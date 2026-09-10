@@ -1,0 +1,4224 @@
+{
+  "schemaVersion": 2,
+  "id": "35167",
+  "correlation": {
+    "policyVersion": 1,
+    "preflight": "passed"
+  },
+  "releasePlanId": "35167",
+  "title": "Public Preview release plan for BillingTrust",
+  "service": "BillingTrust",
+  "product": "Release",
+  "path": "specification/billingtrust/resource-manager/Microsoft.BillingTrust/BillingTrust",
+  "state": "finished",
+  "plane": "management",
+  "releaseType": "APEX Public Preview",
+  "intendedMonth": "July 2026",
+  "createdAt": "2026-07-01T22:41:35.853Z",
+  "completedAt": "2026-07-10T21:35:08.217Z",
+  "sourceUrl": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35167",
+  "range": {
+    "start": "2026-06-10T20:36:17.000Z",
+    "end": "2026-07-10T21:35:08.217Z"
+  },
+  "intendedArtifacts": [
+    {
+      "prId": "github:Azure/azure-sdk-for-net#60598",
+      "language": ".NET",
+      "package": "Azure.ResourceManager.Billing.Trust",
+      "version": "1.0.0-beta.1",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6535873",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-js#39176",
+      "language": "JavaScript",
+      "package": "@azure/arm-billing-trust",
+      "version": "1.0.0-beta.1",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6535874",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-python#47804",
+      "language": "Python",
+      "package": "azure-mgmt-billingtrust",
+      "version": "1.0.0b1",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6514983",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-java#49697",
+      "language": "Java",
+      "package": "azure-resourcemanager-billing-trust",
+      "version": "1.0.0-beta.1",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6509632",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-go#27125",
+      "language": "Go",
+      "package": "sdk/resourcemanager/billingtrust/armbillingtrust",
+      "version": "0.1.0",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6509645",
+      "releasePipelineUrl": null
+    }
+  ],
+  "links": [
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#43896",
+      "role": "spec-pr",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/43896",
+      "releasePlanIds": [
+        "34897"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-net#60598",
+      "role": "sdk-pr",
+      "language": ".NET",
+      "url": "https://github.com/Azure/azure-sdk-for-net/pull/60598",
+      "releasePlanIds": [
+        "35167"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-js#39176",
+      "role": "sdk-pr",
+      "language": "JavaScript",
+      "url": "https://github.com/Azure/azure-sdk-for-js/pull/39176",
+      "releasePlanIds": [
+        "35167"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-python#47804",
+      "role": "sdk-pr",
+      "language": "Python",
+      "url": "https://github.com/Azure/azure-sdk-for-python/pull/47804",
+      "releasePlanIds": [
+        "35167"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-java#49697",
+      "role": "sdk-pr",
+      "language": "Java",
+      "url": "https://github.com/Azure/azure-sdk-for-java/pull/49697",
+      "releasePlanIds": [
+        "35167"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-go#27125",
+      "role": "sdk-pr",
+      "language": "Go",
+      "url": "https://github.com/Azure/azure-sdk-for-go/pull/27125",
+      "releasePlanIds": [
+        "35167"
+      ]
+    }
+  ],
+  "tracks": [
+    {
+      "id": "plan",
+      "kind": "plan",
+      "label": "Release Plan",
+      "detail": "APEX Public Preview"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#43896",
+      "kind": "spec",
+      "label": "Spec PR",
+      "detail": "azure-rest-api-specs #43896",
+      "artifactId": "github:Azure/azure-rest-api-specs#43896",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "kind": "sdk",
+      "label": ".NET",
+      "detail": "Azure.ResourceManager.Billing.Trust",
+      "artifactId": "github:Azure/azure-sdk-for-net#60598",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:JavaScript:@azure/arm-billing-trust",
+      "kind": "sdk",
+      "label": "JavaScript",
+      "detail": "@azure/arm-billing-trust",
+      "artifactId": "github:Azure/azure-sdk-for-js#39176",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Python:azure-mgmt-billingtrust",
+      "kind": "sdk",
+      "label": "Python",
+      "detail": "azure-mgmt-billingtrust",
+      "artifactId": "github:Azure/azure-sdk-for-python#47804",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Java:azure-resourcemanager-billing-trust",
+      "kind": "sdk",
+      "label": "Java",
+      "detail": "azure-resourcemanager-billing-trust",
+      "artifactId": "github:Azure/azure-sdk-for-java#49697",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Go:sdk/resourcemanager/billingtrust/armbillingtrust",
+      "kind": "sdk",
+      "label": "Go",
+      "detail": "sdk/resourcemanager/billingtrust/armbillingtrust",
+      "artifactId": "github:Azure/azure-sdk-for-go#27125",
+      "state": "merged"
+    }
+  ],
+  "events": [
+    {
+      "id": "github:Azure/azure-rest-api-specs#43896:pr.created:spec:github:Azure/azure-rest-api-specs#43896",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-10T20:36:17Z",
+      "observedAt": "2026-06-10T20:36:17Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43896",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "abhimrnandan-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43896",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43896"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43896:comment:4674239265:spec:github:Azure/azure-rest-api-specs#43896",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-10T20:37:12Z",
+      "observedAt": "2026-06-10T20:37:12Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43896",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43896",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43896#issuecomment-4674239265"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>✅ All automated merging requirements have been met! To get your PR merged, see <a href=\"https://aka.ms/azsdk/specreview/merge\">aka.ms/azsdk/specreview/merge</a>.<br /><br />Comment generated by <a href=\"https://g",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43896:comment:4674324646:spec:github:Azure/azure-rest-api-specs#43896",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-10T20:46:54Z",
+      "observedAt": "2026-06-10T20:46:54Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43896",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43896",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43896#issuecomment-4674324646"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews | Language | API Review for Package | |----------|---------| | Swagger | [Microsoft.BillingTrust-BillingTrust](https://apiview.dev/Ass",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43896:comment:4674515298:spec:github:Azure/azure-rest-api-specs#43896",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-10T21:05:20Z",
+      "observedAt": "2026-06-10T21:05:20Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43896",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "abhimrnandan-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43896",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43896#issuecomment-4674515298"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The Microsoft.BillingTrust namespace was merged to RPSaaSMaster in azure-rest-api-specs-pr via PR 28678 (ARM review signed off). However, the CI-RpaaSRPNotInPrivateRepo check does not appear to detect it. Private repo PR link : https://gith",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43896:comment:4674530019:spec:github:Azure/azure-rest-api-specs#43896",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-10T21:07:17Z",
+      "observedAt": "2026-06-10T21:07:17Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43896",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "abhimrnandan-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43896",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43896#issuecomment-4674530019"
+      },
+      "confidence": "authoritative",
+      "excerpt": "/azp run",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43896:comment:4674530851:spec:github:Azure/azure-rest-api-specs#43896",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-10T21:07:24Z",
+      "observedAt": "2026-06-10T21:07:24Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43896",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43896",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43896#issuecomment-4674530851"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> You have several pipelines (over 10) configured to build pull requests in this repository. Specify which pipelines you would like to run by using /azp run [pipelines] command. You can specify multiple pipelines using a comma separate",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43896:commit:0fcf03783828:spec:github:Azure/azure-rest-api-specs#43896",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-10T22:16:06Z",
+      "observedAt": "2026-06-10T22:16:06Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43896",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "abhi3047office"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43896",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/0fcf037838287c6d83de88287e72a246f4b3243d"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43896:commit:a3bd41e10995:spec:github:Azure/azure-rest-api-specs#43896",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-10T22:16:06Z",
+      "observedAt": "2026-06-10T22:16:06Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43896",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "abhi3047office"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43896",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/a3bd41e10995f2323f75eb3213c610a07a2c653a"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43896:commit:a0b648a80fff:spec:github:Azure/azure-rest-api-specs#43896",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-11T00:06:00Z",
+      "observedAt": "2026-06-11T00:06:00Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43896",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "devapathni"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43896",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/a0b648a80fffb20dfce73b798ff64f593582423d"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43896:commit:9ca3c9204449:spec:github:Azure/azure-rest-api-specs#43896",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-16T22:27:03Z",
+      "observedAt": "2026-06-16T22:27:03Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43896",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "abhi3047office"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43896",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/9ca3c92044492c59c1f9d61ab5e64014933ced16"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43896:commit:4aec6d65b688:spec:github:Azure/azure-rest-api-specs#43896",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-16T22:27:03Z",
+      "observedAt": "2026-06-16T22:27:03Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43896",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "abhi3047office"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43896",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/4aec6d65b68839b0ede0b6ad7e3365831e9df2c0"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43896:commit:33b73f6e2871:spec:github:Azure/azure-rest-api-specs#43896",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-16T22:27:29Z",
+      "observedAt": "2026-06-16T22:27:29Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43896",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "abhi3047office"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43896",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/33b73f6e287154afdf2cbe56052ad57e2488d157"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43896:commit:27f3de84483d:spec:github:Azure/azure-rest-api-specs#43896",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-16T22:32:46Z",
+      "observedAt": "2026-06-16T22:32:46Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43896",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "abhi3047office"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43896",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/27f3de84483db175d0230bc5a5a25e70718cc20d"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43896:commit:f55699f2f4d6:spec:github:Azure/azure-rest-api-specs#43896",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-16T22:32:46Z",
+      "observedAt": "2026-06-16T22:32:46Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43896",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "abhi3047office"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43896",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/f55699f2f4d69639d46bf3b0c991ea8af18bab86"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43896:commit:a27d1d4a7026:spec:github:Azure/azure-rest-api-specs#43896",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-16T22:41:27Z",
+      "observedAt": "2026-06-16T22:41:27Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43896",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "abhi3047office"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43896",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/a27d1d4a7026813ae9e0776f04a18c6d997a7356"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43896:commit:238f3b5e25f2:spec:github:Azure/azure-rest-api-specs#43896",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-16T22:41:27Z",
+      "observedAt": "2026-06-16T22:41:27Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43896",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "abhi3047office"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43896",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/238f3b5e25f26da1712ebc0bd0597f284d3f0d5b"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43896:comment:4724287909:spec:github:Azure/azure-rest-api-specs#43896",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-16T22:52:58Z",
+      "observedAt": "2026-06-16T22:52:58Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43896",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "abhimrnandan-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43896",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43896#issuecomment-4724287909"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@microsoft-github-policy-service agree [company=\"Microsoft\"]",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43896:comment:4733470502:spec:github:Azure/azure-rest-api-specs#43896",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-17T17:33:14Z",
+      "observedAt": "2026-06-17T17:33:14Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43896",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "abhimrnandan-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43896",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43896#issuecomment-4733470502"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@microsoft-github-policy-service agree",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43896:comment:4734086563:spec:github:Azure/azure-rest-api-specs#43896",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-17T18:46:45Z",
+      "observedAt": "2026-06-17T18:46:45Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43896",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "gary-x-li"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43896",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43896#issuecomment-4734086563"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[NEW] 🔴 Blocking** **[[ARG002](https://github.com/Azure/azure-rest-api-specs/blob/main/.github/instructions/arm-api-review.instructions.md#102-no-customer-data-in-control-plane-properties-arg002)]** \\specification/billingtrust/resource-m",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43896:comment:4735471569:spec:github:Azure/azure-rest-api-specs#43896",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-17T21:07:32Z",
+      "observedAt": "2026-06-17T21:07:32Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43896",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "abhimrnandan-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43896",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43896#issuecomment-4735471569"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@gary-x-li This issue was raised and resolved during the ARM review of the private repo PR ([azure-rest-api-specs-pr#28678](https://github.com/Azure/azure-rest-api-specs-pr/pull/28678)), which was merged with `ARMSignedOff`. Here is the con",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43896:comment:4753785538:spec:github:Azure/azure-rest-api-specs#43896",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-19T18:05:04Z",
+      "observedAt": "2026-06-19T18:05:04Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43896",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "abhimrnandan-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43896",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43896#issuecomment-4753785538"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@gary-x-li — Friendly follow-up. The ARG002 finding on `SoldTo` was already reviewed and accepted during the private repo ARM review (PR [#28678](https://github.com/Azure/azure-rest-api-specs-pr/pull/28678), merged with `ARMSignedOff`). The",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43896:commit:8f8bf3454846:spec:github:Azure/azure-rest-api-specs#43896",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-22T17:03:16Z",
+      "observedAt": "2026-06-22T17:03:16Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43896",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "devapathni"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43896",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/8f8bf34548469188aab783aa8fb4b5b180382eea"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43896:commit:95222ed819f7:spec:github:Azure/azure-rest-api-specs#43896",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-26T17:50:13Z",
+      "observedAt": "2026-06-26T17:50:13Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43896",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "abhi3047office"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43896",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/95222ed819f7863fa3016e8762f7565eeb82a35b"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43896:commit:cf0a49f4ecd6:spec:github:Azure/azure-rest-api-specs#43896",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-26T17:55:06Z",
+      "observedAt": "2026-06-26T17:55:06Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43896",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "abhi3047office"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43896",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/cf0a49f4ecd674ccb5207e03d2c4f7a748ae34a5"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43896:commit:f6bcf5a51a87:spec:github:Azure/azure-rest-api-specs#43896",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-26T18:02:16Z",
+      "observedAt": "2026-06-26T18:02:16Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43896",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "abhi3047office"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43896",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/f6bcf5a51a87f2615085c909bf0e36af0d6201d8"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43896:commit:1db39f9fe3ee:spec:github:Azure/azure-rest-api-specs#43896",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-26T18:36:33Z",
+      "observedAt": "2026-06-26T18:36:33Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43896",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "abhi3047office"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43896",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/1db39f9fe3eefa85ab75aea30ebeabceed3066b8"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43896:commit:fbc72f72e1c7:spec:github:Azure/azure-rest-api-specs#43896",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-29T17:11:30Z",
+      "observedAt": "2026-06-29T17:11:30Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43896",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "abhi3047office"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43896",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/fbc72f72e1c78842d4d79337da5032dd9911be47"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43896:commit:016eaa4edb48:spec:github:Azure/azure-rest-api-specs#43896",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-29T20:42:05Z",
+      "observedAt": "2026-06-29T20:42:05Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43896",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "abhi3047office"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43896",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/016eaa4edb485d56710e970f1be9fe2c8256ac45"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43896:commit:9d5fd25ff288:spec:github:Azure/azure-rest-api-specs#43896",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-30T02:07:00Z",
+      "observedAt": "2026-06-30T02:07:00Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43896",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43896",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/9d5fd25ff288102fa81149739888d0ea09e465be"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43896:comment:4839317846:spec:github:Azure/azure-rest-api-specs#43896",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-30T02:25:11Z",
+      "observedAt": "2026-06-30T02:25:11Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43896",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43896",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43896#issuecomment-4839317846"
+      },
+      "confidence": "authoritative",
+      "excerpt": "python fails for a known issue and I have sought help in [teams channel](https://teams.microsoft.com/l/message/19:[email redacted]/1782786121486?tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47&groupId=3e17dcb0-425",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43896:commit:475dccaf0f8f:spec:github:Azure/azure-rest-api-specs#43896",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-01T02:35:36Z",
+      "observedAt": "2026-07-01T02:35:36Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43896",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43896",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/475dccaf0f8fc8baf50ae3230e096640abb37bd2"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43896:comment:4849807803:spec:github:Azure/azure-rest-api-specs#43896",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-01T02:46:44Z",
+      "observedAt": "2026-07-01T02:46:44Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43896",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43896",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43896#issuecomment-4849807803"
+      },
+      "confidence": "authoritative",
+      "excerpt": "python check pass",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43896:commit:9c5661cb8416:spec:github:Azure/azure-rest-api-specs#43896",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-01T04:15:10Z",
+      "observedAt": "2026-07-01T04:15:10Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43896",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "abhimrnandan-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43896",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/9c5661cb84163bce01947d7c6d8cfbd78bab27ba"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43896:commit:fa8d181fa59a:spec:github:Azure/azure-rest-api-specs#43896",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-01T16:21:01Z",
+      "observedAt": "2026-07-01T16:21:01Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43896",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "devapathni"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43896",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/fa8d181fa59ab5f97d1992d7997c57d0808ffb77"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43896:review:4610991761:spec:github:Azure/azure-rest-api-specs#43896",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-01T16:22:40Z",
+      "observedAt": "2026-07-01T16:22:40Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43896",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "wanlei123188-gm"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43896",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43896#pullrequestreview-4610991761"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43896:pr.merged:spec:github:Azure/azure-rest-api-specs#43896",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-01T16:36:35Z",
+      "observedAt": "2026-07-01T16:36:35Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43896",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43896",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43896"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:35167:created",
+      "type": "plan.created",
+      "phase": "plan",
+      "occurredAt": "2026-07-01T22:41:35.853Z",
+      "observedAt": "2026-07-01T22:41:35.853Z",
+      "trackId": "plan",
+      "title": "Release Plan created",
+      "confidence": "authoritative",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35167",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35167"
+      },
+      "stack": 0
+    },
+    {
+      "id": "ado:35167:1:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-07-01T22:41:35.853Z",
+      "observedAt": "2026-07-01T22:41:35.853Z",
+      "trackId": "plan",
+      "value": "New",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35167",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35167"
+      },
+      "title": "Plan state changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35167:1:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-01T22:41:35.853Z",
+      "observedAt": "2026-07-01T22:41:35.853Z",
+      "trackId": "plan",
+      "value": "Not Available",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35167",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35167"
+      },
+      "title": "Spec approval changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:35167:1:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-01T22:41:35.853Z",
+      "observedAt": "2026-07-01T22:41:35.853Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35167",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35167"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35167:1:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-01T22:41:35.853Z",
+      "observedAt": "2026-07-01T22:41:35.853Z",
+      "trackId": "sdk:JavaScript:@azure/arm-billing-trust",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35167",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35167"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35167:1:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-01T22:41:35.853Z",
+      "observedAt": "2026-07-01T22:41:35.853Z",
+      "trackId": "sdk:Python:azure-mgmt-billingtrust",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35167",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35167"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35167:1:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-01T22:41:35.853Z",
+      "observedAt": "2026-07-01T22:41:35.853Z",
+      "trackId": "sdk:Java:azure-resourcemanager-billing-trust",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35167",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35167"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35167:1:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-01T22:41:35.853Z",
+      "observedAt": "2026-07-01T22:41:35.853Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/billingtrust/armbillingtrust",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35167",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35167"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35168:1:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-01T22:41:36.243Z",
+      "observedAt": "2026-07-01T22:41:36.243Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43896",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/43896",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35168",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35168"
+      },
+      "title": "Spec PR linked",
+      "stack": 3
+    },
+    {
+      "id": "ado:35167:2:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-07-01T22:41:36.767Z",
+      "observedAt": "2026-07-01T22:41:36.767Z",
+      "trackId": "plan",
+      "value": "In Progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35167",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35167"
+      },
+      "title": "Plan state changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:35167:4:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-01T22:44:48.68Z",
+      "observedAt": "2026-07-01T22:44:48.68Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35167",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35167"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35167:5:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-01T22:45:10.463Z",
+      "observedAt": "2026-07-01T22:45:10.463Z",
+      "trackId": "sdk:Python:azure-mgmt-billingtrust",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35167",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35167"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6509632:generation.queued:sdk:Java:azure-resourcemanager-billing-trust",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-07-01T22:45:23.6788454Z",
+      "observedAt": "2026-07-01T23:10:25.1120251Z",
+      "trackId": "sdk:Java:azure-resourcemanager-billing-trust",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6509632",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6509632"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:35167:6:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-01T22:45:26.65Z",
+      "observedAt": "2026-07-01T22:45:26.65Z",
+      "trackId": "sdk:Java:azure-resourcemanager-billing-trust",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35167",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35167"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:35167:7:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-01T22:45:43.22Z",
+      "observedAt": "2026-07-01T22:45:43.22Z",
+      "trackId": "sdk:JavaScript:@azure/arm-billing-trust",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35167",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35167"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6509645:generation.queued:sdk:Go:sdk/resourcemanager/billingtrust/armbillingtrust",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-07-01T22:45:54.6232348Z",
+      "observedAt": "2026-07-01T22:59:47.3901054Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/billingtrust/armbillingtrust",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6509645",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6509645"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:35167:8:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-01T22:45:56.587Z",
+      "observedAt": "2026-07-01T22:45:56.587Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/billingtrust/armbillingtrust",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35167",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35167"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6509632:generation.started:sdk:Java:azure-resourcemanager-billing-trust",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-07-01T22:50:32.9306012Z",
+      "observedAt": "2026-07-01T23:10:25.1120251Z",
+      "trackId": "sdk:Java:azure-resourcemanager-billing-trust",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6509632",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6509632"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6509645:generation.started:sdk:Go:sdk/resourcemanager/billingtrust/armbillingtrust",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-07-01T22:53:23.1271239Z",
+      "observedAt": "2026-07-01T22:59:47.3901054Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/billingtrust/armbillingtrust",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6509645",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6509645"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47804:commit:238a08968171:sdk:Python:azure-mgmt-billingtrust",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-01T22:55:54Z",
+      "observedAt": "2026-07-01T22:55:54Z",
+      "trackId": "sdk:Python:azure-mgmt-billingtrust",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47804",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/238a0896817182bd817a4ae8c91881b2311e5d13"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47804:pr.created:sdk:Python:azure-mgmt-billingtrust",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-01T22:55:58Z",
+      "observedAt": "2026-07-01T22:55:58Z",
+      "trackId": "sdk:Python:azure-mgmt-billingtrust",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47804",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47804"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47804:review:4613341127:sdk:Python:azure-mgmt-billingtrust",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-01T22:56:00Z",
+      "observedAt": "2026-07-01T22:56:00Z",
+      "trackId": "sdk:Python:azure-mgmt-billingtrust",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47804",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47804#pullrequestreview-4613341127"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot can't review bot-authored pull requests automatically. A user with Copilot access can request a review manually.",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "ado:35167:9:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-01T22:56:05.01Z",
+      "observedAt": "2026-07-01T22:56:05.01Z",
+      "trackId": "sdk:Python:azure-mgmt-billingtrust",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35167",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35167"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:35167:9:Custom.SDKPullRequestForPython",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-01T22:56:05.01Z",
+      "observedAt": "2026-07-01T22:56:05.01Z",
+      "trackId": "sdk:Python:azure-mgmt-billingtrust",
+      "value": "https://github.com/Azure/azure-sdk-for-python/pull/47804",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35167",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35167"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60598:commit:df54286a0e2e:sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-01T22:56:22Z",
+      "observedAt": "2026-07-01T22:56:22Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60598",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/df54286a0e2e1d3bafd3ef4bf5c7545f6c143a8b"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60598:pr.created:sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-01T22:56:26Z",
+      "observedAt": "2026-07-01T22:56:26Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60598",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60598"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60598:review:4613343354:sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-01T22:56:28Z",
+      "observedAt": "2026-07-01T22:56:28Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60598",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60598#pullrequestreview-4613343354"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot can't review bot-authored pull requests automatically. A user with Copilot access can request a review manually.",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "ado:35167:10:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-01T22:56:33.4Z",
+      "observedAt": "2026-07-01T22:56:33.4Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35167",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35167"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:35167:10:Custom.SDKPullRequestForDotnet",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-01T22:56:33.4Z",
+      "observedAt": "2026-07-01T22:56:33.4Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "value": "https://github.com/Azure/azure-sdk-for-net/pull/60598",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35167",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35167"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27125:commit:2784758c0b42:sdk:Go:sdk/resourcemanager/billingtrust/armbillingtrust",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-01T22:58:42Z",
+      "observedAt": "2026-07-01T22:58:42Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/billingtrust/armbillingtrust",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27125",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/2784758c0b42dd5e7c486f378dcef2d4a12f41ab"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:35167:11:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-01T22:58:44.75Z",
+      "observedAt": "2026-07-01T22:58:44.75Z",
+      "trackId": "sdk:JavaScript:@azure/arm-billing-trust",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35167",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35167"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27125:pr.created:sdk:Go:sdk/resourcemanager/billingtrust/armbillingtrust",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-01T22:58:46Z",
+      "observedAt": "2026-07-01T22:58:46Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/billingtrust/armbillingtrust",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27125",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27125"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27125:review:4613354054:sdk:Go:sdk/resourcemanager/billingtrust/armbillingtrust",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-01T22:58:48Z",
+      "observedAt": "2026-07-01T22:58:48Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/billingtrust/armbillingtrust",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27125",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27125#pullrequestreview-4613354054"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot can't review bot-authored pull requests automatically. A user with Copilot access can request a review manually.",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "ado:35167:12:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-01T22:58:52.707Z",
+      "observedAt": "2026-07-01T22:58:52.707Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/billingtrust/armbillingtrust",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35167",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35167"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35167:12:Custom.SDKPullRequestForGo",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-01T22:58:52.707Z",
+      "observedAt": "2026-07-01T22:58:52.707Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/billingtrust/armbillingtrust",
+      "value": "https://github.com/Azure/azure-sdk-for-go/pull/27125",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35167",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35167"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49697:commit:502cbd7615d6:sdk:Java:azure-resourcemanager-billing-trust",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-01T22:59:38Z",
+      "observedAt": "2026-07-01T22:59:38Z",
+      "trackId": "sdk:Java:azure-resourcemanager-billing-trust",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49697",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/502cbd7615d6ae4ed5b2cc4494cdcae809d4bacc"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49697:pr.created:sdk:Java:azure-resourcemanager-billing-trust",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-01T22:59:42Z",
+      "observedAt": "2026-07-01T22:59:42Z",
+      "trackId": "sdk:Java:azure-resourcemanager-billing-trust",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49697",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49697"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49697:review:4613358176:sdk:Java:azure-resourcemanager-billing-trust",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-01T22:59:45Z",
+      "observedAt": "2026-07-01T22:59:45Z",
+      "trackId": "sdk:Java:azure-resourcemanager-billing-trust",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49697",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49697#pullrequestreview-4613358176"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot can't review bot-authored pull requests automatically. A user with Copilot access can request a review manually.",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6509645:generation.completed:sdk:Go:sdk/resourcemanager/billingtrust/armbillingtrust",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-07-01T22:59:47.3901054Z",
+      "observedAt": "2026-07-01T22:59:47.3901054Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/billingtrust/armbillingtrust",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6509645",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6509645"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado:35167:13:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-01T22:59:49.64Z",
+      "observedAt": "2026-07-01T22:59:49.64Z",
+      "trackId": "sdk:Java:azure-resourcemanager-billing-trust",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35167",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35167"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35167:13:Custom.SDKPullRequestForJava",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-01T22:59:49.64Z",
+      "observedAt": "2026-07-01T22:59:49.64Z",
+      "trackId": "sdk:Java:azure-resourcemanager-billing-trust",
+      "value": "https://github.com/Azure/azure-sdk-for-java/pull/49697",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35167",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35167"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6509632:generation.completed:sdk:Java:azure-resourcemanager-billing-trust",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-07-01T23:10:25.1120251Z",
+      "observedAt": "2026-07-01T23:10:25.1120251Z",
+      "trackId": "sdk:Java:azure-resourcemanager-billing-trust",
+      "title": "Pipeline completed with issues",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6509632",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6509632"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49697:comment:4861006034:sdk:Java:azure-resourcemanager-billing-trust",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-02T00:02:15Z",
+      "observedAt": "2026-07-02T00:02:15Z",
+      "trackId": "sdk:Java:azure-resourcemanager-billing-trust",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49697",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49697#issuecomment-4861006034"
+      },
+      "confidence": "authoritative",
+      "excerpt": "namespace review completed https://github.com/Azure/azure-sdk-pr/issues/2661",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49697:comment:4861006228:sdk:Java:azure-resourcemanager-billing-trust",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-02T00:02:18Z",
+      "observedAt": "2026-07-02T00:02:18Z",
+      "trackId": "sdk:Java:azure-resourcemanager-billing-trust",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49697",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49697#issuecomment-4861006228"
+      },
+      "confidence": "authoritative",
+      "excerpt": "/azp run prepare-pipelines",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49697:comment:4861007045:sdk:Java:azure-resourcemanager-billing-trust",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-02T00:02:28Z",
+      "observedAt": "2026-07-02T00:02:28Z",
+      "trackId": "sdk:Java:azure-resourcemanager-billing-trust",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49697",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49697#issuecomment-4861007045"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines successfully started running 1 pipeline(s).<br> </samp>",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49697:review:4613600705:sdk:Java:azure-resourcemanager-billing-trust",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-02T00:10:00Z",
+      "observedAt": "2026-07-02T00:10:00Z",
+      "trackId": "sdk:Java:azure-resourcemanager-billing-trust",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49697",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49697#pullrequestreview-4613600705"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27125:comment:4861287266:sdk:Go:sdk/resourcemanager/billingtrust/armbillingtrust",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-02T01:05:27Z",
+      "observedAt": "2026-07-02T01:05:27Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/billingtrust/armbillingtrust",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27125",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27125#issuecomment-4861287266"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## ⚠️ First On-Board Service — Action Required This PR cannot be merged until the following onboarding requirements are completed: - **Pipeline setup** (release pipelines not created yet): comment `/azp run prepare-pipelines` on this PR to ",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47804:comment:4861924075:sdk:Python:azure-mgmt-billingtrust",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-02T03:31:08Z",
+      "observedAt": "2026-07-02T03:31:08Z",
+      "trackId": "sdk:Python:azure-mgmt-billingtrust",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47804",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47804#issuecomment-4861924075"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Client name: BillingTrustMgmtClient",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47804:comment:4861929195:sdk:Python:azure-mgmt-billingtrust",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-02T03:32:16Z",
+      "observedAt": "2026-07-02T03:32:16Z",
+      "trackId": "sdk:Python:azure-mgmt-billingtrust",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47804",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47804#issuecomment-4861929195"
+      },
+      "confidence": "authoritative",
+      "excerpt": "/azp run prepare-pipelines",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47804:comment:4861930026:sdk:Python:azure-mgmt-billingtrust",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-02T03:32:27Z",
+      "observedAt": "2026-07-02T03:32:27Z",
+      "trackId": "sdk:Python:azure-mgmt-billingtrust",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47804",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47804#issuecomment-4861930026"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines successfully started running 1 pipeline(s).<br> </samp>",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47804:commit:0745963f8877:sdk:Python:azure-mgmt-billingtrust",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-02T03:34:26Z",
+      "observedAt": "2026-07-02T03:34:26Z",
+      "trackId": "sdk:Python:azure-mgmt-billingtrust",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47804",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/0745963f8877f0f6495f5328014e1c41e66c943d"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47804:commit:65802154f64c:sdk:Python:azure-mgmt-billingtrust",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-02T03:36:49Z",
+      "observedAt": "2026-07-02T03:36:49Z",
+      "trackId": "sdk:Python:azure-mgmt-billingtrust",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47804",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/65802154f64c655f7a5784a7d1d6c8fa76d69dd0"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:35167:15:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-02T17:10:37.837Z",
+      "observedAt": "2026-07-02T17:10:37.837Z",
+      "trackId": "plan",
+      "value": "Approved",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35167",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35167"
+      },
+      "title": "Spec approval changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35167:16:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-02T17:18:52.607Z",
+      "observedAt": "2026-07-02T17:18:52.607Z",
+      "trackId": "sdk:JavaScript:@azure/arm-billing-trust",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35167",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35167"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39176:commit:d9b75ace2c56:sdk:JavaScript:@azure/arm-billing-trust",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-02T17:29:22Z",
+      "observedAt": "2026-07-02T17:29:22Z",
+      "trackId": "sdk:JavaScript:@azure/arm-billing-trust",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39176",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/d9b75ace2c568d1b8076727554ebc33bacd0eea3"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39176:pr.created:sdk:JavaScript:@azure/arm-billing-trust",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-02T17:29:27Z",
+      "observedAt": "2026-07-02T17:29:27Z",
+      "trackId": "sdk:JavaScript:@azure/arm-billing-trust",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39176",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39176"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39176:review:4619854029:sdk:JavaScript:@azure/arm-billing-trust",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-02T17:29:30Z",
+      "observedAt": "2026-07-02T17:29:30Z",
+      "trackId": "sdk:JavaScript:@azure/arm-billing-trust",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39176",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39176#pullrequestreview-4619854029"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot can't review bot-authored pull requests automatically. A user with Copilot access can request a review manually.",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "ado:35167:17:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-02T17:29:34.083Z",
+      "observedAt": "2026-07-02T17:29:34.083Z",
+      "trackId": "sdk:JavaScript:@azure/arm-billing-trust",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35167",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35167"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:35167:17:Custom.SDKPullRequestForJavaScript",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-02T17:29:34.083Z",
+      "observedAt": "2026-07-02T17:29:34.083Z",
+      "trackId": "sdk:JavaScript:@azure/arm-billing-trust",
+      "value": "https://github.com/Azure/azure-sdk-for-js/pull/39176",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35167",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35167"
+      },
+      "title": "SDK PR linked",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49697:commit:0878ff498af9:sdk:Java:azure-resourcemanager-billing-trust",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-02T17:55:15Z",
+      "observedAt": "2026-07-02T17:55:15Z",
+      "trackId": "sdk:Java:azure-resourcemanager-billing-trust",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "abhimrnandan-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49697",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/0878ff498af96d6b0cdb035e723ffdf78c7fdc80"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49697:review:4621024731:sdk:Java:azure-resourcemanager-billing-trust",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-02T20:39:51Z",
+      "observedAt": "2026-07-02T20:39:51Z",
+      "trackId": "sdk:Java:azure-resourcemanager-billing-trust",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "g2vinay"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49697",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49697#pullrequestreview-4621024731"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49697:pr.merged:sdk:Java:azure-resourcemanager-billing-trust",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-02T20:40:53Z",
+      "observedAt": "2026-07-02T20:40:53Z",
+      "trackId": "sdk:Java:azure-resourcemanager-billing-trust",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49697",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49697"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:35167:18:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-02T22:10:42.823Z",
+      "observedAt": "2026-07-02T22:10:42.823Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35167",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35167"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60598:commit:1588f4d052e4:sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-02T22:17:34Z",
+      "observedAt": "2026-07-02T22:17:34Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60598",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/1588f4d052e4717f8f5d335bb9670fc2c42f2d83"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:35167:19:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-02T22:17:43.577Z",
+      "observedAt": "2026-07-02T22:17:43.577Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35167",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35167"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6514983:generation.queued:sdk:Python:azure-mgmt-billingtrust",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-07-02T22:38:31.8248448Z",
+      "observedAt": "2026-07-02T22:44:59.2484366Z",
+      "trackId": "sdk:Python:azure-mgmt-billingtrust",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6514983",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6514983"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:35167:20:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-02T22:38:37.36Z",
+      "observedAt": "2026-07-02T22:38:37.36Z",
+      "trackId": "sdk:Python:azure-mgmt-billingtrust",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35167",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35167"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6514983:generation.started:sdk:Python:azure-mgmt-billingtrust",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-07-02T22:38:58.9446167Z",
+      "observedAt": "2026-07-02T22:44:59.2484366Z",
+      "trackId": "sdk:Python:azure-mgmt-billingtrust",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6514983",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6514983"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47804:commit:1d6c9a22fada:sdk:Python:azure-mgmt-billingtrust",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-02T22:43:50Z",
+      "observedAt": "2026-07-02T22:43:50Z",
+      "trackId": "sdk:Python:azure-mgmt-billingtrust",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47804",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/1d6c9a22fada05fd7b5ab2e30dd3b32d6ac07e5e"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado:35167:21:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-02T22:43:59.173Z",
+      "observedAt": "2026-07-02T22:43:59.173Z",
+      "trackId": "sdk:Python:azure-mgmt-billingtrust",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35167",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35167"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6514983:generation.completed:sdk:Python:azure-mgmt-billingtrust",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-07-02T22:44:59.2484366Z",
+      "observedAt": "2026-07-02T22:44:59.2484366Z",
+      "trackId": "sdk:Python:azure-mgmt-billingtrust",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6514983",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6514983"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60598:comment:3516504891:sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-02T22:54:05Z",
+      "observedAt": "2026-07-02T22:54:05Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60598",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60598#discussion_r3516504891"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[RESNAME001]** The resource trio noun `Assessment` is a single generic word. After stripping the reserved `Data`/`Resource` suffix the name carries no RP/domain context and will collide with similarly-named types in other management packa",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60598:comment:3516504899:sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-02T22:54:05Z",
+      "observedAt": "2026-07-02T22:54:05Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60598",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60598#discussion_r3516504899"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[RESNAME001]** The resource trio noun `Rule` is a single generic word. After stripping `Resource`/`Data`/`Collection` the name carries no RP/domain context and will collide with similarly-named types across management packages. **Required",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60598:comment:3516504906:sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-02T22:54:05Z",
+      "observedAt": "2026-07-02T22:54:05Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60598",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60598#discussion_r3516504906"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[Contextual Naming]** `AssessmentProperties`, `AssessmentState`, and `AssessmentType` all carry the generic prefix `Assessment` without RP/service context. In IntelliSense, consumers see only the short name and cannot distinguish these fr",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60598:review:4621629896:sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-02T22:54:06Z",
+      "observedAt": "2026-07-02T22:54:06Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60598",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60598#pullrequestreview-4621629896"
+      },
+      "confidence": "authoritative",
+      "excerpt": "### Management SDK Review Summary - **Scope:** `Azure.ResourceManager.Billing.Trust` (new package, v1.0.0-beta.1) - **Versioning:** Pass — new package, no `ApiCompatVersion` expected - **API surface:** Fail — 2 RESNAME001 deterministic viol",
+      "reviewState": "dismissed",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60598:comment:3516504913:sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-02T22:54:06Z",
+      "observedAt": "2026-07-02T22:54:06Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60598",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60598#discussion_r3516504913"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[Contextual Naming]** `RuleProperties`, `RulePatch`, and `RuleState` all carry the generic prefix `Rule` with no RP/domain context. Consumers using IntelliSense cannot distinguish these from identically-named types in other management pac",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60598:comment:3516504916:sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-02T22:54:06Z",
+      "observedAt": "2026-07-02T22:54:06Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60598",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60598#discussion_r3516504916"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[Contextual Naming]** Several model types carry generic names with no RP/service context. In IntelliSense, these names appear without namespace qualification and will confuse consumers or collide with types in other management packages. T",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47804:commit:36f95b33f395:sdk:Python:azure-mgmt-billingtrust",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-03T00:38:14Z",
+      "observedAt": "2026-07-03T00:38:14Z",
+      "trackId": "sdk:Python:azure-mgmt-billingtrust",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "abhi3047office"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47804",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/36f95b33f395934f9750755c205363fd7e616078"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60598:commit:4a986ee1ead0:sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-03T00:53:03Z",
+      "observedAt": "2026-07-03T00:53:03Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "abhimrnandan-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60598",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/4a986ee1ead0c3ff18a6da0c526cce6ac0b92ea3"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47804:review:4622583058:sdk:Python:azure-mgmt-billingtrust",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-03T03:28:45Z",
+      "observedAt": "2026-07-03T03:28:45Z",
+      "trackId": "sdk:Python:azure-mgmt-billingtrust",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47804",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47804#pullrequestreview-4622583058"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47804:comment:3517304658:sdk:Python:azure-mgmt-billingtrust",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-03T03:28:45Z",
+      "observedAt": "2026-07-03T03:28:45Z",
+      "trackId": "sdk:Python:azure-mgmt-billingtrust",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47804",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47804#discussion_r3517304658"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Add `no_sub = true` then regenerate since there is no `subscription_id` in client",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47804:review:4622585172:sdk:Python:azure-mgmt-billingtrust",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-03T03:29:28Z",
+      "observedAt": "2026-07-03T03:29:28Z",
+      "trackId": "sdk:Python:azure-mgmt-billingtrust",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47804",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47804#pullrequestreview-4622585172"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47804:comment:3517306589:sdk:Python:azure-mgmt-billingtrust",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-03T03:29:28Z",
+      "observedAt": "2026-07-03T03:29:28Z",
+      "trackId": "sdk:Python:azure-mgmt-billingtrust",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47804",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47804#discussion_r3517306589"
+      },
+      "confidence": "authoritative",
+      "excerpt": "got it",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47804:commit:784a945aae83:sdk:Python:azure-mgmt-billingtrust",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-03T03:29:43Z",
+      "observedAt": "2026-07-03T03:29:43Z",
+      "trackId": "sdk:Python:azure-mgmt-billingtrust",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47804",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/784a945aae83b1a2b85874d17cbdb15054637642"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47804:commit:d9d691cf8c2a:sdk:Python:azure-mgmt-billingtrust",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-03T03:36:11Z",
+      "observedAt": "2026-07-03T03:36:11Z",
+      "trackId": "sdk:Python:azure-mgmt-billingtrust",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47804",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/d9d691cf8c2a5b7b34960cbe484aeb5ff1b1063d"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47804:review:4622650933:sdk:Python:azure-mgmt-billingtrust",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-03T03:48:53Z",
+      "observedAt": "2026-07-03T03:48:53Z",
+      "trackId": "sdk:Python:azure-mgmt-billingtrust",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47804",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47804#pullrequestreview-4622650933"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47804:comment:4872461435:sdk:Python:azure-mgmt-billingtrust",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-03T03:58:42Z",
+      "observedAt": "2026-07-03T03:58:42Z",
+      "trackId": "sdk:Python:azure-mgmt-billingtrust",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47804",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47804#issuecomment-4872461435"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @abhimrnandan-ms, we have approved the PR and we will hold the PR merge and release until you explicitly ping us to merge then release.",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47804:pr.merged:sdk:Python:azure-mgmt-billingtrust",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-06T22:48:36Z",
+      "observedAt": "2026-07-06T22:48:36Z",
+      "trackId": "sdk:Python:azure-mgmt-billingtrust",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47804",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47804"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27125:comment:4898502799:sdk:Go:sdk/resourcemanager/billingtrust/armbillingtrust",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-06T23:21:57Z",
+      "observedAt": "2026-07-06T23:21:57Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/billingtrust/armbillingtrust",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "abhimrnandan-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27125",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27125#issuecomment-4898502799"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Namespace review issue: https://github.com/Azure/azure-sdk/issues/10100",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27125:comment:4898502870:sdk:Go:sdk/resourcemanager/billingtrust/armbillingtrust",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-06T23:21:58Z",
+      "observedAt": "2026-07-06T23:21:58Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/billingtrust/armbillingtrust",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "abhimrnandan-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27125",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27125#issuecomment-4898502870"
+      },
+      "confidence": "authoritative",
+      "excerpt": "/azp run prepare-pipelines",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27125:comment:4898503782:sdk:Go:sdk/resourcemanager/billingtrust/armbillingtrust",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-06T23:22:09Z",
+      "observedAt": "2026-07-06T23:22:09Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/billingtrust/armbillingtrust",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27125",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27125#issuecomment-4898503782"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines successfully started running 1 pipeline(s).<br> </samp>",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27125:review:4641019210:sdk:Go:sdk/resourcemanager/billingtrust/armbillingtrust",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-07T01:53:55Z",
+      "observedAt": "2026-07-07T01:53:55Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/billingtrust/armbillingtrust",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "tadelesh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27125",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27125#pullrequestreview-4641019210"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39176:comment:4899554857:sdk:JavaScript:@azure/arm-billing-trust",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-07T02:32:36Z",
+      "observedAt": "2026-07-07T02:32:36Z",
+      "trackId": "sdk:JavaScript:@azure/arm-billing-trust",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39176",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39176#issuecomment-4899554857"
+      },
+      "confidence": "authoritative",
+      "excerpt": "namespace review is still in progress https://github.com/Azure/azure-sdk/issues/10100",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27125:pr.merged:sdk:Go:sdk/resourcemanager/billingtrust/armbillingtrust",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-07T02:50:52Z",
+      "observedAt": "2026-07-07T02:50:52Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/billingtrust/armbillingtrust",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27125",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27125"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:35167:22:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-07T03:03:54.553Z",
+      "observedAt": "2026-07-07T03:03:54.553Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35167",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35167"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39176:comment:4899710758:sdk:JavaScript:@azure/arm-billing-trust",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-07T03:04:46Z",
+      "observedAt": "2026-07-07T03:04:46Z",
+      "trackId": "sdk:JavaScript:@azure/arm-billing-trust",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39176",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39176#issuecomment-4899710758"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@kazrael2119 Their -pr issue already closed https://github.com/Azure/azure-sdk-pr/issues/2661 The public issue is same as the -pr issue.",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39176:comment:4899723288:sdk:JavaScript:@azure/arm-billing-trust",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-07T03:07:12Z",
+      "observedAt": "2026-07-07T03:07:12Z",
+      "trackId": "sdk:JavaScript:@azure/arm-billing-trust",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "abhimrnandan-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39176",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39176#issuecomment-4899723288"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@kazrael2119 — the namespace review is now complete. Issue [Azure/azure-sdk#10100](https://github.com/Azure/azure-sdk/issues/10100) has the `mgmt-namespace-ready` label and is closed as completed (approved by @weidongxu-microsoft). The pack",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39176:comment:4899739763:sdk:JavaScript:@azure/arm-billing-trust",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-07T03:10:34Z",
+      "observedAt": "2026-07-07T03:10:34Z",
+      "trackId": "sdk:JavaScript:@azure/arm-billing-trust",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39176",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39176#issuecomment-4899739763"
+      },
+      "confidence": "authoritative",
+      "excerpt": "got it",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60598:commit:7fe74f3cbf40:sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-07T03:10:50Z",
+      "observedAt": "2026-07-07T03:10:50Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60598",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/7fe74f3cbf40bbea211eae5bf466253e61bfbe2e"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:35167:23:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-07T03:11:03.507Z",
+      "observedAt": "2026-07-07T03:11:03.507Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35167",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35167"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39176:review:4641360318:sdk:JavaScript:@azure/arm-billing-trust",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-07T03:19:22Z",
+      "observedAt": "2026-07-07T03:19:22Z",
+      "trackId": "sdk:JavaScript:@azure/arm-billing-trust",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39176",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39176#pullrequestreview-4641360318"
+      },
+      "confidence": "authoritative",
+      "excerpt": "1 design concern found in the public API surface: the `AssessmentsOperations.createOrUpdate` operation resolves to `void` instead of returning the `Assessment` resource (see inline comment). All other checks passed — package versions are al",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39176:comment:3533361793:sdk:JavaScript:@azure/arm-billing-trust",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-07T03:19:22Z",
+      "observedAt": "2026-07-07T03:19:22Z",
+      "trackId": "sdk:JavaScript:@azure/arm-billing-trust",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39176",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39176#discussion_r3533361793"
+      },
+      "confidence": "authoritative",
+      "excerpt": "🔴 **Design Concern** — `review/arm-billing-trust-node.api.md:60` ```ts createOrUpdate: (resourceUri: string, resource: Assessment, options?: AssessmentsCreateOrUpdateOptionalParams) => PollerLike<OperationState<void>, void>; ``` The `creat",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60598:comment:4900139022:sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-07T04:32:55Z",
+      "observedAt": "2026-07-07T04:32:55Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60598",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60598#issuecomment-4900139022"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## 🔍 CI Failure Analysis for PR #60598 ### Check Status Summary | Check | Status | Notes | |---|---|---| | `net - pullrequest` | ❌ Failed | Umbrella check failed | | `Build Analyze PRBatch` | ❌ Cancelled | **Job timeout after exactly 1 hou",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39176:review:4642209036:sdk:JavaScript:@azure/arm-billing-trust",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-07T06:14:23Z",
+      "observedAt": "2026-07-07T06:14:23Z",
+      "trackId": "sdk:JavaScript:@azure/arm-billing-trust",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39176",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39176#pullrequestreview-4642209036"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39176:comment:3534057273:sdk:JavaScript:@azure/arm-billing-trust",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-07T06:14:23Z",
+      "observedAt": "2026-07-07T06:14:23Z",
+      "trackId": "sdk:JavaScript:@azure/arm-billing-trust",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39176",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39176#discussion_r3534057273"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@abhimrnandan-ms could you help confirm if the LRO `Assessments_createOrUpdate` should return `Assessment` as the response or not? from your [swagger](https://github.com/Azure/azure-rest-api-specs/blob/main/specification/billingtrust/resour",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60598:comment:4906654281:sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-07T17:32:22Z",
+      "observedAt": "2026-07-07T17:32:22Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "abhimrnandan-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60598",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60598#issuecomment-4906654281"
+      },
+      "confidence": "authoritative",
+      "excerpt": "/azp run net - pullrequest",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60598:comment:4906661682:sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-07T17:32:50Z",
+      "observedAt": "2026-07-07T17:32:50Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60598",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60598#issuecomment-4906661682"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines successfully started running 1 pipeline(s).<br> </samp>",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60598:review:4650419751:sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-08T02:19:35Z",
+      "observedAt": "2026-07-08T02:19:35Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60598",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60598#pullrequestreview-4650419751"
+      },
+      "confidence": "authoritative",
+      "excerpt": "### Management SDK Review Summary - **Scope:** `Azure.ResourceManager.Billing.Trust` (new package, v1.0.0-beta.1) - **Versioning:** Pass — new package, no `ApiCompatVersion` expected - **API surface:** Fail — 14 contextual naming flags rema",
+      "reviewState": "dismissed",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6535874:generation.queued:sdk:JavaScript:@azure/arm-billing-trust",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-07-08T16:33:06.0660687Z",
+      "observedAt": "2026-07-08T16:45:25.9498855Z",
+      "trackId": "sdk:JavaScript:@azure/arm-billing-trust",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6535874",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6535874"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6535873:generation.queued:sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-07-08T16:33:06.1798907Z",
+      "observedAt": "2026-07-08T16:44:37.0046996Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6535873",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6535873"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:35167:24:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-08T16:33:10.65Z",
+      "observedAt": "2026-07-08T16:33:10.65Z",
+      "trackId": "sdk:JavaScript:@azure/arm-billing-trust",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35167",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35167"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35167:25:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-08T16:33:12.087Z",
+      "observedAt": "2026-07-08T16:33:12.087Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35167",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35167"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6535874:generation.started:sdk:JavaScript:@azure/arm-billing-trust",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-07-08T16:36:31.771554Z",
+      "observedAt": "2026-07-08T16:45:25.9498855Z",
+      "trackId": "sdk:JavaScript:@azure/arm-billing-trust",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6535874",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6535874"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6535873:generation.started:sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-07-08T16:36:32.8302403Z",
+      "observedAt": "2026-07-08T16:44:37.0046996Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6535873",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6535873"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60598:commit:7e8fc9156b7c:sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-08T16:43:25Z",
+      "observedAt": "2026-07-08T16:43:25Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60598",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/7e8fc9156b7c156f79b2a5cc26fb93c7de341ccd"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado:35167:26:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-08T16:43:35.793Z",
+      "observedAt": "2026-07-08T16:43:35.793Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35167",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35167"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39176:commit:d8d832c7a93a:sdk:JavaScript:@azure/arm-billing-trust",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-08T16:43:44Z",
+      "observedAt": "2026-07-08T16:43:44Z",
+      "trackId": "sdk:JavaScript:@azure/arm-billing-trust",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39176",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/d8d832c7a93a8bc2d11e39d430cc94cfc3036875"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60598:comment:4917095460:sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-08T16:43:47Z",
+      "observedAt": "2026-07-08T16:43:47Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60598",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60598#issuecomment-4917095460"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @azure-sdk-automation[bot]. We've noticed that new changes have been pushed to this pull request. Because it is set to automatically merge, we've reset the approvals to allow the opportunity to review the updates.",
+      "stack": 5
+    },
+    {
+      "id": "ado:35167:27:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-08T16:43:55.297Z",
+      "observedAt": "2026-07-08T16:43:55.297Z",
+      "trackId": "sdk:JavaScript:@azure/arm-billing-trust",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35167",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35167"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39176:comment:4917097705:sdk:JavaScript:@azure/arm-billing-trust",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-08T16:44:04Z",
+      "observedAt": "2026-07-08T16:44:04Z",
+      "trackId": "sdk:JavaScript:@azure/arm-billing-trust",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39176",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39176#issuecomment-4917097705"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @azure-sdk-automation[bot]. We've noticed that new changes have been pushed to this pull request. Because it is set to automatically merge, we've reset the approvals to allow the opportunity to review the updates.",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:6535873:generation.completed:sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-07-08T16:44:37.0046996Z",
+      "observedAt": "2026-07-08T16:44:37.0046996Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6535873",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6535873"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6535874:generation.completed:sdk:JavaScript:@azure/arm-billing-trust",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-07-08T16:45:25.9498855Z",
+      "observedAt": "2026-07-08T16:45:25.9498855Z",
+      "trackId": "sdk:JavaScript:@azure/arm-billing-trust",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6535874",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6535874"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60598:review:4656490336:sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-08T17:23:20Z",
+      "observedAt": "2026-07-08T17:23:20Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60598",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60598#pullrequestreview-4656490336"
+      },
+      "confidence": "authoritative",
+      "excerpt": "### Management SDK Review Summary - **Scope:** `Azure.ResourceManager.Billing.Trust` (new package, v1.0.0-beta.1) - **Versioning:** Pass — new package, no `ApiCompatVersion` expected - **API surface:** Pass — no deterministic scanner violat",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39176:comment:4917461275:sdk:JavaScript:@azure/arm-billing-trust",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-08T17:28:55Z",
+      "observedAt": "2026-07-08T17:28:55Z",
+      "trackId": "sdk:JavaScript:@azure/arm-billing-trust",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "abhimrnandan-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39176",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39176#issuecomment-4917461275"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@kazrael2119 — yes, `Assessments_createOrUpdate` should return `Assessment`. Fixed in the spec ([azure-rest-api-specs#44514](https://github.com/Azure/azure-rest-api-specs/pull/44514), merged) by parameterizing `ArmCombinedLroHeaders<FinalRe",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60598:comment:4920850110:sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-09T01:58:02Z",
+      "observedAt": "2026-07-09T01:58:02Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "live1206"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60598",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60598#issuecomment-4920850110"
+      },
+      "confidence": "authoritative",
+      "excerpt": "/azp run prepare-pipelines",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60598:comment:4920851217:sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-09T01:58:14Z",
+      "observedAt": "2026-07-09T01:58:14Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60598",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60598#issuecomment-4920851217"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines successfully started running 1 pipeline(s).<br> </samp>",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60598:comment:3548381618:sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-09T02:03:18Z",
+      "observedAt": "2026-07-09T02:03:18Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "live1206"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60598",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60598#discussion_r3548381618"
+      },
+      "confidence": "authoritative",
+      "excerpt": "please update changelog as https://github.com/Azure/azure-sdk-for-net/blob/main/sdk/developerhub/Azure.ResourceManager.DevHub/CHANGELOG.md",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60598:comment:3548392104:sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-09T02:05:54Z",
+      "observedAt": "2026-07-09T02:05:54Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "live1206"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60598",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60598#discussion_r3548392104"
+      },
+      "confidence": "authoritative",
+      "excerpt": "please set the expected release date if you are planning to release it soon. Also, remove the empty sections in this entry",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60598:review:4659182054:sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-09T02:06:20Z",
+      "observedAt": "2026-07-09T02:06:20Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "live1206"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60598",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60598#pullrequestreview-4659182054"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60598:commit:586172eb80db:sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-09T03:00:58Z",
+      "observedAt": "2026-07-09T03:00:58Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "abhi3047office"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60598",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/586172eb80dbcf43149dff7c2234ab78bed75175"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60598:comment:4921180791:sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-09T03:01:55Z",
+      "observedAt": "2026-07-09T03:01:55Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60598",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60598#issuecomment-4921180791"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @azure-sdk-automation[bot]. We've noticed that new changes have been pushed to this pull request. Because it is set to automatically merge, we've reset the approvals to allow the opportunity to review the updates.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60598:review:4659466791:sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-09T03:05:17Z",
+      "observedAt": "2026-07-09T03:05:17Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "abhimrnandan-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60598",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60598#pullrequestreview-4659466791"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60598:comment:3548636052:sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-09T03:05:17Z",
+      "observedAt": "2026-07-09T03:05:17Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "abhimrnandan-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60598",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60598#discussion_r3548636052"
+      },
+      "confidence": "authoritative",
+      "excerpt": "addressed your CHANGELOG feedback and the bot's assets.json flag: • CHANGELOG.md: set the release date (2026-07-09), added the Features Added summary, and removed the empty sections. • assets.json: added with the correct TagPrefix ( net/bil",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60598:review:4659467518:sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-09T03:05:30Z",
+      "observedAt": "2026-07-09T03:05:30Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "abhimrnandan-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60598",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60598#pullrequestreview-4659467518"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60598:comment:3548636653:sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-09T03:05:30Z",
+      "observedAt": "2026-07-09T03:05:30Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "abhimrnandan-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60598",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60598#discussion_r3548636653"
+      },
+      "confidence": "authoritative",
+      "excerpt": "addressed your CHANGELOG feedback and the bot's assets.json flag: • CHANGELOG.md: set the release date (2026-07-09), added the Features Added summary, and removed the empty sections. • assets.json: added with the correct TagPrefix ( net/bil",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60598:review:4659548278:sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-09T03:30:57Z",
+      "observedAt": "2026-07-09T03:30:57Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "live1206"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60598",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60598#pullrequestreview-4659548278"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60598:comment:3548706758:sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-09T03:30:57Z",
+      "observedAt": "2026-07-09T03:30:57Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "live1206"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60598",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60598#discussion_r3548706758"
+      },
+      "confidence": "authoritative",
+      "excerpt": "could you add common part in this as well? like the one in https://github.com/Azure/azure-sdk-for-net/blob/main/sdk/developerhub/Azure.ResourceManager.DevHub/CHANGELOG.md, starting with > This package follows the [new Azure SDK guidelines](",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60598:commit:b6d091bc96e9:sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-09T03:43:19Z",
+      "observedAt": "2026-07-09T03:43:19Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "abhi3047office"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60598",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/b6d091bc96e933f1954ce5f8240ecac94a766f8a"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60598:comment:4921368577:sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-09T03:43:51Z",
+      "observedAt": "2026-07-09T03:43:51Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60598",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60598#issuecomment-4921368577"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @azure-sdk-automation[bot]. We've noticed that new changes have been pushed to this pull request. Because it is set to automatically merge, we've reset the approvals to allow the opportunity to review the updates.",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60598:review:4659594963:sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-09T03:44:43Z",
+      "observedAt": "2026-07-09T03:44:43Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60598",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60598#pullrequestreview-4659594963"
+      },
+      "confidence": "authoritative",
+      "excerpt": "### Management SDK Review Summary Same status as the previous management SDK review: all phases pass, no naming violations, CI green. No new management SDK review findings on this head commit. > Analyzed by Azure .NET Management SDK PR Revi",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60598:review:4659597154:sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-09T03:45:18Z",
+      "observedAt": "2026-07-09T03:45:18Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "live1206"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60598",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60598#pullrequestreview-4659597154"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60598:review:4659742999:sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-09T04:18:56Z",
+      "observedAt": "2026-07-09T04:18:56Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60598",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60598#pullrequestreview-4659742999"
+      },
+      "confidence": "authoritative",
+      "excerpt": "### Management SDK Review Summary Same status as the previous management SDK review: all phases pass, no naming violations, CI green. No new management SDK review findings on this head commit. > Analyzed by Azure .NET Management SDK PR Revi",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60598:pr.merged:sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-09T04:37:25Z",
+      "observedAt": "2026-07-09T04:37:25Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60598",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60598"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39176:comment:4922131353:sdk:JavaScript:@azure/arm-billing-trust",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-09T06:18:01Z",
+      "observedAt": "2026-07-09T06:18:01Z",
+      "trackId": "sdk:JavaScript:@azure/arm-billing-trust",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39176",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39176#issuecomment-4922131353"
+      },
+      "confidence": "authoritative",
+      "excerpt": "LGTM cc @JialinHuang803",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39176:comment:4922276982:sdk:JavaScript:@azure/arm-billing-trust",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-09T06:36:02Z",
+      "observedAt": "2026-07-09T06:36:02Z",
+      "trackId": "sdk:JavaScript:@azure/arm-billing-trust",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39176",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39176#issuecomment-4922276982"
+      },
+      "confidence": "authoritative",
+      "excerpt": "the check `Management Release Assistant` is not a merge block,",
+      "stack": 1
+    },
+    {
+      "id": "ado:35167:28:Custom.ReleaseStatusForGo",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-07-09T07:48:47.387Z",
+      "observedAt": "2026-07-09T07:48:47.387Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/billingtrust/armbillingtrust",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35167",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35167"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35167:28:Custom.ReleasedVersionForGo",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-07-09T07:48:47.387Z",
+      "observedAt": "2026-07-09T07:48:47.387Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/billingtrust/armbillingtrust",
+      "value": "0.1.0",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35167",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35167"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39176:review:4667946279:sdk:JavaScript:@azure/arm-billing-trust",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-10T01:37:49Z",
+      "observedAt": "2026-07-10T01:37:49Z",
+      "trackId": "sdk:JavaScript:@azure/arm-billing-trust",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "JialinHuang803"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39176",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39176#pullrequestreview-4667946279"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39176:pr.merged:sdk:JavaScript:@azure/arm-billing-trust",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-10T01:42:31Z",
+      "observedAt": "2026-07-10T01:42:31Z",
+      "trackId": "sdk:JavaScript:@azure/arm-billing-trust",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39176",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39176"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:35167:30:Custom.ReleaseStatusForJava",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-07-10T06:40:19.58Z",
+      "observedAt": "2026-07-10T06:40:19.58Z",
+      "trackId": "sdk:Java:azure-resourcemanager-billing-trust",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35167",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35167"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35167:30:Custom.ReleasedVersionForJava",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-07-10T06:40:19.58Z",
+      "observedAt": "2026-07-10T06:40:19.58Z",
+      "trackId": "sdk:Java:azure-resourcemanager-billing-trust",
+      "value": "1.0.0-beta.1",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35167",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35167"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35167:31:Custom.ReleaseStatusForPython",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-07-10T14:11:10.96Z",
+      "observedAt": "2026-07-10T14:11:10.96Z",
+      "trackId": "sdk:Python:azure-mgmt-billingtrust",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35167",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35167"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35167:31:Custom.ReleasedVersionForPython",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-07-10T14:11:10.96Z",
+      "observedAt": "2026-07-10T14:11:10.96Z",
+      "trackId": "sdk:Python:azure-mgmt-billingtrust",
+      "value": "1.0.0b1",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35167",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35167"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35167:32:Custom.ReleaseStatusForJavaScript",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-07-10T19:41:25.16Z",
+      "observedAt": "2026-07-10T19:41:25.16Z",
+      "trackId": "sdk:JavaScript:@azure/arm-billing-trust",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35167",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35167"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35167:32:Custom.ReleasedVersionForJavaScript",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-07-10T19:41:25.16Z",
+      "observedAt": "2026-07-10T19:41:25.16Z",
+      "trackId": "sdk:JavaScript:@azure/arm-billing-trust",
+      "value": "1.0.0-beta.1",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35167",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35167"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35167:33:Custom.ReleaseStatusForDotnet",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-07-10T21:35:07.957Z",
+      "observedAt": "2026-07-10T21:35:07.957Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35167",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35167"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35167:33:Custom.ReleasedVersionForDotnet",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-07-10T21:35:07.957Z",
+      "observedAt": "2026-07-10T21:35:07.957Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Billing.Trust",
+      "value": "1.0.0-beta.1",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35167",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35167"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35167:34:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-07-10T21:35:08.217Z",
+      "observedAt": "2026-07-10T21:35:08.217Z",
+      "trackId": "plan",
+      "value": "Finished",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35167",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35167"
+      },
+      "title": "Plan state changed",
+      "stack": 0
+    }
+  ],
+  "quality": {
+    "warnings": [],
+    "unavailablePullRequests": 0,
+    "unavailablePipelineRuns": 0
+  },
+  "boundaryFacts": {
+    "id": "35167",
+    "state": "finished",
+    "specPrs": [
+      {
+        "id": "github:Azure/azure-rest-api-specs#43896",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#43896",
+        "createdAt": "2026-06-10T20:36:17Z",
+        "mergedAt": "2026-07-01T16:36:35Z",
+        "closedAt": "2026-07-01T16:36:35Z",
+        "available": true
+      }
+    ],
+    "artifacts": [
+      {
+        "language": ".NET",
+        "package": "Azure.ResourceManager.Billing.Trust",
+        "trackId": "sdk:.NET:Azure.ResourceManager.Billing.Trust",
+        "prId": "github:Azure/azure-sdk-for-net#60598",
+        "prCreatedAt": "2026-07-01T22:56:26Z",
+        "prMergedAt": "2026-07-09T04:37:25Z",
+        "prClosedAt": "2026-07-09T04:37:25Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-net#60598",
+            "createdAt": "2026-07-01T22:56:26Z",
+            "mergedAt": "2026-07-09T04:37:25Z",
+            "closedAt": "2026-07-09T04:37:25Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6535873",
+        "generationStartAt": "2026-07-08T16:36:32.8302403Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-07-10T21:35:07.957Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.0.0-beta.1",
+        "releaseBoundaryAt": "2026-07-10T21:35:07.957Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "JavaScript",
+        "package": "@azure/arm-billing-trust",
+        "trackId": "sdk:JavaScript:@azure/arm-billing-trust",
+        "prId": "github:Azure/azure-sdk-for-js#39176",
+        "prCreatedAt": "2026-07-02T17:29:27Z",
+        "prMergedAt": "2026-07-10T01:42:31Z",
+        "prClosedAt": "2026-07-10T01:42:31Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-js#39176",
+            "createdAt": "2026-07-02T17:29:27Z",
+            "mergedAt": "2026-07-10T01:42:31Z",
+            "closedAt": "2026-07-10T01:42:31Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6535874",
+        "generationStartAt": "2026-07-08T16:36:31.771554Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-07-10T19:41:25.16Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.0.0-beta.1",
+        "releaseBoundaryAt": "2026-07-10T19:41:25.16Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Python",
+        "package": "azure-mgmt-billingtrust",
+        "trackId": "sdk:Python:azure-mgmt-billingtrust",
+        "prId": "github:Azure/azure-sdk-for-python#47804",
+        "prCreatedAt": "2026-07-01T22:55:58Z",
+        "prMergedAt": "2026-07-06T22:48:36Z",
+        "prClosedAt": "2026-07-06T22:48:36Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-python#47804",
+            "createdAt": "2026-07-01T22:55:58Z",
+            "mergedAt": "2026-07-06T22:48:36Z",
+            "closedAt": "2026-07-06T22:48:36Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6514983",
+        "generationStartAt": "2026-07-02T22:38:58.9446167Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-07-10T14:11:10.96Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.0.0b1",
+        "releaseBoundaryAt": "2026-07-10T14:11:10.96Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Java",
+        "package": "azure-resourcemanager-billing-trust",
+        "trackId": "sdk:Java:azure-resourcemanager-billing-trust",
+        "prId": "github:Azure/azure-sdk-for-java#49697",
+        "prCreatedAt": "2026-07-01T22:59:42Z",
+        "prMergedAt": "2026-07-02T20:40:53Z",
+        "prClosedAt": "2026-07-02T20:40:53Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-java#49697",
+            "createdAt": "2026-07-01T22:59:42Z",
+            "mergedAt": "2026-07-02T20:40:53Z",
+            "closedAt": "2026-07-02T20:40:53Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6509632",
+        "generationStartAt": "2026-07-01T22:50:32.9306012Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-07-10T06:40:19.58Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.0.0-beta.1",
+        "releaseBoundaryAt": "2026-07-10T06:40:19.58Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Go",
+        "package": "sdk/resourcemanager/billingtrust/armbillingtrust",
+        "trackId": "sdk:Go:sdk/resourcemanager/billingtrust/armbillingtrust",
+        "prId": "github:Azure/azure-sdk-for-go#27125",
+        "prCreatedAt": "2026-07-01T22:58:46Z",
+        "prMergedAt": "2026-07-07T02:50:52Z",
+        "prClosedAt": "2026-07-07T02:50:52Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-go#27125",
+            "createdAt": "2026-07-01T22:58:46Z",
+            "mergedAt": "2026-07-07T02:50:52Z",
+            "closedAt": "2026-07-07T02:50:52Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6509645",
+        "generationStartAt": "2026-07-01T22:53:23.1271239Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-07-09T07:48:47.387Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "0.1.0",
+        "releaseBoundaryAt": "2026-07-09T07:48:47.387Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      }
+    ],
+    "cohortPlan": {
+      "id": "35167",
+      "releasePlanId": "35167",
+      "title": "Public Preview release plan for BillingTrust",
+      "service": "BillingTrust",
+      "state": "finished"
+    },
+    "quality": {
+      "warnings": [],
+      "unavailablePullRequests": 0,
+      "unavailablePipelineRuns": 0
+    }
+  },
+  "summary": {
+    "durationHours": 214.9,
+    "pullRequestCount": 6,
+    "humanReviewCount": 14,
+    "humanCommentCount": 33
+  }
+}

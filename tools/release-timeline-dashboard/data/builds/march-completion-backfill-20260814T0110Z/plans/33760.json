@@ -1,0 +1,3288 @@
+{
+  "schemaVersion": 2,
+  "id": "33760",
+  "correlation": {
+    "policyVersion": 1,
+    "preflight": "passed"
+  },
+  "releasePlanId": "2164",
+  "title": "Release Plan - 2164 - Public Preview - AKS on HCI and Windows Server",
+  "service": "Release Plan - 2164 - Public Preview - AKS on HCI and Windows Server",
+  "product": "Release",
+  "path": null,
+  "state": "in-progress",
+  "plane": "management",
+  "releaseType": "APEX Public Preview",
+  "intendedMonth": "April 2026",
+  "createdAt": "2026-04-02T17:14:22.98Z",
+  "completedAt": null,
+  "sourceUrl": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33760",
+  "range": {
+    "start": "2026-04-02T17:14:22.980Z",
+    "end": "2026-08-14T00:37:23.589Z"
+  },
+  "intendedArtifacts": [
+    {
+      "prId": null,
+      "language": ".NET",
+      "package": null,
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": null,
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": null,
+      "language": "JavaScript",
+      "package": null,
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": null,
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": null,
+      "language": "Python",
+      "package": null,
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": null,
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": null,
+      "language": "Java",
+      "package": null,
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": null,
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": null,
+      "language": "Go",
+      "package": null,
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": null,
+      "releasePipelineUrl": null
+    }
+  ],
+  "links": [
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#42060",
+      "role": "spec-pr",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060",
+      "releasePlanIds": []
+    }
+  ],
+  "tracks": [
+    {
+      "id": "plan",
+      "kind": "plan",
+      "label": "Release Plan",
+      "detail": "APEX Public Preview"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#42060",
+      "kind": "spec",
+      "label": "Spec PR",
+      "detail": "azure-rest-api-specs #42060",
+      "artifactId": "github:Azure/azure-rest-api-specs#42060",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:.NET:.NET",
+      "kind": "sdk",
+      "label": ".NET",
+      "detail": "Package not recorded",
+      "artifactId": null,
+      "state": "missing"
+    },
+    {
+      "id": "sdk:JavaScript:JavaScript",
+      "kind": "sdk",
+      "label": "JavaScript",
+      "detail": "Package not recorded",
+      "artifactId": null,
+      "state": "missing"
+    },
+    {
+      "id": "sdk:Python:Python",
+      "kind": "sdk",
+      "label": "Python",
+      "detail": "Package not recorded",
+      "artifactId": null,
+      "state": "missing"
+    },
+    {
+      "id": "sdk:Java:Java",
+      "kind": "sdk",
+      "label": "Java",
+      "detail": "Package not recorded",
+      "artifactId": null,
+      "state": "missing"
+    },
+    {
+      "id": "sdk:Go:Go",
+      "kind": "sdk",
+      "label": "Go",
+      "detail": "Package not recorded",
+      "artifactId": null,
+      "state": "missing"
+    }
+  ],
+  "events": [
+    {
+      "id": "ado:33760:created",
+      "type": "plan.created",
+      "phase": "plan",
+      "occurredAt": "2026-04-02T17:14:22.98Z",
+      "observedAt": "2026-04-02T17:14:22.98Z",
+      "trackId": "plan",
+      "title": "Release Plan created",
+      "confidence": "authoritative",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33760",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33760"
+      },
+      "stack": 0
+    },
+    {
+      "id": "ado:33760:1:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-04-02T17:14:22.98Z",
+      "observedAt": "2026-04-02T17:14:22.98Z",
+      "trackId": "plan",
+      "value": "New",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33760",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33760"
+      },
+      "title": "Plan state changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33760:1:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-02T17:14:22.98Z",
+      "observedAt": "2026-04-02T17:14:22.98Z",
+      "trackId": "plan",
+      "value": "Not Available",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33760",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33760"
+      },
+      "title": "Spec approval changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:33760:1:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-02T17:14:22.98Z",
+      "observedAt": "2026-04-02T17:14:22.98Z",
+      "trackId": "sdk:.NET:.NET",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33760",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33760"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33760:1:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-02T17:14:22.98Z",
+      "observedAt": "2026-04-02T17:14:22.98Z",
+      "trackId": "sdk:JavaScript:JavaScript",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33760",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33760"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33760:1:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-02T17:14:22.98Z",
+      "observedAt": "2026-04-02T17:14:22.98Z",
+      "trackId": "sdk:Python:Python",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33760",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33760"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33760:1:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-02T17:14:22.98Z",
+      "observedAt": "2026-04-02T17:14:22.98Z",
+      "trackId": "sdk:Java:Java",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33760",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33760"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33760:1:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-02T17:14:22.98Z",
+      "observedAt": "2026-04-02T17:14:22.98Z",
+      "trackId": "sdk:Go:Go",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33760",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33760"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33760:6:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-04-02T17:15:13.573Z",
+      "observedAt": "2026-04-02T17:15:13.573Z",
+      "trackId": "plan",
+      "value": "In Progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33760",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33760"
+      },
+      "title": "Plan state changed",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:commit:8093ce6c1e3f:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-02T18:24:08Z",
+      "observedAt": "2026-04-02T18:24:08Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "jonnguyen1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/8093ce6c1e3f7bfcb1681213f53ed0fdb0bcebd6"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:pr.created:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-02T18:24:50Z",
+      "observedAt": "2026-04-02T18:24:50Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "jonnguyen1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:comment:4179662978:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-02T18:25:32Z",
+      "observedAt": "2026-04-02T18:25:32Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#issuecomment-4179662978"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>Next steps that must be taken to merge this PR: <br/><ul><li>❌ This PR is in purview of the ARM review (label: <code>ARMReview</code>). This PR must get <code>ARMSignedOff</code> label from an ARM reviewer.<br/>T",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:comment:4179665886:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-02T18:26:03Z",
+      "observedAt": "2026-04-02T18:26:03Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jonnguyen1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#issuecomment-4179665886"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Corresponding changes in specs-pr RPSaaSMaster https://github.com/Azure/azure-rest-api-specs-pr/tree/RPSaaSMaster/specification/hybridaks",
+      "stack": 3
+    },
+    {
+      "id": "ado:33761:2:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-02T18:26:36.48Z",
+      "observedAt": "2026-04-02T18:26:36.48Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/42060",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33761",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33761"
+      },
+      "title": "Spec PR linked",
+      "stack": 4
+    },
+    {
+      "id": "ado:33760:10:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-02T18:26:39.57Z",
+      "observedAt": "2026-04-02T18:26:39.57Z",
+      "trackId": "sdk:.NET:.NET",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33760",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33760"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33760:10:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-02T18:26:39.57Z",
+      "observedAt": "2026-04-02T18:26:39.57Z",
+      "trackId": "sdk:JavaScript:JavaScript",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33760",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33760"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33760:10:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-02T18:26:39.57Z",
+      "observedAt": "2026-04-02T18:26:39.57Z",
+      "trackId": "sdk:Python:Python",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33760",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33760"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33760:10:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-02T18:26:39.57Z",
+      "observedAt": "2026-04-02T18:26:39.57Z",
+      "trackId": "sdk:Java:Java",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33760",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33760"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33760:10:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-02T18:26:39.57Z",
+      "observedAt": "2026-04-02T18:26:39.57Z",
+      "trackId": "sdk:Go:Go",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33760",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33760"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33760:11:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-02T18:26:51.17Z",
+      "observedAt": "2026-04-02T18:26:51.17Z",
+      "trackId": "plan",
+      "value": "Approved",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33760",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33760"
+      },
+      "title": "Spec approval changed",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:commit:9a925095297b:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-02T18:48:20Z",
+      "observedAt": "2026-04-02T18:48:20Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "jonnguyen1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/9a925095297b37a38b3792bbb827adc8c6e1833e"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:comment:4179826756:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-02T18:50:30Z",
+      "observedAt": "2026-04-02T18:50:30Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jonnguyen1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#issuecomment-4179826756"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Some of these validations say that tspconfig.yaml needs to be in the folder for openapi generation, but we didn't have that for the older apis. Do we need to have that now? `Checking specification/hybridaks/resource-manager/Microsoft.Hybrid",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:review:4052717152:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-02T19:21:12Z",
+      "observedAt": "2026-04-02T19:21:12Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "rjaini"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#pullrequestreview-4052717152"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:comment:4181260162:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-03T01:10:11Z",
+      "observedAt": "2026-04-03T01:10:11Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ravimeda"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#issuecomment-4181260162"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> Some of these validations say that tspconfig.yaml needs to be in the folder for openapi generation, but we didn't have that for the older apis. Do we need to have that now? `Checking specification/hybridaks/resource-manager/Microsoft.Hybr",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:commit:d854c1174dc7:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-03T21:08:22Z",
+      "observedAt": "2026-04-03T21:08:22Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "jonnguyen1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/d854c1174dc75a67779a0ecf8e12223822217211"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:commit:bf9f9d071073:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-03T21:17:35Z",
+      "observedAt": "2026-04-03T21:17:35Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "jonnguyen1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/bf9f9d071073e5d9d475246fd0e414ba731d5628"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:commit:65fcb0475b5f:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-03T21:23:42Z",
+      "observedAt": "2026-04-03T21:23:42Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "jonnguyen1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/65fcb0475b5f88b875d559d21beea33e6cd2bd89"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:comment:4185321960:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-03T21:39:22Z",
+      "observedAt": "2026-04-03T21:39:22Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jonnguyen1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#issuecomment-4185321960"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> > Some of these validations say that tspconfig.yaml needs to be in the folder for openapi generation, but we didn't have that for the older apis. Do we need to have that now? `Checking specification/hybridaks/resource-manager/Microsoft.Hy",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:commit:b19ebeb9d5c5:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-03T21:55:00Z",
+      "observedAt": "2026-04-03T21:55:00Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "jonnguyen1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/b19ebeb9d5c5d84610912307ac030209c94f3c7a"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:commit:0ab96b5d1063:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-08T18:51:04Z",
+      "observedAt": "2026-04-08T18:51:04Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "jonnguyen1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/0ab96b5d10632bd87251b88f982fea4ed2ee87b7"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:comment:4210549141:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-09T00:13:44Z",
+      "observedAt": "2026-04-09T00:13:44Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "mentat9"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#issuecomment-4210549141"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@jonnguyen1 - You will need to fix the TypeSpec Validation failure. Your spec needs to follow the V2 folder structure. Ref: https://github.com/Azure/azure-rest-api-specs/wiki/Folder-Structure.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:comment:4216015937:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-09T16:57:56Z",
+      "observedAt": "2026-04-09T16:57:56Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jonnguyen1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#issuecomment-4216015937"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> @jonnguyen1 - You will need to fix the TypeSpec Validation failure. Your spec needs to follow the V2 folder structure. Ref: https://github.com/Azure/azure-rest-api-specs/wiki/Folder-Structure. Hey @mentat9, I had a discussion with @mikeha",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:comment:3061349147:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T00:17:36Z",
+      "observedAt": "2026-04-10T00:17:36Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#discussion_r3061349147"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The default tag and tag section name (`package-preview-2026-04`) don’t reflect the actual API version folder/file being referenced (`preview/2026-04-01-preview/openapi.json`). This inconsistency makes it easy to select the wrong tag and is ",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:comment:3061349164:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T00:17:36Z",
+      "observedAt": "2026-04-10T00:17:36Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#discussion_r3061349164"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This example’s 200-response body is `{}`, but `Operations_List` returns `OperationListResult` (common-types) which requires a `value` array (and optionally `nextLink`). Update the minimum-set example to include at least an empty `value: []`",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:comment:3061349174:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T00:17:36Z",
+      "observedAt": "2026-04-10T00:17:36Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#discussion_r3061349174"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`resourceGroupName` is set to `test-vnet-static`, which appears to be a virtual network name rather than a resource group. This parameter should be the actual resource group name (e.g., `test-arcappliance-resgrp` as used in the other Virtua",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:comment:3061349194:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T00:17:36Z",
+      "observedAt": "2026-04-10T00:17:36Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#discussion_r3061349194"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`resourceGroupName` is set to `test-vnet-static`, which appears to be a virtual network name rather than a resource group. This parameter should be the actual resource group name (e.g., `test-arcappliance-resgrp` as used in the other Virtua",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:review:4086277938:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T00:17:37Z",
+      "observedAt": "2026-04-10T00:17:37Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#pullrequestreview-4086277938"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Adds a new ARM **preview** API version (**2026-04-01-preview**) for **Microsoft.HybridContainerService (hybridaks)**, including a new TypeSpec source set to generate the consolidated swagger and a full set of genera",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:comment:3061349211:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T00:17:37Z",
+      "observedAt": "2026-04-10T00:17:37Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#discussion_r3061349211"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The word list includes `inital`, which looks like an unintentional misspelling of `initial` and isn’t used elsewhere in this spec. Keeping misspellings in the allow-list can mask real typos—please remove it (or replace it with `initial` if ",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:review:4086534493:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T01:26:25Z",
+      "observedAt": "2026-04-10T01:26:25Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "mentat9"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#pullrequestreview-4086534493"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:comment:3061542133:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T01:26:26Z",
+      "observedAt": "2026-04-10T01:26:26Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "mentat9"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#discussion_r3061542133"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Use built-in type for this. Ref: [https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/data-types/#Azure.ResourceManager.CommonTypes.ExtendedLocation](https://azure.github.io/typespec-azure/docs/libraries/a",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:review:4086534693:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T01:26:30Z",
+      "observedAt": "2026-04-10T01:26:30Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "mentat9"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#pullrequestreview-4086534693"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:comment:3061542328:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T01:26:30Z",
+      "observedAt": "2026-04-10T01:26:30Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "mentat9"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#discussion_r3061542328"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Use built-in type, ref: [https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/data-types/#Azure.ResourceManager.CommonTypes.Resource](https://azure.github.io/typespec-azure/docs/libraries/azure-resource-man",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:review:4086534932:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T01:26:35Z",
+      "observedAt": "2026-04-10T01:26:35Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "mentat9"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#pullrequestreview-4086534932"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:comment:3061542568:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T01:26:35Z",
+      "observedAt": "2026-04-10T01:26:35Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "mentat9"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#discussion_r3061542568"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Use the built-in union (ResourceProvisioningState) for terminal states, combined with your RP-specific transition types. Ref (see example): [https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/data-types/#",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:review:4086535334:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T01:26:39Z",
+      "observedAt": "2026-04-10T01:26:39Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "mentat9"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#pullrequestreview-4086535334"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:comment:3061542790:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T01:26:39Z",
+      "observedAt": "2026-04-10T01:26:39Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "mentat9"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#discussion_r3061542790"
+      },
+      "confidence": "authoritative",
+      "excerpt": ">#suppress \"@azure-tools/typespec-azure-resource-manager/arm-resource-invalid-envelope-property\" \"Well-known envelope property\" [](http://example.com/codeflow?start=2&length=126) Not sure, but you may be able to remove this suppression afte",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:review:4086535806:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T01:26:45Z",
+      "observedAt": "2026-04-10T01:26:45Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "mentat9"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#pullrequestreview-4086535806"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:comment:3061543136:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T01:26:45Z",
+      "observedAt": "2026-04-10T01:26:45Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "mentat9"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#discussion_r3061543136"
+      },
+      "confidence": "authoritative",
+      "excerpt": ">True: \"True\", [](http://example.com/codeflow?start=2&length=13) OptedIn? #Resolved",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:review:4086535893:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T01:26:47Z",
+      "observedAt": "2026-04-10T01:26:47Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "mentat9"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#pullrequestreview-4086535893"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:comment:3061543238:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T01:26:47Z",
+      "observedAt": "2026-04-10T01:26:47Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "mentat9"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#discussion_r3061543238"
+      },
+      "confidence": "authoritative",
+      "excerpt": ">False: \"False\", [](http://example.com/codeflow?start=2&length=15) NotSpecified, OptedOut, NotOptedIn, Default, something else? #Resolved",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:review:4086536111:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T01:26:52Z",
+      "observedAt": "2026-04-10T01:26:52Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "mentat9"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#pullrequestreview-4086536111"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:comment:3061543520:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T01:26:52Z",
+      "observedAt": "2026-04-10T01:26:52Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "mentat9"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#discussion_r3061543520"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Suggest normalizing name format and casing of union member names. This spec uses Sentence casing, lowercase casing, hyphen-separated, etc. Comment applies to all new unions. #Resolved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:review:4086536468:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T01:26:56Z",
+      "observedAt": "2026-04-10T01:26:56Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "mentat9"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#pullrequestreview-4086536468"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:comment:3061543735:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T01:26:56Z",
+      "observedAt": "2026-04-10T01:26:56Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "mentat9"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#discussion_r3061543735"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Use built-in definition, ref: [https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/data-types/#Azure.ResourceManager.CommonTypes.ExtendedLocationType](https://azure.github.io/typespec-azure/docs/libraries/",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:review:4086536882:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T01:27:02Z",
+      "observedAt": "2026-04-10T01:27:02Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "mentat9"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#pullrequestreview-4086536882"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:comment:3061544015:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T01:27:02Z",
+      "observedAt": "2026-04-10T01:27:02Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "mentat9"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#discussion_r3061544015"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Shouldn't need @visibility after switching to built-in type. #Resolved",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:review:4086537162:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T01:27:07Z",
+      "observedAt": "2026-04-10T01:27:07Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "mentat9"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#pullrequestreview-4086537162"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:comment:3061544213:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T01:27:07Z",
+      "observedAt": "2026-04-10T01:27:07Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "mentat9"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#discussion_r3061544213"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Are you able to get rid of this? Doesn't seem to be needed. #Resolved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:review:4086537538:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T01:27:11Z",
+      "observedAt": "2026-04-10T01:27:11Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "mentat9"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#pullrequestreview-4086537538"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:comment:3061544479:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T01:27:12Z",
+      "observedAt": "2026-04-10T01:27:12Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "mentat9"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#discussion_r3061544479"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Move to built-in type, remove @visibility. #Resolved",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:review:4086537759:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T01:27:16Z",
+      "observedAt": "2026-04-10T01:27:16Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "mentat9"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#pullrequestreview-4086537759"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:comment:3061544692:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T01:27:16Z",
+      "observedAt": "2026-04-10T01:27:16Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "mentat9"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#discussion_r3061544692"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Use built-in date/time types, e.g. utcDateTime, ref: [https://typespec.io/docs/standard-library/built-in-data-types/#utcDateTime](https://typespec.io/docs/standard-library/built-in-data-types/#utcDateTime). #Resolved",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:review:4086538167:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T01:27:21Z",
+      "observedAt": "2026-04-10T01:27:21Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "mentat9"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#pullrequestreview-4086538167"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:comment:3061544972:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T01:27:21Z",
+      "observedAt": "2026-04-10T01:27:21Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "mentat9"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#discussion_r3061544972"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Can you use types instead of unrestricted string for these? #Resolved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:review:4086538440:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T01:27:26Z",
+      "observedAt": "2026-04-10T01:27:26Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "mentat9"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#pullrequestreview-4086538440"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:comment:3061545213:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T01:27:26Z",
+      "observedAt": "2026-04-10T01:27:26Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "mentat9"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#discussion_r3061545213"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Use built-in => remove @visibility. Comment applies to all of the models with provisioningState.",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:review:4086538777:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T01:27:31Z",
+      "observedAt": "2026-04-10T01:27:31Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "mentat9"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#pullrequestreview-4086538777"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:comment:3061545453:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T01:27:31Z",
+      "observedAt": "2026-04-10T01:27:31Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "mentat9"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#discussion_r3061545453"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Can you use armResourceIdentifier instead of unrestricted string? Ref: [https://azure.github.io/typespec-azure/docs/libraries/azure-core/reference/data-types/#Azure.Core.armResourceIdentifier](https://azure.github.io/typespec-azure/docs/lib",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:review:4086539260:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T01:27:39Z",
+      "observedAt": "2026-04-10T01:27:39Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "mentat9"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#pullrequestreview-4086539260"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:comment:3061545776:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T01:27:39Z",
+      "observedAt": "2026-04-10T01:27:39Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "mentat9"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#discussion_r3061545776"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Use built-in type, ref: [https://azure.github.io/typespec-azure/docs/libraries/azure-core/reference/data-types/#Azure.Core.armResourceType](https://azure.github.io/typespec-azure/docs/libraries/azure-core/reference/data-types/#Azure.Core.ar",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:review:4086539582:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T01:27:43Z",
+      "observedAt": "2026-04-10T01:27:43Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "mentat9"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#pullrequestreview-4086539582"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:comment:3061545979:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T01:27:43Z",
+      "observedAt": "2026-04-10T01:27:43Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "mentat9"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#discussion_r3061545979"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Consider beefing up the descriptions here to include what format these strings take.",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:review:4086539903:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T01:27:49Z",
+      "observedAt": "2026-04-10T01:27:49Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "mentat9"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#pullrequestreview-4086539903"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:comment:3061546201:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T01:27:50Z",
+      "observedAt": "2026-04-10T01:27:50Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "mentat9"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#discussion_r3061546201"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Use built-in type for this, ref: [https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/data-types/#Azure.ResourceManager.Foundations.ArmTagsProperty](https://azure.github.io/typespec-azure/docs/libraries/az",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:review:4086540396:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T01:27:57Z",
+      "observedAt": "2026-04-10T01:27:57Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "mentat9"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#pullrequestreview-4086540396"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:comment:3061546538:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T01:27:57Z",
+      "observedAt": "2026-04-10T01:27:57Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "mentat9"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#discussion_r3061546538"
+      },
+      "confidence": "authoritative",
+      "excerpt": ">string [](http://example.com/codeflow?start=31&length=6) Use built-in uri type. #Resolved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:review:4086540736:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T01:28:02Z",
+      "observedAt": "2026-04-10T01:28:02Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "mentat9"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#pullrequestreview-4086540736"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:comment:3061546781:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T01:28:02Z",
+      "observedAt": "2026-04-10T01:28:02Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "mentat9"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#discussion_r3061546781"
+      },
+      "confidence": "authoritative",
+      "excerpt": ">string [](http://example.com/codeflow?start=29&length=6) Use built-in uri type. #Resolved",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:comment:4219224197:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T01:28:21Z",
+      "observedAt": "2026-04-10T01:28:21Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "mentat9"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#issuecomment-4219224197"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> > @jonnguyen1 - You will need to fix the TypeSpec Validation failure. Your spec needs to follow the V2 folder structure. Ref: https://github.com/Azure/azure-rest-api-specs/wiki/Folder-Structure. > > Hey @mentat9, I had a discussion with @",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:commit:22f7f61fcfa8:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T18:12:23Z",
+      "observedAt": "2026-04-10T18:12:23Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "jonnguyen1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/22f7f61fcfa8eddf8d5f9d5c2335745829863419"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:review:4092479553:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T21:07:10Z",
+      "observedAt": "2026-04-10T21:07:10Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "jonnguyen1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#pullrequestreview-4092479553"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:comment:3066744159:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T21:07:10Z",
+      "observedAt": "2026-04-10T21:07:10Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jonnguyen1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#discussion_r3066744159"
+      },
+      "confidence": "authoritative",
+      "excerpt": "REST change. Won't fix",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:review:4092619086:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T21:39:15Z",
+      "observedAt": "2026-04-10T21:39:15Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "jonnguyen1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#pullrequestreview-4092619086"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:comment:3066865454:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T21:39:15Z",
+      "observedAt": "2026-04-10T21:39:15Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jonnguyen1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#discussion_r3066865454"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Won't fix, as this is something that's already packaged into a string down the line.",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:review:4092621316:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T21:40:02Z",
+      "observedAt": "2026-04-10T21:40:02Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "jonnguyen1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#pullrequestreview-4092621316"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:comment:3066867799:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T21:40:02Z",
+      "observedAt": "2026-04-10T21:40:02Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jonnguyen1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#discussion_r3066867799"
+      },
+      "confidence": "authoritative",
+      "excerpt": "unsure here as this would probably be a breaking change and these versions exist as an older api. e.g our code would probably have to change. Will take note for a potential fix down the line",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:comment:3066874492:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T21:42:22Z",
+      "observedAt": "2026-04-10T21:42:22Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jonnguyen1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#discussion_r3066874492"
+      },
+      "confidence": "authoritative",
+      "excerpt": "See other comment",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:review:4092627864:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T21:42:23Z",
+      "observedAt": "2026-04-10T21:42:23Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "jonnguyen1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#pullrequestreview-4092627864"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:review:4092712048:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T22:08:08Z",
+      "observedAt": "2026-04-10T22:08:08Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "jonnguyen1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#pullrequestreview-4092712048"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:comment:3066950726:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T22:08:08Z",
+      "observedAt": "2026-04-10T22:08:08Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jonnguyen1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#discussion_r3066950726"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Rest change wont fix",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:comment:3066952363:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T22:08:44Z",
+      "observedAt": "2026-04-10T22:08:44Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jonnguyen1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#discussion_r3066952363"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Fixed. I think because its only part of the enum, and we have other RP specific fields, we still need @visibility(Lifecycle.Read)",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:review:4092713543:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T22:08:45Z",
+      "observedAt": "2026-04-10T22:08:45Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "jonnguyen1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#pullrequestreview-4092713543"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:review:4092714892:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T22:09:17Z",
+      "observedAt": "2026-04-10T22:09:17Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "jonnguyen1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#pullrequestreview-4092714892"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:comment:3066953645:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T22:09:17Z",
+      "observedAt": "2026-04-10T22:09:17Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jonnguyen1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#discussion_r3066953645"
+      },
+      "confidence": "authoritative",
+      "excerpt": "See other provisioningState comment",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:review:4092715629:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T22:09:34Z",
+      "observedAt": "2026-04-10T22:09:34Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "jonnguyen1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#pullrequestreview-4092715629"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:comment:3066954428:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T22:09:34Z",
+      "observedAt": "2026-04-10T22:09:34Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jonnguyen1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#discussion_r3066954428"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Keeping CA acronym. Will remove other one. Edit: Had to keep both as tsp compile was giving a warning",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:review:4092716724:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T22:09:59Z",
+      "observedAt": "2026-04-10T22:09:59Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "jonnguyen1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#pullrequestreview-4092716724"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:comment:3066955576:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T22:09:59Z",
+      "observedAt": "2026-04-10T22:09:59Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jonnguyen1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#discussion_r3066955576"
+      },
+      "confidence": "authoritative",
+      "excerpt": "I'm not 100% sure this will be the full arm id. Would have to investigate more, but I can note this down as a future fix",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:review:4092721602:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T22:11:51Z",
+      "observedAt": "2026-04-10T22:11:51Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "jonnguyen1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#pullrequestreview-4092721602"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:comment:3066960520:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T22:11:51Z",
+      "observedAt": "2026-04-10T22:11:51Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jonnguyen1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#discussion_r3066960520"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Rest change",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:review:4092722193:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T22:12:07Z",
+      "observedAt": "2026-04-10T22:12:07Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "jonnguyen1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#pullrequestreview-4092722193"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:comment:3066961160:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T22:12:07Z",
+      "observedAt": "2026-04-10T22:12:07Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jonnguyen1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#discussion_r3066961160"
+      },
+      "confidence": "authoritative",
+      "excerpt": "rest change",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:comment:3066975520:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T22:17:28Z",
+      "observedAt": "2026-04-10T22:17:28Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jonnguyen1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#discussion_r3066975520"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Fixed",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:review:4092735406:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T22:17:29Z",
+      "observedAt": "2026-04-10T22:17:29Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "jonnguyen1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#pullrequestreview-4092735406"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:comment:3066977775:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T22:18:23Z",
+      "observedAt": "2026-04-10T22:18:23Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jonnguyen1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#discussion_r3066977775"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Seems to be a rest change since built in requires a custom location. Not sure if that's implied, but I dont have the context. model ExtendedLocation { type?: ExtendedLocationTypes; // optional, only \"CustomLocation\" name?: string; // option",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:review:4092737501:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T22:18:24Z",
+      "observedAt": "2026-04-10T22:18:24Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "jonnguyen1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#pullrequestreview-4092737501"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:review:4092743943:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T22:21:15Z",
+      "observedAt": "2026-04-10T22:21:15Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "jonnguyen1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#pullrequestreview-4092743943"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:comment:3066984618:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T22:21:15Z",
+      "observedAt": "2026-04-10T22:21:15Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jonnguyen1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#discussion_r3066984618"
+      },
+      "confidence": "authoritative",
+      "excerpt": "see other comment.",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:review:4092757707:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T22:27:20Z",
+      "observedAt": "2026-04-10T22:27:20Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "jonnguyen1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#pullrequestreview-4092757707"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:comment:3066999290:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T22:27:20Z",
+      "observedAt": "2026-04-10T22:27:20Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jonnguyen1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#discussion_r3066999290"
+      },
+      "confidence": "authoritative",
+      "excerpt": "I'm not really certain why the other team chose to separate out the different models from the standard https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/data-types/#Azure.ResourceManager.ResourceUriParam",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:review:4092781454:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T22:36:20Z",
+      "observedAt": "2026-04-10T22:36:20Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "jonnguyen1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#pullrequestreview-4092781454"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:comment:3067022029:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T22:36:20Z",
+      "observedAt": "2026-04-10T22:36:20Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jonnguyen1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#discussion_r3067022029"
+      },
+      "confidence": "authoritative",
+      "excerpt": "cant fix for this Network Policy since code is case sensitive I believe. Will keep in mind for future",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:review:4092812326:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T22:49:23Z",
+      "observedAt": "2026-04-10T22:49:23Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "jonnguyen1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#pullrequestreview-4092812326"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:comment:3067052808:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T22:49:23Z",
+      "observedAt": "2026-04-10T22:49:23Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jonnguyen1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#discussion_r3067052808"
+      },
+      "confidence": "authoritative",
+      "excerpt": "See other comment",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:commit:fce69a4bd453:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T22:50:02Z",
+      "observedAt": "2026-04-10T22:50:02Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "jonnguyen1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/fce69a4bd45390807a958c7e7dc47cfd1151ae52"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:commit:05441aa6a17b:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T22:57:52Z",
+      "observedAt": "2026-04-10T22:57:52Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "jonnguyen1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/05441aa6a17b2b07d95df338640f702dc4fe3114"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:comment:4227240441:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T23:01:07Z",
+      "observedAt": "2026-04-10T23:01:07Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#issuecomment-4227240441"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews | Language | API Review for Package | |----------|---------| | Swagger | [Microsoft.HybridContainerService](https://apiview.dev/Assemb",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:commit:7e65c7e13636:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T23:03:15Z",
+      "observedAt": "2026-04-10T23:03:15Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "jonnguyen1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/7e65c7e13636eeed327b75389dec884fd26c20c9"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:comment:4227263768:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T23:09:07Z",
+      "observedAt": "2026-04-10T23:09:07Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jonnguyen1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#issuecomment-4227263768"
+      },
+      "confidence": "authoritative",
+      "excerpt": "tsp compile is passing, but TS validation is failing on that v2 file structure. Would need a bypass",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:commit:70a8b0ac890e:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T23:13:46Z",
+      "observedAt": "2026-04-10T23:13:46Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "jonnguyen1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/70a8b0ac890e605e0845a57050e6e2d050db551c"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:comment:4227478771:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-11T00:38:00Z",
+      "observedAt": "2026-04-11T00:38:00Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "mentat9"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#issuecomment-4227478771"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@jonnguyen1 - Thank-you for making that last pass. I've resolved all the comments and signed off for ARM. Note that more of the suggested changes would/should have been safe (top-level tags on PATCH payload, resource type property) and some",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:review:4093256047:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-11T02:38:51Z",
+      "observedAt": "2026-04-11T02:38:51Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "rjaini"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#pullrequestreview-4093256047"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:comment:3067528006:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-11T03:32:42Z",
+      "observedAt": "2026-04-11T03:32:42Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "mikeharder"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#discussion_r3067528006"
+      },
+      "confidence": "authoritative",
+      "excerpt": "If this is your first PR to main you should use folder structure v2 instead of v1. - https://github.com/Azure/azure-rest-api-specs/wiki/Folder-Structure CC: @qiaozha",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:review:4093338984:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-11T03:32:46Z",
+      "observedAt": "2026-04-11T03:32:46Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "mikeharder"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#pullrequestreview-4093338984"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "dismissed",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:comment:4228114245:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-11T03:46:55Z",
+      "observedAt": "2026-04-11T03:46:55Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "mikeharder"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#issuecomment-4228114245"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> @jonnguyen1 - Thank-you for making that last pass. I've resolved all the comments and signed off for ARM. Note that more of the suggested changes would/should have been safe (top-level tags on PATCH payload, resource type property) and so",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:review:4093392644:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-11T04:24:26Z",
+      "observedAt": "2026-04-11T04:24:26Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "jonnguyen1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#pullrequestreview-4093392644"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:comment:3067583425:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-11T04:24:26Z",
+      "observedAt": "2026-04-11T04:24:26Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jonnguyen1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#discussion_r3067583425"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Based on previous convo > Hey @mentat9, I had a discussion with @mikeharder and he said to commit my new api in v1 + introduce the tsp, then change to v2 file structure. https://teams.microsoft.com/l/message/19:f6d52ac6465c40ea80dc86b8be382",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:comment:4228173300:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-11T04:25:07Z",
+      "observedAt": "2026-04-11T04:25:07Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jonnguyen1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#issuecomment-4228173300"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> > @jonnguyen1 - You will need to fix the TypeSpec Validation failure. Your spec needs to follow the V2 folder structure. Ref: https://github.com/Azure/azure-rest-api-specs/wiki/Folder-Structure. > > > @jonnguyen1 - Thank-you for making th",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:commit:5f17f800ba6a:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-11T04:25:46Z",
+      "observedAt": "2026-04-11T04:25:46Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "jonnguyen1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/5f17f800ba6ac3302e777f251f9fca187de73351"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:commit:b720e4e6accf:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-11T04:37:42Z",
+      "observedAt": "2026-04-11T04:37:42Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "jonnguyen1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/b720e4e6accf824ea4a2d8bbf3736d515edf1ba7"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:commit:e77bdea6399e:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-11T04:38:10Z",
+      "observedAt": "2026-04-11T04:38:10Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "jonnguyen1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/e77bdea6399eb1ea79d85dd74e8ca8b1ab2af188"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:comment:4228198968:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-11T04:42:42Z",
+      "observedAt": "2026-04-11T04:42:42Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jonnguyen1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#issuecomment-4228198968"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Since I removed the change to the global suppressions, I don't think ill need code owner review on that anymore",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:commit:aff4317cb6b1:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-11T04:46:59Z",
+      "observedAt": "2026-04-11T04:46:59Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "jonnguyen1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/aff4317cb6b1f6573e9603adf912f73d659ace2b"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:review:4093441407:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-11T05:20:58Z",
+      "observedAt": "2026-04-11T05:20:58Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "mikeharder"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#pullrequestreview-4093441407"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:comment:3067636784:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-11T05:20:58Z",
+      "observedAt": "2026-04-11T05:20:58Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "mikeharder"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#discussion_r3067636784"
+      },
+      "confidence": "authoritative",
+      "excerpt": "update reason to something accurate for your service",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:review:4093443463:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-11T05:23:32Z",
+      "observedAt": "2026-04-11T05:23:32Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "mikeharder"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#pullrequestreview-4093443463"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:comment:3067639129:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-11T05:23:32Z",
+      "observedAt": "2026-04-11T05:23:32Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "mikeharder"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#discussion_r3067639129"
+      },
+      "confidence": "authoritative",
+      "excerpt": "but i approve adding this spec as v1, it's a rare exception where it's still OK, since there are sibling services still v1",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:commit:3a0700a02c58:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-11T05:25:43Z",
+      "observedAt": "2026-04-11T05:25:43Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "jonnguyen1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/3a0700a02c583dd93db7efd38c902105c7b855b0"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:review:4093445286:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-11T05:25:54Z",
+      "observedAt": "2026-04-11T05:25:54Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "jonnguyen1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#pullrequestreview-4093445286"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:comment:3067641082:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-11T05:25:54Z",
+      "observedAt": "2026-04-11T05:25:54Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jonnguyen1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#discussion_r3067641082"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Fixed",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:comment:4228305926:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-11T05:59:21Z",
+      "observedAt": "2026-04-11T05:59:21Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jonnguyen1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#issuecomment-4228305926"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@mikeharder Are we good to merge? I think PR is just blocked on your requesting change vote.",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:review:4100308537:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-13T16:25:49Z",
+      "observedAt": "2026-04-13T16:25:49Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "rjaini"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#pullrequestreview-4100308537"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:review:4100314911:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-13T16:26:34Z",
+      "observedAt": "2026-04-13T16:26:34Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "pradipd"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060#pullrequestreview-4100314911"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42060:pr.merged:spec:github:Azure/azure-rest-api-specs#42060",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-13T16:44:07Z",
+      "observedAt": "2026-04-13T16:44:07Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42060",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42060"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    }
+  ],
+  "quality": {
+    "warnings": [
+      "API specification path is missing"
+    ],
+    "unavailablePullRequests": 0,
+    "unavailablePipelineRuns": 0
+  },
+  "boundaryFacts": {
+    "id": "33760",
+    "state": "in-progress",
+    "specPrs": [
+      {
+        "id": "github:Azure/azure-rest-api-specs#42060",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#42060",
+        "createdAt": "2026-04-02T18:24:50Z",
+        "mergedAt": "2026-04-13T16:44:07Z",
+        "closedAt": "2026-04-13T16:44:07Z",
+        "available": true
+      }
+    ],
+    "artifacts": [
+      {
+        "language": ".NET",
+        "package": null,
+        "trackId": "sdk:.NET:.NET",
+        "prId": null,
+        "prCreatedAt": null,
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [],
+        "generationRunId": null,
+        "generationStartAt": null,
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "missing",
+          "generation": "missing",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "JavaScript",
+        "package": null,
+        "trackId": "sdk:JavaScript:JavaScript",
+        "prId": null,
+        "prCreatedAt": null,
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [],
+        "generationRunId": null,
+        "generationStartAt": null,
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "missing",
+          "generation": "missing",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Python",
+        "package": null,
+        "trackId": "sdk:Python:Python",
+        "prId": null,
+        "prCreatedAt": null,
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [],
+        "generationRunId": null,
+        "generationStartAt": null,
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "missing",
+          "generation": "missing",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Java",
+        "package": null,
+        "trackId": "sdk:Java:Java",
+        "prId": null,
+        "prCreatedAt": null,
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [],
+        "generationRunId": null,
+        "generationStartAt": null,
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "missing",
+          "generation": "missing",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Go",
+        "package": null,
+        "trackId": "sdk:Go:Go",
+        "prId": null,
+        "prCreatedAt": null,
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [],
+        "generationRunId": null,
+        "generationStartAt": null,
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "missing",
+          "generation": "missing",
+          "release": "missing"
+        }
+      }
+    ],
+    "cohortPlan": {
+      "id": "33760",
+      "releasePlanId": "2164",
+      "title": "Release Plan - 2164 - Public Preview - AKS on HCI and Windows Server",
+      "service": "Release Plan - 2164 - Public Preview - AKS on HCI and Windows Server",
+      "state": "in-progress"
+    },
+    "quality": {
+      "warnings": [
+        "API specification path is missing"
+      ],
+      "unavailablePullRequests": 0,
+      "unavailablePipelineRuns": 0
+    }
+  },
+  "summary": {
+    "durationHours": 3199.4,
+    "pullRequestCount": 1,
+    "humanReviewCount": 46,
+    "humanCommentCount": 55
+  }
+}

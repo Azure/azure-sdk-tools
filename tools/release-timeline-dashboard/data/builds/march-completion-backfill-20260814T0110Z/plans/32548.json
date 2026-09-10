@@ -1,0 +1,3477 @@
+{
+  "schemaVersion": 2,
+  "id": "32548",
+  "correlation": {
+    "policyVersion": 1,
+    "preflight": "passed"
+  },
+  "releasePlanId": "2070",
+  "title": "Release Plan - 2070 - GA - Microsoft Planetary Computer Pro",
+  "service": "Microsoft Planetary Computer Pro",
+  "product": "Release",
+  "path": "specification/orbitalplanetarycomputer/Orbital.Management",
+  "state": "finished",
+  "plane": "management",
+  "releaseType": "APEX GA",
+  "intendedMonth": "April 2026",
+  "createdAt": "2026-02-03T22:31:46.447Z",
+  "completedAt": "2026-05-01T21:08:48.167Z",
+  "sourceUrl": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32548",
+  "range": {
+    "start": "2026-02-03T22:31:46.447Z",
+    "end": "2026-05-01T21:08:48.167Z"
+  },
+  "intendedArtifacts": [
+    {
+      "prId": "github:Azure/azure-sdk-for-net#57473",
+      "language": ".NET",
+      "package": "Azure.ResourceManager.PlanetaryComputer",
+      "version": "1.0.0",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6062566",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-js#37830",
+      "language": "JavaScript",
+      "package": "@azure/arm-planetarycomputer",
+      "version": "1.0.0",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6062570",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-python#45908",
+      "language": "Python",
+      "package": "azure-mgmt-planetarycomputer",
+      "version": "1.0.0",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6062568",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-java#48577",
+      "language": "Java",
+      "package": "azure-resourcemanager-planetarycomputer",
+      "version": "1.0.0",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6062567",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-go#26400",
+      "language": "Go",
+      "package": "sdk/resourcemanager/planetarycomputer/armplanetarycomputer",
+      "version": "1.0.0",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6062572",
+      "releasePipelineUrl": null
+    }
+  ],
+  "links": [
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#41263",
+      "role": "spec-pr-history",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/41263",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs-pr#27283",
+      "role": "spec-pr",
+      "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/27283",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-net#57473",
+      "role": "sdk-pr",
+      "language": ".NET",
+      "url": "https://github.com/Azure/azure-sdk-for-net/pull/57473",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-js#37830",
+      "role": "sdk-pr",
+      "language": "JavaScript",
+      "url": "https://github.com/Azure/azure-sdk-for-js/pull/37830",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-python#45908",
+      "role": "sdk-pr",
+      "language": "Python",
+      "url": "https://github.com/Azure/azure-sdk-for-python/pull/45908",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-java#48577",
+      "role": "sdk-pr",
+      "language": "Java",
+      "url": "https://github.com/Azure/azure-sdk-for-java/pull/48577",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-go#26400",
+      "role": "sdk-pr",
+      "language": "Go",
+      "url": "https://github.com/Azure/azure-sdk-for-go/pull/26400",
+      "releasePlanIds": []
+    }
+  ],
+  "tracks": [
+    {
+      "id": "plan",
+      "kind": "plan",
+      "label": "Release Plan",
+      "detail": "APEX GA"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#41263",
+      "kind": "spec",
+      "label": "Spec PR 1",
+      "detail": "azure-rest-api-specs #41263",
+      "artifactId": "github:Azure/azure-rest-api-specs#41263",
+      "state": "merged"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs-pr#27283",
+      "kind": "spec",
+      "label": "Spec PR 2",
+      "detail": "azure-rest-api-specs-pr #27283",
+      "artifactId": "github:Azure/azure-rest-api-specs-pr#27283",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:.NET:Azure.ResourceManager.PlanetaryComputer",
+      "kind": "sdk",
+      "label": ".NET",
+      "detail": "Azure.ResourceManager.PlanetaryComputer",
+      "artifactId": "github:Azure/azure-sdk-for-net#57473",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:JavaScript:@azure/arm-planetarycomputer",
+      "kind": "sdk",
+      "label": "JavaScript",
+      "detail": "@azure/arm-planetarycomputer",
+      "artifactId": "github:Azure/azure-sdk-for-js#37830",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Python:azure-mgmt-planetarycomputer",
+      "kind": "sdk",
+      "label": "Python",
+      "detail": "azure-mgmt-planetarycomputer",
+      "artifactId": "github:Azure/azure-sdk-for-python#45908",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Java:azure-resourcemanager-planetarycomputer",
+      "kind": "sdk",
+      "label": "Java",
+      "detail": "azure-resourcemanager-planetarycomputer",
+      "artifactId": "github:Azure/azure-sdk-for-java#48577",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Go:sdk/resourcemanager/planetarycomputer/armplanetarycomputer",
+      "kind": "sdk",
+      "label": "Go",
+      "detail": "sdk/resourcemanager/planetarycomputer/armplanetarycomputer",
+      "artifactId": "github:Azure/azure-sdk-for-go#26400",
+      "state": "merged"
+    }
+  ],
+  "events": [
+    {
+      "id": "ado:32548:created",
+      "type": "plan.created",
+      "phase": "plan",
+      "occurredAt": "2026-02-03T22:31:46.447Z",
+      "observedAt": "2026-02-03T22:31:46.447Z",
+      "trackId": "plan",
+      "title": "Release Plan created",
+      "confidence": "authoritative",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32548",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32548"
+      },
+      "stack": 0
+    },
+    {
+      "id": "ado:32548:1:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-02-03T22:31:46.447Z",
+      "observedAt": "2026-02-03T22:31:46.447Z",
+      "trackId": "plan",
+      "value": "New",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32548",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32548"
+      },
+      "title": "Plan state changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:32548:1:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-03T22:31:46.447Z",
+      "observedAt": "2026-02-03T22:31:46.447Z",
+      "trackId": "plan",
+      "value": "Not Available",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32548",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32548"
+      },
+      "title": "Spec approval changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:32548:1:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-03T22:31:46.447Z",
+      "observedAt": "2026-02-03T22:31:46.447Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.PlanetaryComputer",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32548",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32548"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32548:1:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-03T22:31:46.447Z",
+      "observedAt": "2026-02-03T22:31:46.447Z",
+      "trackId": "sdk:JavaScript:@azure/arm-planetarycomputer",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32548",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32548"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32548:1:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-03T22:31:46.447Z",
+      "observedAt": "2026-02-03T22:31:46.447Z",
+      "trackId": "sdk:Python:azure-mgmt-planetarycomputer",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32548",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32548"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32548:1:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-03T22:31:46.447Z",
+      "observedAt": "2026-02-03T22:31:46.447Z",
+      "trackId": "sdk:Java:azure-resourcemanager-planetarycomputer",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32548",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32548"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32548:1:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-03T22:31:46.447Z",
+      "observedAt": "2026-02-03T22:31:46.447Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/planetarycomputer/armplanetarycomputer",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32548",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32548"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32548:6:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-02-03T23:16:27.08Z",
+      "observedAt": "2026-02-03T23:16:27.08Z",
+      "trackId": "plan",
+      "value": "In Progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32548",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32548"
+      },
+      "title": "Plan state changed",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#27283:commit:264624e90e0d:spec:github:Azure/azure-rest-api-specs-pr#27283",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-09T22:13:55Z",
+      "observedAt": "2026-03-09T22:13:55Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#27283",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "hemilmodi88"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#27283",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/commit/264624e90e0d23d5a391d32bdbb22c9634c1f448"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#27283:commit:41cb018fb39c:spec:github:Azure/azure-rest-api-specs-pr#27283",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-10T00:00:45Z",
+      "observedAt": "2026-03-10T00:00:45Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#27283",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "hemilmodi88"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#27283",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/commit/41cb018fb39ce42c90a050ea613e8607158e4934"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#27283:pr.created:spec:github:Azure/azure-rest-api-specs-pr#27283",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-10T00:02:06Z",
+      "observedAt": "2026-03-10T00:02:06Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#27283",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "hemilmodi88"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#27283",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/27283"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#27283:comment:4027714973:spec:github:Azure/azure-rest-api-specs-pr#27283",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-10T00:02:45Z",
+      "observedAt": "2026-03-10T00:02:45Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#27283",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#27283",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/27283#issuecomment-4027714973"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>✅ All automated merging requirements have been met! To get your PR merged, see <a href=\"https://aka.ms/azsdk/specreview/merge\">aka.ms/azsdk/specreview/merge</a>.<br /><br />Comment generated by <a href=\"https://g",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#27283:commit:1abd2377ba18:spec:github:Azure/azure-rest-api-specs-pr#27283",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-10T00:06:20Z",
+      "observedAt": "2026-03-10T00:06:20Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#27283",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "hemilmodi88"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#27283",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/commit/1abd2377ba185009c771f109cef75e4317b68976"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#27283:comment:4033984870:spec:github:Azure/azure-rest-api-specs-pr#27283",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-10T19:42:29Z",
+      "observedAt": "2026-03-10T19:42:29Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#27283",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "hemilmodi88"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#27283",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/27283#issuecomment-4033984870"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@microsoft-github-policy-service agree company=\"Microsoft\"",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#27283:commit:2d888dacc769:spec:github:Azure/azure-rest-api-specs-pr#27283",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-10T22:35:32Z",
+      "observedAt": "2026-03-10T22:35:32Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#27283",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "hemilmodi88"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#27283",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/commit/2d888dacc76951638f75c618a8b927ed0fb096f3"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#27283:commit:10ac7965eec8:spec:github:Azure/azure-rest-api-specs-pr#27283",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-10T22:40:42Z",
+      "observedAt": "2026-03-10T22:40:42Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#27283",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "hemilmodi88"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#27283",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/commit/10ac7965eec88eab030826ee2b4a5f330407eff3"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#27283:commit:ab04b280da08:spec:github:Azure/azure-rest-api-specs-pr#27283",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-11T00:04:09Z",
+      "observedAt": "2026-03-11T00:04:09Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#27283",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "hemilmodi88"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#27283",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/commit/ab04b280da0809e05a77526b23f3d35b1ed70d4c"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#27283:commit:78332348373e:spec:github:Azure/azure-rest-api-specs-pr#27283",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-11T00:27:57Z",
+      "observedAt": "2026-03-11T00:27:57Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#27283",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "hemilmodi88"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#27283",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/commit/78332348373e08323a439fc279503b68b9ac5c58"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#27283:commit:22e29d57401d:spec:github:Azure/azure-rest-api-specs-pr#27283",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-11T18:27:11Z",
+      "observedAt": "2026-03-11T18:27:11Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#27283",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "hemilmodi88"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#27283",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/commit/22e29d57401d87500b41975b999d8b49061d7703"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#27283:commit:a43ac3a1aa17:spec:github:Azure/azure-rest-api-specs-pr#27283",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-11T18:32:34Z",
+      "observedAt": "2026-03-11T18:32:34Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#27283",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "hemilmodi88"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#27283",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/commit/a43ac3a1aa17c38acfad2c3e0141b6c45fb290eb"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#27283:commit:2e818cbbe8b2:spec:github:Azure/azure-rest-api-specs-pr#27283",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-11T20:53:49Z",
+      "observedAt": "2026-03-11T20:53:49Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#27283",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "hemilmodi88"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#27283",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/commit/2e818cbbe8b26e788810561ffd4dc8f244522a03"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#27283:commit:bbdce8ae950d:spec:github:Azure/azure-rest-api-specs-pr#27283",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-11T20:57:34Z",
+      "observedAt": "2026-03-11T20:57:34Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#27283",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "hemilmodi88"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#27283",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/commit/bbdce8ae950d9b93dc00205eb1f1767ad243d97a"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41263:commit:f5a7bdea1eac:spec:github:Azure/azure-rest-api-specs#41263",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-11T21:17:52Z",
+      "observedAt": "2026-03-11T21:17:52Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41263",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "hemilmodi88"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41263",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/f5a7bdea1eacf4e238e3ee829001558e7ed53474"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41263:pr.created:spec:github:Azure/azure-rest-api-specs#41263",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-11T21:23:42Z",
+      "observedAt": "2026-03-11T21:23:42Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41263",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "hemilmodi88"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41263",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41263"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41263:comment:4042305274:spec:github:Azure/azure-rest-api-specs#41263",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-11T21:24:04Z",
+      "observedAt": "2026-03-11T21:24:04Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41263",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41263",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41263#issuecomment-4042305274"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>✅ All automated merging requirements have been met! To get your PR merged, see <a href=\"https://aka.ms/azsdk/specreview/merge\">aka.ms/azsdk/specreview/merge</a>.<br /><br />Comment generated by <a href=\"https://g",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41263:commit:7b4ee30708bc:spec:github:Azure/azure-rest-api-specs#41263",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-11T21:27:15Z",
+      "observedAt": "2026-03-11T21:27:15Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41263",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "hemilmodi88"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41263",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/7b4ee30708bc4e6b5d452adfa27008194a6e6eca"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#27283:review:3932935280:spec:github:Azure/azure-rest-api-specs-pr#27283",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-11T22:34:44Z",
+      "observedAt": "2026-03-11T22:34:44Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#27283",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "mandarinamdar"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#27283",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/27283#pullrequestreview-3932935280"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "dismissed",
+      "stack": 2
+    },
+    {
+      "id": "ado:32549:3:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-12T15:12:46.457Z",
+      "observedAt": "2026-03-12T15:12:46.457Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#27283",
+      "value": "https://github.com/Azure/azure-rest-api-specs-pr/pull/27283",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32549",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32549"
+      },
+      "title": "Spec PR linked",
+      "stack": 3
+    },
+    {
+      "id": "ado:32548:7:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-12T15:12:49.827Z",
+      "observedAt": "2026-03-12T15:12:49.827Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.PlanetaryComputer",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32548",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32548"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32548:7:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-12T15:12:49.827Z",
+      "observedAt": "2026-03-12T15:12:49.827Z",
+      "trackId": "sdk:JavaScript:@azure/arm-planetarycomputer",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32548",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32548"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32548:7:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-12T15:12:49.827Z",
+      "observedAt": "2026-03-12T15:12:49.827Z",
+      "trackId": "sdk:Python:azure-mgmt-planetarycomputer",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32548",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32548"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32548:7:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-12T15:12:49.827Z",
+      "observedAt": "2026-03-12T15:12:49.827Z",
+      "trackId": "sdk:Java:azure-resourcemanager-planetarycomputer",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32548",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32548"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32548:7:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-12T15:12:49.827Z",
+      "observedAt": "2026-03-12T15:12:49.827Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/planetarycomputer/armplanetarycomputer",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32548",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32548"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32548:8:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-12T17:10:43.263Z",
+      "observedAt": "2026-03-12T17:10:43.263Z",
+      "trackId": "plan",
+      "value": "Approved",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32548",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32548"
+      },
+      "title": "Spec approval changed",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41263:commit:da7707e40369:spec:github:Azure/azure-rest-api-specs#41263",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-18T16:56:38Z",
+      "observedAt": "2026-03-18T16:56:38Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41263",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "sandipsh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41263",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/da7707e40369a943afb59196d5d3c8910944259c"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#27283:review:4003152597:spec:github:Azure/azure-rest-api-specs-pr#27283",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-25T00:05:38Z",
+      "observedAt": "2026-03-25T00:05:38Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#27283",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "mandarinamdar"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#27283",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/27283#pullrequestreview-4003152597"
+      },
+      "confidence": "authoritative",
+      "excerpt": "GA Version, lets merge",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#27283:pr.merged:spec:github:Azure/azure-rest-api-specs-pr#27283",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-25T00:07:13Z",
+      "observedAt": "2026-03-25T00:07:13Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#27283",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#27283",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/27283"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41263:review:4003225322:spec:github:Azure/azure-rest-api-specs#41263",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-25T00:27:12Z",
+      "observedAt": "2026-03-25T00:27:12Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41263",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "lesongjia"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41263",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41263#pullrequestreview-4003225322"
+      },
+      "confidence": "authoritative",
+      "excerpt": "LGTM",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41263:pr.merged:spec:github:Azure/azure-rest-api-specs#41263",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-25T00:52:55Z",
+      "observedAt": "2026-03-25T00:52:55Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41263",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41263",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41263"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:32549:5:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-25T15:56:42.193Z",
+      "observedAt": "2026-03-25T15:56:42.193Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41263",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/41263",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32549",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32549"
+      },
+      "title": "Spec PR linked",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6062566:generation.queued:sdk:.NET:Azure.ResourceManager.PlanetaryComputer",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-03-25T17:13:11.4729618Z",
+      "observedAt": "2026-03-25T17:20:19.115422Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.PlanetaryComputer",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6062566",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6062566"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:32548:24:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-25T17:13:15.663Z",
+      "observedAt": "2026-03-25T17:13:15.663Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.PlanetaryComputer",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32548",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32548"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6062567:generation.queued:sdk:Java:azure-resourcemanager-planetarycomputer",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-03-25T17:13:24.0708407Z",
+      "observedAt": "2026-03-25T17:33:05.4632954Z",
+      "trackId": "sdk:Java:azure-resourcemanager-planetarycomputer",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6062567",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6062567"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:32548:25:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-25T17:13:27.353Z",
+      "observedAt": "2026-03-25T17:13:27.353Z",
+      "trackId": "sdk:Java:azure-resourcemanager-planetarycomputer",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32548",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32548"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6062566:generation.started:sdk:.NET:Azure.ResourceManager.PlanetaryComputer",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-03-25T17:13:34.1558375Z",
+      "observedAt": "2026-03-25T17:20:19.115422Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.PlanetaryComputer",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6062566",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6062566"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6062568:generation.queued:sdk:Python:azure-mgmt-planetarycomputer",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-03-25T17:13:38.749972Z",
+      "observedAt": "2026-03-25T17:21:36.1045354Z",
+      "trackId": "sdk:Python:azure-mgmt-planetarycomputer",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6062568",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6062568"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:32548:26:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-25T17:13:42.293Z",
+      "observedAt": "2026-03-25T17:13:42.293Z",
+      "trackId": "sdk:Python:azure-mgmt-planetarycomputer",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32548",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32548"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6062567:generation.started:sdk:Java:azure-resourcemanager-planetarycomputer",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-03-25T17:13:42.4361116Z",
+      "observedAt": "2026-03-25T17:33:05.4632954Z",
+      "trackId": "sdk:Java:azure-resourcemanager-planetarycomputer",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6062567",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6062567"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6062570:generation.queued:sdk:JavaScript:@azure/arm-planetarycomputer",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-03-25T17:13:50.0926128Z",
+      "observedAt": "2026-03-25T17:20:38.8564711Z",
+      "trackId": "sdk:JavaScript:@azure/arm-planetarycomputer",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6062570",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6062570"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:32548:27:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-25T17:13:52.75Z",
+      "observedAt": "2026-03-25T17:13:52.75Z",
+      "trackId": "sdk:JavaScript:@azure/arm-planetarycomputer",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32548",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32548"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6062568:generation.started:sdk:Python:azure-mgmt-planetarycomputer",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-03-25T17:13:53.9518162Z",
+      "observedAt": "2026-03-25T17:21:36.1045354Z",
+      "trackId": "sdk:Python:azure-mgmt-planetarycomputer",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6062568",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6062568"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6062572:generation.queued:sdk:Go:sdk/resourcemanager/planetarycomputer/armplanetarycomputer",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-03-25T17:14:00.8487338Z",
+      "observedAt": "2026-03-25T17:20:02.612568Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/planetarycomputer/armplanetarycomputer",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6062572",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6062572"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:32548:28:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-25T17:14:03.573Z",
+      "observedAt": "2026-03-25T17:14:03.573Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/planetarycomputer/armplanetarycomputer",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32548",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32548"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6062570:generation.started:sdk:JavaScript:@azure/arm-planetarycomputer",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-03-25T17:14:08.7318333Z",
+      "observedAt": "2026-03-25T17:20:38.8564711Z",
+      "trackId": "sdk:JavaScript:@azure/arm-planetarycomputer",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6062570",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6062570"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6062572:generation.started:sdk:Go:sdk/resourcemanager/planetarycomputer/armplanetarycomputer",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-03-25T17:14:20.5116037Z",
+      "observedAt": "2026-03-25T17:20:02.612568Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/planetarycomputer/armplanetarycomputer",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6062572",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6062572"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26400:commit:a49f6b29366f:sdk:Go:sdk/resourcemanager/planetarycomputer/armplanetarycomputer",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-25T17:18:50Z",
+      "observedAt": "2026-03-25T17:18:50Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/planetarycomputer/armplanetarycomputer",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26400",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/a49f6b29366f08ada6f2b7118b21f502fdf87dc7"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26400:pr.created:sdk:Go:sdk/resourcemanager/planetarycomputer/armplanetarycomputer",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-25T17:18:56Z",
+      "observedAt": "2026-03-25T17:18:56Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/planetarycomputer/armplanetarycomputer",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26400",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26400"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:32548:29:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-25T17:19:03.77Z",
+      "observedAt": "2026-03-25T17:19:03.77Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/planetarycomputer/armplanetarycomputer",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32548",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32548"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:32548:29:Custom.SDKPullRequestForGo",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-03-25T17:19:03.77Z",
+      "observedAt": "2026-03-25T17:19:03.77Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/planetarycomputer/armplanetarycomputer",
+      "value": "https://github.com/Azure/azure-sdk-for-go/pull/26400",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32548",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32548"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57473:commit:48358f294d06:sdk:.NET:Azure.ResourceManager.PlanetaryComputer",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-25T17:19:07Z",
+      "observedAt": "2026-03-25T17:19:07Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.PlanetaryComputer",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57473",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/48358f294d061deb36ae84c9b5ed66e89308db09"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57473:pr.created:sdk:.NET:Azure.ResourceManager.PlanetaryComputer",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-25T17:19:14Z",
+      "observedAt": "2026-03-25T17:19:14Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.PlanetaryComputer",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57473",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57473"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:32548:30:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-25T17:19:21.34Z",
+      "observedAt": "2026-03-25T17:19:21.34Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.PlanetaryComputer",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32548",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32548"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:32548:30:Custom.SDKPullRequestForDotnet",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-03-25T17:19:21.34Z",
+      "observedAt": "2026-03-25T17:19:21.34Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.PlanetaryComputer",
+      "value": "https://github.com/Azure/azure-sdk-for-net/pull/57473",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32548",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32548"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37830:commit:4562d24a29ad:sdk:JavaScript:@azure/arm-planetarycomputer",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-25T17:19:29Z",
+      "observedAt": "2026-03-25T17:19:29Z",
+      "trackId": "sdk:JavaScript:@azure/arm-planetarycomputer",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37830",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/4562d24a29add88d04bff560b98c8f3337ecc3c0"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37830:pr.created:sdk:JavaScript:@azure/arm-planetarycomputer",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-25T17:19:33Z",
+      "observedAt": "2026-03-25T17:19:33Z",
+      "trackId": "sdk:JavaScript:@azure/arm-planetarycomputer",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37830",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37830"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:32548:31:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-25T17:19:40.927Z",
+      "observedAt": "2026-03-25T17:19:40.927Z",
+      "trackId": "sdk:JavaScript:@azure/arm-planetarycomputer",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32548",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32548"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:32548:31:Custom.SDKPullRequestForJavaScript",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-03-25T17:19:40.927Z",
+      "observedAt": "2026-03-25T17:19:40.927Z",
+      "trackId": "sdk:JavaScript:@azure/arm-planetarycomputer",
+      "value": "https://github.com/Azure/azure-sdk-for-js/pull/37830",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32548",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32548"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6062572:generation.completed:sdk:Go:sdk/resourcemanager/planetarycomputer/armplanetarycomputer",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-03-25T17:20:02.612568Z",
+      "observedAt": "2026-03-25T17:20:02.612568Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/planetarycomputer/armplanetarycomputer",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6062572",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6062572"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45908:commit:34215a0fd2ad:sdk:Python:azure-mgmt-planetarycomputer",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-25T17:20:07Z",
+      "observedAt": "2026-03-25T17:20:07Z",
+      "trackId": "sdk:Python:azure-mgmt-planetarycomputer",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45908",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/34215a0fd2ad7d7ba7e747156576fa496bc830c5"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45908:pr.created:sdk:Python:azure-mgmt-planetarycomputer",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-25T17:20:11Z",
+      "observedAt": "2026-03-25T17:20:11Z",
+      "trackId": "sdk:Python:azure-mgmt-planetarycomputer",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45908",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45908"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:32548:34:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-25T17:20:18.003Z",
+      "observedAt": "2026-03-25T17:20:18.003Z",
+      "trackId": "sdk:Python:azure-mgmt-planetarycomputer",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32548",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32548"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:32548:34:Custom.SDKPullRequestForPython",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-03-25T17:20:18.003Z",
+      "observedAt": "2026-03-25T17:20:18.003Z",
+      "trackId": "sdk:Python:azure-mgmt-planetarycomputer",
+      "value": "https://github.com/Azure/azure-sdk-for-python/pull/45908",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32548",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32548"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6062566:generation.completed:sdk:.NET:Azure.ResourceManager.PlanetaryComputer",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-03-25T17:20:19.115422Z",
+      "observedAt": "2026-03-25T17:20:19.115422Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.PlanetaryComputer",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6062566",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6062566"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6062570:generation.completed:sdk:JavaScript:@azure/arm-planetarycomputer",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-03-25T17:20:38.8564711Z",
+      "observedAt": "2026-03-25T17:20:38.8564711Z",
+      "trackId": "sdk:JavaScript:@azure/arm-planetarycomputer",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6062570",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6062570"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6062568:generation.completed:sdk:Python:azure-mgmt-planetarycomputer",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-03-25T17:21:36.1045354Z",
+      "observedAt": "2026-03-25T17:21:36.1045354Z",
+      "trackId": "sdk:Python:azure-mgmt-planetarycomputer",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6062568",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6062568"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48577:commit:7b9463ec57d1:sdk:Java:azure-resourcemanager-planetarycomputer",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-25T17:22:22Z",
+      "observedAt": "2026-03-25T17:22:22Z",
+      "trackId": "sdk:Java:azure-resourcemanager-planetarycomputer",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48577",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/7b9463ec57d1fbf853d02fa68b1e9ffa639c269c"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48577:pr.created:sdk:Java:azure-resourcemanager-planetarycomputer",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-25T17:22:26Z",
+      "observedAt": "2026-03-25T17:22:26Z",
+      "trackId": "sdk:Java:azure-resourcemanager-planetarycomputer",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48577",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48577"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:32548:37:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-25T17:22:32.887Z",
+      "observedAt": "2026-03-25T17:22:32.887Z",
+      "trackId": "sdk:Java:azure-resourcemanager-planetarycomputer",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32548",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32548"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:32548:37:Custom.SDKPullRequestForJava",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-03-25T17:22:32.887Z",
+      "observedAt": "2026-03-25T17:22:32.887Z",
+      "trackId": "sdk:Java:azure-resourcemanager-planetarycomputer",
+      "value": "https://github.com/Azure/azure-sdk-for-java/pull/48577",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32548",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32548"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6062567:generation.completed:sdk:Java:azure-resourcemanager-planetarycomputer",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-03-25T17:33:05.4632954Z",
+      "observedAt": "2026-03-25T17:33:05.4632954Z",
+      "trackId": "sdk:Java:azure-resourcemanager-planetarycomputer",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6062567",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6062567"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37830:comment:4128554794:sdk:JavaScript:@azure/arm-planetarycomputer",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-25T17:50:06Z",
+      "observedAt": "2026-03-25T17:50:06Z",
+      "trackId": "sdk:JavaScript:@azure/arm-planetarycomputer",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37830",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37830#issuecomment-4128554794"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews [@azure/arm-planetarycomputer](https://spa.apiview.dev/review/348bc65e3ed846099b99bfd1706b1f94?activeApiRevisionId=39f58506d5ed4473868",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48577:comment:4128562232:sdk:Java:azure-resourcemanager-planetarycomputer",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-25T17:51:06Z",
+      "observedAt": "2026-03-25T17:51:06Z",
+      "trackId": "sdk:Java:azure-resourcemanager-planetarycomputer",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48577",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48577#issuecomment-4128562232"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews [com.azure.resourcemanager:azure-resourcemanager-planetarycomputer](https://spa.apiview.dev/review/64e471fc514f4cd3b7e7f6c9a1f9c12b?ac",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57473:comment:2998495464:sdk:.NET:Azure.ResourceManager.PlanetaryComputer",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-27T01:19:41Z",
+      "observedAt": "2026-03-27T01:19:41Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.PlanetaryComputer",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57473",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57473#discussion_r2998495464"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The package version is being set to 1.0.0, but the package CHANGELOG still has the latest entry as \"1.0.0-beta.2 (Unreleased)\". Please update the changelog to include a 1.0.0 release section (and move beta entries accordingly) so the packag",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48577:review:4018328565:sdk:Java:azure-resourcemanager-planetarycomputer",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-27T01:19:41Z",
+      "observedAt": "2026-03-27T01:19:41Z",
+      "trackId": "sdk:Java:azure-resourcemanager-planetarycomputer",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48577",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48577#pullrequestreview-4018328565"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Updates the `azure-resourcemanager-planetarycomputer` management library to a stable release generated from the `2026-04-15` Planetary Computer ARM API version, aligning metadata, samples, and client defaults with t",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48577:comment:2998495458:sdk:Java:azure-resourcemanager-planetarycomputer",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-27T01:19:41Z",
+      "observedAt": "2026-03-27T01:19:41Z",
+      "trackId": "sdk:Java:azure-resourcemanager-planetarycomputer",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48577",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48577#discussion_r2998495458"
+      },
+      "confidence": "authoritative",
+      "excerpt": "CHANGELOG top section was changed from an \"(Unreleased)\" entry to a dated release (\"## 1.0.0 (2026-03-25)\"). In this repo’s management libraries, CHANGELOGs generally keep an Unreleased section at the top (e.g., sdk/advisor/azure-resourcema",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57473:review:4018328573:sdk:.NET:Azure.ResourceManager.PlanetaryComputer",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-27T01:19:42Z",
+      "observedAt": "2026-03-27T01:19:42Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.PlanetaryComputer",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57473",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57473#pullrequestreview-4018328573"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Updates the PlanetaryComputer ARM management SDK generated from the TypeSpec spec repo, aligning the package with a new API version and moving it to a stable release. **Changes:** - Update default API version refere",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57473:comment:2998495484:sdk:.NET:Azure.ResourceManager.PlanetaryComputer",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-27T01:19:42Z",
+      "observedAt": "2026-03-27T01:19:42Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.PlanetaryComputer",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57473",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57473#discussion_r2998495484"
+      },
+      "confidence": "authoritative",
+      "excerpt": "There are still references to the previous API version (\"2025-02-11-preview\") in the generated test samples under tests/Generated/Samples (in the \"Generated from example definition\" comments). If this PR is moving the package to the 2026-04",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45908:comment:2998495545:sdk:Python:azure-mgmt-planetarycomputer",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-27T01:19:43Z",
+      "observedAt": "2026-03-27T01:19:43Z",
+      "trackId": "sdk:Python:azure-mgmt-planetarycomputer",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45908",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45908#discussion_r2998495545"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Changelog entry refers to `PlanetaryComputerMgmtClient` as a \"Model\", but it is the client class. Please adjust wording to avoid confusion in release notes (e.g., \"Client `PlanetaryComputerMgmtClient` added parameter `cloud_setting` to `__i",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45908:review:4018328668:sdk:Python:azure-mgmt-planetarycomputer",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-27T01:19:44Z",
+      "observedAt": "2026-03-27T01:19:44Z",
+      "trackId": "sdk:Python:azure-mgmt-planetarycomputer",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45908",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45908#pullrequestreview-4018328668"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Updates the `azure-mgmt-planetarycomputer` management-plane SDK to the `2026-04-15` API version generated from TypeSpec, promotes the package to stable `1.0.0`, and aligns packaging metadata with the repo’s current ",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26400:comment:2998497053:sdk:Go:sdk/resourcemanager/planetarycomputer/armplanetarycomputer",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-27T01:20:26Z",
+      "observedAt": "2026-03-27T01:20:26Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/planetarycomputer/armplanetarycomputer",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26400",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26400#discussion_r2998497053"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`initServer` manually unlocks the mutex; if `src()` panics, the mutex will remain locked and can deadlock subsequent requests in tests. Use `defer mu.Unlock()` immediately after `mu.Lock()` to guarantee unlock on all paths. ```suggestion de",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26400:comment:2998497075:sdk:Go:sdk/resourcemanager/planetarycomputer/armplanetarycomputer",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-27T01:20:26Z",
+      "observedAt": "2026-03-27T01:20:26Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/planetarycomputer/armplanetarycomputer",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26400",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26400#discussion_r2998497075"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`testdata/_metadata.json` lists the RP as `Microsoft.Spatio`, but the generated client endpoints in this module use `providers/Microsoft.Orbital` (e.g., GeoCatalogs paths). This mismatch can confuse tooling that relies on `_metadata.json` t",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26400:comment:2998497085:sdk:Go:sdk/resourcemanager/planetarycomputer/armplanetarycomputer",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-27T01:20:26Z",
+      "observedAt": "2026-03-27T01:20:26Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/planetarycomputer/armplanetarycomputer",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26400",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26400#discussion_r2998497085"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The new `## 1.0.0` section is empty (no bullets under \"Other Changes\"). For a stable release, the changelog should include at least a brief entry (e.g., noting the GA/stable release and/or the API version update to 2026-04-15) so consumers ",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26400:review:4018330109:sdk:Go:sdk/resourcemanager/planetarycomputer/armplanetarycomputer",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-27T01:20:27Z",
+      "observedAt": "2026-03-27T01:20:27Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/planetarycomputer/armplanetarycomputer",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26400",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26400#pullrequestreview-4018330109"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Updates the `armplanetarycomputer` Resource Manager SDK to the 2026-04-15 API version and promotes the package to a stable `v1.0.0` release, with associated regeneration artifacts (examples, fake server wiring, and ",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37830:comment:2998501377:sdk:JavaScript:@azure/arm-planetarycomputer",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-27T01:22:22Z",
+      "observedAt": "2026-03-27T01:22:22Z",
+      "trackId": "sdk:JavaScript:@azure/arm-planetarycomputer",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37830",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37830#discussion_r2998501377"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`userAssignedIdentities` was changed to `Record<string, UserAssignedIdentity>`, but `managedServiceIdentityDeserializer` can still produce `null` entries (it returns `p` when `p` is falsy). This makes the public type inaccurate and removes ",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37830:comment:2998501386:sdk:JavaScript:@azure/arm-planetarycomputer",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-27T01:22:22Z",
+      "observedAt": "2026-03-27T01:22:22Z",
+      "trackId": "sdk:JavaScript:@azure/arm-planetarycomputer",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37830",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37830#discussion_r2998501386"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`ManagedServiceIdentityUpdate.userAssignedIdentities` no longer allows `null` values. For ARM resources, `null` is commonly used in PATCH updates to remove a specific user-assigned identity entry. Consider changing this back to `Record<stri",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37830:review:4018334357:sdk:JavaScript:@azure/arm-planetarycomputer",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-27T01:22:23Z",
+      "observedAt": "2026-03-27T01:22:23Z",
+      "trackId": "sdk:JavaScript:@azure/arm-planetarycomputer",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37830",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37830#pullrequestreview-4018334357"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This PR updates `@azure/arm-planetarycomputer` to the newly generated **stable** SDK for API version **2026-04-15** from the REST specs commit `5e21babae10dd7056c3005bb51da815f0495f1aa`, including updated client beh",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37830:comment:2998501394:sdk:JavaScript:@azure/arm-planetarycomputer",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-27T01:22:23Z",
+      "observedAt": "2026-03-27T01:22:23Z",
+      "trackId": "sdk:JavaScript:@azure/arm-planetarycomputer",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37830",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37830#discussion_r2998501394"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`addApiVersionToUrl` can produce an invalid URL when `url` already contains a `?` but no query params (e.g. ends with `?`), because it appends another `?` when `searchParams` is empty. Consider checking whether the original `url` already co",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37830:comment:2998501400:sdk:JavaScript:@azure/arm-planetarycomputer",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-27T01:22:23Z",
+      "observedAt": "2026-03-27T01:22:23Z",
+      "trackId": "sdk:JavaScript:@azure/arm-planetarycomputer",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37830",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37830#discussion_r2998501400"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`addApiVersionToUrl` can append a second `?` when the `pageLink` already contains `?` but no parameters (or ends with `?`), since it uses `searchParams.keys().length` to decide between `?`/`&`. Consider basing the separator on the raw URL s",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26400:commit:af2dacc39be5:sdk:Go:sdk/resourcemanager/planetarycomputer/armplanetarycomputer",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-27T02:13:59Z",
+      "observedAt": "2026-03-27T02:13:59Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/planetarycomputer/armplanetarycomputer",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "tadelesh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26400",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/af2dacc39be57f204322e2d0d9ea2188b944f4c4"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26400:review:4018457446:sdk:Go:sdk/resourcemanager/planetarycomputer/armplanetarycomputer",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-27T02:14:58Z",
+      "observedAt": "2026-03-27T02:14:58Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/planetarycomputer/armplanetarycomputer",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "JiaqiZhang-Dev"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26400",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26400#pullrequestreview-4018457446"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48577:review:4018632149:sdk:Java:azure-resourcemanager-planetarycomputer",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-27T03:15:57Z",
+      "observedAt": "2026-03-27T03:15:57Z",
+      "trackId": "sdk:Java:azure-resourcemanager-planetarycomputer",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48577",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48577#pullrequestreview-4018632149"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45908:commit:1cd14787a89f:sdk:Python:azure-mgmt-planetarycomputer",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-27T03:57:13Z",
+      "observedAt": "2026-03-27T03:57:13Z",
+      "trackId": "sdk:Python:azure-mgmt-planetarycomputer",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45908",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/1cd14787a89f11de61114fcec040083ae1240cf3"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45908:comment:4139982320:sdk:Python:azure-mgmt-planetarycomputer",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-27T03:59:28Z",
+      "observedAt": "2026-03-27T03:59:28Z",
+      "trackId": "sdk:Python:azure-mgmt-planetarycomputer",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45908",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45908#issuecomment-4139982320"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @thisisdevanshu, the new api version `2026-04-15` seems not deployed on portal yet, we recommend making sure the api version to be deployed before releasing the SDK, though we won't block the release in self-serve release flow. You can c",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45908:comment:4139983051:sdk:Python:azure-mgmt-planetarycomputer",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-27T03:59:44Z",
+      "observedAt": "2026-03-27T03:59:44Z",
+      "trackId": "sdk:Python:azure-mgmt-planetarycomputer",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45908",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45908#issuecomment-4139983051"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@msyyc, pr ready, please help review",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45908:commit:011d87512d31:sdk:Python:azure-mgmt-planetarycomputer",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-27T07:23:16Z",
+      "observedAt": "2026-03-27T07:23:16Z",
+      "trackId": "sdk:Python:azure-mgmt-planetarycomputer",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45908",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/011d87512d3155e818f3fe3bc463f2a66df9a5d7"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45908:review:4019352529:sdk:Python:azure-mgmt-planetarycomputer",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-27T07:25:12Z",
+      "observedAt": "2026-03-27T07:25:12Z",
+      "trackId": "sdk:Python:azure-mgmt-planetarycomputer",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45908",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45908#pullrequestreview-4019352529"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45908:review:4019402935:sdk:Python:azure-mgmt-planetarycomputer",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-27T07:36:40Z",
+      "observedAt": "2026-03-27T07:36:40Z",
+      "trackId": "sdk:Python:azure-mgmt-planetarycomputer",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45908",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45908#pullrequestreview-4019402935"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45908:commit:5b147d1152e3:sdk:Python:azure-mgmt-planetarycomputer",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-27T08:12:37Z",
+      "observedAt": "2026-03-27T08:12:37Z",
+      "trackId": "sdk:Python:azure-mgmt-planetarycomputer",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45908",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/5b147d1152e3a0782fe14ae2501a6247be5d1c2f"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37830:comment:4152578207:sdk:JavaScript:@azure/arm-planetarycomputer",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-30T06:25:52Z",
+      "observedAt": "2026-03-30T06:25:52Z",
+      "trackId": "sdk:JavaScript:@azure/arm-planetarycomputer",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37830",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37830#issuecomment-4152578207"
+      },
+      "confidence": "authoritative",
+      "excerpt": "ci failure is because you need to run the test and push the test recordings see this [guide](https://github.com/Azure/azure-sdk-for-js/blob/main/documentation/Quickstart-on-how-to-write-tests.md#run-tests-in-record-mode) but testing is not ",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48577:pr.merged:sdk:Java:azure-resourcemanager-planetarycomputer",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-31T00:05:37Z",
+      "observedAt": "2026-03-31T00:05:37Z",
+      "trackId": "sdk:Java:azure-resourcemanager-planetarycomputer",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48577",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48577"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57473:commit:47c02fe8c5bf:sdk:.NET:Azure.ResourceManager.PlanetaryComputer",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-09T00:07:18Z",
+      "observedAt": "2026-04-09T00:07:18Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.PlanetaryComputer",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "thisisdevanshu-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57473",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/47c02fe8c5bf69edeec64e99fee705f053335ccf"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37830:commit:ee36db1022e6:sdk:JavaScript:@azure/arm-planetarycomputer",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-09T06:51:35Z",
+      "observedAt": "2026-04-09T06:51:35Z",
+      "trackId": "sdk:JavaScript:@azure/arm-planetarycomputer",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "thisisdevanshu-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37830",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/ee36db1022e649f2f4fff614147db2575f47945f"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37830:comment:4219807637:sdk:JavaScript:@azure/arm-planetarycomputer",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-10T03:01:24Z",
+      "observedAt": "2026-04-10T03:01:24Z",
+      "trackId": "sdk:JavaScript:@azure/arm-planetarycomputer",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37830",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37830#issuecomment-4219807637"
+      },
+      "confidence": "authoritative",
+      "excerpt": "please resolve conflicts",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37830:comment:4219841428:sdk:JavaScript:@azure/arm-planetarycomputer",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-10T03:06:40Z",
+      "observedAt": "2026-04-10T03:06:40Z",
+      "trackId": "sdk:JavaScript:@azure/arm-planetarycomputer",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37830",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37830#issuecomment-4219841428"
+      },
+      "confidence": "authoritative",
+      "excerpt": "LGTM cc @JialinHuang803",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37830:comment:4257736760:sdk:JavaScript:@azure/arm-planetarycomputer",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-16T06:09:46Z",
+      "observedAt": "2026-04-16T06:09:46Z",
+      "trackId": "sdk:JavaScript:@azure/arm-planetarycomputer",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37830",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37830#issuecomment-4257736760"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@thisisdevanshu-ms could you follow this [guide ](https://github.com/Azure/azure-sdk-for-js/blob/main/documentation/steps-after-generations.md#resolve-conflicts-for-pr)to resolve conflicts and enable auto-merge? we will re-approve when conf",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37830:commit:56aca0bab7f5:sdk:JavaScript:@azure/arm-planetarycomputer",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-27T20:34:51Z",
+      "observedAt": "2026-04-27T20:34:51Z",
+      "trackId": "sdk:JavaScript:@azure/arm-planetarycomputer",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "thisisdevanshu-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37830",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/56aca0bab7f535fe3b2132207366fe09c2273a5e"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37830:commit:098268289676:sdk:JavaScript:@azure/arm-planetarycomputer",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-27T23:02:44Z",
+      "observedAt": "2026-04-27T23:02:44Z",
+      "trackId": "sdk:JavaScript:@azure/arm-planetarycomputer",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "thisisdevanshu-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37830",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/09826828967671b37c6ea698c577351bcd052b91"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45908:pr.merged:sdk:Python:azure-mgmt-planetarycomputer",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-28T00:41:26Z",
+      "observedAt": "2026-04-28T00:41:26Z",
+      "trackId": "sdk:Python:azure-mgmt-planetarycomputer",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45908",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45908"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37830:commit:a62703863e53:sdk:JavaScript:@azure/arm-planetarycomputer",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-28T00:57:55Z",
+      "observedAt": "2026-04-28T00:57:55Z",
+      "trackId": "sdk:JavaScript:@azure/arm-planetarycomputer",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "thisisdevanshu-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37830",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/a62703863e530f3f9649aa7df17242df537148b8"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37830:comment:4332080274:sdk:JavaScript:@azure/arm-planetarycomputer",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-28T03:06:12Z",
+      "observedAt": "2026-04-28T03:06:12Z",
+      "trackId": "sdk:JavaScript:@azure/arm-planetarycomputer",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37830",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37830#issuecomment-4332080274"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines successfully started running 1 pipeline(s).<br> </samp>",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37830:commit:02e1e893fdca:sdk:JavaScript:@azure/arm-planetarycomputer",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-28T04:05:09Z",
+      "observedAt": "2026-04-28T04:05:09Z",
+      "trackId": "sdk:JavaScript:@azure/arm-planetarycomputer",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "thisisdevanshu-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37830",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/02e1e893fdca1e8e5bf40e2fbb0b5289fdb27e3b"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37830:comment:4332339536:sdk:JavaScript:@azure/arm-planetarycomputer",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-28T04:24:37Z",
+      "observedAt": "2026-04-28T04:24:37Z",
+      "trackId": "sdk:JavaScript:@azure/arm-planetarycomputer",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "thisisdevanshu"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37830",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37830#issuecomment-4332339536"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> kazrael2119 addressed the review comments, thanks",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26400:pr.merged:sdk:Go:sdk/resourcemanager/planetarycomputer/armplanetarycomputer",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-28T06:27:27Z",
+      "observedAt": "2026-04-28T06:27:27Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/planetarycomputer/armplanetarycomputer",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26400",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26400"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37830:comment:4333504332:sdk:JavaScript:@azure/arm-planetarycomputer",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-28T08:19:57Z",
+      "observedAt": "2026-04-28T08:19:57Z",
+      "trackId": "sdk:JavaScript:@azure/arm-planetarycomputer",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37830",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37830#issuecomment-4333504332"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@copilot please resolve conflicts",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37830:commit:35a44baf01f3:sdk:JavaScript:@azure/arm-planetarycomputer",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-28T08:25:50Z",
+      "observedAt": "2026-04-28T08:25:50Z",
+      "trackId": "sdk:JavaScript:@azure/arm-planetarycomputer",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37830",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/35a44baf01f399fe1ee2e7a6ebe9af2945c77cda"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37830:comment:4333557335:sdk:JavaScript:@azure/arm-planetarycomputer",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-28T08:26:13Z",
+      "observedAt": "2026-04-28T08:26:13Z",
+      "trackId": "sdk:JavaScript:@azure/arm-planetarycomputer",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37830",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37830#issuecomment-4333557335"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> @copilot please resolve conflicts Resolved the conflicts in commit `35a44baf`. The only conflict was in `pnpm-lock.yaml`, which was resolved by taking the main version and running `pnpm install` to regenerate the lockfile with the `arm-pl",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37830:comment:4334042445:sdk:JavaScript:@azure/arm-planetarycomputer",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-28T09:35:33Z",
+      "observedAt": "2026-04-28T09:35:33Z",
+      "trackId": "sdk:JavaScript:@azure/arm-planetarycomputer",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37830",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37830#issuecomment-4334042445"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Next Steps to Merge Only failed checks and required actions are listed below. - ⏳ ADO CI (`js - PullRequest`): still running — the pnpm-lock conflict was resolved in commit [`35a44baf`](https://github.com/Azure/azure-sdk-for-js/commit/35",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37830:review:4187482387:sdk:JavaScript:@azure/arm-planetarycomputer",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-28T09:35:34Z",
+      "observedAt": "2026-04-28T09:35:34Z",
+      "trackId": "sdk:JavaScript:@azure/arm-planetarycomputer",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37830",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37830#pullrequestreview-4187482387"
+      },
+      "confidence": "authoritative",
+      "excerpt": "No API design issues found. This PR upgrades `@azure/arm-planetarycomputer` from `1.0.0-beta.1` to `1.0.0` (first stable release). The API version `2026-04-15` is strictly newer than the existing `2025-02-11-preview`. The `userAgentInfo` is",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37830:review:4193622898:sdk:JavaScript:@azure/arm-planetarycomputer",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-29T02:01:03Z",
+      "observedAt": "2026-04-29T02:01:03Z",
+      "trackId": "sdk:JavaScript:@azure/arm-planetarycomputer",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "JialinHuang803"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37830",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37830#pullrequestreview-4193622898"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37830:pr.merged:sdk:JavaScript:@azure/arm-planetarycomputer",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-29T02:01:06Z",
+      "observedAt": "2026-04-29T02:01:06Z",
+      "trackId": "sdk:JavaScript:@azure/arm-planetarycomputer",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37830",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37830"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:32548:49:Custom.ReleaseStatusForDotnet",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-04-29T07:17:14.633Z",
+      "observedAt": "2026-04-29T07:17:14.633Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.PlanetaryComputer",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32548",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32548"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32548:49:Custom.ReleasedVersionForDotnet",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-04-29T07:17:14.633Z",
+      "observedAt": "2026-04-29T07:17:14.633Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.PlanetaryComputer",
+      "value": "1.0.0-beta.2",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32548",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32548"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57473:commit:dfa0dcdd3b71:sdk:.NET:Azure.ResourceManager.PlanetaryComputer",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-29T16:17:01Z",
+      "observedAt": "2026-04-29T16:17:01Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.PlanetaryComputer",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "thisisdevanshu-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57473",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/dfa0dcdd3b719378b5656e3c0296bf90a44c31c0"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57473:review:4201899167:sdk:.NET:Azure.ResourceManager.PlanetaryComputer",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-30T01:35:02Z",
+      "observedAt": "2026-04-30T01:35:02Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.PlanetaryComputer",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "live1206"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57473",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57473#pullrequestreview-4201899167"
+      },
+      "confidence": "authoritative",
+      "excerpt": "MPG migration review completed. Phase 1 (Versioning): passed. The PR moves the package from beta to 1.0.0 without a disallowed major version bump, does not remove ApiCompatVersion, and does not add ApiCompatBaseline entries. Phase 2 (API Re",
+      "reviewState": "dismissed",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57473:comment:3165191432:sdk:.NET:Azure.ResourceManager.PlanetaryComputer",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-30T01:42:37Z",
+      "observedAt": "2026-04-30T01:42:37Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.PlanetaryComputer",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "live1206"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57473",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57473#discussion_r3165191432"
+      },
+      "confidence": "authoritative",
+      "excerpt": "please specify the release date",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57473:review:4201916169:sdk:.NET:Azure.ResourceManager.PlanetaryComputer",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-30T01:42:38Z",
+      "observedAt": "2026-04-30T01:42:38Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.PlanetaryComputer",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "live1206"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57473",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57473#pullrequestreview-4201916169"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57473:review:4201918170:sdk:.NET:Azure.ResourceManager.PlanetaryComputer",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-30T01:43:30Z",
+      "observedAt": "2026-04-30T01:43:30Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.PlanetaryComputer",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "live1206"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57473",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57473#pullrequestreview-4201918170"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57473:comment:3165193375:sdk:.NET:Azure.ResourceManager.PlanetaryComputer",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-30T01:43:30Z",
+      "observedAt": "2026-04-30T01:43:30Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.PlanetaryComputer",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "live1206"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57473",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57473#discussion_r3165193375"
+      },
+      "confidence": "authoritative",
+      "excerpt": "why are we adding the empty parameter here?",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57473:review:4201923082:sdk:.NET:Azure.ResourceManager.PlanetaryComputer",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-30T01:45:38Z",
+      "observedAt": "2026-04-30T01:45:38Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.PlanetaryComputer",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "live1206"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57473",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57473#pullrequestreview-4201923082"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57473:comment:3165198462:sdk:.NET:Azure.ResourceManager.PlanetaryComputer",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-30T01:45:38Z",
+      "observedAt": "2026-04-30T01:45:38Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.PlanetaryComputer",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "live1206"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57473",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57473#discussion_r3165198462"
+      },
+      "confidence": "authoritative",
+      "excerpt": "since you are going GA in this release, please update readme file to remove `--prerelease` in https://github.com/Azure/azure-sdk-for-net/blob/dfa0dcdd3b719378b5656e3c0296bf90a44c31c0/sdk/planetarycomputer/Azure.ResourceManager.PlanetaryComp",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57473:review:4201925044:sdk:.NET:Azure.ResourceManager.PlanetaryComputer",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-30T01:46:25Z",
+      "observedAt": "2026-04-30T01:46:25Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.PlanetaryComputer",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "live1206"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57473",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57473#pullrequestreview-4201925044"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57473:comment:3165200382:sdk:.NET:Azure.ResourceManager.PlanetaryComputer",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-30T01:46:25Z",
+      "observedAt": "2026-04-30T01:46:25Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.PlanetaryComputer",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "live1206"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57473",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57473#discussion_r3165200382"
+      },
+      "confidence": "authoritative",
+      "excerpt": "this has been released, please move this to the latest entry in changelog",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57473:commit:46c8c22eda0e:sdk:.NET:Azure.ResourceManager.PlanetaryComputer",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-30T02:34:25Z",
+      "observedAt": "2026-04-30T02:34:25Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.PlanetaryComputer",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "thisisdevanshu-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57473",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/46c8c22eda0e5cd4556897c2a6814190e9892764"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57473:commit:a6f577a02990:sdk:.NET:Azure.ResourceManager.PlanetaryComputer",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-30T02:38:02Z",
+      "observedAt": "2026-04-30T02:38:02Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.PlanetaryComputer",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "thisisdevanshu-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57473",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/a6f577a0299084d9418ab13a168e737ab7f8edd6"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57473:review:4202194440:sdk:.NET:Azure.ResourceManager.PlanetaryComputer",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-30T03:15:51Z",
+      "observedAt": "2026-04-30T03:15:51Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.PlanetaryComputer",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "live1206"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57473",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57473#pullrequestreview-4202194440"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57473:pr.merged:sdk:.NET:Azure.ResourceManager.PlanetaryComputer",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-30T03:33:33Z",
+      "observedAt": "2026-04-30T03:33:33Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.PlanetaryComputer",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57473",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57473"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado:32548:51:Custom.ReleasedVersionForDotnet",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-04-30T10:09:38.953Z",
+      "observedAt": "2026-04-30T10:09:38.953Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.PlanetaryComputer",
+      "value": "1.0.0",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32548",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32548"
+      },
+      "title": "Package version observed",
+      "stack": 4
+    },
+    {
+      "id": "ado:32548:52:Custom.ReleaseStatusForPython",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-04-30T22:48:14.02Z",
+      "observedAt": "2026-04-30T22:48:14.02Z",
+      "trackId": "sdk:Python:azure-mgmt-planetarycomputer",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32548",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32548"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32548:52:Custom.ReleasedVersionForPython",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-04-30T22:48:14.02Z",
+      "observedAt": "2026-04-30T22:48:14.02Z",
+      "trackId": "sdk:Python:azure-mgmt-planetarycomputer",
+      "value": "1.0.0",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32548",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32548"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "ado:32548:53:Custom.ReleaseStatusForGo",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-04-30T23:24:42.2Z",
+      "observedAt": "2026-04-30T23:24:42.2Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/planetarycomputer/armplanetarycomputer",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32548",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32548"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32548:53:Custom.ReleasedVersionForGo",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-04-30T23:24:42.2Z",
+      "observedAt": "2026-04-30T23:24:42.2Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/planetarycomputer/armplanetarycomputer",
+      "value": "1.0.0",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32548",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32548"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "ado:32548:54:Custom.ReleaseStatusForJava",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-05-01T00:11:29.88Z",
+      "observedAt": "2026-05-01T00:11:29.88Z",
+      "trackId": "sdk:Java:azure-resourcemanager-planetarycomputer",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32548",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32548"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32548:54:Custom.ReleasedVersionForJava",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-05-01T00:11:29.88Z",
+      "observedAt": "2026-05-01T00:11:29.88Z",
+      "trackId": "sdk:Java:azure-resourcemanager-planetarycomputer",
+      "value": "1.0.0",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32548",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32548"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "ado:32548:55:Custom.ReleaseStatusForJavaScript",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-05-01T21:07:29.47Z",
+      "observedAt": "2026-05-01T21:07:29.47Z",
+      "trackId": "sdk:JavaScript:@azure/arm-planetarycomputer",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32548",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32548"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32548:55:Custom.ReleasedVersionForJavaScript",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-05-01T21:07:29.47Z",
+      "observedAt": "2026-05-01T21:07:29.47Z",
+      "trackId": "sdk:JavaScript:@azure/arm-planetarycomputer",
+      "value": "1.0.0",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32548",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32548"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "ado:32548:56:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-05-01T21:08:48.167Z",
+      "observedAt": "2026-05-01T21:08:48.167Z",
+      "trackId": "plan",
+      "value": "Finished",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32548",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32548"
+      },
+      "title": "Plan state changed",
+      "stack": 0
+    }
+  ],
+  "quality": {
+    "warnings": [
+      "Multiple spec PRs are retained in link history"
+    ],
+    "unavailablePullRequests": 0,
+    "unavailablePipelineRuns": 0
+  },
+  "boundaryFacts": {
+    "id": "32548",
+    "state": "finished",
+    "specPrs": [
+      {
+        "id": "github:Azure/azure-rest-api-specs#41263",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#41263",
+        "createdAt": "2026-03-11T21:23:42Z",
+        "mergedAt": "2026-03-25T00:52:55Z",
+        "closedAt": "2026-03-25T00:52:55Z",
+        "available": true
+      },
+      {
+        "id": "github:Azure/azure-rest-api-specs-pr#27283",
+        "trackId": "spec:github:Azure/azure-rest-api-specs-pr#27283",
+        "createdAt": "2026-03-10T00:02:06Z",
+        "mergedAt": "2026-03-25T00:07:13Z",
+        "closedAt": "2026-03-25T00:07:13Z",
+        "available": true
+      }
+    ],
+    "artifacts": [
+      {
+        "language": ".NET",
+        "package": "Azure.ResourceManager.PlanetaryComputer",
+        "trackId": "sdk:.NET:Azure.ResourceManager.PlanetaryComputer",
+        "prId": "github:Azure/azure-sdk-for-net#57473",
+        "prCreatedAt": "2026-03-25T17:19:14Z",
+        "prMergedAt": "2026-04-30T03:33:33Z",
+        "prClosedAt": "2026-04-30T03:33:33Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-net#57473",
+            "createdAt": "2026-03-25T17:19:14Z",
+            "mergedAt": "2026-04-30T03:33:33Z",
+            "closedAt": "2026-04-30T03:33:33Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6062566",
+        "generationStartAt": "2026-03-25T17:13:34.1558375Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-04-29T07:17:14.633Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.0.0",
+        "releaseBoundaryAt": "2026-04-29T07:17:14.633Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "JavaScript",
+        "package": "@azure/arm-planetarycomputer",
+        "trackId": "sdk:JavaScript:@azure/arm-planetarycomputer",
+        "prId": "github:Azure/azure-sdk-for-js#37830",
+        "prCreatedAt": "2026-03-25T17:19:33Z",
+        "prMergedAt": "2026-04-29T02:01:06Z",
+        "prClosedAt": "2026-04-29T02:01:06Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-js#37830",
+            "createdAt": "2026-03-25T17:19:33Z",
+            "mergedAt": "2026-04-29T02:01:06Z",
+            "closedAt": "2026-04-29T02:01:06Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6062570",
+        "generationStartAt": "2026-03-25T17:14:08.7318333Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-05-01T21:07:29.47Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.0.0",
+        "releaseBoundaryAt": "2026-05-01T21:07:29.47Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Python",
+        "package": "azure-mgmt-planetarycomputer",
+        "trackId": "sdk:Python:azure-mgmt-planetarycomputer",
+        "prId": "github:Azure/azure-sdk-for-python#45908",
+        "prCreatedAt": "2026-03-25T17:20:11Z",
+        "prMergedAt": "2026-04-28T00:41:26Z",
+        "prClosedAt": "2026-04-28T00:41:26Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-python#45908",
+            "createdAt": "2026-03-25T17:20:11Z",
+            "mergedAt": "2026-04-28T00:41:26Z",
+            "closedAt": "2026-04-28T00:41:26Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6062568",
+        "generationStartAt": "2026-03-25T17:13:53.9518162Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-04-30T22:48:14.02Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.0.0",
+        "releaseBoundaryAt": "2026-04-30T22:48:14.02Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Java",
+        "package": "azure-resourcemanager-planetarycomputer",
+        "trackId": "sdk:Java:azure-resourcemanager-planetarycomputer",
+        "prId": "github:Azure/azure-sdk-for-java#48577",
+        "prCreatedAt": "2026-03-25T17:22:26Z",
+        "prMergedAt": "2026-03-31T00:05:37Z",
+        "prClosedAt": "2026-03-31T00:05:37Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-java#48577",
+            "createdAt": "2026-03-25T17:22:26Z",
+            "mergedAt": "2026-03-31T00:05:37Z",
+            "closedAt": "2026-03-31T00:05:37Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6062567",
+        "generationStartAt": "2026-03-25T17:13:42.4361116Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-05-01T00:11:29.88Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.0.0",
+        "releaseBoundaryAt": "2026-05-01T00:11:29.88Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Go",
+        "package": "sdk/resourcemanager/planetarycomputer/armplanetarycomputer",
+        "trackId": "sdk:Go:sdk/resourcemanager/planetarycomputer/armplanetarycomputer",
+        "prId": "github:Azure/azure-sdk-for-go#26400",
+        "prCreatedAt": "2026-03-25T17:18:56Z",
+        "prMergedAt": "2026-04-28T06:27:27Z",
+        "prClosedAt": "2026-04-28T06:27:27Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-go#26400",
+            "createdAt": "2026-03-25T17:18:56Z",
+            "mergedAt": "2026-04-28T06:27:27Z",
+            "closedAt": "2026-04-28T06:27:27Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6062572",
+        "generationStartAt": "2026-03-25T17:14:20.5116037Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-04-30T23:24:42.2Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.0.0",
+        "releaseBoundaryAt": "2026-04-30T23:24:42.2Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      }
+    ],
+    "cohortPlan": {
+      "id": "32548",
+      "releasePlanId": "2070",
+      "title": "Release Plan - 2070 - GA - Microsoft Planetary Computer Pro",
+      "service": "Microsoft Planetary Computer Pro",
+      "state": "finished"
+    },
+    "quality": {
+      "warnings": [
+        "Multiple spec PRs are retained in link history"
+      ],
+      "unavailablePullRequests": 0,
+      "unavailablePipelineRuns": 0
+    }
+  },
+  "summary": {
+    "durationHours": 2086.6,
+    "pullRequestCount": 7,
+    "humanReviewCount": 14,
+    "humanCommentCount": 13
+  }
+}

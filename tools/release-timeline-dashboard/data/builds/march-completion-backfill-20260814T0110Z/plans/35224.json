@@ -1,0 +1,3513 @@
+{
+  "schemaVersion": 2,
+  "id": "35224",
+  "correlation": {
+    "policyVersion": 1,
+    "preflight": "passed"
+  },
+  "releasePlanId": "35224",
+  "title": "Public Preview release plan for CloudHealth.Management",
+  "service": "CloudHealth.Management",
+  "product": "Release",
+  "path": "specification/cloudhealth/CloudHealth.Management",
+  "state": "finished",
+  "plane": "management",
+  "releaseType": "APEX Public Preview",
+  "intendedMonth": "July 2026",
+  "createdAt": "2026-07-07T13:14:29.13Z",
+  "completedAt": "2026-08-10T03:31:38.743Z",
+  "sourceUrl": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35224",
+  "range": {
+    "start": "2026-07-03T07:49:47.000Z",
+    "end": "2026-08-10T03:31:38.743Z"
+  },
+  "intendedArtifacts": [
+    {
+      "prId": "github:Azure/azure-sdk-for-net#60727",
+      "language": ".NET",
+      "package": "Azure.ResourceManager.CloudHealth",
+      "version": "1.0.0-beta.4",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6661430",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-js#39245",
+      "language": "JavaScript",
+      "package": "@azure/arm-cloudhealth",
+      "version": "1.0.0-beta.3",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6550237",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-python#47912",
+      "language": "Python",
+      "package": "azure-mgmt-cloudhealth",
+      "version": "1.0.0b3",
+      "outcome": "released",
+      "generationPipelineUrl": null,
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-java#49787",
+      "language": "Java",
+      "package": "azure-resourcemanager-cloudhealth",
+      "version": "1.0.0-beta.3",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6551162",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-go#27169",
+      "language": "Go",
+      "package": "sdk/resourcemanager/cloudhealth/armcloudhealth",
+      "version": "0.3.0",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6550238",
+      "releasePipelineUrl": null
+    }
+  ],
+  "links": [
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#44415",
+      "role": "spec-pr",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/44415",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-net#60727",
+      "role": "sdk-pr",
+      "language": ".NET",
+      "url": "https://github.com/Azure/azure-sdk-for-net/pull/60727",
+      "releasePlanIds": [
+        "35224"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-js#39199",
+      "role": "sdk-pr-history",
+      "language": "JavaScript",
+      "url": "https://github.com/Azure/azure-sdk-for-js/pull/39199",
+      "releasePlanIds": [
+        "35221",
+        "35224"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-js#39244",
+      "role": "sdk-pr-history",
+      "language": "JavaScript",
+      "url": "https://github.com/Azure/azure-sdk-for-js/pull/39244",
+      "releasePlanIds": [
+        "35224"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-js#39245",
+      "role": "sdk-pr",
+      "language": "JavaScript",
+      "url": "https://github.com/Azure/azure-sdk-for-js/pull/39245",
+      "releasePlanIds": [
+        "35224"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-python#47912",
+      "role": "sdk-pr",
+      "language": "Python",
+      "url": "https://github.com/Azure/azure-sdk-for-python/pull/47912",
+      "releasePlanIds": [
+        "35221",
+        "35224"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-java#49741",
+      "role": "sdk-pr-history",
+      "language": "Java",
+      "url": "https://github.com/Azure/azure-sdk-for-java/pull/49741",
+      "releasePlanIds": [
+        "35221",
+        "35224"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-java#49786",
+      "role": "sdk-pr-history",
+      "language": "Java",
+      "url": "https://github.com/Azure/azure-sdk-for-java/pull/49786",
+      "releasePlanIds": [
+        "35224"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-java#49787",
+      "role": "sdk-pr",
+      "language": "Java",
+      "url": "https://github.com/Azure/azure-sdk-for-java/pull/49787",
+      "releasePlanIds": [
+        "35224"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-go#27141",
+      "role": "sdk-pr-history",
+      "language": "Go",
+      "url": "https://github.com/Azure/azure-sdk-for-go/pull/27141",
+      "releasePlanIds": [
+        "35221",
+        "35224"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-go#27169",
+      "role": "sdk-pr",
+      "language": "Go",
+      "url": "https://github.com/Azure/azure-sdk-for-go/pull/27169",
+      "releasePlanIds": [
+        "35224"
+      ]
+    }
+  ],
+  "tracks": [
+    {
+      "id": "plan",
+      "kind": "plan",
+      "label": "Release Plan",
+      "detail": "APEX Public Preview"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#44415",
+      "kind": "spec",
+      "label": "Spec PR",
+      "detail": "azure-rest-api-specs #44415",
+      "artifactId": "github:Azure/azure-rest-api-specs#44415",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "kind": "sdk",
+      "label": ".NET",
+      "detail": "Azure.ResourceManager.CloudHealth",
+      "artifactId": "github:Azure/azure-sdk-for-net#60727",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:JavaScript:@azure/arm-cloudhealth",
+      "kind": "sdk",
+      "label": "JavaScript",
+      "detail": "@azure/arm-cloudhealth",
+      "artifactId": "github:Azure/azure-sdk-for-js#39245",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Python:azure-mgmt-cloudhealth",
+      "kind": "sdk",
+      "label": "Python",
+      "detail": "azure-mgmt-cloudhealth",
+      "artifactId": "github:Azure/azure-sdk-for-python#47912",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Java:azure-resourcemanager-cloudhealth",
+      "kind": "sdk",
+      "label": "Java",
+      "detail": "azure-resourcemanager-cloudhealth",
+      "artifactId": "github:Azure/azure-sdk-for-java#49787",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Go:sdk/resourcemanager/cloudhealth/armcloudhealth",
+      "kind": "sdk",
+      "label": "Go",
+      "detail": "sdk/resourcemanager/cloudhealth/armcloudhealth",
+      "artifactId": "github:Azure/azure-sdk-for-go#27169",
+      "state": "merged"
+    }
+  ],
+  "events": [
+    {
+      "id": "github:Azure/azure-rest-api-specs#44415:pr.created:spec:github:Azure/azure-rest-api-specs#44415",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-03T07:49:47Z",
+      "observedAt": "2026-07-03T07:49:47Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44415",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "sebader"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44415",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44415"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44415:comment:4874007610:spec:github:Azure/azure-rest-api-specs#44415",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-03T07:50:35Z",
+      "observedAt": "2026-07-03T07:50:35Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44415",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44415",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44415#issuecomment-4874007610"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>✅ All automated merging requirements have been met! To get your PR merged, see <a href=\"https://aka.ms/azsdk/specreview/merge\">aka.ms/azsdk/specreview/merge</a>.<br /><br />Comment generated by <a href=\"https://g",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44415:comment:4874040267:spec:github:Azure/azure-rest-api-specs#44415",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-03T07:54:27Z",
+      "observedAt": "2026-07-03T07:54:27Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44415",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44415",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44415#issuecomment-4874040267"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews | Language | API Review for Package | |----------|---------| | Swagger | [Microsoft.CloudHealth](https://apiview.dev/Assemblies/Review",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44415:commit:00664e2b444a:spec:github:Azure/azure-rest-api-specs#44415",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-03T09:05:36Z",
+      "observedAt": "2026-07-03T09:05:36Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44415",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "sebader"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44415",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/00664e2b444adf934ab16eb9eb704ee49a4d4826"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44415:commit:28821c0b4f14:spec:github:Azure/azure-rest-api-specs#44415",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-03T09:21:34Z",
+      "observedAt": "2026-07-03T09:21:34Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44415",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "sebader"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44415",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/28821c0b4f145eee8d978e4ebab2e0d3b4bc9424"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44415:commit:05e3911729b8:spec:github:Azure/azure-rest-api-specs#44415",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-03T09:25:43Z",
+      "observedAt": "2026-07-03T09:25:43Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44415",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "sebader"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44415",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/05e3911729b818623f3b024ad07484fe77993c30"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44415:review:4624704479:spec:github:Azure/azure-rest-api-specs#44415",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-03T09:33:03Z",
+      "observedAt": "2026-07-03T09:33:03Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44415",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "hjscherer"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44415",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44415#pullrequestreview-4624704479"
+      },
+      "confidence": "authoritative",
+      "excerpt": "LGTM",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44415:pr.merged:spec:github:Azure/azure-rest-api-specs#44415",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-03T09:36:23Z",
+      "observedAt": "2026-07-03T09:36:23Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44415",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44415",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44415"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39199:commit:ed2b1eeffb42:sdk:JavaScript:@azure/arm-cloudhealth",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-07T12:25:00Z",
+      "observedAt": "2026-07-07T12:25:00Z",
+      "trackId": "sdk:JavaScript:@azure/arm-cloudhealth",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39199",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/ed2b1eeffb420a1497e52ef26cc1a8b2356de593"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39199:pr.created:sdk:JavaScript:@azure/arm-cloudhealth",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-07T12:25:05Z",
+      "observedAt": "2026-07-07T12:25:05Z",
+      "trackId": "sdk:JavaScript:@azure/arm-cloudhealth",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39199",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39199"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39199:review:4645041495:sdk:JavaScript:@azure/arm-cloudhealth",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-07T12:25:07Z",
+      "observedAt": "2026-07-07T12:25:07Z",
+      "trackId": "sdk:JavaScript:@azure/arm-cloudhealth",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39199",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39199#pullrequestreview-4645041495"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot can't review bot-authored pull requests automatically. A user with Copilot access can request a review manually.",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47912:commit:249970436c83:sdk:Python:azure-mgmt-cloudhealth",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-07T12:27:31Z",
+      "observedAt": "2026-07-07T12:27:31Z",
+      "trackId": "sdk:Python:azure-mgmt-cloudhealth",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47912",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/249970436c83a4b6cb31fac93d0cebbf4d018d7e"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47912:pr.created:sdk:Python:azure-mgmt-cloudhealth",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-07T12:27:36Z",
+      "observedAt": "2026-07-07T12:27:36Z",
+      "trackId": "sdk:Python:azure-mgmt-cloudhealth",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47912",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47912"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47912:review:4645060611:sdk:Python:azure-mgmt-cloudhealth",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-07T12:27:39Z",
+      "observedAt": "2026-07-07T12:27:39Z",
+      "trackId": "sdk:Python:azure-mgmt-cloudhealth",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47912",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47912#pullrequestreview-4645060611"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot can't review bot-authored pull requests automatically. A user with Copilot access can request a review manually.",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27141:commit:a0848832a5f7:sdk:Go:sdk/resourcemanager/cloudhealth/armcloudhealth",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-07T12:28:02Z",
+      "observedAt": "2026-07-07T12:28:02Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/cloudhealth/armcloudhealth",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27141",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/a0848832a5f75c929a1c5d81c2331d9e99dd0a1c"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27141:pr.created:sdk:Go:sdk/resourcemanager/cloudhealth/armcloudhealth",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-07T12:28:07Z",
+      "observedAt": "2026-07-07T12:28:07Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/cloudhealth/armcloudhealth",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27141",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27141"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27141:review:4645064398:sdk:Go:sdk/resourcemanager/cloudhealth/armcloudhealth",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-07T12:28:09Z",
+      "observedAt": "2026-07-07T12:28:09Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/cloudhealth/armcloudhealth",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27141",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27141#pullrequestreview-4645064398"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot can't review bot-authored pull requests automatically. A user with Copilot access can request a review manually.",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49741:commit:a9d5ec05c77e:sdk:Java:azure-resourcemanager-cloudhealth",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-07T12:28:56Z",
+      "observedAt": "2026-07-07T12:28:56Z",
+      "trackId": "sdk:Java:azure-resourcemanager-cloudhealth",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49741",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/a9d5ec05c77ed5ae30309c89d11d7ca696abc497"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49741:pr.created:sdk:Java:azure-resourcemanager-cloudhealth",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-07T12:29:00Z",
+      "observedAt": "2026-07-07T12:29:00Z",
+      "trackId": "sdk:Java:azure-resourcemanager-cloudhealth",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49741",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49741"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49741:review:4645072267:sdk:Java:azure-resourcemanager-cloudhealth",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-07T12:29:03Z",
+      "observedAt": "2026-07-07T12:29:03Z",
+      "trackId": "sdk:Java:azure-resourcemanager-cloudhealth",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49741",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49741#pullrequestreview-4645072267"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot can't review bot-authored pull requests automatically. A user with Copilot access can request a review manually.",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "ado:35224:created",
+      "type": "plan.created",
+      "phase": "plan",
+      "occurredAt": "2026-07-07T13:14:29.13Z",
+      "observedAt": "2026-07-07T13:14:29.13Z",
+      "trackId": "plan",
+      "title": "Release Plan created",
+      "confidence": "authoritative",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35224",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35224"
+      },
+      "stack": 0
+    },
+    {
+      "id": "ado:35224:1:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-07-07T13:14:29.13Z",
+      "observedAt": "2026-07-07T13:14:29.13Z",
+      "trackId": "plan",
+      "value": "New",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35224",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35224"
+      },
+      "title": "Plan state changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35224:1:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-07T13:14:29.13Z",
+      "observedAt": "2026-07-07T13:14:29.13Z",
+      "trackId": "plan",
+      "value": "Not Available",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35224",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35224"
+      },
+      "title": "Spec approval changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:35224:1:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-07T13:14:29.13Z",
+      "observedAt": "2026-07-07T13:14:29.13Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35224",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35224"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35224:1:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-07T13:14:29.13Z",
+      "observedAt": "2026-07-07T13:14:29.13Z",
+      "trackId": "sdk:JavaScript:@azure/arm-cloudhealth",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35224",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35224"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:35224:1:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-07T13:14:29.13Z",
+      "observedAt": "2026-07-07T13:14:29.13Z",
+      "trackId": "sdk:Python:azure-mgmt-cloudhealth",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35224",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35224"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:35224:1:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-07T13:14:29.13Z",
+      "observedAt": "2026-07-07T13:14:29.13Z",
+      "trackId": "sdk:Java:azure-resourcemanager-cloudhealth",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35224",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35224"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:35224:1:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-07T13:14:29.13Z",
+      "observedAt": "2026-07-07T13:14:29.13Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/cloudhealth/armcloudhealth",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35224",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35224"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:35225:1:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-07T13:14:29.71Z",
+      "observedAt": "2026-07-07T13:14:29.71Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44415",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/44415",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35225",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35225"
+      },
+      "title": "Spec PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado:35224:2:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-07-07T13:14:30.707Z",
+      "observedAt": "2026-07-07T13:14:30.707Z",
+      "trackId": "plan",
+      "value": "In Progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35224",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35224"
+      },
+      "title": "Plan state changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:35224:5:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-07T13:14:46.167Z",
+      "observedAt": "2026-07-07T13:14:46.167Z",
+      "trackId": "sdk:JavaScript:@azure/arm-cloudhealth",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35224",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35224"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:35224:5:Custom.SDKPullRequestForJavaScript",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-07T13:14:46.167Z",
+      "observedAt": "2026-07-07T13:14:46.167Z",
+      "trackId": "sdk:JavaScript:@azure/arm-cloudhealth",
+      "value": "https://github.com/Azure/azure-sdk-for-js/pull/39199",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35224",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35224"
+      },
+      "title": "SDK PR linked",
+      "stack": 5
+    },
+    {
+      "id": "ado:35224:6:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-07T13:14:47.697Z",
+      "observedAt": "2026-07-07T13:14:47.697Z",
+      "trackId": "sdk:Python:azure-mgmt-cloudhealth",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35224",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35224"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:35224:6:Custom.SDKPullRequestForPython",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-07T13:14:47.697Z",
+      "observedAt": "2026-07-07T13:14:47.697Z",
+      "trackId": "sdk:Python:azure-mgmt-cloudhealth",
+      "value": "https://github.com/Azure/azure-sdk-for-python/pull/47912",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35224",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35224"
+      },
+      "title": "SDK PR linked",
+      "stack": 5
+    },
+    {
+      "id": "ado:35224:7:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-07T13:14:48.6Z",
+      "observedAt": "2026-07-07T13:14:48.6Z",
+      "trackId": "sdk:Java:azure-resourcemanager-cloudhealth",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35224",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35224"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:35224:7:Custom.SDKPullRequestForJava",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-07T13:14:48.6Z",
+      "observedAt": "2026-07-07T13:14:48.6Z",
+      "trackId": "sdk:Java:azure-resourcemanager-cloudhealth",
+      "value": "https://github.com/Azure/azure-sdk-for-java/pull/49741",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35224",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35224"
+      },
+      "title": "SDK PR linked",
+      "stack": 5
+    },
+    {
+      "id": "ado:35224:8:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-07T13:14:49.51Z",
+      "observedAt": "2026-07-07T13:14:49.51Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/cloudhealth/armcloudhealth",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35224",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35224"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:35224:8:Custom.SDKPullRequestForGo",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-07T13:14:49.51Z",
+      "observedAt": "2026-07-07T13:14:49.51Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/cloudhealth/armcloudhealth",
+      "value": "https://github.com/Azure/azure-sdk-for-go/pull/27141",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35224",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35224"
+      },
+      "title": "SDK PR linked",
+      "stack": 5
+    },
+    {
+      "id": "ado:35224:10:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-07T17:02:54.627Z",
+      "observedAt": "2026-07-07T17:02:54.627Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35224",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35224"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35224:10:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-07T17:02:54.627Z",
+      "observedAt": "2026-07-07T17:02:54.627Z",
+      "trackId": "sdk:JavaScript:@azure/arm-cloudhealth",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35224",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35224"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35224:10:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-07T17:02:54.627Z",
+      "observedAt": "2026-07-07T17:02:54.627Z",
+      "trackId": "sdk:Python:azure-mgmt-cloudhealth",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35224",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35224"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35224:10:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-07T17:02:54.627Z",
+      "observedAt": "2026-07-07T17:02:54.627Z",
+      "trackId": "sdk:Java:azure-resourcemanager-cloudhealth",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35224",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35224"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35224:10:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-07T17:02:54.627Z",
+      "observedAt": "2026-07-07T17:02:54.627Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/cloudhealth/armcloudhealth",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35224",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35224"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35224:12:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-07T17:04:52.993Z",
+      "observedAt": "2026-07-07T17:04:52.993Z",
+      "trackId": "plan",
+      "value": "Approved",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35224",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35224"
+      },
+      "title": "Spec approval changed",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60727:commit:f946bbd5bdff:sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-07T17:12:08Z",
+      "observedAt": "2026-07-07T17:12:08Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60727",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/f946bbd5bdff9db6e70b5d9aa838a73473dd198c"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60727:pr.created:sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-07T17:12:12Z",
+      "observedAt": "2026-07-07T17:12:12Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60727",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60727"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60727:review:4647376749:sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-07T17:12:14Z",
+      "observedAt": "2026-07-07T17:12:14Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60727",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60727#pullrequestreview-4647376749"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot can't review bot-authored pull requests automatically. A user with Copilot access can request a review manually.",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "ado:35224:13:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-07T17:12:19.453Z",
+      "observedAt": "2026-07-07T17:12:19.453Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35224",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35224"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:35224:13:Custom.SDKPullRequestForDotnet",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-07T17:12:19.453Z",
+      "observedAt": "2026-07-07T17:12:19.453Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "value": "https://github.com/Azure/azure-sdk-for-net/pull/60727",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35224",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35224"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60727:review:4647635731:sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-07T17:49:37Z",
+      "observedAt": "2026-07-07T17:49:37Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60727",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60727#pullrequestreview-4647635731"
+      },
+      "confidence": "authoritative",
+      "excerpt": "### Management SDK Review Summary - **Scope**: `Azure.ResourceManager.CloudHealth` (v1.0.0-beta.4) - **Versioning**: Pass — beta pre-release, no `ApiCompatVersion`, CHANGELOG unreleased section present - **API surface**: Pass (scanner: 0 vi",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27141:comment:4910447720:sdk:Go:sdk/resourcemanager/cloudhealth/armcloudhealth",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-08T01:05:14Z",
+      "observedAt": "2026-07-08T01:05:14Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/cloudhealth/armcloudhealth",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27141",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27141#issuecomment-4910447720"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## PR is ready to merge",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49741:review:4650195930:sdk:Java:azure-resourcemanager-cloudhealth",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-08T01:26:26Z",
+      "observedAt": "2026-07-08T01:26:26Z",
+      "trackId": "sdk:Java:azure-resourcemanager-cloudhealth",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49741",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49741#pullrequestreview-4650195930"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27141:review:4650291514:sdk:Go:sdk/resourcemanager/cloudhealth/armcloudhealth",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-08T01:51:38Z",
+      "observedAt": "2026-07-08T01:51:38Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/cloudhealth/armcloudhealth",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "tadelesh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27141",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27141#pullrequestreview-4650291514"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47912:commit:13a5ddb09ca2:sdk:Python:azure-mgmt-cloudhealth",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-08T02:27:45Z",
+      "observedAt": "2026-07-08T02:27:45Z",
+      "trackId": "sdk:Python:azure-mgmt-cloudhealth",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47912",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/13a5ddb09ca2a84baecfe142223a38fe91f0d12b"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47912:comment:4910839137:sdk:Python:azure-mgmt-cloudhealth",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-08T02:28:07Z",
+      "observedAt": "2026-07-08T02:28:07Z",
+      "trackId": "sdk:Python:azure-mgmt-cloudhealth",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47912",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47912#issuecomment-4910839137"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @hjscherer, we have approved the PR and we will hold the PR merge and release until you explicitly ping us to merge then release.",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47912:commit:9bdeecbe38c9:sdk:Python:azure-mgmt-cloudhealth",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-08T02:46:33Z",
+      "observedAt": "2026-07-08T02:46:33Z",
+      "trackId": "sdk:Python:azure-mgmt-cloudhealth",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47912",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/9bdeecbe38c9febf8b885550618ae7f32f9b0f5b"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47912:review:4650733981:sdk:Python:azure-mgmt-cloudhealth",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-08T03:44:09Z",
+      "observedAt": "2026-07-08T03:44:09Z",
+      "trackId": "sdk:Python:azure-mgmt-cloudhealth",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47912",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47912#pullrequestreview-4650733981"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47912:pr.merged:sdk:Python:azure-mgmt-cloudhealth",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-08T05:34:25Z",
+      "observedAt": "2026-07-08T05:34:25Z",
+      "trackId": "sdk:Python:azure-mgmt-cloudhealth",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47912",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47912"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:35224:14:Custom.ReleaseStatusForPython",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-07-08T06:40:57.467Z",
+      "observedAt": "2026-07-08T06:40:57.467Z",
+      "trackId": "sdk:Python:azure-mgmt-cloudhealth",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35224",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35224"
+      },
+      "title": "Release status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:35224:14:Custom.ReleasedVersionForPython",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-07-08T06:40:57.467Z",
+      "observedAt": "2026-07-08T06:40:57.467Z",
+      "trackId": "sdk:Python:azure-mgmt-cloudhealth",
+      "value": "1.0.0b3",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35224",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35224"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27141:pr.merged:sdk:Go:sdk/resourcemanager/cloudhealth/armcloudhealth",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-08T12:07:12Z",
+      "observedAt": "2026-07-08T12:07:12Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/cloudhealth/armcloudhealth",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27141",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27141"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49741:pr.merged:sdk:Java:azure-resourcemanager-cloudhealth",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-08T12:07:36Z",
+      "observedAt": "2026-07-08T12:07:36Z",
+      "trackId": "sdk:Java:azure-resourcemanager-cloudhealth",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49741",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49741"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39199:comment:4922484036:sdk:JavaScript:@azure/arm-cloudhealth",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-09T07:02:06Z",
+      "observedAt": "2026-07-09T07:02:06Z",
+      "trackId": "sdk:JavaScript:@azure/arm-cloudhealth",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39199",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39199#issuecomment-4922484036"
+      },
+      "confidence": "authoritative",
+      "excerpt": "LGTM cc @JialinHuang803",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39199:review:4668045649:sdk:JavaScript:@azure/arm-cloudhealth",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-10T02:08:36Z",
+      "observedAt": "2026-07-10T02:08:36Z",
+      "trackId": "sdk:JavaScript:@azure/arm-cloudhealth",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "JialinHuang803"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39199",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39199#pullrequestreview-4668045649"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39199:pr.merged:sdk:JavaScript:@azure/arm-cloudhealth",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-10T16:35:25Z",
+      "observedAt": "2026-07-10T16:35:25Z",
+      "trackId": "sdk:JavaScript:@azure/arm-cloudhealth",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39199",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39199"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6550237:generation.queued:sdk:JavaScript:@azure/arm-cloudhealth",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-07-12T11:37:54.2583083Z",
+      "observedAt": "2026-07-12T11:45:14.8988546Z",
+      "trackId": "sdk:JavaScript:@azure/arm-cloudhealth",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6550237",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6550237"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6550237:generation.started:sdk:JavaScript:@azure/arm-cloudhealth",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-07-12T11:38:05.8186994Z",
+      "observedAt": "2026-07-12T11:45:14.8988546Z",
+      "trackId": "sdk:JavaScript:@azure/arm-cloudhealth",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6550237",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6550237"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6550238:generation.queued:sdk:Go:sdk/resourcemanager/cloudhealth/armcloudhealth",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-07-12T11:40:11.3070201Z",
+      "observedAt": "2026-07-12T11:46:15.1074657Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/cloudhealth/armcloudhealth",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6550238",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6550238"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6550238:generation.started:sdk:Go:sdk/resourcemanager/cloudhealth/armcloudhealth",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-07-12T11:40:22.8585391Z",
+      "observedAt": "2026-07-12T11:46:15.1074657Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/cloudhealth/armcloudhealth",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6550238",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6550238"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39244:commit:8b4a66130195:sdk:JavaScript:@azure/arm-cloudhealth",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-12T11:44:12Z",
+      "observedAt": "2026-07-12T11:44:12Z",
+      "trackId": "sdk:JavaScript:@azure/arm-cloudhealth",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39244",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/8b4a661301951d27db147e22025a43b16d5c4a44"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39245:commit:fcc4de05725d:sdk:JavaScript:@azure/arm-cloudhealth",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-12T11:44:12Z",
+      "observedAt": "2026-07-12T11:44:12Z",
+      "trackId": "sdk:JavaScript:@azure/arm-cloudhealth",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39245",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/fcc4de05725dbc282ab5c650f7d5e3712ad4e893"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39244:pr.created:sdk:JavaScript:@azure/arm-cloudhealth",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-12T11:44:15Z",
+      "observedAt": "2026-07-12T11:44:15Z",
+      "trackId": "sdk:JavaScript:@azure/arm-cloudhealth",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39244",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39244"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39245:pr.created:sdk:JavaScript:@azure/arm-cloudhealth",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-12T11:44:16Z",
+      "observedAt": "2026-07-12T11:44:16Z",
+      "trackId": "sdk:JavaScript:@azure/arm-cloudhealth",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39245",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39245"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39244:review:4679979790:sdk:JavaScript:@azure/arm-cloudhealth",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-12T11:44:17Z",
+      "observedAt": "2026-07-12T11:44:17Z",
+      "trackId": "sdk:JavaScript:@azure/arm-cloudhealth",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39244",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39244#pullrequestreview-4679979790"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot can't review bot-authored pull requests automatically. A user with Copilot access can request a review manually.",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39245:review:4679979802:sdk:JavaScript:@azure/arm-cloudhealth",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-12T11:44:18Z",
+      "observedAt": "2026-07-12T11:44:18Z",
+      "trackId": "sdk:JavaScript:@azure/arm-cloudhealth",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39245",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39245#pullrequestreview-4679979802"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot can't review bot-authored pull requests automatically. A user with Copilot access can request a review manually.",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "ado:35224:18:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-12T11:44:21.753Z",
+      "observedAt": "2026-07-12T11:44:21.753Z",
+      "trackId": "sdk:JavaScript:@azure/arm-cloudhealth",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35224",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35224"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:35224:18:Custom.SDKPullRequestForJavaScript",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-12T11:44:21.753Z",
+      "observedAt": "2026-07-12T11:44:21.753Z",
+      "trackId": "sdk:JavaScript:@azure/arm-cloudhealth",
+      "value": "https://github.com/Azure/azure-sdk-for-js/pull/39244",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35224",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35224"
+      },
+      "title": "SDK PR linked",
+      "stack": 3
+    },
+    {
+      "id": "ado:35224:19:Custom.SDKPullRequestForJavaScript",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-12T11:44:22.95Z",
+      "observedAt": "2026-07-12T11:44:22.95Z",
+      "trackId": "sdk:JavaScript:@azure/arm-cloudhealth",
+      "value": "https://github.com/Azure/azure-sdk-for-js/pull/39245",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35224",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35224"
+      },
+      "title": "SDK PR linked",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60727:review:4679980467:sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-12T11:44:49Z",
+      "observedAt": "2026-07-12T11:44:49Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60727",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60727#pullrequestreview-4679980467"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Copilot reviewed 4 out of 5 changed files in this pull request and generated 1 comment.",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60727:comment:3566231504:sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-12T11:44:49Z",
+      "observedAt": "2026-07-12T11:44:49Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60727",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60727#discussion_r3566231504"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This PR adds a new public API surface area (`EntitySignalRefreshInterval.PT15M`). The package CHANGELOG’s current `1.0.0-beta.4 (Unreleased)` section is still empty, so this addition should be captured there to keep release notes accurate.",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6550237:generation.completed:sdk:JavaScript:@azure/arm-cloudhealth",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-07-12T11:45:14.8988546Z",
+      "observedAt": "2026-07-12T11:45:14.8988546Z",
+      "trackId": "sdk:JavaScript:@azure/arm-cloudhealth",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6550237",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6550237"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27169:commit:ef8c76e1dd6d:sdk:Go:sdk/resourcemanager/cloudhealth/armcloudhealth",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-12T11:45:16Z",
+      "observedAt": "2026-07-12T11:45:16Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/cloudhealth/armcloudhealth",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27169",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/ef8c76e1dd6d8600062ef5f4d2892883174d7b99"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27169:pr.created:sdk:Go:sdk/resourcemanager/cloudhealth/armcloudhealth",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-12T11:45:19Z",
+      "observedAt": "2026-07-12T11:45:19Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/cloudhealth/armcloudhealth",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27169",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27169"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27169:review:4679981195:sdk:Go:sdk/resourcemanager/cloudhealth/armcloudhealth",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-12T11:45:21Z",
+      "observedAt": "2026-07-12T11:45:21Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/cloudhealth/armcloudhealth",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27169",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27169#pullrequestreview-4679981195"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot can't review bot-authored pull requests automatically. A user with Copilot access can request a review manually.",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "ado:35224:20:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-12T11:45:25.493Z",
+      "observedAt": "2026-07-12T11:45:25.493Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/cloudhealth/armcloudhealth",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35224",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35224"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:35224:20:Custom.SDKPullRequestForGo",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-12T11:45:25.493Z",
+      "observedAt": "2026-07-12T11:45:25.493Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/cloudhealth/armcloudhealth",
+      "value": "https://github.com/Azure/azure-sdk-for-go/pull/27169",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35224",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35224"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6550238:generation.completed:sdk:Go:sdk/resourcemanager/cloudhealth/armcloudhealth",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-07-12T11:46:15.1074657Z",
+      "observedAt": "2026-07-12T11:46:15.1074657Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/cloudhealth/armcloudhealth",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6550238",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6550238"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49786:commit:f26b9433815d:sdk:Java:azure-resourcemanager-cloudhealth",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-12T11:59:54Z",
+      "observedAt": "2026-07-12T11:59:54Z",
+      "trackId": "sdk:Java:azure-resourcemanager-cloudhealth",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49786",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/f26b9433815dbb2da42c5bbbb3fc811ee0729dc6"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49786:pr.created:sdk:Java:azure-resourcemanager-cloudhealth",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-12T11:59:58Z",
+      "observedAt": "2026-07-12T11:59:58Z",
+      "trackId": "sdk:Java:azure-resourcemanager-cloudhealth",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49786",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49786"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49786:review:4680000140:sdk:Java:azure-resourcemanager-cloudhealth",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-12T12:00:00Z",
+      "observedAt": "2026-07-12T12:00:00Z",
+      "trackId": "sdk:Java:azure-resourcemanager-cloudhealth",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49786",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49786#pullrequestreview-4680000140"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot can't review bot-authored pull requests automatically. A user with Copilot access can request a review manually.",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "ado:35224:22:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-12T12:00:04.44Z",
+      "observedAt": "2026-07-12T12:00:04.44Z",
+      "trackId": "sdk:Java:azure-resourcemanager-cloudhealth",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35224",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35224"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:35224:22:Custom.SDKPullRequestForJava",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-12T12:00:04.44Z",
+      "observedAt": "2026-07-12T12:00:04.44Z",
+      "trackId": "sdk:Java:azure-resourcemanager-cloudhealth",
+      "value": "https://github.com/Azure/azure-sdk-for-java/pull/49786",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35224",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35224"
+      },
+      "title": "SDK PR linked",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27169:comment:4953051707:sdk:Go:sdk/resourcemanager/cloudhealth/armcloudhealth",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-12T22:37:50Z",
+      "observedAt": "2026-07-12T22:37:50Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/cloudhealth/armcloudhealth",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27169",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27169#issuecomment-4953051707"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## PR is ready to merge",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49786:review:4681212036:sdk:Java:azure-resourcemanager-cloudhealth",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-13T01:25:21Z",
+      "observedAt": "2026-07-13T01:25:21Z",
+      "trackId": "sdk:Java:azure-resourcemanager-cloudhealth",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49786",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49786#pullrequestreview-4681212036"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27169:review:4681301704:sdk:Go:sdk/resourcemanager/cloudhealth/armcloudhealth",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-13T02:03:13Z",
+      "observedAt": "2026-07-13T02:03:13Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/cloudhealth/armcloudhealth",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "tadelesh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27169",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27169#pullrequestreview-4681301704"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49786:pr.merged:sdk:Java:azure-resourcemanager-cloudhealth",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-13T04:55:23Z",
+      "observedAt": "2026-07-13T04:55:23Z",
+      "trackId": "sdk:Java:azure-resourcemanager-cloudhealth",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49786",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49786"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27169:pr.merged:sdk:Go:sdk/resourcemanager/cloudhealth/armcloudhealth",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-13T04:56:08Z",
+      "observedAt": "2026-07-13T04:56:08Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/cloudhealth/armcloudhealth",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27169",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27169"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6551162:generation.queued:sdk:Java:azure-resourcemanager-cloudhealth",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-07-13T04:57:32.6130023Z",
+      "observedAt": "2026-07-13T05:16:41.8673528Z",
+      "trackId": "sdk:Java:azure-resourcemanager-cloudhealth",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6551162",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6551162"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:35224:23:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-13T04:57:39.51Z",
+      "observedAt": "2026-07-13T04:57:39.51Z",
+      "trackId": "sdk:Java:azure-resourcemanager-cloudhealth",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35224",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35224"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6551162:generation.started:sdk:Java:azure-resourcemanager-cloudhealth",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-07-13T04:57:51.1088874Z",
+      "observedAt": "2026-07-13T05:16:41.8673528Z",
+      "trackId": "sdk:Java:azure-resourcemanager-cloudhealth",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6551162",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6551162"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49787:commit:f0510b076943:sdk:Java:azure-resourcemanager-cloudhealth",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-13T05:06:42Z",
+      "observedAt": "2026-07-13T05:06:42Z",
+      "trackId": "sdk:Java:azure-resourcemanager-cloudhealth",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49787",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/f0510b0769437897d6c5672e8146452eb7978441"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49787:pr.created:sdk:Java:azure-resourcemanager-cloudhealth",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-13T05:06:46Z",
+      "observedAt": "2026-07-13T05:06:46Z",
+      "trackId": "sdk:Java:azure-resourcemanager-cloudhealth",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49787",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49787"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49787:review:4681891999:sdk:Java:azure-resourcemanager-cloudhealth",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-13T05:06:48Z",
+      "observedAt": "2026-07-13T05:06:48Z",
+      "trackId": "sdk:Java:azure-resourcemanager-cloudhealth",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49787",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49787#pullrequestreview-4681891999"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot can't review bot-authored pull requests automatically. A user with Copilot access can request a review manually.",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "ado:35224:24:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-13T05:06:52.44Z",
+      "observedAt": "2026-07-13T05:06:52.44Z",
+      "trackId": "sdk:Java:azure-resourcemanager-cloudhealth",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35224",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35224"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:35224:24:Custom.SDKPullRequestForJava",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-13T05:06:52.44Z",
+      "observedAt": "2026-07-13T05:06:52.44Z",
+      "trackId": "sdk:Java:azure-resourcemanager-cloudhealth",
+      "value": "https://github.com/Azure/azure-sdk-for-java/pull/49787",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35224",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35224"
+      },
+      "title": "SDK PR linked",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6551162:generation.completed:sdk:Java:azure-resourcemanager-cloudhealth",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-07-13T05:16:41.8673528Z",
+      "observedAt": "2026-07-13T05:16:41.8673528Z",
+      "trackId": "sdk:Java:azure-resourcemanager-cloudhealth",
+      "title": "Pipeline completed with issues",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6551162",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6551162"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49787:review:4681958723:sdk:Java:azure-resourcemanager-cloudhealth",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-13T05:25:40Z",
+      "observedAt": "2026-07-13T05:25:40Z",
+      "trackId": "sdk:Java:azure-resourcemanager-cloudhealth",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49787",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49787#pullrequestreview-4681958723"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49787:comment:4954714795:sdk:Java:azure-resourcemanager-cloudhealth",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-13T05:25:51Z",
+      "observedAt": "2026-07-13T05:25:51Z",
+      "trackId": "sdk:Java:azure-resourcemanager-cloudhealth",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49787",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49787#issuecomment-4954714795"
+      },
+      "confidence": "authoritative",
+      "excerpt": "why are you generating this again and again>??",
+      "stack": 0
+    },
+    {
+      "id": "ado:35224:25:Custom.ReleaseStatusForGo",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-07-13T13:30:58.26Z",
+      "observedAt": "2026-07-13T13:30:58.26Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/cloudhealth/armcloudhealth",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35224",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35224"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35224:25:Custom.ReleasedVersionForGo",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-07-13T13:30:58.26Z",
+      "observedAt": "2026-07-13T13:30:58.26Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/cloudhealth/armcloudhealth",
+      "value": "0.3.0",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35224",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35224"
+      },
+      "title": "Package version observed",
+      "stack": 2
+    },
+    {
+      "id": "ado:35224:26:Custom.ReleaseStatusForJava",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-07-13T14:28:35.077Z",
+      "observedAt": "2026-07-13T14:28:35.077Z",
+      "trackId": "sdk:Java:azure-resourcemanager-cloudhealth",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35224",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35224"
+      },
+      "title": "Release status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35224:26:Custom.ReleasedVersionForJava",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-07-13T14:28:35.077Z",
+      "observedAt": "2026-07-13T14:28:35.077Z",
+      "trackId": "sdk:Java:azure-resourcemanager-cloudhealth",
+      "value": "1.0.0-beta.3",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35224",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35224"
+      },
+      "title": "Package version observed",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49787:pr.merged:sdk:Java:azure-resourcemanager-cloudhealth",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-13T17:03:55Z",
+      "observedAt": "2026-07-13T17:03:55Z",
+      "trackId": "sdk:Java:azure-resourcemanager-cloudhealth",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49787",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49787"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39244:pr.closed:sdk:JavaScript:@azure/arm-cloudhealth",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-14T06:58:56Z",
+      "observedAt": "2026-07-14T06:58:56Z",
+      "trackId": "sdk:JavaScript:@azure/arm-cloudhealth",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39244",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39244"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39244:comment:4966256360:sdk:JavaScript:@azure/arm-cloudhealth",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-14T06:58:56Z",
+      "observedAt": "2026-07-14T06:58:56Z",
+      "trackId": "sdk:JavaScript:@azure/arm-cloudhealth",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39244",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39244#issuecomment-4966256360"
+      },
+      "confidence": "authoritative",
+      "excerpt": "close as duplicate with https://github.com/Azure/azure-sdk-for-js/pull/39245",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39245:review:4718923475:sdk:JavaScript:@azure/arm-cloudhealth",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-17T02:27:36Z",
+      "observedAt": "2026-07-17T02:27:36Z",
+      "trackId": "sdk:JavaScript:@azure/arm-cloudhealth",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "JialinHuang803"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39245",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39245#pullrequestreview-4718923475"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39245:comment:4998411414:sdk:JavaScript:@azure/arm-cloudhealth",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-17T02:31:07Z",
+      "observedAt": "2026-07-17T02:31:07Z",
+      "trackId": "sdk:JavaScript:@azure/arm-cloudhealth",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39245",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39245#issuecomment-4998411414"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@hjscherer please help merge this pr, then we will trigger the release, this pr only has changelog date change is because we have merged https://github.com/Azure/azure-sdk-for-js/pull/39199 but not released yet, and both pr use the same api",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39245:pr.merged:sdk:JavaScript:@azure/arm-cloudhealth",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-31T08:30:38Z",
+      "observedAt": "2026-07-31T08:30:38Z",
+      "trackId": "sdk:JavaScript:@azure/arm-cloudhealth",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39245",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39245"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60727:comment:5140980413:sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-31T08:36:45Z",
+      "observedAt": "2026-07-31T08:36:45Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "hjscherer"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60727",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60727#issuecomment-5140980413"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@live1206, @ArcturusZhang and @ArthurMa1978 can you please review? Thanks",
+      "stack": 0
+    },
+    {
+      "id": "ado:35224:27:Custom.ReleaseStatusForJavaScript",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-07-31T10:17:01.95Z",
+      "observedAt": "2026-07-31T10:17:01.95Z",
+      "trackId": "sdk:JavaScript:@azure/arm-cloudhealth",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35224",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35224"
+      },
+      "title": "Release status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35224:27:Custom.ReleasedVersionForJavaScript",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-07-31T10:17:01.95Z",
+      "observedAt": "2026-07-31T10:17:01.95Z",
+      "trackId": "sdk:JavaScript:@azure/arm-cloudhealth",
+      "value": "1.0.0-beta.3",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35224",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35224"
+      },
+      "title": "Package version observed",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60727:review:4862622599:sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-05T08:41:15Z",
+      "observedAt": "2026-08-05T08:41:15Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "live1206"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60727",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60727#pullrequestreview-4862622599"
+      },
+      "confidence": "authoritative",
+      "excerpt": "As I can see, there is no api-version bump since the output metadata.json doesn't change. Any plan to release this? Currently, we should manually update changelog with expecting release data.",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6661430:generation.queued:sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-08-05T09:20:56.5777663Z",
+      "observedAt": "2026-08-06T09:23:44.9708226Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6661430",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6661430"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:35224:28:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-05T09:21:01.483Z",
+      "observedAt": "2026-08-05T09:21:01.483Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35224",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35224"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:35224:29:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-05T09:26:35.11Z",
+      "observedAt": "2026-08-05T09:26:35.11Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35224",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35224"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6661430:generation.started:sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-08-06T09:18:48.8677787Z",
+      "observedAt": "2026-08-06T09:23:44.9708226Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6661430",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6661430"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6661430:e774f8e5-bdc6-568c-1139-90a03215c860:sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-08-06T09:23:06.0066667Z",
+      "observedAt": "2026-08-06T09:23:44.9708226Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "title": "task failed: Generate SDK",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6661430",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6661430"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6661430:80130f07-32fc-5c19-809b-35051dcc5ef5:sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-08-06T09:23:39.8366667Z",
+      "observedAt": "2026-08-06T09:23:44.9708226Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "title": "job failed: Job",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6661430",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6661430"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6661430:b49e7e65-b64b-557c-018e-3fd79c15ded6:sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-08-06T09:23:43.4766667Z",
+      "observedAt": "2026-08-06T09:23:44.9708226Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "title": "stage failed: SDK Generation",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6661430",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6661430"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6661430:generation.failed:sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "type": "generation.failed",
+      "phase": "generation",
+      "occurredAt": "2026-08-06T09:23:44.9708226Z",
+      "observedAt": "2026-08-06T09:23:44.9708226Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "title": "Pipeline failed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6661430",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6661430"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60727:commit:16ddc108a98c:sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-06T11:34:11Z",
+      "observedAt": "2026-08-06T11:34:11Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "hjscherer"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60727",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/16ddc108a98c81b1124bcc0d4b1fe10fc05abbe3"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60727:comment:5204164625:sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-06T11:40:16Z",
+      "observedAt": "2026-08-06T11:40:16Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60727",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60727#issuecomment-5204164625"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## 🔍 CI Failure Analysis for PR #60727 ### Check Status Summary | Check | Status | |---|---| | `net - pullrequest` | ❌ Failed | | `net - eng-scripts - ci` | ✅ Passed | | `net - eng-scripts - ci (Run PowerShell Tests Test Windows)` | ✅ Pass",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60727:review:4874236525:sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-06T11:45:35Z",
+      "observedAt": "2026-08-06T11:45:35Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "live1206"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60727",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60727#pullrequestreview-4874236525"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60727:comment:3728479056:sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-06T11:45:35Z",
+      "observedAt": "2026-08-06T11:45:35Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "live1206"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60727",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60727#discussion_r3728479056"
+      },
+      "confidence": "authoritative",
+      "excerpt": "this already released, should update the latest entry in changelog",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60727:commit:4003d1a0e271:sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-06T12:00:24Z",
+      "observedAt": "2026-08-06T12:00:24Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "hjscherer"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60727",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/4003d1a0e2714c237604a9bdb487e07a7013ae0b"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60727:review:4874370820:sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-06T12:01:17Z",
+      "observedAt": "2026-08-06T12:01:17Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "hjscherer"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60727",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60727#pullrequestreview-4874370820"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60727:comment:3728577322:sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-06T12:01:17Z",
+      "observedAt": "2026-08-06T12:01:17Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "hjscherer"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60727",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60727#discussion_r3728577322"
+      },
+      "confidence": "authoritative",
+      "excerpt": "done",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60727:comment:5204746709:sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-06T12:40:34Z",
+      "observedAt": "2026-08-06T12:40:34Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60727",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60727#issuecomment-5204746709"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## 🔍 CI Failure Analysis for PR #60727 ### Check Status Summary | Check | Status | |---|---| | `net - pullrequest` | ❌ Failed | | `Build Build PRBatch` | ❌ Failed | | `Build Analyze PRBatch` | ✅ Passed | | All build/test matrix jobs | ✅ Pa",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60727:comment:5211562417:sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-07T02:50:20Z",
+      "observedAt": "2026-08-07T02:50:20Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "live1206"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60727",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60727#issuecomment-5211562417"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Please fix the CI failure according to the above instructions",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60727:review:4879733703:sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-07T03:39:30Z",
+      "observedAt": "2026-08-07T03:39:30Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "live1206"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60727",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60727#pullrequestreview-4879733703"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60727:comment:3733273348:sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-07T03:39:30Z",
+      "observedAt": "2026-08-07T03:39:30Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "live1206"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60727",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60727#discussion_r3733273348"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This is wrong, there is already an entry for this in L3, please make sure CI pass",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60727:commit:832c77fe1e37:sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-07T05:19:52Z",
+      "observedAt": "2026-08-07T05:19:52Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "hjscherer"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60727",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/832c77fe1e3703d51c8217e4ae0c2be71df2087c"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60727:review:4880163316:sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-07T05:20:14Z",
+      "observedAt": "2026-08-07T05:20:14Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "hjscherer"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60727",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60727#pullrequestreview-4880163316"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60727:comment:3733609754:sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-07T05:20:14Z",
+      "observedAt": "2026-08-07T05:20:14Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "hjscherer"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60727",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60727#discussion_r3733609754"
+      },
+      "confidence": "authoritative",
+      "excerpt": "fixed",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60727:review:4880312529:sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-07T05:55:12Z",
+      "observedAt": "2026-08-07T05:55:12Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "live1206"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60727",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60727#pullrequestreview-4880312529"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60727:comment:3733737397:sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-07T05:55:12Z",
+      "observedAt": "2026-08-07T05:55:12Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "live1206"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60727",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60727#discussion_r3733737397"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The CI is still failing",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60727:comment:5213056603:sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-07T05:57:05Z",
+      "observedAt": "2026-08-07T05:57:05Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60727",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60727#issuecomment-5213056603"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## 🔍 CI Failure Analysis for PR #60727 ### Check Status Summary | Check | Status | |---|---| | `net - pullrequest` | ❌ Failed | | `net - pullrequest (Build Build PRBatch)` | ❌ Failed | | `net - pullrequest (Build Analyze PRBatch)` | ✅ Pass",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60727:commit:820541541e4d:sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-07T06:01:06Z",
+      "observedAt": "2026-08-07T06:01:06Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "hjscherer"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60727",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/820541541e4d5628c1202830314a7ea7ba4c045d"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60727:review:4880517202:sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-07T06:36:50Z",
+      "observedAt": "2026-08-07T06:36:50Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "hjscherer"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60727",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60727#pullrequestreview-4880517202"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60727:comment:3733906445:sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-07T06:36:50Z",
+      "observedAt": "2026-08-07T06:36:50Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "hjscherer"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60727",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60727#discussion_r3733906445"
+      },
+      "confidence": "authoritative",
+      "excerpt": "removed the empty sections",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60727:review:4880528571:sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-07T06:38:29Z",
+      "observedAt": "2026-08-07T06:38:29Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60727",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60727#pullrequestreview-4880528571"
+      },
+      "confidence": "authoritative",
+      "excerpt": "### Management SDK Review Summary Same status as the previous management SDK review: no blocking management SDK review findings. No new management SDK review findings on this head commit. All commits since the prior workflow review ([f946bb",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60727:review:4880600483:sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-07T06:51:46Z",
+      "observedAt": "2026-08-07T06:51:46Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "live1206"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60727",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60727#pullrequestreview-4880600483"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60727:pr.merged:sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-07T06:51:58Z",
+      "observedAt": "2026-08-07T06:51:58Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60727",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60727"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:35224:30:Custom.ReleaseStatusForDotnet",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-08-10T03:31:38.493Z",
+      "observedAt": "2026-08-10T03:31:38.493Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35224",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35224"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35224:30:Custom.ReleasedVersionForDotnet",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-08-10T03:31:38.493Z",
+      "observedAt": "2026-08-10T03:31:38.493Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CloudHealth",
+      "value": "1.0.0-beta.4",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35224",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35224"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35224:31:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-08-10T03:31:38.743Z",
+      "observedAt": "2026-08-10T03:31:38.743Z",
+      "trackId": "plan",
+      "value": "Finished",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35224",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35224"
+      },
+      "title": "Plan state changed",
+      "stack": 0
+    }
+  ],
+  "quality": {
+    "warnings": [
+      "1 historical linked PR(s) closed without merge",
+      "5 superseded SDK PR link(s) retained"
+    ],
+    "unavailablePullRequests": 0,
+    "unavailablePipelineRuns": 0
+  },
+  "boundaryFacts": {
+    "id": "35224",
+    "state": "finished",
+    "specPrs": [
+      {
+        "id": "github:Azure/azure-rest-api-specs#44415",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#44415",
+        "createdAt": "2026-07-03T07:49:47Z",
+        "mergedAt": "2026-07-03T09:36:23Z",
+        "closedAt": "2026-07-03T09:36:23Z",
+        "available": true
+      }
+    ],
+    "artifacts": [
+      {
+        "language": ".NET",
+        "package": "Azure.ResourceManager.CloudHealth",
+        "trackId": "sdk:.NET:Azure.ResourceManager.CloudHealth",
+        "prId": "github:Azure/azure-sdk-for-net#60727",
+        "prCreatedAt": "2026-07-07T17:12:12Z",
+        "prMergedAt": "2026-08-07T06:51:58Z",
+        "prClosedAt": "2026-08-07T06:51:58Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-net#60727",
+            "createdAt": "2026-07-07T17:12:12Z",
+            "mergedAt": "2026-08-07T06:51:58Z",
+            "closedAt": "2026-08-07T06:51:58Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6661430",
+        "generationStartAt": "2026-08-06T09:18:48.8677787Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-08-10T03:31:38.493Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.0.0-beta.4",
+        "releaseBoundaryAt": "2026-08-10T03:31:38.493Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "JavaScript",
+        "package": "@azure/arm-cloudhealth",
+        "trackId": "sdk:JavaScript:@azure/arm-cloudhealth",
+        "prId": "github:Azure/azure-sdk-for-js#39245",
+        "prCreatedAt": "2026-07-12T11:44:16Z",
+        "prMergedAt": "2026-07-31T08:30:38Z",
+        "prClosedAt": "2026-07-31T08:30:38Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-js#39199",
+            "createdAt": "2026-07-07T12:25:05Z",
+            "mergedAt": "2026-07-10T16:35:25Z",
+            "closedAt": "2026-07-10T16:35:25Z",
+            "state": "merged"
+          },
+          {
+            "id": "github:Azure/azure-sdk-for-js#39244",
+            "createdAt": "2026-07-12T11:44:15Z",
+            "mergedAt": null,
+            "closedAt": "2026-07-14T06:58:56Z",
+            "state": "closed"
+          },
+          {
+            "id": "github:Azure/azure-sdk-for-js#39245",
+            "createdAt": "2026-07-12T11:44:16Z",
+            "mergedAt": "2026-07-31T08:30:38Z",
+            "closedAt": "2026-07-31T08:30:38Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6550237",
+        "generationStartAt": "2026-07-12T11:38:05.8186994Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-07-31T10:17:01.95Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.0.0-beta.3",
+        "releaseBoundaryAt": "2026-07-31T10:17:01.95Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Python",
+        "package": "azure-mgmt-cloudhealth",
+        "trackId": "sdk:Python:azure-mgmt-cloudhealth",
+        "prId": "github:Azure/azure-sdk-for-python#47912",
+        "prCreatedAt": "2026-07-07T12:27:36Z",
+        "prMergedAt": "2026-07-08T05:34:25Z",
+        "prClosedAt": "2026-07-08T05:34:25Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-python#47912",
+            "createdAt": "2026-07-07T12:27:36Z",
+            "mergedAt": "2026-07-08T05:34:25Z",
+            "closedAt": "2026-07-08T05:34:25Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": null,
+        "generationStartAt": null,
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-07-08T06:40:57.467Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.0.0b3",
+        "releaseBoundaryAt": "2026-07-08T06:40:57.467Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "missing",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Java",
+        "package": "azure-resourcemanager-cloudhealth",
+        "trackId": "sdk:Java:azure-resourcemanager-cloudhealth",
+        "prId": "github:Azure/azure-sdk-for-java#49787",
+        "prCreatedAt": "2026-07-13T05:06:46Z",
+        "prMergedAt": "2026-07-13T17:03:55Z",
+        "prClosedAt": "2026-07-13T17:03:55Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-java#49741",
+            "createdAt": "2026-07-07T12:29:00Z",
+            "mergedAt": "2026-07-08T12:07:36Z",
+            "closedAt": "2026-07-08T12:07:36Z",
+            "state": "merged"
+          },
+          {
+            "id": "github:Azure/azure-sdk-for-java#49786",
+            "createdAt": "2026-07-12T11:59:58Z",
+            "mergedAt": "2026-07-13T04:55:23Z",
+            "closedAt": "2026-07-13T04:55:23Z",
+            "state": "merged"
+          },
+          {
+            "id": "github:Azure/azure-sdk-for-java#49787",
+            "createdAt": "2026-07-13T05:06:46Z",
+            "mergedAt": "2026-07-13T17:03:55Z",
+            "closedAt": "2026-07-13T17:03:55Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6551162",
+        "generationStartAt": "2026-07-13T04:57:51.1088874Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-07-13T14:28:35.077Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.0.0-beta.3",
+        "releaseBoundaryAt": "2026-07-13T14:28:35.077Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Go",
+        "package": "sdk/resourcemanager/cloudhealth/armcloudhealth",
+        "trackId": "sdk:Go:sdk/resourcemanager/cloudhealth/armcloudhealth",
+        "prId": "github:Azure/azure-sdk-for-go#27169",
+        "prCreatedAt": "2026-07-12T11:45:19Z",
+        "prMergedAt": "2026-07-13T04:56:08Z",
+        "prClosedAt": "2026-07-13T04:56:08Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-go#27141",
+            "createdAt": "2026-07-07T12:28:07Z",
+            "mergedAt": "2026-07-08T12:07:12Z",
+            "closedAt": "2026-07-08T12:07:12Z",
+            "state": "merged"
+          },
+          {
+            "id": "github:Azure/azure-sdk-for-go#27169",
+            "createdAt": "2026-07-12T11:45:19Z",
+            "mergedAt": "2026-07-13T04:56:08Z",
+            "closedAt": "2026-07-13T04:56:08Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6550238",
+        "generationStartAt": "2026-07-12T11:40:22.8585391Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-07-13T13:30:58.26Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "0.3.0",
+        "releaseBoundaryAt": "2026-07-13T13:30:58.26Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      }
+    ],
+    "cohortPlan": {
+      "id": "35224",
+      "releasePlanId": "35224",
+      "title": "Public Preview release plan for CloudHealth.Management",
+      "service": "CloudHealth.Management",
+      "state": "finished"
+    },
+    "quality": {
+      "warnings": [
+        "1 historical linked PR(s) closed without merge",
+        "5 superseded SDK PR link(s) retained"
+      ],
+      "unavailablePullRequests": 0,
+      "unavailablePipelineRuns": 0
+    }
+  },
+  "summary": {
+    "durationHours": 806.3,
+    "pullRequestCount": 11,
+    "humanReviewCount": 17,
+    "humanCommentCount": 13
+  }
+}

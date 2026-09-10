@@ -1,0 +1,2040 @@
+{
+  "schemaVersion": 2,
+  "id": "34833",
+  "correlation": {
+    "policyVersion": 1,
+    "preflight": "passed"
+  },
+  "releasePlanId": "1574",
+  "title": "Release plan - 1574 - Public Preview - Release Planner Test Product",
+  "service": "fleet",
+  "product": "Release",
+  "path": "specification/containerservice/resource-manager/Microsoft.ContainerService/fleet",
+  "state": "finished",
+  "plane": "management",
+  "releaseType": "APEX Public Preview",
+  "intendedMonth": "June 2026",
+  "createdAt": "2026-06-03T21:30:30.733Z",
+  "completedAt": "2026-06-03T23:26:31.55Z",
+  "sourceUrl": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34833",
+  "range": {
+    "start": "2026-06-03T21:30:30.733Z",
+    "end": "2026-06-03T23:26:31.550Z"
+  },
+  "intendedArtifacts": [
+    {
+      "prId": "github:Azure/azure-sdk-for-net#59642",
+      "language": ".NET",
+      "package": "Azure.ResourceManager.ContainerServiceFleet",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6391677",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-js#38810",
+      "language": "JavaScript",
+      "package": "@azure/arm-containerservicefleet",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6391675",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-python#47329",
+      "language": "Python",
+      "package": "azure-mgmt-containerservicefleet",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6391674",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-java#49369",
+      "language": "Java",
+      "package": "azure-resourcemanager-containerservicefleet",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6391678",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-go#26938",
+      "language": "Go",
+      "package": "sdk/resourcemanager/containerservicefleet/armcontainerservicefleet/v3",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6391676",
+      "releasePipelineUrl": null
+    }
+  ],
+  "links": [
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#43727",
+      "role": "spec-pr",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/43727",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-net#59642",
+      "role": "sdk-pr",
+      "language": ".NET",
+      "url": "https://github.com/Azure/azure-sdk-for-net/pull/59642",
+      "releasePlanIds": [
+        "1574"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-js#38810",
+      "role": "sdk-pr",
+      "language": "JavaScript",
+      "url": "https://github.com/Azure/azure-sdk-for-js/pull/38810",
+      "releasePlanIds": [
+        "1574"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-python#47329",
+      "role": "sdk-pr",
+      "language": "Python",
+      "url": "https://github.com/Azure/azure-sdk-for-python/pull/47329",
+      "releasePlanIds": [
+        "1574"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-java#49369",
+      "role": "sdk-pr",
+      "language": "Java",
+      "url": "https://github.com/Azure/azure-sdk-for-java/pull/49369",
+      "releasePlanIds": [
+        "1574"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-go#26938",
+      "role": "sdk-pr",
+      "language": "Go",
+      "url": "https://github.com/Azure/azure-sdk-for-go/pull/26938",
+      "releasePlanIds": [
+        "1574"
+      ]
+    }
+  ],
+  "tracks": [
+    {
+      "id": "plan",
+      "kind": "plan",
+      "label": "Release Plan",
+      "detail": "APEX Public Preview"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#43727",
+      "kind": "spec",
+      "label": "Spec PR",
+      "detail": "azure-rest-api-specs #43727",
+      "artifactId": "github:Azure/azure-rest-api-specs#43727",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:.NET:Azure.ResourceManager.ContainerServiceFleet",
+      "kind": "sdk",
+      "label": ".NET",
+      "detail": "Azure.ResourceManager.ContainerServiceFleet",
+      "artifactId": "github:Azure/azure-sdk-for-net#59642",
+      "state": "closed"
+    },
+    {
+      "id": "sdk:JavaScript:@azure/arm-containerservicefleet",
+      "kind": "sdk",
+      "label": "JavaScript",
+      "detail": "@azure/arm-containerservicefleet",
+      "artifactId": "github:Azure/azure-sdk-for-js#38810",
+      "state": "closed"
+    },
+    {
+      "id": "sdk:Python:azure-mgmt-containerservicefleet",
+      "kind": "sdk",
+      "label": "Python",
+      "detail": "azure-mgmt-containerservicefleet",
+      "artifactId": "github:Azure/azure-sdk-for-python#47329",
+      "state": "closed"
+    },
+    {
+      "id": "sdk:Java:azure-resourcemanager-containerservicefleet",
+      "kind": "sdk",
+      "label": "Java",
+      "detail": "azure-resourcemanager-containerservicefleet",
+      "artifactId": "github:Azure/azure-sdk-for-java#49369",
+      "state": "closed"
+    },
+    {
+      "id": "sdk:Go:sdk/resourcemanager/containerservicefleet/armcontainerservicefleet/v3",
+      "kind": "sdk",
+      "label": "Go",
+      "detail": "sdk/resourcemanager/containerservicefleet/armcontainerservicefleet/v3",
+      "artifactId": "github:Azure/azure-sdk-for-go#26938",
+      "state": "closed"
+    }
+  ],
+  "events": [
+    {
+      "id": "ado:34833:created",
+      "type": "plan.created",
+      "phase": "plan",
+      "occurredAt": "2026-06-03T21:30:30.733Z",
+      "observedAt": "2026-06-03T21:30:30.733Z",
+      "trackId": "plan",
+      "title": "Release Plan created",
+      "confidence": "authoritative",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34833",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34833"
+      },
+      "stack": 0
+    },
+    {
+      "id": "ado:34833:1:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-06-03T21:30:30.733Z",
+      "observedAt": "2026-06-03T21:30:30.733Z",
+      "trackId": "plan",
+      "value": "New",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34833",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34833"
+      },
+      "title": "Plan state changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34833:1:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-03T21:30:30.733Z",
+      "observedAt": "2026-06-03T21:30:30.733Z",
+      "trackId": "plan",
+      "value": "Not Available",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34833",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34833"
+      },
+      "title": "Spec approval changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:34833:1:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-03T21:30:30.733Z",
+      "observedAt": "2026-06-03T21:30:30.733Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ContainerServiceFleet",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34833",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34833"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34833:1:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-03T21:30:30.733Z",
+      "observedAt": "2026-06-03T21:30:30.733Z",
+      "trackId": "sdk:JavaScript:@azure/arm-containerservicefleet",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34833",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34833"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34833:1:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-03T21:30:30.733Z",
+      "observedAt": "2026-06-03T21:30:30.733Z",
+      "trackId": "sdk:Python:azure-mgmt-containerservicefleet",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34833",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34833"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34833:1:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-03T21:30:30.733Z",
+      "observedAt": "2026-06-03T21:30:30.733Z",
+      "trackId": "sdk:Java:azure-resourcemanager-containerservicefleet",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34833",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34833"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34833:1:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-03T21:30:30.733Z",
+      "observedAt": "2026-06-03T21:30:30.733Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/containerservicefleet/armcontainerservicefleet/v3",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34833",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34833"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34833:2:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-06-03T21:30:31.563Z",
+      "observedAt": "2026-06-03T21:30:31.563Z",
+      "trackId": "plan",
+      "value": "In Progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34833",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34833"
+      },
+      "title": "Plan state changed",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6391677:generation.queued:sdk:.NET:Azure.ResourceManager.ContainerServiceFleet",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-06-03T21:36:21.6774215Z",
+      "observedAt": "2026-06-03T21:45:15.2303668Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ContainerServiceFleet",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6391677",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6391677"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6391678:generation.queued:sdk:Java:azure-resourcemanager-containerservicefleet",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-06-03T21:36:21.6941793Z",
+      "observedAt": "2026-06-03T21:55:57.9507524Z",
+      "trackId": "sdk:Java:azure-resourcemanager-containerservicefleet",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6391678",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6391678"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6391674:generation.queued:sdk:Python:azure-mgmt-containerservicefleet",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-06-03T21:36:21.6990268Z",
+      "observedAt": "2026-06-03T21:44:34.0121798Z",
+      "trackId": "sdk:Python:azure-mgmt-containerservicefleet",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6391674",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6391674"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6391676:generation.queued:sdk:Go:sdk/resourcemanager/containerservicefleet/armcontainerservicefleet/v3",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-06-03T21:36:21.7375388Z",
+      "observedAt": "2026-06-03T21:44:45.7911694Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/containerservicefleet/armcontainerservicefleet/v3",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6391676",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6391676"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6391675:generation.queued:sdk:JavaScript:@azure/arm-containerservicefleet",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-06-03T21:36:21.8512027Z",
+      "observedAt": "2026-06-03T21:44:08.9122796Z",
+      "trackId": "sdk:JavaScript:@azure/arm-containerservicefleet",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6391675",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6391675"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:34833:5:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-03T21:36:27.35Z",
+      "observedAt": "2026-06-03T21:36:27.35Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ContainerServiceFleet",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34833",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34833"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34833:6:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-03T21:36:27.49Z",
+      "observedAt": "2026-06-03T21:36:27.49Z",
+      "trackId": "sdk:Python:azure-mgmt-containerservicefleet",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34833",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34833"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34833:7:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-03T21:36:29.307Z",
+      "observedAt": "2026-06-03T21:36:29.307Z",
+      "trackId": "sdk:JavaScript:@azure/arm-containerservicefleet",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34833",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34833"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34833:8:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-03T21:36:31.66Z",
+      "observedAt": "2026-06-03T21:36:31.66Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/containerservicefleet/armcontainerservicefleet/v3",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34833",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34833"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34833:9:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-03T21:36:35.077Z",
+      "observedAt": "2026-06-03T21:36:35.077Z",
+      "trackId": "sdk:Java:azure-resourcemanager-containerservicefleet",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34833",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34833"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6391675:generation.started:sdk:JavaScript:@azure/arm-containerservicefleet",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-06-03T21:36:39.9794261Z",
+      "observedAt": "2026-06-03T21:44:08.9122796Z",
+      "trackId": "sdk:JavaScript:@azure/arm-containerservicefleet",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6391675",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6391675"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6391676:generation.started:sdk:Go:sdk/resourcemanager/containerservicefleet/armcontainerservicefleet/v3",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-06-03T21:36:41.1214695Z",
+      "observedAt": "2026-06-03T21:44:45.7911694Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/containerservicefleet/armcontainerservicefleet/v3",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6391676",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6391676"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6391677:generation.started:sdk:.NET:Azure.ResourceManager.ContainerServiceFleet",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-06-03T21:36:41.1234838Z",
+      "observedAt": "2026-06-03T21:45:15.2303668Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ContainerServiceFleet",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6391677",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6391677"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6391678:generation.started:sdk:Java:azure-resourcemanager-containerservicefleet",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-06-03T21:36:42.1216111Z",
+      "observedAt": "2026-06-03T21:55:57.9507524Z",
+      "trackId": "sdk:Java:azure-resourcemanager-containerservicefleet",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6391678",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6391678"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6391674:generation.started:sdk:Python:azure-mgmt-containerservicefleet",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-06-03T21:36:44.4032312Z",
+      "observedAt": "2026-06-03T21:44:34.0121798Z",
+      "trackId": "sdk:Python:azure-mgmt-containerservicefleet",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6391674",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6391674"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26938:commit:f373e62398dd:sdk:Go:sdk/resourcemanager/containerservicefleet/armcontainerservicefleet/v3",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-03T21:41:52Z",
+      "observedAt": "2026-06-03T21:41:52Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/containerservicefleet/armcontainerservicefleet/v3",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26938",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/f373e62398ddf03b39e246c1ad37eb486135c806"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26938:pr.created:sdk:Go:sdk/resourcemanager/containerservicefleet/armcontainerservicefleet/v3",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-03T21:41:55Z",
+      "observedAt": "2026-06-03T21:41:55Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/containerservicefleet/armcontainerservicefleet/v3",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26938",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26938"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:34833:10:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-03T21:42:02.53Z",
+      "observedAt": "2026-06-03T21:42:02.53Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/containerservicefleet/armcontainerservicefleet/v3",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34833",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34833"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:34833:10:Custom.SDKPullRequestForGo",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-06-03T21:42:02.53Z",
+      "observedAt": "2026-06-03T21:42:02.53Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/containerservicefleet/armcontainerservicefleet/v3",
+      "value": "https://github.com/Azure/azure-sdk-for-go/pull/26938",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34833",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34833"
+      },
+      "title": "SDK PR linked",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38810:commit:0f23428b97e1:sdk:JavaScript:@azure/arm-containerservicefleet",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-03T21:43:01Z",
+      "observedAt": "2026-06-03T21:43:01Z",
+      "trackId": "sdk:JavaScript:@azure/arm-containerservicefleet",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38810",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/0f23428b97e195e77d8edf616a8ce9074a86e78d"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38810:pr.created:sdk:JavaScript:@azure/arm-containerservicefleet",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-03T21:43:06Z",
+      "observedAt": "2026-06-03T21:43:06Z",
+      "trackId": "sdk:JavaScript:@azure/arm-containerservicefleet",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38810",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38810"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47329:commit:22f4957104d5:sdk:Python:azure-mgmt-containerservicefleet",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-03T21:43:08Z",
+      "observedAt": "2026-06-03T21:43:08Z",
+      "trackId": "sdk:Python:azure-mgmt-containerservicefleet",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47329",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/22f4957104d562fca39df49d71e3b3d2f60bccd3"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47329:pr.created:sdk:Python:azure-mgmt-containerservicefleet",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-03T21:43:12Z",
+      "observedAt": "2026-06-03T21:43:12Z",
+      "trackId": "sdk:Python:azure-mgmt-containerservicefleet",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47329",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47329"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:34833:11:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-03T21:43:13.537Z",
+      "observedAt": "2026-06-03T21:43:13.537Z",
+      "trackId": "sdk:JavaScript:@azure/arm-containerservicefleet",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34833",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34833"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:34833:11:Custom.SDKPullRequestForJavaScript",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-06-03T21:43:13.537Z",
+      "observedAt": "2026-06-03T21:43:13.537Z",
+      "trackId": "sdk:JavaScript:@azure/arm-containerservicefleet",
+      "value": "https://github.com/Azure/azure-sdk-for-js/pull/38810",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34833",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34833"
+      },
+      "title": "SDK PR linked",
+      "stack": 3
+    },
+    {
+      "id": "ado:34833:12:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-03T21:43:19.2Z",
+      "observedAt": "2026-06-03T21:43:19.2Z",
+      "trackId": "sdk:Python:azure-mgmt-containerservicefleet",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34833",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34833"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:34833:12:Custom.SDKPullRequestForPython",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-06-03T21:43:19.2Z",
+      "observedAt": "2026-06-03T21:43:19.2Z",
+      "trackId": "sdk:Python:azure-mgmt-containerservicefleet",
+      "value": "https://github.com/Azure/azure-sdk-for-python/pull/47329",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34833",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34833"
+      },
+      "title": "SDK PR linked",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6391675:generation.completed:sdk:JavaScript:@azure/arm-containerservicefleet",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-06-03T21:44:08.9122796Z",
+      "observedAt": "2026-06-03T21:44:08.9122796Z",
+      "trackId": "sdk:JavaScript:@azure/arm-containerservicefleet",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6391675",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6391675"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59642:commit:57981b6cc9f6:sdk:.NET:Azure.ResourceManager.ContainerServiceFleet",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-03T21:44:10Z",
+      "observedAt": "2026-06-03T21:44:10Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ContainerServiceFleet",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59642",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/57981b6cc9f61de539d0d31e4259c3f35da0b2ca"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59642:pr.created:sdk:.NET:Azure.ResourceManager.ContainerServiceFleet",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-03T21:44:14Z",
+      "observedAt": "2026-06-03T21:44:14Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ContainerServiceFleet",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59642",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59642"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:34833:13:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-03T21:44:21.547Z",
+      "observedAt": "2026-06-03T21:44:21.547Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ContainerServiceFleet",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34833",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34833"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:34833:13:Custom.SDKPullRequestForDotnet",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-06-03T21:44:21.547Z",
+      "observedAt": "2026-06-03T21:44:21.547Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ContainerServiceFleet",
+      "value": "https://github.com/Azure/azure-sdk-for-net/pull/59642",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34833",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34833"
+      },
+      "title": "SDK PR linked",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6391674:generation.completed:sdk:Python:azure-mgmt-containerservicefleet",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-06-03T21:44:34.0121798Z",
+      "observedAt": "2026-06-03T21:44:34.0121798Z",
+      "trackId": "sdk:Python:azure-mgmt-containerservicefleet",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6391674",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6391674"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6391676:generation.completed:sdk:Go:sdk/resourcemanager/containerservicefleet/armcontainerservicefleet/v3",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-06-03T21:44:45.7911694Z",
+      "observedAt": "2026-06-03T21:44:45.7911694Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/containerservicefleet/armcontainerservicefleet/v3",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6391676",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6391676"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26938:review:4423044040:sdk:Go:sdk/resourcemanager/containerservicefleet/armcontainerservicefleet/v3",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-03T21:45:06Z",
+      "observedAt": "2026-06-03T21:45:06Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/containerservicefleet/armcontainerservicefleet/v3",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26938",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26938#pullrequestreview-4423044040"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This is an auto-generated release PR for `armcontainerservicefleet`, updating the SDK to align with the latest TypeSpec/spec input (spec repo commit `12298b3…`) and bumping the module to `3.0.0-beta.6`. **Changes:**",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26938:comment:3352117049:sdk:Go:sdk/resourcemanager/containerservicefleet/armcontainerservicefleet/v3",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-03T21:45:06Z",
+      "observedAt": "2026-06-03T21:45:06Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/containerservicefleet/armcontainerservicefleet/v3",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26938",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26938#discussion_r3352117049"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The new 3.0.0-beta.6 changelog section is empty (no bullets or description). This makes the release notes uninformative and is inconsistent with other mgmt SDK changelog entries that include at least a brief note under \"Other Changes\".",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6391677:generation.completed:sdk:.NET:Azure.ResourceManager.ContainerServiceFleet",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-06-03T21:45:15.2303668Z",
+      "observedAt": "2026-06-03T21:45:15.2303668Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ContainerServiceFleet",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6391677",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6391677"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49369:commit:b48d611213c0:sdk:Java:azure-resourcemanager-containerservicefleet",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-03T21:45:34Z",
+      "observedAt": "2026-06-03T21:45:34Z",
+      "trackId": "sdk:Java:azure-resourcemanager-containerservicefleet",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49369",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/b48d611213c06663cf9f8793b3fba2b09b5a0dba"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49369:pr.created:sdk:Java:azure-resourcemanager-containerservicefleet",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-03T21:45:39Z",
+      "observedAt": "2026-06-03T21:45:39Z",
+      "trackId": "sdk:Java:azure-resourcemanager-containerservicefleet",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49369",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49369"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:34833:14:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-03T21:45:45.863Z",
+      "observedAt": "2026-06-03T21:45:45.863Z",
+      "trackId": "sdk:Java:azure-resourcemanager-containerservicefleet",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34833",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34833"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:34833:14:Custom.SDKPullRequestForJava",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-06-03T21:45:45.863Z",
+      "observedAt": "2026-06-03T21:45:45.863Z",
+      "trackId": "sdk:Java:azure-resourcemanager-containerservicefleet",
+      "value": "https://github.com/Azure/azure-sdk-for-java/pull/49369",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34833",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34833"
+      },
+      "title": "SDK PR linked",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47329:comment:3352127026:sdk:Python:azure-mgmt-containerservicefleet",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-03T21:46:45Z",
+      "observedAt": "2026-06-03T21:46:45Z",
+      "trackId": "sdk:Python:azure-mgmt-containerservicefleet",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47329",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47329#discussion_r3352127026"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The new 4.0.0b5 changelog entry contains a placeholder message. CHANGELOG.md should include real release notes (at least a section header) rather than shipping with a tool error string.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47329:review:4423056942:sdk:Python:azure-mgmt-containerservicefleet",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-03T21:46:46Z",
+      "observedAt": "2026-06-03T21:46:46Z",
+      "trackId": "sdk:Python:azure-mgmt-containerservicefleet",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47329",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47329#pullrequestreview-4423056942"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Updates the `azure-mgmt-containerservicefleet` management-plane package metadata and documentation to align with the latest TypeSpec spec commit and prepares a new beta version release entry. **Changes:** - Bumped p",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47329:comment:3352127064:sdk:Python:azure-mgmt-containerservicefleet",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-03T21:46:46Z",
+      "observedAt": "2026-06-03T21:46:46Z",
+      "trackId": "sdk:Python:azure-mgmt-containerservicefleet",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47329",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47329#discussion_r3352127064"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The current terminology is typically “Microsoft Entra ID” (not just “Microsoft Entra”). Using the full name here will better match Microsoft docs and reduce ambiguity.",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38810:review:4423060141:sdk:JavaScript:@azure/arm-containerservicefleet",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-03T21:47:10Z",
+      "observedAt": "2026-06-03T21:47:10Z",
+      "trackId": "sdk:JavaScript:@azure/arm-containerservicefleet",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38810",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38810#pullrequestreview-4423060141"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This AutoPR updates the `@azure/arm-containerservicefleet` management client to the latest generated output from the referenced TypeSpec configuration/spec commit, including a beta version bump and regeneration-side",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47329:comment:4617002010:sdk:Python:azure-mgmt-containerservicefleet",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-03T21:48:31Z",
+      "observedAt": "2026-06-03T21:48:31Z",
+      "trackId": "sdk:Python:azure-mgmt-containerservicefleet",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "praveenkuttappan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47329",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47329#issuecomment-4617002010"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This PR is from a test release plan. Please ignore.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38810:comment:4617006299:sdk:JavaScript:@azure/arm-containerservicefleet",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-03T21:49:08Z",
+      "observedAt": "2026-06-03T21:49:08Z",
+      "trackId": "sdk:JavaScript:@azure/arm-containerservicefleet",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "praveenkuttappan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38810",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38810#issuecomment-4617006299"
+      },
+      "confidence": "authoritative",
+      "excerpt": "[Test PR ignore]",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26938:comment:4617008292:sdk:Go:sdk/resourcemanager/containerservicefleet/armcontainerservicefleet/v3",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-03T21:49:27Z",
+      "observedAt": "2026-06-03T21:49:27Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/containerservicefleet/armcontainerservicefleet/v3",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "praveenkuttappan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26938",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26938#issuecomment-4617008292"
+      },
+      "confidence": "authoritative",
+      "excerpt": "[Test PR ignore]",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59642:comment:4617009701:sdk:.NET:Azure.ResourceManager.ContainerServiceFleet",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-03T21:49:40Z",
+      "observedAt": "2026-06-03T21:49:40Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ContainerServiceFleet",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "praveenkuttappan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59642",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59642#issuecomment-4617009701"
+      },
+      "confidence": "authoritative",
+      "excerpt": "[Test PR ignore]",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59642:comment:3352149316:sdk:.NET:Azure.ResourceManager.ContainerServiceFleet",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-03T21:51:15Z",
+      "observedAt": "2026-06-03T21:51:15Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ContainerServiceFleet",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59642",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59642#discussion_r3352149316"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`MemberSelectorByLabel`'s setter always constructs a `MemberSelector`, which throws if the caller sets the property to `null`. The XML doc says the selector can be \"empty or not specified\"; allowing `null` here would let callers clear the s",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59642:comment:3352149338:sdk:.NET:Azure.ResourceManager.ContainerServiceFleet",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-03T21:51:15Z",
+      "observedAt": "2026-06-03T21:51:15Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ContainerServiceFleet",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59642",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59642#discussion_r3352149338"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The page `ContinuationToken` should represent the link needed to request the *next* page (per `Page<T>.ContinuationToken` docs). Currently this returns the URI used to request the current page (`nextPage`), which makes `AsPages()` consumers",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59642:review:4423085996:sdk:.NET:Azure.ResourceManager.ContainerServiceFleet",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-03T21:51:16Z",
+      "observedAt": "2026-06-03T21:51:16Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ContainerServiceFleet",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59642",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59642#pullrequestreview-4423085996"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This AutoPR updates **Azure.ResourceManager.ContainerServiceFleet** from the latest TypeSpec/spec commit and regenerates the management-plane SDK to pick up a newer API version plus new “cluster mesh profile” and “m",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59642:comment:3352149360:sdk:.NET:Azure.ResourceManager.ContainerServiceFleet",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-03T21:51:16Z",
+      "observedAt": "2026-06-03T21:51:16Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ContainerServiceFleet",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59642",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59642#discussion_r3352149360"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The page `ContinuationToken` should represent the link needed to request the *next* page (per `Page<T>.ContinuationToken` docs). Currently this returns the URI used to request the current page (`nextPage`), which makes `AsPages()` consumers",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6391678:generation.completed:sdk:Java:azure-resourcemanager-containerservicefleet",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-06-03T21:55:57.9507524Z",
+      "observedAt": "2026-06-03T21:55:57.9507524Z",
+      "trackId": "sdk:Java:azure-resourcemanager-containerservicefleet",
+      "title": "Pipeline completed with issues",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6391678",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6391678"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49369:review:4423108644:sdk:Java:azure-resourcemanager-containerservicefleet",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-03T21:56:03Z",
+      "observedAt": "2026-06-03T21:56:03Z",
+      "trackId": "sdk:Java:azure-resourcemanager-containerservicefleet",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49369",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49369#pullrequestreview-4423108644"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Updates the `azure-resourcemanager-containerservicefleet` package metadata to align with a new TypeSpec commit from `azure-rest-api-specs` and refreshes release documentation for the next beta release. **Changes:** ",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49369:comment:3352168724:sdk:Java:azure-resourcemanager-containerservicefleet",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-03T21:56:03Z",
+      "observedAt": "2026-06-03T21:56:03Z",
+      "trackId": "sdk:Java:azure-resourcemanager-containerservicefleet",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49369",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49369#discussion_r3352168724"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The 1.3.0-beta.5 section no longer follows the standard Azure SDK for Java CHANGELOG structure: it removes the usual (Unreleased) placeholder for the next version and drops the categorized subsections (e.g., \"### Other Changes\"), which make",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43727:commit:2f30bba50bf2:spec:github:Azure/azure-rest-api-specs#43727",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-03T22:03:39Z",
+      "observedAt": "2026-06-03T22:03:39Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43727",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "praveenkuttappan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43727",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/2f30bba50bf26c09c57c3931d1b9486d335903a6"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43727:pr.created:spec:github:Azure/azure-rest-api-specs#43727",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-03T22:06:19Z",
+      "observedAt": "2026-06-03T22:06:19Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43727",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "praveenkuttappan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43727",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43727"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43727:comment:4617118187:spec:github:Azure/azure-rest-api-specs#43727",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-03T22:07:24Z",
+      "observedAt": "2026-06-03T22:07:24Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43727",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43727",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43727#issuecomment-4617118187"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>Next steps that must be taken to merge this PR: <br/><ul><li>❌ The required check named <code>Protected Files</code> has failed. Refer to the check in the PR's 'Checks' tab for details on how to fix it and consul",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43727:commit:96385d50dcc1:spec:github:Azure/azure-rest-api-specs#43727",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-03T22:14:47Z",
+      "observedAt": "2026-06-03T22:14:47Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43727",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "praveenkuttappan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43727",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/96385d50dcc1705529b8fd716a3aa295550f2d6b"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43727:review:4423439758:spec:github:Azure/azure-rest-api-specs#43727",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-03T23:10:05Z",
+      "observedAt": "2026-06-03T23:10:05Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43727",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "mikeharder"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43727",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43727#pullrequestreview-4423439758"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43727:comment:3352445767:spec:github:Azure/azure-rest-api-specs#43727",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-03T23:10:05Z",
+      "observedAt": "2026-06-03T23:10:05Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43727",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "mikeharder"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43727",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43727#discussion_r3352445767"
+      },
+      "confidence": "authoritative",
+      "excerpt": "```suggestion **/tsp-output/**/*.yaml ```",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43727:commit:b98ae7618469:spec:github:Azure/azure-rest-api-specs#43727",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-03T23:10:10Z",
+      "observedAt": "2026-06-03T23:10:10Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43727",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "mikeharder"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43727",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/b98ae76184692ad4d0fc53f42edebc90ae63e1e8"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43727:review:4423441288:spec:github:Azure/azure-rest-api-specs#43727",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-03T23:10:27Z",
+      "observedAt": "2026-06-03T23:10:27Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43727",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "mikeharder"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43727",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43727#pullrequestreview-4423441288"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43727:pr.merged:spec:github:Azure/azure-rest-api-specs#43727",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-03T23:13:01Z",
+      "observedAt": "2026-06-03T23:13:01Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43727",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43727",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43727"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49369:comment:4617519853:sdk:Java:azure-resourcemanager-containerservicefleet",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-03T23:23:01Z",
+      "observedAt": "2026-06-03T23:23:01Z",
+      "trackId": "sdk:Java:azure-resourcemanager-containerservicefleet",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "praveenkuttappan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49369",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49369#issuecomment-4617519853"
+      },
+      "confidence": "authoritative",
+      "excerpt": "[ Please Ignore: Test release plan PR ]",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49369:pr.closed:sdk:Java:azure-resourcemanager-containerservicefleet",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-03T23:23:06Z",
+      "observedAt": "2026-06-03T23:23:06Z",
+      "trackId": "sdk:Java:azure-resourcemanager-containerservicefleet",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49369",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49369"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47329:pr.closed:sdk:Python:azure-mgmt-containerservicefleet",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-03T23:23:36Z",
+      "observedAt": "2026-06-03T23:23:36Z",
+      "trackId": "sdk:Python:azure-mgmt-containerservicefleet",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47329",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47329"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38810:pr.closed:sdk:JavaScript:@azure/arm-containerservicefleet",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-03T23:23:52Z",
+      "observedAt": "2026-06-03T23:23:52Z",
+      "trackId": "sdk:JavaScript:@azure/arm-containerservicefleet",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38810",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38810"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59642:pr.closed:sdk:.NET:Azure.ResourceManager.ContainerServiceFleet",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-03T23:24:02Z",
+      "observedAt": "2026-06-03T23:24:02Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ContainerServiceFleet",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59642",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59642"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26938:pr.closed:sdk:Go:sdk/resourcemanager/containerservicefleet/armcontainerservicefleet/v3",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-03T23:24:29Z",
+      "observedAt": "2026-06-03T23:24:29Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/containerservicefleet/armcontainerservicefleet/v3",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26938",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26938"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:34834:2:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-03T23:26:27.14Z",
+      "observedAt": "2026-06-03T23:26:27.14Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43727",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/43727",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34834",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34834"
+      },
+      "title": "Spec PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado:34833:15:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-03T23:26:27.35Z",
+      "observedAt": "2026-06-03T23:26:27.35Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ContainerServiceFleet",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34833",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34833"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34833:15:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-03T23:26:27.35Z",
+      "observedAt": "2026-06-03T23:26:27.35Z",
+      "trackId": "sdk:JavaScript:@azure/arm-containerservicefleet",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34833",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34833"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34833:15:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-03T23:26:27.35Z",
+      "observedAt": "2026-06-03T23:26:27.35Z",
+      "trackId": "sdk:Python:azure-mgmt-containerservicefleet",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34833",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34833"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34833:15:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-03T23:26:27.35Z",
+      "observedAt": "2026-06-03T23:26:27.35Z",
+      "trackId": "sdk:Java:azure-resourcemanager-containerservicefleet",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34833",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34833"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34833:15:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-03T23:26:27.35Z",
+      "observedAt": "2026-06-03T23:26:27.35Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/containerservicefleet/armcontainerservicefleet/v3",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34833",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34833"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34833:16:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-06-03T23:26:31.55Z",
+      "observedAt": "2026-06-03T23:26:31.55Z",
+      "trackId": "plan",
+      "value": "Finished",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34833",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34833"
+      },
+      "title": "Plan state changed",
+      "stack": 0
+    }
+  ],
+  "quality": {
+    "warnings": [
+      "5 historical linked PR(s) closed without merge"
+    ],
+    "unavailablePullRequests": 0,
+    "unavailablePipelineRuns": 0
+  },
+  "boundaryFacts": {
+    "id": "34833",
+    "state": "finished",
+    "specPrs": [
+      {
+        "id": "github:Azure/azure-rest-api-specs#43727",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#43727",
+        "createdAt": "2026-06-03T22:06:19Z",
+        "mergedAt": "2026-06-03T23:13:01Z",
+        "closedAt": "2026-06-03T23:13:01Z",
+        "available": true
+      }
+    ],
+    "artifacts": [
+      {
+        "language": ".NET",
+        "package": "Azure.ResourceManager.ContainerServiceFleet",
+        "trackId": "sdk:.NET:Azure.ResourceManager.ContainerServiceFleet",
+        "prId": "github:Azure/azure-sdk-for-net#59642",
+        "prCreatedAt": "2026-06-03T21:44:14Z",
+        "prMergedAt": null,
+        "prClosedAt": "2026-06-03T23:24:02Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-net#59642",
+            "createdAt": "2026-06-03T21:44:14Z",
+            "mergedAt": null,
+            "closedAt": "2026-06-03T23:24:02Z",
+            "state": "closed"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6391677",
+        "generationStartAt": "2026-06-03T21:36:41.1234838Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "JavaScript",
+        "package": "@azure/arm-containerservicefleet",
+        "trackId": "sdk:JavaScript:@azure/arm-containerservicefleet",
+        "prId": "github:Azure/azure-sdk-for-js#38810",
+        "prCreatedAt": "2026-06-03T21:43:06Z",
+        "prMergedAt": null,
+        "prClosedAt": "2026-06-03T23:23:52Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-js#38810",
+            "createdAt": "2026-06-03T21:43:06Z",
+            "mergedAt": null,
+            "closedAt": "2026-06-03T23:23:52Z",
+            "state": "closed"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6391675",
+        "generationStartAt": "2026-06-03T21:36:39.9794261Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Python",
+        "package": "azure-mgmt-containerservicefleet",
+        "trackId": "sdk:Python:azure-mgmt-containerservicefleet",
+        "prId": "github:Azure/azure-sdk-for-python#47329",
+        "prCreatedAt": "2026-06-03T21:43:12Z",
+        "prMergedAt": null,
+        "prClosedAt": "2026-06-03T23:23:36Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-python#47329",
+            "createdAt": "2026-06-03T21:43:12Z",
+            "mergedAt": null,
+            "closedAt": "2026-06-03T23:23:36Z",
+            "state": "closed"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6391674",
+        "generationStartAt": "2026-06-03T21:36:44.4032312Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Java",
+        "package": "azure-resourcemanager-containerservicefleet",
+        "trackId": "sdk:Java:azure-resourcemanager-containerservicefleet",
+        "prId": "github:Azure/azure-sdk-for-java#49369",
+        "prCreatedAt": "2026-06-03T21:45:39Z",
+        "prMergedAt": null,
+        "prClosedAt": "2026-06-03T23:23:06Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-java#49369",
+            "createdAt": "2026-06-03T21:45:39Z",
+            "mergedAt": null,
+            "closedAt": "2026-06-03T23:23:06Z",
+            "state": "closed"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6391678",
+        "generationStartAt": "2026-06-03T21:36:42.1216111Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Go",
+        "package": "sdk/resourcemanager/containerservicefleet/armcontainerservicefleet/v3",
+        "trackId": "sdk:Go:sdk/resourcemanager/containerservicefleet/armcontainerservicefleet/v3",
+        "prId": "github:Azure/azure-sdk-for-go#26938",
+        "prCreatedAt": "2026-06-03T21:41:55Z",
+        "prMergedAt": null,
+        "prClosedAt": "2026-06-03T23:24:29Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-go#26938",
+            "createdAt": "2026-06-03T21:41:55Z",
+            "mergedAt": null,
+            "closedAt": "2026-06-03T23:24:29Z",
+            "state": "closed"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6391676",
+        "generationStartAt": "2026-06-03T21:36:41.1214695Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      }
+    ],
+    "cohortPlan": {
+      "id": "34833",
+      "releasePlanId": "1574",
+      "title": "Release plan - 1574 - Public Preview - Release Planner Test Product",
+      "service": "fleet",
+      "state": "finished"
+    },
+    "quality": {
+      "warnings": [
+        "5 historical linked PR(s) closed without merge"
+      ],
+      "unavailablePullRequests": 0,
+      "unavailablePipelineRuns": 0
+    }
+  },
+  "summary": {
+    "durationHours": 1.9,
+    "pullRequestCount": 6,
+    "humanReviewCount": 2,
+    "humanCommentCount": 6
+  }
+}

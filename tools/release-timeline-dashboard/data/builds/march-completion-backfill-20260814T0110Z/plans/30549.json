@@ -1,0 +1,1298 @@
+{
+  "schemaVersion": 2,
+  "id": "30549",
+  "correlation": {
+    "policyVersion": 1,
+    "preflight": "passed"
+  },
+  "releasePlanId": "2059",
+  "title": "Release Plan - 2059 - GA - Azure Red Hat OpenShift (ARO)",
+  "service": "Azure Red Hat OpenShift (ARO)",
+  "product": "Release",
+  "path": null,
+  "state": "in-progress",
+  "plane": "management",
+  "releaseType": "APEX GA",
+  "intendedMonth": "June 2026",
+  "createdAt": "2026-01-21T15:24:19.63Z",
+  "completedAt": null,
+  "sourceUrl": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30549",
+  "range": {
+    "start": "2025-05-30T15:06:03.000Z",
+    "end": "2026-08-14T00:37:23.589Z"
+  },
+  "intendedArtifacts": [
+    {
+      "prId": "github:Azure/azure-sdk-for-java#49602",
+      "language": "Java",
+      "package": "azure-resourcemanager-redhatopenshift",
+      "version": "1.0.0",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6468168",
+      "releasePipelineUrl": null
+    }
+  ],
+  "links": [
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#35013",
+      "role": "spec-pr",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/35013",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-java#49602",
+      "role": "sdk-pr",
+      "language": "Java",
+      "url": "https://github.com/Azure/azure-sdk-for-java/pull/49602",
+      "releasePlanIds": [
+        "2059",
+        "30549"
+      ]
+    }
+  ],
+  "tracks": [
+    {
+      "id": "plan",
+      "kind": "plan",
+      "label": "Release Plan",
+      "detail": "APEX GA"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#35013",
+      "kind": "spec",
+      "label": "Spec PR",
+      "detail": "azure-rest-api-specs #35013",
+      "artifactId": "github:Azure/azure-rest-api-specs#35013",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Java:azure-resourcemanager-redhatopenshift",
+      "kind": "sdk",
+      "label": "Java",
+      "detail": "azure-resourcemanager-redhatopenshift",
+      "artifactId": "github:Azure/azure-sdk-for-java#49602",
+      "state": "merged"
+    }
+  ],
+  "events": [
+    {
+      "id": "github:Azure/azure-rest-api-specs#35013:pr.created:spec:github:Azure/azure-rest-api-specs#35013",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-05-30T15:06:03Z",
+      "observedAt": "2025-05-30T15:06:03Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#35013",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "rajdeepc2792"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#35013",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/35013"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#35013:comment:2922648998:spec:github:Azure/azure-rest-api-specs#35013",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-05-30T15:06:07Z",
+      "observedAt": "2025-05-30T15:06:07Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#35013",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "openapi-pipeline-app[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#35013",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/35013#issuecomment-2922648998"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>Next steps that must be taken to merge this PR: <br/><ul><li>❌ This PR targets either the <code>main</code> branch of the public specs repo or the <code>RPSaaSMaster</code> branch of the private specs repo. These",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#35013:comment:2922649023:spec:github:Azure/azure-rest-api-specs#35013",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-05-30T15:06:08Z",
+      "observedAt": "2025-05-30T15:06:08Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#35013",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "openapi-pipeline-app[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#35013",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/35013#issuecomment-2922649023"
+      },
+      "confidence": "authoritative",
+      "excerpt": "PR validation pipeline restarted successfully. If there is ApiView generated, it will be updated in this comment.",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#35013:comment:2922656283:spec:github:Azure/azure-rest-api-specs#35013",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-05-30T15:09:00Z",
+      "observedAt": "2025-05-30T15:09:00Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#35013",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#35013",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/35013#issuecomment-2922656283"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews | Language | API Review for Package | |----------|---------| | Go | [sdk/resourcemanager/redhatopenshift/armredhatopenshift](https://s",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#35013:comment:2922660304:spec:github:Azure/azure-rest-api-specs#35013",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-05-30T15:10:44Z",
+      "observedAt": "2025-05-30T15:10:44Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#35013",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "rajdeepc2792"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#35013",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/35013#issuecomment-2922660304"
+      },
+      "confidence": "authoritative",
+      "excerpt": "/azp run",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#35013:comment:2922660558:spec:github:Azure/azure-rest-api-specs#35013",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-05-30T15:10:50Z",
+      "observedAt": "2025-05-30T15:10:50Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#35013",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#35013",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/35013#issuecomment-2922660558"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Commenter does not have sufficient privileges for PR 35013 in repo Azure/azure-rest-api-specs<br> </samp>",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#35013:comment:2959322490:spec:github:Azure/azure-rest-api-specs#35013",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-06-10T13:44:28Z",
+      "observedAt": "2025-06-10T13:44:28Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#35013",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "cadenmarchese"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#35013",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/35013#issuecomment-2959322490"
+      },
+      "confidence": "authoritative",
+      "excerpt": "To ARM team - the Swagger Avocado checks fail due to the known issues: https://github.com/Azure/azure-rest-api-specs/wiki/Swagger-Avocado#known-issues I believe you can disregard them an apply Approved-Avocado label here.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#35013:comment:2961008677:spec:github:Azure/azure-rest-api-specs#35013",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-06-11T02:04:27Z",
+      "observedAt": "2025-06-11T02:04:27Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#35013",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "mentat9"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#35013",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/35013#issuecomment-2961008677"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@rajdeepc2792 - Please recreate your PR following the guidance for new API version PRs. Your PR must have a base commit containing the current API version spec files copied unchanged to the new API version folder. Then apply changes for the",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#35013:comment:3353079947:spec:github:Azure/azure-rest-api-specs#35013",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-09-30T17:06:32Z",
+      "observedAt": "2025-09-30T17:06:32Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#35013",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#35013",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/35013#issuecomment-3353079947"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>✅ All automated merging requirements have been met! To get your PR merged, see <a href=\"https://aka.ms/azsdk/specreview/merge\">aka.ms/azsdk/specreview/merge</a>.<br /><br />Comment generated by <a href=\"https://g",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#35013:commit:188643ec5f0d:spec:github:Azure/azure-rest-api-specs#35013",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-30T19:37:57Z",
+      "observedAt": "2025-10-30T19:37:57Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#35013",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "rajdeepc2792"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#35013",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/188643ec5f0dddc339993db9b3572fb406d6f4bb"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#35013:commit:f4dcaa7e13a9:spec:github:Azure/azure-rest-api-specs#35013",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-30T19:39:22Z",
+      "observedAt": "2025-10-30T19:39:22Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#35013",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "rajdeepc2792"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#35013",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/f4dcaa7e13a934d2aaf3959b102b01a5566fe898"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#35013:comment:3469943665:spec:github:Azure/azure-rest-api-specs#35013",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-30T20:20:12Z",
+      "observedAt": "2025-10-30T20:20:12Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#35013",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "cadenmarchese"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#35013",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/35013#issuecomment-3469943665"
+      },
+      "confidence": "authoritative",
+      "excerpt": "/azp run",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#35013:comment:3469944178:spec:github:Azure/azure-rest-api-specs#35013",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-30T20:20:19Z",
+      "observedAt": "2025-10-30T20:20:19Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#35013",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#35013",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/35013#issuecomment-3469944178"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Commenter does not have sufficient privileges for PR 35013 in repo Azure/azure-rest-api-specs<br> </samp>",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#35013:comment:3469973138:spec:github:Azure/azure-rest-api-specs#35013",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-30T20:27:09Z",
+      "observedAt": "2025-10-30T20:27:09Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#35013",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "bennerv"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#35013",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/35013#issuecomment-3469973138"
+      },
+      "confidence": "authoritative",
+      "excerpt": "/azp run",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#35013:comment:3469973459:spec:github:Azure/azure-rest-api-specs#35013",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-30T20:27:17Z",
+      "observedAt": "2025-10-30T20:27:17Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#35013",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#35013",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/35013#issuecomment-3469973459"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> You have several pipelines (over 10) configured to build pull requests in this repository. Specify which pipelines you would like to run by using /azp run [pipelines] command. You can specify multiple pipelines using a comma separate",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#35013:comment:3470053955:spec:github:Azure/azure-rest-api-specs#35013",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-30T20:40:05Z",
+      "observedAt": "2025-10-30T20:40:05Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#35013",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "cadenmarchese"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#35013",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/35013#issuecomment-3470053955"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Note to ARM reviewer - the Swagger Avocado appears to fail due to removed resource types. Issue appears to be the same as https://github.com/Azure/avocado/issues/150. These resource types are deprecated and the breaking changes were already",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#35013:comment:3483615514:spec:github:Azure/azure-rest-api-specs#35013",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-11-04T03:28:08Z",
+      "observedAt": "2025-11-04T03:28:08Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#35013",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "tadelesh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#35013",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/35013#issuecomment-3483615514"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Go SDK breaking changes are not introduced in this PR.",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#35013:review:3623323908:spec:github:Azure/azure-rest-api-specs#35013",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-01-02T15:13:46Z",
+      "observedAt": "2026-01-02T15:13:46Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#35013",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "cadenmarchese"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#35013",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/35013#pullrequestreview-3623323908"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#35013:pr.merged:spec:github:Azure/azure-rest-api-specs#35013",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2026-01-02T15:18:58Z",
+      "observedAt": "2026-01-02T15:18:58Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#35013",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#35013",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/35013"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:30549:created",
+      "type": "plan.created",
+      "phase": "plan",
+      "occurredAt": "2026-01-21T15:24:19.63Z",
+      "observedAt": "2026-01-21T15:24:19.63Z",
+      "trackId": "plan",
+      "title": "Release Plan created",
+      "confidence": "authoritative",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30549",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30549"
+      },
+      "stack": 0
+    },
+    {
+      "id": "ado:30549:1:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-01-21T15:24:19.63Z",
+      "observedAt": "2026-01-21T15:24:19.63Z",
+      "trackId": "plan",
+      "value": "New",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30549",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30549"
+      },
+      "title": "Plan state changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:30549:1:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-01-21T15:24:19.63Z",
+      "observedAt": "2026-01-21T15:24:19.63Z",
+      "trackId": "plan",
+      "value": "Not Available",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30549",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30549"
+      },
+      "title": "Spec approval changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:30549:1:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-01-21T15:24:19.63Z",
+      "observedAt": "2026-01-21T15:24:19.63Z",
+      "trackId": "sdk:Java:azure-resourcemanager-redhatopenshift",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30549",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30549"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:30549:4:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-01-21T15:26:33.613Z",
+      "observedAt": "2026-01-21T15:26:33.613Z",
+      "trackId": "plan",
+      "value": "In Progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30549",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30549"
+      },
+      "title": "Plan state changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:30550:2:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-01-21T15:28:24.21Z",
+      "observedAt": "2026-01-21T15:28:24.21Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#35013",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/35013",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30550",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30550"
+      },
+      "title": "Spec PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6468168:generation.queued:sdk:Java:azure-resourcemanager-redhatopenshift",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-06-23T03:34:29.9974714Z",
+      "observedAt": "2026-06-23T03:55:30.0167816Z",
+      "trackId": "sdk:Java:azure-resourcemanager-redhatopenshift",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6468168",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6468168"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:30549:26:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-23T03:34:34.007Z",
+      "observedAt": "2026-06-23T03:34:34.007Z",
+      "trackId": "sdk:Java:azure-resourcemanager-redhatopenshift",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30549",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30549"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6468168:generation.started:sdk:Java:azure-resourcemanager-redhatopenshift",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-06-23T03:37:40.0573049Z",
+      "observedAt": "2026-06-23T03:55:30.0167816Z",
+      "trackId": "sdk:Java:azure-resourcemanager-redhatopenshift",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6468168",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6468168"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49602:commit:9234dd8ed5d5:sdk:Java:azure-resourcemanager-redhatopenshift",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-23T03:45:51Z",
+      "observedAt": "2026-06-23T03:45:51Z",
+      "trackId": "sdk:Java:azure-resourcemanager-redhatopenshift",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49602",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/9234dd8ed5d5eb5cf8bac95b1910233ad13a8b0f"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49602:pr.created:sdk:Java:azure-resourcemanager-redhatopenshift",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-23T03:45:55Z",
+      "observedAt": "2026-06-23T03:45:55Z",
+      "trackId": "sdk:Java:azure-resourcemanager-redhatopenshift",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49602",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49602"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:30549:27:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-23T03:46:02.72Z",
+      "observedAt": "2026-06-23T03:46:02.72Z",
+      "trackId": "sdk:Java:azure-resourcemanager-redhatopenshift",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30549",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30549"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:30549:27:Custom.SDKPullRequestForJava",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-06-23T03:46:02.72Z",
+      "observedAt": "2026-06-23T03:46:02.72Z",
+      "trackId": "sdk:Java:azure-resourcemanager-redhatopenshift",
+      "value": "https://github.com/Azure/azure-sdk-for-java/pull/49602",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30549",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30549"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6468168:generation.completed:sdk:Java:azure-resourcemanager-redhatopenshift",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-06-23T03:55:30.0167816Z",
+      "observedAt": "2026-06-23T03:55:30.0167816Z",
+      "trackId": "sdk:Java:azure-resourcemanager-redhatopenshift",
+      "title": "Pipeline completed with issues",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6468168",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6468168"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49602:comment:3456910823:sdk:Java:azure-resourcemanager-redhatopenshift",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-23T03:58:13Z",
+      "observedAt": "2026-06-23T03:58:13Z",
+      "trackId": "sdk:Java:azure-resourcemanager-redhatopenshift",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49602",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49602#discussion_r3456910823"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The JavaDoc says the operation returns a list \"as a string\", but the method returns a PagedIterable of PlatformWorkloadIdentityRoleSet. This wording is misleading for callers.",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49602:comment:3456910846:sdk:Java:azure-resourcemanager-redhatopenshift",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-23T03:58:13Z",
+      "observedAt": "2026-06-23T03:58:13Z",
+      "trackId": "sdk:Java:azure-resourcemanager-redhatopenshift",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49602",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49602#discussion_r3456910846"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The JavaDoc says the operation returns a list \"as a string\", but the method returns a PagedIterable of PlatformWorkloadIdentityRoleSet. This wording is misleading for callers.",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49602:comment:3456910860:sdk:Java:azure-resourcemanager-redhatopenshift",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-23T03:58:13Z",
+      "observedAt": "2026-06-23T03:58:13Z",
+      "trackId": "sdk:Java:azure-resourcemanager-redhatopenshift",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49602",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49602#discussion_r3456910860"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The JavaDoc says this returns a role set \"as a string\", but the API returns a PlatformWorkloadIdentityRoleSet model. Updating the wording avoids confusing consumers.",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49602:comment:3456910874:sdk:Java:azure-resourcemanager-redhatopenshift",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-23T03:58:13Z",
+      "observedAt": "2026-06-23T03:58:13Z",
+      "trackId": "sdk:Java:azure-resourcemanager-redhatopenshift",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49602",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49602#discussion_r3456910874"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The `@return` JavaDoc repeats that the operation returns \"as a string\" even though the method returns a Response<PlatformWorkloadIdentityRoleSet>. Adjusting the wording will better match the signature.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49602:comment:3456910890:sdk:Java:azure-resourcemanager-redhatopenshift",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-23T03:58:14Z",
+      "observedAt": "2026-06-23T03:58:14Z",
+      "trackId": "sdk:Java:azure-resourcemanager-redhatopenshift",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49602",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49602#discussion_r3456910890"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The JavaDoc says this returns a role set \"as a string\", but the API returns a PlatformWorkloadIdentityRoleSet model. Updating the wording avoids confusing consumers.",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49602:comment:3456910901:sdk:Java:azure-resourcemanager-redhatopenshift",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-23T03:58:14Z",
+      "observedAt": "2026-06-23T03:58:14Z",
+      "trackId": "sdk:Java:azure-resourcemanager-redhatopenshift",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49602",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49602#discussion_r3456910901"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The `@return` JavaDoc repeats that the operation returns \"as a string\" even though the method returns a PlatformWorkloadIdentityRoleSet. Updating the wording will better match the signature.",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49602:comment:3456910919:sdk:Java:azure-resourcemanager-redhatopenshift",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-23T03:58:14Z",
+      "observedAt": "2026-06-23T03:58:14Z",
+      "trackId": "sdk:Java:azure-resourcemanager-redhatopenshift",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49602",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49602#discussion_r3456910919"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The JavaDoc says this operation returns an OpenShift version \"as a string\", but the API returns an OpenShiftVersion model. Updating the wording will better match the signature.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49602:comment:3456910928:sdk:Java:azure-resourcemanager-redhatopenshift",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-23T03:58:14Z",
+      "observedAt": "2026-06-23T03:58:14Z",
+      "trackId": "sdk:Java:azure-resourcemanager-redhatopenshift",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49602",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49602#discussion_r3456910928"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The `@return` JavaDoc describes the response as \"a string\" even though this method returns Response<OpenShiftVersion>. Aligning the wording with the return type avoids confusion.",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49602:comment:3456910938:sdk:Java:azure-resourcemanager-redhatopenshift",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-23T03:58:15Z",
+      "observedAt": "2026-06-23T03:58:15Z",
+      "trackId": "sdk:Java:azure-resourcemanager-redhatopenshift",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49602",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49602#discussion_r3456910938"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The JavaDoc says this operation returns an OpenShift version \"as a string\", but the API returns an OpenShiftVersion model. Updating the wording will better match the signature.",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49602:comment:3456910950:sdk:Java:azure-resourcemanager-redhatopenshift",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-23T03:58:15Z",
+      "observedAt": "2026-06-23T03:58:15Z",
+      "trackId": "sdk:Java:azure-resourcemanager-redhatopenshift",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49602",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49602#discussion_r3456910950"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The `@return` JavaDoc describes the response as \"a string\" even though this method returns an OpenShiftVersion. Aligning the wording with the return type avoids confusion.",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49602:comment:3456910965:sdk:Java:azure-resourcemanager-redhatopenshift",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-23T03:58:15Z",
+      "observedAt": "2026-06-23T03:58:15Z",
+      "trackId": "sdk:Java:azure-resourcemanager-redhatopenshift",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49602",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49602#discussion_r3456910965"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The JavaDoc says the list operation returns versions \"as a string\", but it returns a PagedIterable<OpenShiftVersion>. Updating the wording will better match the API surface.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49602:comment:3456910977:sdk:Java:azure-resourcemanager-redhatopenshift",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-23T03:58:15Z",
+      "observedAt": "2026-06-23T03:58:15Z",
+      "trackId": "sdk:Java:azure-resourcemanager-redhatopenshift",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49602",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49602#discussion_r3456910977"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The JavaDoc says the list operation returns versions \"as a string\", but it returns a PagedIterable<OpenShiftVersion>. Updating the wording will better match the API surface.",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49602:comment:3456910993:sdk:Java:azure-resourcemanager-redhatopenshift",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-23T03:58:15Z",
+      "observedAt": "2026-06-23T03:58:15Z",
+      "trackId": "sdk:Java:azure-resourcemanager-redhatopenshift",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49602",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49602#discussion_r3456910993"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The JavaDoc says the operation returns a list \"as a string\", but the method returns a PagedIterable of PlatformWorkloadIdentityRoleSetInner. This wording is misleading for callers.",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49602:comment:3456911009:sdk:Java:azure-resourcemanager-redhatopenshift",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-23T03:58:16Z",
+      "observedAt": "2026-06-23T03:58:16Z",
+      "trackId": "sdk:Java:azure-resourcemanager-redhatopenshift",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49602",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49602#discussion_r3456911009"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The JavaDoc says the operation returns a list \"as a string\", but the method returns a PagedIterable of PlatformWorkloadIdentityRoleSetInner. This wording is misleading for callers.",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49602:comment:3456911019:sdk:Java:azure-resourcemanager-redhatopenshift",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-23T03:58:16Z",
+      "observedAt": "2026-06-23T03:58:16Z",
+      "trackId": "sdk:Java:azure-resourcemanager-redhatopenshift",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49602",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49602#discussion_r3456911019"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The JavaDoc says this returns a role set \"as a string\", but the API returns PlatformWorkloadIdentityRoleSetInner. Updating the wording avoids confusing consumers.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49602:comment:3456911028:sdk:Java:azure-resourcemanager-redhatopenshift",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-23T03:58:16Z",
+      "observedAt": "2026-06-23T03:58:16Z",
+      "trackId": "sdk:Java:azure-resourcemanager-redhatopenshift",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49602",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49602#discussion_r3456911028"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The `@return` JavaDoc repeats that the operation returns \"as a string\" even though the method returns Response<PlatformWorkloadIdentityRoleSetInner>. Adjusting the wording will better match the signature.",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49602:comment:3456911038:sdk:Java:azure-resourcemanager-redhatopenshift",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-23T03:58:16Z",
+      "observedAt": "2026-06-23T03:58:16Z",
+      "trackId": "sdk:Java:azure-resourcemanager-redhatopenshift",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49602",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49602#discussion_r3456911038"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The JavaDoc says this returns a role set \"as a string\", but the API returns PlatformWorkloadIdentityRoleSetInner. Updating the wording avoids confusing consumers.",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49602:review:4549875576:sdk:Java:azure-resourcemanager-redhatopenshift",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-23T03:58:17Z",
+      "observedAt": "2026-06-23T03:58:17Z",
+      "trackId": "sdk:Java:azure-resourcemanager-redhatopenshift",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49602",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49602#pullrequestreview-4549875576"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This PR is an automated TypeSpec regeneration for `azure-resourcemanager-redhatopenshift`, moving the package to a stable `1.0.0` release and updating the generated SDK surface to the `2025-07-25` API version (inclu",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49602:comment:3456911057:sdk:Java:azure-resourcemanager-redhatopenshift",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-23T03:58:17Z",
+      "observedAt": "2026-06-23T03:58:17Z",
+      "trackId": "sdk:Java:azure-resourcemanager-redhatopenshift",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49602",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49602#discussion_r3456911057"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The `@return` JavaDoc repeats that the operation returns \"as a string\" even though the method returns PlatformWorkloadIdentityRoleSetInner. Updating the wording will better match the signature.",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49602:review:4549942339:sdk:Java:azure-resourcemanager-redhatopenshift",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-23T04:12:29Z",
+      "observedAt": "2026-06-23T04:12:29Z",
+      "trackId": "sdk:Java:azure-resourcemanager-redhatopenshift",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49602",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49602#pullrequestreview-4549942339"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49602:review:4556748553:sdk:Java:azure-resourcemanager-redhatopenshift",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-23T20:10:25Z",
+      "observedAt": "2026-06-23T20:10:25Z",
+      "trackId": "sdk:Java:azure-resourcemanager-redhatopenshift",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "cadenmarchese"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49602",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49602#pullrequestreview-4556748553"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49602:pr.merged:sdk:Java:azure-resourcemanager-redhatopenshift",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-23T20:11:26Z",
+      "observedAt": "2026-06-23T20:11:26Z",
+      "trackId": "sdk:Java:azure-resourcemanager-redhatopenshift",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49602",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49602"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:30549:29:Custom.ReleaseStatusForJava",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-06-25T06:37:40.65Z",
+      "observedAt": "2026-06-25T06:37:40.65Z",
+      "trackId": "sdk:Java:azure-resourcemanager-redhatopenshift",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30549",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30549"
+      },
+      "title": "Release status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:30549:29:Custom.ReleasedVersionForJava",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-06-25T06:37:40.65Z",
+      "observedAt": "2026-06-25T06:37:40.65Z",
+      "trackId": "sdk:Java:azure-resourcemanager-redhatopenshift",
+      "value": "1.0.0",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30549",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30549"
+      },
+      "title": "Package version observed",
+      "stack": 3
+    }
+  ],
+  "quality": {
+    "warnings": [
+      "API specification path is missing"
+    ],
+    "unavailablePullRequests": 0,
+    "unavailablePipelineRuns": 0
+  },
+  "boundaryFacts": {
+    "id": "30549",
+    "state": "in-progress",
+    "specPrs": [
+      {
+        "id": "github:Azure/azure-rest-api-specs#35013",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#35013",
+        "createdAt": "2025-05-30T15:06:03Z",
+        "mergedAt": "2026-01-02T15:18:58Z",
+        "closedAt": "2026-01-02T15:18:58Z",
+        "available": true
+      }
+    ],
+    "artifacts": [
+      {
+        "language": "Java",
+        "package": "azure-resourcemanager-redhatopenshift",
+        "trackId": "sdk:Java:azure-resourcemanager-redhatopenshift",
+        "prId": "github:Azure/azure-sdk-for-java#49602",
+        "prCreatedAt": "2026-06-23T03:45:55Z",
+        "prMergedAt": "2026-06-23T20:11:26Z",
+        "prClosedAt": "2026-06-23T20:11:26Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-java#49602",
+            "createdAt": "2026-06-23T03:45:55Z",
+            "mergedAt": "2026-06-23T20:11:26Z",
+            "closedAt": "2026-06-23T20:11:26Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6468168",
+        "generationStartAt": "2026-06-23T03:37:40.0573049Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-06-25T06:37:40.65Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.0.0",
+        "releaseBoundaryAt": "2026-06-25T06:37:40.65Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      }
+    ],
+    "cohortPlan": {
+      "id": "30549",
+      "releasePlanId": "2059",
+      "title": "Release Plan - 2059 - GA - Azure Red Hat OpenShift (ARO)",
+      "service": "Azure Red Hat OpenShift (ARO)",
+      "state": "in-progress"
+    },
+    "quality": {
+      "warnings": [
+        "API specification path is missing"
+      ],
+      "unavailablePullRequests": 0,
+      "unavailablePipelineRuns": 0
+    }
+  },
+  "summary": {
+    "durationHours": 4905.2,
+    "pullRequestCount": 2,
+    "humanReviewCount": 3,
+    "humanCommentCount": 7
+  }
+}

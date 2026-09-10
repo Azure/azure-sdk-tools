@@ -1,0 +1,4593 @@
+{
+  "schemaVersion": 2,
+  "id": "32615",
+  "correlation": {
+    "policyVersion": 1,
+    "preflight": "passed"
+  },
+  "releasePlanId": "2079",
+  "title": "Release Plan - 2079 - GA - Key Vault",
+  "service": "Key Vault",
+  "product": "Release",
+  "path": "specification/keyvault/KeyVault.Management",
+  "state": "finished",
+  "plane": "management",
+  "releaseType": "APEX GA",
+  "intendedMonth": "April 2026",
+  "createdAt": "2026-02-09T23:55:14.48Z",
+  "completedAt": "2026-03-23T16:58:06.137Z",
+  "sourceUrl": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615",
+  "range": {
+    "start": "2026-02-09T23:55:14.480Z",
+    "end": "2026-03-23T16:58:06.137Z"
+  },
+  "intendedArtifacts": [
+    {
+      "prId": "github:Azure/azure-sdk-for-net#57181",
+      "language": ".NET",
+      "package": "Azure.ResourceManager.KeyVault",
+      "version": null,
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6022786",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-js#37688",
+      "language": "JavaScript",
+      "package": "@azure/arm-keyvault",
+      "version": null,
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6022783",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-python#45750",
+      "language": "Python",
+      "package": "azure-mgmt-keyvault",
+      "version": null,
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6022787",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-java#48446",
+      "language": "Java",
+      "package": "azure-resourcemanager-keyvault",
+      "version": null,
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6022785",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-go#26294",
+      "language": "Go",
+      "package": "sdk/resourcemanager/keyvault/armkeyvault",
+      "version": null,
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6022784",
+      "releasePipelineUrl": null
+    }
+  ],
+  "links": [
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#40486",
+      "role": "spec-pr",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/40486",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-net#56858",
+      "role": "sdk-pr-history",
+      "language": ".NET",
+      "url": "https://github.com/Azure/azure-sdk-for-net/pull/56858",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-net#57181",
+      "role": "sdk-pr",
+      "language": ".NET",
+      "url": "https://github.com/Azure/azure-sdk-for-net/pull/57181",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-js#37521",
+      "role": "sdk-pr-history",
+      "language": "JavaScript",
+      "url": "https://github.com/Azure/azure-sdk-for-js/pull/37521",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-js#37688",
+      "role": "sdk-pr",
+      "language": "JavaScript",
+      "url": "https://github.com/Azure/azure-sdk-for-js/pull/37688",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-python#45565",
+      "role": "sdk-pr-history",
+      "language": "Python",
+      "url": "https://github.com/Azure/azure-sdk-for-python/pull/45565",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-python#45750",
+      "role": "sdk-pr",
+      "language": "Python",
+      "url": "https://github.com/Azure/azure-sdk-for-python/pull/45750",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-java#48325",
+      "role": "sdk-pr-history",
+      "language": "Java",
+      "url": "https://github.com/Azure/azure-sdk-for-java/pull/48325",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-java#48446",
+      "role": "sdk-pr",
+      "language": "Java",
+      "url": "https://github.com/Azure/azure-sdk-for-java/pull/48446",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-go#26137",
+      "role": "sdk-pr-history",
+      "language": "Go",
+      "url": "https://github.com/Azure/azure-sdk-for-go/pull/26137",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-go#26294",
+      "role": "sdk-pr",
+      "language": "Go",
+      "url": "https://github.com/Azure/azure-sdk-for-go/pull/26294",
+      "releasePlanIds": []
+    }
+  ],
+  "tracks": [
+    {
+      "id": "plan",
+      "kind": "plan",
+      "label": "Release Plan",
+      "detail": "APEX GA"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#40486",
+      "kind": "spec",
+      "label": "Spec PR",
+      "detail": "azure-rest-api-specs #40486",
+      "artifactId": "github:Azure/azure-rest-api-specs#40486",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:.NET:Azure.ResourceManager.KeyVault",
+      "kind": "sdk",
+      "label": ".NET",
+      "detail": "Azure.ResourceManager.KeyVault",
+      "artifactId": "github:Azure/azure-sdk-for-net#57181",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:JavaScript:@azure/arm-keyvault",
+      "kind": "sdk",
+      "label": "JavaScript",
+      "detail": "@azure/arm-keyvault",
+      "artifactId": "github:Azure/azure-sdk-for-js#37688",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Python:azure-mgmt-keyvault",
+      "kind": "sdk",
+      "label": "Python",
+      "detail": "azure-mgmt-keyvault",
+      "artifactId": "github:Azure/azure-sdk-for-python#45750",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Java:azure-resourcemanager-keyvault",
+      "kind": "sdk",
+      "label": "Java",
+      "detail": "azure-resourcemanager-keyvault",
+      "artifactId": "github:Azure/azure-sdk-for-java#48446",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Go:sdk/resourcemanager/keyvault/armkeyvault",
+      "kind": "sdk",
+      "label": "Go",
+      "detail": "sdk/resourcemanager/keyvault/armkeyvault",
+      "artifactId": "github:Azure/azure-sdk-for-go#26294",
+      "state": "merged"
+    }
+  ],
+  "events": [
+    {
+      "id": "ado:32615:created",
+      "type": "plan.created",
+      "phase": "plan",
+      "occurredAt": "2026-02-09T23:55:14.48Z",
+      "observedAt": "2026-02-09T23:55:14.48Z",
+      "trackId": "plan",
+      "title": "Release Plan created",
+      "confidence": "authoritative",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "stack": 0
+    },
+    {
+      "id": "ado:32615:1:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-02-09T23:55:14.48Z",
+      "observedAt": "2026-02-09T23:55:14.48Z",
+      "trackId": "plan",
+      "value": "New",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Plan state changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:32615:1:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-09T23:55:14.48Z",
+      "observedAt": "2026-02-09T23:55:14.48Z",
+      "trackId": "plan",
+      "value": "Not Available",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Spec approval changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:32615:1:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-09T23:55:14.48Z",
+      "observedAt": "2026-02-09T23:55:14.48Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.KeyVault",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32615:1:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-09T23:55:14.48Z",
+      "observedAt": "2026-02-09T23:55:14.48Z",
+      "trackId": "sdk:JavaScript:@azure/arm-keyvault",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32615:1:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-09T23:55:14.48Z",
+      "observedAt": "2026-02-09T23:55:14.48Z",
+      "trackId": "sdk:Python:azure-mgmt-keyvault",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32615:1:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-09T23:55:14.48Z",
+      "observedAt": "2026-02-09T23:55:14.48Z",
+      "trackId": "sdk:Java:azure-resourcemanager-keyvault",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32615:1:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-09T23:55:14.48Z",
+      "observedAt": "2026-02-09T23:55:14.48Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/keyvault/armkeyvault",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40486:commit:a7dd7847562e:spec:github:Azure/azure-rest-api-specs#40486",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-13T23:16:47Z",
+      "observedAt": "2026-02-13T23:16:47Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40486",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "melissamserv"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40486",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/a7dd7847562e4db0eef195779fe8f2a10fe380ea"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40486:commit:2e7d1a36545e:spec:github:Azure/azure-rest-api-specs#40486",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-17T21:13:37Z",
+      "observedAt": "2026-02-17T21:13:37Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40486",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "melissamserv"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40486",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/2e7d1a36545e912325326f6c747d293ad7709fb4"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40486:pr.created:spec:github:Azure/azure-rest-api-specs#40486",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-17T21:17:10Z",
+      "observedAt": "2026-02-17T21:17:10Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40486",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "melissamserv"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40486",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40486"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40486:comment:3917135037:spec:github:Azure/azure-rest-api-specs#40486",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-17T21:17:40Z",
+      "observedAt": "2026-02-17T21:17:40Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40486",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40486",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40486#issuecomment-3917135037"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>✅ All automated merging requirements have been met! To get your PR merged, see <a href=\"https://aka.ms/azsdk/specreview/merge\">aka.ms/azsdk/specreview/merge</a>.<br /><br />Comment generated by <a href=\"https://g",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40486:comment:3917149027:spec:github:Azure/azure-rest-api-specs#40486",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-17T21:21:14Z",
+      "observedAt": "2026-02-17T21:21:14Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40486",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40486",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40486#issuecomment-3917149027"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews | Language | API Review for Package | |----------|---------| | Swagger | [Microsoft.KeyVault](https://apiview.dev/Assemblies/Review/82",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40486:comment:3946727407:spec:github:Azure/azure-rest-api-specs#40486",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-23T19:05:00Z",
+      "observedAt": "2026-02-23T19:05:00Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40486",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "FRL200"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40486",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40486#issuecomment-3946727407"
+      },
+      "confidence": "authoritative",
+      "excerpt": "/azp run",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40486:comment:3946727993:spec:github:Azure/azure-rest-api-specs#40486",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-23T19:05:06Z",
+      "observedAt": "2026-02-23T19:05:06Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40486",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40486",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40486#issuecomment-3946727993"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> You have several pipelines (over 10) configured to build pull requests in this repository. Specify which pipelines you would like to run by using /azp run [pipelines] command. You can specify multiple pipelines using a comma separate",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40486:review:3843050810:spec:github:Azure/azure-rest-api-specs#40486",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-23T19:20:24Z",
+      "observedAt": "2026-02-23T19:20:24Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40486",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "FRL200"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40486",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40486#pullrequestreview-3843050810"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40486:pr.merged:spec:github:Azure/azure-rest-api-specs#40486",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-23T19:21:19Z",
+      "observedAt": "2026-02-23T19:21:19Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40486",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40486",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40486"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado:32615:15:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-03-05T18:53:58.25Z",
+      "observedAt": "2026-03-05T18:53:58.25Z",
+      "trackId": "plan",
+      "value": "In Progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Plan state changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32616:2:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-05T18:56:10.717Z",
+      "observedAt": "2026-03-05T18:56:10.717Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40486",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/40486",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32616",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32616"
+      },
+      "title": "Spec PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado:32615:17:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-05T18:56:14.89Z",
+      "observedAt": "2026-03-05T18:56:14.89Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.KeyVault",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32615:17:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-05T18:56:14.89Z",
+      "observedAt": "2026-03-05T18:56:14.89Z",
+      "trackId": "sdk:JavaScript:@azure/arm-keyvault",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32615:17:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-05T18:56:14.89Z",
+      "observedAt": "2026-03-05T18:56:14.89Z",
+      "trackId": "sdk:Python:azure-mgmt-keyvault",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32615:17:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-05T18:56:14.89Z",
+      "observedAt": "2026-03-05T18:56:14.89Z",
+      "trackId": "sdk:Java:azure-resourcemanager-keyvault",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32615:17:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-05T18:56:14.89Z",
+      "observedAt": "2026-03-05T18:56:14.89Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/keyvault/armkeyvault",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32615:20:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-05T18:56:27.137Z",
+      "observedAt": "2026-03-05T18:56:27.137Z",
+      "trackId": "plan",
+      "value": "Approved",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Spec approval changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:32615:44:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-06T23:58:54.537Z",
+      "observedAt": "2026-03-06T23:58:54.537Z",
+      "trackId": "sdk:JavaScript:@azure/arm-keyvault",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32615:45:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-06T23:59:04.053Z",
+      "observedAt": "2026-03-06T23:59:04.053Z",
+      "trackId": "sdk:Python:azure-mgmt-keyvault",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32615:46:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-06T23:59:13.31Z",
+      "observedAt": "2026-03-06T23:59:13.31Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.KeyVault",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32615:47:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-06T23:59:23.193Z",
+      "observedAt": "2026-03-06T23:59:23.193Z",
+      "trackId": "sdk:Java:azure-resourcemanager-keyvault",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32615:48:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-06T23:59:32.557Z",
+      "observedAt": "2026-03-06T23:59:32.557Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/keyvault/armkeyvault",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32615:49:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-07T00:03:13.833Z",
+      "observedAt": "2026-03-07T00:03:13.833Z",
+      "trackId": "sdk:JavaScript:@azure/arm-keyvault",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56858:commit:937523a81c63:sdk:.NET:Azure.ResourceManager.KeyVault",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-07T00:04:48Z",
+      "observedAt": "2026-03-07T00:04:48Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.KeyVault",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56858",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/937523a81c63a45f49407f06b4df74df3754d42b"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26137:commit:913e6fb8f4f3:sdk:Go:sdk/resourcemanager/keyvault/armkeyvault",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-07T00:04:50Z",
+      "observedAt": "2026-03-07T00:04:50Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/keyvault/armkeyvault",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26137",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/913e6fb8f4f3fee80ac93c3c3ac0cc1ff2d69f5b"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56858:pr.created:sdk:.NET:Azure.ResourceManager.KeyVault",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-07T00:04:51Z",
+      "observedAt": "2026-03-07T00:04:51Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.KeyVault",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56858",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56858"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26137:pr.created:sdk:Go:sdk/resourcemanager/keyvault/armkeyvault",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-07T00:04:53Z",
+      "observedAt": "2026-03-07T00:04:53Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/keyvault/armkeyvault",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26137",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26137"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:32615:50:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-07T00:04:57.087Z",
+      "observedAt": "2026-03-07T00:04:57.087Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.KeyVault",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:32615:50:Custom.SDKPullRequestForDotnet",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-03-07T00:04:57.087Z",
+      "observedAt": "2026-03-07T00:04:57.087Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.KeyVault",
+      "value": "https://github.com/Azure/azure-sdk-for-net/pull/56858",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "SDK PR linked",
+      "stack": 4
+    },
+    {
+      "id": "ado:32615:51:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-07T00:04:59.23Z",
+      "observedAt": "2026-03-07T00:04:59.23Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/keyvault/armkeyvault",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:32615:51:Custom.SDKPullRequestForGo",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-03-07T00:04:59.23Z",
+      "observedAt": "2026-03-07T00:04:59.23Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/keyvault/armkeyvault",
+      "value": "https://github.com/Azure/azure-sdk-for-go/pull/26137",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "SDK PR linked",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48325:commit:29d7dcb4c688:sdk:Java:azure-resourcemanager-keyvault",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-07T00:06:57Z",
+      "observedAt": "2026-03-07T00:06:57Z",
+      "trackId": "sdk:Java:azure-resourcemanager-keyvault",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48325",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/29d7dcb4c68879b05bce47234df39dfb7f774512"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48325:pr.created:sdk:Java:azure-resourcemanager-keyvault",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-07T00:07:00Z",
+      "observedAt": "2026-03-07T00:07:00Z",
+      "trackId": "sdk:Java:azure-resourcemanager-keyvault",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48325",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48325"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:32615:52:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-07T00:07:07.373Z",
+      "observedAt": "2026-03-07T00:07:07.373Z",
+      "trackId": "sdk:Java:azure-resourcemanager-keyvault",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:32615:52:Custom.SDKPullRequestForJava",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-03-07T00:07:07.373Z",
+      "observedAt": "2026-03-07T00:07:07.373Z",
+      "trackId": "sdk:Java:azure-resourcemanager-keyvault",
+      "value": "https://github.com/Azure/azure-sdk-for-java/pull/48325",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "SDK PR linked",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45565:commit:ec615d7020be:sdk:Python:azure-mgmt-keyvault",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-07T00:07:45Z",
+      "observedAt": "2026-03-07T00:07:45Z",
+      "trackId": "sdk:Python:azure-mgmt-keyvault",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45565",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/ec615d7020be23e9ebad010b5d8f546f405fe806"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45565:pr.created:sdk:Python:azure-mgmt-keyvault",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-07T00:07:48Z",
+      "observedAt": "2026-03-07T00:07:48Z",
+      "trackId": "sdk:Python:azure-mgmt-keyvault",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45565",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45565"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:32615:53:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-07T00:07:54.11Z",
+      "observedAt": "2026-03-07T00:07:54.11Z",
+      "trackId": "sdk:Python:azure-mgmt-keyvault",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:32615:53:Custom.SDKPullRequestForPython",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-03-07T00:07:54.11Z",
+      "observedAt": "2026-03-07T00:07:54.11Z",
+      "trackId": "sdk:Python:azure-mgmt-keyvault",
+      "value": "https://github.com/Azure/azure-sdk-for-python/pull/45565",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "SDK PR linked",
+      "stack": 4
+    },
+    {
+      "id": "ado:32615:56:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-07T01:14:02.143Z",
+      "observedAt": "2026-03-07T01:14:02.143Z",
+      "trackId": "sdk:JavaScript:@azure/arm-keyvault",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37521:commit:b6b06f731237:sdk:JavaScript:@azure/arm-keyvault",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-07T01:25:27Z",
+      "observedAt": "2026-03-07T01:25:27Z",
+      "trackId": "sdk:JavaScript:@azure/arm-keyvault",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37521",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/b6b06f731237dd9a523155cf830657cb54d1dd34"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37521:pr.created:sdk:JavaScript:@azure/arm-keyvault",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-07T01:25:30Z",
+      "observedAt": "2026-03-07T01:25:30Z",
+      "trackId": "sdk:JavaScript:@azure/arm-keyvault",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37521",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37521"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:32615:57:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-07T01:25:36.22Z",
+      "observedAt": "2026-03-07T01:25:36.22Z",
+      "trackId": "sdk:JavaScript:@azure/arm-keyvault",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:32615:57:Custom.SDKPullRequestForJavaScript",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-03-07T01:25:36.22Z",
+      "observedAt": "2026-03-07T01:25:36.22Z",
+      "trackId": "sdk:JavaScript:@azure/arm-keyvault",
+      "value": "https://github.com/Azure/azure-sdk-for-js/pull/37521",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado:32615:58:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-16T18:44:36.957Z",
+      "observedAt": "2026-03-16T18:44:36.957Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.KeyVault",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32615:58:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-16T18:44:36.957Z",
+      "observedAt": "2026-03-16T18:44:36.957Z",
+      "trackId": "sdk:JavaScript:@azure/arm-keyvault",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32615:58:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-16T18:44:36.957Z",
+      "observedAt": "2026-03-16T18:44:36.957Z",
+      "trackId": "sdk:Python:azure-mgmt-keyvault",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32615:58:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-16T18:44:36.957Z",
+      "observedAt": "2026-03-16T18:44:36.957Z",
+      "trackId": "sdk:Java:azure-resourcemanager-keyvault",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32615:58:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-16T18:44:36.957Z",
+      "observedAt": "2026-03-16T18:44:36.957Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/keyvault/armkeyvault",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32615:63:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-16T18:48:52.223Z",
+      "observedAt": "2026-03-16T18:48:52.223Z",
+      "trackId": "sdk:JavaScript:@azure/arm-keyvault",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:32615:64:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-16T18:49:03.267Z",
+      "observedAt": "2026-03-16T18:49:03.267Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/keyvault/armkeyvault",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:32615:65:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-16T18:49:15.58Z",
+      "observedAt": "2026-03-16T18:49:15.58Z",
+      "trackId": "sdk:Java:azure-resourcemanager-keyvault",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:32615:66:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-16T18:49:29.04Z",
+      "observedAt": "2026-03-16T18:49:29.04Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.KeyVault",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:32615:67:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-16T18:49:39.98Z",
+      "observedAt": "2026-03-16T18:49:39.98Z",
+      "trackId": "sdk:Python:azure-mgmt-keyvault",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26137:commit:72c246fed65a:sdk:Go:sdk/resourcemanager/keyvault/armkeyvault",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-16T18:57:23Z",
+      "observedAt": "2026-03-16T18:57:23Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/keyvault/armkeyvault",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26137",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/72c246fed65a2d9f58517c2375dc909a2ce91752"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:32615:68:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-16T18:57:30.783Z",
+      "observedAt": "2026-03-16T18:57:30.783Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/keyvault/armkeyvault",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56858:commit:f58c0cf3a859:sdk:.NET:Azure.ResourceManager.KeyVault",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-16T18:58:22Z",
+      "observedAt": "2026-03-16T18:58:22Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.KeyVault",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56858",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/f58c0cf3a859d7c6b2c70e2204e0c5febc2d7597"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:32615:69:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-16T18:58:29.383Z",
+      "observedAt": "2026-03-16T18:58:29.383Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.KeyVault",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45565:commit:3260011d004b:sdk:Python:azure-mgmt-keyvault",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-16T18:59:44Z",
+      "observedAt": "2026-03-16T18:59:44Z",
+      "trackId": "sdk:Python:azure-mgmt-keyvault",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45565",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/3260011d004ba48d4a3bafdf444bcdae58c7a796"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:32615:70:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-16T18:59:51.747Z",
+      "observedAt": "2026-03-16T18:59:51.747Z",
+      "trackId": "sdk:Python:azure-mgmt-keyvault",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37521:commit:85c2e8662657:sdk:JavaScript:@azure/arm-keyvault",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-16T19:01:16Z",
+      "observedAt": "2026-03-16T19:01:16Z",
+      "trackId": "sdk:JavaScript:@azure/arm-keyvault",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37521",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/85c2e866265758466bc41f800ba9cf09d52ea81f"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:32615:71:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-16T19:01:23.857Z",
+      "observedAt": "2026-03-16T19:01:23.857Z",
+      "trackId": "sdk:JavaScript:@azure/arm-keyvault",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48325:commit:9fefcaaf7a85:sdk:Java:azure-resourcemanager-keyvault",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-16T19:01:34Z",
+      "observedAt": "2026-03-16T19:01:34Z",
+      "trackId": "sdk:Java:azure-resourcemanager-keyvault",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48325",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/9fefcaaf7a855499030ed6c1d6ac328a4b17ba37"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:32615:72:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-16T19:01:42.26Z",
+      "observedAt": "2026-03-16T19:01:42.26Z",
+      "trackId": "sdk:Java:azure-resourcemanager-keyvault",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:32615:73:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-17T03:41:11.81Z",
+      "observedAt": "2026-03-17T03:41:11.81Z",
+      "trackId": "sdk:JavaScript:@azure/arm-keyvault",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:32615:74:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-17T03:41:22.75Z",
+      "observedAt": "2026-03-17T03:41:22.75Z",
+      "trackId": "sdk:Java:azure-resourcemanager-keyvault",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48325:commit:b4bfe49fe03c:sdk:Java:azure-resourcemanager-keyvault",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T03:50:41Z",
+      "observedAt": "2026-03-17T03:50:41Z",
+      "trackId": "sdk:Java:azure-resourcemanager-keyvault",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48325",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/b4bfe49fe03c93b5e1df6ee6e86485e49a781fa6"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:32615:75:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-17T03:50:47.88Z",
+      "observedAt": "2026-03-17T03:50:47.88Z",
+      "trackId": "sdk:Java:azure-resourcemanager-keyvault",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37521:commit:89878f3e1817:sdk:JavaScript:@azure/arm-keyvault",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T03:51:29Z",
+      "observedAt": "2026-03-17T03:51:29Z",
+      "trackId": "sdk:JavaScript:@azure/arm-keyvault",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37521",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/89878f3e18172051642949175a5fb57c10d31414"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:32615:76:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-17T03:51:37.067Z",
+      "observedAt": "2026-03-17T03:51:37.067Z",
+      "trackId": "sdk:JavaScript:@azure/arm-keyvault",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32615:77:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-17T03:59:44.39Z",
+      "observedAt": "2026-03-17T03:59:44.39Z",
+      "trackId": "sdk:JavaScript:@azure/arm-keyvault",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:32615:78:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-17T03:59:56.09Z",
+      "observedAt": "2026-03-17T03:59:56.09Z",
+      "trackId": "sdk:Java:azure-resourcemanager-keyvault",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48325:commit:99fe7625850d:sdk:Java:azure-resourcemanager-keyvault",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T04:07:50Z",
+      "observedAt": "2026-03-17T04:07:50Z",
+      "trackId": "sdk:Java:azure-resourcemanager-keyvault",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48325",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/99fe7625850db0f3bf2c2b768a00b6ec76c50526"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:32615:79:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-17T04:07:56.863Z",
+      "observedAt": "2026-03-17T04:07:56.863Z",
+      "trackId": "sdk:Java:azure-resourcemanager-keyvault",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:32615:80:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-17T04:08:43.947Z",
+      "observedAt": "2026-03-17T04:08:43.947Z",
+      "trackId": "sdk:JavaScript:@azure/arm-keyvault",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56858:commit:716f0d76c56b:sdk:.NET:Azure.ResourceManager.KeyVault",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T05:30:39Z",
+      "observedAt": "2026-03-17T05:30:39Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.KeyVault",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "live1206"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56858",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/716f0d76c56bbb10e2f5de909b2912f0038f5d8b"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48325:commit:4b4388f059c8:sdk:Java:azure-resourcemanager-keyvault",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T07:30:29Z",
+      "observedAt": "2026-03-17T07:30:29Z",
+      "trackId": "sdk:Java:azure-resourcemanager-keyvault",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48325",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/4b4388f059c8414f6961ec3f9a9c2f1a58c428ae"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48325:commit:0b6b25d4127c:sdk:Java:azure-resourcemanager-keyvault",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T07:34:17Z",
+      "observedAt": "2026-03-17T07:34:17Z",
+      "trackId": "sdk:Java:azure-resourcemanager-keyvault",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48325",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/0b6b25d4127c325cff595f3ecc6b01284b538950"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48325:commit:4fc4e670f0d9:sdk:Java:azure-resourcemanager-keyvault",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T07:42:52Z",
+      "observedAt": "2026-03-17T07:42:52Z",
+      "trackId": "sdk:Java:azure-resourcemanager-keyvault",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48325",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/4fc4e670f0d94dd7ab5131b0870f8b2a78d7815f"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48325:commit:d7a1d31b4db4:sdk:Java:azure-resourcemanager-keyvault",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T07:59:26Z",
+      "observedAt": "2026-03-17T07:59:26Z",
+      "trackId": "sdk:Java:azure-resourcemanager-keyvault",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48325",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/d7a1d31b4db44590b8bce20374f6095fa2831fa0"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48446:commit:a3585a79f6a6:sdk:Java:azure-resourcemanager-keyvault",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T07:59:26Z",
+      "observedAt": "2026-03-17T07:59:26Z",
+      "trackId": "sdk:Java:azure-resourcemanager-keyvault",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48446",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/a3585a79f6a62f85e21c14fd4096f75440cc04ff"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48325:commit:6b7e50f6b1fc:sdk:Java:azure-resourcemanager-keyvault",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T07:59:37Z",
+      "observedAt": "2026-03-17T07:59:37Z",
+      "trackId": "sdk:Java:azure-resourcemanager-keyvault",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48325",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/6b7e50f6b1fc5316db00f2f6fb4ca7b94e9fc3f1"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37521:commit:7a47d58e51ca:sdk:JavaScript:@azure/arm-keyvault",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T08:05:38Z",
+      "observedAt": "2026-03-17T08:05:38Z",
+      "trackId": "sdk:JavaScript:@azure/arm-keyvault",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37521",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/7a47d58e51ca5fb268aa1e37f1a934cb3539d6b4"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48325:commit:67722b6dfd65:sdk:Java:azure-resourcemanager-keyvault",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T09:43:28Z",
+      "observedAt": "2026-03-17T09:43:28Z",
+      "trackId": "sdk:Java:azure-resourcemanager-keyvault",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48325",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/67722b6dfd6596408b208671611461e513058a32"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48325:commit:a50292f485d2:sdk:Java:azure-resourcemanager-keyvault",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T09:52:04Z",
+      "observedAt": "2026-03-17T09:52:04Z",
+      "trackId": "sdk:Java:azure-resourcemanager-keyvault",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48325",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/a50292f485d2110589cdc55a6a0066d12bf46181"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48325:commit:a3f7fd3641d3:sdk:Java:azure-resourcemanager-keyvault",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T09:52:40Z",
+      "observedAt": "2026-03-17T09:52:40Z",
+      "trackId": "sdk:Java:azure-resourcemanager-keyvault",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48325",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/a3f7fd3641d396f1cb108861e265a73e337ebfc2"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48325:commit:5d829855dca3:sdk:Java:azure-resourcemanager-keyvault",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T09:53:00Z",
+      "observedAt": "2026-03-17T09:53:00Z",
+      "trackId": "sdk:Java:azure-resourcemanager-keyvault",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48325",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/5d829855dca34516b1cb792e602128926053508f"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48325:review:3959691194:sdk:Java:azure-resourcemanager-keyvault",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T10:27:52Z",
+      "observedAt": "2026-03-17T10:27:52Z",
+      "trackId": "sdk:Java:azure-resourcemanager-keyvault",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48325",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48325#pullrequestreview-3959691194"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56858:pr.closed:sdk:.NET:Azure.ResourceManager.KeyVault",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T16:49:55Z",
+      "observedAt": "2026-03-17T16:49:55Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.KeyVault",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56858",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56858"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48325:pr.closed:sdk:Java:azure-resourcemanager-keyvault",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T16:53:27Z",
+      "observedAt": "2026-03-17T16:53:27Z",
+      "trackId": "sdk:Java:azure-resourcemanager-keyvault",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48325",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48325"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26137:pr.closed:sdk:Go:sdk/resourcemanager/keyvault/armkeyvault",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T16:53:34Z",
+      "observedAt": "2026-03-17T16:53:34Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/keyvault/armkeyvault",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26137",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26137"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37521:pr.closed:sdk:JavaScript:@azure/arm-keyvault",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T16:53:40Z",
+      "observedAt": "2026-03-17T16:53:40Z",
+      "trackId": "sdk:JavaScript:@azure/arm-keyvault",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37521",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37521"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45565:pr.closed:sdk:Python:azure-mgmt-keyvault",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T16:53:46Z",
+      "observedAt": "2026-03-17T16:53:46Z",
+      "trackId": "sdk:Python:azure-mgmt-keyvault",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45565",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45565"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:32615:83:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-17T16:55:39.42Z",
+      "observedAt": "2026-03-17T16:55:39.42Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.KeyVault",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:32615:84:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-17T17:04:28.88Z",
+      "observedAt": "2026-03-17T17:04:28.88Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.KeyVault",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6022783:generation.queued:sdk:JavaScript:@azure/arm-keyvault",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-03-17T17:51:52.3410195Z",
+      "observedAt": "2026-03-17T18:07:48.0412585Z",
+      "trackId": "sdk:JavaScript:@azure/arm-keyvault",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6022783",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6022783"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:32615:86:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-17T17:51:54.56Z",
+      "observedAt": "2026-03-17T17:51:54.56Z",
+      "trackId": "sdk:JavaScript:@azure/arm-keyvault",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6022784:generation.queued:sdk:Go:sdk/resourcemanager/keyvault/armkeyvault",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-03-17T17:52:03.4004241Z",
+      "observedAt": "2026-03-17T18:03:18.6590718Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/keyvault/armkeyvault",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6022784",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6022784"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:32615:87:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-17T17:52:05.767Z",
+      "observedAt": "2026-03-17T17:52:05.767Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/keyvault/armkeyvault",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6022785:generation.queued:sdk:Java:azure-resourcemanager-keyvault",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-03-17T17:52:14.514703Z",
+      "observedAt": "2026-03-17T18:20:19.18554Z",
+      "trackId": "sdk:Java:azure-resourcemanager-keyvault",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6022785",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6022785"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:32615:88:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-17T17:52:16.85Z",
+      "observedAt": "2026-03-17T17:52:16.85Z",
+      "trackId": "sdk:Java:azure-resourcemanager-keyvault",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:6022786:generation.queued:sdk:.NET:Azure.ResourceManager.KeyVault",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-03-17T17:52:26.6830649Z",
+      "observedAt": "2026-03-17T18:07:11.3614435Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.KeyVault",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6022786",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6022786"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado:32615:89:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-17T17:52:28.713Z",
+      "observedAt": "2026-03-17T17:52:28.713Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.KeyVault",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6022787:generation.queued:sdk:Python:azure-mgmt-keyvault",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-03-17T17:52:39.4440509Z",
+      "observedAt": "2026-03-17T18:07:08.410507Z",
+      "trackId": "sdk:Python:azure-mgmt-keyvault",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6022787",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6022787"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:32615:90:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-17T17:52:42.467Z",
+      "observedAt": "2026-03-17T17:52:42.467Z",
+      "trackId": "sdk:Python:azure-mgmt-keyvault",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6022783:generation.started:sdk:JavaScript:@azure/arm-keyvault",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-03-17T17:54:49.3014026Z",
+      "observedAt": "2026-03-17T18:07:48.0412585Z",
+      "trackId": "sdk:JavaScript:@azure/arm-keyvault",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6022783",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6022783"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6022785:generation.started:sdk:Java:azure-resourcemanager-keyvault",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-03-17T17:54:50.1124619Z",
+      "observedAt": "2026-03-17T18:20:19.18554Z",
+      "trackId": "sdk:Java:azure-resourcemanager-keyvault",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6022785",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6022785"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6022784:generation.started:sdk:Go:sdk/resourcemanager/keyvault/armkeyvault",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-03-17T17:54:51.0416704Z",
+      "observedAt": "2026-03-17T18:03:18.6590718Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/keyvault/armkeyvault",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6022784",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6022784"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6022786:generation.started:sdk:.NET:Azure.ResourceManager.KeyVault",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-03-17T17:54:51.9939276Z",
+      "observedAt": "2026-03-17T18:07:11.3614435Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.KeyVault",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6022786",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6022786"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:6022787:generation.started:sdk:Python:azure-mgmt-keyvault",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-03-17T17:54:53.0082912Z",
+      "observedAt": "2026-03-17T18:07:08.410507Z",
+      "trackId": "sdk:Python:azure-mgmt-keyvault",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6022787",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6022787"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26294:commit:f4601d0c72a6:sdk:Go:sdk/resourcemanager/keyvault/armkeyvault",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T18:01:53Z",
+      "observedAt": "2026-03-17T18:01:53Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/keyvault/armkeyvault",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26294",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/f4601d0c72a68eff45c7c692807ccdac68c32ce6"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26294:pr.created:sdk:Go:sdk/resourcemanager/keyvault/armkeyvault",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T18:01:56Z",
+      "observedAt": "2026-03-17T18:01:56Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/keyvault/armkeyvault",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26294",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26294"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:32615:91:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-17T18:02:03.937Z",
+      "observedAt": "2026-03-17T18:02:03.937Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/keyvault/armkeyvault",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32615:91:Custom.SDKPullRequestForGo",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-03-17T18:02:03.937Z",
+      "observedAt": "2026-03-17T18:02:03.937Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/keyvault/armkeyvault",
+      "value": "https://github.com/Azure/azure-sdk-for-go/pull/26294",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "SDK PR linked",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6022784:generation.completed:sdk:Go:sdk/resourcemanager/keyvault/armkeyvault",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-03-17T18:03:18.6590718Z",
+      "observedAt": "2026-03-17T18:03:18.6590718Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/keyvault/armkeyvault",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6022784",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6022784"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45750:commit:115518e3ebcb:sdk:Python:azure-mgmt-keyvault",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T18:05:27Z",
+      "observedAt": "2026-03-17T18:05:27Z",
+      "trackId": "sdk:Python:azure-mgmt-keyvault",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45750",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/115518e3ebcb9ff23113fa10ca80000dbf260151"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45750:pr.created:sdk:Python:azure-mgmt-keyvault",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T18:05:31Z",
+      "observedAt": "2026-03-17T18:05:31Z",
+      "trackId": "sdk:Python:azure-mgmt-keyvault",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45750",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45750"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:32615:92:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-17T18:05:38.283Z",
+      "observedAt": "2026-03-17T18:05:38.283Z",
+      "trackId": "sdk:Python:azure-mgmt-keyvault",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32615:92:Custom.SDKPullRequestForPython",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-03-17T18:05:38.283Z",
+      "observedAt": "2026-03-17T18:05:38.283Z",
+      "trackId": "sdk:Python:azure-mgmt-keyvault",
+      "value": "https://github.com/Azure/azure-sdk-for-python/pull/45750",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "SDK PR linked",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57181:commit:39cdba5058c0:sdk:.NET:Azure.ResourceManager.KeyVault",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T18:06:15Z",
+      "observedAt": "2026-03-17T18:06:15Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.KeyVault",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57181",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/39cdba5058c0be9736277d795ce6026253843d40"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57181:pr.created:sdk:.NET:Azure.ResourceManager.KeyVault",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T18:06:19Z",
+      "observedAt": "2026-03-17T18:06:19Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.KeyVault",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57181",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57181"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:32615:93:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-17T18:06:26.39Z",
+      "observedAt": "2026-03-17T18:06:26.39Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.KeyVault",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:32615:93:Custom.SDKPullRequestForDotnet",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-03-17T18:06:26.39Z",
+      "observedAt": "2026-03-17T18:06:26.39Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.KeyVault",
+      "value": "https://github.com/Azure/azure-sdk-for-net/pull/57181",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "SDK PR linked",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37688:commit:b1ee66c53e31:sdk:JavaScript:@azure/arm-keyvault",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T18:06:42Z",
+      "observedAt": "2026-03-17T18:06:42Z",
+      "trackId": "sdk:JavaScript:@azure/arm-keyvault",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37688",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/b1ee66c53e312fc4d85d088b0280ae121a7fbdcf"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37688:pr.created:sdk:JavaScript:@azure/arm-keyvault",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T18:06:46Z",
+      "observedAt": "2026-03-17T18:06:46Z",
+      "trackId": "sdk:JavaScript:@azure/arm-keyvault",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37688",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37688"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado:32615:94:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-17T18:06:53.117Z",
+      "observedAt": "2026-03-17T18:06:53.117Z",
+      "trackId": "sdk:JavaScript:@azure/arm-keyvault",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32615:94:Custom.SDKPullRequestForJavaScript",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-03-17T18:06:53.117Z",
+      "observedAt": "2026-03-17T18:06:53.117Z",
+      "trackId": "sdk:JavaScript:@azure/arm-keyvault",
+      "value": "https://github.com/Azure/azure-sdk-for-js/pull/37688",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "SDK PR linked",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6022787:generation.completed:sdk:Python:azure-mgmt-keyvault",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-03-17T18:07:08.410507Z",
+      "observedAt": "2026-03-17T18:07:08.410507Z",
+      "trackId": "sdk:Python:azure-mgmt-keyvault",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6022787",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6022787"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6022786:generation.completed:sdk:.NET:Azure.ResourceManager.KeyVault",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-03-17T18:07:11.3614435Z",
+      "observedAt": "2026-03-17T18:07:11.3614435Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.KeyVault",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6022786",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6022786"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6022783:generation.completed:sdk:JavaScript:@azure/arm-keyvault",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-03-17T18:07:48.0412585Z",
+      "observedAt": "2026-03-17T18:07:48.0412585Z",
+      "trackId": "sdk:JavaScript:@azure/arm-keyvault",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6022783",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6022783"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48446:commit:809c7924207d:sdk:Java:azure-resourcemanager-keyvault",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T18:09:38Z",
+      "observedAt": "2026-03-17T18:09:38Z",
+      "trackId": "sdk:Java:azure-resourcemanager-keyvault",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48446",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/809c7924207d822d579a382cea100e2dffa91553"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48446:pr.created:sdk:Java:azure-resourcemanager-keyvault",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T18:09:42Z",
+      "observedAt": "2026-03-17T18:09:42Z",
+      "trackId": "sdk:Java:azure-resourcemanager-keyvault",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48446",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48446"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:32615:95:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-17T18:09:49.073Z",
+      "observedAt": "2026-03-17T18:09:49.073Z",
+      "trackId": "sdk:Java:azure-resourcemanager-keyvault",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:32615:95:Custom.SDKPullRequestForJava",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-03-17T18:09:49.073Z",
+      "observedAt": "2026-03-17T18:09:49.073Z",
+      "trackId": "sdk:Java:azure-resourcemanager-keyvault",
+      "value": "https://github.com/Azure/azure-sdk-for-java/pull/48446",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "SDK PR linked",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6022785:generation.completed:sdk:Java:azure-resourcemanager-keyvault",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-03-17T18:20:19.18554Z",
+      "observedAt": "2026-03-17T18:20:19.18554Z",
+      "trackId": "sdk:Java:azure-resourcemanager-keyvault",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6022785",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6022785"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45750:comment:2949657796:sdk:Python:azure-mgmt-keyvault",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T21:28:02Z",
+      "observedAt": "2026-03-17T21:28:02Z",
+      "trackId": "sdk:Python:azure-mgmt-keyvault",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45750",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45750#discussion_r2949657796"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The docstring claims the `api_version` kwarg has known values \"2026-02-01\" and `None`, but the public signature/typing documents `api_version` as `str` and the client/operation request building logic doesn’t appear to special-case `None`. E",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45750:comment:2949657818:sdk:Python:azure-mgmt-keyvault",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T21:28:02Z",
+      "observedAt": "2026-03-17T21:28:02Z",
+      "trackId": "sdk:Python:azure-mgmt-keyvault",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45750",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45750#discussion_r2949657818"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The docstring claims the `api_version` kwarg has known values \"2026-02-01\" and `None`, but the public signature/typing documents `api_version` as `str` and the client/operation request building logic doesn’t appear to special-case `None`. E",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45750:comment:2949657831:sdk:Python:azure-mgmt-keyvault",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T21:28:02Z",
+      "observedAt": "2026-03-17T21:28:02Z",
+      "trackId": "sdk:Python:azure-mgmt-keyvault",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45750",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45750#discussion_r2949657831"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The 14.0.0 entry doesn’t mention that the SDK was regenerated for API version 2026-02-01 (and the default `api_version` changed accordingly). Please add a brief note under \"Features Added\" (or \"Breaking Changes\" if applicable) so consumers ",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45750:review:3963863017:sdk:Python:azure-mgmt-keyvault",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T21:28:03Z",
+      "observedAt": "2026-03-17T21:28:03Z",
+      "trackId": "sdk:Python:azure-mgmt-keyvault",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45750",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45750#pullrequestreview-3963863017"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Regenerates `azure-mgmt-keyvault` from the Key Vault TypeSpec configuration for API version **2026-02-01**, updating generated client/operation/model code and metadata for a new **stable** release. **Changes:** - Up",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48446:commit:b8fca32d5bd1:sdk:Java:azure-resourcemanager-keyvault",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-18T01:41:33Z",
+      "observedAt": "2026-03-18T01:41:33Z",
+      "trackId": "sdk:Java:azure-resourcemanager-keyvault",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48446",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/b8fca32d5bd138bc083d13907d78f0a4b4505ddb"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37688:commit:b2474683768e:sdk:JavaScript:@azure/arm-keyvault",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-18T01:58:53Z",
+      "observedAt": "2026-03-18T01:58:53Z",
+      "trackId": "sdk:JavaScript:@azure/arm-keyvault",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "JialinHuang803"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37688",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/b2474683768e100a4cd29bdb2e7ca346d80a3360"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48446:review:3964661424:sdk:Java:azure-resourcemanager-keyvault",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-18T02:27:15Z",
+      "observedAt": "2026-03-18T02:27:15Z",
+      "trackId": "sdk:Java:azure-resourcemanager-keyvault",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48446",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48446#pullrequestreview-3964661424"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45750:commit:4b12eb96cc87:sdk:Python:azure-mgmt-keyvault",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-18T02:31:01Z",
+      "observedAt": "2026-03-18T02:31:01Z",
+      "trackId": "sdk:Python:azure-mgmt-keyvault",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45750",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/4b12eb96cc87292788ba7faab7dc1da6adac8c87"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45750:commit:34fbd7867509:sdk:Python:azure-mgmt-keyvault",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-18T02:31:14Z",
+      "observedAt": "2026-03-18T02:31:14Z",
+      "trackId": "sdk:Python:azure-mgmt-keyvault",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45750",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/34fbd78675091e8edeca21d8be330e3632c32b00"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45750:comment:4079217009:sdk:Python:azure-mgmt-keyvault",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-18T02:31:57Z",
+      "observedAt": "2026-03-18T02:31:57Z",
+      "trackId": "sdk:Python:azure-mgmt-keyvault",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45750",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45750#issuecomment-4079217009"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@msyyc pr ready, please help review",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45750:review:3964685290:sdk:Python:azure-mgmt-keyvault",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-18T02:37:46Z",
+      "observedAt": "2026-03-18T02:37:46Z",
+      "trackId": "sdk:Python:azure-mgmt-keyvault",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45750",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45750#pullrequestreview-3964685290"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45750:comment:4079268168:sdk:Python:azure-mgmt-keyvault",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-18T02:50:27Z",
+      "observedAt": "2026-03-18T02:50:27Z",
+      "trackId": "sdk:Python:azure-mgmt-keyvault",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45750",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45750#issuecomment-4079268168"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@FRL200, pr ready, feel free to merge and release",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26294:commit:f81534dfffc4:sdk:Go:sdk/resourcemanager/keyvault/armkeyvault",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-18T03:17:44Z",
+      "observedAt": "2026-03-18T03:17:44Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/keyvault/armkeyvault",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "tadelesh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26294",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/f81534dfffc46f35412f784b4bfe0a9a2faceb9e"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26294:commit:59c17163026e:sdk:Go:sdk/resourcemanager/keyvault/armkeyvault",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-18T04:01:43Z",
+      "observedAt": "2026-03-18T04:01:43Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/keyvault/armkeyvault",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26294",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/59c17163026ec58c07fbe393ace77b162bc1f8be"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26294:commit:2a5eb1b7232b:sdk:Go:sdk/resourcemanager/keyvault/armkeyvault",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-18T05:55:14Z",
+      "observedAt": "2026-03-18T05:55:14Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/keyvault/armkeyvault",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "jliusan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26294",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/2a5eb1b7232baa6abea1599fe152be879e859cd2"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26294:review:3965313778:sdk:Go:sdk/resourcemanager/keyvault/armkeyvault",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-18T06:03:09Z",
+      "observedAt": "2026-03-18T06:03:09Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/keyvault/armkeyvault",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "tadelesh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26294",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26294#pullrequestreview-3965313778"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26294:review:3965325448:sdk:Go:sdk/resourcemanager/keyvault/armkeyvault",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-18T06:05:58Z",
+      "observedAt": "2026-03-18T06:05:58Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/keyvault/armkeyvault",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26294",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26294#pullrequestreview-3965325448"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Auto-generated update for the `armkeyvault` Resource Manager Go SDK to align with the KeyVault RP spec `2026-02-01` (per tspconfig), including version bump and regenerated clients/examples/test artifacts. **Changes:",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26294:comment:2951149961:sdk:Go:sdk/resourcemanager/keyvault/armkeyvault",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-18T06:05:58Z",
+      "observedAt": "2026-03-18T06:05:58Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/keyvault/armkeyvault",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26294",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26294#discussion_r2951149961"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The example NextLink URL has an invalid `api-version` value (`22026-02-01`). This looks like an accidental extra \"22\" prefix and should be `2026-02-01` to match the rest of the SDK and the example definition version.",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57181:comment:4080519105:sdk:.NET:Azure.ResourceManager.KeyVault",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-18T08:10:52Z",
+      "observedAt": "2026-03-18T08:10:52Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.KeyVault",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "live1206"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57181",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57181#issuecomment-4080519105"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## 🔍 CI Failure Analysis for PR #57181 ### Check Status Summary | Check | Status | |-------|--------| | Build Analyze PRBatch | ✅ Pass | | Build Build PRBatch | ❌ **5 errors / 1 warning** | | Build Compliance | ✅ Pass | | All test jobs (8/",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37688:comment:4083208362:sdk:JavaScript:@azure/arm-keyvault",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-18T14:57:35Z",
+      "observedAt": "2026-03-18T14:57:35Z",
+      "trackId": "sdk:JavaScript:@azure/arm-keyvault",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "JialinHuang803"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37688",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37688#issuecomment-4083208362"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The CI failure is caused by test issues on another service which has dependency on arm-keyvault, and we are working on fixing them.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37688:commit:310e02adc243:sdk:JavaScript:@azure/arm-keyvault",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-18T17:15:26Z",
+      "observedAt": "2026-03-18T17:15:26Z",
+      "trackId": "sdk:JavaScript:@azure/arm-keyvault",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "jeremymeng"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37688",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/310e02adc24360a9afcb7894ae1a0d731a95dc2b"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37688:commit:6f7fc2afedc1:sdk:JavaScript:@azure/arm-keyvault",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-18T18:45:31Z",
+      "observedAt": "2026-03-18T18:45:31Z",
+      "trackId": "sdk:JavaScript:@azure/arm-keyvault",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "jeremymeng"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37688",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/6f7fc2afedc1deac47a2d297d57beb992e8e2ff5"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57181:commit:3ca24c602ed3:sdk:.NET:Azure.ResourceManager.KeyVault",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-18T19:55:10Z",
+      "observedAt": "2026-03-18T19:55:10Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.KeyVault",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57181",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/3ca24c602ed37db63da6c6c9a0966203150d3eeb"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57181:commit:6626d87d9429:sdk:.NET:Azure.ResourceManager.KeyVault",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-18T19:58:06Z",
+      "observedAt": "2026-03-18T19:58:06Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.KeyVault",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57181",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/6626d87d9429b3c9c58b4e5b714d6767381bd92f"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57181:commit:8cd349351b80:sdk:.NET:Azure.ResourceManager.KeyVault",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-18T23:40:49Z",
+      "observedAt": "2026-03-18T23:40:49Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.KeyVault",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57181",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/8cd349351b80973984a8fdcaca5cf9b7a46b191f"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57181:review:3971778565:sdk:.NET:Azure.ResourceManager.KeyVault",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-19T00:29:45Z",
+      "observedAt": "2026-03-19T00:29:45Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.KeyVault",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57181",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57181#pullrequestreview-3971778565"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Updates the **Azure.ResourceManager.KeyVault** management SDK to align with the Key Vault RP **2026-02-01** TypeSpec/spec commit and prepares the package for a **1.4.0 stable** release. **Changes:** - Updated TypeSp",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26294:pr.merged:sdk:Go:sdk/resourcemanager/keyvault/armkeyvault",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-19T00:38:52Z",
+      "observedAt": "2026-03-19T00:38:52Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/keyvault/armkeyvault",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26294",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26294"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48446:review:3971852647:sdk:Java:azure-resourcemanager-keyvault",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-19T00:49:42Z",
+      "observedAt": "2026-03-19T00:49:42Z",
+      "trackId": "sdk:Java:azure-resourcemanager-keyvault",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48446",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48446#pullrequestreview-3971852647"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Updates the **Azure Resource Manager Key Vault** Java SDK (`azure-resourcemanager-keyvault`) generated from the Key Vault management TypeSpec for API version **2026-02-01**, preparing a **stable** release. **Changes",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48446:comment:2957075202:sdk:Java:azure-resourcemanager-keyvault",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-19T00:49:42Z",
+      "observedAt": "2026-03-19T00:49:42Z",
+      "trackId": "sdk:Java:azure-resourcemanager-keyvault",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48446",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48446#discussion_r2957075202"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`MhsmPrivateLinkResource` now extends `com.azure.core.management.Resource`, but it also redeclares `id`, `name`, and `type` fields and overrides the corresponding getters to return these new fields. This shadows the existing `id/name/type` ",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48446:comment:2957075212:sdk:Java:azure-resourcemanager-keyvault",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-19T00:49:42Z",
+      "observedAt": "2026-03-19T00:49:42Z",
+      "trackId": "sdk:Java:azure-resourcemanager-keyvault",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48446",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48446#discussion_r2957075212"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The changelog no longer has a top \"(Unreleased)\" section for the next version. Other management libraries in this repo keep an \"(Unreleased)\" header at the top even after cutting a release (for example, `sdk/network/azure-resourcemanager-ne",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48446:comment:2957075224:sdk:Java:azure-resourcemanager-keyvault",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-19T00:49:42Z",
+      "observedAt": "2026-03-19T00:49:42Z",
+      "trackId": "sdk:Java:azure-resourcemanager-keyvault",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48446",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48446#discussion_r2957075224"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This release includes a documented breaking change (`ManagedHsmResource` removal in CHANGELOG) but the Maven version is being finalized as `2.55.0` (a minor bump from `2.54.x`). Under semantic versioning, removing a public type is a major b",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48446:comment:4087119645:sdk:Java:azure-resourcemanager-keyvault",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-19T02:17:13Z",
+      "observedAt": "2026-03-19T02:17:13Z",
+      "trackId": "sdk:Java:azure-resourcemanager-keyvault",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48446",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48446#issuecomment-4087119645"
+      },
+      "confidence": "authoritative",
+      "excerpt": "I will skip the test from source CI. It seems cosmos_spark again having problem. ``` [ERROR] Failed to execute goal on project azure-cosmos-spark_3: Could not resolve dependencies for project com.azure.cosmos.spark:azure-cosmos-spark_3:pom:",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48446:comment:4087120593:sdk:Java:azure-resourcemanager-keyvault",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-19T02:17:22Z",
+      "observedAt": "2026-03-19T02:17:22Z",
+      "trackId": "sdk:Java:azure-resourcemanager-keyvault",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48446",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48446#issuecomment-4087120593"
+      },
+      "confidence": "authoritative",
+      "excerpt": "/check-enforcer override",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48446:comment:4087121268:sdk:Java:azure-resourcemanager-keyvault",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-19T02:17:29Z",
+      "observedAt": "2026-03-19T02:17:29Z",
+      "trackId": "sdk:Java:azure-resourcemanager-keyvault",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48446",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48446#issuecomment-4087121268"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@XiaofeiCao for review",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45750:commit:4b8f258bdd3f:sdk:Python:azure-mgmt-keyvault",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-19T02:31:57Z",
+      "observedAt": "2026-03-19T02:31:57Z",
+      "trackId": "sdk:Python:azure-mgmt-keyvault",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45750",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/4b8f258bdd3f3504f6ee9a74997b0a5b3836ed28"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48446:review:3972419302:sdk:Java:azure-resourcemanager-keyvault",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-19T02:52:43Z",
+      "observedAt": "2026-03-19T02:52:43Z",
+      "trackId": "sdk:Java:azure-resourcemanager-keyvault",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "XiaofeiCao"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48446",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48446#pullrequestreview-3972419302"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57181:review:3972623252:sdk:.NET:Azure.ResourceManager.KeyVault",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-19T03:35:53Z",
+      "observedAt": "2026-03-19T03:35:53Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.KeyVault",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "live1206"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57181",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57181#pullrequestreview-3972623252"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Mgmt SDK PR Review — Azure.ResourceManager.KeyVault #57181 ### Phase 1: Versioning Review ✅ PASS - **Version**: 1.4.0-beta.1 → 1.4.0 (minor bump only, no major version change) - **ApiCompatVersion**: 1.3.3 retained — API compatibility en",
+      "reviewState": "approved",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57181:pr.merged:sdk:.NET:Azure.ResourceManager.KeyVault",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-19T03:38:15Z",
+      "observedAt": "2026-03-19T03:38:15Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.KeyVault",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57181",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57181"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48446:pr.merged:sdk:Java:azure-resourcemanager-keyvault",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-19T07:12:20Z",
+      "observedAt": "2026-03-19T07:12:20Z",
+      "trackId": "sdk:Java:azure-resourcemanager-keyvault",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48446",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48446"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37688:commit:6d92d7b4bc88:sdk:JavaScript:@azure/arm-keyvault",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-19T08:20:13Z",
+      "observedAt": "2026-03-19T08:20:13Z",
+      "trackId": "sdk:JavaScript:@azure/arm-keyvault",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37688",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/6d92d7b4bc883bfaa42305c404249d1799908c08"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37688:commit:2a688da90f88:sdk:JavaScript:@azure/arm-keyvault",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-19T08:35:19Z",
+      "observedAt": "2026-03-19T08:35:19Z",
+      "trackId": "sdk:JavaScript:@azure/arm-keyvault",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37688",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/2a688da90f88144ad4aaaa4026fe8dcaac0ed6d1"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37688:review:3973653801:sdk:JavaScript:@azure/arm-keyvault",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-19T08:51:27Z",
+      "observedAt": "2026-03-19T08:51:27Z",
+      "trackId": "sdk:JavaScript:@azure/arm-keyvault",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37688",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37688#pullrequestreview-3973653801"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37688:comment:2958644471:sdk:JavaScript:@azure/arm-keyvault",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-19T08:51:27Z",
+      "observedAt": "2026-03-19T08:51:27Z",
+      "trackId": "sdk:JavaScript:@azure/arm-keyvault",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37688",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37688#discussion_r2958644471"
+      },
+      "confidence": "authoritative",
+      "excerpt": "```suggestion // Skip this test cases temporaryly we have a merge blocker when refreshing @azure/arm-keyvault package. See https://dev.azure.com/azure-sdk/public/public%20Team/_build/results?buildId=6029942&view=logs&j=d81dfa19-13f9-5461-4e",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37688:commit:03fb509cd16a:sdk:JavaScript:@azure/arm-keyvault",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-19T08:51:32Z",
+      "observedAt": "2026-03-19T08:51:32Z",
+      "trackId": "sdk:JavaScript:@azure/arm-keyvault",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37688",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/03fb509cd16a82df01c57c4ef0f474b8442c1b92"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37688:commit:96ba564007e8:sdk:JavaScript:@azure/arm-keyvault",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-19T13:29:23Z",
+      "observedAt": "2026-03-19T13:29:23Z",
+      "trackId": "sdk:JavaScript:@azure/arm-keyvault",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "JialinHuang803"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37688",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/96ba564007e8757b6729faf51b74fd4f135f2b41"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37688:commit:535c26a1c72a:sdk:JavaScript:@azure/arm-keyvault",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-19T15:11:43Z",
+      "observedAt": "2026-03-19T15:11:43Z",
+      "trackId": "sdk:JavaScript:@azure/arm-keyvault",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "JialinHuang803"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37688",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/535c26a1c72af7425a92e946e112a9eb95463d97"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45750:pr.merged:sdk:Python:azure-mgmt-keyvault",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-19T16:07:29Z",
+      "observedAt": "2026-03-19T16:07:29Z",
+      "trackId": "sdk:Python:azure-mgmt-keyvault",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45750",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45750"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37688:commit:721ef31d7a5e:sdk:JavaScript:@azure/arm-keyvault",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-19T18:44:08Z",
+      "observedAt": "2026-03-19T18:44:08Z",
+      "trackId": "sdk:JavaScript:@azure/arm-keyvault",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "jeremymeng"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37688",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/721ef31d7a5e0d58a801c9ac7880b02028179f5f"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37688:commit:7ce3aff4debf:sdk:JavaScript:@azure/arm-keyvault",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-19T18:44:15Z",
+      "observedAt": "2026-03-19T18:44:15Z",
+      "trackId": "sdk:JavaScript:@azure/arm-keyvault",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "jeremymeng"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37688",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/7ce3aff4debf0e1bad483bf97b77ccb74e234615"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37688:commit:d02a3aa42f91:sdk:JavaScript:@azure/arm-keyvault",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-19T18:44:21Z",
+      "observedAt": "2026-03-19T18:44:21Z",
+      "trackId": "sdk:JavaScript:@azure/arm-keyvault",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "jeremymeng"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37688",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/d02a3aa42f91786b7acecbf048b67c967b2a0157"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37688:commit:d616c9f00227:sdk:JavaScript:@azure/arm-keyvault",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-19T18:44:26Z",
+      "observedAt": "2026-03-19T18:44:26Z",
+      "trackId": "sdk:JavaScript:@azure/arm-keyvault",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "jeremymeng"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37688",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/d616c9f00227832228c8921b8404e4c0e6162304"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37688:commit:2c17c8d15df0:sdk:JavaScript:@azure/arm-keyvault",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-19T18:44:31Z",
+      "observedAt": "2026-03-19T18:44:31Z",
+      "trackId": "sdk:JavaScript:@azure/arm-keyvault",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "jeremymeng"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37688",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/2c17c8d15df0bc92d192310795b023e14651c0cf"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37688:commit:fbd357377928:sdk:JavaScript:@azure/arm-keyvault",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-19T18:52:07Z",
+      "observedAt": "2026-03-19T18:52:07Z",
+      "trackId": "sdk:JavaScript:@azure/arm-keyvault",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "jeremymeng"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37688",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/fbd357377928310f61e47ecd7638a16c3cce30d6"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37688:commit:fe7c242f8572:sdk:JavaScript:@azure/arm-keyvault",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-19T20:04:48Z",
+      "observedAt": "2026-03-19T20:04:48Z",
+      "trackId": "sdk:JavaScript:@azure/arm-keyvault",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "jeremymeng"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37688",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/fe7c242f85722d07832547f165bc8c7734a09160"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37688:commit:ffe0e8cd4997:sdk:JavaScript:@azure/arm-keyvault",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-19T21:23:13Z",
+      "observedAt": "2026-03-19T21:23:13Z",
+      "trackId": "sdk:JavaScript:@azure/arm-keyvault",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "jeremymeng"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37688",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/ffe0e8cd49977dc723b62329ab28d047d1c31745"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37688:comment:2962898761:sdk:JavaScript:@azure/arm-keyvault",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-19T21:51:37Z",
+      "observedAt": "2026-03-19T21:51:37Z",
+      "trackId": "sdk:JavaScript:@azure/arm-keyvault",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37688",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37688#discussion_r2962898761"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`KeyVaultManagementClient` is instantiated without the required `subscriptionId` argument (all other v5 samples pass `subscriptionId`). Update this sample to accept/provide a `subscriptionId` and construct the client as `new KeyVaultManagem",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37688:comment:2962898786:sdk:JavaScript:@azure/arm-keyvault",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-19T21:51:37Z",
+      "observedAt": "2026-03-19T21:51:37Z",
+      "trackId": "sdk:JavaScript:@azure/arm-keyvault",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37688",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37688#discussion_r2962898786"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`KeyVaultManagementClient` is instantiated without `subscriptionId`, which is inconsistent with other v5 JavaScript samples and will fail if the constructor requires it. Pass a `subscriptionId` when creating the client (e.g., `new KeyVaultM",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37688:review:3978186885:sdk:JavaScript:@azure/arm-keyvault",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-19T21:51:38Z",
+      "observedAt": "2026-03-19T21:51:38Z",
+      "trackId": "sdk:JavaScript:@azure/arm-keyvault",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37688",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37688#pullrequestreview-3978186885"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This PR updates `@azure/arm-keyvault` using the 2026-02-01 swagger/tsp configuration, regenerating the client surface (API layer + “classic” wrappers), updating API reports/changelog, and refreshing samples (introdu",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37688:comment:2962898809:sdk:JavaScript:@azure/arm-keyvault",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-19T21:51:38Z",
+      "observedAt": "2026-03-19T21:51:38Z",
+      "trackId": "sdk:JavaScript:@azure/arm-keyvault",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37688",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37688#discussion_r2962898809"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The phrase “demonstrates how to the List operation gets…” is grammatically incorrect and appears to be a generation artifact. Please reword to something like “This sample demonstrates how to list the vaults associated with the subscription.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37688:comment:2962898826:sdk:JavaScript:@azure/arm-keyvault",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-19T21:51:38Z",
+      "observedAt": "2026-03-19T21:51:38Z",
+      "trackId": "sdk:JavaScript:@azure/arm-keyvault",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37688",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37688#discussion_r2962898826"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This new exported `logger` lacks any TSDoc. Add a brief TSDoc comment explaining what this logger is used for (and whether it’s intended for internal use), to keep exported symbols documented and consistent with typical Azure SDK TypeScript",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37688:review:3978899258:sdk:JavaScript:@azure/arm-keyvault",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-20T01:47:41Z",
+      "observedAt": "2026-03-20T01:47:41Z",
+      "trackId": "sdk:JavaScript:@azure/arm-keyvault",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "JialinHuang803"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37688",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37688#pullrequestreview-3978899258"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37688:review:3979037759:sdk:JavaScript:@azure/arm-keyvault",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-20T02:42:21Z",
+      "observedAt": "2026-03-20T02:42:21Z",
+      "trackId": "sdk:JavaScript:@azure/arm-keyvault",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "lirenhe"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37688",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37688#pullrequestreview-3979037759"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37688:pr.merged:sdk:JavaScript:@azure/arm-keyvault",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-20T02:50:02Z",
+      "observedAt": "2026-03-20T02:50:02Z",
+      "trackId": "sdk:JavaScript:@azure/arm-keyvault",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37688",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37688"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github-release:32615:JavaScript:@azure/arm-keyvault_5.0.0",
+      "type": "package.github_release_published",
+      "phase": "release",
+      "occurredAt": "2026-03-20T18:27:33Z",
+      "observedAt": "2026-03-20T18:27:33Z",
+      "trackId": "sdk:JavaScript:@azure/arm-keyvault",
+      "title": "GitHub Release published",
+      "value": "@azure/arm-keyvault_5.0.0",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "azure-sdk-for-js release @azure/arm-keyvault_5.0.0",
+        "url": "https://github.com/Azure/azure-sdk-for-js/releases/tag/%40azure/arm-keyvault_5.0.0"
+      },
+      "confidence": "inferred",
+      "stack": 0
+    },
+    {
+      "id": "github-release:32615:Go:sdk/resourcemanager/keyvault/armkeyvault/v2.0.2",
+      "type": "package.github_release_published",
+      "phase": "release",
+      "occurredAt": "2026-03-20T18:30:01Z",
+      "observedAt": "2026-03-20T18:30:01Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/keyvault/armkeyvault",
+      "title": "GitHub Release published",
+      "value": "sdk/resourcemanager/keyvault/armkeyvault/v2.0.2",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "azure-sdk-for-go release sdk/resourcemanager/keyvault/armkeyvault/v2.0.2",
+        "url": "https://github.com/Azure/azure-sdk-for-go/releases/tag/sdk/resourcemanager/keyvault/armkeyvault/v2.0.2"
+      },
+      "confidence": "inferred",
+      "stack": 0
+    },
+    {
+      "id": "github-release:32615:.NET:Azure.ResourceManager.KeyVault_1.4.0",
+      "type": "package.github_release_published",
+      "phase": "release",
+      "occurredAt": "2026-03-20T19:03:03Z",
+      "observedAt": "2026-03-20T19:03:03Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.KeyVault",
+      "title": "GitHub Release published",
+      "value": "Azure.ResourceManager.KeyVault_1.4.0",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "azure-sdk-for-net release Azure.ResourceManager.KeyVault_1.4.0",
+        "url": "https://github.com/Azure/azure-sdk-for-net/releases/tag/Azure.ResourceManager.KeyVault_1.4.0"
+      },
+      "confidence": "inferred",
+      "stack": 0
+    },
+    {
+      "id": "github-release:32615:Python:azure-mgmt-keyvault_14.0.0",
+      "type": "package.github_release_published",
+      "phase": "release",
+      "occurredAt": "2026-03-20T22:40:09Z",
+      "observedAt": "2026-03-20T22:40:09Z",
+      "trackId": "sdk:Python:azure-mgmt-keyvault",
+      "title": "GitHub Release published",
+      "value": "azure-mgmt-keyvault_14.0.0",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "azure-sdk-for-python release azure-mgmt-keyvault_14.0.0",
+        "url": "https://github.com/Azure/azure-sdk-for-python/releases/tag/azure-mgmt-keyvault_14.0.0"
+      },
+      "confidence": "inferred",
+      "stack": 0
+    },
+    {
+      "id": "github-release:32615:Java:com.azure.resourcemanager+azure-resourcemanager-keyvault_2.55.0",
+      "type": "package.github_release_published",
+      "phase": "release",
+      "occurredAt": "2026-03-20T22:43:17Z",
+      "observedAt": "2026-03-20T22:43:17Z",
+      "trackId": "sdk:Java:azure-resourcemanager-keyvault",
+      "title": "GitHub Release published",
+      "value": "com.azure.resourcemanager+azure-resourcemanager-keyvault_2.55.0",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "azure-sdk-for-java release com.azure.resourcemanager+azure-resourcemanager-keyvault_2.55.0",
+        "url": "https://github.com/Azure/azure-sdk-for-java/releases/tag/com.azure.resourcemanager%2Bazure-resourcemanager-keyvault_2.55.0"
+      },
+      "confidence": "inferred",
+      "stack": 0
+    },
+    {
+      "id": "ado:32615:106:Custom.ReleaseStatusForDotnet",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-03-23T16:57:17.363Z",
+      "observedAt": "2026-03-23T16:57:17.363Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.KeyVault",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32615:106:Custom.ReleaseStatusForJavaScript",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-03-23T16:57:17.363Z",
+      "observedAt": "2026-03-23T16:57:17.363Z",
+      "trackId": "sdk:JavaScript:@azure/arm-keyvault",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32615:106:Custom.ReleaseStatusForPython",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-03-23T16:57:17.363Z",
+      "observedAt": "2026-03-23T16:57:17.363Z",
+      "trackId": "sdk:Python:azure-mgmt-keyvault",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32615:106:Custom.ReleaseStatusForJava",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-03-23T16:57:17.363Z",
+      "observedAt": "2026-03-23T16:57:17.363Z",
+      "trackId": "sdk:Java:azure-resourcemanager-keyvault",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32615:106:Custom.ReleaseStatusForGo",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-03-23T16:57:17.363Z",
+      "observedAt": "2026-03-23T16:57:17.363Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/keyvault/armkeyvault",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32615:107:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-03-23T16:58:06.137Z",
+      "observedAt": "2026-03-23T16:58:06.137Z",
+      "trackId": "plan",
+      "value": "Finished",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32615",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32615"
+      },
+      "title": "Plan state changed",
+      "stack": 0
+    }
+  ],
+  "quality": {
+    "warnings": [
+      "5 historical linked PR(s) closed without merge",
+      "5 superseded SDK PR link(s) retained"
+    ],
+    "unavailablePullRequests": 0,
+    "unavailablePipelineRuns": 0
+  },
+  "boundaryFacts": {
+    "id": "32615",
+    "state": "finished",
+    "specPrs": [
+      {
+        "id": "github:Azure/azure-rest-api-specs#40486",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#40486",
+        "createdAt": "2026-02-17T21:17:10Z",
+        "mergedAt": "2026-02-23T19:21:19Z",
+        "closedAt": "2026-02-23T19:21:19Z",
+        "available": true
+      }
+    ],
+    "artifacts": [
+      {
+        "language": ".NET",
+        "package": "Azure.ResourceManager.KeyVault",
+        "trackId": "sdk:.NET:Azure.ResourceManager.KeyVault",
+        "prId": "github:Azure/azure-sdk-for-net#57181",
+        "prCreatedAt": "2026-03-17T18:06:19Z",
+        "prMergedAt": "2026-03-19T03:38:15Z",
+        "prClosedAt": "2026-03-19T03:38:15Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-net#56858",
+            "createdAt": "2026-03-07T00:04:51Z",
+            "mergedAt": null,
+            "closedAt": "2026-03-17T16:49:55Z",
+            "state": "closed"
+          },
+          {
+            "id": "github:Azure/azure-sdk-for-net#57181",
+            "createdAt": "2026-03-17T18:06:19Z",
+            "mergedAt": "2026-03-19T03:38:15Z",
+            "closedAt": "2026-03-19T03:38:15Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6022786",
+        "generationStartAt": "2026-03-17T17:54:51.9939276Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-03-23T16:57:17.363Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": null,
+        "releaseBoundaryAt": "2026-03-20T19:03:03Z",
+        "releaseBoundarySource": "github-release",
+        "releaseBoundaryConfidence": "inferred",
+        "releaseBoundaryUrl": "https://github.com/Azure/azure-sdk-for-net/releases/tag/Azure.ResourceManager.KeyVault_1.4.0",
+        "releaseTag": "Azure.ResourceManager.KeyVault_1.4.0",
+        "releaseMatchMethod": "unique-nearby-release",
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "github-release"
+        }
+      },
+      {
+        "language": "JavaScript",
+        "package": "@azure/arm-keyvault",
+        "trackId": "sdk:JavaScript:@azure/arm-keyvault",
+        "prId": "github:Azure/azure-sdk-for-js#37688",
+        "prCreatedAt": "2026-03-17T18:06:46Z",
+        "prMergedAt": "2026-03-20T02:50:02Z",
+        "prClosedAt": "2026-03-20T02:50:02Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-js#37521",
+            "createdAt": "2026-03-07T01:25:30Z",
+            "mergedAt": null,
+            "closedAt": "2026-03-17T16:53:40Z",
+            "state": "closed"
+          },
+          {
+            "id": "github:Azure/azure-sdk-for-js#37688",
+            "createdAt": "2026-03-17T18:06:46Z",
+            "mergedAt": "2026-03-20T02:50:02Z",
+            "closedAt": "2026-03-20T02:50:02Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6022783",
+        "generationStartAt": "2026-03-17T17:54:49.3014026Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-03-23T16:57:17.363Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": null,
+        "releaseBoundaryAt": "2026-03-20T18:27:33Z",
+        "releaseBoundarySource": "github-release",
+        "releaseBoundaryConfidence": "inferred",
+        "releaseBoundaryUrl": "https://github.com/Azure/azure-sdk-for-js/releases/tag/%40azure/arm-keyvault_5.0.0",
+        "releaseTag": "@azure/arm-keyvault_5.0.0",
+        "releaseMatchMethod": "unique-nearby-release",
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "github-release"
+        }
+      },
+      {
+        "language": "Python",
+        "package": "azure-mgmt-keyvault",
+        "trackId": "sdk:Python:azure-mgmt-keyvault",
+        "prId": "github:Azure/azure-sdk-for-python#45750",
+        "prCreatedAt": "2026-03-17T18:05:31Z",
+        "prMergedAt": "2026-03-19T16:07:29Z",
+        "prClosedAt": "2026-03-19T16:07:30Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-python#45565",
+            "createdAt": "2026-03-07T00:07:48Z",
+            "mergedAt": null,
+            "closedAt": "2026-03-17T16:53:46Z",
+            "state": "closed"
+          },
+          {
+            "id": "github:Azure/azure-sdk-for-python#45750",
+            "createdAt": "2026-03-17T18:05:31Z",
+            "mergedAt": "2026-03-19T16:07:29Z",
+            "closedAt": "2026-03-19T16:07:30Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6022787",
+        "generationStartAt": "2026-03-17T17:54:53.0082912Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-03-23T16:57:17.363Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": null,
+        "releaseBoundaryAt": "2026-03-20T22:40:09Z",
+        "releaseBoundarySource": "github-release",
+        "releaseBoundaryConfidence": "inferred",
+        "releaseBoundaryUrl": "https://github.com/Azure/azure-sdk-for-python/releases/tag/azure-mgmt-keyvault_14.0.0",
+        "releaseTag": "azure-mgmt-keyvault_14.0.0",
+        "releaseMatchMethod": "release-index-version",
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "github-release"
+        }
+      },
+      {
+        "language": "Java",
+        "package": "azure-resourcemanager-keyvault",
+        "trackId": "sdk:Java:azure-resourcemanager-keyvault",
+        "prId": "github:Azure/azure-sdk-for-java#48446",
+        "prCreatedAt": "2026-03-17T18:09:42Z",
+        "prMergedAt": "2026-03-19T07:12:20Z",
+        "prClosedAt": "2026-03-19T07:12:20Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-java#48325",
+            "createdAt": "2026-03-07T00:07:00Z",
+            "mergedAt": null,
+            "closedAt": "2026-03-17T16:53:27Z",
+            "state": "closed"
+          },
+          {
+            "id": "github:Azure/azure-sdk-for-java#48446",
+            "createdAt": "2026-03-17T18:09:42Z",
+            "mergedAt": "2026-03-19T07:12:20Z",
+            "closedAt": "2026-03-19T07:12:20Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6022785",
+        "generationStartAt": "2026-03-17T17:54:50.1124619Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-03-23T16:57:17.363Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": null,
+        "releaseBoundaryAt": "2026-03-20T22:43:17Z",
+        "releaseBoundarySource": "github-release",
+        "releaseBoundaryConfidence": "inferred",
+        "releaseBoundaryUrl": "https://github.com/Azure/azure-sdk-for-java/releases/tag/com.azure.resourcemanager%2Bazure-resourcemanager-keyvault_2.55.0",
+        "releaseTag": "com.azure.resourcemanager+azure-resourcemanager-keyvault_2.55.0",
+        "releaseMatchMethod": "release-index-version",
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "github-release"
+        }
+      },
+      {
+        "language": "Go",
+        "package": "sdk/resourcemanager/keyvault/armkeyvault",
+        "trackId": "sdk:Go:sdk/resourcemanager/keyvault/armkeyvault",
+        "prId": "github:Azure/azure-sdk-for-go#26294",
+        "prCreatedAt": "2026-03-17T18:01:56Z",
+        "prMergedAt": "2026-03-19T00:38:52Z",
+        "prClosedAt": "2026-03-19T00:38:52Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-go#26137",
+            "createdAt": "2026-03-07T00:04:53Z",
+            "mergedAt": null,
+            "closedAt": "2026-03-17T16:53:34Z",
+            "state": "closed"
+          },
+          {
+            "id": "github:Azure/azure-sdk-for-go#26294",
+            "createdAt": "2026-03-17T18:01:56Z",
+            "mergedAt": "2026-03-19T00:38:52Z",
+            "closedAt": "2026-03-19T00:38:52Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6022784",
+        "generationStartAt": "2026-03-17T17:54:51.0416704Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-03-23T16:57:17.363Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": null,
+        "releaseBoundaryAt": "2026-03-20T18:30:01Z",
+        "releaseBoundarySource": "github-release",
+        "releaseBoundaryConfidence": "inferred",
+        "releaseBoundaryUrl": "https://github.com/Azure/azure-sdk-for-go/releases/tag/sdk/resourcemanager/keyvault/armkeyvault/v2.0.2",
+        "releaseTag": "sdk/resourcemanager/keyvault/armkeyvault/v2.0.2",
+        "releaseMatchMethod": "unique-nearby-release",
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "github-release"
+        }
+      }
+    ],
+    "cohortPlan": {
+      "id": "32615",
+      "releasePlanId": "2079",
+      "title": "Release Plan - 2079 - GA - Key Vault",
+      "service": "Key Vault",
+      "state": "finished"
+    },
+    "quality": {
+      "warnings": [
+        "5 historical linked PR(s) closed without merge",
+        "5 superseded SDK PR link(s) retained"
+      ],
+      "unavailablePullRequests": 0,
+      "unavailablePipelineRuns": 0
+    }
+  },
+  "summary": {
+    "durationHours": 1001,
+    "pullRequestCount": 11,
+    "humanReviewCount": 10,
+    "humanCommentCount": 9
+  }
+}

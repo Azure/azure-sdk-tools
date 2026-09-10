@@ -1,0 +1,3808 @@
+{
+  "schemaVersion": 2,
+  "id": "33833",
+  "correlation": {
+    "policyVersion": 1,
+    "preflight": "passed"
+  },
+  "releasePlanId": "2179",
+  "title": "Release plan - 2179 - GA - Azure IoT Operations",
+  "service": "Azure IoT Operations",
+  "product": "Release",
+  "path": "specification/iotoperations/IoTOperations.Management",
+  "state": "finished",
+  "plane": "management",
+  "releaseType": "APEX GA",
+  "intendedMonth": "April 2026",
+  "createdAt": "2026-04-09T18:03:18.007Z",
+  "completedAt": "2026-08-11T06:32:48.253Z",
+  "sourceUrl": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33833",
+  "range": {
+    "start": "2026-01-08T00:59:29.000Z",
+    "end": "2026-08-11T06:32:48.253Z"
+  },
+  "intendedArtifacts": [
+    {
+      "prId": "github:Azure/azure-sdk-for-net#58017",
+      "language": ".NET",
+      "package": "Azure.ResourceManager.IotOperations",
+      "version": "1.1.0",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6132587",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-js#38084",
+      "language": "JavaScript",
+      "package": "@azure/arm-iotoperations",
+      "version": "2.0.0",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6132590",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-python#46229",
+      "language": "Python",
+      "package": "azure-mgmt-iotoperations",
+      "version": "1.1.0",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6132591",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-java#48754",
+      "language": "Java",
+      "package": "azure-resourcemanager-iotoperations",
+      "version": "1.2.0",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6132589",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-go#26547",
+      "language": "Go",
+      "package": "sdk/resourcemanager/iotoperations/armiotoperations",
+      "version": "1.1.0",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6132588",
+      "releasePipelineUrl": null
+    }
+  ],
+  "links": [
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#39503",
+      "role": "spec-pr",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/39503",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-net#58017",
+      "role": "sdk-pr",
+      "language": ".NET",
+      "url": "https://github.com/Azure/azure-sdk-for-net/pull/58017",
+      "releasePlanIds": [
+        "2179"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-js#38084",
+      "role": "sdk-pr",
+      "language": "JavaScript",
+      "url": "https://github.com/Azure/azure-sdk-for-js/pull/38084",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-python#46229",
+      "role": "sdk-pr",
+      "language": "Python",
+      "url": "https://github.com/Azure/azure-sdk-for-python/pull/46229",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-java#48754",
+      "role": "sdk-pr",
+      "language": "Java",
+      "url": "https://github.com/Azure/azure-sdk-for-java/pull/48754",
+      "releasePlanIds": [
+        "33833"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-go#26547",
+      "role": "sdk-pr",
+      "language": "Go",
+      "url": "https://github.com/Azure/azure-sdk-for-go/pull/26547",
+      "releasePlanIds": []
+    }
+  ],
+  "tracks": [
+    {
+      "id": "plan",
+      "kind": "plan",
+      "label": "Release Plan",
+      "detail": "APEX GA"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#39503",
+      "kind": "spec",
+      "label": "Spec PR",
+      "detail": "azure-rest-api-specs #39503",
+      "artifactId": "github:Azure/azure-rest-api-specs#39503",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:.NET:Azure.ResourceManager.IotOperations",
+      "kind": "sdk",
+      "label": ".NET",
+      "detail": "Azure.ResourceManager.IotOperations",
+      "artifactId": "github:Azure/azure-sdk-for-net#58017",
+      "state": "closed"
+    },
+    {
+      "id": "sdk:JavaScript:@azure/arm-iotoperations",
+      "kind": "sdk",
+      "label": "JavaScript",
+      "detail": "@azure/arm-iotoperations",
+      "artifactId": "github:Azure/azure-sdk-for-js#38084",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Python:azure-mgmt-iotoperations",
+      "kind": "sdk",
+      "label": "Python",
+      "detail": "azure-mgmt-iotoperations",
+      "artifactId": "github:Azure/azure-sdk-for-python#46229",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Java:azure-resourcemanager-iotoperations",
+      "kind": "sdk",
+      "label": "Java",
+      "detail": "azure-resourcemanager-iotoperations",
+      "artifactId": "github:Azure/azure-sdk-for-java#48754",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Go:sdk/resourcemanager/iotoperations/armiotoperations",
+      "kind": "sdk",
+      "label": "Go",
+      "detail": "sdk/resourcemanager/iotoperations/armiotoperations",
+      "artifactId": "github:Azure/azure-sdk-for-go#26547",
+      "state": "merged"
+    }
+  ],
+  "events": [
+    {
+      "id": "github:Azure/azure-rest-api-specs#39503:pr.created:spec:github:Azure/azure-rest-api-specs#39503",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-01-08T00:59:29Z",
+      "observedAt": "2026-01-08T00:59:29Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39503",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "byronjinmsft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39503",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39503"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39503:comment:3721467385:spec:github:Azure/azure-rest-api-specs#39503",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-01-08T00:59:51Z",
+      "observedAt": "2026-01-08T00:59:51Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39503",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39503",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39503#issuecomment-3721467385"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>✅ All automated merging requirements have been met! To get your PR merged, see <a href=\"https://aka.ms/azsdk/specreview/merge\">aka.ms/azsdk/specreview/merge</a>.<br /><br />Comment generated by <a href=\"https://g",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39503:comment:3721479394:spec:github:Azure/azure-rest-api-specs#39503",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-01-08T01:06:02Z",
+      "observedAt": "2026-01-08T01:06:02Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39503",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39503",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39503#issuecomment-3721479394"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews | Language | API Review for Package | |----------|---------| | TypeSpec | [Microsoft.IoTOperations](https://spa.apiview.dev/review/045",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39503:commit:5cb593828dc4:spec:github:Azure/azure-rest-api-specs#39503",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-01-27T06:38:55Z",
+      "observedAt": "2026-01-27T06:38:55Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39503",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "byronjinmsft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39503",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/5cb593828dc49e95359c6a509ecce2b597acf772"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39503:commit:778a422a0cfa:spec:github:Azure/azure-rest-api-specs#39503",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-01-27T06:56:33Z",
+      "observedAt": "2026-01-27T06:56:33Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39503",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "byronjinmsft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39503",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/778a422a0cfa162dd935d8c95648890d24bb7438"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39503:commit:66d81c75ea03:spec:github:Azure/azure-rest-api-specs#39503",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-01-27T17:26:50Z",
+      "observedAt": "2026-01-27T17:26:50Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39503",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "byronjinmsft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39503",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/66d81c75ea03d7c00e2307b521aa6fe8aac00706"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39503:commit:ca99b8b4c34a:spec:github:Azure/azure-rest-api-specs#39503",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-01-27T17:42:54Z",
+      "observedAt": "2026-01-27T17:42:54Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39503",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "byronjinmsft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39503",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/ca99b8b4c34a215c7391def7c1db10fc0a29efa7"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39503:commit:56e7c6ef4e22:spec:github:Azure/azure-rest-api-specs#39503",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-01-27T17:43:25Z",
+      "observedAt": "2026-01-27T17:43:25Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39503",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "byronjinmsft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39503",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/56e7c6ef4e2277e046fd0c29aedd844a66652378"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39503:commit:f9857609c168:spec:github:Azure/azure-rest-api-specs#39503",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-01-27T17:48:37Z",
+      "observedAt": "2026-01-27T17:48:37Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39503",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "byronjinmsft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39503",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/f9857609c168b3994730efe3ace0bfa1273c5d6c"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39503:commit:2a2ea6e7efd3:spec:github:Azure/azure-rest-api-specs#39503",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-01-27T17:49:51Z",
+      "observedAt": "2026-01-27T17:49:51Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39503",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "byronjinmsft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39503",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/2a2ea6e7efd348a7adc7f56877608bc5dabded21"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39503:commit:ac284dec8d65:spec:github:Azure/azure-rest-api-specs#39503",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-01-27T18:16:50Z",
+      "observedAt": "2026-01-27T18:16:50Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39503",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "byronjinmsft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39503",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/ac284dec8d6515568e5d2b05b9844dcd591c53fa"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39503:commit:dcf8df5e0a45:spec:github:Azure/azure-rest-api-specs#39503",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-01-27T18:17:23Z",
+      "observedAt": "2026-01-27T18:17:23Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39503",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "byronjinmsft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39503",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/dcf8df5e0a45d56e80b4f280d10945d5c785c8cd"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39503:commit:3f4392d9051f:spec:github:Azure/azure-rest-api-specs#39503",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-01-27T18:22:35Z",
+      "observedAt": "2026-01-27T18:22:35Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39503",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "byronjinmsft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39503",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/3f4392d9051f1494094aa9f85a6712033c9e0eb4"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39503:commit:4df5f5b808ff:spec:github:Azure/azure-rest-api-specs#39503",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-01-27T18:36:39Z",
+      "observedAt": "2026-01-27T18:36:39Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39503",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "byronjinmsft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39503",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/4df5f5b808ff4eed198b1c5986cf99fb94e5fc57"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39503:commit:50682d3e3614:spec:github:Azure/azure-rest-api-specs#39503",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-01-27T18:46:26Z",
+      "observedAt": "2026-01-27T18:46:26Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39503",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "byronjinmsft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39503",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/50682d3e361443f344dacb767b68a174da136aa2"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39503:commit:96c3a27143c6:spec:github:Azure/azure-rest-api-specs#39503",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-01-27T18:54:06Z",
+      "observedAt": "2026-01-27T18:54:06Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39503",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "byronjinmsft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39503",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/96c3a27143c609d581f3aadccaf2785cd2a38720"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39503:commit:44c02aa9a0f8:spec:github:Azure/azure-rest-api-specs#39503",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-01-27T18:57:23Z",
+      "observedAt": "2026-01-27T18:57:23Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39503",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "byronjinmsft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39503",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/44c02aa9a0f84c8fafaa8e115a1428e82d82abf6"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39503:commit:18c8c7e1d33d:spec:github:Azure/azure-rest-api-specs#39503",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-01-27T19:33:21Z",
+      "observedAt": "2026-01-27T19:33:21Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39503",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "byronjinmsft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39503",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/18c8c7e1d33d4c759c4f94c95ac8c1076dc5e8d4"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39503:commit:d0ae7facde41:spec:github:Azure/azure-rest-api-specs#39503",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-01-27T19:39:23Z",
+      "observedAt": "2026-01-27T19:39:23Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39503",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "byronjinmsft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39503",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/d0ae7facde41c0e5693b780ec60a760822640ba6"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39503:commit:18d1f4d2e412:spec:github:Azure/azure-rest-api-specs#39503",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-01-27T19:48:12Z",
+      "observedAt": "2026-01-27T19:48:12Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39503",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "byronjinmsft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39503",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/18d1f4d2e4120df88d6e6d7695696a46d60114ea"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39503:commit:a147b74c7440:spec:github:Azure/azure-rest-api-specs#39503",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-01-27T19:53:02Z",
+      "observedAt": "2026-01-27T19:53:02Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39503",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "byronjinmsft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39503",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/a147b74c74407f4c206eeea2232eb5fec02798a0"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39503:comment:3838810019:spec:github:Azure/azure-rest-api-specs#39503",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-03T03:18:10Z",
+      "observedAt": "2026-02-03T03:18:10Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39503",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39503",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39503#issuecomment-3838810019"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@byronjinmsft JS has breaking changes of changing `extendedLocation` from required to optional. <img width=\"1098\" height=\"212\" alt=\"image\" src=\"https://github.com/user-attachments/assets/553f15a6-6095-479f-bfde-9f8a01bab85c\" /> I found that",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39503:comment:3843554496:spec:github:Azure/azure-rest-api-specs#39503",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-03T20:43:26Z",
+      "observedAt": "2026-02-03T20:43:26Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39503",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "byronjinmsft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39503",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39503#issuecomment-3843554496"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> @byronjinmsft JS has breaking changes of changing `extendedLocation` from required to optional. <img alt=\"image\" width=\"1098\" height=\"212\" src=\"https://private-user-images.githubusercontent.com/98569699/544102204-553f15a6-6095-479f-bfde-9",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39503:commit:ff6e14540de8:spec:github:Azure/azure-rest-api-specs#39503",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-05T02:05:14Z",
+      "observedAt": "2026-02-05T02:05:14Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39503",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39503",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/ff6e14540de8a471730aa39aed540d2f7aff74c8"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39503:comment:3856241255:spec:github:Azure/azure-rest-api-specs#39503",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-05T21:11:11Z",
+      "observedAt": "2026-02-05T21:11:11Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39503",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "byronjinmsft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39503",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39503#issuecomment-3856241255"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@kazrael2119 Seems like the tag 'BreakingChange-Python-Sdk' was just added (18 hr ago). Do you know where that came from? And will we need to address that? We were not expecting anything other than the javascript one.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39503:review:3759535372:spec:github:Azure/azure-rest-api-specs#39503",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-05T21:24:08Z",
+      "observedAt": "2026-02-05T21:24:08Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39503",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "vadim-kovalyov"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39503",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39503#pullrequestreview-3759535372"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39503:pr.merged:spec:github:Azure/azure-rest-api-specs#39503",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-11T17:27:20Z",
+      "observedAt": "2026-02-11T17:27:20Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39503",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39503",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39503"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:33833:created",
+      "type": "plan.created",
+      "phase": "plan",
+      "occurredAt": "2026-04-09T18:03:18.007Z",
+      "observedAt": "2026-04-09T18:03:18.007Z",
+      "trackId": "plan",
+      "title": "Release Plan created",
+      "confidence": "authoritative",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33833",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33833"
+      },
+      "stack": 0
+    },
+    {
+      "id": "ado:33833:1:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-04-09T18:03:18.007Z",
+      "observedAt": "2026-04-09T18:03:18.007Z",
+      "trackId": "plan",
+      "value": "New",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33833",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33833"
+      },
+      "title": "Plan state changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33833:1:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-09T18:03:18.007Z",
+      "observedAt": "2026-04-09T18:03:18.007Z",
+      "trackId": "plan",
+      "value": "Not Available",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33833",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33833"
+      },
+      "title": "Spec approval changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:33833:1:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-09T18:03:18.007Z",
+      "observedAt": "2026-04-09T18:03:18.007Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.IotOperations",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33833",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33833"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33833:1:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-09T18:03:18.007Z",
+      "observedAt": "2026-04-09T18:03:18.007Z",
+      "trackId": "sdk:JavaScript:@azure/arm-iotoperations",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33833",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33833"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33833:1:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-09T18:03:18.007Z",
+      "observedAt": "2026-04-09T18:03:18.007Z",
+      "trackId": "sdk:Python:azure-mgmt-iotoperations",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33833",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33833"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33833:1:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-09T18:03:18.007Z",
+      "observedAt": "2026-04-09T18:03:18.007Z",
+      "trackId": "sdk:Java:azure-resourcemanager-iotoperations",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33833",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33833"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33833:1:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-09T18:03:18.007Z",
+      "observedAt": "2026-04-09T18:03:18.007Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/iotoperations/armiotoperations",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33833",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33833"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33834:1:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-09T18:03:18.353Z",
+      "observedAt": "2026-04-09T18:03:18.353Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39503",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/39503",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33834",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33834"
+      },
+      "title": "Spec PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado:33833:2:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-04-09T18:03:18.813Z",
+      "observedAt": "2026-04-09T18:03:18.813Z",
+      "trackId": "plan",
+      "value": "In Progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33833",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33833"
+      },
+      "title": "Plan state changed",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6132587:generation.queued:sdk:.NET:Azure.ResourceManager.IotOperations",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-04-09T18:30:53.9701355Z",
+      "observedAt": "2026-04-09T18:38:39.6046125Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.IotOperations",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6132587",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6132587"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:33833:7:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-09T18:30:57.68Z",
+      "observedAt": "2026-04-09T18:30:57.68Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.IotOperations",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33833",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33833"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6132588:generation.queued:sdk:Go:sdk/resourcemanager/iotoperations/armiotoperations",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-04-09T18:31:07.4063418Z",
+      "observedAt": "2026-04-09T18:37:39.6966637Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/iotoperations/armiotoperations",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6132588",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6132588"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:33833:8:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-09T18:31:09.867Z",
+      "observedAt": "2026-04-09T18:31:09.867Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/iotoperations/armiotoperations",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33833",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33833"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6132589:generation.queued:sdk:Java:azure-resourcemanager-iotoperations",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-04-09T18:31:18.9534925Z",
+      "observedAt": "2026-04-09T18:46:57.3783135Z",
+      "trackId": "sdk:Java:azure-resourcemanager-iotoperations",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6132589",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6132589"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:33833:9:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-09T18:31:23.267Z",
+      "observedAt": "2026-04-09T18:31:23.267Z",
+      "trackId": "sdk:Java:azure-resourcemanager-iotoperations",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33833",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33833"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6132587:generation.started:sdk:.NET:Azure.ResourceManager.IotOperations",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-04-09T18:31:26.1760195Z",
+      "observedAt": "2026-04-09T18:38:39.6046125Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.IotOperations",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6132587",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6132587"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6132590:generation.queued:sdk:JavaScript:@azure/arm-iotoperations",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-04-09T18:31:32.2405741Z",
+      "observedAt": "2026-04-09T18:43:17.7977923Z",
+      "trackId": "sdk:JavaScript:@azure/arm-iotoperations",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6132590",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6132590"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:33833:10:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-09T18:31:34.217Z",
+      "observedAt": "2026-04-09T18:31:34.217Z",
+      "trackId": "sdk:JavaScript:@azure/arm-iotoperations",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33833",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33833"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6132588:generation.started:sdk:Go:sdk/resourcemanager/iotoperations/armiotoperations",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-04-09T18:31:38.818587Z",
+      "observedAt": "2026-04-09T18:37:39.6966637Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/iotoperations/armiotoperations",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6132588",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6132588"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6132591:generation.queued:sdk:Python:azure-mgmt-iotoperations",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-04-09T18:31:43.7903171Z",
+      "observedAt": "2026-04-09T18:40:53.6818215Z",
+      "trackId": "sdk:Python:azure-mgmt-iotoperations",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6132591",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6132591"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:33833:11:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-09T18:31:45.893Z",
+      "observedAt": "2026-04-09T18:31:45.893Z",
+      "trackId": "sdk:Python:azure-mgmt-iotoperations",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33833",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33833"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6132589:generation.started:sdk:Java:azure-resourcemanager-iotoperations",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-04-09T18:31:56.1472625Z",
+      "observedAt": "2026-04-09T18:46:57.3783135Z",
+      "trackId": "sdk:Java:azure-resourcemanager-iotoperations",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6132589",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6132589"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6132590:generation.started:sdk:JavaScript:@azure/arm-iotoperations",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-04-09T18:32:01.8144139Z",
+      "observedAt": "2026-04-09T18:43:17.7977923Z",
+      "trackId": "sdk:JavaScript:@azure/arm-iotoperations",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6132590",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6132590"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6132591:generation.started:sdk:Python:azure-mgmt-iotoperations",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-04-09T18:32:08.9131076Z",
+      "observedAt": "2026-04-09T18:40:53.6818215Z",
+      "trackId": "sdk:Python:azure-mgmt-iotoperations",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6132591",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6132591"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26547:commit:76f0041de2a4:sdk:Go:sdk/resourcemanager/iotoperations/armiotoperations",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-09T18:36:20Z",
+      "observedAt": "2026-04-09T18:36:20Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/iotoperations/armiotoperations",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26547",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/76f0041de2a4d1779168565ab687e1e81bc95f1a"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26547:pr.created:sdk:Go:sdk/resourcemanager/iotoperations/armiotoperations",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-09T18:36:23Z",
+      "observedAt": "2026-04-09T18:36:23Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/iotoperations/armiotoperations",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26547",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26547"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:33833:12:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-09T18:36:33.71Z",
+      "observedAt": "2026-04-09T18:36:33.71Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/iotoperations/armiotoperations",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33833",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33833"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33833:12:Custom.SDKPullRequestForGo",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-04-09T18:36:33.71Z",
+      "observedAt": "2026-04-09T18:36:33.71Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/iotoperations/armiotoperations",
+      "value": "https://github.com/Azure/azure-sdk-for-go/pull/26547",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33833",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33833"
+      },
+      "title": "SDK PR linked",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58017:commit:0de198e1ff0f:sdk:.NET:Azure.ResourceManager.IotOperations",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-09T18:37:29Z",
+      "observedAt": "2026-04-09T18:37:29Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.IotOperations",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58017",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/0de198e1ff0f8f545e519df2ff82f3d6a69ab1e5"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58017:pr.created:sdk:.NET:Azure.ResourceManager.IotOperations",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-09T18:37:33Z",
+      "observedAt": "2026-04-09T18:37:33Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.IotOperations",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58017",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58017"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:6132588:generation.completed:sdk:Go:sdk/resourcemanager/iotoperations/armiotoperations",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-04-09T18:37:39.6966637Z",
+      "observedAt": "2026-04-09T18:37:39.6966637Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/iotoperations/armiotoperations",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6132588",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6132588"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:33833:13:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-09T18:37:40.81Z",
+      "observedAt": "2026-04-09T18:37:40.81Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.IotOperations",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33833",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33833"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33833:13:Custom.SDKPullRequestForDotnet",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-04-09T18:37:40.81Z",
+      "observedAt": "2026-04-09T18:37:40.81Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.IotOperations",
+      "value": "https://github.com/Azure/azure-sdk-for-net/pull/58017",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33833",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33833"
+      },
+      "title": "SDK PR linked",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6132587:generation.completed:sdk:.NET:Azure.ResourceManager.IotOperations",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-04-09T18:38:39.6046125Z",
+      "observedAt": "2026-04-09T18:38:39.6046125Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.IotOperations",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6132587",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6132587"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46229:commit:aafe6a81663a:sdk:Python:azure-mgmt-iotoperations",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-09T18:39:26Z",
+      "observedAt": "2026-04-09T18:39:26Z",
+      "trackId": "sdk:Python:azure-mgmt-iotoperations",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46229",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/aafe6a81663a7086e6755efb7ab916f79491cc7a"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46229:pr.created:sdk:Python:azure-mgmt-iotoperations",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-09T18:39:30Z",
+      "observedAt": "2026-04-09T18:39:30Z",
+      "trackId": "sdk:Python:azure-mgmt-iotoperations",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46229",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46229"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:33833:14:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-09T18:39:37.343Z",
+      "observedAt": "2026-04-09T18:39:37.343Z",
+      "trackId": "sdk:Python:azure-mgmt-iotoperations",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33833",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33833"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33833:14:Custom.SDKPullRequestForPython",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-04-09T18:39:37.343Z",
+      "observedAt": "2026-04-09T18:39:37.343Z",
+      "trackId": "sdk:Python:azure-mgmt-iotoperations",
+      "value": "https://github.com/Azure/azure-sdk-for-python/pull/46229",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33833",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33833"
+      },
+      "title": "SDK PR linked",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6132591:generation.completed:sdk:Python:azure-mgmt-iotoperations",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-04-09T18:40:53.6818215Z",
+      "observedAt": "2026-04-09T18:40:53.6818215Z",
+      "trackId": "sdk:Python:azure-mgmt-iotoperations",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6132591",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6132591"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48754:commit:c3b4adfb0813:sdk:Java:azure-resourcemanager-iotoperations",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-09T18:41:10Z",
+      "observedAt": "2026-04-09T18:41:10Z",
+      "trackId": "sdk:Java:azure-resourcemanager-iotoperations",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48754",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/c3b4adfb0813079edc5220d66d5e8de40125f0d4"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48754:pr.created:sdk:Java:azure-resourcemanager-iotoperations",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-09T18:41:14Z",
+      "observedAt": "2026-04-09T18:41:14Z",
+      "trackId": "sdk:Java:azure-resourcemanager-iotoperations",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48754",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48754"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:33833:15:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-09T18:41:21.46Z",
+      "observedAt": "2026-04-09T18:41:21.46Z",
+      "trackId": "sdk:Java:azure-resourcemanager-iotoperations",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33833",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33833"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33833:15:Custom.SDKPullRequestForJava",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-04-09T18:41:21.46Z",
+      "observedAt": "2026-04-09T18:41:21.46Z",
+      "trackId": "sdk:Java:azure-resourcemanager-iotoperations",
+      "value": "https://github.com/Azure/azure-sdk-for-java/pull/48754",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33833",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33833"
+      },
+      "title": "SDK PR linked",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38084:commit:1605b58c2aac:sdk:JavaScript:@azure/arm-iotoperations",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-09T18:42:07Z",
+      "observedAt": "2026-04-09T18:42:07Z",
+      "trackId": "sdk:JavaScript:@azure/arm-iotoperations",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38084",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/1605b58c2aac99c439cfb1b96371989f42960556"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38084:pr.created:sdk:JavaScript:@azure/arm-iotoperations",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-09T18:42:13Z",
+      "observedAt": "2026-04-09T18:42:13Z",
+      "trackId": "sdk:JavaScript:@azure/arm-iotoperations",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38084",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38084"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:33833:16:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-09T18:42:21.057Z",
+      "observedAt": "2026-04-09T18:42:21.057Z",
+      "trackId": "sdk:JavaScript:@azure/arm-iotoperations",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33833",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33833"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33833:16:Custom.SDKPullRequestForJavaScript",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-04-09T18:42:21.057Z",
+      "observedAt": "2026-04-09T18:42:21.057Z",
+      "trackId": "sdk:JavaScript:@azure/arm-iotoperations",
+      "value": "https://github.com/Azure/azure-sdk-for-js/pull/38084",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33833",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33833"
+      },
+      "title": "SDK PR linked",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6132590:generation.completed:sdk:JavaScript:@azure/arm-iotoperations",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-04-09T18:43:17.7977923Z",
+      "observedAt": "2026-04-09T18:43:17.7977923Z",
+      "trackId": "sdk:JavaScript:@azure/arm-iotoperations",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6132590",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6132590"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26547:comment:4216620513:sdk:Go:sdk/resourcemanager/iotoperations/armiotoperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-09T18:45:02Z",
+      "observedAt": "2026-04-09T18:45:02Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/iotoperations/armiotoperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26547",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26547#issuecomment-4216620513"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews [sdk/resourcemanager/iotoperations/armiotoperations](https://spa.apiview.dev/review/e7201948d0214fdfa9767bfbe86b0bb9?activeApiRevision",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6132589:generation.completed:sdk:Java:azure-resourcemanager-iotoperations",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-04-09T18:46:57.3783135Z",
+      "observedAt": "2026-04-09T18:46:57.3783135Z",
+      "trackId": "sdk:Java:azure-resourcemanager-iotoperations",
+      "title": "Pipeline completed with issues",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6132589",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6132589"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48754:comment:4216687607:sdk:Java:azure-resourcemanager-iotoperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-09T18:51:31Z",
+      "observedAt": "2026-04-09T18:51:31Z",
+      "trackId": "sdk:Java:azure-resourcemanager-iotoperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48754",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48754#issuecomment-4216687607"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews [com.azure.resourcemanager:azure-resourcemanager-iotoperations](https://spa.apiview.dev/review/9154d09178794822b41e73cbd5da6f3e?active",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58017:comment:4216778541:sdk:.NET:Azure.ResourceManager.IotOperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-09T19:03:06Z",
+      "observedAt": "2026-04-09T19:03:06Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.IotOperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58017",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58017#issuecomment-4216778541"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews [Azure.ResourceManager.IotOperations](https://spa.apiview.dev/review/f0b30a587f2a41ccb335e9199bef1f38?activeApiRevisionId=f90132c0732e",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38084:comment:3060127089:sdk:JavaScript:@azure/arm-iotoperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-09T19:14:19Z",
+      "observedAt": "2026-04-09T19:14:19Z",
+      "trackId": "sdk:JavaScript:@azure/arm-iotoperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38084",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38084#discussion_r3060127089"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`KnownVersions` is imported as a value but is not referenced anywhere in this file (it only appears in JSDoc). With typical TS build settings (and/or ESLint), this will fail due to an unused import. Fix by either removing the import or conv",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38084:comment:3060127139:sdk:JavaScript:@azure/arm-iotoperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-09T19:14:20Z",
+      "observedAt": "2026-04-09T19:14:20Z",
+      "trackId": "sdk:JavaScript:@azure/arm-iotoperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38084",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38084#discussion_r3060127139"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The previous implementation also honored `options.baseUrl`, but the new logic drops it entirely. Since `IoTOperationsClientOptionalParams` extends `ClientOptions` (which commonly includes `baseUrl` in this ecosystem), this is a behavioral b",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38084:comment:3060127174:sdk:JavaScript:@azure/arm-iotoperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-09T19:14:20Z",
+      "observedAt": "2026-04-09T19:14:20Z",
+      "trackId": "sdk:JavaScript:@azure/arm-iotoperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38084",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38084#discussion_r3060127174"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`moduleResolution: \"node10\"` is deprecated/legacy and can cause incorrect resolution for modern Node + TypeScript configurations (especially with newer TS versions and ESM-aware packages). Update to `node16`, `nodenext`, or `bundler` (which",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38084:review:4084836052:sdk:JavaScript:@azure/arm-iotoperations",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-09T19:14:21Z",
+      "observedAt": "2026-04-09T19:14:21Z",
+      "trackId": "sdk:JavaScript:@azure/arm-iotoperations",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38084",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38084#pullrequestreview-4084836052"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview > [!NOTE] > Copilot was unable to run its full agentic suite in this review. This PR is an auto-generated update for `@azure/arm-iotoperations` based on the `2026-03-01` swagger/TSP configuration, adding new resourc",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38084:comment:3060127196:sdk:JavaScript:@azure/arm-iotoperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-09T19:14:21Z",
+      "observedAt": "2026-04-09T19:14:21Z",
+      "trackId": "sdk:JavaScript:@azure/arm-iotoperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38084",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38084#discussion_r3060127196"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`extendedLocation.name` is expected to be a full ARM resource ID for the Custom Location and should typically start with `/subscriptions/...`. This sample value is missing the leading slash (and the subscription GUID also looks malformed wi",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26547:review:4084841941:sdk:Go:sdk/resourcemanager/iotoperations/armiotoperations",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-09T19:15:21Z",
+      "observedAt": "2026-04-09T19:15:21Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/iotoperations/armiotoperations",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26547",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26547#pullrequestreview-4084841941"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Updates the `sdk/resourcemanager/iotoperations/armiotoperations` Resource Manager Go SDK module from the `azure-rest-api-specs` TypeSpec config for **API version `2026-03-01`** (spec commit `0238251ff4a7b2404ec01105",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46229:comment:3060141458:sdk:Python:azure-mgmt-iotoperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-09T19:17:31Z",
+      "observedAt": "2026-04-09T19:17:31Z",
+      "trackId": "sdk:Python:azure-mgmt-iotoperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46229",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46229#discussion_r3060141458"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Changelog entry refers to `IoTOperationsMgmtClient` as a \"Model\", but it’s the client type. This should be corrected to \"Client\" so the release notes accurately describe the public surface area change. ```suggestion - Client `IoTOperationsM",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46229:review:4084853997:sdk:Python:azure-mgmt-iotoperations",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-09T19:17:32Z",
+      "observedAt": "2026-04-09T19:17:32Z",
+      "trackId": "sdk:Python:azure-mgmt-iotoperations",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46229",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46229#pullrequestreview-4084853997"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Auto-generated update for `azure-mgmt-iotoperations` (stable) from the `2026-03-01` API version in `azure-rest-api-specs`, including new operation groups/models and a packaging migration to `pyproject.toml`. **Chang",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46229:comment:3060141536:sdk:Python:azure-mgmt-iotoperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-09T19:17:32Z",
+      "observedAt": "2026-04-09T19:17:32Z",
+      "trackId": "sdk:Python:azure-mgmt-iotoperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46229",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46229#discussion_r3060141536"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The docstring says `base_url` defaults to None, but still documents `:type base_url: str`. Since `base_url` is now optional, update the type annotation in the docstring (and any related text) to reflect `Optional[str]`/`None` accurately. ``",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46229:comment:3060141565:sdk:Python:azure-mgmt-iotoperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-09T19:17:32Z",
+      "observedAt": "2026-04-09T19:17:32Z",
+      "trackId": "sdk:Python:azure-mgmt-iotoperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46229",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46229#discussion_r3060141565"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The docstring says `base_url` defaults to None, but still documents `:type base_url: str`. Since `base_url` is now optional, update the docstring type to reflect `Optional[str]`/`None` accurately. ```suggestion :type base_url: Optional[str]",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58017:comment:3060142481:sdk:.NET:Azure.ResourceManager.IotOperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-09T19:17:44Z",
+      "observedAt": "2026-04-09T19:17:44Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.IotOperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58017",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58017#discussion_r3060142481"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`StatusHealthState` dereferences `Status` without a null-check. `Status` can be null when the service omits the `status` object (or when instances are created via model factory/default constructors), causing a runtime `NullReferenceExceptio",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58017:comment:3060142507:sdk:.NET:Azure.ResourceManager.IotOperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-09T19:17:44Z",
+      "observedAt": "2026-04-09T19:17:44Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.IotOperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58017",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58017#discussion_r3060142507"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`StatusHealthState` dereferences `Status` without a null-check. If `status` is absent in the service payload (or the object is created without initializing `Status`), this property will throw a `NullReferenceException`. Consider guarding (`",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58017:comment:3060142531:sdk:.NET:Azure.ResourceManager.IotOperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-09T19:17:44Z",
+      "observedAt": "2026-04-09T19:17:44Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.IotOperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58017",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58017#discussion_r3060142531"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`StatusHealthState` dereferences `Status` without checking for null. When `status` isn't returned by the service (or isn't initialized), this will throw at runtime. Consider returning `Status?.HealthState` / making the property nullable.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58017:comment:3060142558:sdk:.NET:Azure.ResourceManager.IotOperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-09T19:17:45Z",
+      "observedAt": "2026-04-09T19:17:45Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.IotOperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58017",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58017#discussion_r3060142558"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`StatusHealthState` dereferences `Status` without a null-check. Since `Status` can be null when the service omits `status` (or when created via model factory/default constructors), this can throw a `NullReferenceException`. Consider guardin",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58017:comment:3060142591:sdk:.NET:Azure.ResourceManager.IotOperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-09T19:17:45Z",
+      "observedAt": "2026-04-09T19:17:45Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.IotOperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58017",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58017#discussion_r3060142591"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`StatusHealthState` dereferences `Status` without checking for null. If the wire payload doesn't include `status` (or the object is constructed without initializing `Status`), this will throw at runtime. Consider returning `Status?.HealthSt",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58017:comment:3060142612:sdk:.NET:Azure.ResourceManager.IotOperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-09T19:17:45Z",
+      "observedAt": "2026-04-09T19:17:45Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.IotOperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58017",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58017#discussion_r3060142612"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`StatusHealthState` returns `Status.HealthState` without guarding against `Status` being null. Since `Status` can be null when `status` isn't returned on the wire (or when instances are created without initializing it), this can throw a `Nu",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58017:comment:3060142637:sdk:.NET:Azure.ResourceManager.IotOperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-09T19:17:46Z",
+      "observedAt": "2026-04-09T19:17:46Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.IotOperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58017",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58017#discussion_r3060142637"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`continuationToken` is converted to a `Uri` via `new Uri(continuationToken)`, which requires an absolute URI. However, `nextLink` values in ARM list responses can be relative (and this code later handles relative URIs in the REST client). C",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58017:comment:3060142661:sdk:.NET:Azure.ResourceManager.IotOperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-09T19:17:46Z",
+      "observedAt": "2026-04-09T19:17:46Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.IotOperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58017",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58017#discussion_r3060142661"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The `Page<T>.ContinuationToken` is documented as the token used to request the *next* page (see Azure.Core Page<T> docs). Here `FromValues(...)` is given `nextPage` (the URI used for the current request), and only afterwards `nextPage` is u",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58017:comment:3060142680:sdk:.NET:Azure.ResourceManager.IotOperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-09T19:17:46Z",
+      "observedAt": "2026-04-09T19:17:46Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.IotOperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58017",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58017#discussion_r3060142680"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`continuationToken` is parsed with `new Uri(continuationToken)`, which requires an absolute URI. ARM `nextLink` values (and thus continuation tokens) may be relative. Consider `new Uri(continuationToken, UriKind.RelativeOrAbsolute)` to avoi",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58017:review:4084855139:sdk:.NET:Azure.ResourceManager.IotOperations",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-09T19:17:47Z",
+      "observedAt": "2026-04-09T19:17:47Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.IotOperations",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58017",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58017#pullrequestreview-4084855139"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This is an auto-generated management-plane SDK update for **Azure.ResourceManager.IotOperations** based on the TypeSpec configuration at `specification/iotoperations/IoTOperations.Management`, updating the SDK to AP",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58017:comment:3060142697:sdk:.NET:Azure.ResourceManager.IotOperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-09T19:17:47Z",
+      "observedAt": "2026-04-09T19:17:47Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.IotOperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58017",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58017#discussion_r3060142697"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`Page<T>.ContinuationToken` should be the token needed to request the *next* page. This implementation passes the current `nextPage` into `Page.FromValues(...)` and only afterwards assigns `nextPage = result.NextLink`, so the returned conti",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48754:comment:3060147946:sdk:Java:azure-resourcemanager-iotoperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-09T19:18:57Z",
+      "observedAt": "2026-04-09T19:18:57Z",
+      "trackId": "sdk:Java:azure-resourcemanager-iotoperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48754",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48754#discussion_r3060147946"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The module POM no longer sets `revapi.skip` / `spotless.skip`. Most `azure-resourcemanager-*` modules keep these properties (e.g., sdk/iotcentral/azure-resourcemanager-iotcentral/pom.xml:44-49, sdk/agrifood/azure-resourcemanager-agrifood/po",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48754:comment:3060147984:sdk:Java:azure-resourcemanager-iotoperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-09T19:18:57Z",
+      "observedAt": "2026-04-09T19:18:57Z",
+      "trackId": "sdk:Java:azure-resourcemanager-iotoperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48754",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48754#discussion_r3060147984"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The sentence “Please change the `AzureCloud.AZURE_PUBLIC_CLOUD` variable if otherwise.” is grammatically unclear and may confuse readers. Suggest rephrasing to something like “If you’re using a different Azure cloud (e.g., China/Gov), use t",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48754:review:4084862358:sdk:Java:azure-resourcemanager-iotoperations",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-09T19:18:58Z",
+      "observedAt": "2026-04-09T19:18:58Z",
+      "trackId": "sdk:Java:azure-resourcemanager-iotoperations",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48754",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48754#pullrequestreview-4084862358"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Updates the `azure-resourcemanager-iotoperations` management library to the IoT Operations Management spec `2026-03-01` and moves the package from beta to a stable `1.1.0` release, including newly generated APIs/mod",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46229:commit:45bd4b777915:sdk:Python:azure-mgmt-iotoperations",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-10T05:37:20Z",
+      "observedAt": "2026-04-10T05:37:20Z",
+      "trackId": "sdk:Python:azure-mgmt-iotoperations",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46229",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/45bd4b777915a18b1eeefe1ebfc3817aa4d4126d"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46229:commit:cf4b4163b159:sdk:Python:azure-mgmt-iotoperations",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-10T05:41:30Z",
+      "observedAt": "2026-04-10T05:41:30Z",
+      "trackId": "sdk:Python:azure-mgmt-iotoperations",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46229",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/cf4b4163b15916da30059512573e81ff79f73d2a"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46229:review:4087516204:sdk:Python:azure-mgmt-iotoperations",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-10T05:43:32Z",
+      "observedAt": "2026-04-10T05:43:32Z",
+      "trackId": "sdk:Python:azure-mgmt-iotoperations",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46229",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46229#pullrequestreview-4087516204"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46229:comment:4221126215:sdk:Python:azure-mgmt-iotoperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-10T05:44:18Z",
+      "observedAt": "2026-04-10T05:44:18Z",
+      "trackId": "sdk:Python:azure-mgmt-iotoperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46229",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46229#issuecomment-4221126215"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@byronjinmsft, pr ready, feel free to merge and release",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26547:review:4087843898:sdk:Go:sdk/resourcemanager/iotoperations/armiotoperations",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-10T06:40:08Z",
+      "observedAt": "2026-04-10T06:40:08Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/iotoperations/armiotoperations",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "JiaqiZhang-Dev"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26547",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26547#pullrequestreview-4087843898"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48754:review:4090178879:sdk:Java:azure-resourcemanager-iotoperations",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-10T14:02:40Z",
+      "observedAt": "2026-04-10T14:02:40Z",
+      "trackId": "sdk:Java:azure-resourcemanager-iotoperations",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48754",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48754#pullrequestreview-4090178879"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48754:commit:bbdf5ffe8ff3:sdk:Java:azure-resourcemanager-iotoperations",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-10T14:04:26Z",
+      "observedAt": "2026-04-10T14:04:26Z",
+      "trackId": "sdk:Java:azure-resourcemanager-iotoperations",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48754",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/bbdf5ffe8ff344be77efbe00a845833695ec63e1"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48754:review:4090190429:sdk:Java:azure-resourcemanager-iotoperations",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-10T14:04:37Z",
+      "observedAt": "2026-04-10T14:04:37Z",
+      "trackId": "sdk:Java:azure-resourcemanager-iotoperations",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48754",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48754#pullrequestreview-4090190429"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46229:pr.merged:sdk:Python:azure-mgmt-iotoperations",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-10T15:20:31Z",
+      "observedAt": "2026-04-10T15:20:31Z",
+      "trackId": "sdk:Python:azure-mgmt-iotoperations",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46229",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46229"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38084:comment:4233381288:sdk:JavaScript:@azure/arm-iotoperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-13T02:24:26Z",
+      "observedAt": "2026-04-13T02:24:26Z",
+      "trackId": "sdk:JavaScript:@azure/arm-iotoperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38084",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38084#issuecomment-4233381288"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Next Steps to Merge Only failed checks and required actions are listed below. - ⏳ `checkenforcer`: still running — waiting for all required checks to pass. No ADO pipeline check results are visible yet for this PR.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38084:review:4096119550:sdk:JavaScript:@azure/arm-iotoperations",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-13T02:24:27Z",
+      "observedAt": "2026-04-13T02:24:27Z",
+      "trackId": "sdk:JavaScript:@azure/arm-iotoperations",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38084",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38084#pullrequestreview-4096119550"
+      },
+      "confidence": "authoritative",
+      "excerpt": "1 tool issue found in this PR for `@azure/arm-iotoperations` 2.0.0 (API version `2026-03-01`). The package version, userAgent string, and CHANGELOG entries are all consistent. No `_N`/`AutoGenerated` naming issues, no alpha version referenc",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38084:comment:3070604949:sdk:JavaScript:@azure/arm-iotoperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-13T02:24:27Z",
+      "observedAt": "2026-04-13T02:24:27Z",
+      "trackId": "sdk:JavaScript:@azure/arm-iotoperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38084",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38084#discussion_r3070604949"
+      },
+      "confidence": "authoritative",
+      "excerpt": "🔴 **Tool Issue** — `arm-iotoperations-node.api.md:1999` ```ts export enum KnownVersions { \"V2024-11-01\" = \"2024-11-01\", V20250401 = \"2025-04-01\", // ← V prefix Versions20251001 = \"2025-10-01\", // ← Versions prefix Versions20260301 = \"2026-",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38084:review:4096151402:sdk:JavaScript:@azure/arm-iotoperations",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-13T02:41:00Z",
+      "observedAt": "2026-04-13T02:41:00Z",
+      "trackId": "sdk:JavaScript:@azure/arm-iotoperations",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38084",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38084#pullrequestreview-4096151402"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38084:comment:3070636040:sdk:JavaScript:@azure/arm-iotoperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-13T02:41:00Z",
+      "observedAt": "2026-04-13T02:41:00Z",
+      "trackId": "sdk:JavaScript:@azure/arm-iotoperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38084",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38084#discussion_r3070636040"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Versions is not expected, will update this in spec",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38084:comment:3081055761:sdk:JavaScript:@azure/arm-iotoperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-14T16:44:46Z",
+      "observedAt": "2026-04-14T16:44:46Z",
+      "trackId": "sdk:JavaScript:@azure/arm-iotoperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "byronjinmsft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38084",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38084#discussion_r3081055761"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> Versions is not expected, will update this in spec After this fix is done in the generation tool repository, will I need to regenerate this SDK? Or will that be done automatically/not my responsibility?",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38084:review:4107687085:sdk:JavaScript:@azure/arm-iotoperations",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-14T16:44:47Z",
+      "observedAt": "2026-04-14T16:44:47Z",
+      "trackId": "sdk:JavaScript:@azure/arm-iotoperations",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "byronjinmsft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38084",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38084#pullrequestreview-4107687085"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38084:comment:3083616189:sdk:JavaScript:@azure/arm-iotoperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-15T02:27:10Z",
+      "observedAt": "2026-04-15T02:27:10Z",
+      "trackId": "sdk:JavaScript:@azure/arm-iotoperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38084",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38084#discussion_r3083616189"
+      },
+      "confidence": "authoritative",
+      "excerpt": "I will trigger the regeneration after the fix is done and make a commit target to this pr",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38084:review:4110419215:sdk:JavaScript:@azure/arm-iotoperations",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-15T02:27:11Z",
+      "observedAt": "2026-04-15T02:27:11Z",
+      "trackId": "sdk:JavaScript:@azure/arm-iotoperations",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38084",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38084#pullrequestreview-4110419215"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38084:review:4110441219:sdk:JavaScript:@azure/arm-iotoperations",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-15T02:34:32Z",
+      "observedAt": "2026-04-15T02:34:32Z",
+      "trackId": "sdk:JavaScript:@azure/arm-iotoperations",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38084",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38084#pullrequestreview-4110441219"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38084:comment:3083640567:sdk:JavaScript:@azure/arm-iotoperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-15T02:34:32Z",
+      "observedAt": "2026-04-15T02:34:32Z",
+      "trackId": "sdk:JavaScript:@azure/arm-iotoperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38084",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38084#discussion_r3083640567"
+      },
+      "confidence": "authoritative",
+      "excerpt": "https://github.com/Azure/azure-rest-api-specs/pull/42395",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38084:commit:d55f434f6d47:sdk:JavaScript:@azure/arm-iotoperations",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-16T09:30:03Z",
+      "observedAt": "2026-04-16T09:30:03Z",
+      "trackId": "sdk:JavaScript:@azure/arm-iotoperations",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38084",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/d55f434f6d472768a5f24ad35dec25f3d3b7b2a2"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38084:comment:4264958902:sdk:JavaScript:@azure/arm-iotoperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-17T02:54:24Z",
+      "observedAt": "2026-04-17T02:54:24Z",
+      "trackId": "sdk:JavaScript:@azure/arm-iotoperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38084",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38084#issuecomment-4264958902"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@byronjinmsft could you follow this [guide ](https://github.com/Azure/azure-sdk-for-js/blob/main/documentation/steps-after-generations.md#resolve-conflicts-for-pr)to resolve conflicts and enable auto-merge? we will re-approve when conflicts",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38084:commit:e50718771fd4:sdk:JavaScript:@azure/arm-iotoperations",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-17T18:53:21Z",
+      "observedAt": "2026-04-17T18:53:21Z",
+      "trackId": "sdk:JavaScript:@azure/arm-iotoperations",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "byronjinmsft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38084",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/e50718771fd4a830f1c14463b1b0413bcf8c4df2"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38084:comment:4270554961:sdk:JavaScript:@azure/arm-iotoperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-17T18:57:41Z",
+      "observedAt": "2026-04-17T18:57:41Z",
+      "trackId": "sdk:JavaScript:@azure/arm-iotoperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "byronjinmsft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38084",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38084#issuecomment-4270554961"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> @byronjinmsft could you follow this [guide ](https://github.com/Azure/azure-sdk-for-js/blob/main/documentation/steps-after-generations.md#resolve-conflicts-for-pr)to resolve conflicts and enable auto-merge? we will re-approve when conflic",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38084:comment:4277415526:sdk:JavaScript:@azure/arm-iotoperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-20T02:01:54Z",
+      "observedAt": "2026-04-20T02:01:54Z",
+      "trackId": "sdk:JavaScript:@azure/arm-iotoperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38084",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38084#issuecomment-4277415526"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@byronjinmsft ci failure is because you need to run the test and push the test recordings see this [guide](https://github.com/Azure/azure-sdk-for-js/blob/main/documentation/Quickstart-on-how-to-write-tests.md#run-tests-in-record-mode) but t",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38084:review:4136936928:sdk:JavaScript:@azure/arm-iotoperations",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-20T02:06:33Z",
+      "observedAt": "2026-04-20T02:06:33Z",
+      "trackId": "sdk:JavaScript:@azure/arm-iotoperations",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38084",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38084#pullrequestreview-4136936928"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38084:comment:3107927309:sdk:JavaScript:@azure/arm-iotoperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-20T02:06:33Z",
+      "observedAt": "2026-04-20T02:06:33Z",
+      "trackId": "sdk:JavaScript:@azure/arm-iotoperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38084",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38084#discussion_r3107927309"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@byronjinmsft extendedLocation has been optional since 2025-07-01-preview from https://github.com/azure/azure-rest-api-specs/pull/33810 could you help confirm if this feature should be published in this stable version?",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38084:comment:3112234993:sdk:JavaScript:@azure/arm-iotoperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-20T16:38:25Z",
+      "observedAt": "2026-04-20T16:38:25Z",
+      "trackId": "sdk:JavaScript:@azure/arm-iotoperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "byronjinmsft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38084",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38084#discussion_r3112234993"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Yes this is an intentional change, and we have been using these APIs publicly for a while now.",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38084:review:4141817757:sdk:JavaScript:@azure/arm-iotoperations",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-20T16:38:26Z",
+      "observedAt": "2026-04-20T16:38:26Z",
+      "trackId": "sdk:JavaScript:@azure/arm-iotoperations",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "byronjinmsft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38084",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38084#pullrequestreview-4141817757"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38084:commit:85bcc78cb11b:sdk:JavaScript:@azure/arm-iotoperations",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-20T18:09:47Z",
+      "observedAt": "2026-04-20T18:09:47Z",
+      "trackId": "sdk:JavaScript:@azure/arm-iotoperations",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "byronjinmsft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38084",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/85bcc78cb11b4616d1e9f45e006dbe1eb7b7c97b"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38084:commit:1bfe1ecc693f:sdk:JavaScript:@azure/arm-iotoperations",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-20T18:16:08Z",
+      "observedAt": "2026-04-20T18:16:08Z",
+      "trackId": "sdk:JavaScript:@azure/arm-iotoperations",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "byronjinmsft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38084",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/1bfe1ecc693f10069c960b23cc3d5e8789042170"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38084:comment:4283259661:sdk:JavaScript:@azure/arm-iotoperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-20T18:19:23Z",
+      "observedAt": "2026-04-20T18:19:23Z",
+      "trackId": "sdk:JavaScript:@azure/arm-iotoperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "byronjinmsft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38084",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38084#issuecomment-4283259661"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> @byronjinmsft ci failure is because you need to run the test and push the test recordings see this [guide](https://github.com/Azure/azure-sdk-for-js/blob/main/documentation/Quickstart-on-how-to-write-tests.md#run-tests-in-record-mode) > >",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38084:review:4144374031:sdk:JavaScript:@azure/arm-iotoperations",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-21T00:54:27Z",
+      "observedAt": "2026-04-21T00:54:27Z",
+      "trackId": "sdk:JavaScript:@azure/arm-iotoperations",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "JialinHuang803"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38084",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38084#pullrequestreview-4144374031"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38084:commit:9d43dfdd5eb1:sdk:JavaScript:@azure/arm-iotoperations",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-21T18:14:32Z",
+      "observedAt": "2026-04-21T18:14:32Z",
+      "trackId": "sdk:JavaScript:@azure/arm-iotoperations",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "byronjinmsft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38084",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/9d43dfdd5eb15ff3475f7e87455aad2f3fda3b9b"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38084:comment:4290860526:sdk:JavaScript:@azure/arm-iotoperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-21T18:24:28Z",
+      "observedAt": "2026-04-21T18:24:28Z",
+      "trackId": "sdk:JavaScript:@azure/arm-iotoperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "byronjinmsft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38084",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38084#issuecomment-4290860526"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@JialinHuang803 I had another merge conflict, can you re-approve? I will set automerge so that it gets merged in once you approve and then I won't have to deal with more merge conflicts.",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38084:review:4151522235:sdk:JavaScript:@azure/arm-iotoperations",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-22T01:06:08Z",
+      "observedAt": "2026-04-22T01:06:08Z",
+      "trackId": "sdk:JavaScript:@azure/arm-iotoperations",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "JialinHuang803"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38084",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38084#pullrequestreview-4151522235"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38084:pr.merged:sdk:JavaScript:@azure/arm-iotoperations",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-22T01:06:10Z",
+      "observedAt": "2026-04-22T01:06:10Z",
+      "trackId": "sdk:JavaScript:@azure/arm-iotoperations",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38084",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38084"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48754:commit:f53217083611:sdk:Java:azure-resourcemanager-iotoperations",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-22T05:06:00Z",
+      "observedAt": "2026-04-22T05:06:00Z",
+      "trackId": "sdk:Java:azure-resourcemanager-iotoperations",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "byronjinmsft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48754",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/f5321708361111fffe0380972b97faa6e0456554"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48754:comment:4293635918:sdk:Java:azure-resourcemanager-iotoperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-22T05:07:17Z",
+      "observedAt": "2026-04-22T05:07:17Z",
+      "trackId": "sdk:Java:azure-resourcemanager-iotoperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "byronjinmsft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48754",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48754#issuecomment-4293635918"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@weidongxu-microsoft Seems like you need someone other than yourself to approve this PR since you have made a commit to this PR. Can you ask one of your teammates to approve it?",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26547:pr.merged:sdk:Go:sdk/resourcemanager/iotoperations/armiotoperations",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-22T05:07:50Z",
+      "observedAt": "2026-04-22T05:07:50Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/iotoperations/armiotoperations",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26547",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26547"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48754:comment:4293697805:sdk:Java:azure-resourcemanager-iotoperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-22T05:18:17Z",
+      "observedAt": "2026-04-22T05:18:17Z",
+      "trackId": "sdk:Java:azure-resourcemanager-iotoperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48754",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48754#issuecomment-4293697805"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@XiaofeiCao for review",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48754:commit:052bdec67fd7:sdk:Java:azure-resourcemanager-iotoperations",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-22T17:05:11Z",
+      "observedAt": "2026-04-22T17:05:11Z",
+      "trackId": "sdk:Java:azure-resourcemanager-iotoperations",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "byronjinmsft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48754",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/052bdec67fd79ce01ecacf3d316d081735fcbd96"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58017:commit:e990f951edc8:sdk:.NET:Azure.ResourceManager.IotOperations",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-22T19:07:55Z",
+      "observedAt": "2026-04-22T19:07:55Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.IotOperations",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "byronjinmsft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58017",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/e990f951edc8b9403cffea1feb60a61d82577afc"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48754:review:4159181768:sdk:Java:azure-resourcemanager-iotoperations",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-23T02:26:53Z",
+      "observedAt": "2026-04-23T02:26:53Z",
+      "trackId": "sdk:Java:azure-resourcemanager-iotoperations",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "XiaofeiCao"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48754",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48754#pullrequestreview-4159181768"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48754:pr.merged:sdk:Java:azure-resourcemanager-iotoperations",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-23T02:26:55Z",
+      "observedAt": "2026-04-23T02:26:55Z",
+      "trackId": "sdk:Java:azure-resourcemanager-iotoperations",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48754",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48754"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58017:commit:063ec3841b96:sdk:.NET:Azure.ResourceManager.IotOperations",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-30T07:22:04Z",
+      "observedAt": "2026-04-30T07:22:04Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.IotOperations",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "byronjinmsft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58017",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/063ec3841b96835b65d9da3a25886e6878a1566b"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58017:commit:e0265acb954b:sdk:.NET:Azure.ResourceManager.IotOperations",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-30T08:07:36Z",
+      "observedAt": "2026-04-30T08:07:36Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.IotOperations",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "byronjinmsft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58017",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/e0265acb954b1a49537b89f8a184564d425c0dd9"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58017:commit:8207523e5ff2:sdk:.NET:Azure.ResourceManager.IotOperations",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-30T09:13:34Z",
+      "observedAt": "2026-04-30T09:13:34Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.IotOperations",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "byronjinmsft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58017",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/8207523e5ff2a75c51d81552c27eccdc090672d5"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58017:comment:4354643403:sdk:.NET:Azure.ResourceManager.IotOperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-30T17:25:21Z",
+      "observedAt": "2026-04-30T17:25:21Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.IotOperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "byronjinmsft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58017",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58017#issuecomment-4354643403"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@ArcturusZhang @ArthurMa1978 @live1206 Can I get a review from one of you?",
+      "stack": 3
+    },
+    {
+      "id": "ado:33833:29:Custom.ReleaseStatusForJavaScript",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-05-05T09:25:09.987Z",
+      "observedAt": "2026-05-05T09:25:09.987Z",
+      "trackId": "sdk:JavaScript:@azure/arm-iotoperations",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33833",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33833"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33833:29:Custom.ReleasedVersionForJavaScript",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-05-05T09:25:09.987Z",
+      "observedAt": "2026-05-05T09:25:09.987Z",
+      "trackId": "sdk:JavaScript:@azure/arm-iotoperations",
+      "value": "2.0.0",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33833",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33833"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58017:comment:4381528320:sdk:.NET:Azure.ResourceManager.IotOperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-05T17:26:02Z",
+      "observedAt": "2026-05-05T17:26:02Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.IotOperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "byronjinmsft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58017",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58017#issuecomment-4381528320"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @weshaggard and @msalaman , can I get a review on this PR? Thanks",
+      "stack": 0
+    },
+    {
+      "id": "ado:33833:30:Custom.ReleaseStatusForGo",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-05-06T20:57:37.953Z",
+      "observedAt": "2026-05-06T20:57:37.953Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/iotoperations/armiotoperations",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33833",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33833"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33833:30:Custom.ReleasedVersionForGo",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-05-06T20:57:37.953Z",
+      "observedAt": "2026-05-06T20:57:37.953Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/iotoperations/armiotoperations",
+      "value": "1.1.0",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33833",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33833"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33833:31:Custom.ReleaseStatusForPython",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-05-06T21:05:05.58Z",
+      "observedAt": "2026-05-06T21:05:05.58Z",
+      "trackId": "sdk:Python:azure-mgmt-iotoperations",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33833",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33833"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33833:31:Custom.ReleasedVersionForPython",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-05-06T21:05:05.58Z",
+      "observedAt": "2026-05-06T21:05:05.58Z",
+      "trackId": "sdk:Python:azure-mgmt-iotoperations",
+      "value": "1.1.0",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33833",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33833"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58017:comment:3212247676:sdk:.NET:Azure.ResourceManager.IotOperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-09T02:22:19Z",
+      "observedAt": "2026-05-09T02:22:19Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.IotOperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "live1206"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58017",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58017#discussion_r3212247676"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[RESINFIX001]** `AkriServiceResourceCollection` includes `Resource` before `Collection`. Management SDK collection types should drop the `Resource` infix unless this is the established `PrivateLinkResource` exception. Please rename this t",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58017:comment:3212247678:sdk:.NET:Azure.ResourceManager.IotOperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-09T02:22:19Z",
+      "observedAt": "2026-05-09T02:22:19Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.IotOperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "live1206"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58017",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58017#discussion_r3212247678"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[RESINFIX001]** `AkriServiceResourceData` includes `Resource` before `Data`. Management SDK resource data types should be named after the resource without the `Resource` infix. Please rename this to `AkriServiceData` (for TypeSpec generat",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58017:comment:3212247680:sdk:.NET:Azure.ResourceManager.IotOperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-09T02:22:19Z",
+      "observedAt": "2026-05-09T02:22:19Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.IotOperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "live1206"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58017",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58017#discussion_r3212247680"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[CTX001]** `ResourceHealthStatus` is a new public model with a generic ARM-style name, but it is service-specific and can appear in IntelliSense without the namespace. Please add IoT Operations context to the type name, for example `IotOp",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58017:review:4256417240:sdk:.NET:Azure.ResourceManager.IotOperations",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-09T02:22:20Z",
+      "observedAt": "2026-05-09T02:22:20Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.IotOperations",
+      "title": "Changes requested",
+      "actor": {
+        "kind": "human",
+        "publicId": "live1206"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58017",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58017#pullrequestreview-4256417240"
+      },
+      "confidence": "authoritative",
+      "excerpt": "MPG SDK review summary: - Phase 1 (versioning): passed. No major version bump, `ApiCompatVersion` remains, and no ApiCompatBaseline entries were added. - Phase 2 (API review): found 3 naming issues on newly added API surface. I did not dupl",
+      "reviewState": "changes_requested",
+      "stack": 3
+    },
+    {
+      "id": "ado:33833:33:Custom.ReleaseStatusForDotnet",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-06-16T00:20:36.547Z",
+      "observedAt": "2026-06-16T00:20:36.547Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.IotOperations",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33833",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33833"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33833:33:Custom.ReleasedVersionForDotnet",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-06-16T00:20:36.547Z",
+      "observedAt": "2026-06-16T00:20:36.547Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.IotOperations",
+      "value": "1.1.0",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33833",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33833"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58017:comment:5139841026:sdk:.NET:Azure.ResourceManager.IotOperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-31T06:03:31Z",
+      "observedAt": "2026-07-31T06:03:31Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.IotOperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58017",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58017#issuecomment-5139841026"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @azure-sdk. Thank you for your interest in helping to improve the Azure SDK experience and for your contribution. We've noticed that there hasn't been recent engagement on this pull request. If this is still an active work stream, please",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58017:comment:5214884821:sdk:.NET:Azure.ResourceManager.IotOperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-07T08:46:19Z",
+      "observedAt": "2026-08-07T08:46:19Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.IotOperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58017",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58017#issuecomment-5214884821"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @azure-sdk. Thank you for your contribution. Since there hasn't been recent engagement, we're going to close this out. Feel free to respond with a comment containing `/reopen` if you'd like to continue working on these changes. Please be",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58017:pr.closed:sdk:.NET:Azure.ResourceManager.IotOperations",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-07T08:46:30Z",
+      "observedAt": "2026-08-07T08:46:30Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.IotOperations",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58017",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58017"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:33833:35:Custom.ReleaseStatusForJava",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-08-11T06:32:48.01Z",
+      "observedAt": "2026-08-11T06:32:48.01Z",
+      "trackId": "sdk:Java:azure-resourcemanager-iotoperations",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33833",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33833"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33833:35:Custom.ReleasedVersionForJava",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-08-11T06:32:48.01Z",
+      "observedAt": "2026-08-11T06:32:48.01Z",
+      "trackId": "sdk:Java:azure-resourcemanager-iotoperations",
+      "value": "1.2.0",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33833",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33833"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33833:36:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-08-11T06:32:48.253Z",
+      "observedAt": "2026-08-11T06:32:48.253Z",
+      "trackId": "plan",
+      "value": "Finished",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33833",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33833"
+      },
+      "title": "Plan state changed",
+      "stack": 0
+    }
+  ],
+  "quality": {
+    "warnings": [
+      "1 historical linked PR(s) closed without merge"
+    ],
+    "unavailablePullRequests": 0,
+    "unavailablePipelineRuns": 0
+  },
+  "boundaryFacts": {
+    "id": "33833",
+    "state": "finished",
+    "specPrs": [
+      {
+        "id": "github:Azure/azure-rest-api-specs#39503",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#39503",
+        "createdAt": "2026-01-08T00:59:29Z",
+        "mergedAt": "2026-02-11T17:27:20Z",
+        "closedAt": "2026-02-11T17:27:20Z",
+        "available": true
+      }
+    ],
+    "artifacts": [
+      {
+        "language": ".NET",
+        "package": "Azure.ResourceManager.IotOperations",
+        "trackId": "sdk:.NET:Azure.ResourceManager.IotOperations",
+        "prId": "github:Azure/azure-sdk-for-net#58017",
+        "prCreatedAt": "2026-04-09T18:37:33Z",
+        "prMergedAt": null,
+        "prClosedAt": "2026-08-07T08:46:30Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-net#58017",
+            "createdAt": "2026-04-09T18:37:33Z",
+            "mergedAt": null,
+            "closedAt": "2026-08-07T08:46:30Z",
+            "state": "closed"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6132587",
+        "generationStartAt": "2026-04-09T18:31:26.1760195Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-06-16T00:20:36.547Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.1.0",
+        "releaseBoundaryAt": "2026-06-16T00:20:36.547Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "JavaScript",
+        "package": "@azure/arm-iotoperations",
+        "trackId": "sdk:JavaScript:@azure/arm-iotoperations",
+        "prId": "github:Azure/azure-sdk-for-js#38084",
+        "prCreatedAt": "2026-04-09T18:42:13Z",
+        "prMergedAt": "2026-04-22T01:06:10Z",
+        "prClosedAt": "2026-04-22T01:06:10Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-js#38084",
+            "createdAt": "2026-04-09T18:42:13Z",
+            "mergedAt": "2026-04-22T01:06:10Z",
+            "closedAt": "2026-04-22T01:06:10Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6132590",
+        "generationStartAt": "2026-04-09T18:32:01.8144139Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-05-05T09:25:09.987Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "2.0.0",
+        "releaseBoundaryAt": "2026-05-05T09:25:09.987Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Python",
+        "package": "azure-mgmt-iotoperations",
+        "trackId": "sdk:Python:azure-mgmt-iotoperations",
+        "prId": "github:Azure/azure-sdk-for-python#46229",
+        "prCreatedAt": "2026-04-09T18:39:30Z",
+        "prMergedAt": "2026-04-10T15:20:31Z",
+        "prClosedAt": "2026-04-10T15:20:31Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-python#46229",
+            "createdAt": "2026-04-09T18:39:30Z",
+            "mergedAt": "2026-04-10T15:20:31Z",
+            "closedAt": "2026-04-10T15:20:31Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6132591",
+        "generationStartAt": "2026-04-09T18:32:08.9131076Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-05-06T21:05:05.58Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.1.0",
+        "releaseBoundaryAt": "2026-05-06T21:05:05.58Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Java",
+        "package": "azure-resourcemanager-iotoperations",
+        "trackId": "sdk:Java:azure-resourcemanager-iotoperations",
+        "prId": "github:Azure/azure-sdk-for-java#48754",
+        "prCreatedAt": "2026-04-09T18:41:14Z",
+        "prMergedAt": "2026-04-23T02:26:55Z",
+        "prClosedAt": "2026-04-23T02:26:55Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-java#48754",
+            "createdAt": "2026-04-09T18:41:14Z",
+            "mergedAt": "2026-04-23T02:26:55Z",
+            "closedAt": "2026-04-23T02:26:55Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6132589",
+        "generationStartAt": "2026-04-09T18:31:56.1472625Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-08-11T06:32:48.01Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.2.0",
+        "releaseBoundaryAt": "2026-08-11T06:32:48.01Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Go",
+        "package": "sdk/resourcemanager/iotoperations/armiotoperations",
+        "trackId": "sdk:Go:sdk/resourcemanager/iotoperations/armiotoperations",
+        "prId": "github:Azure/azure-sdk-for-go#26547",
+        "prCreatedAt": "2026-04-09T18:36:23Z",
+        "prMergedAt": "2026-04-22T05:07:50Z",
+        "prClosedAt": "2026-04-22T05:07:50Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-go#26547",
+            "createdAt": "2026-04-09T18:36:23Z",
+            "mergedAt": "2026-04-22T05:07:50Z",
+            "closedAt": "2026-04-22T05:07:50Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6132588",
+        "generationStartAt": "2026-04-09T18:31:38.818587Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-05-06T20:57:37.953Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.1.0",
+        "releaseBoundaryAt": "2026-05-06T20:57:37.953Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      }
+    ],
+    "cohortPlan": {
+      "id": "33833",
+      "releasePlanId": "2179",
+      "title": "Release plan - 2179 - GA - Azure IoT Operations",
+      "service": "Azure IoT Operations",
+      "state": "finished"
+    },
+    "quality": {
+      "warnings": [
+        "1 historical linked PR(s) closed without merge"
+      ],
+      "unavailablePullRequests": 0,
+      "unavailablePipelineRuns": 0
+    }
+  },
+  "summary": {
+    "durationHours": 2964.5,
+    "pullRequestCount": 6,
+    "humanReviewCount": 15,
+    "humanCommentCount": 22
+  }
+}

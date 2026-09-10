@@ -1,0 +1,2783 @@
+{
+  "schemaVersion": 2,
+  "id": "35569",
+  "correlation": {
+    "policyVersion": 1,
+    "preflight": "passed"
+  },
+  "releasePlanId": "35569",
+  "title": "GA release plan for Relay",
+  "service": "Relay",
+  "product": "Release",
+  "path": "specification/relay/resource-manager/Microsoft.Relay/Relay",
+  "state": "in-progress",
+  "plane": "management",
+  "releaseType": "GA",
+  "intendedMonth": "August 2026",
+  "createdAt": "2026-07-25T17:32:37.4Z",
+  "completedAt": null,
+  "sourceUrl": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35569",
+  "range": {
+    "start": "2026-07-17T02:37:24.000Z",
+    "end": "2026-08-14T00:37:23.589Z"
+  },
+  "intendedArtifacts": [
+    {
+      "prId": "github:Azure/azure-sdk-for-net#61371",
+      "language": ".NET",
+      "package": "Azure.ResourceManager.Relay",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6617067",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-js#39403",
+      "language": "JavaScript",
+      "package": "@azure/arm-relay",
+      "version": "4.0.0",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6617069",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-python#48263",
+      "language": "Python",
+      "package": "azure-mgmt-relay",
+      "version": "2.0.0",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6617070",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-java#49930",
+      "language": "Java",
+      "package": "azure-resourcemanager-relay",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6617068",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-go#27255",
+      "language": "Go",
+      "package": "sdk/resourcemanager/relay/armrelay",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6617071",
+      "releasePipelineUrl": null
+    }
+  ],
+  "links": [
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#44751",
+      "role": "spec-pr",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/44751",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-net#61371",
+      "role": "sdk-pr",
+      "language": ".NET",
+      "url": "https://github.com/Azure/azure-sdk-for-net/pull/61371",
+      "releasePlanIds": [
+        "35569"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-js#39403",
+      "role": "sdk-pr",
+      "language": "JavaScript",
+      "url": "https://github.com/Azure/azure-sdk-for-js/pull/39403",
+      "releasePlanIds": [
+        "35569"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-python#48263",
+      "role": "sdk-pr",
+      "language": "Python",
+      "url": "https://github.com/Azure/azure-sdk-for-python/pull/48263",
+      "releasePlanIds": [
+        "35569"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-java#49930",
+      "role": "sdk-pr",
+      "language": "Java",
+      "url": "https://github.com/Azure/azure-sdk-for-java/pull/49930",
+      "releasePlanIds": [
+        "35569"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-go#27255",
+      "role": "sdk-pr",
+      "language": "Go",
+      "url": "https://github.com/Azure/azure-sdk-for-go/pull/27255",
+      "releasePlanIds": [
+        "35569"
+      ]
+    }
+  ],
+  "tracks": [
+    {
+      "id": "plan",
+      "kind": "plan",
+      "label": "Release Plan",
+      "detail": "GA"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#44751",
+      "kind": "spec",
+      "label": "Spec PR",
+      "detail": "azure-rest-api-specs #44751",
+      "artifactId": "github:Azure/azure-rest-api-specs#44751",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:.NET:Azure.ResourceManager.Relay",
+      "kind": "sdk",
+      "label": ".NET",
+      "detail": "Azure.ResourceManager.Relay",
+      "artifactId": "github:Azure/azure-sdk-for-net#61371",
+      "state": "open"
+    },
+    {
+      "id": "sdk:JavaScript:@azure/arm-relay",
+      "kind": "sdk",
+      "label": "JavaScript",
+      "detail": "@azure/arm-relay",
+      "artifactId": "github:Azure/azure-sdk-for-js#39403",
+      "state": "open"
+    },
+    {
+      "id": "sdk:Python:azure-mgmt-relay",
+      "kind": "sdk",
+      "label": "Python",
+      "detail": "azure-mgmt-relay",
+      "artifactId": "github:Azure/azure-sdk-for-python#48263",
+      "state": "open"
+    },
+    {
+      "id": "sdk:Java:azure-resourcemanager-relay",
+      "kind": "sdk",
+      "label": "Java",
+      "detail": "azure-resourcemanager-relay",
+      "artifactId": "github:Azure/azure-sdk-for-java#49930",
+      "state": "open"
+    },
+    {
+      "id": "sdk:Go:sdk/resourcemanager/relay/armrelay",
+      "kind": "sdk",
+      "label": "Go",
+      "detail": "sdk/resourcemanager/relay/armrelay",
+      "artifactId": "github:Azure/azure-sdk-for-go#27255",
+      "state": "open"
+    }
+  ],
+  "events": [
+    {
+      "id": "github:Azure/azure-rest-api-specs#44751:pr.created:spec:github:Azure/azure-rest-api-specs#44751",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-17T02:37:24Z",
+      "observedAt": "2026-07-17T02:37:24Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44751",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "mashrafsiddiquee"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44751",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44751"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44751:comment:4998445979:spec:github:Azure/azure-rest-api-specs#44751",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-17T02:38:26Z",
+      "observedAt": "2026-07-17T02:38:26Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44751",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44751",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44751#issuecomment-4998445979"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>✅ All automated merging requirements have been met! To get your PR merged, see <a href=\"https://aka.ms/azsdk/specreview/merge\">aka.ms/azsdk/specreview/merge</a>.<br /><br />Comment generated by <a href=\"https://g",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44751:comment:4998487141:spec:github:Azure/azure-rest-api-specs#44751",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-17T02:46:38Z",
+      "observedAt": "2026-07-17T02:46:38Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44751",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44751",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44751#issuecomment-4998487141"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews | Language | API Review for Package | |----------|---------| | Swagger | [Microsoft.Relay-Relay](https://apiview.dev/Assemblies/Review",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44751:comment:5004428575:spec:github:Azure/azure-rest-api-specs#44751",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-17T14:43:13Z",
+      "observedAt": "2026-07-17T14:43:13Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44751",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "razvanbadea-msft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44751",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44751#issuecomment-5004428575"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Check error from [Swagger LintDiff](https://github.com/Azure/azure-rest-api-specs/actions/runs/29552326218)",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44751:commit:44a4ed4f6918:spec:github:Azure/azure-rest-api-specs#44751",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-22T17:03:15Z",
+      "observedAt": "2026-07-22T17:03:15Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44751",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "asiddiqiuee"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44751",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/44a4ed4f6918609e67aac153ef55dd26eda65510"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44751:review:4770017970:spec:github:Azure/azure-rest-api-specs#44751",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-24T04:04:43Z",
+      "observedAt": "2026-07-24T04:04:43Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44751",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "dsouzaarun"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44751",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44751#pullrequestreview-4770017970"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44751:comment:5073101859:spec:github:Azure/azure-rest-api-specs#44751",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-24T18:21:06Z",
+      "observedAt": "2026-07-24T18:21:06Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44751",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "mikeharder"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44751",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44751#issuecomment-5073101859"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@sandipsh: Reminder you need to add label `Approved-Suppression` along with `ARMSignedOff`. Removing `ARMSignedOff` to re-queue for approval.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44751:pr.merged:spec:github:Azure/azure-rest-api-specs#44751",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-25T17:29:13Z",
+      "observedAt": "2026-07-25T17:29:13Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44751",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44751",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44751"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:35569:created",
+      "type": "plan.created",
+      "phase": "plan",
+      "occurredAt": "2026-07-25T17:32:37.4Z",
+      "observedAt": "2026-07-25T17:32:37.4Z",
+      "trackId": "plan",
+      "title": "Release Plan created",
+      "confidence": "authoritative",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35569",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35569"
+      },
+      "stack": 0
+    },
+    {
+      "id": "ado:35569:1:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-07-25T17:32:37.4Z",
+      "observedAt": "2026-07-25T17:32:37.4Z",
+      "trackId": "plan",
+      "value": "New",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35569",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35569"
+      },
+      "title": "Plan state changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35569:1:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-25T17:32:37.4Z",
+      "observedAt": "2026-07-25T17:32:37.4Z",
+      "trackId": "plan",
+      "value": "Not Available",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35569",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35569"
+      },
+      "title": "Spec approval changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:35569:1:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-25T17:32:37.4Z",
+      "observedAt": "2026-07-25T17:32:37.4Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Relay",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35569",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35569"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35569:1:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-25T17:32:37.4Z",
+      "observedAt": "2026-07-25T17:32:37.4Z",
+      "trackId": "sdk:JavaScript:@azure/arm-relay",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35569",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35569"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35569:1:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-25T17:32:37.4Z",
+      "observedAt": "2026-07-25T17:32:37.4Z",
+      "trackId": "sdk:Python:azure-mgmt-relay",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35569",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35569"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35569:1:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-25T17:32:37.4Z",
+      "observedAt": "2026-07-25T17:32:37.4Z",
+      "trackId": "sdk:Java:azure-resourcemanager-relay",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35569",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35569"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35569:1:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-25T17:32:37.4Z",
+      "observedAt": "2026-07-25T17:32:37.4Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/relay/armrelay",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35569",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35569"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35570:1:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-25T17:32:37.8Z",
+      "observedAt": "2026-07-25T17:32:37.8Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44751",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/44751",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35570",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35570"
+      },
+      "title": "Spec PR linked",
+      "stack": 1
+    },
+    {
+      "id": "ado:35569:2:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-07-25T17:32:38.413Z",
+      "observedAt": "2026-07-25T17:32:38.413Z",
+      "trackId": "plan",
+      "value": "In Progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35569",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35569"
+      },
+      "title": "Plan state changed",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44751:comment:5079501894:spec:github:Azure/azure-rest-api-specs#44751",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-25T17:32:43Z",
+      "observedAt": "2026-07-25T17:32:43Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44751",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44751",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44751#issuecomment-5079501894"
+      },
+      "confidence": "authoritative",
+      "excerpt": "### ✅ Release Plan Created | Field | Value | |-------|-------| | **Release Plan** | [View Release Plan](https://azsdk-releaseplan-dashboard-hveph5aqhhcfhtgu.westus-01.azurewebsites.net/?releaseplan=35569) | | **API Version** | `2026-01-01` ",
+      "stack": 2
+    },
+    {
+      "id": "ado:35569:4:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-25T17:32:52.477Z",
+      "observedAt": "2026-07-25T17:32:52.477Z",
+      "trackId": "plan",
+      "value": "Approved",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35569",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35569"
+      },
+      "title": "Spec approval changed",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6617067:generation.queued:sdk:.NET:Azure.ResourceManager.Relay",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-07-25T17:39:03.8274264Z",
+      "observedAt": "2026-07-25T17:46:45.9340279Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Relay",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6617067",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6617067"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:35569:5:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-25T17:39:08.953Z",
+      "observedAt": "2026-07-25T17:39:08.953Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Relay",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35569",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35569"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6617068:generation.queued:sdk:Java:azure-resourcemanager-relay",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-07-25T17:39:12.7314353Z",
+      "observedAt": "2026-07-25T17:58:54.16361Z",
+      "trackId": "sdk:Java:azure-resourcemanager-relay",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6617068",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6617068"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:35569:6:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-25T17:39:16.38Z",
+      "observedAt": "2026-07-25T17:39:16.38Z",
+      "trackId": "sdk:Java:azure-resourcemanager-relay",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35569",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35569"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6617067:generation.started:sdk:.NET:Azure.ResourceManager.Relay",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-07-25T17:39:17.6279589Z",
+      "observedAt": "2026-07-25T17:46:45.9340279Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Relay",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6617067",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6617067"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6617069:generation.queued:sdk:JavaScript:@azure/arm-relay",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-07-25T17:39:20.1857566Z",
+      "observedAt": "2026-07-25T17:46:58.3191791Z",
+      "trackId": "sdk:JavaScript:@azure/arm-relay",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6617069",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6617069"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:35569:7:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-25T17:39:23.447Z",
+      "observedAt": "2026-07-25T17:39:23.447Z",
+      "trackId": "sdk:JavaScript:@azure/arm-relay",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35569",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35569"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6617070:generation.queued:sdk:Python:azure-mgmt-relay",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-07-25T17:39:27.1446659Z",
+      "observedAt": "2026-07-25T17:46:50.8031651Z",
+      "trackId": "sdk:Python:azure-mgmt-relay",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6617070",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6617070"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:35569:8:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-25T17:39:29.377Z",
+      "observedAt": "2026-07-25T17:39:29.377Z",
+      "trackId": "sdk:Python:azure-mgmt-relay",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35569",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35569"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6617068:generation.started:sdk:Java:azure-resourcemanager-relay",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-07-25T17:39:29.7818427Z",
+      "observedAt": "2026-07-25T17:58:54.16361Z",
+      "trackId": "sdk:Java:azure-resourcemanager-relay",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6617068",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6617068"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6617069:generation.started:sdk:JavaScript:@azure/arm-relay",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-07-25T17:39:33.5875084Z",
+      "observedAt": "2026-07-25T17:46:58.3191791Z",
+      "trackId": "sdk:JavaScript:@azure/arm-relay",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6617069",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6617069"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6617071:generation.queued:sdk:Go:sdk/resourcemanager/relay/armrelay",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-07-25T17:39:33.6967337Z",
+      "observedAt": "2026-07-25T17:46:13.3553358Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/relay/armrelay",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6617071",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6617071"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:35569:9:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-25T17:39:36.347Z",
+      "observedAt": "2026-07-25T17:39:36.347Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/relay/armrelay",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35569",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35569"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6617070:generation.started:sdk:Python:azure-mgmt-relay",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-07-25T17:39:42.1185804Z",
+      "observedAt": "2026-07-25T17:46:50.8031651Z",
+      "trackId": "sdk:Python:azure-mgmt-relay",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6617070",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6617070"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6617071:generation.started:sdk:Go:sdk/resourcemanager/relay/armrelay",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-07-25T17:39:43.3786893Z",
+      "observedAt": "2026-07-25T17:46:13.3553358Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/relay/armrelay",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6617071",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6617071"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27255:commit:84167a87c3d7:sdk:Go:sdk/resourcemanager/relay/armrelay",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-25T17:45:07Z",
+      "observedAt": "2026-07-25T17:45:07Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/relay/armrelay",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27255",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/84167a87c3d7d621fce3774167388c084b32ac81"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27255:pr.created:sdk:Go:sdk/resourcemanager/relay/armrelay",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-25T17:45:10Z",
+      "observedAt": "2026-07-25T17:45:10Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/relay/armrelay",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27255",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27255"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:35569:10:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-25T17:45:19Z",
+      "observedAt": "2026-07-25T17:45:19Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/relay/armrelay",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35569",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35569"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35569:10:Custom.SDKPullRequestForGo",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-25T17:45:19Z",
+      "observedAt": "2026-07-25T17:45:19Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/relay/armrelay",
+      "value": "https://github.com/Azure/azure-sdk-for-go/pull/27255",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35569",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35569"
+      },
+      "title": "SDK PR linked",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27255:comment:5079611660:sdk:Go:sdk/resourcemanager/relay/armrelay",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-25T17:45:39Z",
+      "observedAt": "2026-07-25T17:45:39Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/relay/armrelay",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27255",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27255#issuecomment-5079611660"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 5 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48263:commit:f88e9fec38c7:sdk:Python:azure-mgmt-relay",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-25T17:45:43Z",
+      "observedAt": "2026-07-25T17:45:43Z",
+      "trackId": "sdk:Python:azure-mgmt-relay",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48263",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/f88e9fec38c78cb4fabcbec1e975b0c55b9f853f"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48263:pr.created:sdk:Python:azure-mgmt-relay",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-25T17:45:46Z",
+      "observedAt": "2026-07-25T17:45:46Z",
+      "trackId": "sdk:Python:azure-mgmt-relay",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48263",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48263"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27255:review:4779791866:sdk:Go:sdk/resourcemanager/relay/armrelay",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-25T17:45:48Z",
+      "observedAt": "2026-07-25T17:45:48Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/relay/armrelay",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27255",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27255#pullrequestreview-4779791866"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview > [!NOTE] > Copilot could not run the full agentic suite for this review because it was automatically requested on a bot-authored pull request. Request a review from Copilot under Reviewers to retry with the full ag",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61371:commit:7e79bedfc24a:sdk:.NET:Azure.ResourceManager.Relay",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-25T17:45:51Z",
+      "observedAt": "2026-07-25T17:45:51Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Relay",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61371",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/7e79bedfc24a74ed55407fb66ca0ce25da358d1b"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:35569:11:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-25T17:45:54.213Z",
+      "observedAt": "2026-07-25T17:45:54.213Z",
+      "trackId": "sdk:Python:azure-mgmt-relay",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35569",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35569"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35569:11:Custom.SDKPullRequestForPython",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-25T17:45:54.213Z",
+      "observedAt": "2026-07-25T17:45:54.213Z",
+      "trackId": "sdk:Python:azure-mgmt-relay",
+      "value": "https://github.com/Azure/azure-sdk-for-python/pull/48263",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35569",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35569"
+      },
+      "title": "SDK PR linked",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61371:pr.created:sdk:.NET:Azure.ResourceManager.Relay",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-25T17:45:55Z",
+      "observedAt": "2026-07-25T17:45:55Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Relay",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61371",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61371"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39403:commit:07b431e57b24:sdk:JavaScript:@azure/arm-relay",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-25T17:45:56Z",
+      "observedAt": "2026-07-25T17:45:56Z",
+      "trackId": "sdk:JavaScript:@azure/arm-relay",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39403",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/07b431e57b2441c6cb8008f0958f59530aa84e0b"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39403:pr.created:sdk:JavaScript:@azure/arm-relay",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-25T17:45:59Z",
+      "observedAt": "2026-07-25T17:45:59Z",
+      "trackId": "sdk:JavaScript:@azure/arm-relay",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39403",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39403"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:35569:12:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-25T17:46:03.03Z",
+      "observedAt": "2026-07-25T17:46:03.03Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Relay",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35569",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35569"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35569:12:Custom.SDKPullRequestForDotnet",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-25T17:46:03.03Z",
+      "observedAt": "2026-07-25T17:46:03.03Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Relay",
+      "value": "https://github.com/Azure/azure-sdk-for-net/pull/61371",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35569",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35569"
+      },
+      "title": "SDK PR linked",
+      "stack": 1
+    },
+    {
+      "id": "ado:35569:13:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-25T17:46:07.78Z",
+      "observedAt": "2026-07-25T17:46:07.78Z",
+      "trackId": "sdk:JavaScript:@azure/arm-relay",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35569",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35569"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35569:13:Custom.SDKPullRequestForJavaScript",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-25T17:46:07.78Z",
+      "observedAt": "2026-07-25T17:46:07.78Z",
+      "trackId": "sdk:JavaScript:@azure/arm-relay",
+      "value": "https://github.com/Azure/azure-sdk-for-js/pull/39403",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35569",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35569"
+      },
+      "title": "SDK PR linked",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6617071:generation.completed:sdk:Go:sdk/resourcemanager/relay/armrelay",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-07-25T17:46:13.3553358Z",
+      "observedAt": "2026-07-25T17:46:13.3553358Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/relay/armrelay",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6617071",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6617071"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48263:comment:5079618403:sdk:Python:azure-mgmt-relay",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-25T17:46:20Z",
+      "observedAt": "2026-07-25T17:46:20Z",
+      "trackId": "sdk:Python:azure-mgmt-relay",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48263",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48263#issuecomment-5079618403"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 9 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61371:comment:5079619404:sdk:.NET:Azure.ResourceManager.Relay",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-25T17:46:26Z",
+      "observedAt": "2026-07-25T17:46:26Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Relay",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61371",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61371#issuecomment-5079619404"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 10 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39403:comment:5079619819:sdk:JavaScript:@azure/arm-relay",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-25T17:46:30Z",
+      "observedAt": "2026-07-25T17:46:30Z",
+      "trackId": "sdk:JavaScript:@azure/arm-relay",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39403",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39403#issuecomment-5079619819"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 9 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6617067:generation.completed:sdk:.NET:Azure.ResourceManager.Relay",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-07-25T17:46:45.9340279Z",
+      "observedAt": "2026-07-25T17:46:45.9340279Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Relay",
+      "title": "Pipeline completed with issues",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6617067",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6617067"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6617070:generation.completed:sdk:Python:azure-mgmt-relay",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-07-25T17:46:50.8031651Z",
+      "observedAt": "2026-07-25T17:46:50.8031651Z",
+      "trackId": "sdk:Python:azure-mgmt-relay",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6617070",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6617070"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48263:review:4779795501:sdk:Python:azure-mgmt-relay",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-25T17:46:57Z",
+      "observedAt": "2026-07-25T17:46:57Z",
+      "trackId": "sdk:Python:azure-mgmt-relay",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48263",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48263#pullrequestreview-4779795501"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview > [!NOTE] > Copilot could not run the full agentic suite for this review because it was automatically requested on a bot-authored pull request. Request a review from Copilot under Reviewers to retry with the full ag",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48263:comment:3650676559:sdk:Python:azure-mgmt-relay",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-25T17:46:57Z",
+      "observedAt": "2026-07-25T17:46:57Z",
+      "trackId": "sdk:Python:azure-mgmt-relay",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48263",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48263#discussion_r3650676559"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The public API diff shows several `azure.mgmt.relay.types.*` TypedDicts were removed (e.g., `AccessKeys`, `CheckNameAvailabilityResult`, `ErrorAdditionalInfo`, `ErrorDetail`, `ErrorResponse`, `Operation`, `OperationDisplay`, `PrivateLinkRes",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:6617069:generation.completed:sdk:JavaScript:@azure/arm-relay",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-07-25T17:46:58.3191791Z",
+      "observedAt": "2026-07-25T17:46:58.3191791Z",
+      "trackId": "sdk:JavaScript:@azure/arm-relay",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6617069",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6617069"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61371:comment:3650676999:sdk:.NET:Azure.ResourceManager.Relay",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-25T17:47:06Z",
+      "observedAt": "2026-07-25T17:47:06Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Relay",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61371",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61371#discussion_r3650676999"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This changes the signature of an existing public model factory method by inserting `minimumTlsVersion` before `sku`, which is a breaking change for callers using positional arguments. Prefer adding a new overload that includes `minimumTlsVe",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61371:comment:3650677020:sdk:.NET:Azure.ResourceManager.Relay",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-25T17:47:06Z",
+      "observedAt": "2026-07-25T17:47:06Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Relay",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61371",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61371#discussion_r3650677020"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Public members `_12` and `_13` violate typical .NET naming guidelines (leading underscore) and are awkward to discover/use. Since this is a newly introduced type, consider exposing better-named members (e.g., `Tls12`/`Tls13` or `V12`/`V13`)",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61371:review:4779796047:sdk:.NET:Azure.ResourceManager.Relay",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-25T17:47:07Z",
+      "observedAt": "2026-07-25T17:47:07Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Relay",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61371",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61371#pullrequestreview-4779796047"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview > [!NOTE] > Copilot could not run the full agentic suite for this review because it was automatically requested on a bot-authored pull request. Request a review from Copilot under Reviewers to retry with the full ag",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39403:review:4779799472:sdk:JavaScript:@azure/arm-relay",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-25T17:48:07Z",
+      "observedAt": "2026-07-25T17:48:07Z",
+      "trackId": "sdk:JavaScript:@azure/arm-relay",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39403",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39403#pullrequestreview-4779799472"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview > [!NOTE] > Copilot could not run the full agentic suite for this review because it was automatically requested on a bot-authored pull request. Request a review from Copilot under Reviewers to retry with the full ag",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49930:commit:a6f766924492:sdk:Java:azure-resourcemanager-relay",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-25T17:48:13Z",
+      "observedAt": "2026-07-25T17:48:13Z",
+      "trackId": "sdk:Java:azure-resourcemanager-relay",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49930",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/a6f766924492e8073663155768bbd338acfd5346"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49930:pr.created:sdk:Java:azure-resourcemanager-relay",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-25T17:48:17Z",
+      "observedAt": "2026-07-25T17:48:17Z",
+      "trackId": "sdk:Java:azure-resourcemanager-relay",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49930",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49930"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:35569:14:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-25T17:48:25.233Z",
+      "observedAt": "2026-07-25T17:48:25.233Z",
+      "trackId": "sdk:Java:azure-resourcemanager-relay",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35569",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35569"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35569:14:Custom.SDKPullRequestForJava",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-25T17:48:25.233Z",
+      "observedAt": "2026-07-25T17:48:25.233Z",
+      "trackId": "sdk:Java:azure-resourcemanager-relay",
+      "value": "https://github.com/Azure/azure-sdk-for-java/pull/49930",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35569",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35569"
+      },
+      "title": "SDK PR linked",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49930:comment:5079650378:sdk:Java:azure-resourcemanager-relay",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-25T17:49:09Z",
+      "observedAt": "2026-07-25T17:49:09Z",
+      "trackId": "sdk:Java:azure-resourcemanager-relay",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49930",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49930#issuecomment-5079650378"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 2 pipeline(s).<br> 33 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49930:review:4779806426:sdk:Java:azure-resourcemanager-relay",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-25T17:50:41Z",
+      "observedAt": "2026-07-25T17:50:41Z",
+      "trackId": "sdk:Java:azure-resourcemanager-relay",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49930",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49930#pullrequestreview-4779806426"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview > [!NOTE] > Copilot could not run the full agentic suite for this review because it was automatically requested on a bot-authored pull request. Request a review from Copilot under Reviewers to retry with the full ag",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6617068:generation.completed:sdk:Java:azure-resourcemanager-relay",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-07-25T17:58:54.16361Z",
+      "observedAt": "2026-07-25T17:58:54.16361Z",
+      "trackId": "sdk:Java:azure-resourcemanager-relay",
+      "title": "Pipeline completed with issues",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6617068",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6617068"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39403:comment:5079729500:sdk:JavaScript:@azure/arm-relay",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-25T18:05:31Z",
+      "observedAt": "2026-07-25T18:05:31Z",
+      "trackId": "sdk:JavaScript:@azure/arm-relay",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39403",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39403#issuecomment-5079729500"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Next Steps to Merge Only failed checks and required actions are listed below. - ❌ UnitTest (all environments): stale recordings for `@azure/arm-relay` — requests with `api-version=2026-01-01` have no matching recorded responses (`Recorde",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61371:review:4779874193:sdk:.NET:Azure.ResourceManager.Relay",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-25T18:21:52Z",
+      "observedAt": "2026-07-25T18:21:52Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Relay",
+      "title": "Changes requested",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61371",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61371#pullrequestreview-4779874193"
+      },
+      "confidence": "authoritative",
+      "excerpt": "### Management SDK Review Summary - **Scope:** `Azure.ResourceManager.Relay` (1 package) - **Versioning:** ❌ Fail — CHANGELOG.md not updated for stable 1.3.0 release - **API surface:** ❌ Fail — `TlsVersion` member names violate naming rules",
+      "reviewState": "changes_requested",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61371:comment:3650742784:sdk:.NET:Azure.ResourceManager.Relay",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-25T18:21:52Z",
+      "observedAt": "2026-07-25T18:21:52Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Relay",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61371",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61371#discussion_r3650742784"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[SUFFIX/ACRONYM — Blocking]** The member names `_12` and `_13` begin with an underscore, which violates C# naming conventions and management SDK naming rules. Per the Azure SDK guidelines, numeric TLS version members must follow the `Tls<",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27255:comment:5085730252:sdk:Go:sdk/resourcemanager/relay/armrelay",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-26T22:37:58Z",
+      "observedAt": "2026-07-26T22:37:58Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/relay/armrelay",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27255",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27255#issuecomment-5085730252"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## PR is ready to merge",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49930:commit:796265a5b3f9:sdk:Java:azure-resourcemanager-relay",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-27T01:51:43Z",
+      "observedAt": "2026-07-27T01:51:43Z",
+      "trackId": "sdk:Java:azure-resourcemanager-relay",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49930",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/796265a5b3f9b3be859e8ade1a0b2bc8e7eca62e"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27255:review:4783162443:sdk:Go:sdk/resourcemanager/relay/armrelay",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-27T01:58:39Z",
+      "observedAt": "2026-07-27T01:58:39Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/relay/armrelay",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "tadelesh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27255",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27255#pullrequestreview-4783162443"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49930:review:4783226143:sdk:Java:azure-resourcemanager-relay",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-27T02:22:29Z",
+      "observedAt": "2026-07-27T02:22:29Z",
+      "trackId": "sdk:Java:azure-resourcemanager-relay",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49930",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49930#pullrequestreview-4783226143"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@XiaofeiCao for review",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49930:review:4783231030:sdk:Java:azure-resourcemanager-relay",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-27T02:24:25Z",
+      "observedAt": "2026-07-27T02:24:25Z",
+      "trackId": "sdk:Java:azure-resourcemanager-relay",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "XiaofeiCao"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49930",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49930#pullrequestreview-4783231030"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48263:review:4783425618:sdk:Python:azure-mgmt-relay",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-27T03:34:04Z",
+      "observedAt": "2026-07-27T03:34:04Z",
+      "trackId": "sdk:Python:azure-mgmt-relay",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48263",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48263#pullrequestreview-4783425618"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48263:commit:25a11c744397:sdk:Python:azure-mgmt-relay",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-27T03:49:39Z",
+      "observedAt": "2026-07-27T03:49:39Z",
+      "trackId": "sdk:Python:azure-mgmt-relay",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48263",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/25a11c7443976097295723c51df74017741c8a3f"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48263:comment:5087069465:sdk:Python:azure-mgmt-relay",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-27T03:50:09Z",
+      "observedAt": "2026-07-27T03:50:09Z",
+      "trackId": "sdk:Python:azure-mgmt-relay",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48263",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48263#issuecomment-5087069465"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi, we have approved the PR and we will hold the PR merge and release until you explicitly ping us to merge then release.",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48263:comment:3654293538:sdk:Python:azure-mgmt-relay",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-27T03:54:52Z",
+      "observedAt": "2026-07-27T03:54:52Z",
+      "trackId": "sdk:Python:azure-mgmt-relay",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48263",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48263#discussion_r3654293538"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The release notes introduce `TlsVersion` but omit the public property that uses it. This release adds `RelayNamespaceProperties.minimum_tls_version` (also visible in `api.md`), so users cannot tell from the changelog how to configure the ne",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48263:review:4783484538:sdk:Python:azure-mgmt-relay",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-27T03:54:53Z",
+      "observedAt": "2026-07-27T03:54:53Z",
+      "trackId": "sdk:Python:azure-mgmt-relay",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48263",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48263#pullrequestreview-4783484538"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Copilot reviewed 67 out of 67 changed files in this pull request and generated 4 comments. <details> <summary>Comments suppressed due to low confidence (1)</summary> **sdk/relay/azure-mgmt-relay/CHANGELOG.md:65** * ",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48263:comment:3654293560:sdk:Python:azure-mgmt-relay",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-27T03:54:53Z",
+      "observedAt": "2026-07-27T03:54:53Z",
+      "trackId": "sdk:Python:azure-mgmt-relay",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48263",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48263#discussion_r3654293560"
+      },
+      "confidence": "authoritative",
+      "excerpt": "A subscription can legitimately contain zero Relay namespaces. The resource-group preparer creates only an empty resource group, so this non-empty assertion makes the live test fail in a clean subscription even when `namespaces.list()` beha",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48263:comment:3654293572:sdk:Python:azure-mgmt-relay",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-27T03:54:53Z",
+      "observedAt": "2026-07-27T03:54:53Z",
+      "trackId": "sdk:Python:azure-mgmt-relay",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48263",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48263#discussion_r3654293572"
+      },
+      "confidence": "authoritative",
+      "excerpt": "A subscription can legitimately contain zero Relay namespaces. The resource-group preparer creates only an empty resource group, so this non-empty assertion makes the async live test fail in a clean subscription even when `namespaces.list()",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48263:comment:3654293580:sdk:Python:azure-mgmt-relay",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-27T03:54:53Z",
+      "observedAt": "2026-07-27T03:54:53Z",
+      "trackId": "sdk:Python:azure-mgmt-relay",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48263",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48263#discussion_r3654293580"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Use “avoid recording” for grammatical correctness.",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48263:review:4783522673:sdk:Python:azure-mgmt-relay",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-27T04:07:23Z",
+      "observedAt": "2026-07-27T04:07:23Z",
+      "trackId": "sdk:Python:azure-mgmt-relay",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48263",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48263#pullrequestreview-4783522673"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @mashrafsiddiquee, we have approved the PR and we will hold the PR merge and release until you explicitly ping us to merge then release.",
+      "reviewState": "approved",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48263:review:4783948257:sdk:Python:azure-mgmt-relay",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-27T05:47:11Z",
+      "observedAt": "2026-07-27T05:47:11Z",
+      "trackId": "sdk:Python:azure-mgmt-relay",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48263",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48263#pullrequestreview-4783948257"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39403:review:4785751992:sdk:JavaScript:@azure/arm-relay",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-27T09:55:39Z",
+      "observedAt": "2026-07-27T09:55:39Z",
+      "trackId": "sdk:JavaScript:@azure/arm-relay",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39403",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39403#pullrequestreview-4785751992"
+      },
+      "confidence": "authoritative",
+      "excerpt": "1 design concern found in this PR for `@azure/arm-relay` 4.0.0. - **Type safety (1):** `wCFRelaysOperations.get` returns `Promise<WcfRelay | void>`, which violates the guideline that `void` is only appropriate for delete/upgrade/reset opera",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39403:comment:3656094215:sdk:JavaScript:@azure/arm-relay",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-27T09:55:39Z",
+      "observedAt": "2026-07-27T09:55:39Z",
+      "trackId": "sdk:JavaScript:@azure/arm-relay",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39403",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39403#discussion_r3656094215"
+      },
+      "confidence": "authoritative",
+      "excerpt": "🔴 **Design Concern** — `wCFRelaysOperations.get` ```ts get: (...) => Promise<WcfRelay | void>; ``` The `get` operation returns `Promise<WcfRelay | void>`. Per SDK design guidelines, `void` is only appropriate for operations like delete/upg",
+      "stack": 1
+    },
+    {
+      "id": "ado:35569:15:Custom.ReleaseStatusForJavaScript",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-07-29T06:59:19.257Z",
+      "observedAt": "2026-07-29T06:59:19.257Z",
+      "trackId": "sdk:JavaScript:@azure/arm-relay",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35569",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35569"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35569:15:Custom.ReleasedVersionForJavaScript",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-07-29T06:59:19.257Z",
+      "observedAt": "2026-07-29T06:59:19.257Z",
+      "trackId": "sdk:JavaScript:@azure/arm-relay",
+      "value": "4.0.0",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35569",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35569"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35569:16:Custom.ReleaseStatusForPython",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-07-29T09:33:19.183Z",
+      "observedAt": "2026-07-29T09:33:19.183Z",
+      "trackId": "sdk:Python:azure-mgmt-relay",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35569",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35569"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35569:16:Custom.ReleasedVersionForPython",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-07-29T09:33:19.183Z",
+      "observedAt": "2026-07-29T09:33:19.183Z",
+      "trackId": "sdk:Python:azure-mgmt-relay",
+      "value": "2.0.0",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35569",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35569"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39403:commit:a0d68bc7e66c:sdk:JavaScript:@azure/arm-relay",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-07T03:06:48Z",
+      "observedAt": "2026-08-07T03:06:48Z",
+      "trackId": "sdk:JavaScript:@azure/arm-relay",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39403",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/a0d68bc7e66c40baf7fa23887c31580a7945ce1e"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39403:review:4879640292:sdk:JavaScript:@azure/arm-relay",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-07T03:16:26Z",
+      "observedAt": "2026-08-07T03:16:26Z",
+      "trackId": "sdk:JavaScript:@azure/arm-relay",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39403",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39403#pullrequestreview-4879640292"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Copilot reviewed 160 out of 163 changed files in this pull request and generated no new comments. <details> <summary>Suppressed comments (2)</summary> **sdk/relay/arm-relay/test/relay_examples.spec.ts:34** * This di",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39403:commit:f278f3ff02b2:sdk:JavaScript:@azure/arm-relay",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-07T03:21:46Z",
+      "observedAt": "2026-08-07T03:21:46Z",
+      "trackId": "sdk:JavaScript:@azure/arm-relay",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39403",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/f278f3ff02b29b2c69c3033cb721e88913a83a9e"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39403:comment:3733235252:sdk:JavaScript:@azure/arm-relay",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-07T03:27:40Z",
+      "observedAt": "2026-08-07T03:27:40Z",
+      "trackId": "sdk:JavaScript:@azure/arm-relay",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39403",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39403#discussion_r3733235252"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This skips the package's only real test suite (the only other test file is `snippets.spec.ts`, which is documentation source), so all 13 Relay operation tests stop running in CI. Please keep the suite enabled and address any failures caused",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39403:comment:3733235271:sdk:JavaScript:@azure/arm-relay",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-07T03:27:40Z",
+      "observedAt": "2026-08-07T03:27:40Z",
+      "trackId": "sdk:JavaScript:@azure/arm-relay",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39403",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39403#discussion_r3733235271"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This changes a stable public `get` signature from `WcfRelay | undefined` to `WcfRelay | void`. `void` is not assignable to `undefined` under strict typing, so this breaks existing consumers, and resource get operations should return the res",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39403:review:4879687694:sdk:JavaScript:@azure/arm-relay",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-07T03:27:41Z",
+      "observedAt": "2026-08-07T03:27:41Z",
+      "trackId": "sdk:JavaScript:@azure/arm-relay",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39403",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39403#pullrequestreview-4879687694"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Copilot reviewed 158 out of 161 changed files in this pull request and generated 2 comments. <details> <summary>Suppressed comments (2)</summary> **sdk/relay/arm-relay/src/models/models.ts:943** * The new `minimumTl",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39403:commit:fe25212ff998:sdk:JavaScript:@azure/arm-relay",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-07T03:33:16Z",
+      "observedAt": "2026-08-07T03:33:16Z",
+      "trackId": "sdk:JavaScript:@azure/arm-relay",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39403",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/fe25212ff9989ea8240f6fb0cc352a28b1dadfac"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39403:review:4879718750:sdk:JavaScript:@azure/arm-relay",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-07T03:35:28Z",
+      "observedAt": "2026-08-07T03:35:28Z",
+      "trackId": "sdk:JavaScript:@azure/arm-relay",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39403",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39403#pullrequestreview-4879718750"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Copilot reviewed 197 out of 201 changed files in this pull request and generated no new comments. <details> <summary>Suppressed comments (9)</summary> **sdk/relay/arm-relay/test/relay_examples.spec.ts:1** * The enti",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39403:review:4879726274:sdk:JavaScript:@azure/arm-relay",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-07T03:37:52Z",
+      "observedAt": "2026-08-07T03:37:52Z",
+      "trackId": "sdk:JavaScript:@azure/arm-relay",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39403",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39403#pullrequestreview-4879726274"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Copilot reviewed 197 out of 201 changed files in this pull request and generated no new comments. <details> <summary>Suppressed comments (10)</summary> **sdk/relay/arm-relay/src/classic/clusters/index.ts:1** * `$del",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39403:comment:5212229949:sdk:JavaScript:@azure/arm-relay",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-07T04:03:06Z",
+      "observedAt": "2026-08-07T04:03:06Z",
+      "trackId": "sdk:JavaScript:@azure/arm-relay",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39403",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39403#issuecomment-5212229949"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Next Steps to Merge ✅ All CI checks have passed — this PR is ready for review! The SDK engineer will review this PR shortly. Once it's approved, you can go ahead and merge it. To make things easier, feel free to [enable auto-merge](https",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39403:review:4880302003:sdk:JavaScript:@azure/arm-relay",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-07T05:52:47Z",
+      "observedAt": "2026-08-07T05:52:47Z",
+      "trackId": "sdk:JavaScript:@azure/arm-relay",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39403",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39403#pullrequestreview-4880302003"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Found 2 findings (1 tool issue, 1 API design concern) for `@azure/arm-relay` PR #39403 (v4.0.0 → v5.0.0, adding `ClustersOperations` and API versions `2026-01-01`/`2026-07-01-preview`). Version alignment across `package.json`, `CHANGELOG.md",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39403:comment:3733728120:sdk:JavaScript:@azure/arm-relay",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-07T05:52:48Z",
+      "observedAt": "2026-08-07T05:52:48Z",
+      "trackId": "sdk:JavaScript:@azure/arm-relay",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39403",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39403#discussion_r3733728120"
+      },
+      "confidence": "authoritative",
+      "excerpt": "🔴 **Tool Issue** — `wCFRelaysOperations.get`. The return type changed from `Promise<WcfRelay | undefined>` to `Promise<WcfRelay | void>`. Using `void` as (part of) a return type for a `get` operation is discouraged by the type-safety guide",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39403:comment:3733728122:sdk:JavaScript:@azure/arm-relay",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-07T05:52:48Z",
+      "observedAt": "2026-08-07T05:52:48Z",
+      "trackId": "sdk:JavaScript:@azure/arm-relay",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39403",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39403#discussion_r3733728122"
+      },
+      "confidence": "authoritative",
+      "excerpt": "🔴 **Design Concern** — `KnownVersions.V20260701Preview = \"2026-07-01-preview\"`. This PR adds a **preview** API version (`2026-07-01-preview`) to `KnownVersions` while the package version is being released as a **stable** `5.0.0` (see `pack",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39403:commit:9809c4cf2931:sdk:JavaScript:@azure/arm-relay",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-07T06:33:14Z",
+      "observedAt": "2026-08-07T06:33:14Z",
+      "trackId": "sdk:JavaScript:@azure/arm-relay",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39403",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/9809c4cf2931d9614daa19cae8a92fb640988d67"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39403:review:4880511840:sdk:JavaScript:@azure/arm-relay",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-07T06:35:54Z",
+      "observedAt": "2026-08-07T06:35:54Z",
+      "trackId": "sdk:JavaScript:@azure/arm-relay",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39403",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39403#pullrequestreview-4880511840"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Copilot reviewed 163 out of 167 changed files in this pull request and generated no new comments. <details> <summary>Suppressed comments (5)</summary> **sdk/relay/arm-relay/test/relay_examples.spec.ts:1** * Skipping",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39403:review:4880556719:sdk:JavaScript:@azure/arm-relay",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-07T06:43:57Z",
+      "observedAt": "2026-08-07T06:43:57Z",
+      "trackId": "sdk:JavaScript:@azure/arm-relay",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39403",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39403#pullrequestreview-4880556719"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39403:comment:3733937871:sdk:JavaScript:@azure/arm-relay",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-07T06:43:57Z",
+      "observedAt": "2026-08-07T06:43:57Z",
+      "trackId": "sdk:JavaScript:@azure/arm-relay",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39403",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39403#discussion_r3733937871"
+      },
+      "confidence": "authoritative",
+      "excerpt": "🔴 **Design Concern** — `wCFRelaysOperations.get` return type changed from `Promise<WcfRelay | undefined>` to `Promise<WcfRelay | void>`. Per API guidelines, `void` should not be used as the return type for `get` operations (only appropriat",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39403:comment:5213604189:sdk:JavaScript:@azure/arm-relay",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-07T06:56:29Z",
+      "observedAt": "2026-08-07T06:56:29Z",
+      "trackId": "sdk:JavaScript:@azure/arm-relay",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39403",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39403#issuecomment-5213604189"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Next Steps to Merge ✅ All CI checks have passed — this PR is ready for review! The SDK engineer will review this PR shortly. Once it's approved, you can go ahead and merge it. To make things easier, feel free to [enable auto-merge](https",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39403:commit:32a2088c2084:sdk:JavaScript:@azure/arm-relay",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-07T07:03:20Z",
+      "observedAt": "2026-08-07T07:03:20Z",
+      "trackId": "sdk:JavaScript:@azure/arm-relay",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39403",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/32a2088c208443ed8b1beeea2885e0bff4cf7812"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39403:comment:3734058209:sdk:JavaScript:@azure/arm-relay",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-07T07:09:37Z",
+      "observedAt": "2026-08-07T07:09:37Z",
+      "trackId": "sdk:JavaScript:@azure/arm-relay",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39403",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39403#discussion_r3734058209"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Changing this stable public return type from `WcfRelay | undefined` to `WcfRelay | void` is source-breaking: `void` is not assignable to `undefined`, although the bare return still produces `undefined` at runtime. This is being shipped as 4",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39403:review:4880702771:sdk:JavaScript:@azure/arm-relay",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-07T07:09:38Z",
+      "observedAt": "2026-08-07T07:09:38Z",
+      "trackId": "sdk:JavaScript:@azure/arm-relay",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39403",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39403#pullrequestreview-4880702771"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> [!WARNING] > - Copilot's review of this pull request may be incomplete because some of the changed files are excluded by your Copilot content exclusion settings. See [Excluding content from Copilot](https://docs.github.com/en/copilot/how-",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39403:comment:5213922609:sdk:JavaScript:@azure/arm-relay",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-07T07:31:01Z",
+      "observedAt": "2026-08-07T07:31:01Z",
+      "trackId": "sdk:JavaScript:@azure/arm-relay",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39403",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39403#issuecomment-5213922609"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Next Steps to Merge ✅ All CI checks have passed — this PR is ready for review! The SDK engineer will review this PR shortly. Once it's approved, you can go ahead and merge it. To make things easier, feel free to [enable auto-merge](https",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39403:comment:5236892756:sdk:JavaScript:@azure/arm-relay",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-10T06:57:20Z",
+      "observedAt": "2026-08-10T06:57:20Z",
+      "trackId": "sdk:JavaScript:@azure/arm-relay",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39403",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39403#issuecomment-5236892756"
+      },
+      "confidence": "authoritative",
+      "excerpt": "LGTM cc @JialinHuang803",
+      "stack": 0
+    }
+  ],
+  "quality": {
+    "warnings": [
+      "5 historical linked PR(s) closed without merge"
+    ],
+    "unavailablePullRequests": 0,
+    "unavailablePipelineRuns": 0
+  },
+  "boundaryFacts": {
+    "id": "35569",
+    "state": "in-progress",
+    "specPrs": [
+      {
+        "id": "github:Azure/azure-rest-api-specs#44751",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#44751",
+        "createdAt": "2026-07-17T02:37:24Z",
+        "mergedAt": "2026-07-25T17:29:13Z",
+        "closedAt": "2026-07-25T17:29:13Z",
+        "available": true
+      }
+    ],
+    "artifacts": [
+      {
+        "language": ".NET",
+        "package": "Azure.ResourceManager.Relay",
+        "trackId": "sdk:.NET:Azure.ResourceManager.Relay",
+        "prId": "github:Azure/azure-sdk-for-net#61371",
+        "prCreatedAt": "2026-07-25T17:45:55Z",
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-net#61371",
+            "createdAt": "2026-07-25T17:45:55Z",
+            "mergedAt": null,
+            "closedAt": null,
+            "state": "open"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6617067",
+        "generationStartAt": "2026-07-25T17:39:17.6279589Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "JavaScript",
+        "package": "@azure/arm-relay",
+        "trackId": "sdk:JavaScript:@azure/arm-relay",
+        "prId": "github:Azure/azure-sdk-for-js#39403",
+        "prCreatedAt": "2026-07-25T17:45:59Z",
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-js#39403",
+            "createdAt": "2026-07-25T17:45:59Z",
+            "mergedAt": null,
+            "closedAt": null,
+            "state": "open"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6617069",
+        "generationStartAt": "2026-07-25T17:39:33.5875084Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-07-29T06:59:19.257Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "4.0.0",
+        "releaseBoundaryAt": "2026-07-29T06:59:19.257Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Python",
+        "package": "azure-mgmt-relay",
+        "trackId": "sdk:Python:azure-mgmt-relay",
+        "prId": "github:Azure/azure-sdk-for-python#48263",
+        "prCreatedAt": "2026-07-25T17:45:46Z",
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-python#48263",
+            "createdAt": "2026-07-25T17:45:46Z",
+            "mergedAt": null,
+            "closedAt": null,
+            "state": "open"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6617070",
+        "generationStartAt": "2026-07-25T17:39:42.1185804Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-07-29T09:33:19.183Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "2.0.0",
+        "releaseBoundaryAt": "2026-07-29T09:33:19.183Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Java",
+        "package": "azure-resourcemanager-relay",
+        "trackId": "sdk:Java:azure-resourcemanager-relay",
+        "prId": "github:Azure/azure-sdk-for-java#49930",
+        "prCreatedAt": "2026-07-25T17:48:17Z",
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-java#49930",
+            "createdAt": "2026-07-25T17:48:17Z",
+            "mergedAt": null,
+            "closedAt": null,
+            "state": "open"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6617068",
+        "generationStartAt": "2026-07-25T17:39:29.7818427Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Go",
+        "package": "sdk/resourcemanager/relay/armrelay",
+        "trackId": "sdk:Go:sdk/resourcemanager/relay/armrelay",
+        "prId": "github:Azure/azure-sdk-for-go#27255",
+        "prCreatedAt": "2026-07-25T17:45:10Z",
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-go#27255",
+            "createdAt": "2026-07-25T17:45:10Z",
+            "mergedAt": null,
+            "closedAt": null,
+            "state": "open"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6617071",
+        "generationStartAt": "2026-07-25T17:39:43.3786893Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      }
+    ],
+    "cohortPlan": {
+      "id": "35569",
+      "releasePlanId": "35569",
+      "title": "GA release plan for Relay",
+      "service": "Relay",
+      "state": "in-progress"
+    },
+    "quality": {
+      "warnings": [
+        "5 historical linked PR(s) closed without merge"
+      ],
+      "unavailablePullRequests": 0,
+      "unavailablePipelineRuns": 0
+    }
+  },
+  "summary": {
+    "durationHours": 463.1,
+    "pullRequestCount": 6,
+    "humanReviewCount": 7,
+    "humanCommentCount": 4
+  }
+}

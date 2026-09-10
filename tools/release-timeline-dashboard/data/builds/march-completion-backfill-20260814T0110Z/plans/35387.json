@@ -1,0 +1,1021 @@
+{
+  "schemaVersion": 2,
+  "id": "35387",
+  "correlation": {
+    "policyVersion": 1,
+    "preflight": "passed"
+  },
+  "releasePlanId": "35387",
+  "title": "GA release plan for Network",
+  "service": "Network",
+  "product": "Release",
+  "path": "specification/network/resource-manager/Microsoft.Network/Network",
+  "state": "in-progress",
+  "plane": "management",
+  "releaseType": "GA",
+  "intendedMonth": "September 2026",
+  "createdAt": "2026-07-18T02:48:36.29Z",
+  "completedAt": null,
+  "sourceUrl": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35387",
+  "range": {
+    "start": "2026-07-17T05:51:22.000Z",
+    "end": "2026-08-14T00:37:23.589Z"
+  },
+  "intendedArtifacts": [
+    {
+      "prId": null,
+      "language": ".NET",
+      "package": null,
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": null,
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": null,
+      "language": "JavaScript",
+      "package": null,
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": null,
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": null,
+      "language": "Python",
+      "package": null,
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": null,
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": null,
+      "language": "Java",
+      "package": null,
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": null,
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": null,
+      "language": "Go",
+      "package": null,
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": null,
+      "releasePipelineUrl": null
+    }
+  ],
+  "links": [
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#44815",
+      "role": "spec-pr-history",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/44815",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#44755",
+      "role": "spec-pr",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/44755",
+      "releasePlanIds": []
+    }
+  ],
+  "tracks": [
+    {
+      "id": "plan",
+      "kind": "plan",
+      "label": "Release Plan",
+      "detail": "GA"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#44815",
+      "kind": "spec",
+      "label": "Spec PR 1",
+      "detail": "azure-rest-api-specs #44815",
+      "artifactId": "github:Azure/azure-rest-api-specs#44815",
+      "state": "merged"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#44755",
+      "kind": "spec",
+      "label": "Spec PR 2",
+      "detail": "azure-rest-api-specs #44755",
+      "artifactId": "github:Azure/azure-rest-api-specs#44755",
+      "state": "closed"
+    },
+    {
+      "id": "sdk:.NET:.NET",
+      "kind": "sdk",
+      "label": ".NET",
+      "detail": "Package not recorded",
+      "artifactId": null,
+      "state": "missing"
+    },
+    {
+      "id": "sdk:JavaScript:JavaScript",
+      "kind": "sdk",
+      "label": "JavaScript",
+      "detail": "Package not recorded",
+      "artifactId": null,
+      "state": "missing"
+    },
+    {
+      "id": "sdk:Python:Python",
+      "kind": "sdk",
+      "label": "Python",
+      "detail": "Package not recorded",
+      "artifactId": null,
+      "state": "missing"
+    },
+    {
+      "id": "sdk:Java:Java",
+      "kind": "sdk",
+      "label": "Java",
+      "detail": "Package not recorded",
+      "artifactId": null,
+      "state": "missing"
+    },
+    {
+      "id": "sdk:Go:Go",
+      "kind": "sdk",
+      "label": "Go",
+      "detail": "Package not recorded",
+      "artifactId": null,
+      "state": "missing"
+    }
+  ],
+  "events": [
+    {
+      "id": "github:Azure/azure-rest-api-specs#44755:pr.created:spec:github:Azure/azure-rest-api-specs#44755",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-17T05:51:22Z",
+      "observedAt": "2026-07-17T05:51:22Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44755",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "Jordang3177"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44755",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44755"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44755:comment:4999449351:spec:github:Azure/azure-rest-api-specs#44755",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-17T05:51:55Z",
+      "observedAt": "2026-07-17T05:51:55Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44755",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44755",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44755#issuecomment-4999449351"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>Next steps that must be taken to merge this PR: <br/><ul><li>❌ This PR is in purview of the ARM review (label: <code>ARMReview</code>). This PR must get <code>ARMSignedOff</code> label from an ARM reviewer.<br/>T",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44755:comment:4999449534:spec:github:Azure/azure-rest-api-specs#44755",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-17T05:51:57Z",
+      "observedAt": "2026-07-17T05:51:57Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44755",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44755",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44755#issuecomment-4999449534"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 9 pipeline(s).<br> 4 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44755:comment:4999536735:spec:github:Azure/azure-rest-api-specs#44755",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-17T06:05:17Z",
+      "observedAt": "2026-07-17T06:05:17Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44755",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44755",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44755#issuecomment-4999536735"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews | Language | API Review for Package | |----------|---------| | TypeSpec | [Microsoft.Network](https://spa.apiview.dev/review/61f151c72",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44815:commit:92b2591d016f:spec:github:Azure/azure-rest-api-specs#44815",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-17T16:39:41Z",
+      "observedAt": "2026-07-17T16:39:41Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44815",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "JordanMGraves"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44815",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/92b2591d016ff633fbda2d2b3b94e31b933b1309"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44755:commit:92b2591d016f:spec:github:Azure/azure-rest-api-specs#44755",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-17T16:39:41Z",
+      "observedAt": "2026-07-17T16:39:41Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44755",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "JordanMGraves"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44755",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/92b2591d016ff633fbda2d2b3b94e31b933b1309"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44815:commit:a7c18b2742dc:spec:github:Azure/azure-rest-api-specs#44815",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-17T17:01:20Z",
+      "observedAt": "2026-07-17T17:01:20Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44815",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "JordanMGraves"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44815",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/a7c18b2742dcfbad77a650c268ff4ead0432e91a"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44755:commit:a7c18b2742dc:spec:github:Azure/azure-rest-api-specs#44755",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-17T17:01:20Z",
+      "observedAt": "2026-07-17T17:01:20Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44755",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "JordanMGraves"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44755",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/a7c18b2742dcfbad77a650c268ff4ead0432e91a"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44815:commit:0f01195282b3:spec:github:Azure/azure-rest-api-specs#44815",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-17T17:11:11Z",
+      "observedAt": "2026-07-17T17:11:11Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44815",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "JordanMGraves"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44815",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/0f01195282b38a01baabda14ec4dfd16c6241037"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44755:commit:0f01195282b3:spec:github:Azure/azure-rest-api-specs#44755",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-17T17:11:11Z",
+      "observedAt": "2026-07-17T17:11:11Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44755",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "JordanMGraves"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44755",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/0f01195282b38a01baabda14ec4dfd16c6241037"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:35387:created",
+      "type": "plan.created",
+      "phase": "plan",
+      "occurredAt": "2026-07-18T02:48:36.29Z",
+      "observedAt": "2026-07-18T02:48:36.29Z",
+      "trackId": "plan",
+      "title": "Release Plan created",
+      "confidence": "authoritative",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35387",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35387"
+      },
+      "stack": 0
+    },
+    {
+      "id": "ado:35387:1:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-07-18T02:48:36.29Z",
+      "observedAt": "2026-07-18T02:48:36.29Z",
+      "trackId": "plan",
+      "value": "New",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35387",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35387"
+      },
+      "title": "Plan state changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35387:1:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-18T02:48:36.29Z",
+      "observedAt": "2026-07-18T02:48:36.29Z",
+      "trackId": "plan",
+      "value": "Not Available",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35387",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35387"
+      },
+      "title": "Spec approval changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:35387:1:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-18T02:48:36.29Z",
+      "observedAt": "2026-07-18T02:48:36.29Z",
+      "trackId": "sdk:.NET:.NET",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35387",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35387"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35387:1:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-18T02:48:36.29Z",
+      "observedAt": "2026-07-18T02:48:36.29Z",
+      "trackId": "sdk:JavaScript:JavaScript",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35387",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35387"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35387:1:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-18T02:48:36.29Z",
+      "observedAt": "2026-07-18T02:48:36.29Z",
+      "trackId": "sdk:Python:Python",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35387",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35387"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35387:1:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-18T02:48:36.29Z",
+      "observedAt": "2026-07-18T02:48:36.29Z",
+      "trackId": "sdk:Java:Java",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35387",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35387"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35387:1:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-18T02:48:36.29Z",
+      "observedAt": "2026-07-18T02:48:36.29Z",
+      "trackId": "sdk:Go:Go",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35387",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35387"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35387:2:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-07-18T02:48:37.197Z",
+      "observedAt": "2026-07-18T02:48:37.197Z",
+      "trackId": "plan",
+      "value": "In Progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35387",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35387"
+      },
+      "title": "Plan state changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:35388:2:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-18T02:50:47.163Z",
+      "observedAt": "2026-07-18T02:50:47.163Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44755",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/44755",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35388",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35388"
+      },
+      "title": "Spec PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado:35387:3:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-18T02:50:47.457Z",
+      "observedAt": "2026-07-18T02:50:47.457Z",
+      "trackId": "sdk:.NET:.NET",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35387",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35387"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35387:3:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-18T02:50:47.457Z",
+      "observedAt": "2026-07-18T02:50:47.457Z",
+      "trackId": "sdk:JavaScript:JavaScript",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35387",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35387"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35387:3:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-18T02:50:47.457Z",
+      "observedAt": "2026-07-18T02:50:47.457Z",
+      "trackId": "sdk:Python:Python",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35387",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35387"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35387:3:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-18T02:50:47.457Z",
+      "observedAt": "2026-07-18T02:50:47.457Z",
+      "trackId": "sdk:Java:Java",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35387",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35387"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35387:3:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-18T02:50:47.457Z",
+      "observedAt": "2026-07-18T02:50:47.457Z",
+      "trackId": "sdk:Go:Go",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35387",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35387"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44755:review:4738985329:spec:github:Azure/azure-rest-api-specs#44755",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-20T21:06:16Z",
+      "observedAt": "2026-07-20T21:06:16Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44755",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "sandipsh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44755",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44755#pullrequestreview-4738985329"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44755:comment:3617558315:spec:github:Azure/azure-rest-api-specs#44755",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-20T21:06:16Z",
+      "observedAt": "2026-07-20T21:06:16Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44755",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "sandipsh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44755",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44755#discussion_r3617558315"
+      },
+      "confidence": "authoritative",
+      "excerpt": "the newly added migration suppressions in models.tsp still use placeholder justification (`FIXME: Update justification...`) (for example around lines 16244, 16264, 16282, 16295, 16308, 16321, 16334, 16347). Please replace these with concret",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44815:commit:cf1e240d76a4:spec:github:Azure/azure-rest-api-specs#44815",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-20T23:21:30Z",
+      "observedAt": "2026-07-20T23:21:30Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44815",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "JordanMGraves"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44815",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/cf1e240d76a4ff1ec51abb24a26af6e5b95cafca"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44755:commit:cf1e240d76a4:spec:github:Azure/azure-rest-api-specs#44755",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-20T23:21:30Z",
+      "observedAt": "2026-07-20T23:21:30Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44755",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "JordanMGraves"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44755",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/cf1e240d76a4ff1ec51abb24a26af6e5b95cafca"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44755:pr.closed:spec:github:Azure/azure-rest-api-specs#44755",
+      "type": "pr.closed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-20T23:45:04Z",
+      "observedAt": "2026-07-20T23:45:04Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44755",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44755",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44755"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44815:pr.created:spec:github:Azure/azure-rest-api-specs#44815",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-20T23:47:32Z",
+      "observedAt": "2026-07-20T23:47:32Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44815",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "Jordang3177"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44815",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44815"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44815:comment:5028467255:spec:github:Azure/azure-rest-api-specs#44815",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-20T23:48:06Z",
+      "observedAt": "2026-07-20T23:48:06Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44815",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44815",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44815#issuecomment-5028467255"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 9 pipeline(s).<br> 4 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44815:comment:5028468312:spec:github:Azure/azure-rest-api-specs#44815",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-20T23:48:13Z",
+      "observedAt": "2026-07-20T23:48:13Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44815",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44815",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44815#issuecomment-5028468312"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>✅ All automated merging requirements have been met! To get your PR merged, see <a href=\"https://aka.ms/azsdk/specreview/merge\">aka.ms/azsdk/specreview/merge</a>.<br /><br />Comment generated by <a href=\"https://g",
+      "stack": 3
+    },
+    {
+      "id": "ado:35388:3:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-20T23:49:07.103Z",
+      "observedAt": "2026-07-20T23:49:07.103Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44815",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/44815",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35388",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35388"
+      },
+      "title": "Spec PR linked",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44815:comment:5028541826:spec:github:Azure/azure-rest-api-specs#44815",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-20T23:55:50Z",
+      "observedAt": "2026-07-20T23:55:50Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44815",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44815",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44815#issuecomment-5028541826"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews | Language | API Review for Package | |----------|---------| | TypeSpec | [Microsoft.Network](https://spa.apiview.dev/review/61f151c72",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44815:commit:901946f82506:spec:github:Azure/azure-rest-api-specs#44815",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-23T16:51:36Z",
+      "observedAt": "2026-07-23T16:51:36Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44815",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "JordanMGraves"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44815",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/901946f8250603f5fe11a036225bed3e2fa7c1fc"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44815:pr.merged:spec:github:Azure/azure-rest-api-specs#44815",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-23T19:04:40Z",
+      "observedAt": "2026-07-23T19:04:40Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44815",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44815",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44815"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    }
+  ],
+  "quality": {
+    "warnings": [
+      "Multiple spec PRs are retained in link history",
+      "1 historical linked PR(s) closed without merge"
+    ],
+    "unavailablePullRequests": 0,
+    "unavailablePipelineRuns": 0
+  },
+  "boundaryFacts": {
+    "id": "35387",
+    "state": "in-progress",
+    "specPrs": [
+      {
+        "id": "github:Azure/azure-rest-api-specs#44815",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#44815",
+        "createdAt": "2026-07-20T23:47:32Z",
+        "mergedAt": "2026-07-23T19:04:40Z",
+        "closedAt": "2026-07-23T19:04:40Z",
+        "available": true
+      },
+      {
+        "id": "github:Azure/azure-rest-api-specs#44755",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#44755",
+        "createdAt": "2026-07-17T05:51:22Z",
+        "mergedAt": null,
+        "closedAt": "2026-07-20T23:45:04Z",
+        "available": true
+      }
+    ],
+    "artifacts": [
+      {
+        "language": ".NET",
+        "package": null,
+        "trackId": "sdk:.NET:.NET",
+        "prId": null,
+        "prCreatedAt": null,
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [],
+        "generationRunId": null,
+        "generationStartAt": null,
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "missing",
+          "generation": "missing",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "JavaScript",
+        "package": null,
+        "trackId": "sdk:JavaScript:JavaScript",
+        "prId": null,
+        "prCreatedAt": null,
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [],
+        "generationRunId": null,
+        "generationStartAt": null,
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "missing",
+          "generation": "missing",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Python",
+        "package": null,
+        "trackId": "sdk:Python:Python",
+        "prId": null,
+        "prCreatedAt": null,
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [],
+        "generationRunId": null,
+        "generationStartAt": null,
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "missing",
+          "generation": "missing",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Java",
+        "package": null,
+        "trackId": "sdk:Java:Java",
+        "prId": null,
+        "prCreatedAt": null,
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [],
+        "generationRunId": null,
+        "generationStartAt": null,
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "missing",
+          "generation": "missing",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Go",
+        "package": null,
+        "trackId": "sdk:Go:Go",
+        "prId": null,
+        "prCreatedAt": null,
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [],
+        "generationRunId": null,
+        "generationStartAt": null,
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "missing",
+          "generation": "missing",
+          "release": "missing"
+        }
+      }
+    ],
+    "cohortPlan": {
+      "id": "35387",
+      "releasePlanId": "35387",
+      "title": "GA release plan for Network",
+      "service": "Network",
+      "state": "in-progress"
+    },
+    "quality": {
+      "warnings": [
+        "Multiple spec PRs are retained in link history",
+        "1 historical linked PR(s) closed without merge"
+      ],
+      "unavailablePullRequests": 0,
+      "unavailablePipelineRuns": 0
+    }
+  },
+  "summary": {
+    "durationHours": 645.8,
+    "pullRequestCount": 2,
+    "humanReviewCount": 1,
+    "humanCommentCount": 1
+  }
+}

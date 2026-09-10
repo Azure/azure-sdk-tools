@@ -1,0 +1,4399 @@
+{
+  "schemaVersion": 2,
+  "id": "34851",
+  "correlation": {
+    "policyVersion": 1,
+    "preflight": "passed"
+  },
+  "releasePlanId": "2266",
+  "title": "Release Plan - 2266 - GA - Liftr-Napster",
+  "service": "Liftr-Napster",
+  "product": "Release",
+  "path": "specification/napster/Napster.CompanionAPI.Management",
+  "state": "finished",
+  "plane": "management",
+  "releaseType": "APEX GA",
+  "intendedMonth": "June 2026",
+  "createdAt": "2026-06-04T08:08:22.547Z",
+  "completedAt": "2026-06-30T09:27:28.54Z",
+  "sourceUrl": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34851",
+  "range": {
+    "start": "2026-05-14T15:40:09.000Z",
+    "end": "2026-06-30T09:27:28.540Z"
+  },
+  "intendedArtifacts": [
+    {
+      "prId": "github:Azure/azure-sdk-for-net#59853",
+      "language": ".NET",
+      "package": "Azure.ResourceManager.NapsterOmniagentApi",
+      "version": "1.0.0-beta.1",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6424083",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-js#38950",
+      "language": "JavaScript",
+      "package": "@azure/arm-napsteromniagentapi",
+      "version": "1.0.0-beta.1",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6424084",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-python#47459",
+      "language": "Python",
+      "package": "azure-mgmt-napsteromniagentapi",
+      "version": "1.0.0b1",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6424082",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-java#49470",
+      "language": "Java",
+      "package": "azure-resourcemanager-napsteromniagentapi",
+      "version": "1.0.0-beta.1",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6424085",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-go#26990",
+      "language": "Go",
+      "package": "sdk/resourcemanager/napsteromniagentapi/armnapsteromniagentapi",
+      "version": "0.1.0",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6424086",
+      "releasePipelineUrl": null
+    }
+  ],
+  "links": [
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#43210",
+      "role": "spec-pr",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/43210",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-net#59853",
+      "role": "sdk-pr",
+      "language": ".NET",
+      "url": "https://github.com/Azure/azure-sdk-for-net/pull/59853",
+      "releasePlanIds": [
+        "2266"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-js#38923",
+      "role": "sdk-pr-history",
+      "language": "JavaScript",
+      "url": "https://github.com/Azure/azure-sdk-for-js/pull/38923",
+      "releasePlanIds": [
+        "2266"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-js#38950",
+      "role": "sdk-pr",
+      "language": "JavaScript",
+      "url": "https://github.com/Azure/azure-sdk-for-js/pull/38950",
+      "releasePlanIds": [
+        "2266"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-python#47459",
+      "role": "sdk-pr",
+      "language": "Python",
+      "url": "https://github.com/Azure/azure-sdk-for-python/pull/47459",
+      "releasePlanIds": [
+        "2266"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-java#49470",
+      "role": "sdk-pr",
+      "language": "Java",
+      "url": "https://github.com/Azure/azure-sdk-for-java/pull/49470",
+      "releasePlanIds": [
+        "2266"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-go#26990",
+      "role": "sdk-pr",
+      "language": "Go",
+      "url": "https://github.com/Azure/azure-sdk-for-go/pull/26990",
+      "releasePlanIds": [
+        "2266"
+      ]
+    }
+  ],
+  "tracks": [
+    {
+      "id": "plan",
+      "kind": "plan",
+      "label": "Release Plan",
+      "detail": "APEX GA"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#43210",
+      "kind": "spec",
+      "label": "Spec PR",
+      "detail": "azure-rest-api-specs #43210",
+      "artifactId": "github:Azure/azure-rest-api-specs#43210",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "kind": "sdk",
+      "label": ".NET",
+      "detail": "Azure.ResourceManager.NapsterOmniagentApi",
+      "artifactId": "github:Azure/azure-sdk-for-net#59853",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "kind": "sdk",
+      "label": "JavaScript",
+      "detail": "@azure/arm-napsteromniagentapi",
+      "artifactId": "github:Azure/azure-sdk-for-js#38950",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Python:azure-mgmt-napsteromniagentapi",
+      "kind": "sdk",
+      "label": "Python",
+      "detail": "azure-mgmt-napsteromniagentapi",
+      "artifactId": "github:Azure/azure-sdk-for-python#47459",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Java:azure-resourcemanager-napsteromniagentapi",
+      "kind": "sdk",
+      "label": "Java",
+      "detail": "azure-resourcemanager-napsteromniagentapi",
+      "artifactId": "github:Azure/azure-sdk-for-java#49470",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Go:sdk/resourcemanager/napsteromniagentapi/armnapsteromniagentapi",
+      "kind": "sdk",
+      "label": "Go",
+      "detail": "sdk/resourcemanager/napsteromniagentapi/armnapsteromniagentapi",
+      "artifactId": "github:Azure/azure-sdk-for-go#26990",
+      "state": "merged"
+    }
+  ],
+  "events": [
+    {
+      "id": "github:Azure/azure-rest-api-specs#43210:pr.created:spec:github:Azure/azure-rest-api-specs#43210",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-14T15:40:09Z",
+      "observedAt": "2026-05-14T15:40:09Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43210",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "nikhgup"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43210",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43210"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43210:comment:4452236941:spec:github:Azure/azure-rest-api-specs#43210",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-14T15:44:14Z",
+      "observedAt": "2026-05-14T15:44:14Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43210",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43210",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43210#issuecomment-4452236941"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>✅ All automated merging requirements have been met! To get your PR merged, see <a href=\"https://aka.ms/azsdk/specreview/merge\">aka.ms/azsdk/specreview/merge</a>.<br /><br />Comment generated by <a href=\"https://g",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43210:comment:4452250297:spec:github:Azure/azure-rest-api-specs#43210",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-14T15:46:05Z",
+      "observedAt": "2026-05-14T15:46:05Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43210",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43210",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43210#issuecomment-4452250297"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews | Language | API Review for Package | |----------|---------| | Swagger | [Napster.CompanionAPI](https://apiview.dev/Assemblies/Review/",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43210:commit:a475165bee19:spec:github:Azure/azure-rest-api-specs#43210",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-16T16:23:02Z",
+      "observedAt": "2026-05-16T16:23:02Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43210",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "nikhgup"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43210",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/a475165bee190b3f381778235bd48a8a28de5347"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43210:commit:3de890049cce:spec:github:Azure/azure-rest-api-specs#43210",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-16T16:25:07Z",
+      "observedAt": "2026-05-16T16:25:07Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43210",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "nikhgup"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43210",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/3de890049cceb9700d6d513569c2ba8e4cdc4776"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43210:commit:798acfcf5294:spec:github:Azure/azure-rest-api-specs#43210",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-18T04:49:24Z",
+      "observedAt": "2026-05-18T04:49:24Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43210",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "nikhgup"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43210",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/798acfcf5294ed334dc8893afa35153c623f3184"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43210:review:4307323328:spec:github:Azure/azure-rest-api-specs#43210",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-18T04:55:12Z",
+      "observedAt": "2026-05-18T04:55:12Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43210",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "vrijesh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43210",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43210#pullrequestreview-4307323328"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Approving this as the move from the private repo to public repo.",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43210:comment:4474660923:spec:github:Azure/azure-rest-api-specs#43210",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-18T05:30:11Z",
+      "observedAt": "2026-05-18T05:30:11Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43210",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "vrijesh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43210",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43210#issuecomment-4474660923"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Added RPaaSException tag as the RpaaSRPNotInPrivaterepo tag validation is not working correctly and was asked to override that. Couldn't find any other tag so doing with RpaaSException. Also added the ARMSigned off tags. Approving as there ",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43210:pr.merged:spec:github:Azure/azure-rest-api-specs#43210",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-18T05:32:59Z",
+      "observedAt": "2026-05-18T05:32:59Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43210",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43210",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43210"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado:34851:created",
+      "type": "plan.created",
+      "phase": "plan",
+      "occurredAt": "2026-06-04T08:08:22.547Z",
+      "observedAt": "2026-06-04T08:08:22.547Z",
+      "trackId": "plan",
+      "title": "Release Plan created",
+      "confidence": "authoritative",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34851",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34851"
+      },
+      "stack": 0
+    },
+    {
+      "id": "ado:34851:1:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-06-04T08:08:22.547Z",
+      "observedAt": "2026-06-04T08:08:22.547Z",
+      "trackId": "plan",
+      "value": "New",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34851",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34851"
+      },
+      "title": "Plan state changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34851:1:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-04T08:08:22.547Z",
+      "observedAt": "2026-06-04T08:08:22.547Z",
+      "trackId": "plan",
+      "value": "Not Available",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34851",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34851"
+      },
+      "title": "Spec approval changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:34851:1:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-04T08:08:22.547Z",
+      "observedAt": "2026-06-04T08:08:22.547Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34851",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34851"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34851:1:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-04T08:08:22.547Z",
+      "observedAt": "2026-06-04T08:08:22.547Z",
+      "trackId": "sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34851",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34851"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34851:1:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-04T08:08:22.547Z",
+      "observedAt": "2026-06-04T08:08:22.547Z",
+      "trackId": "sdk:Python:azure-mgmt-napsteromniagentapi",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34851",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34851"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34851:1:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-04T08:08:22.547Z",
+      "observedAt": "2026-06-04T08:08:22.547Z",
+      "trackId": "sdk:Java:azure-resourcemanager-napsteromniagentapi",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34851",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34851"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34851:1:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-04T08:08:22.547Z",
+      "observedAt": "2026-06-04T08:08:22.547Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/napsteromniagentapi/armnapsteromniagentapi",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34851",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34851"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34851:7:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-06-04T08:09:34.047Z",
+      "observedAt": "2026-06-04T08:09:34.047Z",
+      "trackId": "plan",
+      "value": "In Progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34851",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34851"
+      },
+      "title": "Plan state changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:34852:2:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-04T08:15:52.893Z",
+      "observedAt": "2026-06-04T08:15:52.893Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43210",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/43210",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34852",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34852"
+      },
+      "title": "Spec PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado:34851:8:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-04T08:15:56.947Z",
+      "observedAt": "2026-06-04T08:15:56.947Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34851",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34851"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34851:8:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-04T08:15:56.947Z",
+      "observedAt": "2026-06-04T08:15:56.947Z",
+      "trackId": "sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34851",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34851"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34851:8:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-04T08:15:56.947Z",
+      "observedAt": "2026-06-04T08:15:56.947Z",
+      "trackId": "sdk:Python:azure-mgmt-napsteromniagentapi",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34851",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34851"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34851:8:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-04T08:15:56.947Z",
+      "observedAt": "2026-06-04T08:15:56.947Z",
+      "trackId": "sdk:Java:azure-resourcemanager-napsteromniagentapi",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34851",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34851"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34851:8:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-04T08:15:56.947Z",
+      "observedAt": "2026-06-04T08:15:56.947Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/napsteromniagentapi/armnapsteromniagentapi",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34851",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34851"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34851:9:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-04T08:16:35.517Z",
+      "observedAt": "2026-06-04T08:16:35.517Z",
+      "trackId": "plan",
+      "value": "Approved",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34851",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34851"
+      },
+      "title": "Spec approval changed",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6424082:generation.queued:sdk:Python:azure-mgmt-napsteromniagentapi",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-06-11T15:40:57.3262586Z",
+      "observedAt": "2026-06-11T15:47:42.7763029Z",
+      "trackId": "sdk:Python:azure-mgmt-napsteromniagentapi",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6424082",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6424082"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:34851:24:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-11T15:41:01.89Z",
+      "observedAt": "2026-06-11T15:41:01.89Z",
+      "trackId": "sdk:Python:azure-mgmt-napsteromniagentapi",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34851",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34851"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6424083:generation.queued:sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-06-11T15:41:12.0840085Z",
+      "observedAt": "2026-06-11T15:48:27.6339362Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6424083",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6424083"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:34851:25:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-11T15:41:14.75Z",
+      "observedAt": "2026-06-11T15:41:14.75Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34851",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34851"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6424082:generation.started:sdk:Python:azure-mgmt-napsteromniagentapi",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-06-11T15:41:18.2310116Z",
+      "observedAt": "2026-06-11T15:47:42.7763029Z",
+      "trackId": "sdk:Python:azure-mgmt-napsteromniagentapi",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6424082",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6424082"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6424084:generation.queued:sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-06-11T15:41:24.981456Z",
+      "observedAt": "2026-06-11T15:48:49.5620571Z",
+      "trackId": "sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6424084",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6424084"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:34851:26:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-11T15:41:27.407Z",
+      "observedAt": "2026-06-11T15:41:27.407Z",
+      "trackId": "sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34851",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34851"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6424083:generation.started:sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-06-11T15:41:28.1468677Z",
+      "observedAt": "2026-06-11T15:48:27.6339362Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6424083",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6424083"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6424085:generation.queued:sdk:Java:azure-resourcemanager-napsteromniagentapi",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-06-11T15:41:38.0338574Z",
+      "observedAt": "2026-06-11T16:01:02.9745566Z",
+      "trackId": "sdk:Java:azure-resourcemanager-napsteromniagentapi",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6424085",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6424085"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:34851:27:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-11T15:41:42.713Z",
+      "observedAt": "2026-06-11T15:41:42.713Z",
+      "trackId": "sdk:Java:azure-resourcemanager-napsteromniagentapi",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34851",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34851"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6424084:generation.started:sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-06-11T15:41:43.5377482Z",
+      "observedAt": "2026-06-11T15:48:49.5620571Z",
+      "trackId": "sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6424084",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6424084"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6424086:generation.queued:sdk:Go:sdk/resourcemanager/napsteromniagentapi/armnapsteromniagentapi",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-06-11T15:41:52.6295955Z",
+      "observedAt": "2026-06-11T15:47:59.1838926Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/napsteromniagentapi/armnapsteromniagentapi",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6424086",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6424086"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6424085:generation.started:sdk:Java:azure-resourcemanager-napsteromniagentapi",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-06-11T15:41:53.5344843Z",
+      "observedAt": "2026-06-11T16:01:02.9745566Z",
+      "trackId": "sdk:Java:azure-resourcemanager-napsteromniagentapi",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6424085",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6424085"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:34851:28:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-11T15:41:55.477Z",
+      "observedAt": "2026-06-11T15:41:55.477Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/napsteromniagentapi/armnapsteromniagentapi",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34851",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34851"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6424086:generation.started:sdk:Go:sdk/resourcemanager/napsteromniagentapi/armnapsteromniagentapi",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-06-11T15:42:03.1747989Z",
+      "observedAt": "2026-06-11T15:47:59.1838926Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/napsteromniagentapi/armnapsteromniagentapi",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6424086",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6424086"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47459:commit:c4145a4df390:sdk:Python:azure-mgmt-napsteromniagentapi",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-11T15:46:23Z",
+      "observedAt": "2026-06-11T15:46:23Z",
+      "trackId": "sdk:Python:azure-mgmt-napsteromniagentapi",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47459",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/c4145a4df3901f77eadb86cdca19fe5e585f4d94"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47459:pr.created:sdk:Python:azure-mgmt-napsteromniagentapi",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-11T15:46:28Z",
+      "observedAt": "2026-06-11T15:46:28Z",
+      "trackId": "sdk:Python:azure-mgmt-napsteromniagentapi",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47459",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47459"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:34851:29:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-11T15:46:35.92Z",
+      "observedAt": "2026-06-11T15:46:35.92Z",
+      "trackId": "sdk:Python:azure-mgmt-napsteromniagentapi",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34851",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34851"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:34851:29:Custom.SDKPullRequestForPython",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-06-11T15:46:35.92Z",
+      "observedAt": "2026-06-11T15:46:35.92Z",
+      "trackId": "sdk:Python:azure-mgmt-napsteromniagentapi",
+      "value": "https://github.com/Azure/azure-sdk-for-python/pull/47459",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34851",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34851"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26990:commit:f178f84d5091:sdk:Go:sdk/resourcemanager/napsteromniagentapi/armnapsteromniagentapi",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-11T15:46:48Z",
+      "observedAt": "2026-06-11T15:46:48Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/napsteromniagentapi/armnapsteromniagentapi",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26990",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/f178f84d5091185029bcf11928e30aa62152d44a"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26990:pr.created:sdk:Go:sdk/resourcemanager/napsteromniagentapi/armnapsteromniagentapi",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-11T15:46:52Z",
+      "observedAt": "2026-06-11T15:46:52Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/napsteromniagentapi/armnapsteromniagentapi",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26990",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26990"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:34851:30:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-11T15:46:59.253Z",
+      "observedAt": "2026-06-11T15:46:59.253Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/napsteromniagentapi/armnapsteromniagentapi",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34851",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34851"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:34851:30:Custom.SDKPullRequestForGo",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-06-11T15:46:59.253Z",
+      "observedAt": "2026-06-11T15:46:59.253Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/napsteromniagentapi/armnapsteromniagentapi",
+      "value": "https://github.com/Azure/azure-sdk-for-go/pull/26990",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34851",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34851"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59853:commit:9f4b5000fb6d:sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-11T15:47:19Z",
+      "observedAt": "2026-06-11T15:47:19Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59853",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/9f4b5000fb6da7f54b07de84a9f8e80d2d0c0410"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59853:pr.created:sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-11T15:47:24Z",
+      "observedAt": "2026-06-11T15:47:24Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59853",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59853"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:34851:31:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-11T15:47:31.443Z",
+      "observedAt": "2026-06-11T15:47:31.443Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34851",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34851"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:34851:31:Custom.SDKPullRequestForDotnet",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-06-11T15:47:31.443Z",
+      "observedAt": "2026-06-11T15:47:31.443Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "value": "https://github.com/Azure/azure-sdk-for-net/pull/59853",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34851",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34851"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6424082:generation.completed:sdk:Python:azure-mgmt-napsteromniagentapi",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-06-11T15:47:42.7763029Z",
+      "observedAt": "2026-06-11T15:47:42.7763029Z",
+      "trackId": "sdk:Python:azure-mgmt-napsteromniagentapi",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6424082",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6424082"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38923:commit:77d7d18e4ecf:sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-11T15:47:50Z",
+      "observedAt": "2026-06-11T15:47:50Z",
+      "trackId": "sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38923",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/77d7d18e4ecf75270c82b647978daf12663fe110"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38923:pr.created:sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-11T15:47:54Z",
+      "observedAt": "2026-06-11T15:47:54Z",
+      "trackId": "sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38923",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38923"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6424086:generation.completed:sdk:Go:sdk/resourcemanager/napsteromniagentapi/armnapsteromniagentapi",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-06-11T15:47:59.1838926Z",
+      "observedAt": "2026-06-11T15:47:59.1838926Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/napsteromniagentapi/armnapsteromniagentapi",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6424086",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6424086"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:34851:32:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-11T15:48:01.757Z",
+      "observedAt": "2026-06-11T15:48:01.757Z",
+      "trackId": "sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34851",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34851"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:34851:32:Custom.SDKPullRequestForJavaScript",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-06-11T15:48:01.757Z",
+      "observedAt": "2026-06-11T15:48:01.757Z",
+      "trackId": "sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "value": "https://github.com/Azure/azure-sdk-for-js/pull/38923",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34851",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34851"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6424083:generation.completed:sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-06-11T15:48:27.6339362Z",
+      "observedAt": "2026-06-11T15:48:27.6339362Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "title": "Pipeline completed with issues",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6424083",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6424083"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6424084:generation.completed:sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-06-11T15:48:49.5620571Z",
+      "observedAt": "2026-06-11T15:48:49.5620571Z",
+      "trackId": "sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6424084",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6424084"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49470:commit:aedcd1c01c27:sdk:Java:azure-resourcemanager-napsteromniagentapi",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-11T15:50:19Z",
+      "observedAt": "2026-06-11T15:50:19Z",
+      "trackId": "sdk:Java:azure-resourcemanager-napsteromniagentapi",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49470",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/aedcd1c01c270daabff7afd0f9a6bfb56220f871"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49470:pr.created:sdk:Java:azure-resourcemanager-napsteromniagentapi",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-11T15:50:23Z",
+      "observedAt": "2026-06-11T15:50:23Z",
+      "trackId": "sdk:Java:azure-resourcemanager-napsteromniagentapi",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49470",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49470"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:34851:33:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-11T15:50:30.54Z",
+      "observedAt": "2026-06-11T15:50:30.54Z",
+      "trackId": "sdk:Java:azure-resourcemanager-napsteromniagentapi",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34851",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34851"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:34851:33:Custom.SDKPullRequestForJava",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-06-11T15:50:30.54Z",
+      "observedAt": "2026-06-11T15:50:30.54Z",
+      "trackId": "sdk:Java:azure-resourcemanager-napsteromniagentapi",
+      "value": "https://github.com/Azure/azure-sdk-for-java/pull/49470",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34851",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34851"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26990:review:4478396638:sdk:Go:sdk/resourcemanager/napsteromniagentapi/armnapsteromniagentapi",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-11T15:52:30Z",
+      "observedAt": "2026-06-11T15:52:30Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/napsteromniagentapi/armnapsteromniagentapi",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26990",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26990#pullrequestreview-4478396638"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This PR introduces a new Azure Resource Manager (ARM) Go management-plane module `armnapsteromniagentapi` generated from the TypeSpec configuration at `specification/napster/Napster.CompanionAPI.Management`, targeti",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47459:review:4478409107:sdk:Python:azure-mgmt-napsteromniagentapi",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-11T15:54:15Z",
+      "observedAt": "2026-06-11T15:54:15Z",
+      "trackId": "sdk:Python:azure-mgmt-napsteromniagentapi",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47459",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47459#pullrequestreview-4478409107"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This PR is an auto-generated introduction of a new management-plane Python SDK package `azure-mgmt-napsteromniagentapi` (API version `2025-12-24-preview`, `1.0.0b1`) under the `sdk/napsteromniagentapi/` service dire",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38923:review:4478426098:sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-11T15:56:38Z",
+      "observedAt": "2026-06-11T15:56:38Z",
+      "trackId": "sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38923",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38923#pullrequestreview-4478426098"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This AutoPR introduces a new TypeSpec-generated Azure Resource Manager (management-plane) JavaScript/TypeScript package, `@azure/arm-napsteromniagentapi`, aligned to `2025-12-24-preview` and published as a `1.0.0-be",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59853:comment:3397349748:sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-11T15:57:48Z",
+      "observedAt": "2026-06-11T15:57:48Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59853",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59853#discussion_r3397349748"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The AzureResourceProviderNamespace assembly attribute should align with the actual RP namespace used by the generated resource types/paths (this SDK uses \"Napster.CompanionAPI\" in ResourceType and request paths). Keeping this as \"Microsoft.",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59853:comment:3397349838:sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-11T15:57:49Z",
+      "observedAt": "2026-06-11T15:57:49Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59853",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59853#discussion_r3397349838"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This new package is missing the checked-in public API baseline files under an `api/` directory (e.g., `api/Azure.ResourceManager.<Package>.netstandard2.0.cs`, `net8.0.cs`, etc.). Most Azure.ResourceManager.* packages in this repo include th",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59853:comment:3397349886:sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-11T15:57:49Z",
+      "observedAt": "2026-06-11T15:57:49Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59853",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59853#discussion_r3397349886"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Type name ends with `Request` and `ParameterRequest`, which conflicts with Azure SDK mgmt naming guidance (prefer `Content` for request bodies; avoid `Parameters`/`Request` suffixes). Consider renaming to something like `ActivateSaaSContent",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59853:comment:3397349916:sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-11T15:57:50Z",
+      "observedAt": "2026-06-11T15:57:50Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59853",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59853#discussion_r3397349916"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`SaasGuid` is documented as a GUID but is exposed as `string`. Per mgmt SDK type-formatting guidance, UUID-valued `*Guid` properties should be `Guid` in the public API to prevent invalid values and improve usability.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59853:comment:3397349957:sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-11T15:57:50Z",
+      "observedAt": "2026-06-11T15:57:50Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59853",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59853#discussion_r3397349957"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Public model name ends with `Response`. For Azure SDK mgmt libraries, response payload models should generally use a `Result` suffix (or a domain-specific name) rather than `Response` to avoid confusion with `Azure.Response` and to match na",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59853:comment:3397349992:sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-11T15:57:50Z",
+      "observedAt": "2026-06-11T15:57:50Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59853",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59853#discussion_r3397349992"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Public model name ends with `Response`. Consider renaming to a `Result`-suffixed (or otherwise domain-specific) type before release to match mgmt SDK naming guidance and avoid confusion with `Azure.Response`.",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59853:review:4478434618:sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-11T15:57:51Z",
+      "observedAt": "2026-06-11T15:57:51Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59853",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59853#pullrequestreview-4478434618"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This PR introduces a new management-plane SDK package, **Azure.ResourceManager.NapsterOmniagentApi**, auto-generated from the TypeSpec configuration `specification/napster/Napster.CompanionAPI.Management/tspconfig.y",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59853:comment:3397350029:sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-11T15:57:51Z",
+      "observedAt": "2026-06-11T15:57:51Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59853",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59853#discussion_r3397350029"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Public parameter name `organizationname` should be camel-cased as `organizationName` to follow .NET naming conventions and avoid surfacing an odd parameter name across the resource, collection, and extension APIs.",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49470:review:4478448450:sdk:Java:azure-resourcemanager-napsteromniagentapi",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-11T15:59:43Z",
+      "observedAt": "2026-06-11T15:59:43Z",
+      "trackId": "sdk:Java:azure-resourcemanager-napsteromniagentapi",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49470",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49470#pullrequestreview-4478448450"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This PR adds a new, auto-generated Azure Resource Manager management library for **NapsterOmniagentApi** (api-version `2025-12-24-preview`) under `sdk/napsteromniagentapi`, wiring it into the repo build and release/",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6424085:generation.completed:sdk:Java:azure-resourcemanager-napsteromniagentapi",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-06-11T16:01:02.9745566Z",
+      "observedAt": "2026-06-11T16:01:02.9745566Z",
+      "trackId": "sdk:Java:azure-resourcemanager-napsteromniagentapi",
+      "title": "Pipeline completed with issues",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6424085",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6424085"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59853:comment:3397467750:sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-11T16:16:44Z",
+      "observedAt": "2026-06-11T16:16:44Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59853",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59853#discussion_r3397467750"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[SUFFIX004]** The type name `ActivateSaaSParameterRequest` uses the forbidden `Request` suffix. Per Azure SDK naming conventions, `Request` should be replaced with `Content`. **Required fix:** Rename to `ActivateSaaSParameterContent` via ",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59853:review:4478575391:sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-11T16:16:45Z",
+      "observedAt": "2026-06-11T16:16:45Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59853",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59853#pullrequestreview-4478575391"
+      },
+      "confidence": "authoritative",
+      "excerpt": "### Management SDK Review Summary - **Scope:** `Azure.ResourceManager.NapsterOmniagentApi` (new package, first beta, all files added) - **Versioning:** ✅ Pass — Version `1.0.0-beta.1`, no `ApiCompatVersion` (appropriate for first preview re",
+      "reviewState": "dismissed",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59853:comment:3397467773:sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-11T16:16:45Z",
+      "observedAt": "2026-06-11T16:16:45Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59853",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59853#discussion_r3397467773"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[SUFFIX005]** The type name `LatestLinkedSaaSResponse` uses the forbidden `Response` suffix. Per Azure SDK naming conventions, `Response` should be replaced with `Result`. **Required fix:** Rename to `LatestLinkedSaaSResult` via a `@`@cli",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59853:comment:3397467781:sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-11T16:16:45Z",
+      "observedAt": "2026-06-11T16:16:45Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59853",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59853#discussion_r3397467781"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[SUFFIX003]** The type name `SaaSData` uses the `Data` suffix but does **not** derive from `ResourceData` or `TrackedResourceData`. The `Data` suffix is reserved exclusively for ARM resource data types that inherit from those framework ba",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59853:comment:3397467785:sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-11T16:16:45Z",
+      "observedAt": "2026-06-11T16:16:45Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59853",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59853#discussion_r3397467785"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[TYPE001]** The property `SaaSResourceId` is typed as `string` but ends with `ResourceId`, which strongly suggests it holds an ARM resource ID. ARM resource IDs must be typed as `Azure.Core.ResourceIdentifier`, not `string`. **Required fi",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59853:comment:3397467792:sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-11T16:16:45Z",
+      "observedAt": "2026-06-11T16:16:45Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59853",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59853#discussion_r3397467792"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[SUFFIX005]** The type name `SaaSResourceDetailsResponse` uses the forbidden `Response` suffix. Additionally, this class derives from `ResourceData`, so it represents an ARM resource data type — its name should end in `Data`, not `Respons",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59853:comment:3397467803:sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-11T16:16:45Z",
+      "observedAt": "2026-06-11T16:16:45Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59853",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59853#discussion_r3397467803"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[ENUM plural]** The extensible enum `SingleSignOnStates` has a plural name. Extensible enums (non-flags) must use singular names per Azure SDK naming conventions. **Required fix:** Rename to `SingleSignOnState` via a `@`@clientName`` deco",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59853:comment:3397467814:sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-11T16:16:45Z",
+      "observedAt": "2026-06-11T16:16:45Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59853",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59853#discussion_r3397467814"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[RESINFIX001]** The type name `OrganizationResourceData` includes `Resource` before the `Data` suffix. Azure SDK management conventions require dropping the `Resource` infix on `*Data` and `*Collection` types (`PrivateLinkResource*` is th",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59853:comment:3397467819:sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-11T16:16:45Z",
+      "observedAt": "2026-06-11T16:16:45Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59853",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59853#discussion_r3397467819"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[RESINFIX001]** The type name `OrganizationResourceCollection` includes `Resource` before the `Collection` suffix. Azure SDK management conventions require dropping the `Resource` infix on `*Data` and `*Collection` types. **Required fix:*",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59853:comment:3397467823:sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-11T16:16:45Z",
+      "observedAt": "2026-06-11T16:16:45Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59853",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59853#discussion_r3397467823"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[RESNAME001]** The resource trio noun `Organization` is a single generic word that lacks RP/domain context. After stripping the `Resource` / `Data` / `Collection` suffixes, the bare noun `Organization` is so generic that it will collide w",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59853:comment:3397467832:sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-11T16:16:45Z",
+      "observedAt": "2026-06-11T16:16:45Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59853",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59853#discussion_r3397467832"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[TYPE001]** The property `SaaSResourceId` is typed as `string` but ends with `ResourceId`, suggesting it holds an ARM resource ID. ARM resource IDs should be typed as `Azure.Core.ResourceIdentifier`. **Required fix:** If this is an ARM re",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59853:comment:3397467835:sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-11T16:16:45Z",
+      "observedAt": "2026-06-11T16:16:45Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59853",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59853#discussion_r3397467835"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[TYPE001]** The property `SaasResourceId` is typed as `string` but ends with `ResourceId`, suggesting it holds an ARM resource ID. ARM resource IDs should be typed as `Azure.Core.ResourceIdentifier`. Additionally, note the inconsistent ca",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49470:comment:4686617694:sdk:Java:azure-resourcemanager-napsteromniagentapi",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-12T01:51:11Z",
+      "observedAt": "2026-06-12T01:51:11Z",
+      "trackId": "sdk:Java:azure-resourcemanager-napsteromniagentapi",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49470",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49470#issuecomment-4686617694"
+      },
+      "confidence": "authoritative",
+      "excerpt": "namespace review completed https://github.com/Azure/azure-sdk-pr/issues/2613",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49470:comment:4686617820:sdk:Java:azure-resourcemanager-napsteromniagentapi",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-12T01:51:12Z",
+      "observedAt": "2026-06-12T01:51:12Z",
+      "trackId": "sdk:Java:azure-resourcemanager-napsteromniagentapi",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49470",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49470#issuecomment-4686617820"
+      },
+      "confidence": "authoritative",
+      "excerpt": "/azp run prepare-pipelines",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49470:comment:4686618613:sdk:Java:azure-resourcemanager-napsteromniagentapi",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-12T01:51:23Z",
+      "observedAt": "2026-06-12T01:51:23Z",
+      "trackId": "sdk:Java:azure-resourcemanager-napsteromniagentapi",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49470",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49470#issuecomment-4686618613"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines successfully started running 1 pipeline(s).<br> </samp>",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49470:review:4481759596:sdk:Java:azure-resourcemanager-napsteromniagentapi",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-12T01:53:03Z",
+      "observedAt": "2026-06-12T01:53:03Z",
+      "trackId": "sdk:Java:azure-resourcemanager-napsteromniagentapi",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49470",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49470#pullrequestreview-4481759596"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47459:comment:4686818121:sdk:Python:azure-mgmt-napsteromniagentapi",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-12T02:35:32Z",
+      "observedAt": "2026-06-12T02:35:32Z",
+      "trackId": "sdk:Python:azure-mgmt-napsteromniagentapi",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47459",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47459#issuecomment-4686818121"
+      },
+      "confidence": "authoritative",
+      "excerpt": "namespace review result: https://github.com/Azure/azure-sdk-pr/issues/2613",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47459:comment:4686822248:sdk:Python:azure-mgmt-napsteromniagentapi",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-12T02:36:37Z",
+      "observedAt": "2026-06-12T02:36:37Z",
+      "trackId": "sdk:Python:azure-mgmt-napsteromniagentapi",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47459",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47459#issuecomment-4686822248"
+      },
+      "confidence": "authoritative",
+      "excerpt": "/azp run prepare-pipelines",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47459:comment:4686822903:sdk:Python:azure-mgmt-napsteromniagentapi",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-12T02:36:47Z",
+      "observedAt": "2026-06-12T02:36:47Z",
+      "trackId": "sdk:Python:azure-mgmt-napsteromniagentapi",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47459",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47459#issuecomment-4686822903"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines successfully started running 1 pipeline(s).<br> </samp>",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47459:commit:dc415ddedf8b:sdk:Python:azure-mgmt-napsteromniagentapi",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-12T03:13:49Z",
+      "observedAt": "2026-06-12T03:13:49Z",
+      "trackId": "sdk:Python:azure-mgmt-napsteromniagentapi",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47459",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/dc415ddedf8ba8faffd5de439da37434e579198c"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47459:commit:7d5a755aa496:sdk:Python:azure-mgmt-napsteromniagentapi",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-12T03:16:08Z",
+      "observedAt": "2026-06-12T03:16:08Z",
+      "trackId": "sdk:Python:azure-mgmt-napsteromniagentapi",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47459",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/7d5a755aa496576f1dfd56dd5ee73cb1743328c3"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47459:commit:f6439a5fec5e:sdk:Python:azure-mgmt-napsteromniagentapi",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-12T05:41:01Z",
+      "observedAt": "2026-06-12T05:41:01Z",
+      "trackId": "sdk:Python:azure-mgmt-napsteromniagentapi",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47459",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/f6439a5fec5ef0c427386abf06628032886bdbf2"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47459:commit:7377b27e33a4:sdk:Python:azure-mgmt-napsteromniagentapi",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-12T06:14:15Z",
+      "observedAt": "2026-06-12T06:14:15Z",
+      "trackId": "sdk:Python:azure-mgmt-napsteromniagentapi",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47459",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/7377b27e33a42b85c4a073a7f24f6bbbf6b7c404"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47459:commit:72983cbf66ea:sdk:Python:azure-mgmt-napsteromniagentapi",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-12T06:34:03Z",
+      "observedAt": "2026-06-12T06:34:03Z",
+      "trackId": "sdk:Python:azure-mgmt-napsteromniagentapi",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47459",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/72983cbf66ea5c66850f3f497284eb6b976f42aa"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47459:review:4483195080:sdk:Python:azure-mgmt-napsteromniagentapi",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-12T06:50:48Z",
+      "observedAt": "2026-06-12T06:50:48Z",
+      "trackId": "sdk:Python:azure-mgmt-napsteromniagentapi",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47459",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47459#pullrequestreview-4483195080"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47459:comment:3401287193:sdk:Python:azure-mgmt-napsteromniagentapi",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-12T06:50:49Z",
+      "observedAt": "2026-06-12T06:50:49Z",
+      "trackId": "sdk:Python:azure-mgmt-napsteromniagentapi",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47459",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47459#discussion_r3401287193"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Do not match real client name.",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47459:commit:42aa0b7665e8:sdk:Python:azure-mgmt-napsteromniagentapi",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-12T06:55:43Z",
+      "observedAt": "2026-06-12T06:55:43Z",
+      "trackId": "sdk:Python:azure-mgmt-napsteromniagentapi",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47459",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/42aa0b7665e8155dd80502a7e58a272a493ed63b"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47459:commit:9e69c53e366a:sdk:Python:azure-mgmt-napsteromniagentapi",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-12T07:03:20Z",
+      "observedAt": "2026-06-12T07:03:20Z",
+      "trackId": "sdk:Python:azure-mgmt-napsteromniagentapi",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47459",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/9e69c53e366a8294ddd48b8b7899fb6b9b127a2c"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47459:commit:f86e66ab5b34:sdk:Python:azure-mgmt-napsteromniagentapi",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-12T07:29:36Z",
+      "observedAt": "2026-06-12T07:29:36Z",
+      "trackId": "sdk:Python:azure-mgmt-napsteromniagentapi",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47459",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/f86e66ab5b3455f2913bcdf2917d1cca0a1fc873"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47459:commit:cfa10f7dc244:sdk:Python:azure-mgmt-napsteromniagentapi",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-12T07:32:45Z",
+      "observedAt": "2026-06-12T07:32:45Z",
+      "trackId": "sdk:Python:azure-mgmt-napsteromniagentapi",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47459",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/cfa10f7dc2449716d164548aa09bf06d13c162e7"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47459:review:4483476357:sdk:Python:azure-mgmt-napsteromniagentapi",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-12T07:33:30Z",
+      "observedAt": "2026-06-12T07:33:30Z",
+      "trackId": "sdk:Python:azure-mgmt-napsteromniagentapi",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47459",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47459#pullrequestreview-4483476357"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47459:pr.merged:sdk:Python:azure-mgmt-napsteromniagentapi",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-12T08:19:44Z",
+      "observedAt": "2026-06-12T08:19:44Z",
+      "trackId": "sdk:Python:azure-mgmt-napsteromniagentapi",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47459",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47459"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26990:comment:4689320686:sdk:Go:sdk/resourcemanager/napsteromniagentapi/armnapsteromniagentapi",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-12T08:56:23Z",
+      "observedAt": "2026-06-12T08:56:23Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/napsteromniagentapi/armnapsteromniagentapi",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "JiaqiZhang-Dev"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26990",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26990#issuecomment-4689320686"
+      },
+      "confidence": "authoritative",
+      "excerpt": "namespace review completed https://github.com/Azure/azure-sdk-pr/issues/2613",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26990:comment:4689362789:sdk:Go:sdk/resourcemanager/napsteromniagentapi/armnapsteromniagentapi",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-12T09:02:28Z",
+      "observedAt": "2026-06-12T09:02:28Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/napsteromniagentapi/armnapsteromniagentapi",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26990",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26990#issuecomment-4689362789"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## PR is ready to merge ## ⚠️ First On-Board Service — Pipeline Setup Required This PR adds a new service. Release pipelines have not been created yet. **Action required:** Comment `/azp run prepare-pipelines` on this PR to create the relea",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26990:comment:4689371022:sdk:Go:sdk/resourcemanager/napsteromniagentapi/armnapsteromniagentapi",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-12T09:03:41Z",
+      "observedAt": "2026-06-12T09:03:41Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/napsteromniagentapi/armnapsteromniagentapi",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "JiaqiZhang-Dev"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26990",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26990#issuecomment-4689371022"
+      },
+      "confidence": "authoritative",
+      "excerpt": "/azp run prepare-pipelines",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26990:comment:4689372438:sdk:Go:sdk/resourcemanager/napsteromniagentapi/armnapsteromniagentapi",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-12T09:03:53Z",
+      "observedAt": "2026-06-12T09:03:53Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/napsteromniagentapi/armnapsteromniagentapi",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26990",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26990#issuecomment-4689372438"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines successfully started running 1 pipeline(s).<br> </samp>",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49470:comment:4692669173:sdk:Java:azure-resourcemanager-napsteromniagentapi",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-12T15:27:25Z",
+      "observedAt": "2026-06-12T15:27:25Z",
+      "trackId": "sdk:Java:azure-resourcemanager-napsteromniagentapi",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49470",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49470#issuecomment-4692669173"
+      },
+      "confidence": "authoritative",
+      "excerpt": "SDK dev approved. Ping us once more to merge.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26990:review:4494062201:sdk:Go:sdk/resourcemanager/napsteromniagentapi/armnapsteromniagentapi",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-15T02:13:46Z",
+      "observedAt": "2026-06-15T02:13:46Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/napsteromniagentapi/armnapsteromniagentapi",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "JiaqiZhang-Dev"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26990",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26990#pullrequestreview-4494062201"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26990:comment:3410706647:sdk:Go:sdk/resourcemanager/napsteromniagentapi/armnapsteromniagentapi",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-15T02:13:46Z",
+      "observedAt": "2026-06-15T02:13:46Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/napsteromniagentapi/armnapsteromniagentapi",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "JiaqiZhang-Dev"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26990",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26990#discussion_r3410706647"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @jliusan, could you help fix the service name for readme?",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49470:commit:0c3e81c57ea9:sdk:Java:azure-resourcemanager-napsteromniagentapi",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-15T02:28:45Z",
+      "observedAt": "2026-06-15T02:28:45Z",
+      "trackId": "sdk:Java:azure-resourcemanager-napsteromniagentapi",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49470",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/0c3e81c57ea9b21b47218a24268f1ccd49e2e540"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38923:comment:4704053890:sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-15T02:44:43Z",
+      "observedAt": "2026-06-15T02:44:43Z",
+      "trackId": "sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38923",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38923#issuecomment-4704053890"
+      },
+      "confidence": "authoritative",
+      "excerpt": "namespace https://github.com/Azure/azure-sdk-pr/issues/2613",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49470:commit:8ae2ca070415:sdk:Java:azure-resourcemanager-napsteromniagentapi",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-15T02:46:07Z",
+      "observedAt": "2026-06-15T02:46:07Z",
+      "trackId": "sdk:Java:azure-resourcemanager-napsteromniagentapi",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49470",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/8ae2ca070415dafa5018d2abeb3991e06f45495d"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49470:commit:94948f0470b6:sdk:Java:azure-resourcemanager-napsteromniagentapi",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-15T02:46:36Z",
+      "observedAt": "2026-06-15T02:46:36Z",
+      "trackId": "sdk:Java:azure-resourcemanager-napsteromniagentapi",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49470",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/94948f0470b6cb4e7e1c8785a80d2422aaad8bf7"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:34851:34:Custom.ReleaseStatusForPython",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-06-15T02:52:09.31Z",
+      "observedAt": "2026-06-15T02:52:09.31Z",
+      "trackId": "sdk:Python:azure-mgmt-napsteromniagentapi",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34851",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34851"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34851:34:Custom.ReleasedVersionForPython",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-06-15T02:52:09.31Z",
+      "observedAt": "2026-06-15T02:52:09.31Z",
+      "trackId": "sdk:Python:azure-mgmt-napsteromniagentapi",
+      "value": "1.0.0b1",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34851",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34851"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38923:comment:4704083433:sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-15T02:53:50Z",
+      "observedAt": "2026-06-15T02:53:50Z",
+      "trackId": "sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38923",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38923#issuecomment-4704083433"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Next Steps to Merge Only failed checks and required actions are listed below. - ❌ **js - pullrequest (Build Build, Build Analyze, UnitTest × 4)**: All CI jobs failed with the same transient infrastructure error — `pnpm@10.33.0` npm regis",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38923:review:4494152231:sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-15T02:53:53Z",
+      "observedAt": "2026-06-15T02:53:53Z",
+      "trackId": "sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38923",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38923#pullrequestreview-4494152231"
+      },
+      "confidence": "authoritative",
+      "excerpt": "No API design issues found. The `@azure/arm-napsteromniagentapi` package is a new first-release SDK (`1.0.0-beta.1`, API version `2025-12-24-preview`). All version strings are consistent across `package.json`, `src/api/companionAPIContext.t",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38923:commit:6735858e6d92:sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-15T05:06:43Z",
+      "observedAt": "2026-06-15T05:06:43Z",
+      "trackId": "sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "yashikajain14"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38923",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/6735858e6d9294ebe11829ccd4f467871e18c4cf"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38950:commit:6bc74eece045:sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-15T05:42:46Z",
+      "observedAt": "2026-06-15T05:42:46Z",
+      "trackId": "sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38950",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/6bc74eece04543c44edb1b32ef40a3a3f9aac946"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38950:pr.created:sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-15T05:42:50Z",
+      "observedAt": "2026-06-15T05:42:50Z",
+      "trackId": "sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38950",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38950"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:34851:35:Custom.SDKPullRequestForJavaScript",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-06-15T05:42:57.487Z",
+      "observedAt": "2026-06-15T05:42:57.487Z",
+      "trackId": "sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "value": "https://github.com/Azure/azure-sdk-for-js/pull/38950",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34851",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34851"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38923:comment:4704921035:sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-15T05:45:10Z",
+      "observedAt": "2026-06-15T05:45:10Z",
+      "trackId": "sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "yashikajain14"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38923",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38923#issuecomment-4704921035"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Superseded by #38950, regenerated against current `azure-sdk-for-js/main` (which includes the pnpm lockfile fix from #38926). Closing this stale PR. — Re-ran SDK Generation pipeline [build 6434109](https://dev.azure.com/azure-sdk/internal/_",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38923:pr.closed:sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-15T05:45:11Z",
+      "observedAt": "2026-06-15T05:45:11Z",
+      "trackId": "sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38923",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38923"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38950:review:4494724365:sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-15T05:48:19Z",
+      "observedAt": "2026-06-15T05:48:19Z",
+      "trackId": "sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38950",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38950#pullrequestreview-4494724365"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> [!WARNING] > - Copilot's review of this pull request may be incomplete because some of the changed files are excluded by your Copilot content exclusion settings. See [Excluding content from Copilot](https://docs.github.com/en/copilot/how-",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26990:commit:e52411755fa0:sdk:Go:sdk/resourcemanager/napsteromniagentapi/armnapsteromniagentapi",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-15T05:53:16Z",
+      "observedAt": "2026-06-15T05:53:16Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/napsteromniagentapi/armnapsteromniagentapi",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "jliusan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26990",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/e52411755fa0166b02c0a5afb29857c64cb52dc5"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38950:comment:4705005485:sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-15T06:01:10Z",
+      "observedAt": "2026-06-15T06:01:10Z",
+      "trackId": "sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38950",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38950#issuecomment-4705005485"
+      },
+      "confidence": "authoritative",
+      "excerpt": "namespace https://github.com/Azure/azure-sdk-pr/issues/2613",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26990:review:4494795819:sdk:Go:sdk/resourcemanager/napsteromniagentapi/armnapsteromniagentapi",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-15T06:04:07Z",
+      "observedAt": "2026-06-15T06:04:07Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/napsteromniagentapi/armnapsteromniagentapi",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "jliusan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26990",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26990#pullrequestreview-4494795819"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26990:comment:3411325471:sdk:Go:sdk/resourcemanager/napsteromniagentapi/armnapsteromniagentapi",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-15T06:04:07Z",
+      "observedAt": "2026-06-15T06:04:07Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/napsteromniagentapi/armnapsteromniagentapi",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jliusan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26990",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26990#discussion_r3411325471"
+      },
+      "confidence": "authoritative",
+      "excerpt": "renamed",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38950:comment:4705042839:sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-15T06:08:18Z",
+      "observedAt": "2026-06-15T06:08:18Z",
+      "trackId": "sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38950",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38950#issuecomment-4705042839"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## PR is ready to merge All CI checks have passed and no API review issues were found. The PR is pending human reviewer approval.",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38950:review:4494815323:sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-15T06:08:21Z",
+      "observedAt": "2026-06-15T06:08:21Z",
+      "trackId": "sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38950",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38950#pullrequestreview-4494815323"
+      },
+      "confidence": "authoritative",
+      "excerpt": "No API design or tooling issues found for `@azure/arm-napsteromniagentapi` (`1.0.0-beta.1`, API version `2025-12-24-preview`). All version references are consistent across `package.json`, `companionAPIContext.ts`, and `CHANGELOG.md`; the pu",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26990:review:4495021479:sdk:Go:sdk/resourcemanager/napsteromniagentapi/armnapsteromniagentapi",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-15T06:52:24Z",
+      "observedAt": "2026-06-15T06:52:24Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/napsteromniagentapi/armnapsteromniagentapi",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "JiaqiZhang-Dev"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26990",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26990#pullrequestreview-4495021479"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38950:comment:4709833236:sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-15T16:02:57Z",
+      "observedAt": "2026-06-15T16:02:57Z",
+      "trackId": "sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jeremymeng"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38950",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38950#issuecomment-4709833236"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@copilot merge the latest from main branch",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38950:commit:56a13128a67b:sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-15T16:08:01Z",
+      "observedAt": "2026-06-15T16:08:01Z",
+      "trackId": "sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38950",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/56a13128a67b639a7f150247d3368c95d34edd57"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38950:comment:4709883725:sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-15T16:08:23Z",
+      "observedAt": "2026-06-15T16:08:23Z",
+      "trackId": "sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38950",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38950#issuecomment-4709883725"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> @copilot merge the latest from main branch Merged latest `main` into this branch in commit `56a13128a67`.",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38950:commit:24a9de542bb4:sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-15T16:21:14Z",
+      "observedAt": "2026-06-15T16:21:14Z",
+      "trackId": "sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "jeremymeng"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38950",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/24a9de542bb4488e4413c91c1ba690d79a9bd9c8"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59853:review:4503846527:sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-16T06:39:36Z",
+      "observedAt": "2026-06-16T06:39:36Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "yashikajain14"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59853",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59853#pullrequestreview-4503846527"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59853:comment:3418622473:sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-16T06:39:36Z",
+      "observedAt": "2026-06-16T06:39:36Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "yashikajain14"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59853",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59853#discussion_r3418622473"
+      },
+      "confidence": "authoritative",
+      "excerpt": "https://github.com/Azure/azure-sdk-pr/issues/2613 approved in namespace review.",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59853:commit:1066b0b6add2:sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-16T09:18:26Z",
+      "observedAt": "2026-06-16T09:18:26Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "yashikajain14"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59853",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/1066b0b6add22ea334da5e7ddba1d331c394739b"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59853:review:4505130558:sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-16T09:45:10Z",
+      "observedAt": "2026-06-16T09:45:10Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59853",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59853#pullrequestreview-4505130558"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59853:comment:3419680820:sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-16T09:45:10Z",
+      "observedAt": "2026-06-16T09:45:10Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59853",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59853#discussion_r3419680820"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[RESINFIX001]** The type name `NapsterOrganizationResourceData` still includes `Resource` before the `Data` suffix. The Napster prefix was correctly added (addressing RESNAME001), but the `Resource` infix must also be dropped on `*Data` a",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59853:comment:3419680838:sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-16T09:45:10Z",
+      "observedAt": "2026-06-16T09:45:10Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59853",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59853#discussion_r3419680838"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[RESINFIX001]** The type name `NapsterOrganizationResourceCollection` includes `Resource` before the `Collection` suffix. The same `Resource`-infix rule that applies to `*Data` types also applies to `*Collection` types — `PrivateLinkResou",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59853:comment:3419680843:sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-16T09:45:11Z",
+      "observedAt": "2026-06-16T09:45:11Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59853",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59853#discussion_r3419680843"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[Contextual naming — non-blocking suggestion]** The PATCH body model for `NapsterOrganizationResource` follows the convention `[resource-noun]Patch`. Since the resource noun is `NapsterOrganization` (not `NapsterOrganizationResource`), th",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59853:comment:3419680854:sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-16T09:45:11Z",
+      "observedAt": "2026-06-16T09:45:11Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59853",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59853#discussion_r3419680854"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[Contextual naming — non-blocking suggestion]** The `V2` version suffix in `NapsterSingleSignOnPropertiesV2` is unusual in Azure SDK management libraries and implies an undocumented V1 predecessor. If there is no `NapsterSingleSignOnPrope",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59853:comment:3419680855:sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-16T09:45:11Z",
+      "observedAt": "2026-06-16T09:45:11Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59853",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59853#discussion_r3419680855"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[ACRONYM001 — non-blocking]** The property name `SaasId` uses lowercase `saas` (`Saas`) while every other `SaaS`-prefixed property in this package uses uppercase `SaaS` (e.g., `SaaSId` in `SaaSInfo`, `LatestLinkedSaaSResult`, and `Napster",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59853:commit:89d73cd7d85d:sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-16T10:20:59Z",
+      "observedAt": "2026-06-16T10:20:59Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "yashikajain14"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59853",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/89d73cd7d85dffce4131e8f3386cb6167355ed96"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38950:comment:4739092744:sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-18T07:19:02Z",
+      "observedAt": "2026-06-18T07:19:02Z",
+      "trackId": "sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38950",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38950#issuecomment-4739092744"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@copilot resolve conflicts",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38950:commit:67780d2d6907:sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-18T07:22:12Z",
+      "observedAt": "2026-06-18T07:22:12Z",
+      "trackId": "sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38950",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/67780d2d6907e31af77d6b47b27983522258fbb3"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38950:comment:4739123834:sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-18T07:22:34Z",
+      "observedAt": "2026-06-18T07:22:34Z",
+      "trackId": "sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38950",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38950#issuecomment-4739123834"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> @copilot resolve conflicts Resolved conflicts by merging latest `main` and pushing commit `67780d2d6`.",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49470:commit:8e67e148136f:sdk:Java:azure-resourcemanager-napsteromniagentapi",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-18T07:22:58Z",
+      "observedAt": "2026-06-18T07:22:58Z",
+      "trackId": "sdk:Java:azure-resourcemanager-napsteromniagentapi",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49470",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/8e67e148136f30db287dc48e16cb16e45a8cc041"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49470:comment:4739137378:sdk:Java:azure-resourcemanager-napsteromniagentapi",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-18T07:24:12Z",
+      "observedAt": "2026-06-18T07:24:12Z",
+      "trackId": "sdk:Java:azure-resourcemanager-napsteromniagentapi",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49470",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49470#issuecomment-4739137378"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@XiaofeiCao for review, as I am the last pusher so my approval does not count.",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26990:review:4522648144:sdk:Go:sdk/resourcemanager/napsteromniagentapi/armnapsteromniagentapi",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-18T07:26:31Z",
+      "observedAt": "2026-06-18T07:26:31Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/napsteromniagentapi/armnapsteromniagentapi",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "yashikajain14"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26990",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26990#pullrequestreview-4522648144"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49470:review:4522651429:sdk:Java:azure-resourcemanager-napsteromniagentapi",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-18T07:26:55Z",
+      "observedAt": "2026-06-18T07:26:55Z",
+      "trackId": "sdk:Java:azure-resourcemanager-napsteromniagentapi",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "yashikajain14"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49470",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49470#pullrequestreview-4522651429"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26990:pr.merged:sdk:Go:sdk/resourcemanager/napsteromniagentapi/armnapsteromniagentapi",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-18T07:29:17Z",
+      "observedAt": "2026-06-18T07:29:17Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/napsteromniagentapi/armnapsteromniagentapi",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26990",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26990"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38950:commit:aa2242a50ae2:sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-18T07:37:40Z",
+      "observedAt": "2026-06-18T07:37:40Z",
+      "trackId": "sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38950",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/aa2242a50ae26bb9cce46a653d5d09b60905e873"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49470:pr.merged:sdk:Java:azure-resourcemanager-napsteromniagentapi",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-18T07:46:10Z",
+      "observedAt": "2026-06-18T07:46:10Z",
+      "trackId": "sdk:Java:azure-resourcemanager-napsteromniagentapi",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49470",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49470"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38950:comment:4739596092:sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-18T08:17:27Z",
+      "observedAt": "2026-06-18T08:17:27Z",
+      "trackId": "sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38950",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38950#issuecomment-4739596092"
+      },
+      "confidence": "authoritative",
+      "excerpt": "LGTM cc @JialinHuang803",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38950:review:4523205587:sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-18T08:42:42Z",
+      "observedAt": "2026-06-18T08:42:42Z",
+      "trackId": "sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "JialinHuang803"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38950",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38950#pullrequestreview-4523205587"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38950:pr.merged:sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-18T08:43:52Z",
+      "observedAt": "2026-06-18T08:43:52Z",
+      "trackId": "sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38950",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38950"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:34851:36:Custom.ReleaseStatusForGo",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-06-19T10:35:04.65Z",
+      "observedAt": "2026-06-19T10:35:04.65Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/napsteromniagentapi/armnapsteromniagentapi",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34851",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34851"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34851:36:Custom.ReleasedVersionForGo",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-06-19T10:35:04.65Z",
+      "observedAt": "2026-06-19T10:35:04.65Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/napsteromniagentapi/armnapsteromniagentapi",
+      "value": "0.1.0",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34851",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34851"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34851:37:Custom.ReleaseStatusForJavaScript",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-06-19T10:43:34.84Z",
+      "observedAt": "2026-06-19T10:43:34.84Z",
+      "trackId": "sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34851",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34851"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34851:37:Custom.ReleasedVersionForJavaScript",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-06-19T10:43:34.84Z",
+      "observedAt": "2026-06-19T10:43:34.84Z",
+      "trackId": "sdk:JavaScript:@azure/arm-napsteromniagentapi",
+      "value": "1.0.0-beta.1",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34851",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34851"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34851:38:Custom.ReleaseStatusForJava",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-06-19T10:50:43.73Z",
+      "observedAt": "2026-06-19T10:50:43.73Z",
+      "trackId": "sdk:Java:azure-resourcemanager-napsteromniagentapi",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34851",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34851"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34851:38:Custom.ReleasedVersionForJava",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-06-19T10:50:43.73Z",
+      "observedAt": "2026-06-19T10:50:43.73Z",
+      "trackId": "sdk:Java:azure-resourcemanager-napsteromniagentapi",
+      "value": "1.0.0-beta.1",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34851",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34851"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59853:review:4541288953:sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-22T05:13:32Z",
+      "observedAt": "2026-06-22T05:13:32Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59853",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59853#pullrequestreview-4541288953"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59853:comment:3449937019:sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-22T05:13:32Z",
+      "observedAt": "2026-06-22T05:13:32Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59853",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59853#discussion_r3449937019"
+      },
+      "confidence": "authoritative",
+      "excerpt": "actually copilot is correct on this one. the value here should be your \"provider namespace\", which is `Napster.CompanionAPI`. This incorrect value does not really harm the functionality of this library, but it produces incorrect telemetry i",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59853:review:4541305539:sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-22T05:16:31Z",
+      "observedAt": "2026-06-22T05:16:31Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59853",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59853#pullrequestreview-4541305539"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59853:comment:3449947741:sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-22T05:16:32Z",
+      "observedAt": "2026-06-22T05:16:32Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59853",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59853#discussion_r3449947741"
+      },
+      "confidence": "authoritative",
+      "excerpt": "please include some release notes and a release date.",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59853:review:4541307634:sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-22T05:17:06Z",
+      "observedAt": "2026-06-22T05:17:06Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59853",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59853#pullrequestreview-4541307634"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59853:comment:3449949305:sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-22T05:17:06Z",
+      "observedAt": "2026-06-22T05:17:06Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59853",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59853#discussion_r3449949305"
+      },
+      "confidence": "authoritative",
+      "excerpt": "```suggestion # Azure ResourceManager NapsterOmniagentApi management client library for .NET ```",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59853:review:4541332350:sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-22T05:23:32Z",
+      "observedAt": "2026-06-22T05:23:32Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "yashikajain14"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59853",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59853#pullrequestreview-4541332350"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59853:comment:3449967407:sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-22T05:23:32Z",
+      "observedAt": "2026-06-22T05:23:32Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "yashikajain14"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59853",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59853#discussion_r3449967407"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Since this is autogenerated, should this be changed manually?",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59853:review:4541336019:sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-22T05:24:19Z",
+      "observedAt": "2026-06-22T05:24:19Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "yashikajain14"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59853",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59853#pullrequestreview-4541336019"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59853:comment:3449969619:sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-22T05:24:19Z",
+      "observedAt": "2026-06-22T05:24:19Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "yashikajain14"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59853",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59853#discussion_r3449969619"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This is autogenerated. Should this be updated manually?",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59853:commit:c5eea0df5998:sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-22T05:32:10Z",
+      "observedAt": "2026-06-22T05:32:10Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "yashikajain14"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59853",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/c5eea0df5998d941a5891e8db3ebad38ea0a8876"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59853:comment:3450005184:sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-22T05:36:28Z",
+      "observedAt": "2026-06-22T05:36:28Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "yashikajain14"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59853",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59853#discussion_r3450005184"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Updated",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59853:review:4541377617:sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-22T05:36:29Z",
+      "observedAt": "2026-06-22T05:36:29Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "yashikajain14"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59853",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59853#pullrequestreview-4541377617"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59853:comment:3450009815:sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-22T05:37:57Z",
+      "observedAt": "2026-06-22T05:37:57Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59853",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59853#discussion_r3450009815"
+      },
+      "confidence": "authoritative",
+      "excerpt": "this is not generated. everything under `Generated` directory is generated.",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59853:review:4541383448:sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-22T05:37:58Z",
+      "observedAt": "2026-06-22T05:37:58Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59853",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59853#pullrequestreview-4541383448"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59853:review:4541388552:sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-22T05:39:11Z",
+      "observedAt": "2026-06-22T05:39:11Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59853",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59853#pullrequestreview-4541388552"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59853:comment:3450013802:sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-22T05:39:11Z",
+      "observedAt": "2026-06-22T05:39:11Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59853",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59853#discussion_r3450013802"
+      },
+      "confidence": "authoritative",
+      "excerpt": "this is not generated. the scaffolding script creates this for you, but you can modify its content. the failed CI is complaining about this. I will follow up with this issue to update this scaffolding.",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59853:commit:47730fa89404:sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-22T05:43:23Z",
+      "observedAt": "2026-06-22T05:43:23Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "yashikajain14"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59853",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/47730fa894041de1a9fcb9dbadfe2601b0186454"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59853:commit:36e86a49b740:sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-22T05:43:48Z",
+      "observedAt": "2026-06-22T05:43:48Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "yashikajain14"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59853",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/36e86a49b740cab006f1321bd980649b89d61e65"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59853:commit:0df46680604b:sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-22T06:13:50Z",
+      "observedAt": "2026-06-22T06:13:50Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "yashikajain14"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59853",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/0df46680604b3ae652e0afdb3cc05e4a9d1fca60"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59853:commit:8d81358a1a95:sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-22T06:19:16Z",
+      "observedAt": "2026-06-22T06:19:16Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "yashikajain14"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59853",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/8d81358a1a95d1ccd356b4027e2f996919cdc863"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59853:review:4541644231:sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-22T06:36:44Z",
+      "observedAt": "2026-06-22T06:36:44Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59853",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59853#pullrequestreview-4541644231"
+      },
+      "confidence": "authoritative",
+      "excerpt": "### Management SDK Review Summary - **Scope:** `Azure.ResourceManager.NapsterOmniagentApi` (new package, first beta — all files new) - **Versioning:** ✅ Pass — Version `1.0.0-beta.1`, no `ApiCompatVersion` (correct for first preview release",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59853:commit:e1575665a543:sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-22T15:18:58Z",
+      "observedAt": "2026-06-22T15:18:58Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "yashikajain14"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59853",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/e1575665a54339746c92177207f712942a490f7d"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59853:review:4545751009:sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-22T15:41:29Z",
+      "observedAt": "2026-06-22T15:41:29Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59853",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59853#pullrequestreview-4545751009"
+      },
+      "confidence": "authoritative",
+      "excerpt": "### Management SDK Review Summary Same status as the previous management SDK review: all naming checks pass, no blocking findings. No new management SDK review findings on this head commit. The only change since the last reviewed commit (`8",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59853:review:4559460067:sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-24T05:53:12Z",
+      "observedAt": "2026-06-24T05:53:12Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59853",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59853#pullrequestreview-4559460067"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59853:pr.merged:sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-24T07:56:54Z",
+      "observedAt": "2026-06-24T07:56:54Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59853",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59853"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:34851:39:Custom.ReleaseStatusForDotnet",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-06-30T09:27:28.327Z",
+      "observedAt": "2026-06-30T09:27:28.327Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34851",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34851"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34851:39:Custom.ReleasedVersionForDotnet",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-06-30T09:27:28.327Z",
+      "observedAt": "2026-06-30T09:27:28.327Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+      "value": "1.0.0-beta.1",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34851",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34851"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34851:40:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-06-30T09:27:28.54Z",
+      "observedAt": "2026-06-30T09:27:28.54Z",
+      "trackId": "plan",
+      "value": "Finished",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34851",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34851"
+      },
+      "title": "Plan state changed",
+      "stack": 0
+    }
+  ],
+  "quality": {
+    "warnings": [
+      "1 historical linked PR(s) closed without merge",
+      "1 superseded SDK PR link(s) retained"
+    ],
+    "unavailablePullRequests": 0,
+    "unavailablePipelineRuns": 0
+  },
+  "boundaryFacts": {
+    "id": "34851",
+    "state": "finished",
+    "specPrs": [
+      {
+        "id": "github:Azure/azure-rest-api-specs#43210",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#43210",
+        "createdAt": "2026-05-14T15:40:09Z",
+        "mergedAt": "2026-05-18T05:32:59Z",
+        "closedAt": "2026-05-18T05:32:59Z",
+        "available": true
+      }
+    ],
+    "artifacts": [
+      {
+        "language": ".NET",
+        "package": "Azure.ResourceManager.NapsterOmniagentApi",
+        "trackId": "sdk:.NET:Azure.ResourceManager.NapsterOmniagentApi",
+        "prId": "github:Azure/azure-sdk-for-net#59853",
+        "prCreatedAt": "2026-06-11T15:47:24Z",
+        "prMergedAt": "2026-06-24T07:56:54Z",
+        "prClosedAt": "2026-06-24T07:56:55Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-net#59853",
+            "createdAt": "2026-06-11T15:47:24Z",
+            "mergedAt": "2026-06-24T07:56:54Z",
+            "closedAt": "2026-06-24T07:56:55Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6424083",
+        "generationStartAt": "2026-06-11T15:41:28.1468677Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-06-30T09:27:28.327Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.0.0-beta.1",
+        "releaseBoundaryAt": "2026-06-30T09:27:28.327Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "JavaScript",
+        "package": "@azure/arm-napsteromniagentapi",
+        "trackId": "sdk:JavaScript:@azure/arm-napsteromniagentapi",
+        "prId": "github:Azure/azure-sdk-for-js#38950",
+        "prCreatedAt": "2026-06-15T05:42:50Z",
+        "prMergedAt": "2026-06-18T08:43:52Z",
+        "prClosedAt": "2026-06-18T08:43:52Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-js#38923",
+            "createdAt": "2026-06-11T15:47:54Z",
+            "mergedAt": null,
+            "closedAt": "2026-06-15T05:45:11Z",
+            "state": "closed"
+          },
+          {
+            "id": "github:Azure/azure-sdk-for-js#38950",
+            "createdAt": "2026-06-15T05:42:50Z",
+            "mergedAt": "2026-06-18T08:43:52Z",
+            "closedAt": "2026-06-18T08:43:52Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6424084",
+        "generationStartAt": "2026-06-11T15:41:43.5377482Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-06-19T10:43:34.84Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.0.0-beta.1",
+        "releaseBoundaryAt": "2026-06-19T10:43:34.84Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Python",
+        "package": "azure-mgmt-napsteromniagentapi",
+        "trackId": "sdk:Python:azure-mgmt-napsteromniagentapi",
+        "prId": "github:Azure/azure-sdk-for-python#47459",
+        "prCreatedAt": "2026-06-11T15:46:28Z",
+        "prMergedAt": "2026-06-12T08:19:44Z",
+        "prClosedAt": "2026-06-12T08:19:44Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-python#47459",
+            "createdAt": "2026-06-11T15:46:28Z",
+            "mergedAt": "2026-06-12T08:19:44Z",
+            "closedAt": "2026-06-12T08:19:44Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6424082",
+        "generationStartAt": "2026-06-11T15:41:18.2310116Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-06-15T02:52:09.31Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.0.0b1",
+        "releaseBoundaryAt": "2026-06-15T02:52:09.31Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Java",
+        "package": "azure-resourcemanager-napsteromniagentapi",
+        "trackId": "sdk:Java:azure-resourcemanager-napsteromniagentapi",
+        "prId": "github:Azure/azure-sdk-for-java#49470",
+        "prCreatedAt": "2026-06-11T15:50:23Z",
+        "prMergedAt": "2026-06-18T07:46:10Z",
+        "prClosedAt": "2026-06-18T07:46:11Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-java#49470",
+            "createdAt": "2026-06-11T15:50:23Z",
+            "mergedAt": "2026-06-18T07:46:10Z",
+            "closedAt": "2026-06-18T07:46:11Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6424085",
+        "generationStartAt": "2026-06-11T15:41:53.5344843Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-06-19T10:50:43.73Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.0.0-beta.1",
+        "releaseBoundaryAt": "2026-06-19T10:50:43.73Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Go",
+        "package": "sdk/resourcemanager/napsteromniagentapi/armnapsteromniagentapi",
+        "trackId": "sdk:Go:sdk/resourcemanager/napsteromniagentapi/armnapsteromniagentapi",
+        "prId": "github:Azure/azure-sdk-for-go#26990",
+        "prCreatedAt": "2026-06-11T15:46:52Z",
+        "prMergedAt": "2026-06-18T07:29:17Z",
+        "prClosedAt": "2026-06-18T07:29:17Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-go#26990",
+            "createdAt": "2026-06-11T15:46:52Z",
+            "mergedAt": "2026-06-18T07:29:17Z",
+            "closedAt": "2026-06-18T07:29:17Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6424086",
+        "generationStartAt": "2026-06-11T15:42:03.1747989Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-06-19T10:35:04.65Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "0.1.0",
+        "releaseBoundaryAt": "2026-06-19T10:35:04.65Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      }
+    ],
+    "cohortPlan": {
+      "id": "34851",
+      "releasePlanId": "2266",
+      "title": "Release Plan - 2266 - GA - Liftr-Napster",
+      "service": "Liftr-Napster",
+      "state": "finished"
+    },
+    "quality": {
+      "warnings": [
+        "1 historical linked PR(s) closed without merge",
+        "1 superseded SDK PR link(s) retained"
+      ],
+      "unavailablePullRequests": 0,
+      "unavailablePipelineRuns": 0
+    }
+  },
+  "summary": {
+    "durationHours": 625.3,
+    "pullRequestCount": 7,
+    "humanReviewCount": 20,
+    "humanCommentCount": 27
+  }
+}

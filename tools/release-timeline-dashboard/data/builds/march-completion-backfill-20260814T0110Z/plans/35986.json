@@ -1,0 +1,3029 @@
+{
+  "schemaVersion": 2,
+  "id": "35986",
+  "correlation": {
+    "policyVersion": 1,
+    "preflight": "passed"
+  },
+  "releasePlanId": "35986",
+  "title": "GA release plan for CostManagement",
+  "service": "CostManagement",
+  "product": "Release",
+  "path": "specification/cost-management/resource-manager/Microsoft.CostManagement/CostManagement",
+  "state": "in-progress",
+  "plane": "management",
+  "releaseType": "GA",
+  "intendedMonth": "September 2026",
+  "createdAt": "2026-08-11T16:53:43.47Z",
+  "completedAt": null,
+  "sourceUrl": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35986",
+  "range": {
+    "start": "2026-06-09T14:37:37.000Z",
+    "end": "2026-08-14T00:37:23.589Z"
+  },
+  "intendedArtifacts": [
+    {
+      "prId": "github:Azure/azure-sdk-for-net#61925",
+      "language": ".NET",
+      "package": "Azure.ResourceManager.CostManagement",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6689519",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-js#39561",
+      "language": "JavaScript",
+      "package": "@azure/arm-costmanagement",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6689521",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-python#48541",
+      "language": "Python",
+      "package": "azure-mgmt-costmanagement",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6689522",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-java#50098",
+      "language": "Java",
+      "package": "azure-resourcemanager-costmanagement",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6689520",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-go#27367",
+      "language": "Go",
+      "package": "sdk/resourcemanager/costmanagement/armcostmanagement",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6689523",
+      "releasePipelineUrl": null
+    }
+  ],
+  "links": [
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#43847",
+      "role": "spec-pr",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/43847",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-net#61925",
+      "role": "sdk-pr",
+      "language": ".NET",
+      "url": "https://github.com/Azure/azure-sdk-for-net/pull/61925",
+      "releasePlanIds": [
+        "35986"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-js#39561",
+      "role": "sdk-pr",
+      "language": "JavaScript",
+      "url": "https://github.com/Azure/azure-sdk-for-js/pull/39561",
+      "releasePlanIds": [
+        "35986"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-python#48541",
+      "role": "sdk-pr",
+      "language": "Python",
+      "url": "https://github.com/Azure/azure-sdk-for-python/pull/48541",
+      "releasePlanIds": [
+        "35986"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-java#50098",
+      "role": "sdk-pr",
+      "language": "Java",
+      "url": "https://github.com/Azure/azure-sdk-for-java/pull/50098",
+      "releasePlanIds": [
+        "35986"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-go#27367",
+      "role": "sdk-pr",
+      "language": "Go",
+      "url": "https://github.com/Azure/azure-sdk-for-go/pull/27367",
+      "releasePlanIds": [
+        "35986"
+      ]
+    }
+  ],
+  "tracks": [
+    {
+      "id": "plan",
+      "kind": "plan",
+      "label": "Release Plan",
+      "detail": "GA"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#43847",
+      "kind": "spec",
+      "label": "Spec PR",
+      "detail": "azure-rest-api-specs #43847",
+      "artifactId": "github:Azure/azure-rest-api-specs#43847",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:.NET:Azure.ResourceManager.CostManagement",
+      "kind": "sdk",
+      "label": ".NET",
+      "detail": "Azure.ResourceManager.CostManagement",
+      "artifactId": "github:Azure/azure-sdk-for-net#61925",
+      "state": "open"
+    },
+    {
+      "id": "sdk:JavaScript:@azure/arm-costmanagement",
+      "kind": "sdk",
+      "label": "JavaScript",
+      "detail": "@azure/arm-costmanagement",
+      "artifactId": "github:Azure/azure-sdk-for-js#39561",
+      "state": "open"
+    },
+    {
+      "id": "sdk:Python:azure-mgmt-costmanagement",
+      "kind": "sdk",
+      "label": "Python",
+      "detail": "azure-mgmt-costmanagement",
+      "artifactId": "github:Azure/azure-sdk-for-python#48541",
+      "state": "open"
+    },
+    {
+      "id": "sdk:Java:azure-resourcemanager-costmanagement",
+      "kind": "sdk",
+      "label": "Java",
+      "detail": "azure-resourcemanager-costmanagement",
+      "artifactId": "github:Azure/azure-sdk-for-java#50098",
+      "state": "open"
+    },
+    {
+      "id": "sdk:Go:sdk/resourcemanager/costmanagement/armcostmanagement",
+      "kind": "sdk",
+      "label": "Go",
+      "detail": "sdk/resourcemanager/costmanagement/armcostmanagement",
+      "artifactId": "github:Azure/azure-sdk-for-go#27367",
+      "state": "open"
+    }
+  ],
+  "events": [
+    {
+      "id": "github:Azure/azure-rest-api-specs#43847:pr.created:spec:github:Azure/azure-rest-api-specs#43847",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-09T14:37:37Z",
+      "observedAt": "2026-06-09T14:37:37Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43847",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "madhuravee27"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43847",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43847"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43847:comment:4660891550:spec:github:Azure/azure-rest-api-specs#43847",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-09T14:39:17Z",
+      "observedAt": "2026-06-09T14:39:17Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43847",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43847",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43847#issuecomment-4660891550"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>✅ All automated merging requirements have been met! To get your PR merged, see <a href=\"https://aka.ms/azsdk/specreview/merge\">aka.ms/azsdk/specreview/merge</a>.<br /><br />Comment generated by <a href=\"https://g",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43847:comment:4660974152:spec:github:Azure/azure-rest-api-specs#43847",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-09T14:47:59Z",
+      "observedAt": "2026-06-09T14:47:59Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43847",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43847",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43847#issuecomment-4660974152"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews | Language | API Review for Package | |----------|---------| | Swagger | [Microsoft.CostManagement-CostManagement](https://apiview.dev",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43847:comment:4661076786:spec:github:Azure/azure-rest-api-specs#43847",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-09T14:59:23Z",
+      "observedAt": "2026-06-09T14:59:23Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43847",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "madhuravee27"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43847",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43847#issuecomment-4661076786"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@microsoft-github-policy-service agree company=\"Microsoft\"",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43847:commit:686cac1e4272:spec:github:Azure/azure-rest-api-specs#43847",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-09T17:52:44Z",
+      "observedAt": "2026-06-09T17:52:44Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43847",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43847",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/686cac1e4272d05f23b127bb166e5b2ddf50199a"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43847:commit:7864e35e90ef:spec:github:Azure/azure-rest-api-specs#43847",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-10T00:23:52Z",
+      "observedAt": "2026-06-10T00:23:52Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43847",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43847",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/7864e35e90ef5b66249ed7365777845b5ff17a1f"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43847:commit:3899f87bebc7:spec:github:Azure/azure-rest-api-specs#43847",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-06T02:41:35Z",
+      "observedAt": "2026-07-06T02:41:35Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43847",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43847",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/3899f87bebc7812d7b8a4be45a0c4677662b4285"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43847:commit:a1af51b8dbd8:spec:github:Azure/azure-rest-api-specs#43847",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-06T16:33:56Z",
+      "observedAt": "2026-07-06T16:33:56Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43847",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43847",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/a1af51b8dbd813e3cfa814ec6c1461c35fa982c0"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43847:commit:9fe72c8753aa:spec:github:Azure/azure-rest-api-specs#43847",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-06T17:17:05Z",
+      "observedAt": "2026-07-06T17:17:05Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43847",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43847",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/9fe72c8753aae4176b1758e8a8108b26e4f07de3"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43847:review:4863755470:spec:github:Azure/azure-rest-api-specs#43847",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-05T11:13:24Z",
+      "observedAt": "2026-08-05T11:13:24Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43847",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "ravimeda"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43847",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43847#pullrequestreview-4863755470"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43847:commit:ca558575dae5:spec:github:Azure/azure-rest-api-specs#43847",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-07T17:12:57Z",
+      "observedAt": "2026-08-07T17:12:57Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43847",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43847",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/ca558575dae59e4d6ec4d15c162726141b998079"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43847:commit:7b4673da276f:spec:github:Azure/azure-rest-api-specs#43847",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-07T17:22:43Z",
+      "observedAt": "2026-08-07T17:22:43Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43847",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43847",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/7b4673da276f894004e92aac4f7b37c05a302889"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43847:commit:ae4ea2cc1ce3:spec:github:Azure/azure-rest-api-specs#43847",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-07T17:55:11Z",
+      "observedAt": "2026-08-07T17:55:11Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43847",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43847",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/ae4ea2cc1ce396d2c284209246a78a05baffbe0a"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43847:commit:f246ab3e25ef:spec:github:Azure/azure-rest-api-specs#43847",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-07T18:03:01Z",
+      "observedAt": "2026-08-07T18:03:01Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43847",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "madhuravee27"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43847",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/f246ab3e25ef5614e3e6e037dba80bfd53566985"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43847:comment:5220465528:spec:github:Azure/azure-rest-api-specs#43847",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-07T18:05:29Z",
+      "observedAt": "2026-08-07T18:05:29Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43847",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43847",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43847#issuecomment-5220465528"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## TypeSpec suppressions requiring review (testing, non-blocking) ✅ No TypeSpec suppressions require review for the latest commit.",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43847:commit:bad4b0b7f457:spec:github:Azure/azure-rest-api-specs#43847",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-07T18:08:27Z",
+      "observedAt": "2026-08-07T18:08:27Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43847",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43847",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/bad4b0b7f45771d320705a9760d4b1677bcdb2df"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43847:review:4885715710:spec:github:Azure/azure-rest-api-specs#43847",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-07T18:50:50Z",
+      "observedAt": "2026-08-07T18:50:50Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43847",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "brayanm-at-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43847",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43847#pullrequestreview-4885715710"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43847:commit:b3c5623be36c:spec:github:Azure/azure-rest-api-specs#43847",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-10T15:38:28Z",
+      "observedAt": "2026-08-10T15:38:28Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43847",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43847",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/b3c5623be36c58ac9103bb25536504d7ac2bdf8b"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43847:review:4907374216:spec:github:Azure/azure-rest-api-specs#43847",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-11T14:35:38Z",
+      "observedAt": "2026-08-11T14:35:38Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43847",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "brayanm-at-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43847",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43847#pullrequestreview-4907374216"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43847:pr.merged:spec:github:Azure/azure-rest-api-specs#43847",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-11T16:45:15Z",
+      "observedAt": "2026-08-11T16:45:15Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43847",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43847",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43847"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:35986:created",
+      "type": "plan.created",
+      "phase": "plan",
+      "occurredAt": "2026-08-11T16:53:43.47Z",
+      "observedAt": "2026-08-11T16:53:43.47Z",
+      "trackId": "plan",
+      "title": "Release Plan created",
+      "confidence": "authoritative",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35986",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35986"
+      },
+      "stack": 0
+    },
+    {
+      "id": "ado:35986:1:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-08-11T16:53:43.47Z",
+      "observedAt": "2026-08-11T16:53:43.47Z",
+      "trackId": "plan",
+      "value": "New",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35986",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35986"
+      },
+      "title": "Plan state changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35986:1:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-11T16:53:43.47Z",
+      "observedAt": "2026-08-11T16:53:43.47Z",
+      "trackId": "plan",
+      "value": "Not Available",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35986",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35986"
+      },
+      "title": "Spec approval changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:35986:1:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-11T16:53:43.47Z",
+      "observedAt": "2026-08-11T16:53:43.47Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CostManagement",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35986",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35986"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35986:1:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-11T16:53:43.47Z",
+      "observedAt": "2026-08-11T16:53:43.47Z",
+      "trackId": "sdk:JavaScript:@azure/arm-costmanagement",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35986",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35986"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35986:1:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-11T16:53:43.47Z",
+      "observedAt": "2026-08-11T16:53:43.47Z",
+      "trackId": "sdk:Python:azure-mgmt-costmanagement",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35986",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35986"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35986:1:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-11T16:53:43.47Z",
+      "observedAt": "2026-08-11T16:53:43.47Z",
+      "trackId": "sdk:Java:azure-resourcemanager-costmanagement",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35986",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35986"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35986:1:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-11T16:53:43.47Z",
+      "observedAt": "2026-08-11T16:53:43.47Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/costmanagement/armcostmanagement",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35986",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35986"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35987:1:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-11T16:53:43.83Z",
+      "observedAt": "2026-08-11T16:53:43.83Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43847",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/43847",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35987",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35987"
+      },
+      "title": "Spec PR linked",
+      "stack": 2
+    },
+    {
+      "id": "ado:35986:2:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-08-11T16:53:44.663Z",
+      "observedAt": "2026-08-11T16:53:44.663Z",
+      "trackId": "plan",
+      "value": "In Progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35986",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35986"
+      },
+      "title": "Plan state changed",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43847:comment:5256197573:spec:github:Azure/azure-rest-api-specs#43847",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-11T16:53:51Z",
+      "observedAt": "2026-08-11T16:53:51Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43847",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43847",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43847#issuecomment-5256197573"
+      },
+      "confidence": "authoritative",
+      "excerpt": "### ✅ Release Plan Created | Field | Value | |-------|-------| | **Release Plan** | [View Release Plan](https://azsdk-releaseplan-dashboard-hveph5aqhhcfhtgu.westus-01.azurewebsites.net/?releaseplan=35986) | | **API Version** | `2026-06-01` ",
+      "stack": 3
+    },
+    {
+      "id": "ado:35986:4:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-11T16:54:00.23Z",
+      "observedAt": "2026-08-11T16:54:00.23Z",
+      "trackId": "plan",
+      "value": "Approved",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35986",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35986"
+      },
+      "title": "Spec approval changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:35986:5:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-11T17:03:48.887Z",
+      "observedAt": "2026-08-11T17:03:48.887Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CostManagement",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35986",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35986"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35986:6:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-11T17:03:57.93Z",
+      "observedAt": "2026-08-11T17:03:57.93Z",
+      "trackId": "sdk:Java:azure-resourcemanager-costmanagement",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35986",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35986"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35986:7:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-11T17:04:05.077Z",
+      "observedAt": "2026-08-11T17:04:05.077Z",
+      "trackId": "sdk:JavaScript:@azure/arm-costmanagement",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35986",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35986"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35986:8:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-11T17:04:12.42Z",
+      "observedAt": "2026-08-11T17:04:12.42Z",
+      "trackId": "sdk:Python:azure-mgmt-costmanagement",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35986",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35986"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35986:9:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-11T17:04:22.513Z",
+      "observedAt": "2026-08-11T17:04:22.513Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/costmanagement/armcostmanagement",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35986",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35986"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27367:commit:b13c3bc44918:sdk:Go:sdk/resourcemanager/costmanagement/armcostmanagement",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T17:12:06Z",
+      "observedAt": "2026-08-11T17:12:06Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/costmanagement/armcostmanagement",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27367",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/b13c3bc449189653dc54b1a84a4b4075fa53fd4f"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27367:pr.created:sdk:Go:sdk/resourcemanager/costmanagement/armcostmanagement",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T17:12:16Z",
+      "observedAt": "2026-08-11T17:12:16Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/costmanagement/armcostmanagement",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27367",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27367"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado:35986:10:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-11T17:12:24.947Z",
+      "observedAt": "2026-08-11T17:12:24.947Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/costmanagement/armcostmanagement",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35986",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35986"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:35986:10:Custom.SDKPullRequestForGo",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-08-11T17:12:24.947Z",
+      "observedAt": "2026-08-11T17:12:24.947Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/costmanagement/armcostmanagement",
+      "value": "https://github.com/Azure/azure-sdk-for-go/pull/27367",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35986",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35986"
+      },
+      "title": "SDK PR linked",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27367:comment:5256403007:sdk:Go:sdk/resourcemanager/costmanagement/armcostmanagement",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T17:12:49Z",
+      "observedAt": "2026-08-11T17:12:49Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/costmanagement/armcostmanagement",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27367",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27367#issuecomment-5256403007"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 6 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27367:comment:3760124875:sdk:Go:sdk/resourcemanager/costmanagement/armcostmanagement",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T17:13:21Z",
+      "observedAt": "2026-08-11T17:13:21Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/costmanagement/armcostmanagement",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27367",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27367#discussion_r3760124875"
+      },
+      "confidence": "authoritative",
+      "excerpt": "There are extra blank lines before the `## 3.0.0` section, which makes the changelog formatting inconsistent. Consider reducing to a single blank line between sections.",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27367:review:4908863969:sdk:Go:sdk/resourcemanager/costmanagement/armcostmanagement",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T17:13:22Z",
+      "observedAt": "2026-08-11T17:13:22Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/costmanagement/armcostmanagement",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27367",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27367#pullrequestreview-4908863969"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview > [!NOTE] > Copilot could not run the full agentic suite for this review because it was automatically requested on a bot-authored pull request. Request a review from Copilot under Reviewers to retry with the full ag",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39561:commit:0f5d69a546ce:sdk:JavaScript:@azure/arm-costmanagement",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T17:13:52Z",
+      "observedAt": "2026-08-11T17:13:52Z",
+      "trackId": "sdk:JavaScript:@azure/arm-costmanagement",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39561",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/0f5d69a546ce482925ff469e6c58d11b3ac00e5e"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39561:pr.created:sdk:JavaScript:@azure/arm-costmanagement",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T17:13:58Z",
+      "observedAt": "2026-08-11T17:13:58Z",
+      "trackId": "sdk:JavaScript:@azure/arm-costmanagement",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39561",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39561"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39561:review:4908870255:sdk:JavaScript:@azure/arm-costmanagement",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T17:14:05Z",
+      "observedAt": "2026-08-11T17:14:05Z",
+      "trackId": "sdk:JavaScript:@azure/arm-costmanagement",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39561",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39561#pullrequestreview-4908870255"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot wasn't able to review this pull request because it exceeds the maximum number of files (300). Try reducing the number of changed files and requesting a review from Copilot again.",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "ado:35986:11:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-11T17:14:06.71Z",
+      "observedAt": "2026-08-11T17:14:06.71Z",
+      "trackId": "sdk:JavaScript:@azure/arm-costmanagement",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35986",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35986"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:35986:11:Custom.SDKPullRequestForJavaScript",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-08-11T17:14:06.71Z",
+      "observedAt": "2026-08-11T17:14:06.71Z",
+      "trackId": "sdk:JavaScript:@azure/arm-costmanagement",
+      "value": "https://github.com/Azure/azure-sdk-for-js/pull/39561",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35986",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35986"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado:35986:12:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-11T17:14:23.337Z",
+      "observedAt": "2026-08-11T17:14:23.337Z",
+      "trackId": "sdk:Python:azure-mgmt-costmanagement",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35986",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35986"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39561:comment:5256424374:sdk:JavaScript:@azure/arm-costmanagement",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T17:14:38Z",
+      "observedAt": "2026-08-11T17:14:38Z",
+      "trackId": "sdk:JavaScript:@azure/arm-costmanagement",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39561",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39561#issuecomment-5256424374"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 10 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61925:commit:d545e902ed62:sdk:.NET:Azure.ResourceManager.CostManagement",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T17:16:12Z",
+      "observedAt": "2026-08-11T17:16:12Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CostManagement",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61925",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/d545e902ed62550506170866a31d50a7df3b8d66"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61925:pr.created:sdk:.NET:Azure.ResourceManager.CostManagement",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T17:16:19Z",
+      "observedAt": "2026-08-11T17:16:19Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CostManagement",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61925",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61925"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado:35986:13:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-11T17:16:28.52Z",
+      "observedAt": "2026-08-11T17:16:28.52Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CostManagement",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35986",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35986"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:35986:13:Custom.SDKPullRequestForDotnet",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-08-11T17:16:28.52Z",
+      "observedAt": "2026-08-11T17:16:28.52Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CostManagement",
+      "value": "https://github.com/Azure/azure-sdk-for-net/pull/61925",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35986",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35986"
+      },
+      "title": "SDK PR linked",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61925:comment:5256457832:sdk:.NET:Azure.ResourceManager.CostManagement",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T17:17:05Z",
+      "observedAt": "2026-08-11T17:17:05Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CostManagement",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61925",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61925#issuecomment-5256457832"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 11 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50098:commit:9b79e9b21130:sdk:Java:azure-resourcemanager-costmanagement",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T17:18:33Z",
+      "observedAt": "2026-08-11T17:18:33Z",
+      "trackId": "sdk:Java:azure-resourcemanager-costmanagement",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50098",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/9b79e9b211302b02af8e99263ec3a2172cff859b"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50098:pr.created:sdk:Java:azure-resourcemanager-costmanagement",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T17:18:38Z",
+      "observedAt": "2026-08-11T17:18:38Z",
+      "trackId": "sdk:Java:azure-resourcemanager-costmanagement",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50098",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/50098"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61925:comment:3760166127:sdk:.NET:Azure.ResourceManager.CostManagement",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T17:18:44Z",
+      "observedAt": "2026-08-11T17:18:44Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CostManagement",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61925",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61925#discussion_r3760166127"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`new Uri(continuationToken)` requires an absolute URI and will throw if the continuation token is a relative URI (which is common for ARM `nextLink`). Use `new Uri(continuationToken, UriKind.RelativeOrAbsolute)` here (and mirror the same fi",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61925:review:4908919585:sdk:.NET:Azure.ResourceManager.CostManagement",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T17:18:45Z",
+      "observedAt": "2026-08-11T17:18:45Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CostManagement",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61925",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61925#pullrequestreview-4908919585"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview > [!NOTE] > Copilot could not run the full agentic suite for this review because it was automatically requested on a bot-authored pull request. Request a review from Copilot under Reviewers to retry with the full ag",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61925:comment:3760166174:sdk:.NET:Azure.ResourceManager.CostManagement",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T17:18:45Z",
+      "observedAt": "2026-08-11T17:18:45Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CostManagement",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61925",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61925#discussion_r3760166174"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`CostManagementSettingCollection` previously implemented `IEnumerable/IAsyncEnumerable` and exposed `GetAll()`/`GetAllAsync()` paging APIs, but those members are removed in this change. This is a breaking public API change (also reflected i",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50098:review:4908919939:sdk:Java:azure-resourcemanager-costmanagement",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T17:18:46Z",
+      "observedAt": "2026-08-11T17:18:46Z",
+      "trackId": "sdk:Java:azure-resourcemanager-costmanagement",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50098",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/50098#pullrequestreview-4908919939"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot wasn't able to review this pull request because it exceeds the maximum number of files (300). Try reducing the number of changed files and requesting a review from Copilot again.",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "ado:35986:14:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-11T17:18:47.137Z",
+      "observedAt": "2026-08-11T17:18:47.137Z",
+      "trackId": "sdk:Java:azure-resourcemanager-costmanagement",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35986",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35986"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:35986:14:Custom.SDKPullRequestForJava",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-08-11T17:18:47.137Z",
+      "observedAt": "2026-08-11T17:18:47.137Z",
+      "trackId": "sdk:Java:azure-resourcemanager-costmanagement",
+      "value": "https://github.com/Azure/azure-sdk-for-java/pull/50098",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35986",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35986"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50098:comment:5256491754:sdk:Java:azure-resourcemanager-costmanagement",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T17:19:37Z",
+      "observedAt": "2026-08-11T17:19:37Z",
+      "trackId": "sdk:Java:azure-resourcemanager-costmanagement",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50098",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/50098#issuecomment-5256491754"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 35 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50098:comment:5256553305:sdk:Java:azure-resourcemanager-costmanagement",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T17:24:31Z",
+      "observedAt": "2026-08-11T17:24:31Z",
+      "trackId": "sdk:Java:azure-resourcemanager-costmanagement",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50098",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/50098#issuecomment-5256553305"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Automated management AutoPR review - Head SHA: `1c9fe0c651aa83a129fd7da435adfd4bd5e68f8c` - Package: `azure-resourcemanager-costmanagement` 1.1.0 - Release type: stable - API version: `2026-06-01` - CHANGELOG: `1.1.0 (2026-08-12)` - Java",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61925:comment:5256825879:sdk:.NET:Azure.ResourceManager.CostManagement",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T17:50:17Z",
+      "observedAt": "2026-08-11T17:50:17Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CostManagement",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61925",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61925#issuecomment-5256825879"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## 🔍 CI Failure Analysis for PR #61925 ### Check Status Summary | Check | Status | |---|---| | `net - pullrequest` | ❌ Failed | | `net - pullrequest (Build and Package for PR)` | ❌ Failed — **ApiCompat breaking changes** | | `net - pullreq",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27367:comment:5260870421:sdk:Go:sdk/resourcemanager/costmanagement/armcostmanagement",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T01:05:34Z",
+      "observedAt": "2026-08-12T01:05:34Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/costmanagement/armcostmanagement",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27367",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27367#issuecomment-5260870421"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## PR is ready to merge All CI checks have passed. The PR can be merged once the required reviewer approvals are obtained.",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50098:commit:1c9fe0c651aa:sdk:Java:azure-resourcemanager-costmanagement",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T02:00:15Z",
+      "observedAt": "2026-08-12T02:00:15Z",
+      "trackId": "sdk:Java:azure-resourcemanager-costmanagement",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50098",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/1c9fe0c651aa83a129fd7da435adfd4bd5e68f8c"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50098:review:4912331976:sdk:Java:azure-resourcemanager-costmanagement",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T02:03:24Z",
+      "observedAt": "2026-08-12T02:03:24Z",
+      "trackId": "sdk:Java:azure-resourcemanager-costmanagement",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50098",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/50098#pullrequestreview-4912331976"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27367:review:4912551784:sdk:Go:sdk/resourcemanager/costmanagement/armcostmanagement",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T02:48:06Z",
+      "observedAt": "2026-08-12T02:48:06Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/costmanagement/armcostmanagement",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "JiaqiZhang-Dev"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27367",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27367#pullrequestreview-4912551784"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39561:review:4912695039:sdk:JavaScript:@azure/arm-costmanagement",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T03:11:31Z",
+      "observedAt": "2026-08-12T03:11:31Z",
+      "trackId": "sdk:JavaScript:@azure/arm-costmanagement",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39561",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39561#pullrequestreview-4912695039"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> [!WARNING] > **Threat Detection Engine Failure** — The analysis engine could not complete. This is a tooling failure, not a security finding. > > > <details> > <summary>What happened</summary> > > The threat detection results could not be",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6689519:generation.queued:sdk:.NET:Azure.ResourceManager.CostManagement",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-08-12T03:12:29.8648285Z",
+      "observedAt": "2026-08-12T03:25:00.2092361Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CostManagement",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6689519",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6689519"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:35986:15:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-12T03:12:33.083Z",
+      "observedAt": "2026-08-12T03:12:33.083Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CostManagement",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35986",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35986"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6689520:generation.queued:sdk:Java:azure-resourcemanager-costmanagement",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-08-12T03:12:38.6144868Z",
+      "observedAt": "2026-08-12T03:35:53.24305Z",
+      "trackId": "sdk:Java:azure-resourcemanager-costmanagement",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6689520",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6689520"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:35986:16:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-12T03:12:41.95Z",
+      "observedAt": "2026-08-12T03:12:41.95Z",
+      "trackId": "sdk:Java:azure-resourcemanager-costmanagement",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35986",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35986"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:6689521:generation.queued:sdk:JavaScript:@azure/arm-costmanagement",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-08-12T03:12:47.3157735Z",
+      "observedAt": "2026-08-12T03:25:12.3189302Z",
+      "trackId": "sdk:JavaScript:@azure/arm-costmanagement",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6689521",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6689521"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado:35986:17:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-12T03:12:50.083Z",
+      "observedAt": "2026-08-12T03:12:50.083Z",
+      "trackId": "sdk:JavaScript:@azure/arm-costmanagement",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35986",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35986"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6689522:generation.queued:sdk:Python:azure-mgmt-costmanagement",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-08-12T03:12:54.5520684Z",
+      "observedAt": "2026-08-12T03:24:37.9019432Z",
+      "trackId": "sdk:Python:azure-mgmt-costmanagement",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6689522",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6689522"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado:35986:18:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-12T03:12:57.703Z",
+      "observedAt": "2026-08-12T03:12:57.703Z",
+      "trackId": "sdk:Python:azure-mgmt-costmanagement",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35986",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35986"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6689523:generation.queued:sdk:Go:sdk/resourcemanager/costmanagement/armcostmanagement",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-08-12T03:13:03.0548681Z",
+      "observedAt": "2026-08-12T03:22:20.4455667Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/costmanagement/armcostmanagement",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6689523",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6689523"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:35986:19:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-12T03:13:05.54Z",
+      "observedAt": "2026-08-12T03:13:05.54Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/costmanagement/armcostmanagement",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35986",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35986"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50098:commit:1ab1da66b718:sdk:Java:azure-resourcemanager-costmanagement",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T03:13:19Z",
+      "observedAt": "2026-08-12T03:13:19Z",
+      "trackId": "sdk:Java:azure-resourcemanager-costmanagement",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50098",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/1ab1da66b7187e0f247e8a81c1cfed3718130fb5"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:35986:20:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-12T03:13:28.68Z",
+      "observedAt": "2026-08-12T03:13:28.68Z",
+      "trackId": "sdk:Java:azure-resourcemanager-costmanagement",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35986",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35986"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6689519:generation.started:sdk:.NET:Azure.ResourceManager.CostManagement",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-08-12T03:15:18.5228884Z",
+      "observedAt": "2026-08-12T03:25:00.2092361Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CostManagement",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6689519",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6689519"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6689520:generation.started:sdk:Java:azure-resourcemanager-costmanagement",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-08-12T03:15:40.7458657Z",
+      "observedAt": "2026-08-12T03:35:53.24305Z",
+      "trackId": "sdk:Java:azure-resourcemanager-costmanagement",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6689520",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6689520"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6689523:generation.started:sdk:Go:sdk/resourcemanager/costmanagement/armcostmanagement",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-08-12T03:16:35.957306Z",
+      "observedAt": "2026-08-12T03:22:20.4455667Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/costmanagement/armcostmanagement",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6689523",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6689523"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6689522:generation.started:sdk:Python:azure-mgmt-costmanagement",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-08-12T03:16:37.1573037Z",
+      "observedAt": "2026-08-12T03:24:37.9019432Z",
+      "trackId": "sdk:Python:azure-mgmt-costmanagement",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6689522",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6689522"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:6689521:generation.started:sdk:JavaScript:@azure/arm-costmanagement",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-08-12T03:16:37.2109822Z",
+      "observedAt": "2026-08-12T03:25:12.3189302Z",
+      "trackId": "sdk:JavaScript:@azure/arm-costmanagement",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6689521",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6689521"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50098:commit:e59a77771bfc:sdk:Java:azure-resourcemanager-costmanagement",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T03:16:43Z",
+      "observedAt": "2026-08-12T03:16:43Z",
+      "trackId": "sdk:Java:azure-resourcemanager-costmanagement",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50098",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/e59a77771bfc4d4988a016521941bb81136cc957"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50098:review:4912730178:sdk:Java:azure-resourcemanager-costmanagement",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T03:17:04Z",
+      "observedAt": "2026-08-12T03:17:04Z",
+      "trackId": "sdk:Java:azure-resourcemanager-costmanagement",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50098",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/50098#pullrequestreview-4912730178"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6689523:23b88faa-b224-5360-d3bb-a3d112dca3e0:sdk:Go:sdk/resourcemanager/costmanagement/armcostmanagement",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-08-12T03:21:43.8833333Z",
+      "observedAt": "2026-08-12T03:22:20.4455667Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/costmanagement/armcostmanagement",
+      "title": "task failed: Login to GitHub",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6689523",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6689523"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 2
+    },
+    {
+      "id": "ado:35986:21:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-12T03:21:48.917Z",
+      "observedAt": "2026-08-12T03:21:48.917Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/costmanagement/armcostmanagement",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35986",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35986"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6689523:83516c17-6666-5250-abde-63983ce72a49:sdk:Go:sdk/resourcemanager/costmanagement/armcostmanagement",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-08-12T03:22:08.5Z",
+      "observedAt": "2026-08-12T03:22:20.4455667Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/costmanagement/armcostmanagement",
+      "title": "job failed: Job",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6689523",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6689523"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6689523:6884a131-87da-5381-61f3-d7acc3b91d76:sdk:Go:sdk/resourcemanager/costmanagement/armcostmanagement",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-08-12T03:22:19.7133333Z",
+      "observedAt": "2026-08-12T03:22:20.4455667Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/costmanagement/armcostmanagement",
+      "title": "stage failed: SDK Generation",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6689523",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6689523"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:6689523:generation.failed:sdk:Go:sdk/resourcemanager/costmanagement/armcostmanagement",
+      "type": "generation.failed",
+      "phase": "generation",
+      "occurredAt": "2026-08-12T03:22:20.4455667Z",
+      "observedAt": "2026-08-12T03:22:20.4455667Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/costmanagement/armcostmanagement",
+      "title": "Pipeline failed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6689523",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6689523"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48541:commit:daddcc1dbea3:sdk:Python:azure-mgmt-costmanagement",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T03:23:16Z",
+      "observedAt": "2026-08-12T03:23:16Z",
+      "trackId": "sdk:Python:azure-mgmt-costmanagement",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48541",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/daddcc1dbea3d78c3846479d5fe20494b321580a"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48541:pr.created:sdk:Python:azure-mgmt-costmanagement",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T03:23:20Z",
+      "observedAt": "2026-08-12T03:23:20Z",
+      "trackId": "sdk:Python:azure-mgmt-costmanagement",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48541",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48541"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:35986:22:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-12T03:23:27.85Z",
+      "observedAt": "2026-08-12T03:23:27.85Z",
+      "trackId": "sdk:Python:azure-mgmt-costmanagement",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35986",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35986"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:35986:22:Custom.SDKPullRequestForPython",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-08-12T03:23:27.85Z",
+      "observedAt": "2026-08-12T03:23:27.85Z",
+      "trackId": "sdk:Python:azure-mgmt-costmanagement",
+      "value": "https://github.com/Azure/azure-sdk-for-python/pull/48541",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35986",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35986"
+      },
+      "title": "SDK PR linked",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39561:commit:5e9954206fd1:sdk:JavaScript:@azure/arm-costmanagement",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T03:23:34Z",
+      "observedAt": "2026-08-12T03:23:34Z",
+      "trackId": "sdk:JavaScript:@azure/arm-costmanagement",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39561",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/5e9954206fd12bc25a13213788e6078193f52f52"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39561:review:4912764486:sdk:JavaScript:@azure/arm-costmanagement",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T03:23:43Z",
+      "observedAt": "2026-08-12T03:23:43Z",
+      "trackId": "sdk:JavaScript:@azure/arm-costmanagement",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39561",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39561#pullrequestreview-4912764486"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot wasn't able to review this pull request because it exceeds the maximum number of files (300). Try reducing the number of changed files and requesting a review from Copilot again.",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "ado:35986:23:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-12T03:23:45.57Z",
+      "observedAt": "2026-08-12T03:23:45.57Z",
+      "trackId": "sdk:JavaScript:@azure/arm-costmanagement",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35986",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35986"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61925:commit:a2db2ca8a40a:sdk:.NET:Azure.ResourceManager.CostManagement",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T03:23:50Z",
+      "observedAt": "2026-08-12T03:23:50Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CostManagement",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61925",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/a2db2ca8a40a444380bed7c675db591f6c85b099"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48541:comment:5261897797:sdk:Python:azure-mgmt-costmanagement",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T03:23:56Z",
+      "observedAt": "2026-08-12T03:23:56Z",
+      "trackId": "sdk:Python:azure-mgmt-costmanagement",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48541",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48541#issuecomment-5261897797"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 9 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 4
+    },
+    {
+      "id": "ado:35986:24:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-12T03:24:01.193Z",
+      "observedAt": "2026-08-12T03:24:01.193Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CostManagement",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35986",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35986"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39561:review:4912766777:sdk:JavaScript:@azure/arm-costmanagement",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T03:24:21Z",
+      "observedAt": "2026-08-12T03:24:21Z",
+      "trackId": "sdk:JavaScript:@azure/arm-costmanagement",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39561",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39561#pullrequestreview-4912766777"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Reviewed `@azure/arm-costmanagement` PR #39561. Found 1 design concern: the major version bump from `1.0.0` (released 2026-07-16) to `2.0.0` (2026-08-11) occurs within one month, driven by breaking signature changes in `ForecastOperations.u",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39561:comment:3763373231:sdk:JavaScript:@azure/arm-costmanagement",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T03:24:22Z",
+      "observedAt": "2026-08-12T03:24:22Z",
+      "trackId": "sdk:JavaScript:@azure/arm-costmanagement",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39561",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39561#discussion_r3763373231"
+      },
+      "confidence": "authoritative",
+      "excerpt": "🔴 **Design Concern** — Major version bump `1.0.0` → `2.0.0` (`package.json`, `CHANGELOG.md`). The previous major/stable version `1.0.0` was released on 2026-07-16, and this PR bumps to a new major version `2.0.0` on 2026-08-11 — less than ",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6689522:generation.completed:sdk:Python:azure-mgmt-costmanagement",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-08-12T03:24:37.9019432Z",
+      "observedAt": "2026-08-12T03:24:37.9019432Z",
+      "trackId": "sdk:Python:azure-mgmt-costmanagement",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6689522",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6689522"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48541:review:4912768958:sdk:Python:azure-mgmt-costmanagement",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T03:24:59Z",
+      "observedAt": "2026-08-12T03:24:59Z",
+      "trackId": "sdk:Python:azure-mgmt-costmanagement",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48541",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48541#pullrequestreview-4912768958"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview > [!NOTE] > Copilot could not run the full agentic suite for this review because it was automatically requested on a bot-authored pull request. Request a review from Copilot under Reviewers to retry with the full ag",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48541:comment:3763375242:sdk:Python:azure-mgmt-costmanagement",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T03:24:59Z",
+      "observedAt": "2026-08-12T03:24:59Z",
+      "trackId": "sdk:Python:azure-mgmt-costmanagement",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48541",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48541#discussion_r3763375242"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The decorator always returns a synchronous `wrapper`, which changes the type of decorated async methods (e.g., those wrapped by `distributed_trace_async`) from coroutine functions into plain functions returning a coroutine. This can break a",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48541:comment:3763375265:sdk:Python:azure-mgmt-costmanagement",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T03:24:59Z",
+      "observedAt": "2026-08-12T03:24:59Z",
+      "trackId": "sdk:Python:azure-mgmt-costmanagement",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48541",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48541#discussion_r3763375265"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Parameter availability validation only checks `kwargs`, so it will never flag parameters passed positionally (which is common for required parameters like `billing_account_id`, `billing_profile_id`, etc.). If this decorator is intended to e",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48541:comment:3763375277:sdk:Python:azure-mgmt-costmanagement",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T03:24:59Z",
+      "observedAt": "2026-08-12T03:24:59Z",
+      "trackId": "sdk:Python:azure-mgmt-costmanagement",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48541",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48541#discussion_r3763375277"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The `MarkupRulesOperations.create_or_update` overloads appear duplicated with the same `resource: MarkupRule` type in the rendered API surface. This is confusing for consumers and likely intended to distinguish between model vs. `types` (Ty",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6689519:generation.completed:sdk:.NET:Azure.ResourceManager.CostManagement",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-08-12T03:25:00.2092361Z",
+      "observedAt": "2026-08-12T03:25:00.2092361Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CostManagement",
+      "title": "Pipeline completed with issues",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6689519",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6689519"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50098:commit:e92bd48c9613:sdk:Java:azure-resourcemanager-costmanagement",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T03:25:02Z",
+      "observedAt": "2026-08-12T03:25:02Z",
+      "trackId": "sdk:Java:azure-resourcemanager-costmanagement",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50098",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/e92bd48c9613a309c64e56ac3d8f7996a2f0e95b"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:6689521:generation.completed:sdk:JavaScript:@azure/arm-costmanagement",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-08-12T03:25:12.3189302Z",
+      "observedAt": "2026-08-12T03:25:12.3189302Z",
+      "trackId": "sdk:JavaScript:@azure/arm-costmanagement",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6689521",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6689521"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6689520:generation.completed:sdk:Java:azure-resourcemanager-costmanagement",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-08-12T03:35:53.24305Z",
+      "observedAt": "2026-08-12T03:35:53.24305Z",
+      "trackId": "sdk:Java:azure-resourcemanager-costmanagement",
+      "title": "Pipeline completed with issues",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6689520",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6689520"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61925:comment:5262106543:sdk:.NET:Azure.ResourceManager.CostManagement",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T03:59:22Z",
+      "observedAt": "2026-08-12T03:59:22Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CostManagement",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61925",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61925#issuecomment-5262106543"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## 🔍 CI Failure Analysis for PR #61925 ### Check Status Summary | Check | Status | |---|---| | `net - pullrequest` | ❌ Failed | | `net - pullrequest (Build and Package for PR)` | ❌ Failed — **ApiCompat breaking changes** | | `net - pullreq",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39561:commit:f0cf129cefc1:sdk:JavaScript:@azure/arm-costmanagement",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T07:54:10Z",
+      "observedAt": "2026-08-12T07:54:10Z",
+      "trackId": "sdk:JavaScript:@azure/arm-costmanagement",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39561",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/f0cf129cefc1a9010bcd2a132d787a93c7b3004b"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39561:review:4914214282:sdk:JavaScript:@azure/arm-costmanagement",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T07:54:27Z",
+      "observedAt": "2026-08-12T07:54:27Z",
+      "trackId": "sdk:JavaScript:@azure/arm-costmanagement",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39561",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39561#pullrequestreview-4914214282"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot wasn't able to review this pull request because it exceeds the maximum number of files (300). Try reducing the number of changed files and requesting a review from Copilot again.",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39561:comment:5264223877:sdk:JavaScript:@azure/arm-costmanagement",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T08:22:48Z",
+      "observedAt": "2026-08-12T08:22:48Z",
+      "trackId": "sdk:JavaScript:@azure/arm-costmanagement",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39561",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39561#issuecomment-5264223877"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> [!WARNING] > **Threat Detection Engine Failure** — The analysis engine could not complete. This is a tooling failure, not a security finding. > > > <details> > <summary>What happened</summary> > > The threat detection results could not be",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39561:commit:5db26b043146:sdk:JavaScript:@azure/arm-costmanagement",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T08:25:36Z",
+      "observedAt": "2026-08-12T08:25:36Z",
+      "trackId": "sdk:JavaScript:@azure/arm-costmanagement",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39561",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/5db26b043146e385ad466c28d02936cf42733e78"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39561:review:4914479396:sdk:JavaScript:@azure/arm-costmanagement",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T08:25:51Z",
+      "observedAt": "2026-08-12T08:25:51Z",
+      "trackId": "sdk:JavaScript:@azure/arm-costmanagement",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39561",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39561#pullrequestreview-4914479396"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot wasn't able to review this pull request because it exceeds the maximum number of files (300). Try reducing the number of changed files and requesting a review from Copilot again.",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39561:comment:5264471070:sdk:JavaScript:@azure/arm-costmanagement",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T08:47:06Z",
+      "observedAt": "2026-08-12T08:47:06Z",
+      "trackId": "sdk:JavaScript:@azure/arm-costmanagement",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39561",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39561#issuecomment-5264471070"
+      },
+      "confidence": "authoritative",
+      "excerpt": "LGTM cc @JialinHuang803",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39561:comment:5264506306:sdk:JavaScript:@azure/arm-costmanagement",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T08:50:42Z",
+      "observedAt": "2026-08-12T08:50:42Z",
+      "trackId": "sdk:JavaScript:@azure/arm-costmanagement",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39561",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39561#issuecomment-5264506306"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Next Steps to Merge ✅ All CI checks have passed — this PR is ready for review! The SDK engineer will review this PR shortly. Once it's approved, you can go ahead and merge it. To make things easier, feel free to [enable auto-merge](https",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50098:commit:47f5f07ccbf7:sdk:Java:azure-resourcemanager-costmanagement",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T16:06:44Z",
+      "observedAt": "2026-08-12T16:06:44Z",
+      "trackId": "sdk:Java:azure-resourcemanager-costmanagement",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50098",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/47f5f07ccbf76d0aaf3ab85e6bd08fee1f2904a2"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50098:comment:5269401485:sdk:Java:azure-resourcemanager-costmanagement",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T16:14:27Z",
+      "observedAt": "2026-08-12T16:14:27Z",
+      "trackId": "sdk:Java:azure-resourcemanager-costmanagement",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50098",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/50098#issuecomment-5269401485"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Automated management AutoPR review - Head SHA: `47f5f07ccbf76d0aaf3ab85e6bd08fee1f2904a2` - Package: `azure-resourcemanager-costmanagement` 1.1.0 - Release type: stable - API version: `2026-06-01` - CHANGELOG: `1.1.0 (2026-08-12)` - Java",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50098:review:4918835264:sdk:Java:azure-resourcemanager-costmanagement",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T16:31:44Z",
+      "observedAt": "2026-08-12T16:31:44Z",
+      "trackId": "sdk:Java:azure-resourcemanager-costmanagement",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50098",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/50098#pullrequestreview-4918835264"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39561:review:4922790973:sdk:JavaScript:@azure/arm-costmanagement",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T02:08:32Z",
+      "observedAt": "2026-08-13T02:08:32Z",
+      "trackId": "sdk:JavaScript:@azure/arm-costmanagement",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "JialinHuang803"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39561",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39561#pullrequestreview-4922790973"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48541:comment:5275323545:sdk:Python:azure-mgmt-costmanagement",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T02:45:08Z",
+      "observedAt": "2026-08-13T02:45:08Z",
+      "trackId": "sdk:Python:azure-mgmt-costmanagement",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48541",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48541#issuecomment-5275323545"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi, the new api version `2026-06-01` seems not deployed on portal yet, we recommend making sure the api version to be deployed before releasing the SDK, though we won't block the release in self-serve release flow.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48541:review:4922944779:sdk:Python:azure-mgmt-costmanagement",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T02:45:34Z",
+      "observedAt": "2026-08-13T02:45:34Z",
+      "trackId": "sdk:Python:azure-mgmt-costmanagement",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48541",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48541#pullrequestreview-4922944779"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @madhuravee27, we have approved the PR. You can move on to merge and release though the action suggestion in Release Plan.",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48541:comment:5275362156:sdk:Python:azure-mgmt-costmanagement",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T02:51:35Z",
+      "observedAt": "2026-08-13T02:51:35Z",
+      "trackId": "sdk:Python:azure-mgmt-costmanagement",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48541",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48541#issuecomment-5275362156"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Management SDK PR review **Findings:** None. ### Unverified checks **Unverified checks:** None. ### Review summary - **Package reviewed:** `sdk/costmanagement/azure-mgmt-costmanagement` - **Checks completed:** - Version consistency: `_ve",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48541:review:4923072283:sdk:Python:azure-mgmt-costmanagement",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T03:17:08Z",
+      "observedAt": "2026-08-13T03:17:08Z",
+      "trackId": "sdk:Python:azure-mgmt-costmanagement",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48541",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48541#pullrequestreview-4923072283"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50098:review:4924119293:sdk:Java:azure-resourcemanager-costmanagement",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T06:37:23Z",
+      "observedAt": "2026-08-13T06:37:23Z",
+      "trackId": "sdk:Java:azure-resourcemanager-costmanagement",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "XiaofeiCao"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50098",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/50098#pullrequestreview-4924119293"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    }
+  ],
+  "quality": {
+    "warnings": [
+      "5 historical linked PR(s) closed without merge"
+    ],
+    "unavailablePullRequests": 0,
+    "unavailablePipelineRuns": 0
+  },
+  "boundaryFacts": {
+    "id": "35986",
+    "state": "in-progress",
+    "specPrs": [
+      {
+        "id": "github:Azure/azure-rest-api-specs#43847",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#43847",
+        "createdAt": "2026-06-09T14:37:37Z",
+        "mergedAt": "2026-08-11T16:45:15Z",
+        "closedAt": "2026-08-11T16:45:15Z",
+        "available": true
+      }
+    ],
+    "artifacts": [
+      {
+        "language": ".NET",
+        "package": "Azure.ResourceManager.CostManagement",
+        "trackId": "sdk:.NET:Azure.ResourceManager.CostManagement",
+        "prId": "github:Azure/azure-sdk-for-net#61925",
+        "prCreatedAt": "2026-08-11T17:16:19Z",
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-net#61925",
+            "createdAt": "2026-08-11T17:16:19Z",
+            "mergedAt": null,
+            "closedAt": null,
+            "state": "open"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6689519",
+        "generationStartAt": "2026-08-12T03:15:18.5228884Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "JavaScript",
+        "package": "@azure/arm-costmanagement",
+        "trackId": "sdk:JavaScript:@azure/arm-costmanagement",
+        "prId": "github:Azure/azure-sdk-for-js#39561",
+        "prCreatedAt": "2026-08-11T17:13:58Z",
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-js#39561",
+            "createdAt": "2026-08-11T17:13:58Z",
+            "mergedAt": null,
+            "closedAt": null,
+            "state": "open"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6689521",
+        "generationStartAt": "2026-08-12T03:16:37.2109822Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Python",
+        "package": "azure-mgmt-costmanagement",
+        "trackId": "sdk:Python:azure-mgmt-costmanagement",
+        "prId": "github:Azure/azure-sdk-for-python#48541",
+        "prCreatedAt": "2026-08-12T03:23:20Z",
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-python#48541",
+            "createdAt": "2026-08-12T03:23:20Z",
+            "mergedAt": null,
+            "closedAt": null,
+            "state": "open"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6689522",
+        "generationStartAt": "2026-08-12T03:16:37.1573037Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Java",
+        "package": "azure-resourcemanager-costmanagement",
+        "trackId": "sdk:Java:azure-resourcemanager-costmanagement",
+        "prId": "github:Azure/azure-sdk-for-java#50098",
+        "prCreatedAt": "2026-08-11T17:18:38Z",
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-java#50098",
+            "createdAt": "2026-08-11T17:18:38Z",
+            "mergedAt": null,
+            "closedAt": null,
+            "state": "open"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6689520",
+        "generationStartAt": "2026-08-12T03:15:40.7458657Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Go",
+        "package": "sdk/resourcemanager/costmanagement/armcostmanagement",
+        "trackId": "sdk:Go:sdk/resourcemanager/costmanagement/armcostmanagement",
+        "prId": "github:Azure/azure-sdk-for-go#27367",
+        "prCreatedAt": "2026-08-11T17:12:16Z",
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-go#27367",
+            "createdAt": "2026-08-11T17:12:16Z",
+            "mergedAt": null,
+            "closedAt": null,
+            "state": "open"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6689523",
+        "generationStartAt": "2026-08-12T03:16:35.957306Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      }
+    ],
+    "cohortPlan": {
+      "id": "35986",
+      "releasePlanId": "35986",
+      "title": "GA release plan for CostManagement",
+      "service": "CostManagement",
+      "state": "in-progress"
+    },
+    "quality": {
+      "warnings": [
+        "5 historical linked PR(s) closed without merge"
+      ],
+      "unavailablePullRequests": 0,
+      "unavailablePipelineRuns": 0
+    }
+  },
+  "summary": {
+    "durationHours": 55.7,
+    "pullRequestCount": 6,
+    "humanReviewCount": 11,
+    "humanCommentCount": 3
+  }
+}

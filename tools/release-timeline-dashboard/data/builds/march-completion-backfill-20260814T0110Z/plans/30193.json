@@ -1,0 +1,3315 @@
+{
+  "schemaVersion": 2,
+  "id": "30193",
+  "correlation": {
+    "policyVersion": 1,
+    "preflight": "passed"
+  },
+  "releasePlanId": "2049",
+  "title": "Release Plan - 2049 - GA - Azure App Configuration",
+  "service": "Azure App Configuration",
+  "product": "Release",
+  "path": "specification/appconfiguration/resource-manager/Microsoft.AppConfiguration/AppConfiguration",
+  "state": "finished",
+  "plane": "management",
+  "releaseType": "APEX GA",
+  "intendedMonth": "January 2026",
+  "createdAt": "2026-01-13T16:30:00.68Z",
+  "completedAt": "2026-04-29T16:36:35.337Z",
+  "sourceUrl": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30193",
+  "range": {
+    "start": "2025-10-17T00:32:13.000Z",
+    "end": "2026-04-29T16:36:35.337Z"
+  },
+  "intendedArtifacts": [
+    {
+      "prId": "github:Azure/azure-sdk-for-net#57375",
+      "language": ".NET",
+      "package": "Azure.ResourceManager.AppConfiguration",
+      "version": "1.5.0-beta.1",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6050932",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-js#37056",
+      "language": "JavaScript",
+      "package": "@azure/arm-appconfiguration",
+      "version": "6.0.0-beta.1",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5763719",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-python#44690",
+      "language": "Python",
+      "package": "azure-mgmt-appconfiguration",
+      "version": "6.0.0b1",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5763718",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-java#47738",
+      "language": "Java",
+      "package": "azure-resourcemanager-appconfiguration",
+      "version": "1.2.0-beta.1",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5763720",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-go#25889",
+      "language": "Go",
+      "package": "sdk/resourcemanager/appconfiguration/armappconfiguration",
+      "version": "3.1.0-beta.1",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5763721",
+      "releasePipelineUrl": null
+    }
+  ],
+  "links": [
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#38240",
+      "role": "spec-pr",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/38240",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-net#55060",
+      "role": "sdk-pr-history",
+      "language": ".NET",
+      "url": "https://github.com/Azure/azure-sdk-for-net/pull/55060",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-net#57375",
+      "role": "sdk-pr",
+      "language": ".NET",
+      "url": "https://github.com/Azure/azure-sdk-for-net/pull/57375",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-js#37056",
+      "role": "sdk-pr",
+      "language": "JavaScript",
+      "url": "https://github.com/Azure/azure-sdk-for-js/pull/37056",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-python#44690",
+      "role": "sdk-pr",
+      "language": "Python",
+      "url": "https://github.com/Azure/azure-sdk-for-python/pull/44690",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-java#47738",
+      "role": "sdk-pr",
+      "language": "Java",
+      "url": "https://github.com/Azure/azure-sdk-for-java/pull/47738",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-go#25889",
+      "role": "sdk-pr",
+      "language": "Go",
+      "url": "https://github.com/Azure/azure-sdk-for-go/pull/25889",
+      "releasePlanIds": []
+    }
+  ],
+  "tracks": [
+    {
+      "id": "plan",
+      "kind": "plan",
+      "label": "Release Plan",
+      "detail": "APEX GA"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#38240",
+      "kind": "spec",
+      "label": "Spec PR",
+      "detail": "azure-rest-api-specs #38240",
+      "artifactId": "github:Azure/azure-rest-api-specs#38240",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:.NET:Azure.ResourceManager.AppConfiguration",
+      "kind": "sdk",
+      "label": ".NET",
+      "detail": "Azure.ResourceManager.AppConfiguration",
+      "artifactId": "github:Azure/azure-sdk-for-net#57375",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:JavaScript:@azure/arm-appconfiguration",
+      "kind": "sdk",
+      "label": "JavaScript",
+      "detail": "@azure/arm-appconfiguration",
+      "artifactId": "github:Azure/azure-sdk-for-js#37056",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Python:azure-mgmt-appconfiguration",
+      "kind": "sdk",
+      "label": "Python",
+      "detail": "azure-mgmt-appconfiguration",
+      "artifactId": "github:Azure/azure-sdk-for-python#44690",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Java:azure-resourcemanager-appconfiguration",
+      "kind": "sdk",
+      "label": "Java",
+      "detail": "azure-resourcemanager-appconfiguration",
+      "artifactId": "github:Azure/azure-sdk-for-java#47738",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Go:sdk/resourcemanager/appconfiguration/armappconfiguration",
+      "kind": "sdk",
+      "label": "Go",
+      "detail": "sdk/resourcemanager/appconfiguration/armappconfiguration",
+      "artifactId": "github:Azure/azure-sdk-for-go#25889",
+      "state": "merged"
+    }
+  ],
+  "events": [
+    {
+      "id": "github:Azure/azure-rest-api-specs#38240:pr.created:spec:github:Azure/azure-rest-api-specs#38240",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-17T00:32:13Z",
+      "observedAt": "2025-10-17T00:32:13Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38240",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "hahahahahaiyiwen"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38240",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/38240"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38240:comment:3413357016:spec:github:Azure/azure-rest-api-specs#38240",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-17T00:32:35Z",
+      "observedAt": "2025-10-17T00:32:35Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38240",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38240",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/38240#issuecomment-3413357016"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>✅ All automated merging requirements have been met! To get your PR merged, see <a href=\"https://aka.ms/azsdk/specreview/merge\">aka.ms/azsdk/specreview/merge</a>.<br /><br />Comment generated by <a href=\"https://g",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38240:comment:3413370810:spec:github:Azure/azure-rest-api-specs#38240",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-17T00:37:33Z",
+      "observedAt": "2025-10-17T00:37:33Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38240",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38240",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/38240#issuecomment-3413370810"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews | Language | API Review for Package | |----------|---------| | Swagger | [Microsoft.AppConfiguration-AppConfiguration](https://apiview",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38240:commit:a0314d8267f8:spec:github:Azure/azure-rest-api-specs#38240",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-17T01:08:50Z",
+      "observedAt": "2025-10-17T01:08:50Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38240",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "hahahahahaiyiwen"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38240",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/a0314d8267f88625d12eeb2f03c9eaa6e1576d43"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38240:commit:c6f4fc5205b7:spec:github:Azure/azure-rest-api-specs#38240",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-17T01:34:08Z",
+      "observedAt": "2025-10-17T01:34:08Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38240",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "hahahahahaiyiwen"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38240",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/c6f4fc5205b7d208e5baf8b8663fec79aa6162bf"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38240:comment:3413470636:spec:github:Azure/azure-rest-api-specs#38240",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-17T01:44:27Z",
+      "observedAt": "2025-10-17T01:44:27Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38240",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "hahahahahaiyiwen"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38240",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/38240#issuecomment-3413470636"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Breaking change was introduced in 2025-02-01-preview with the tsp migration. https://github.com/Azure/azure-rest-api-specs/pull/36878 This PR doesn't introduce any breaking changes.",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38240:commit:7567a65b71ce:spec:github:Azure/azure-rest-api-specs#38240",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-17T01:49:00Z",
+      "observedAt": "2025-10-17T01:49:00Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38240",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "hahahahahaiyiwen"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38240",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/7567a65b71cecc085771e0ae80cec0da1ada3ef7"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38240:comment:2438003414:spec:github:Azure/azure-rest-api-specs#38240",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-17T01:52:23Z",
+      "observedAt": "2025-10-17T01:52:23Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38240",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38240",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/38240#discussion_r2438003414"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The provider namespace in the type value is misspelled (Microsoft.AppConfiguraiton); it should be Microsoft.AppConfiguration to reflect the correct resource type. ```suggestion \"type\": \"Microsoft.AppConfiguration/configurationStores/private",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38240:review:3347684342:spec:github:Azure/azure-rest-api-specs#38240",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-17T01:52:24Z",
+      "observedAt": "2025-10-17T01:52:24Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38240",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38240",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/38240#pullrequestreview-3347684342"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull Request Overview Adds new preview API version 2025-06-01-preview for Microsoft.AppConfiguration, introducing Azure Front Door configuration support and corresponding examples. Key changes include: - New version enum value (v2025_06_",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38240:comment:2438003417:spec:github:Azure/azure-rest-api-specs#38240",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-17T01:52:24Z",
+      "observedAt": "2025-10-17T01:52:24Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38240",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38240",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/38240#discussion_r2438003417"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Misspelled provider namespace (Microsoft.AppConfiguraiton); update to Microsoft.AppConfiguration to ensure the example references a valid resource type. ```suggestion \"type\": \"Microsoft.AppConfiguration/configurationStores/privateLinkResour",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38240:comment:2438003422:spec:github:Azure/azure-rest-api-specs#38240",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-17T01:52:24Z",
+      "observedAt": "2025-10-17T01:52:24Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38240",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38240",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/38240#discussion_r2438003422"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Correct grammatical issue in description; suggested: \"Regenerates one of the API keys for the specified configuration store.\" ```suggestion \"description\": \"Regenerates one of the API keys for the specified configuration store.\", ```",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38240:commit:cc45c3c6076b:spec:github:Azure/azure-rest-api-specs#38240",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-17T01:54:37Z",
+      "observedAt": "2025-10-17T01:54:37Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38240",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "hahahahahaiyiwen"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38240",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/cc45c3c6076b4c42e393dd61ac6b0afdcc2b805b"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38240:commit:c730efad4d48:spec:github:Azure/azure-rest-api-specs#38240",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-17T01:54:56Z",
+      "observedAt": "2025-10-17T01:54:56Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38240",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "hahahahahaiyiwen"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38240",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/c730efad4d48e93dbfb760ddddc8ef7f126ed314"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38240:review:3347687979:spec:github:Azure/azure-rest-api-specs#38240",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-17T01:55:23Z",
+      "observedAt": "2025-10-17T01:55:23Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38240",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "hahahahahaiyiwen"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38240",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/38240#pullrequestreview-3347687979"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38240:comment:2438006597:spec:github:Azure/azure-rest-api-specs#38240",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-17T01:55:23Z",
+      "observedAt": "2025-10-17T01:55:23Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38240",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "hahahahahaiyiwen"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38240",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/38240#discussion_r2438006597"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Not related to the new api version.",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38240:review:3347691671:spec:github:Azure/azure-rest-api-specs#38240",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-17T01:58:15Z",
+      "observedAt": "2025-10-17T01:58:15Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38240",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "jimmyca15"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38240",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/38240#pullrequestreview-3347691671"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38240:commit:8e18a4f16b40:spec:github:Azure/azure-rest-api-specs#38240",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-17T19:51:41Z",
+      "observedAt": "2025-10-17T19:51:41Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38240",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "hahahahahaiyiwen"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38240",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/8e18a4f16b40e0b48b191bdc9c0fe350432ad130"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38240:review:3352374521:spec:github:Azure/azure-rest-api-specs#38240",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-17T23:28:47Z",
+      "observedAt": "2025-10-17T23:28:47Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38240",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "jimmyca15"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38240",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/38240#pullrequestreview-3352374521"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38240:pr.merged:spec:github:Azure/azure-rest-api-specs#38240",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-21T15:57:42Z",
+      "observedAt": "2025-10-21T15:57:42Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38240",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38240",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/38240"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:30193:created",
+      "type": "plan.created",
+      "phase": "plan",
+      "occurredAt": "2026-01-13T16:30:00.68Z",
+      "observedAt": "2026-01-13T16:30:00.68Z",
+      "trackId": "plan",
+      "title": "Release Plan created",
+      "confidence": "authoritative",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30193",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30193"
+      },
+      "stack": 0
+    },
+    {
+      "id": "ado:30193:1:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-01-13T16:30:00.68Z",
+      "observedAt": "2026-01-13T16:30:00.68Z",
+      "trackId": "plan",
+      "value": "New",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30193",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30193"
+      },
+      "title": "Plan state changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:30193:1:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-01-13T16:30:00.68Z",
+      "observedAt": "2026-01-13T16:30:00.68Z",
+      "trackId": "plan",
+      "value": "Not Available",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30193",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30193"
+      },
+      "title": "Spec approval changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:30193:1:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-01-13T16:30:00.68Z",
+      "observedAt": "2026-01-13T16:30:00.68Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.AppConfiguration",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30193",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30193"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:30193:1:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-01-13T16:30:00.68Z",
+      "observedAt": "2026-01-13T16:30:00.68Z",
+      "trackId": "sdk:JavaScript:@azure/arm-appconfiguration",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30193",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30193"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:30193:1:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-01-13T16:30:00.68Z",
+      "observedAt": "2026-01-13T16:30:00.68Z",
+      "trackId": "sdk:Python:azure-mgmt-appconfiguration",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30193",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30193"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:30193:1:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-01-13T16:30:00.68Z",
+      "observedAt": "2026-01-13T16:30:00.68Z",
+      "trackId": "sdk:Java:azure-resourcemanager-appconfiguration",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30193",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30193"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:30193:1:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-01-13T16:30:00.68Z",
+      "observedAt": "2026-01-13T16:30:00.68Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/appconfiguration/armappconfiguration",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30193",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30193"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:30193:7:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-01-13T16:31:42.983Z",
+      "observedAt": "2026-01-13T16:31:42.983Z",
+      "trackId": "plan",
+      "value": "In Progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30193",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30193"
+      },
+      "title": "Plan state changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:30194:2:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-01-13T16:33:06.82Z",
+      "observedAt": "2026-01-13T16:33:06.82Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38240",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/38240",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30194",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30194"
+      },
+      "title": "Spec PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:5763719:generation.queued:sdk:JavaScript:@azure/arm-appconfiguration",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-01-16T17:01:38.9111762Z",
+      "observedAt": "2026-01-16T17:13:38.3045941Z",
+      "trackId": "sdk:JavaScript:@azure/arm-appconfiguration",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5763719",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5763719"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:5763718:generation.queued:sdk:Python:azure-mgmt-appconfiguration",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-01-16T17:01:38.9695183Z",
+      "observedAt": "2026-01-16T17:13:32.2592712Z",
+      "trackId": "sdk:Python:azure-mgmt-appconfiguration",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5763718",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5763718"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:5763720:generation.queued:sdk:Java:azure-resourcemanager-appconfiguration",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-01-16T17:01:38.9753447Z",
+      "observedAt": "2026-01-16T17:18:08.0201836Z",
+      "trackId": "sdk:Java:azure-resourcemanager-appconfiguration",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5763720",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5763720"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:5763721:generation.queued:sdk:Go:sdk/resourcemanager/appconfiguration/armappconfiguration",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-01-16T17:01:39.1379313Z",
+      "observedAt": "2026-01-16T17:11:49.2502487Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/appconfiguration/armappconfiguration",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5763721",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5763721"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:5763718:generation.started:sdk:Python:azure-mgmt-appconfiguration",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-01-16T17:05:51.7267418Z",
+      "observedAt": "2026-01-16T17:13:32.2592712Z",
+      "trackId": "sdk:Python:azure-mgmt-appconfiguration",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5763718",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5763718"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:5763719:generation.started:sdk:JavaScript:@azure/arm-appconfiguration",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-01-16T17:05:56.0756711Z",
+      "observedAt": "2026-01-16T17:13:38.3045941Z",
+      "trackId": "sdk:JavaScript:@azure/arm-appconfiguration",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5763719",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5763719"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:5763721:generation.started:sdk:Go:sdk/resourcemanager/appconfiguration/armappconfiguration",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-01-16T17:05:57.3340616Z",
+      "observedAt": "2026-01-16T17:11:49.2502487Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/appconfiguration/armappconfiguration",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5763721",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5763721"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:5763720:generation.started:sdk:Java:azure-resourcemanager-appconfiguration",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-01-16T17:06:15.3566306Z",
+      "observedAt": "2026-01-16T17:18:08.0201836Z",
+      "trackId": "sdk:Java:azure-resourcemanager-appconfiguration",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5763720",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5763720"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#25889:commit:fd6274d4747a:sdk:Go:sdk/resourcemanager/appconfiguration/armappconfiguration",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-16T17:10:47Z",
+      "observedAt": "2026-01-16T17:10:47Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/appconfiguration/armappconfiguration",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#25889",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/fd6274d4747a7e218df864e3d1f79590e8ce8e0a"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#25889:pr.created:sdk:Go:sdk/resourcemanager/appconfiguration/armappconfiguration",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-16T17:10:51Z",
+      "observedAt": "2026-01-16T17:10:51Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/appconfiguration/armappconfiguration",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#25889",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/25889"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado:30193:26:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-01-16T17:10:57.923Z",
+      "observedAt": "2026-01-16T17:10:57.923Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/appconfiguration/armappconfiguration",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30193",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30193"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:30193:26:Custom.SDKPullRequestForGo",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-01-16T17:10:57.923Z",
+      "observedAt": "2026-01-16T17:10:57.923Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/appconfiguration/armappconfiguration",
+      "value": "https://github.com/Azure/azure-sdk-for-go/pull/25889",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30193",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30193"
+      },
+      "title": "SDK PR linked",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:5763721:generation.completed:sdk:Go:sdk/resourcemanager/appconfiguration/armappconfiguration",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-01-16T17:11:49.2502487Z",
+      "observedAt": "2026-01-16T17:11:49.2502487Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/appconfiguration/armappconfiguration",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5763721",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5763721"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#44690:commit:dd11fa71777d:sdk:Python:azure-mgmt-appconfiguration",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-16T17:12:19Z",
+      "observedAt": "2026-01-16T17:12:19Z",
+      "trackId": "sdk:Python:azure-mgmt-appconfiguration",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#44690",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/dd11fa71777dd33e84f362f73e208e50254aa233"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37056:commit:47b02289a700:sdk:JavaScript:@azure/arm-appconfiguration",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-16T17:12:22Z",
+      "observedAt": "2026-01-16T17:12:22Z",
+      "trackId": "sdk:JavaScript:@azure/arm-appconfiguration",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37056",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/47b02289a70010f2de70f28c91e41212ee231db6"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#44690:pr.created:sdk:Python:azure-mgmt-appconfiguration",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-16T17:12:22Z",
+      "observedAt": "2026-01-16T17:12:22Z",
+      "trackId": "sdk:Python:azure-mgmt-appconfiguration",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#44690",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/44690"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37056:pr.created:sdk:JavaScript:@azure/arm-appconfiguration",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-16T17:12:25Z",
+      "observedAt": "2026-01-16T17:12:25Z",
+      "trackId": "sdk:JavaScript:@azure/arm-appconfiguration",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37056",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37056"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado:30193:27:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-01-16T17:12:28.777Z",
+      "observedAt": "2026-01-16T17:12:28.777Z",
+      "trackId": "sdk:Python:azure-mgmt-appconfiguration",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30193",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30193"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:30193:27:Custom.SDKPullRequestForPython",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-01-16T17:12:28.777Z",
+      "observedAt": "2026-01-16T17:12:28.777Z",
+      "trackId": "sdk:Python:azure-mgmt-appconfiguration",
+      "value": "https://github.com/Azure/azure-sdk-for-python/pull/44690",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30193",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30193"
+      },
+      "title": "SDK PR linked",
+      "stack": 5
+    },
+    {
+      "id": "ado:30193:28:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-01-16T17:12:32.323Z",
+      "observedAt": "2026-01-16T17:12:32.323Z",
+      "trackId": "sdk:JavaScript:@azure/arm-appconfiguration",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30193",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30193"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:30193:28:Custom.SDKPullRequestForJavaScript",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-01-16T17:12:32.323Z",
+      "observedAt": "2026-01-16T17:12:32.323Z",
+      "trackId": "sdk:JavaScript:@azure/arm-appconfiguration",
+      "value": "https://github.com/Azure/azure-sdk-for-js/pull/37056",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30193",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30193"
+      },
+      "title": "SDK PR linked",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#55060:commit:43252d6fd15f:sdk:.NET:Azure.ResourceManager.AppConfiguration",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-16T17:12:35Z",
+      "observedAt": "2026-01-16T17:12:35Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.AppConfiguration",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#55060",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/43252d6fd15f0df5c4737149140f9d6cd8241de6"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#55060:pr.created:sdk:.NET:Azure.ResourceManager.AppConfiguration",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-16T17:12:38Z",
+      "observedAt": "2026-01-16T17:12:38Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.AppConfiguration",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#55060",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/55060"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:30193:29:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-01-16T17:12:46.117Z",
+      "observedAt": "2026-01-16T17:12:46.117Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.AppConfiguration",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30193",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30193"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:30193:29:Custom.SDKPullRequestForDotnet",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-01-16T17:12:46.117Z",
+      "observedAt": "2026-01-16T17:12:46.117Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.AppConfiguration",
+      "value": "https://github.com/Azure/azure-sdk-for-net/pull/55060",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30193",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30193"
+      },
+      "title": "SDK PR linked",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:5763718:generation.completed:sdk:Python:azure-mgmt-appconfiguration",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-01-16T17:13:32.2592712Z",
+      "observedAt": "2026-01-16T17:13:32.2592712Z",
+      "trackId": "sdk:Python:azure-mgmt-appconfiguration",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5763718",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5763718"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:5763719:generation.completed:sdk:JavaScript:@azure/arm-appconfiguration",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-01-16T17:13:38.3045941Z",
+      "observedAt": "2026-01-16T17:13:38.3045941Z",
+      "trackId": "sdk:JavaScript:@azure/arm-appconfiguration",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5763719",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5763719"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#47738:commit:ebbcc3696939:sdk:Java:azure-resourcemanager-appconfiguration",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-16T17:13:54Z",
+      "observedAt": "2026-01-16T17:13:54Z",
+      "trackId": "sdk:Java:azure-resourcemanager-appconfiguration",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#47738",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/ebbcc36969393c36a4104579590373b1419c2d1c"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#47738:pr.created:sdk:Java:azure-resourcemanager-appconfiguration",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-16T17:13:57Z",
+      "observedAt": "2026-01-16T17:13:57Z",
+      "trackId": "sdk:Java:azure-resourcemanager-appconfiguration",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#47738",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/47738"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado:30193:30:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-01-16T17:14:04.953Z",
+      "observedAt": "2026-01-16T17:14:04.953Z",
+      "trackId": "sdk:Java:azure-resourcemanager-appconfiguration",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30193",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30193"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:30193:30:Custom.SDKPullRequestForJava",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-01-16T17:14:04.953Z",
+      "observedAt": "2026-01-16T17:14:04.953Z",
+      "trackId": "sdk:Java:azure-resourcemanager-appconfiguration",
+      "value": "https://github.com/Azure/azure-sdk-for-java/pull/47738",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30193",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30193"
+      },
+      "title": "SDK PR linked",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:5763720:generation.completed:sdk:Java:azure-resourcemanager-appconfiguration",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-01-16T17:18:08.0201836Z",
+      "observedAt": "2026-01-16T17:18:08.0201836Z",
+      "trackId": "sdk:Java:azure-resourcemanager-appconfiguration",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5763720",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5763720"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37056:comment:3761048767:sdk:JavaScript:@azure/arm-appconfiguration",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-16T17:22:32Z",
+      "observedAt": "2026-01-16T17:22:32Z",
+      "trackId": "sdk:JavaScript:@azure/arm-appconfiguration",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37056",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37056#issuecomment-3761048767"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews [@azure/arm-appconfiguration](https://spa.apiview.dev/review/404b25295eb749428bea9e7910bde9ee?activeApiRevisionId=b5befdbbf71f466d99d5",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#47738:comment:3761053828:sdk:Java:azure-resourcemanager-appconfiguration",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-16T17:24:04Z",
+      "observedAt": "2026-01-16T17:24:04Z",
+      "trackId": "sdk:Java:azure-resourcemanager-appconfiguration",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#47738",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/47738#issuecomment-3761053828"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews [com.azure.resourcemanager:azure-resourcemanager-appconfiguration](https://spa.apiview.dev/review/3d1b5fc76f304571b3c2331689763a3d?act",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37056:review:3676683943:sdk:JavaScript:@azure/arm-appconfiguration",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-19T07:37:22Z",
+      "observedAt": "2026-01-19T07:37:22Z",
+      "trackId": "sdk:JavaScript:@azure/arm-appconfiguration",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37056",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37056#pullrequestreview-3676683943"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This PR represents an automated SDK generation update for the Azure App Configuration ARM package, transitioning from version `2024-06-01` to `2025-06-01-preview`. The changes involve a major architectural shift fro",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37056:comment:2703557144:sdk:JavaScript:@azure/arm-appconfiguration",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-19T07:37:22Z",
+      "observedAt": "2026-01-19T07:37:22Z",
+      "trackId": "sdk:JavaScript:@azure/arm-appconfiguration",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37056",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37056#discussion_r2703557144"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Multiple Azure SDK ESLint rules are set to \"warn\" instead of \"error\", and some rules are disabled. This reduces the enforcement of SDK standards. Consider setting these rules to \"error\" to ensure compliance with Azure SDK guidelines, or doc",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#55060:review:3676685633:sdk:.NET:Azure.ResourceManager.AppConfiguration",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-19T07:37:48Z",
+      "observedAt": "2026-01-19T07:37:48Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.AppConfiguration",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#55060",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/55060#pullrequestreview-3676685633"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot wasn't able to review any files in this pull request.",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#47738:review:3676720342:sdk:Java:azure-resourcemanager-appconfiguration",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-19T07:45:51Z",
+      "observedAt": "2026-01-19T07:45:51Z",
+      "trackId": "sdk:Java:azure-resourcemanager-appconfiguration",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#47738",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/47738#pullrequestreview-3676720342"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This PR updates the Azure App Configuration Resource Manager SDK for Java to API version 2025-06-01-preview. The changes represent an automated SDK generation from TypeSpec (transitioning from AutoRest Code Generato",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#44690:review:3676726271:sdk:Python:azure-mgmt-appconfiguration",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-19T07:47:13Z",
+      "observedAt": "2026-01-19T07:47:13Z",
+      "trackId": "sdk:Python:azure-mgmt-appconfiguration",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#44690",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/44690#pullrequestreview-3676726271"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This pull request regenerates the Azure App Configuration Management SDK for Python using TypeSpec-based code generation (Python Code Generator instead of AutoRest) targeting API version 2025-06-01-preview. The chan",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#44690:review:3677174966:sdk:Python:azure-mgmt-appconfiguration",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-19T09:39:00Z",
+      "observedAt": "2026-01-19T09:39:00Z",
+      "trackId": "sdk:Python:azure-mgmt-appconfiguration",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#44690",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/44690#pullrequestreview-3677174966"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#44690:commit:b7c602600fc8:sdk:Python:azure-mgmt-appconfiguration",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-19T09:47:42Z",
+      "observedAt": "2026-01-19T09:47:42Z",
+      "trackId": "sdk:Python:azure-mgmt-appconfiguration",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#44690",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/b7c602600fc832785bbdc8497a3d81ad173b16ba"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#44690:commit:dcb5618ff5a2:sdk:Python:azure-mgmt-appconfiguration",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-19T10:05:33Z",
+      "observedAt": "2026-01-19T10:05:33Z",
+      "trackId": "sdk:Python:azure-mgmt-appconfiguration",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#44690",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/dcb5618ff5a2994d84789cfe823cc14e562cada5"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#44690:comment:3767490713:sdk:Python:azure-mgmt-appconfiguration",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-19T10:06:53Z",
+      "observedAt": "2026-01-19T10:06:53Z",
+      "trackId": "sdk:Python:azure-mgmt-appconfiguration",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#44690",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/44690#issuecomment-3767490713"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@msyyc sdk regenerated, please help rereview",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#44690:review:3680143856:sdk:Python:azure-mgmt-appconfiguration",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-20T03:08:37Z",
+      "observedAt": "2026-01-20T03:08:37Z",
+      "trackId": "sdk:Python:azure-mgmt-appconfiguration",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#44690",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/44690#pullrequestreview-3680143856"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#44690:comment:2706599837:sdk:Python:azure-mgmt-appconfiguration",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-20T03:08:37Z",
+      "observedAt": "2026-01-20T03:08:37Z",
+      "trackId": "sdk:Python:azure-mgmt-appconfiguration",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#44690",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/44690#discussion_r2706599837"
+      },
+      "confidence": "authoritative",
+      "excerpt": "```suggestion - This version introduces new hybrid models which have dual dictionary and model nature. Please follow https://aka.ms/azsdk/python/migrate/hybrid-models for migration. - For the method breakings, please refer to https://aka.ms",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#44690:commit:a5e23c1ba6cf:sdk:Python:azure-mgmt-appconfiguration",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-20T03:09:58Z",
+      "observedAt": "2026-01-20T03:09:58Z",
+      "trackId": "sdk:Python:azure-mgmt-appconfiguration",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#44690",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/a5e23c1ba6cf81c5684d36cb97558e94f282c7e7"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#44690:review:3680151705:sdk:Python:azure-mgmt-appconfiguration",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-20T03:14:17Z",
+      "observedAt": "2026-01-20T03:14:17Z",
+      "trackId": "sdk:Python:azure-mgmt-appconfiguration",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#44690",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/44690#pullrequestreview-3680151705"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#44690:comment:3770848388:sdk:Python:azure-mgmt-appconfiguration",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-20T03:25:20Z",
+      "observedAt": "2026-01-20T03:25:20Z",
+      "trackId": "sdk:Python:azure-mgmt-appconfiguration",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#44690",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/44690#issuecomment-3770848388"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @ChristineWanjau, pr ready, feel free to merge and release",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#25889:comment:3773795534:sdk:Go:sdk/resourcemanager/appconfiguration/armappconfiguration",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-20T16:23:46Z",
+      "observedAt": "2026-01-20T16:23:46Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/appconfiguration/armappconfiguration",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#25889",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/25889#issuecomment-3773795534"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews [sdk/resourcemanager/appconfiguration/armappconfiguration](https://spa.apiview.dev/review/cc878e142e5d48aabb097d8a1fe0c6c9?activeApiRe",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#25889:review:3683109995:sdk:Go:sdk/resourcemanager/appconfiguration/armappconfiguration",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-20T16:27:06Z",
+      "observedAt": "2026-01-20T16:27:06Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/appconfiguration/armappconfiguration",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#25889",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/25889#pullrequestreview-3683109995"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This is an automated SDK generation PR that updates the Azure App Configuration resource manager SDK from API version 2024-06-01 to 2025-06-01-preview. The changes migrate from AutoRest to the Go Code Generator and ",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37056:review:3685083390:sdk:JavaScript:@azure/arm-appconfiguration",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-21T02:28:15Z",
+      "observedAt": "2026-01-21T02:28:15Z",
+      "trackId": "sdk:JavaScript:@azure/arm-appconfiguration",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37056",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37056#pullrequestreview-3685083390"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37056:comment:2710729189:sdk:JavaScript:@azure/arm-appconfiguration",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-21T02:28:15Z",
+      "observedAt": "2026-01-21T02:28:15Z",
+      "trackId": "sdk:JavaScript:@azure/arm-appconfiguration",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37056",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37056#discussion_r2710729189"
+      },
+      "confidence": "authoritative",
+      "excerpt": "test is not a block for self service release, Feel free to revert `xxx_test.spec.ts` and `assets.json` files, then run the test and push the test recordings See https://github.com/Azure/azure-sdk-for-js/blob/main/documentation/Quickstart-on",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#47738:review:3685475929:sdk:Java:azure-resourcemanager-appconfiguration",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-21T06:00:34Z",
+      "observedAt": "2026-01-21T06:00:34Z",
+      "trackId": "sdk:Java:azure-resourcemanager-appconfiguration",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#47738",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/47738#pullrequestreview-3685475929"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#44690:pr.merged:sdk:Python:azure-mgmt-appconfiguration",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-21T07:57:39Z",
+      "observedAt": "2026-01-21T07:57:39Z",
+      "trackId": "sdk:Python:azure-mgmt-appconfiguration",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#44690",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/44690"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#47738:pr.merged:sdk:Java:azure-resourcemanager-appconfiguration",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-21T08:05:45Z",
+      "observedAt": "2026-01-21T08:05:45Z",
+      "trackId": "sdk:Java:azure-resourcemanager-appconfiguration",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#47738",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/47738"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37056:commit:a912fb4dedaa:sdk:JavaScript:@azure/arm-appconfiguration",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-22T08:42:37Z",
+      "observedAt": "2026-01-22T08:42:37Z",
+      "trackId": "sdk:JavaScript:@azure/arm-appconfiguration",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37056",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/a912fb4dedaa115d06ece3a2fcd243c252a92cca"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#25889:comment:3803925164:sdk:Go:sdk/resourcemanager/appconfiguration/armappconfiguration",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-27T08:50:28Z",
+      "observedAt": "2026-01-27T08:50:28Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/appconfiguration/armappconfiguration",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "tadelesh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#25889",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/25889#issuecomment-3803925164"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@ChristineWanjau Please follow this [doc](https://github.com/Azure/azure-sdk-for-go/blob/main/documentation/development/testing.md#example-management-plane) to update the recording tests.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#25889:commit:c2d76af463bf:sdk:Go:sdk/resourcemanager/appconfiguration/armappconfiguration",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-27T09:11:31Z",
+      "observedAt": "2026-01-27T09:11:31Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/appconfiguration/armappconfiguration",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "jliusan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#25889",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/c2d76af463bf71497b4869e847ad10f7b373e37c"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37056:comment:3846165054:sdk:JavaScript:@azure/arm-appconfiguration",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-04T08:56:57Z",
+      "observedAt": "2026-02-04T08:56:57Z",
+      "trackId": "sdk:JavaScript:@azure/arm-appconfiguration",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37056",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37056#issuecomment-3846165054"
+      },
+      "confidence": "authoritative",
+      "excerpt": "These ci failures may because it has conflicts between main and this pr, you can follow this [guide ](https://github.com/Azure/azure-sdk-for-js/blob/main/documentation/steps-after-generations.md#resolve-conflicts-for-pr)to resolve conflicts",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37056:commit:c664e0765573:sdk:JavaScript:@azure/arm-appconfiguration",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-04T09:31:08Z",
+      "observedAt": "2026-02-04T09:31:08Z",
+      "trackId": "sdk:JavaScript:@azure/arm-appconfiguration",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37056",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/c664e0765573839b39e64158a605815d0171a546"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37056:comment:3846456528:sdk:JavaScript:@azure/arm-appconfiguration",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-04T09:58:31Z",
+      "observedAt": "2026-02-04T09:58:31Z",
+      "trackId": "sdk:JavaScript:@azure/arm-appconfiguration",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37056",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37056#issuecomment-3846456528"
+      },
+      "confidence": "authoritative",
+      "excerpt": "LGTM cc @qiaozha",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37056:review:3754344363:sdk:JavaScript:@azure/arm-appconfiguration",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-05T03:53:43Z",
+      "observedAt": "2026-02-05T03:53:43Z",
+      "trackId": "sdk:JavaScript:@azure/arm-appconfiguration",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "qiaozha"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37056",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37056#pullrequestreview-3754344363"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37056:pr.merged:sdk:JavaScript:@azure/arm-appconfiguration",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-05T03:54:06Z",
+      "observedAt": "2026-02-05T03:54:06Z",
+      "trackId": "sdk:JavaScript:@azure/arm-appconfiguration",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37056",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37056"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#25889:commit:ef3777498f89:sdk:Go:sdk/resourcemanager/appconfiguration/armappconfiguration",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-09T09:36:22Z",
+      "observedAt": "2026-02-09T09:36:22Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/appconfiguration/armappconfiguration",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "jliusan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#25889",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/ef3777498f8961bd219743d39828d71095f44969"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#25889:commit:a800a0b3bc2d:sdk:Go:sdk/resourcemanager/appconfiguration/armappconfiguration",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-10T02:28:17Z",
+      "observedAt": "2026-02-10T02:28:17Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/appconfiguration/armappconfiguration",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "jliusan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#25889",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/a800a0b3bc2d0a3812cd58819a16f6061e5449b3"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#25889:review:3776435751:sdk:Go:sdk/resourcemanager/appconfiguration/armappconfiguration",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-10T02:45:01Z",
+      "observedAt": "2026-02-10T02:45:01Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/appconfiguration/armappconfiguration",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "tadelesh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#25889",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/25889#pullrequestreview-3776435751"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#25889:commit:229fdf88fd31:sdk:Go:sdk/resourcemanager/appconfiguration/armappconfiguration",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-10T04:22:00Z",
+      "observedAt": "2026-02-10T04:22:00Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/appconfiguration/armappconfiguration",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "jliusan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#25889",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/229fdf88fd31e0f0bdfec9ac8e3b130914c016d2"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#25889:commit:467befa3c113:sdk:Go:sdk/resourcemanager/appconfiguration/armappconfiguration",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-10T06:00:20Z",
+      "observedAt": "2026-02-10T06:00:20Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/appconfiguration/armappconfiguration",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "jliusan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#25889",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/467befa3c113a221294f2e2f7399415a8ffc02c7"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#25889:commit:55d6f53f1987:sdk:Go:sdk/resourcemanager/appconfiguration/armappconfiguration",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-10T07:33:42Z",
+      "observedAt": "2026-02-10T07:33:42Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/appconfiguration/armappconfiguration",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "jliusan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#25889",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/55d6f53f1987969f4034807b4d3d386735ecfe8a"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#25889:commit:346171999d24:sdk:Go:sdk/resourcemanager/appconfiguration/armappconfiguration",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-10T07:35:17Z",
+      "observedAt": "2026-02-10T07:35:17Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/appconfiguration/armappconfiguration",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "jliusan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#25889",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/346171999d24078ca65baf43fdb1272cb15cff54"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#25889:commit:692a938e5983:sdk:Go:sdk/resourcemanager/appconfiguration/armappconfiguration",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-10T07:54:18Z",
+      "observedAt": "2026-02-10T07:54:18Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/appconfiguration/armappconfiguration",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "jliusan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#25889",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/692a938e59839fa4a037309c6a9da9e386acfea9"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#25889:commit:a4f5defd84d3:sdk:Go:sdk/resourcemanager/appconfiguration/armappconfiguration",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-10T08:21:01Z",
+      "observedAt": "2026-02-10T08:21:01Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/appconfiguration/armappconfiguration",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "jliusan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#25889",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/a4f5defd84d3d4879dd98ebeba1830ebfa99a1cc"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#25889:review:3777520312:sdk:Go:sdk/resourcemanager/appconfiguration/armappconfiguration",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-10T08:40:48Z",
+      "observedAt": "2026-02-10T08:40:48Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/appconfiguration/armappconfiguration",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "tadelesh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#25889",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/25889#pullrequestreview-3777520312"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#25889:pr.merged:sdk:Go:sdk/resourcemanager/appconfiguration/armappconfiguration",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-10T08:54:05Z",
+      "observedAt": "2026-02-10T08:54:05Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/appconfiguration/armappconfiguration",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#25889",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/25889"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#55060:comment:4003744563:sdk:.NET:Azure.ResourceManager.AppConfiguration",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-05T09:41:10Z",
+      "observedAt": "2026-03-05T09:41:10Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.AppConfiguration",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChristineWanjau"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#55060",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/55060#issuecomment-4003744563"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@copilot can you regenerate this PR since it has now alot of conflicts",
+      "stack": 0
+    },
+    {
+      "id": "ado:30193:44:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-05T09:43:01.163Z",
+      "observedAt": "2026-03-05T09:43:01.163Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.AppConfiguration",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30193",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30193"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:30193:44:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-05T09:43:01.163Z",
+      "observedAt": "2026-03-05T09:43:01.163Z",
+      "trackId": "sdk:JavaScript:@azure/arm-appconfiguration",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30193",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30193"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:30193:44:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-05T09:43:01.163Z",
+      "observedAt": "2026-03-05T09:43:01.163Z",
+      "trackId": "sdk:Python:azure-mgmt-appconfiguration",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30193",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30193"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:30193:44:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-05T09:43:01.163Z",
+      "observedAt": "2026-03-05T09:43:01.163Z",
+      "trackId": "sdk:Java:azure-resourcemanager-appconfiguration",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30193",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30193"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:30193:44:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-05T09:43:01.163Z",
+      "observedAt": "2026-03-05T09:43:01.163Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/appconfiguration/armappconfiguration",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30193",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30193"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#55060:pr.closed:sdk:.NET:Azure.ResourceManager.AppConfiguration",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-23T22:38:53Z",
+      "observedAt": "2026-03-23T22:38:53Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.AppConfiguration",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#55060",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/55060"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#55060:comment:4114164888:sdk:.NET:Azure.ResourceManager.AppConfiguration",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-23T22:38:53Z",
+      "observedAt": "2026-03-23T22:38:53Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.AppConfiguration",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "praveenkuttappan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#55060",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/55060#issuecomment-4114164888"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Closing this PR and regenerating it again.",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6050932:generation.queued:sdk:.NET:Azure.ResourceManager.AppConfiguration",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-03-23T22:44:52.4645856Z",
+      "observedAt": "2026-03-23T22:51:42.1394795Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.AppConfiguration",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6050932",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6050932"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:30193:45:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-23T22:44:56.1Z",
+      "observedAt": "2026-03-23T22:44:56.1Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.AppConfiguration",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30193",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30193"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6050932:generation.started:sdk:.NET:Azure.ResourceManager.AppConfiguration",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-03-23T22:45:24.4324384Z",
+      "observedAt": "2026-03-23T22:51:42.1394795Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.AppConfiguration",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6050932",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6050932"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57375:commit:882433ecca5e:sdk:.NET:Azure.ResourceManager.AppConfiguration",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-23T22:50:41Z",
+      "observedAt": "2026-03-23T22:50:41Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.AppConfiguration",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57375",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/882433ecca5eff17bc84c4440d546e671bf8ba7d"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57375:pr.created:sdk:.NET:Azure.ResourceManager.AppConfiguration",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-23T22:50:48Z",
+      "observedAt": "2026-03-23T22:50:48Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.AppConfiguration",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57375",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57375"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:30193:46:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-23T22:50:55.967Z",
+      "observedAt": "2026-03-23T22:50:55.967Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.AppConfiguration",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30193",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30193"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:30193:46:Custom.SDKPullRequestForDotnet",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-03-23T22:50:55.967Z",
+      "observedAt": "2026-03-23T22:50:55.967Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.AppConfiguration",
+      "value": "https://github.com/Azure/azure-sdk-for-net/pull/57375",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30193",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30193"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6050932:generation.completed:sdk:.NET:Azure.ResourceManager.AppConfiguration",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-03-23T22:51:42.1394795Z",
+      "observedAt": "2026-03-23T22:51:42.1394795Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.AppConfiguration",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6050932",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6050932"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#55060:comment:4114232377:sdk:.NET:Azure.ResourceManager.AppConfiguration",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-23T22:55:31Z",
+      "observedAt": "2026-03-23T22:55:31Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.AppConfiguration",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "praveenkuttappan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#55060",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/55060#issuecomment-4114232377"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@ChristineWanjau Here is the regenerated SDK.",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57375:review:4035338053:sdk:.NET:Azure.ResourceManager.AppConfiguration",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-31T07:39:14Z",
+      "observedAt": "2026-03-31T07:39:14Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.AppConfiguration",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57375",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57375#pullrequestreview-4035338053"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Updates the TypeSpec source pin for **Azure.ResourceManager.AppConfiguration** to align SDK generation with the latest referenced `azure-rest-api-specs` commit for API version **2025-06-01-preview**. **Changes:** - ",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57375:comment:4160691554:sdk:.NET:Azure.ResourceManager.AppConfiguration",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-31T08:02:36Z",
+      "observedAt": "2026-03-31T08:02:36Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.AppConfiguration",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChristineWanjau"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57375",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57375#issuecomment-4160691554"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@ArcturusZhang @ArthurMa1978 this is ready to review",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57375:commit:d32420df0cbf:sdk:.NET:Azure.ResourceManager.AppConfiguration",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-13T07:57:30Z",
+      "observedAt": "2026-04-13T07:57:30Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.AppConfiguration",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57375",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/d32420df0cbfe39a8daf0c8c47c24e3b2e44522a"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57375:review:4186532543:sdk:.NET:Azure.ResourceManager.AppConfiguration",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-28T07:04:57Z",
+      "observedAt": "2026-04-28T07:04:57Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.AppConfiguration",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57375",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57375#pullrequestreview-4186532543"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57375:comment:3152167139:sdk:.NET:Azure.ResourceManager.AppConfiguration",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-28T07:04:57Z",
+      "observedAt": "2026-04-28T07:04:57Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.AppConfiguration",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57375",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57375#discussion_r3152167139"
+      },
+      "confidence": "authoritative",
+      "excerpt": "can you also include a release date?",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57375:review:4186534165:sdk:.NET:Azure.ResourceManager.AppConfiguration",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-28T07:05:17Z",
+      "observedAt": "2026-04-28T07:05:17Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.AppConfiguration",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57375",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57375#pullrequestreview-4186534165"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57375:comment:3152168694:sdk:.NET:Azure.ResourceManager.AppConfiguration",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-28T07:05:17Z",
+      "observedAt": "2026-04-28T07:05:17Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.AppConfiguration",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57375",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57375#discussion_r3152168694"
+      },
+      "confidence": "authoritative",
+      "excerpt": "to release, we also need to trim off these empty sections.",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57375:commit:1acf2e2c2edd:sdk:.NET:Azure.ResourceManager.AppConfiguration",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-28T07:25:50Z",
+      "observedAt": "2026-04-28T07:25:50Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.AppConfiguration",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57375",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/1acf2e2c2eddcb02609af8c5973533c38532c5ac"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57375:comment:3152270158:sdk:.NET:Azure.ResourceManager.AppConfiguration",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-28T07:26:15Z",
+      "observedAt": "2026-04-28T07:26:15Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.AppConfiguration",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChristineWanjau"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57375",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57375#discussion_r3152270158"
+      },
+      "confidence": "authoritative",
+      "excerpt": "added a date",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57375:review:4186644706:sdk:.NET:Azure.ResourceManager.AppConfiguration",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-28T07:26:23Z",
+      "observedAt": "2026-04-28T07:26:23Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.AppConfiguration",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChristineWanjau"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57375",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57375#pullrequestreview-4186644706"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57375:review:4186646996:sdk:.NET:Azure.ResourceManager.AppConfiguration",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-28T07:26:41Z",
+      "observedAt": "2026-04-28T07:26:41Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.AppConfiguration",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChristineWanjau"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57375",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57375#pullrequestreview-4186646996"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57375:comment:3152272250:sdk:.NET:Azure.ResourceManager.AppConfiguration",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-28T07:26:41Z",
+      "observedAt": "2026-04-28T07:26:41Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.AppConfiguration",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChristineWanjau"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57375",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57375#discussion_r3152272250"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Trimmed them",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57375:review:4186671159:sdk:.NET:Azure.ResourceManager.AppConfiguration",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-28T07:30:40Z",
+      "observedAt": "2026-04-28T07:30:40Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.AppConfiguration",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57375",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57375#pullrequestreview-4186671159"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57375:pr.merged:sdk:.NET:Azure.ResourceManager.AppConfiguration",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-28T07:57:43Z",
+      "observedAt": "2026-04-28T07:57:43Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.AppConfiguration",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57375",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57375"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:30193:51:Custom.ReleaseStatusForDotnet",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-04-28T10:09:11.547Z",
+      "observedAt": "2026-04-28T10:09:11.547Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.AppConfiguration",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30193",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30193"
+      },
+      "title": "Release status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:30193:51:Custom.ReleasedVersionForDotnet",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-04-28T10:09:11.547Z",
+      "observedAt": "2026-04-28T10:09:11.547Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.AppConfiguration",
+      "value": "1.5.0-beta.1",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30193",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30193"
+      },
+      "title": "Package version observed",
+      "stack": 0
+    },
+    {
+      "id": "ado:30193:53:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-29T16:31:59.323Z",
+      "observedAt": "2026-04-29T16:31:59.323Z",
+      "trackId": "sdk:JavaScript:@azure/arm-appconfiguration",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30193",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30193"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:30193:53:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-29T16:31:59.323Z",
+      "observedAt": "2026-04-29T16:31:59.323Z",
+      "trackId": "sdk:Python:azure-mgmt-appconfiguration",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30193",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30193"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:30193:53:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-29T16:31:59.323Z",
+      "observedAt": "2026-04-29T16:31:59.323Z",
+      "trackId": "sdk:Java:azure-resourcemanager-appconfiguration",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30193",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30193"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:30193:53:Custom.ReleaseStatusForJava",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-04-29T16:31:59.323Z",
+      "observedAt": "2026-04-29T16:31:59.323Z",
+      "trackId": "sdk:Java:azure-resourcemanager-appconfiguration",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30193",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30193"
+      },
+      "title": "Release status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:30193:53:Custom.ReleasedVersionForJava",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-04-29T16:31:59.323Z",
+      "observedAt": "2026-04-29T16:31:59.323Z",
+      "trackId": "sdk:Java:azure-resourcemanager-appconfiguration",
+      "value": "1.2.0-beta.1",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30193",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30193"
+      },
+      "title": "Package version observed",
+      "stack": 2
+    },
+    {
+      "id": "ado:30193:53:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-29T16:31:59.323Z",
+      "observedAt": "2026-04-29T16:31:59.323Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/appconfiguration/armappconfiguration",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30193",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30193"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:30193:54:Custom.ReleaseStatusForPython",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-04-29T16:33:14.12Z",
+      "observedAt": "2026-04-29T16:33:14.12Z",
+      "trackId": "sdk:Python:azure-mgmt-appconfiguration",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30193",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30193"
+      },
+      "title": "Release status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:30193:54:Custom.ReleasedVersionForPython",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-04-29T16:33:14.12Z",
+      "observedAt": "2026-04-29T16:33:14.12Z",
+      "trackId": "sdk:Python:azure-mgmt-appconfiguration",
+      "value": "6.0.0b1",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30193",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30193"
+      },
+      "title": "Package version observed",
+      "stack": 2
+    },
+    {
+      "id": "ado:30193:55:Custom.ReleaseStatusForGo",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-04-29T16:34:25.65Z",
+      "observedAt": "2026-04-29T16:34:25.65Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/appconfiguration/armappconfiguration",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30193",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30193"
+      },
+      "title": "Release status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:30193:55:Custom.ReleasedVersionForGo",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-04-29T16:34:25.65Z",
+      "observedAt": "2026-04-29T16:34:25.65Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/appconfiguration/armappconfiguration",
+      "value": "3.1.0-beta.1",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30193",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30193"
+      },
+      "title": "Package version observed",
+      "stack": 2
+    },
+    {
+      "id": "ado:30193:56:Custom.ReleaseStatusForJavaScript",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-04-29T16:35:30.753Z",
+      "observedAt": "2026-04-29T16:35:30.753Z",
+      "trackId": "sdk:JavaScript:@azure/arm-appconfiguration",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30193",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30193"
+      },
+      "title": "Release status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:30193:56:Custom.ReleasedVersionForJavaScript",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-04-29T16:35:30.753Z",
+      "observedAt": "2026-04-29T16:35:30.753Z",
+      "trackId": "sdk:JavaScript:@azure/arm-appconfiguration",
+      "value": "6.0.0-beta.1",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30193",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30193"
+      },
+      "title": "Package version observed",
+      "stack": 2
+    },
+    {
+      "id": "ado:30193:57:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-04-29T16:36:35.337Z",
+      "observedAt": "2026-04-29T16:36:35.337Z",
+      "trackId": "plan",
+      "value": "Finished",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30193",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30193"
+      },
+      "title": "Plan state changed",
+      "stack": 0
+    }
+  ],
+  "quality": {
+    "warnings": [
+      "1 historical linked PR(s) closed without merge",
+      "1 superseded SDK PR link(s) retained"
+    ],
+    "unavailablePullRequests": 0,
+    "unavailablePipelineRuns": 0
+  },
+  "boundaryFacts": {
+    "id": "30193",
+    "state": "finished",
+    "specPrs": [
+      {
+        "id": "github:Azure/azure-rest-api-specs#38240",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#38240",
+        "createdAt": "2025-10-17T00:32:13Z",
+        "mergedAt": "2025-10-21T15:57:42Z",
+        "closedAt": "2025-10-21T15:57:42Z",
+        "available": true
+      }
+    ],
+    "artifacts": [
+      {
+        "language": ".NET",
+        "package": "Azure.ResourceManager.AppConfiguration",
+        "trackId": "sdk:.NET:Azure.ResourceManager.AppConfiguration",
+        "prId": "github:Azure/azure-sdk-for-net#57375",
+        "prCreatedAt": "2026-03-23T22:50:48Z",
+        "prMergedAt": "2026-04-28T07:57:43Z",
+        "prClosedAt": "2026-04-28T07:57:43Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-net#55060",
+            "createdAt": "2026-01-16T17:12:38Z",
+            "mergedAt": null,
+            "closedAt": "2026-03-23T22:38:53Z",
+            "state": "closed"
+          },
+          {
+            "id": "github:Azure/azure-sdk-for-net#57375",
+            "createdAt": "2026-03-23T22:50:48Z",
+            "mergedAt": "2026-04-28T07:57:43Z",
+            "closedAt": "2026-04-28T07:57:43Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6050932",
+        "generationStartAt": "2026-03-23T22:45:24.4324384Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-04-28T10:09:11.547Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.5.0-beta.1",
+        "releaseBoundaryAt": "2026-04-28T10:09:11.547Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "JavaScript",
+        "package": "@azure/arm-appconfiguration",
+        "trackId": "sdk:JavaScript:@azure/arm-appconfiguration",
+        "prId": "github:Azure/azure-sdk-for-js#37056",
+        "prCreatedAt": "2026-01-16T17:12:25Z",
+        "prMergedAt": "2026-02-05T03:54:06Z",
+        "prClosedAt": "2026-02-05T03:54:06Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-js#37056",
+            "createdAt": "2026-01-16T17:12:25Z",
+            "mergedAt": "2026-02-05T03:54:06Z",
+            "closedAt": "2026-02-05T03:54:06Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:5763719",
+        "generationStartAt": "2026-01-16T17:05:56.0756711Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-04-29T16:35:30.753Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "6.0.0-beta.1",
+        "releaseBoundaryAt": "2026-04-29T16:35:30.753Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Python",
+        "package": "azure-mgmt-appconfiguration",
+        "trackId": "sdk:Python:azure-mgmt-appconfiguration",
+        "prId": "github:Azure/azure-sdk-for-python#44690",
+        "prCreatedAt": "2026-01-16T17:12:22Z",
+        "prMergedAt": "2026-01-21T07:57:39Z",
+        "prClosedAt": "2026-01-21T07:57:39Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-python#44690",
+            "createdAt": "2026-01-16T17:12:22Z",
+            "mergedAt": "2026-01-21T07:57:39Z",
+            "closedAt": "2026-01-21T07:57:39Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:5763718",
+        "generationStartAt": "2026-01-16T17:05:51.7267418Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-04-29T16:33:14.12Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "6.0.0b1",
+        "releaseBoundaryAt": "2026-04-29T16:33:14.12Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Java",
+        "package": "azure-resourcemanager-appconfiguration",
+        "trackId": "sdk:Java:azure-resourcemanager-appconfiguration",
+        "prId": "github:Azure/azure-sdk-for-java#47738",
+        "prCreatedAt": "2026-01-16T17:13:57Z",
+        "prMergedAt": "2026-01-21T08:05:45Z",
+        "prClosedAt": "2026-01-21T08:05:45Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-java#47738",
+            "createdAt": "2026-01-16T17:13:57Z",
+            "mergedAt": "2026-01-21T08:05:45Z",
+            "closedAt": "2026-01-21T08:05:45Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:5763720",
+        "generationStartAt": "2026-01-16T17:06:15.3566306Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-04-29T16:31:59.323Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.2.0-beta.1",
+        "releaseBoundaryAt": "2026-04-29T16:31:59.323Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Go",
+        "package": "sdk/resourcemanager/appconfiguration/armappconfiguration",
+        "trackId": "sdk:Go:sdk/resourcemanager/appconfiguration/armappconfiguration",
+        "prId": "github:Azure/azure-sdk-for-go#25889",
+        "prCreatedAt": "2026-01-16T17:10:51Z",
+        "prMergedAt": "2026-02-10T08:54:05Z",
+        "prClosedAt": "2026-02-10T08:54:05Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-go#25889",
+            "createdAt": "2026-01-16T17:10:51Z",
+            "mergedAt": "2026-02-10T08:54:05Z",
+            "closedAt": "2026-02-10T08:54:05Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:5763721",
+        "generationStartAt": "2026-01-16T17:05:57.3340616Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-04-29T16:34:25.65Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "3.1.0-beta.1",
+        "releaseBoundaryAt": "2026-04-29T16:34:25.65Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      }
+    ],
+    "cohortPlan": {
+      "id": "30193",
+      "releasePlanId": "2049",
+      "title": "Release Plan - 2049 - GA - Azure App Configuration",
+      "service": "Azure App Configuration",
+      "state": "finished"
+    },
+    "quality": {
+      "warnings": [
+        "1 historical linked PR(s) closed without merge",
+        "1 superseded SDK PR link(s) retained"
+      ],
+      "unavailablePullRequests": 0,
+      "unavailablePipelineRuns": 0
+    }
+  },
+  "summary": {
+    "durationHours": 2544.1,
+    "pullRequestCount": 7,
+    "humanReviewCount": 16,
+    "humanCommentCount": 17
+  }
+}

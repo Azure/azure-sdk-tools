@@ -1,0 +1,3790 @@
+{
+  "schemaVersion": 2,
+  "id": "34222",
+  "correlation": {
+    "policyVersion": 1,
+    "preflight": "passed"
+  },
+  "releasePlanId": "2217",
+  "title": "Release Plan - 2217 - Public Preview - Compute Schedule",
+  "service": "Compute Schedule.Management",
+  "product": "Release",
+  "path": "specification/computeschedule/ComputeSchedule.Management",
+  "state": "in-progress",
+  "plane": "management",
+  "releaseType": "APEX Public Preview",
+  "intendedMonth": "May 2026",
+  "createdAt": "2026-05-06T17:20:30.337Z",
+  "completedAt": null,
+  "sourceUrl": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34222",
+  "range": {
+    "start": "2026-05-05T16:03:30.000Z",
+    "end": "2026-08-14T00:37:23.589Z"
+  },
+  "intendedArtifacts": [
+    {
+      "prId": "github:Azure/azure-sdk-for-net#59030",
+      "language": ".NET",
+      "package": "Azure.ResourceManager.ComputeSchedule",
+      "version": "1.2.0-beta.5",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6259453",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-js#38441",
+      "language": "JavaScript",
+      "package": "@azure/arm-computeschedule",
+      "version": "2.0.0-beta.1",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6259452",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-python#46757",
+      "language": "Python",
+      "package": "azure-mgmt-computeschedule",
+      "version": "1.2.0b2",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6259451",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-java#49078",
+      "language": "Java",
+      "package": "azure-resourcemanager-computeschedule",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6259454",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-go#26730",
+      "language": "Go",
+      "package": "sdk/resourcemanager/computeschedule/armcomputeschedule",
+      "version": "2.0.0-beta.1",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6259455",
+      "releasePipelineUrl": null
+    }
+  ],
+  "links": [
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#42886",
+      "role": "spec-pr",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/42886",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-net#59030",
+      "role": "sdk-pr",
+      "language": ".NET",
+      "url": "https://github.com/Azure/azure-sdk-for-net/pull/59030",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-js#38441",
+      "role": "sdk-pr",
+      "language": "JavaScript",
+      "url": "https://github.com/Azure/azure-sdk-for-js/pull/38441",
+      "releasePlanIds": [
+        "2217"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-python#46757",
+      "role": "sdk-pr",
+      "language": "Python",
+      "url": "https://github.com/Azure/azure-sdk-for-python/pull/46757",
+      "releasePlanIds": [
+        "2217"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-java#49078",
+      "role": "sdk-pr",
+      "language": "Java",
+      "url": "https://github.com/Azure/azure-sdk-for-java/pull/49078",
+      "releasePlanIds": [
+        "2217"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-go#26730",
+      "role": "sdk-pr",
+      "language": "Go",
+      "url": "https://github.com/Azure/azure-sdk-for-go/pull/26730",
+      "releasePlanIds": [
+        "2217"
+      ]
+    }
+  ],
+  "tracks": [
+    {
+      "id": "plan",
+      "kind": "plan",
+      "label": "Release Plan",
+      "detail": "APEX Public Preview"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#42886",
+      "kind": "spec",
+      "label": "Spec PR",
+      "detail": "azure-rest-api-specs #42886",
+      "artifactId": "github:Azure/azure-rest-api-specs#42886",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "kind": "sdk",
+      "label": ".NET",
+      "detail": "Azure.ResourceManager.ComputeSchedule",
+      "artifactId": "github:Azure/azure-sdk-for-net#59030",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:JavaScript:@azure/arm-computeschedule",
+      "kind": "sdk",
+      "label": "JavaScript",
+      "detail": "@azure/arm-computeschedule",
+      "artifactId": "github:Azure/azure-sdk-for-js#38441",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Python:azure-mgmt-computeschedule",
+      "kind": "sdk",
+      "label": "Python",
+      "detail": "azure-mgmt-computeschedule",
+      "artifactId": "github:Azure/azure-sdk-for-python#46757",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Java:azure-resourcemanager-computeschedule",
+      "kind": "sdk",
+      "label": "Java",
+      "detail": "azure-resourcemanager-computeschedule",
+      "artifactId": "github:Azure/azure-sdk-for-java#49078",
+      "state": "open"
+    },
+    {
+      "id": "sdk:Go:sdk/resourcemanager/computeschedule/armcomputeschedule",
+      "kind": "sdk",
+      "label": "Go",
+      "detail": "sdk/resourcemanager/computeschedule/armcomputeschedule",
+      "artifactId": "github:Azure/azure-sdk-for-go#26730",
+      "state": "merged"
+    }
+  ],
+  "events": [
+    {
+      "id": "github:Azure/azure-rest-api-specs#42886:pr.created:spec:github:Azure/azure-rest-api-specs#42886",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-05T16:03:30Z",
+      "observedAt": "2026-05-05T16:03:30Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42886",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "asmdv"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42886",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42886"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42886:comment:4380962322:spec:github:Azure/azure-rest-api-specs#42886",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-05T16:04:16Z",
+      "observedAt": "2026-05-05T16:04:16Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42886",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42886",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42886#issuecomment-4380962322"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>✅ All automated merging requirements have been met! To get your PR merged, see <a href=\"https://aka.ms/azsdk/specreview/merge\">aka.ms/azsdk/specreview/merge</a>.<br /><br />Comment generated by <a href=\"https://g",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42886:comment:4381008174:spec:github:Azure/azure-rest-api-specs#42886",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-05T16:10:50Z",
+      "observedAt": "2026-05-05T16:10:50Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42886",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42886",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42886#issuecomment-4381008174"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews | Language | API Review for Package | |----------|---------| | TypeSpec | [Microsoft.ComputeSchedule](https://spa.apiview.dev/review/9",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42886:commit:6065cca70e20:spec:github:Azure/azure-rest-api-specs#42886",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-05T17:44:10Z",
+      "observedAt": "2026-05-05T17:44:10Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42886",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42886",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/6065cca70e202dbb48e13b71cefc16e0ee5e29f9"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42886:commit:ea46f5f556e1:spec:github:Azure/azure-rest-api-specs#42886",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-06T14:29:36Z",
+      "observedAt": "2026-05-06T14:29:36Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42886",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42886",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/ea46f5f556e1a8263d6ee45e59b266f88443ffbb"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42886:commit:89b9aaf40c0f:spec:github:Azure/azure-rest-api-specs#42886",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-06T15:32:18Z",
+      "observedAt": "2026-05-06T15:32:18Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42886",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42886",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/89b9aaf40c0fdff0ef3bdf827617abd12190c743"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42886:review:4238110643:spec:github:Azure/azure-rest-api-specs#42886",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-06T17:11:29Z",
+      "observedAt": "2026-05-06T17:11:29Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42886",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "hardikginwala"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42886",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42886#pullrequestreview-4238110643"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42886:pr.merged:spec:github:Azure/azure-rest-api-specs#42886",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-06T17:13:24Z",
+      "observedAt": "2026-05-06T17:13:24Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42886",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42886",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42886"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:34222:created",
+      "type": "plan.created",
+      "phase": "plan",
+      "occurredAt": "2026-05-06T17:20:30.337Z",
+      "observedAt": "2026-05-06T17:20:30.337Z",
+      "trackId": "plan",
+      "title": "Release Plan created",
+      "confidence": "authoritative",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34222",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34222"
+      },
+      "stack": 0
+    },
+    {
+      "id": "ado:34222:1:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-05-06T17:20:30.337Z",
+      "observedAt": "2026-05-06T17:20:30.337Z",
+      "trackId": "plan",
+      "value": "New",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34222",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34222"
+      },
+      "title": "Plan state changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34222:1:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-06T17:20:30.337Z",
+      "observedAt": "2026-05-06T17:20:30.337Z",
+      "trackId": "plan",
+      "value": "Not Available",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34222",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34222"
+      },
+      "title": "Spec approval changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:34222:1:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T17:20:30.337Z",
+      "observedAt": "2026-05-06T17:20:30.337Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34222",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34222"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34222:1:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T17:20:30.337Z",
+      "observedAt": "2026-05-06T17:20:30.337Z",
+      "trackId": "sdk:JavaScript:@azure/arm-computeschedule",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34222",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34222"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34222:1:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T17:20:30.337Z",
+      "observedAt": "2026-05-06T17:20:30.337Z",
+      "trackId": "sdk:Python:azure-mgmt-computeschedule",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34222",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34222"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34222:1:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T17:20:30.337Z",
+      "observedAt": "2026-05-06T17:20:30.337Z",
+      "trackId": "sdk:Java:azure-resourcemanager-computeschedule",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34222",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34222"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34222:1:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T17:20:30.337Z",
+      "observedAt": "2026-05-06T17:20:30.337Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/computeschedule/armcomputeschedule",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34222",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34222"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34222:6:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-05-06T17:21:02.96Z",
+      "observedAt": "2026-05-06T17:21:02.96Z",
+      "trackId": "plan",
+      "value": "In Progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34222",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34222"
+      },
+      "title": "Plan state changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:34223:2:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-06T17:22:51.833Z",
+      "observedAt": "2026-05-06T17:22:51.833Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42886",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/42886",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34223",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34223"
+      },
+      "title": "Spec PR linked",
+      "stack": 2
+    },
+    {
+      "id": "ado:34222:8:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T17:22:55.893Z",
+      "observedAt": "2026-05-06T17:22:55.893Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34222",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34222"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34222:8:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T17:22:55.893Z",
+      "observedAt": "2026-05-06T17:22:55.893Z",
+      "trackId": "sdk:JavaScript:@azure/arm-computeschedule",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34222",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34222"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34222:8:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T17:22:55.893Z",
+      "observedAt": "2026-05-06T17:22:55.893Z",
+      "trackId": "sdk:Python:azure-mgmt-computeschedule",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34222",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34222"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34222:8:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T17:22:55.893Z",
+      "observedAt": "2026-05-06T17:22:55.893Z",
+      "trackId": "sdk:Java:azure-resourcemanager-computeschedule",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34222",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34222"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34222:8:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T17:22:55.893Z",
+      "observedAt": "2026-05-06T17:22:55.893Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/computeschedule/armcomputeschedule",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34222",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34222"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34222:9:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-06T17:22:57.493Z",
+      "observedAt": "2026-05-06T17:22:57.493Z",
+      "trackId": "plan",
+      "value": "Approved",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34222",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34222"
+      },
+      "title": "Spec approval changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:34222:23:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T17:43:20.173Z",
+      "observedAt": "2026-05-06T17:43:20.173Z",
+      "trackId": "sdk:Python:azure-mgmt-computeschedule",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34222",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34222"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:34222:24:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T17:43:31.177Z",
+      "observedAt": "2026-05-06T17:43:31.177Z",
+      "trackId": "sdk:JavaScript:@azure/arm-computeschedule",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34222",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34222"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:34222:25:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T17:43:42.313Z",
+      "observedAt": "2026-05-06T17:43:42.313Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34222",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34222"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:34222:26:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T17:43:54.563Z",
+      "observedAt": "2026-05-06T17:43:54.563Z",
+      "trackId": "sdk:Java:azure-resourcemanager-computeschedule",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34222",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34222"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:34222:27:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T17:44:05.577Z",
+      "observedAt": "2026-05-06T17:44:05.577Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/computeschedule/armcomputeschedule",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34222",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34222"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26730:commit:846dcd81dcd0:sdk:Go:sdk/resourcemanager/computeschedule/armcomputeschedule",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-06T17:52:01Z",
+      "observedAt": "2026-05-06T17:52:01Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/computeschedule/armcomputeschedule",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26730",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/846dcd81dcd08292513f596cfe810496761858d8"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26730:pr.created:sdk:Go:sdk/resourcemanager/computeschedule/armcomputeschedule",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-06T17:52:05Z",
+      "observedAt": "2026-05-06T17:52:05Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/computeschedule/armcomputeschedule",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26730",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26730"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:34222:28:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T17:52:12.17Z",
+      "observedAt": "2026-05-06T17:52:12.17Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/computeschedule/armcomputeschedule",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34222",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34222"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:34222:28:Custom.SDKPullRequestForGo",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T17:52:12.17Z",
+      "observedAt": "2026-05-06T17:52:12.17Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/computeschedule/armcomputeschedule",
+      "value": "https://github.com/Azure/azure-sdk-for-go/pull/26730",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34222",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34222"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59030:commit:5977e249589f:sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-06T17:52:40Z",
+      "observedAt": "2026-05-06T17:52:40Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59030",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/5977e249589f5b1356387029faac1602e2989f9c"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59030:pr.created:sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-06T17:52:44Z",
+      "observedAt": "2026-05-06T17:52:44Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59030",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59030"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:34222:29:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T17:52:51.267Z",
+      "observedAt": "2026-05-06T17:52:51.267Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34222",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34222"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:34222:29:Custom.SDKPullRequestForDotnet",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T17:52:51.267Z",
+      "observedAt": "2026-05-06T17:52:51.267Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "value": "https://github.com/Azure/azure-sdk-for-net/pull/59030",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34222",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34222"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38441:commit:4509b8645b61:sdk:JavaScript:@azure/arm-computeschedule",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-06T17:53:09Z",
+      "observedAt": "2026-05-06T17:53:09Z",
+      "trackId": "sdk:JavaScript:@azure/arm-computeschedule",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38441",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/4509b8645b61c044bc49539688949598a3e4ad8c"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38441:pr.created:sdk:JavaScript:@azure/arm-computeschedule",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-06T17:53:13Z",
+      "observedAt": "2026-05-06T17:53:13Z",
+      "trackId": "sdk:JavaScript:@azure/arm-computeschedule",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38441",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38441"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:34222:31:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T17:53:21.067Z",
+      "observedAt": "2026-05-06T17:53:21.067Z",
+      "trackId": "sdk:JavaScript:@azure/arm-computeschedule",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34222",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34222"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:34222:31:Custom.SDKPullRequestForJavaScript",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T17:53:21.067Z",
+      "observedAt": "2026-05-06T17:53:21.067Z",
+      "trackId": "sdk:JavaScript:@azure/arm-computeschedule",
+      "value": "https://github.com/Azure/azure-sdk-for-js/pull/38441",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34222",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34222"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46757:commit:3746eb0329ff:sdk:Python:azure-mgmt-computeschedule",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-06T17:53:47Z",
+      "observedAt": "2026-05-06T17:53:47Z",
+      "trackId": "sdk:Python:azure-mgmt-computeschedule",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46757",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/3746eb0329ffc00bc9adc54262f76d94833ea155"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46757:pr.created:sdk:Python:azure-mgmt-computeschedule",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-06T17:53:51Z",
+      "observedAt": "2026-05-06T17:53:51Z",
+      "trackId": "sdk:Python:azure-mgmt-computeschedule",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46757",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46757"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:34222:32:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T17:53:59.783Z",
+      "observedAt": "2026-05-06T17:53:59.783Z",
+      "trackId": "sdk:Python:azure-mgmt-computeschedule",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34222",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34222"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:34222:32:Custom.SDKPullRequestForPython",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T17:53:59.783Z",
+      "observedAt": "2026-05-06T17:53:59.783Z",
+      "trackId": "sdk:Python:azure-mgmt-computeschedule",
+      "value": "https://github.com/Azure/azure-sdk-for-python/pull/46757",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34222",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34222"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49078:commit:2b058a4cdcbd:sdk:Java:azure-resourcemanager-computeschedule",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-06T17:55:39Z",
+      "observedAt": "2026-05-06T17:55:39Z",
+      "trackId": "sdk:Java:azure-resourcemanager-computeschedule",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49078",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/2b058a4cdcbd4d0e4723394a6c64edb488f5feb7"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49078:pr.created:sdk:Java:azure-resourcemanager-computeschedule",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-06T17:55:45Z",
+      "observedAt": "2026-05-06T17:55:45Z",
+      "trackId": "sdk:Java:azure-resourcemanager-computeschedule",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49078",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49078"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:34222:34:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T17:55:52.173Z",
+      "observedAt": "2026-05-06T17:55:52.173Z",
+      "trackId": "sdk:Java:azure-resourcemanager-computeschedule",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34222",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34222"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:34222:34:Custom.SDKPullRequestForJava",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T17:55:52.173Z",
+      "observedAt": "2026-05-06T17:55:52.173Z",
+      "trackId": "sdk:Java:azure-resourcemanager-computeschedule",
+      "value": "https://github.com/Azure/azure-sdk-for-java/pull/49078",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34222",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34222"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6259451:generation.queued:sdk:Python:azure-mgmt-computeschedule",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T18:33:21.3945396Z",
+      "observedAt": "2026-05-06T18:46:07.8147583Z",
+      "trackId": "sdk:Python:azure-mgmt-computeschedule",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6259451",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6259451"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:34222:37:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T18:33:23.8Z",
+      "observedAt": "2026-05-06T18:33:23.8Z",
+      "trackId": "sdk:Python:azure-mgmt-computeschedule",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34222",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34222"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6259452:generation.queued:sdk:JavaScript:@azure/arm-computeschedule",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T18:33:34.8971755Z",
+      "observedAt": "2026-05-06T18:45:03.231048Z",
+      "trackId": "sdk:JavaScript:@azure/arm-computeschedule",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6259452",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6259452"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:34222:38:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T18:33:37.353Z",
+      "observedAt": "2026-05-06T18:33:37.353Z",
+      "trackId": "sdk:JavaScript:@azure/arm-computeschedule",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34222",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34222"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6259453:generation.queued:sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T18:33:47.5136391Z",
+      "observedAt": "2026-05-06T18:44:50.5063246Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6259453",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6259453"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:34222:39:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T18:33:50.137Z",
+      "observedAt": "2026-05-06T18:33:50.137Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34222",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34222"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6259454:generation.queued:sdk:Java:azure-resourcemanager-computeschedule",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T18:34:00.9528635Z",
+      "observedAt": "2026-05-06T18:58:29.1303591Z",
+      "trackId": "sdk:Java:azure-resourcemanager-computeschedule",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6259454",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6259454"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:34222:40:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T18:34:05.707Z",
+      "observedAt": "2026-05-06T18:34:05.707Z",
+      "trackId": "sdk:Java:azure-resourcemanager-computeschedule",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34222",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34222"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6259455:generation.queued:sdk:Go:sdk/resourcemanager/computeschedule/armcomputeschedule",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T18:34:17.0499287Z",
+      "observedAt": "2026-05-06T18:44:09.4295877Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/computeschedule/armcomputeschedule",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6259455",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6259455"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:34222:41:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T18:34:21.66Z",
+      "observedAt": "2026-05-06T18:34:21.66Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/computeschedule/armcomputeschedule",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34222",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34222"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6259451:generation.started:sdk:Python:azure-mgmt-computeschedule",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T18:37:31.0874522Z",
+      "observedAt": "2026-05-06T18:46:07.8147583Z",
+      "trackId": "sdk:Python:azure-mgmt-computeschedule",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6259451",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6259451"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6259452:generation.started:sdk:JavaScript:@azure/arm-computeschedule",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T18:37:31.4920176Z",
+      "observedAt": "2026-05-06T18:45:03.231048Z",
+      "trackId": "sdk:JavaScript:@azure/arm-computeschedule",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6259452",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6259452"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6259453:generation.started:sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T18:37:48.64115Z",
+      "observedAt": "2026-05-06T18:44:50.5063246Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6259453",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6259453"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6259454:generation.started:sdk:Java:azure-resourcemanager-computeschedule",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T18:38:24.512271Z",
+      "observedAt": "2026-05-06T18:58:29.1303591Z",
+      "trackId": "sdk:Java:azure-resourcemanager-computeschedule",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6259454",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6259454"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6259455:generation.started:sdk:Go:sdk/resourcemanager/computeschedule/armcomputeschedule",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T18:38:32.1212845Z",
+      "observedAt": "2026-05-06T18:44:09.4295877Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/computeschedule/armcomputeschedule",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6259455",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6259455"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6259455:00be4b52-4a63-5865-8e02-c61723ad0692:sdk:Go:sdk/resourcemanager/computeschedule/armcomputeschedule",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T18:43:38.0733333Z",
+      "observedAt": "2026-05-06T18:44:09.4295877Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/computeschedule/armcomputeschedule",
+      "title": "task failed: Generate SDK",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6259455",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6259455"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 4
+    },
+    {
+      "id": "ado:34222:42:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T18:43:44.357Z",
+      "observedAt": "2026-05-06T18:43:44.357Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/computeschedule/armcomputeschedule",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34222",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34222"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34222:43:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T18:43:58.577Z",
+      "observedAt": "2026-05-06T18:43:58.577Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34222",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34222"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6259455:83516c17-6666-5250-abde-63983ce72a49:sdk:Go:sdk/resourcemanager/computeschedule/armcomputeschedule",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T18:44:04.1966667Z",
+      "observedAt": "2026-05-06T18:44:09.4295877Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/computeschedule/armcomputeschedule",
+      "title": "job failed: Job",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6259455",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6259455"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 5
+    },
+    {
+      "id": "ado:34222:44:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T18:44:08.45Z",
+      "observedAt": "2026-05-06T18:44:08.45Z",
+      "trackId": "sdk:JavaScript:@azure/arm-computeschedule",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34222",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34222"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6259455:6884a131-87da-5381-61f3-d7acc3b91d76:sdk:Go:sdk/resourcemanager/computeschedule/armcomputeschedule",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T18:44:08.8966667Z",
+      "observedAt": "2026-05-06T18:44:09.4295877Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/computeschedule/armcomputeschedule",
+      "title": "stage failed: SDK Generation",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6259455",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6259455"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6259455:generation.failed:sdk:Go:sdk/resourcemanager/computeschedule/armcomputeschedule",
+      "type": "generation.failed",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T18:44:09.4295877Z",
+      "observedAt": "2026-05-06T18:44:09.4295877Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/computeschedule/armcomputeschedule",
+      "title": "Pipeline failed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6259455",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6259455"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:34222:45:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T18:44:31.673Z",
+      "observedAt": "2026-05-06T18:44:31.673Z",
+      "trackId": "sdk:Python:azure-mgmt-computeschedule",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34222",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34222"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6259453:generation.completed:sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T18:44:50.5063246Z",
+      "observedAt": "2026-05-06T18:44:50.5063246Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6259453",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6259453"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6259452:generation.completed:sdk:JavaScript:@azure/arm-computeschedule",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T18:45:03.231048Z",
+      "observedAt": "2026-05-06T18:45:03.231048Z",
+      "trackId": "sdk:JavaScript:@azure/arm-computeschedule",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6259452",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6259452"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6259451:generation.completed:sdk:Python:azure-mgmt-computeschedule",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T18:46:07.8147583Z",
+      "observedAt": "2026-05-06T18:46:07.8147583Z",
+      "trackId": "sdk:Python:azure-mgmt-computeschedule",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6259451",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6259451"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49078:commit:7db77a1860dd:sdk:Java:azure-resourcemanager-computeschedule",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-06T18:47:42Z",
+      "observedAt": "2026-05-06T18:47:42Z",
+      "trackId": "sdk:Java:azure-resourcemanager-computeschedule",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49078",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/7db77a1860ddf61a7b48bd316b6fee2f971cab96"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:34222:46:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T18:47:51.303Z",
+      "observedAt": "2026-05-06T18:47:51.303Z",
+      "trackId": "sdk:Java:azure-resourcemanager-computeschedule",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34222",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34222"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6259454:generation.completed:sdk:Java:azure-resourcemanager-computeschedule",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T18:58:29.1303591Z",
+      "observedAt": "2026-05-06T18:58:29.1303591Z",
+      "trackId": "sdk:Java:azure-resourcemanager-computeschedule",
+      "title": "Pipeline completed with issues",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6259454",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6259454"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38441:comment:4393770078:sdk:JavaScript:@azure/arm-computeschedule",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-07T02:33:09Z",
+      "observedAt": "2026-05-07T02:33:09Z",
+      "trackId": "sdk:JavaScript:@azure/arm-computeschedule",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38441",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38441#issuecomment-4393770078"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Next Steps to Merge This PR is currently in **draft** state. No CI checks have run yet. - ⏳ PR is a draft — mark it as ready for review to trigger CI checks and enable merge.",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38441:review:4240883228:sdk:JavaScript:@azure/arm-computeschedule",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-07T02:33:10Z",
+      "observedAt": "2026-05-07T02:33:10Z",
+      "trackId": "sdk:JavaScript:@azure/arm-computeschedule",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38441",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38441#pullrequestreview-4240883228"
+      },
+      "confidence": "authoritative",
+      "excerpt": "No API design issues found. The `@azure/arm-computeschedule` package update looks clean: - Package version `2.0.0-beta.1` is consistent across `package.json` and `src/api/computeScheduleContext.ts`. - API version updated from `2025-04-15-pr",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38441:review:4241529820:sdk:JavaScript:@azure/arm-computeschedule",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-07T06:17:07Z",
+      "observedAt": "2026-05-07T06:17:07Z",
+      "trackId": "sdk:JavaScript:@azure/arm-computeschedule",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38441",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38441#pullrequestreview-4241529820"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Updates the `@azure/arm-computeschedule` management SDK generated from the ComputeSchedule TypeSpec (API version `2026-04-15-preview`) and refreshes build config, helpers, API reports, and samples to match the new g",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38441:comment:3199254089:sdk:JavaScript:@azure/arm-computeschedule",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-07T06:17:07Z",
+      "observedAt": "2026-05-07T06:17:07Z",
+      "trackId": "sdk:JavaScript:@azure/arm-computeschedule",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38441",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38441#discussion_r3199254089"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`ComputeScheduleClient` now permits omitting `subscriptionId`, but still calls `createComputeSchedule(…, subscriptionId ?? \"\")`. Passing an empty subscription ID will generate invalid ARM URLs for most operations (e.g. `/subscriptions//reso",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38441:comment:3199254157:sdk:JavaScript:@azure/arm-computeschedule",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-07T06:17:07Z",
+      "observedAt": "2026-05-07T06:17:07Z",
+      "trackId": "sdk:JavaScript:@azure/arm-computeschedule",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38441",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38441#discussion_r3199254157"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The `commonjs` target omits `moduleType: commonjs`. Warp will infer this from `condition: require` but emits a warning and the base config explicitly sets it (see `warp.base.config.yml`). Consider adding `moduleType: commonjs` here to match",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26730:comment:4402721668:sdk:Go:sdk/resourcemanager/computeschedule/armcomputeschedule",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-08T02:10:14Z",
+      "observedAt": "2026-05-08T02:10:14Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/computeschedule/armcomputeschedule",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26730",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26730#issuecomment-4402721668"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## PR is ready to merge All CI checks passed ✅ — Build/Test (ubuntu/windows × Go 1.25.8 & 1.26.1) and Analyze all succeeded. No manual edits to auto-generated files were detected (single commit from `azure-sdk` automation).",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26730:review:4249019575:sdk:Go:sdk/resourcemanager/computeschedule/armcomputeschedule",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-08T02:23:57Z",
+      "observedAt": "2026-05-08T02:23:57Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/computeschedule/armcomputeschedule",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "JiaqiZhang-Dev"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26730",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26730#pullrequestreview-4249019575"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26730:comment:3205862206:sdk:Go:sdk/resourcemanager/computeschedule/armcomputeschedule",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-08T02:23:57Z",
+      "observedAt": "2026-05-08T02:23:57Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/computeschedule/armcomputeschedule",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "JiaqiZhang-Dev"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26730",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26730#discussion_r3205862206"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@jliusan please help find the breaking change source, thanks!",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26730:review:4249039142:sdk:Go:sdk/resourcemanager/computeschedule/armcomputeschedule",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-08T02:26:50Z",
+      "observedAt": "2026-05-08T02:26:50Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/computeschedule/armcomputeschedule",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26730",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26730#pullrequestreview-4249039142"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Regenerates the `armcomputeschedule` Azure Resource Manager SDK from the `2026-04-15-preview` API version and publishes it as a new major (`v2`) beta module release, including new flex-VM create capabilities and upd",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38441:comment:4402925060:sdk:JavaScript:@azure/arm-computeschedule",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-08T02:51:40Z",
+      "observedAt": "2026-05-08T02:51:40Z",
+      "trackId": "sdk:JavaScript:@azure/arm-computeschedule",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38441",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38441#issuecomment-4402925060"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Next Steps to Merge Only failed checks and required actions are listed below. All CI checks are passing. The PR is currently blocked pending required reviewer approvals from: `@xirzec`, `@jeremymeng`, `@MaryGao`, `@qiaozha`, `@JialinHuan",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38441:review:4249182510:sdk:JavaScript:@azure/arm-computeschedule",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-08T02:51:41Z",
+      "observedAt": "2026-05-08T02:51:41Z",
+      "trackId": "sdk:JavaScript:@azure/arm-computeschedule",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38441",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38441#pullrequestreview-4249182510"
+      },
+      "confidence": "authoritative",
+      "excerpt": "No API design issues found. The public API surface looks good. The PR introduces API version `2026-04-15-preview` (up from `2025-04-15-preview`), package version `2.0.0-beta.1` (up from `1.2.0-beta.1`), and adds new operation groups (`Occur",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26730:comment:4404198922:sdk:Go:sdk/resourcemanager/computeschedule/armcomputeschedule",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-08T06:51:23Z",
+      "observedAt": "2026-05-08T06:51:23Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/computeschedule/armcomputeschedule",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jliusan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26730",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26730#issuecomment-4404198922"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The breaking changes are introduced and approved in this [PR](https://github.com/Azure/azure-rest-api-specs/pull/42023/changes#diff-61b10c2b3c388d7baff6e4a00779371a61472e5ee8eda22582f8f7a6b08cfe88L194 )",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38441:review:4250627746:sdk:JavaScript:@azure/arm-computeschedule",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-08T08:01:52Z",
+      "observedAt": "2026-05-08T08:01:52Z",
+      "trackId": "sdk:JavaScript:@azure/arm-computeschedule",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38441",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38441#pullrequestreview-4250627746"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38441:comment:3207277251:sdk:JavaScript:@azure/arm-computeschedule",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-08T08:01:52Z",
+      "observedAt": "2026-05-08T08:01:52Z",
+      "trackId": "sdk:JavaScript:@azure/arm-computeschedule",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38441",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38441#discussion_r3207277251"
+      },
+      "confidence": "authoritative",
+      "excerpt": "breaking approved in https://github.com/azure/azure-rest-api-specs/pull/42023",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38441:review:4250628915:sdk:JavaScript:@azure/arm-computeschedule",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-08T08:02:05Z",
+      "observedAt": "2026-05-08T08:02:05Z",
+      "trackId": "sdk:JavaScript:@azure/arm-computeschedule",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38441",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38441#pullrequestreview-4250628915"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38441:comment:3207278293:sdk:JavaScript:@azure/arm-computeschedule",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-08T08:02:05Z",
+      "observedAt": "2026-05-08T08:02:05Z",
+      "trackId": "sdk:JavaScript:@azure/arm-computeschedule",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38441",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38441#discussion_r3207278293"
+      },
+      "confidence": "authoritative",
+      "excerpt": "need revert",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38441:review:4250663045:sdk:JavaScript:@azure/arm-computeschedule",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-08T08:08:38Z",
+      "observedAt": "2026-05-08T08:08:38Z",
+      "trackId": "sdk:JavaScript:@azure/arm-computeschedule",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38441",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38441#pullrequestreview-4250663045"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38441:comment:3207309038:sdk:JavaScript:@azure/arm-computeschedule",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-08T08:08:38Z",
+      "observedAt": "2026-05-08T08:08:38Z",
+      "trackId": "sdk:JavaScript:@azure/arm-computeschedule",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38441",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38441#discussion_r3207309038"
+      },
+      "confidence": "authoritative",
+      "excerpt": "https://github.com/Azure/azure-rest-api-specs/pull/43010",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59030:commit:91c116270420:sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-08T23:21:48Z",
+      "observedAt": "2026-05-08T23:21:48Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "asmdv"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59030",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/91c116270420281c2bb9d4582e0ca0146ea10ca8"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59030:commit:095c40117df4:sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-09T00:50:31Z",
+      "observedAt": "2026-05-09T00:50:31Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "asmdv"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59030",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/095c40117df4b12da27258beccc9d1d8b810f155"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38441:commit:3a64de53d758:sdk:JavaScript:@azure/arm-computeschedule",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-09T05:52:50Z",
+      "observedAt": "2026-05-09T05:52:50Z",
+      "trackId": "sdk:JavaScript:@azure/arm-computeschedule",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38441",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/3a64de53d758e6ba857d733cde9ebf2343e14c88"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38441:review:4257035711:sdk:JavaScript:@azure/arm-computeschedule",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-09T06:31:37Z",
+      "observedAt": "2026-05-09T06:31:37Z",
+      "trackId": "sdk:JavaScript:@azure/arm-computeschedule",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38441",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38441#pullrequestreview-4257035711"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38441:comment:3212632868:sdk:JavaScript:@azure/arm-computeschedule",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-09T06:31:37Z",
+      "observedAt": "2026-05-09T06:31:37Z",
+      "trackId": "sdk:JavaScript:@azure/arm-computeschedule",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38441",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38441#discussion_r3212632868"
+      },
+      "confidence": "authoritative",
+      "excerpt": "breaking approved in https://github.com/Azure/azure-rest-api-specs/pull/37320",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38441:commit:b688f2fac31a:sdk:JavaScript:@azure/arm-computeschedule",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-09T06:36:57Z",
+      "observedAt": "2026-05-09T06:36:57Z",
+      "trackId": "sdk:JavaScript:@azure/arm-computeschedule",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38441",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/b688f2fac31a96c1a37a34585d01a5369f752726"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38441:comment:4412096257:sdk:JavaScript:@azure/arm-computeschedule",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-09T08:57:24Z",
+      "observedAt": "2026-05-09T08:57:24Z",
+      "trackId": "sdk:JavaScript:@azure/arm-computeschedule",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38441",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38441#issuecomment-4412096257"
+      },
+      "confidence": "authoritative",
+      "excerpt": "LGTM cc @JialinHuang803",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38441:review:4260279034:sdk:JavaScript:@azure/arm-computeschedule",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-11T01:32:05Z",
+      "observedAt": "2026-05-11T01:32:05Z",
+      "trackId": "sdk:JavaScript:@azure/arm-computeschedule",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "JialinHuang803"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38441",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38441#pullrequestreview-4260279034"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26730:review:4260332794:sdk:Go:sdk/resourcemanager/computeschedule/armcomputeschedule",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-11T01:57:32Z",
+      "observedAt": "2026-05-11T01:57:32Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/computeschedule/armcomputeschedule",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "JiaqiZhang-Dev"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26730",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26730#pullrequestreview-4260332794"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38441:comment:4417091673:sdk:JavaScript:@azure/arm-computeschedule",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-11T02:20:12Z",
+      "observedAt": "2026-05-11T02:20:12Z",
+      "trackId": "sdk:JavaScript:@azure/arm-computeschedule",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38441",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38441#issuecomment-4417091673"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@asmdv Feel free to merge this",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59030:commit:9035b25dbcae:sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-11T03:55:06Z",
+      "observedAt": "2026-05-11T03:55:06Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "asmdv"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59030",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/9035b25dbcae9312421744f994e1f093b8f04622"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59030:commit:a3d99b7ba099:sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-11T05:51:15Z",
+      "observedAt": "2026-05-11T05:51:15Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "asmdv"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59030",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/a3d99b7ba099c12a9a38576153ad67ea44641198"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59030:commit:2868eabce7e6:sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-11T11:46:53Z",
+      "observedAt": "2026-05-11T11:46:53Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "asmdv"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59030",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/2868eabce7e6bdaac73316ab2343e989dfc21aab"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59030:comment:3219292247:sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-11T13:32:30Z",
+      "observedAt": "2026-05-11T13:32:30Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59030",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59030#discussion_r3219292247"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`JsonModelWriteCore` always writes `distributionStrategy` using `DistributionStrategy.ToString()`. Because `ComputeScheduleDistributionStrategy` is a wrapper struct whose default value has an underlying null string, this can emit `null` (or",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59030:review:4264085429:sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-11T13:32:31Z",
+      "observedAt": "2026-05-11T13:32:31Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59030",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59030#pullrequestreview-4264085429"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Updates the **Azure.ResourceManager.ComputeSchedule** management SDK to match the latest TypeSpec spec input (api-version `2026-04-15-preview`) and regenerates the SDK surface, serialization, and tests accordingly. ",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59030:comment:3219292325:sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-11T13:32:31Z",
+      "observedAt": "2026-05-11T13:32:31Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59030",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59030#discussion_r3219292325"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`DeserializeComputeScheduleZoneAllocationPolicy` no longer guards against `distributionStrategy: null`. If the service returns a null JSON value, `prop.Value.GetString()` returns null and `new ComputeScheduleDistributionStrategy(null)` will",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59030:comment:3219292368:sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-11T13:32:31Z",
+      "observedAt": "2026-05-11T13:32:31Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59030",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59030#discussion_r3219292368"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The public constructor accepts `ComputeScheduleDistributionStrategy` by value, so callers can still pass `default`, which produces an instance whose `DistributionStrategy.ToString()` is null. Consider validating in the constructor that the ",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59030:review:4264294442:sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-11T13:58:38Z",
+      "observedAt": "2026-05-11T13:58:38Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "sumedhsp-msft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59030",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59030#pullrequestreview-4264294442"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**Review summary (auto-applied skill: azure-sdk-mgmt-pr-review)** - **Phase 1 - Versioning:** PASS. Version stays at `1.2.0-beta.3` (no major bump), `ApiCompatVersion` preserved at `1.1.0`, and no new entries to `ApiCompatBaseline.txt`. - *",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59030:commit:5402cbb05dc1:sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-11T21:29:06Z",
+      "observedAt": "2026-05-11T21:29:06Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "asmdv"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59030",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/5402cbb05dc1f8746e018d8e3629097a8c3de1f3"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59030:commit:e7d9d8c8314a:sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-11T21:30:08Z",
+      "observedAt": "2026-05-11T21:30:08Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "asmdv"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59030",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/e7d9d8c8314ab1047a69f0ad80e78a5c9f66c1cc"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59030:review:4267564326:sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-11T21:32:29Z",
+      "observedAt": "2026-05-11T21:32:29Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "asmdv"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59030",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59030#pullrequestreview-4267564326"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59030:comment:3222276137:sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-11T21:32:29Z",
+      "observedAt": "2026-05-11T21:32:29Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "asmdv"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59030",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59030#discussion_r3222276137"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@copilot+claude-opus-4.7 throw a more descriptive FormatException indicating the required property was null/missing",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59030:commit:4601b0537526:sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-11T21:42:55Z",
+      "observedAt": "2026-05-11T21:42:55Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59030",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/4601b05375269a6586127565450121c81a31590b"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59030:commit:522795ec321a:sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-11T21:44:35Z",
+      "observedAt": "2026-05-11T21:44:35Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59030",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/522795ec321a46880b5856558cbdb02b9575355d"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59030:review:4267627007:sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-11T21:45:01Z",
+      "observedAt": "2026-05-11T21:45:01Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-swe-agent[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59030",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59030#pullrequestreview-4267627007"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59030:comment:3222335031:sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-11T21:45:01Z",
+      "observedAt": "2026-05-11T21:45:01Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59030",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59030#discussion_r3222335031"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Updated in 522795ec: deserialization now throws a descriptive `FormatException` when `distributionStrategy` is null or missing, and I added targeted coverage for both cases.",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59030:comment:4425440489:sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-11T21:46:18Z",
+      "observedAt": "2026-05-11T21:46:18Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59030",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59030#issuecomment-4425440489"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Just as a heads up, I was blocked by some firewall rules while working on your feedback. Expand below for details. > [!WARNING] > > <details> > <summary>Firewall rules blocked me from connecting to one or more addresses (expand for details)",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59030:commit:f9ab103519c5:sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-11T23:00:00Z",
+      "observedAt": "2026-05-11T23:00:00Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59030",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/f9ab103519c57f1551a18b8f3b5409fad47d1899"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59030:commit:1978aea564b0:sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-11T23:17:24Z",
+      "observedAt": "2026-05-11T23:17:24Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59030",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/1978aea564b08fec1744aee9c4c53130a6fa550f"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59030:review:4274278759:sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-12T16:26:23Z",
+      "observedAt": "2026-05-12T16:26:23Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59030",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59030#pullrequestreview-4274278759"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59030:pr.merged:sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-12T16:27:22Z",
+      "observedAt": "2026-05-12T16:27:22Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59030",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59030"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38441:commit:cd508deb383b:sdk:JavaScript:@azure/arm-computeschedule",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-28T06:48:53Z",
+      "observedAt": "2026-05-28T06:48:53Z",
+      "trackId": "sdk:JavaScript:@azure/arm-computeschedule",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38441",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/cd508deb383b40fcb569267c5f1394ac244f5e60"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38441:review:4378660625:sdk:JavaScript:@azure/arm-computeschedule",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-28T07:08:55Z",
+      "observedAt": "2026-05-28T07:08:55Z",
+      "trackId": "sdk:JavaScript:@azure/arm-computeschedule",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "JialinHuang803"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38441",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38441#pullrequestreview-4378660625"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38441:pr.merged:sdk:JavaScript:@azure/arm-computeschedule",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-28T07:09:09Z",
+      "observedAt": "2026-05-28T07:09:09Z",
+      "trackId": "sdk:JavaScript:@azure/arm-computeschedule",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38441",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38441"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26730:comment:4590209699:sdk:Go:sdk/resourcemanager/computeschedule/armcomputeschedule",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-01T06:50:49Z",
+      "observedAt": "2026-06-01T06:50:49Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/computeschedule/armcomputeschedule",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jliusan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26730",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26730#issuecomment-4590209699"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@copilot resolve the merge conflicts in this pull request",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26730:comment:4590218290:sdk:Go:sdk/resourcemanager/computeschedule/armcomputeschedule",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-01T06:52:31Z",
+      "observedAt": "2026-06-01T06:52:31Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/computeschedule/armcomputeschedule",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jliusan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26730",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26730#issuecomment-4590218290"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@copilot resolve the merge conflicts in this pull request",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26730:commit:2401e39e51ca:sdk:Go:sdk/resourcemanager/computeschedule/armcomputeschedule",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-01T06:55:13Z",
+      "observedAt": "2026-06-01T06:55:13Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/computeschedule/armcomputeschedule",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26730",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/2401e39e51ca7a31aab27ab6239e940a21a4e20d"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26730:comment:4590236449:sdk:Go:sdk/resourcemanager/computeschedule/armcomputeschedule",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-01T06:55:29Z",
+      "observedAt": "2026-06-01T06:55:29Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/computeschedule/armcomputeschedule",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26730",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26730#issuecomment-4590236449"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> @copilot resolve the merge conflicts in this pull request Resolved the merge conflicts and merged `origin/main` into this PR branch in commit `2401e39`.",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26730:comment:4590254710:sdk:Go:sdk/resourcemanager/computeschedule/armcomputeschedule",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-01T06:58:18Z",
+      "observedAt": "2026-06-01T06:58:18Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/computeschedule/armcomputeschedule",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26730",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26730#issuecomment-4590254710"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> @copilot resolve the merge conflicts in this pull request Already resolved on this branch in commit `2401e39`. I rechecked the branch and there are currently no unmerged files.",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26730:commit:62fa48d31d83:sdk:Go:sdk/resourcemanager/computeschedule/armcomputeschedule",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-01T08:01:50Z",
+      "observedAt": "2026-06-01T08:01:50Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/computeschedule/armcomputeschedule",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "jliusan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26730",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/62fa48d31d8315a0143cbf01789e84bde8a50b94"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26730:commit:faee2ecddca5:sdk:Go:sdk/resourcemanager/computeschedule/armcomputeschedule",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-01T08:06:20Z",
+      "observedAt": "2026-06-01T08:06:20Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/computeschedule/armcomputeschedule",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "jliusan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26730",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/faee2ecddca5f1c34be6293e24326ff6c7e0ca5b"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26730:commit:a9ead7fcc6eb:sdk:Go:sdk/resourcemanager/computeschedule/armcomputeschedule",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-01T08:28:45Z",
+      "observedAt": "2026-06-01T08:28:45Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/computeschedule/armcomputeschedule",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "jliusan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26730",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/a9ead7fcc6eb4d47a2524c2da95031a9cd928afa"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26730:commit:3d76c5e41d80:sdk:Go:sdk/resourcemanager/computeschedule/armcomputeschedule",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-01T08:44:25Z",
+      "observedAt": "2026-06-01T08:44:25Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/computeschedule/armcomputeschedule",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "jliusan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26730",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/3d76c5e41d8097d7f9e467877fdf5fa46b2f3033"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26730:commit:88ec2d4e157e:sdk:Go:sdk/resourcemanager/computeschedule/armcomputeschedule",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-01T08:51:04Z",
+      "observedAt": "2026-06-01T08:51:04Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/computeschedule/armcomputeschedule",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26730",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/88ec2d4e157e71e8f629a0bad121d4e379a4acc4"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26730:review:4400156888:sdk:Go:sdk/resourcemanager/computeschedule/armcomputeschedule",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-01T09:51:22Z",
+      "observedAt": "2026-06-01T09:51:22Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/computeschedule/armcomputeschedule",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "tadelesh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26730",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26730#pullrequestreview-4400156888"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26730:pr.merged:sdk:Go:sdk/resourcemanager/computeschedule/armcomputeschedule",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-01T09:52:14Z",
+      "observedAt": "2026-06-01T09:52:14Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/computeschedule/armcomputeschedule",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26730",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26730"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49078:review:4420415002:sdk:Java:azure-resourcemanager-computeschedule",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-03T16:05:07Z",
+      "observedAt": "2026-06-03T16:05:07Z",
+      "trackId": "sdk:Java:azure-resourcemanager-computeschedule",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49078",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49078#pullrequestreview-4420415002"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot wasn't able to review this pull request because it exceeds the maximum number of lines (20,000). Try reducing the number of changed lines and requesting a review from Copilot again.",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46757:comment:3350100617:sdk:Python:azure-mgmt-computeschedule",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-03T16:09:29Z",
+      "observedAt": "2026-06-03T16:09:29Z",
+      "trackId": "sdk:Python:azure-mgmt-computeschedule",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46757",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46757#discussion_r3350100617"
+      },
+      "confidence": "authoritative",
+      "excerpt": "README now claims the package is tested with Python 3.10+, but `pyproject.toml` still declares `requires-python = \">=3.9\"` and includes the Python 3.9 classifier. This is inconsistent for users and should be aligned (either update README ba",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46757:review:4420453150:sdk:Python:azure-mgmt-computeschedule",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-03T16:09:30Z",
+      "observedAt": "2026-06-03T16:09:30Z",
+      "trackId": "sdk:Python:azure-mgmt-computeschedule",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46757",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46757#pullrequestreview-4420453150"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This AutoPR updates `azure-mgmt-computeschedule` from the latest TypeSpec in `azure-rest-api-specs` (API version `2026-04-15-preview`) and refreshes the generated SDK + packaging metadata in `azure-sdk-for-python`. ",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46757:comment:3350100681:sdk:Python:azure-mgmt-computeschedule",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-03T16:09:30Z",
+      "observedAt": "2026-06-03T16:09:30Z",
+      "trackId": "sdk:Python:azure-mgmt-computeschedule",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46757",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46757#discussion_r3350100681"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Prerequisites section says Python 3.10+ is required, but the package metadata (`pyproject.toml`) still indicates Python >=3.9 support. Please align the README requirement with the actual `requires-python` version (or update `requires-python",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49078:review:4424128528:sdk:Java:azure-resourcemanager-computeschedule",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-04T02:14:03Z",
+      "observedAt": "2026-06-04T02:14:03Z",
+      "trackId": "sdk:Java:azure-resourcemanager-computeschedule",
+      "title": "Changes requested",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49078",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49078#pullrequestreview-4424128528"
+      },
+      "confidence": "authoritative",
+      "excerpt": "You are using the outdated SHA on specs repo. https://github.com/Azure/azure-rest-api-specs/blob/13d51ee484703ea6845668fbf4b9de13f41bf5c2/specification/computeschedule/ComputeSchedule.Management/client.tsp It got lots of clientName wrong. T",
+      "reviewState": "changes_requested",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49078:comment:4618380712:sdk:Java:azure-resourcemanager-computeschedule",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-04T02:18:00Z",
+      "observedAt": "2026-06-04T02:18:00Z",
+      "trackId": "sdk:Java:azure-resourcemanager-computeschedule",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49078",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49078#issuecomment-4618380712"
+      },
+      "confidence": "authoritative",
+      "excerpt": "You need to use latest main to regen <-- OK, I am running it for you https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6393732&view=results",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46757:commit:2eaeec2bfb48:sdk:Python:azure-mgmt-computeschedule",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-04T05:37:16Z",
+      "observedAt": "2026-06-04T05:37:16Z",
+      "trackId": "sdk:Python:azure-mgmt-computeschedule",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46757",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/2eaeec2bfb483569e7c0fa3253cca618ea590439"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46757:comment:4619330779:sdk:Python:azure-mgmt-computeschedule",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-04T05:40:44Z",
+      "observedAt": "2026-06-04T05:40:44Z",
+      "trackId": "sdk:Python:azure-mgmt-computeschedule",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46757",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46757#issuecomment-4619330779"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @asmdv The new api version 2026-04-15-preview seems not deployed on portal yet, we recommend making sure the api version to be deployed before releasing the SDK, though we won't block the release in self-serve release flow. You can conti",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46757:review:4425451037:sdk:Python:azure-mgmt-computeschedule",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-04T06:37:35Z",
+      "observedAt": "2026-06-04T06:37:35Z",
+      "trackId": "sdk:Python:azure-mgmt-computeschedule",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46757",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46757#pullrequestreview-4425451037"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46757:comment:3354001319:sdk:Python:azure-mgmt-computeschedule",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-04T06:37:36Z",
+      "observedAt": "2026-06-04T06:37:36Z",
+      "trackId": "sdk:Python:azure-mgmt-computeschedule",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46757",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46757#discussion_r3354001319"
+      },
+      "confidence": "authoritative",
+      "excerpt": "```suggestion ## 1.2.0b2 (2026-06-04) ```",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46757:commit:fb492e6d554d:sdk:Python:azure-mgmt-computeschedule",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-04T06:41:07Z",
+      "observedAt": "2026-06-04T06:41:07Z",
+      "trackId": "sdk:Python:azure-mgmt-computeschedule",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46757",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/fb492e6d554d0e9cfa8948d15c1085eb61780e13"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46757:commit:d7d2539d45e5:sdk:Python:azure-mgmt-computeschedule",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-04T06:49:00Z",
+      "observedAt": "2026-06-04T06:49:00Z",
+      "trackId": "sdk:Python:azure-mgmt-computeschedule",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46757",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/d7d2539d45e55e7945afe4af919cc9ad4c25198d"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49078:commit:9879d1bf3708:sdk:Java:azure-resourcemanager-computeschedule",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-04T07:08:17Z",
+      "observedAt": "2026-06-04T07:08:17Z",
+      "trackId": "sdk:Java:azure-resourcemanager-computeschedule",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49078",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/9879d1bf3708cffe815dfd759ab08778247994d5"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49078:review:4425661582:sdk:Java:azure-resourcemanager-computeschedule",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-04T07:14:51Z",
+      "observedAt": "2026-06-04T07:14:51Z",
+      "trackId": "sdk:Java:azure-resourcemanager-computeschedule",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49078",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49078#pullrequestreview-4425661582"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46757:commit:96ba1ab2e11d:sdk:Python:azure-mgmt-computeschedule",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-04T07:50:08Z",
+      "observedAt": "2026-06-04T07:50:08Z",
+      "trackId": "sdk:Python:azure-mgmt-computeschedule",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46757",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/96ba1ab2e11d5a2feac84d633f1416d545cb617e"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46757:commit:1e2ae47802d9:sdk:Python:azure-mgmt-computeschedule",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-04T07:56:23Z",
+      "observedAt": "2026-06-04T07:56:23Z",
+      "trackId": "sdk:Python:azure-mgmt-computeschedule",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46757",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/1e2ae47802d9d6a64c8455618bcb027ab3cd90d6"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46757:review:4425924702:sdk:Python:azure-mgmt-computeschedule",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-04T07:57:46Z",
+      "observedAt": "2026-06-04T07:57:46Z",
+      "trackId": "sdk:Python:azure-mgmt-computeschedule",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46757",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46757#pullrequestreview-4425924702"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46757:review:4426033743:sdk:Python:azure-mgmt-computeschedule",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-04T08:13:13Z",
+      "observedAt": "2026-06-04T08:13:13Z",
+      "trackId": "sdk:Python:azure-mgmt-computeschedule",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46757",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46757#pullrequestreview-4426033743"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49078:review:4426379909:sdk:Java:azure-resourcemanager-computeschedule",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-04T09:02:38Z",
+      "observedAt": "2026-06-04T09:02:38Z",
+      "trackId": "sdk:Java:azure-resourcemanager-computeschedule",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49078",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49078#pullrequestreview-4426379909"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49078:comment:3354775727:sdk:Java:azure-resourcemanager-computeschedule",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-04T09:02:38Z",
+      "observedAt": "2026-06-04T09:02:38Z",
+      "trackId": "sdk:Java:azure-resourcemanager-computeschedule",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49078",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49078#discussion_r3354775727"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This is a break from you GAed API https://github.com/Azure/azure-sdk-for-java/blob/azure-resourcemanager-computeschedule_1.1.0/sdk/computeschedule/azure-resourcemanager-computeschedule/src/main/java/com/azure/resourcemanager/computeschedule",
+      "stack": 0
+    },
+    {
+      "id": "ado:34222:54:Custom.ReleaseStatusForGo",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-06-11T07:16:39.193Z",
+      "observedAt": "2026-06-11T07:16:39.193Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/computeschedule/armcomputeschedule",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34222",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34222"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34222:54:Custom.ReleasedVersionForGo",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-06-11T07:16:39.193Z",
+      "observedAt": "2026-06-11T07:16:39.193Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/computeschedule/armcomputeschedule",
+      "value": "2.0.0-beta.1",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34222",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34222"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34222:55:Custom.ReleaseStatusForJavaScript",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-06-12T08:29:37.3Z",
+      "observedAt": "2026-06-12T08:29:37.3Z",
+      "trackId": "sdk:JavaScript:@azure/arm-computeschedule",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34222",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34222"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34222:55:Custom.ReleasedVersionForJavaScript",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-06-12T08:29:37.3Z",
+      "observedAt": "2026-06-12T08:29:37.3Z",
+      "trackId": "sdk:JavaScript:@azure/arm-computeschedule",
+      "value": "2.0.0-beta.1",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34222",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34222"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46757:comment:5019033826:sdk:Python:azure-mgmt-computeschedule",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-20T05:20:07Z",
+      "observedAt": "2026-07-20T05:20:07Z",
+      "trackId": "sdk:Python:azure-mgmt-computeschedule",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46757",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46757#issuecomment-5019033826"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Haven't received response over one month so will merge and release automatically.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46757:pr.merged:sdk:Python:azure-mgmt-computeschedule",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-20T05:20:20Z",
+      "observedAt": "2026-07-20T05:20:20Z",
+      "trackId": "sdk:Python:azure-mgmt-computeschedule",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46757",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46757"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:34222:56:Custom.ReleaseStatusForPython",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-07-20T06:15:37.24Z",
+      "observedAt": "2026-07-20T06:15:37.24Z",
+      "trackId": "sdk:Python:azure-mgmt-computeschedule",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34222",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34222"
+      },
+      "title": "Release status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:34222:56:Custom.ReleasedVersionForPython",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-07-20T06:15:37.24Z",
+      "observedAt": "2026-07-20T06:15:37.24Z",
+      "trackId": "sdk:Python:azure-mgmt-computeschedule",
+      "value": "1.2.0b2",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34222",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34222"
+      },
+      "title": "Package version observed",
+      "stack": 3
+    },
+    {
+      "id": "ado:34222:57:Custom.ReleaseStatusForDotnet",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-08-06T08:06:56.623Z",
+      "observedAt": "2026-08-06T08:06:56.623Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34222",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34222"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34222:57:Custom.ReleasedVersionForDotnet",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-08-06T08:06:56.623Z",
+      "observedAt": "2026-08-06T08:06:56.623Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+      "value": "1.2.0-beta.5",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34222",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34222"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49078:comment:5212836821:sdk:Java:azure-resourcemanager-computeschedule",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-07T05:33:25Z",
+      "observedAt": "2026-08-07T05:33:25Z",
+      "trackId": "sdk:Java:azure-resourcemanager-computeschedule",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49078",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49078#issuecomment-5212836821"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @azure-sdk. Thank you for your interest in helping to improve the Azure SDK experience and for your contribution. We've noticed that there hasn't been recent engagement on this pull request. If this is still an active work stream, please",
+      "stack": 0
+    }
+  ],
+  "quality": {
+    "warnings": [
+      "1 historical linked PR(s) closed without merge"
+    ],
+    "unavailablePullRequests": 0,
+    "unavailablePipelineRuns": 0
+  },
+  "boundaryFacts": {
+    "id": "34222",
+    "state": "in-progress",
+    "specPrs": [
+      {
+        "id": "github:Azure/azure-rest-api-specs#42886",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#42886",
+        "createdAt": "2026-05-05T16:03:30Z",
+        "mergedAt": "2026-05-06T17:13:24Z",
+        "closedAt": "2026-05-06T17:13:24Z",
+        "available": true
+      }
+    ],
+    "artifacts": [
+      {
+        "language": ".NET",
+        "package": "Azure.ResourceManager.ComputeSchedule",
+        "trackId": "sdk:.NET:Azure.ResourceManager.ComputeSchedule",
+        "prId": "github:Azure/azure-sdk-for-net#59030",
+        "prCreatedAt": "2026-05-06T17:52:44Z",
+        "prMergedAt": "2026-05-12T16:27:22Z",
+        "prClosedAt": "2026-05-12T16:27:22Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-net#59030",
+            "createdAt": "2026-05-06T17:52:44Z",
+            "mergedAt": "2026-05-12T16:27:22Z",
+            "closedAt": "2026-05-12T16:27:22Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6259453",
+        "generationStartAt": "2026-05-06T18:37:48.64115Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-08-06T08:06:56.623Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.2.0-beta.5",
+        "releaseBoundaryAt": "2026-08-06T08:06:56.623Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "JavaScript",
+        "package": "@azure/arm-computeschedule",
+        "trackId": "sdk:JavaScript:@azure/arm-computeschedule",
+        "prId": "github:Azure/azure-sdk-for-js#38441",
+        "prCreatedAt": "2026-05-06T17:53:13Z",
+        "prMergedAt": "2026-05-28T07:09:09Z",
+        "prClosedAt": "2026-05-28T07:09:09Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-js#38441",
+            "createdAt": "2026-05-06T17:53:13Z",
+            "mergedAt": "2026-05-28T07:09:09Z",
+            "closedAt": "2026-05-28T07:09:09Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6259452",
+        "generationStartAt": "2026-05-06T18:37:31.4920176Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-06-12T08:29:37.3Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "2.0.0-beta.1",
+        "releaseBoundaryAt": "2026-06-12T08:29:37.3Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Python",
+        "package": "azure-mgmt-computeschedule",
+        "trackId": "sdk:Python:azure-mgmt-computeschedule",
+        "prId": "github:Azure/azure-sdk-for-python#46757",
+        "prCreatedAt": "2026-05-06T17:53:51Z",
+        "prMergedAt": "2026-07-20T05:20:20Z",
+        "prClosedAt": "2026-07-20T05:20:20Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-python#46757",
+            "createdAt": "2026-05-06T17:53:51Z",
+            "mergedAt": "2026-07-20T05:20:20Z",
+            "closedAt": "2026-07-20T05:20:20Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6259451",
+        "generationStartAt": "2026-05-06T18:37:31.0874522Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-07-20T06:15:37.24Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.2.0b2",
+        "releaseBoundaryAt": "2026-07-20T06:15:37.24Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Java",
+        "package": "azure-resourcemanager-computeschedule",
+        "trackId": "sdk:Java:azure-resourcemanager-computeschedule",
+        "prId": "github:Azure/azure-sdk-for-java#49078",
+        "prCreatedAt": "2026-05-06T17:55:45Z",
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-java#49078",
+            "createdAt": "2026-05-06T17:55:45Z",
+            "mergedAt": null,
+            "closedAt": null,
+            "state": "open"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6259454",
+        "generationStartAt": "2026-05-06T18:38:24.512271Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Go",
+        "package": "sdk/resourcemanager/computeschedule/armcomputeschedule",
+        "trackId": "sdk:Go:sdk/resourcemanager/computeschedule/armcomputeschedule",
+        "prId": "github:Azure/azure-sdk-for-go#26730",
+        "prCreatedAt": "2026-05-06T17:52:05Z",
+        "prMergedAt": "2026-06-01T09:52:14Z",
+        "prClosedAt": "2026-06-01T09:52:14Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-go#26730",
+            "createdAt": "2026-05-06T17:52:05Z",
+            "mergedAt": "2026-06-01T09:52:14Z",
+            "closedAt": "2026-06-01T09:52:14Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6259455",
+        "generationStartAt": "2026-05-06T18:38:32.1212845Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-06-11T07:16:39.193Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "2.0.0-beta.1",
+        "releaseBoundaryAt": "2026-06-11T07:16:39.193Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      }
+    ],
+    "cohortPlan": {
+      "id": "34222",
+      "releasePlanId": "2217",
+      "title": "Release Plan - 2217 - Public Preview - Compute Schedule",
+      "service": "Compute Schedule.Management",
+      "state": "in-progress"
+    },
+    "quality": {
+      "warnings": [
+        "1 historical linked PR(s) closed without merge"
+      ],
+      "unavailablePullRequests": 0,
+      "unavailablePipelineRuns": 0
+    }
+  },
+  "summary": {
+    "durationHours": 2383.3,
+    "pullRequestCount": 6,
+    "humanReviewCount": 19,
+    "humanCommentCount": 16
+  }
+}

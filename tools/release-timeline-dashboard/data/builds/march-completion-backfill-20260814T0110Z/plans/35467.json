@@ -1,0 +1,2569 @@
+{
+  "schemaVersion": 2,
+  "id": "35467",
+  "correlation": {
+    "policyVersion": 1,
+    "preflight": "passed"
+  },
+  "releasePlanId": "35467",
+  "title": "GA release plan for HybridCompute",
+  "service": "HybridCompute",
+  "product": "Release",
+  "path": "specification/hybridcompute/resource-manager/Microsoft.HybridCompute/HybridCompute",
+  "state": "in-progress",
+  "plane": "management",
+  "releaseType": "GA",
+  "intendedMonth": "August 2026",
+  "createdAt": "2026-07-24T16:54:03.433Z",
+  "completedAt": null,
+  "sourceUrl": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35467",
+  "range": {
+    "start": "2026-07-13T17:38:18.000Z",
+    "end": "2026-08-14T00:37:23.589Z"
+  },
+  "intendedArtifacts": [
+    {
+      "prId": "github:Azure/azure-sdk-for-net#61338",
+      "language": ".NET",
+      "package": "Azure.ResourceManager.HybridCompute",
+      "version": "1.1.0",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6614114",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-js#39394",
+      "language": "JavaScript",
+      "package": "@azure/arm-hybridcompute",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6614116",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-python#48245",
+      "language": "Python",
+      "package": "azure-mgmt-hybridcompute",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6614117",
+      "releasePipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6700792"
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-java#49926",
+      "language": "Java",
+      "package": "azure-resourcemanager-hybridcompute",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6614115",
+      "releasePipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6700796"
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-go#27251",
+      "language": "Go",
+      "package": "sdk/resourcemanager/hybridcompute/armhybridcompute",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6614120",
+      "releasePipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6700793"
+    }
+  ],
+  "links": [
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#44618",
+      "role": "spec-pr",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/44618",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-net#61338",
+      "role": "sdk-pr",
+      "language": ".NET",
+      "url": "https://github.com/Azure/azure-sdk-for-net/pull/61338",
+      "releasePlanIds": [
+        "35467"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-js#39394",
+      "role": "sdk-pr",
+      "language": "JavaScript",
+      "url": "https://github.com/Azure/azure-sdk-for-js/pull/39394",
+      "releasePlanIds": [
+        "35467"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-python#48245",
+      "role": "sdk-pr",
+      "language": "Python",
+      "url": "https://github.com/Azure/azure-sdk-for-python/pull/48245",
+      "releasePlanIds": [
+        "35467"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-java#49926",
+      "role": "sdk-pr",
+      "language": "Java",
+      "url": "https://github.com/Azure/azure-sdk-for-java/pull/49926",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-go#27251",
+      "role": "sdk-pr",
+      "language": "Go",
+      "url": "https://github.com/Azure/azure-sdk-for-go/pull/27251",
+      "releasePlanIds": [
+        "35467"
+      ]
+    }
+  ],
+  "tracks": [
+    {
+      "id": "plan",
+      "kind": "plan",
+      "label": "Release Plan",
+      "detail": "GA"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#44618",
+      "kind": "spec",
+      "label": "Spec PR",
+      "detail": "azure-rest-api-specs #44618",
+      "artifactId": "github:Azure/azure-rest-api-specs#44618",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:.NET:Azure.ResourceManager.HybridCompute",
+      "kind": "sdk",
+      "label": ".NET",
+      "detail": "Azure.ResourceManager.HybridCompute",
+      "artifactId": "github:Azure/azure-sdk-for-net#61338",
+      "state": "open"
+    },
+    {
+      "id": "sdk:JavaScript:@azure/arm-hybridcompute",
+      "kind": "sdk",
+      "label": "JavaScript",
+      "detail": "@azure/arm-hybridcompute",
+      "artifactId": "github:Azure/azure-sdk-for-js#39394",
+      "state": "open"
+    },
+    {
+      "id": "sdk:Python:azure-mgmt-hybridcompute",
+      "kind": "sdk",
+      "label": "Python",
+      "detail": "azure-mgmt-hybridcompute",
+      "artifactId": "github:Azure/azure-sdk-for-python#48245",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Java:azure-resourcemanager-hybridcompute",
+      "kind": "sdk",
+      "label": "Java",
+      "detail": "azure-resourcemanager-hybridcompute",
+      "artifactId": "github:Azure/azure-sdk-for-java#49926",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Go:sdk/resourcemanager/hybridcompute/armhybridcompute",
+      "kind": "sdk",
+      "label": "Go",
+      "detail": "sdk/resourcemanager/hybridcompute/armhybridcompute",
+      "artifactId": "github:Azure/azure-sdk-for-go#27251",
+      "state": "merged"
+    }
+  ],
+  "events": [
+    {
+      "id": "github:Azure/azure-rest-api-specs#44618:pr.created:spec:github:Azure/azure-rest-api-specs#44618",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-13T17:38:18Z",
+      "observedAt": "2026-07-13T17:38:18Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44618",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "yzirman"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44618",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44618"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44618:comment:4960862955:spec:github:Azure/azure-rest-api-specs#44618",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-13T17:41:06Z",
+      "observedAt": "2026-07-13T17:41:06Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44618",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44618",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44618#issuecomment-4960862955"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>✅ All automated merging requirements have been met! To get your PR merged, see <a href=\"https://aka.ms/azsdk/specreview/merge\">aka.ms/azsdk/specreview/merge</a>.<br /><br />Comment generated by <a href=\"https://g",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44618:comment:4960905511:spec:github:Azure/azure-rest-api-specs#44618",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-13T17:45:50Z",
+      "observedAt": "2026-07-13T17:45:50Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44618",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44618",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44618#issuecomment-4960905511"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews | Language | API Review for Package | |----------|---------| | Swagger | [Microsoft.HybridCompute-HybridCompute](https://apiview.dev/A",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44618:comment:5003049492:spec:github:Azure/azure-rest-api-specs#44618",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-17T12:00:52Z",
+      "observedAt": "2026-07-17T12:00:52Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44618",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "razvanbadea-msft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44618",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44618#issuecomment-5003049492"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Check errors from Swagger Avocado for missing paths",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44618:comment:5003434557:spec:github:Azure/azure-rest-api-specs#44618",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-17T12:47:17Z",
+      "observedAt": "2026-07-17T12:47:17Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44618",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "razvanbadea-msft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44618",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44618#issuecomment-5003434557"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Re: [the Swagger Avocado comment above](https://github.com/Azure/azure-rest-api-specs/pull/44618#issuecomment-5003049492) -- specifics from the ARM API review. **Check:** `Swagger Avocado - Analyze Code` is failing with `MISSING_APIS_IN_DEF",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44618:commit:12a1f21f77ad:spec:github:Azure/azure-rest-api-specs#44618",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-18T05:12:14Z",
+      "observedAt": "2026-07-18T05:12:14Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44618",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "yzirman"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44618",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/12a1f21f77ad2200a3018d542917e552fda5409e"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44618:comment:5010031891:spec:github:Azure/azure-rest-api-specs#44618",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-18T05:14:39Z",
+      "observedAt": "2026-07-18T05:14:39Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44618",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "yzirman"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44618",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44618#issuecomment-5010031891"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> Re: [the Swagger Avocado comment above](https://github.com/Azure/azure-rest-api-specs/pull/44618#issuecomment-5003049492) -- specifics from the ARM API review. > > **Check:** `Swagger Avocado - Analyze Code` is failing with `MISSING_APIS_",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44618:comment:5024960357:spec:github:Azure/azure-rest-api-specs#44618",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-20T17:07:26Z",
+      "observedAt": "2026-07-20T17:07:26Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44618",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "yzirman"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44618",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44618#issuecomment-5024960357"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> Re: [the Swagger Avocado comment above](https://github.com/Azure/azure-rest-api-specs/pull/44618#issuecomment-5003049492) -- specifics from the ARM API review. > > **Check:** `Swagger Avocado - Analyze Code` is failing with `MISSING_APIS_",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44618:comment:5040586771:spec:github:Azure/azure-rest-api-specs#44618",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-22T00:49:41Z",
+      "observedAt": "2026-07-22T00:49:41Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44618",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "sandipsh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44618",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44618#issuecomment-5040586771"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Thanks -- the three `Swagger Avocado` suppressions in `suppressions.yaml` cover all 6 retired paths and are correctly file-scoped with retirement-intent reasons; suppression review: **approved**. `Approved-Avocado` is already applied (re-ad",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44618:review:4756677000:spec:github:Azure/azure-rest-api-specs#44618",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-22T16:48:19Z",
+      "observedAt": "2026-07-22T16:48:19Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44618",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "vedkale"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44618",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44618#pullrequestreview-4756677000"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44618:pr.merged:spec:github:Azure/azure-rest-api-specs#44618",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-24T16:49:02Z",
+      "observedAt": "2026-07-24T16:49:02Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44618",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44618",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44618"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:35467:created",
+      "type": "plan.created",
+      "phase": "plan",
+      "occurredAt": "2026-07-24T16:54:03.433Z",
+      "observedAt": "2026-07-24T16:54:03.433Z",
+      "trackId": "plan",
+      "title": "Release Plan created",
+      "confidence": "authoritative",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35467",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35467"
+      },
+      "stack": 0
+    },
+    {
+      "id": "ado:35467:1:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-07-24T16:54:03.433Z",
+      "observedAt": "2026-07-24T16:54:03.433Z",
+      "trackId": "plan",
+      "value": "New",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35467",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35467"
+      },
+      "title": "Plan state changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35467:1:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-24T16:54:03.433Z",
+      "observedAt": "2026-07-24T16:54:03.433Z",
+      "trackId": "plan",
+      "value": "Not Available",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35467",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35467"
+      },
+      "title": "Spec approval changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:35467:1:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-24T16:54:03.433Z",
+      "observedAt": "2026-07-24T16:54:03.433Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.HybridCompute",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35467",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35467"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35467:1:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-24T16:54:03.433Z",
+      "observedAt": "2026-07-24T16:54:03.433Z",
+      "trackId": "sdk:JavaScript:@azure/arm-hybridcompute",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35467",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35467"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35467:1:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-24T16:54:03.433Z",
+      "observedAt": "2026-07-24T16:54:03.433Z",
+      "trackId": "sdk:Python:azure-mgmt-hybridcompute",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35467",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35467"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35467:1:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-24T16:54:03.433Z",
+      "observedAt": "2026-07-24T16:54:03.433Z",
+      "trackId": "sdk:Java:azure-resourcemanager-hybridcompute",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35467",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35467"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35467:1:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-24T16:54:03.433Z",
+      "observedAt": "2026-07-24T16:54:03.433Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/hybridcompute/armhybridcompute",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35467",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35467"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35468:1:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-24T16:54:03.79Z",
+      "observedAt": "2026-07-24T16:54:03.79Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44618",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/44618",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35468",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35468"
+      },
+      "title": "Spec PR linked",
+      "stack": 1
+    },
+    {
+      "id": "ado:35467:2:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-07-24T16:54:04.603Z",
+      "observedAt": "2026-07-24T16:54:04.603Z",
+      "trackId": "plan",
+      "value": "In Progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35467",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35467"
+      },
+      "title": "Plan state changed",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44618:comment:5072293830:spec:github:Azure/azure-rest-api-specs#44618",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-24T16:54:10Z",
+      "observedAt": "2026-07-24T16:54:10Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44618",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44618",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44618#issuecomment-5072293830"
+      },
+      "confidence": "authoritative",
+      "excerpt": "### ✅ Release Plan Created | Field | Value | |-------|-------| | **Release Plan** | [View Release Plan](https://azsdk-releaseplan-dashboard-hveph5aqhhcfhtgu.westus-01.azurewebsites.net/?releaseplan=35467) | | **API Version** | `2026-07-15` ",
+      "stack": 2
+    },
+    {
+      "id": "ado:35467:4:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-24T16:54:20.317Z",
+      "observedAt": "2026-07-24T16:54:20.317Z",
+      "trackId": "plan",
+      "value": "Approved",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35467",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35467"
+      },
+      "title": "Spec approval changed",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6614114:generation.queued:sdk:.NET:Azure.ResourceManager.HybridCompute",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-07-24T16:59:37.6323181Z",
+      "observedAt": "2026-07-24T17:07:49.8822111Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.HybridCompute",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6614114",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6614114"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:35467:5:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-24T16:59:42.06Z",
+      "observedAt": "2026-07-24T16:59:42.06Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.HybridCompute",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35467",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35467"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6614115:generation.queued:sdk:Java:azure-resourcemanager-hybridcompute",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-07-24T16:59:46.9291151Z",
+      "observedAt": "2026-07-24T17:20:17.5891817Z",
+      "trackId": "sdk:Java:azure-resourcemanager-hybridcompute",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6614115",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6614115"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:35467:6:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-24T16:59:50.3Z",
+      "observedAt": "2026-07-24T16:59:50.3Z",
+      "trackId": "sdk:Java:azure-resourcemanager-hybridcompute",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35467",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35467"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6614116:generation.queued:sdk:JavaScript:@azure/arm-hybridcompute",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-07-24T16:59:54.4890148Z",
+      "observedAt": "2026-07-24T17:08:06.0168293Z",
+      "trackId": "sdk:JavaScript:@azure/arm-hybridcompute",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6614116",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6614116"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:35467:7:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-24T16:59:57.493Z",
+      "observedAt": "2026-07-24T16:59:57.493Z",
+      "trackId": "sdk:JavaScript:@azure/arm-hybridcompute",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35467",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35467"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6614114:generation.started:sdk:.NET:Azure.ResourceManager.HybridCompute",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-07-24T16:59:59.1459367Z",
+      "observedAt": "2026-07-24T17:07:49.8822111Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.HybridCompute",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6614114",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6614114"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6614117:generation.queued:sdk:Python:azure-mgmt-hybridcompute",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-07-24T17:00:02.0581376Z",
+      "observedAt": "2026-07-24T17:09:09.0938457Z",
+      "trackId": "sdk:Python:azure-mgmt-hybridcompute",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6614117",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6614117"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:35467:8:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-24T17:00:04.627Z",
+      "observedAt": "2026-07-24T17:00:04.627Z",
+      "trackId": "sdk:Python:azure-mgmt-hybridcompute",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35467",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35467"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6614115:generation.started:sdk:Java:azure-resourcemanager-hybridcompute",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-07-24T17:00:05.6800481Z",
+      "observedAt": "2026-07-24T17:20:17.5891817Z",
+      "trackId": "sdk:Java:azure-resourcemanager-hybridcompute",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6614115",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6614115"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6614120:generation.queued:sdk:Go:sdk/resourcemanager/hybridcompute/armhybridcompute",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-07-24T17:00:09.3535408Z",
+      "observedAt": "2026-07-24T17:06:59.1324977Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/hybridcompute/armhybridcompute",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6614120",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6614120"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:35467:9:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-24T17:00:11.66Z",
+      "observedAt": "2026-07-24T17:00:11.66Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/hybridcompute/armhybridcompute",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35467",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35467"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6614116:generation.started:sdk:JavaScript:@azure/arm-hybridcompute",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-07-24T17:00:11.7847161Z",
+      "observedAt": "2026-07-24T17:08:06.0168293Z",
+      "trackId": "sdk:JavaScript:@azure/arm-hybridcompute",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6614116",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6614116"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6614117:generation.started:sdk:Python:azure-mgmt-hybridcompute",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-07-24T17:00:24.7058167Z",
+      "observedAt": "2026-07-24T17:09:09.0938457Z",
+      "trackId": "sdk:Python:azure-mgmt-hybridcompute",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6614117",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6614117"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6614120:generation.started:sdk:Go:sdk/resourcemanager/hybridcompute/armhybridcompute",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-07-24T17:00:46.7850983Z",
+      "observedAt": "2026-07-24T17:06:59.1324977Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/hybridcompute/armhybridcompute",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6614120",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6614120"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27251:commit:8fa3091dcbea:sdk:Go:sdk/resourcemanager/hybridcompute/armhybridcompute",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T17:05:55Z",
+      "observedAt": "2026-07-24T17:05:55Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/hybridcompute/armhybridcompute",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27251",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/8fa3091dcbea5878b4049055b343ce26ca48517a"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27251:pr.created:sdk:Go:sdk/resourcemanager/hybridcompute/armhybridcompute",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T17:05:59Z",
+      "observedAt": "2026-07-24T17:05:59Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/hybridcompute/armhybridcompute",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27251",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27251"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:35467:10:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-24T17:06:08.05Z",
+      "observedAt": "2026-07-24T17:06:08.05Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/hybridcompute/armhybridcompute",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35467",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35467"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35467:10:Custom.SDKPullRequestForGo",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-24T17:06:08.05Z",
+      "observedAt": "2026-07-24T17:06:08.05Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/hybridcompute/armhybridcompute",
+      "value": "https://github.com/Azure/azure-sdk-for-go/pull/27251",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35467",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35467"
+      },
+      "title": "SDK PR linked",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39394:commit:11a7754ee34c:sdk:JavaScript:@azure/arm-hybridcompute",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T17:06:30Z",
+      "observedAt": "2026-07-24T17:06:30Z",
+      "trackId": "sdk:JavaScript:@azure/arm-hybridcompute",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39394",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/11a7754ee34c94d1666f7e5f8e117e7370aa253b"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27251:comment:5072427275:sdk:Go:sdk/resourcemanager/hybridcompute/armhybridcompute",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T17:06:33Z",
+      "observedAt": "2026-07-24T17:06:33Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/hybridcompute/armhybridcompute",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27251",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27251#issuecomment-5072427275"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 5 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39394:pr.created:sdk:JavaScript:@azure/arm-hybridcompute",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T17:06:34Z",
+      "observedAt": "2026-07-24T17:06:34Z",
+      "trackId": "sdk:JavaScript:@azure/arm-hybridcompute",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39394",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39394"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61338:commit:71bef47c25be:sdk:.NET:Azure.ResourceManager.HybridCompute",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T17:06:36Z",
+      "observedAt": "2026-07-24T17:06:36Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.HybridCompute",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61338",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/71bef47c25be6f96e45f1a3dbc454b8c79cb67b2"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61338:pr.created:sdk:.NET:Azure.ResourceManager.HybridCompute",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T17:06:40Z",
+      "observedAt": "2026-07-24T17:06:40Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.HybridCompute",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61338",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61338"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:35467:11:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-24T17:06:42.243Z",
+      "observedAt": "2026-07-24T17:06:42.243Z",
+      "trackId": "sdk:JavaScript:@azure/arm-hybridcompute",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35467",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35467"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35467:11:Custom.SDKPullRequestForJavaScript",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-24T17:06:42.243Z",
+      "observedAt": "2026-07-24T17:06:42.243Z",
+      "trackId": "sdk:JavaScript:@azure/arm-hybridcompute",
+      "value": "https://github.com/Azure/azure-sdk-for-js/pull/39394",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35467",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35467"
+      },
+      "title": "SDK PR linked",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27251:review:4775218646:sdk:Go:sdk/resourcemanager/hybridcompute/armhybridcompute",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T17:06:49Z",
+      "observedAt": "2026-07-24T17:06:49Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/hybridcompute/armhybridcompute",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27251",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27251#pullrequestreview-4775218646"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview > [!NOTE] > Copilot could not run the full agentic suite for this review because it was automatically requested on a bot-authored pull request. Request a review from Copilot under Reviewers to retry with the full ag",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "ado:35467:12:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-24T17:06:49.083Z",
+      "observedAt": "2026-07-24T17:06:49.083Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.HybridCompute",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35467",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35467"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35467:12:Custom.SDKPullRequestForDotnet",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-24T17:06:49.083Z",
+      "observedAt": "2026-07-24T17:06:49.083Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.HybridCompute",
+      "value": "https://github.com/Azure/azure-sdk-for-net/pull/61338",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35467",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35467"
+      },
+      "title": "SDK PR linked",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6614120:generation.completed:sdk:Go:sdk/resourcemanager/hybridcompute/armhybridcompute",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-07-24T17:06:59.1324977Z",
+      "observedAt": "2026-07-24T17:06:59.1324977Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/hybridcompute/armhybridcompute",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6614120",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6614120"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39394:comment:5072434988:sdk:JavaScript:@azure/arm-hybridcompute",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T17:07:08Z",
+      "observedAt": "2026-07-24T17:07:08Z",
+      "trackId": "sdk:JavaScript:@azure/arm-hybridcompute",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39394",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39394#issuecomment-5072434988"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 9 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61338:comment:5072436437:sdk:.NET:Azure.ResourceManager.HybridCompute",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T17:07:19Z",
+      "observedAt": "2026-07-24T17:07:19Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.HybridCompute",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61338",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61338#issuecomment-5072436437"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 10 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48245:commit:059aa0dafe70:sdk:Python:azure-mgmt-hybridcompute",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T17:07:20Z",
+      "observedAt": "2026-07-24T17:07:20Z",
+      "trackId": "sdk:Python:azure-mgmt-hybridcompute",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48245",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/059aa0dafe70acb0fd07fa0026aa1060dbe101ed"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48245:pr.created:sdk:Python:azure-mgmt-hybridcompute",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T17:07:24Z",
+      "observedAt": "2026-07-24T17:07:24Z",
+      "trackId": "sdk:Python:azure-mgmt-hybridcompute",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48245",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48245"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:35467:13:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-24T17:07:32.297Z",
+      "observedAt": "2026-07-24T17:07:32.297Z",
+      "trackId": "sdk:Python:azure-mgmt-hybridcompute",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35467",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35467"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35467:13:Custom.SDKPullRequestForPython",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-24T17:07:32.297Z",
+      "observedAt": "2026-07-24T17:07:32.297Z",
+      "trackId": "sdk:Python:azure-mgmt-hybridcompute",
+      "value": "https://github.com/Azure/azure-sdk-for-python/pull/48245",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35467",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35467"
+      },
+      "title": "SDK PR linked",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6614114:generation.completed:sdk:.NET:Azure.ResourceManager.HybridCompute",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-07-24T17:07:49.8822111Z",
+      "observedAt": "2026-07-24T17:07:49.8822111Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.HybridCompute",
+      "title": "Pipeline completed with issues",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6614114",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6614114"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48245:comment:5072442372:sdk:Python:azure-mgmt-hybridcompute",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T17:08:01Z",
+      "observedAt": "2026-07-24T17:08:01Z",
+      "trackId": "sdk:Python:azure-mgmt-hybridcompute",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48245",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48245#issuecomment-5072442372"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 9 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6614116:generation.completed:sdk:JavaScript:@azure/arm-hybridcompute",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-07-24T17:08:06.0168293Z",
+      "observedAt": "2026-07-24T17:08:06.0168293Z",
+      "trackId": "sdk:JavaScript:@azure/arm-hybridcompute",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6614116",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6614116"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48245:review:4775232662:sdk:Python:azure-mgmt-hybridcompute",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T17:08:58Z",
+      "observedAt": "2026-07-24T17:08:58Z",
+      "trackId": "sdk:Python:azure-mgmt-hybridcompute",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48245",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48245#pullrequestreview-4775232662"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview > [!NOTE] > Copilot could not run the full agentic suite for this review because it was automatically requested on a bot-authored pull request. Request a review from Copilot under Reviewers to retry with the full ag",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6614117:generation.completed:sdk:Python:azure-mgmt-hybridcompute",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-07-24T17:09:09.0938457Z",
+      "observedAt": "2026-07-24T17:09:09.0938457Z",
+      "trackId": "sdk:Python:azure-mgmt-hybridcompute",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6614117",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6614117"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61338:review:4775234990:sdk:.NET:Azure.ResourceManager.HybridCompute",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T17:09:18Z",
+      "observedAt": "2026-07-24T17:09:18Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.HybridCompute",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61338",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61338#pullrequestreview-4775234990"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview > [!NOTE] > Copilot could not run the full agentic suite for this review because it was automatically requested on a bot-authored pull request. Request a review from Copilot under Reviewers to retry with the full ag",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49926:commit:904ab1fb5bd8:sdk:Java:azure-resourcemanager-hybridcompute",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T17:09:20Z",
+      "observedAt": "2026-07-24T17:09:20Z",
+      "trackId": "sdk:Java:azure-resourcemanager-hybridcompute",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49926",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/904ab1fb5bd835895452ce0c4f73a1f3be8f9848"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49926:pr.created:sdk:Java:azure-resourcemanager-hybridcompute",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T17:09:25Z",
+      "observedAt": "2026-07-24T17:09:25Z",
+      "trackId": "sdk:Java:azure-resourcemanager-hybridcompute",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49926",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49926"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:35467:14:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-24T17:09:33.82Z",
+      "observedAt": "2026-07-24T17:09:33.82Z",
+      "trackId": "sdk:Java:azure-resourcemanager-hybridcompute",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35467",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35467"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35467:14:Custom.SDKPullRequestForJava",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-24T17:09:33.82Z",
+      "observedAt": "2026-07-24T17:09:33.82Z",
+      "trackId": "sdk:Java:azure-resourcemanager-hybridcompute",
+      "value": "https://github.com/Azure/azure-sdk-for-java/pull/49926",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35467",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35467"
+      },
+      "title": "SDK PR linked",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39394:review:4775239154:sdk:JavaScript:@azure/arm-hybridcompute",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T17:09:55Z",
+      "observedAt": "2026-07-24T17:09:55Z",
+      "trackId": "sdk:JavaScript:@azure/arm-hybridcompute",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39394",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39394#pullrequestreview-4775239154"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview > [!NOTE] > Copilot could not run the full agentic suite for this review because it was automatically requested on a bot-authored pull request. Request a review from Copilot under Reviewers to retry with the full ag",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49926:comment:5072464043:sdk:Java:azure-resourcemanager-hybridcompute",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T17:10:10Z",
+      "observedAt": "2026-07-24T17:10:10Z",
+      "trackId": "sdk:Java:azure-resourcemanager-hybridcompute",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49926",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49926#issuecomment-5072464043"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 34 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49926:comment:3646976276:sdk:Java:azure-resourcemanager-hybridcompute",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T17:11:19Z",
+      "observedAt": "2026-07-24T17:11:19Z",
+      "trackId": "sdk:Java:azure-resourcemanager-hybridcompute",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49926",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49926#discussion_r3646976276"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The 1.1.0 release notes include two top-level description bullets with conflicting API versions (`2026-07-15` and `2026-06-16-preview`). For a stable 1.1.0 release, this should be a single description reflecting the shipped api-version; rem",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49926:comment:3646976324:sdk:Java:azure-resourcemanager-hybridcompute",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T17:11:19Z",
+      "observedAt": "2026-07-24T17:11:19Z",
+      "trackId": "sdk:Java:azure-resourcemanager-hybridcompute",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49926",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49926#discussion_r3646976324"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This PR promotes the artifact to a stable `1.1.0` and turns on RevAPI, but the accompanying changelog indicates multiple breaking changes (removals/behavioral signature changes). Under SemVer expectations for stable artifacts, breaking chan",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49926:comment:3646976346:sdk:Java:azure-resourcemanager-hybridcompute",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T17:11:19Z",
+      "observedAt": "2026-07-24T17:11:19Z",
+      "trackId": "sdk:Java:azure-resourcemanager-hybridcompute",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49926",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49926#discussion_r3646976346"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This PR promotes the artifact to a stable `1.1.0` and turns on RevAPI, but the accompanying changelog indicates multiple breaking changes (removals/behavioral signature changes). Under SemVer expectations for stable artifacts, breaking chan",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49926:review:4775248155:sdk:Java:azure-resourcemanager-hybridcompute",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T17:11:20Z",
+      "observedAt": "2026-07-24T17:11:20Z",
+      "trackId": "sdk:Java:azure-resourcemanager-hybridcompute",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49926",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49926#pullrequestreview-4775248155"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview > [!NOTE] > Copilot could not run the full agentic suite for this review because it was automatically requested on a bot-authored pull request. Request a review from Copilot under Reviewers to retry with the full ag",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6614115:generation.completed:sdk:Java:azure-resourcemanager-hybridcompute",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-07-24T17:20:17.5891817Z",
+      "observedAt": "2026-07-24T17:20:17.5891817Z",
+      "trackId": "sdk:Java:azure-resourcemanager-hybridcompute",
+      "title": "Pipeline completed with issues",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6614115",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6614115"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39394:comment:5072714783:sdk:JavaScript:@azure/arm-hybridcompute",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T17:35:29Z",
+      "observedAt": "2026-07-24T17:35:29Z",
+      "trackId": "sdk:JavaScript:@azure/arm-hybridcompute",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39394",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39394#issuecomment-5072714783"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Next Steps to Merge ✅ All CI checks have passed — this PR is ready for review! The SDK engineer will review this PR shortly. Once it's approved, you can go ahead and merge it. To make things easier, feel free to [enable auto-merge](https",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61338:comment:5072797059:sdk:.NET:Azure.ResourceManager.HybridCompute",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T17:45:28Z",
+      "observedAt": "2026-07-24T17:45:28Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.HybridCompute",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61338",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61338#issuecomment-5072797059"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## 🔍 CI Failure Analysis for PR #61338 **Package:** `Azure.ResourceManager.HybridCompute` | **Version bump:** `1.1.0-beta.3` → `1.1.0` (stable) ### CI Check Summary | Check | Status | |---|---| | `net - pullrequest` | ❌ Failed | | `Build B",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49926:commit:7158d933a6c7:sdk:Java:azure-resourcemanager-hybridcompute",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-25T16:16:20Z",
+      "observedAt": "2026-07-25T16:16:20Z",
+      "trackId": "sdk:Java:azure-resourcemanager-hybridcompute",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49926",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/7158d933a6c7d7a771734b9cb4b3d9b3ae3c68c7"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49926:commit:c65b515db92f:sdk:Java:azure-resourcemanager-hybridcompute",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-25T16:30:07Z",
+      "observedAt": "2026-07-25T16:30:07Z",
+      "trackId": "sdk:Java:azure-resourcemanager-hybridcompute",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49926",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/c65b515db92fe6694c546cdf05734d37992ac92f"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49926:commit:b8cf2a11cc2e:sdk:Java:azure-resourcemanager-hybridcompute",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-25T17:15:02Z",
+      "observedAt": "2026-07-25T17:15:02Z",
+      "trackId": "sdk:Java:azure-resourcemanager-hybridcompute",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49926",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/b8cf2a11cc2e9de6a77175618968b2c52ac41f33"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49926:commit:f8f153466847:sdk:Java:azure-resourcemanager-hybridcompute",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-26T00:49:41Z",
+      "observedAt": "2026-07-26T00:49:41Z",
+      "trackId": "sdk:Java:azure-resourcemanager-hybridcompute",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49926",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/f8f1534668471f7dc7dbe5ae913d7a6cf8a05645"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27251:comment:5085729046:sdk:Go:sdk/resourcemanager/hybridcompute/armhybridcompute",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-26T22:37:36Z",
+      "observedAt": "2026-07-26T22:37:36Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/hybridcompute/armhybridcompute",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27251",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27251#issuecomment-5085729046"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## PR is ready to merge",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49926:commit:f81cfcccd8c6:sdk:Java:azure-resourcemanager-hybridcompute",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-27T02:44:33Z",
+      "observedAt": "2026-07-27T02:44:33Z",
+      "trackId": "sdk:Java:azure-resourcemanager-hybridcompute",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49926",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/f81cfcccd8c6d26d2c73ed805bf0452015a5f65c"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49926:review:4783335089:sdk:Java:azure-resourcemanager-hybridcompute",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-27T03:00:47Z",
+      "observedAt": "2026-07-27T03:00:47Z",
+      "trackId": "sdk:Java:azure-resourcemanager-hybridcompute",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49926",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49926#pullrequestreview-4783335089"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@XiaofeiCao for review",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49926:review:4783337915:sdk:Java:azure-resourcemanager-hybridcompute",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-27T03:01:46Z",
+      "observedAt": "2026-07-27T03:01:46Z",
+      "trackId": "sdk:Java:azure-resourcemanager-hybridcompute",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "XiaofeiCao"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49926",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49926#pullrequestreview-4783337915"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48245:commit:8f4259b86685:sdk:Python:azure-mgmt-hybridcompute",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-27T03:35:30Z",
+      "observedAt": "2026-07-27T03:35:30Z",
+      "trackId": "sdk:Python:azure-mgmt-hybridcompute",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48245",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/8f4259b86685d32e1d401047e5359b734f542b51"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48245:review:4783436421:sdk:Python:azure-mgmt-hybridcompute",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-27T03:38:03Z",
+      "observedAt": "2026-07-27T03:38:03Z",
+      "trackId": "sdk:Python:azure-mgmt-hybridcompute",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48245",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48245#pullrequestreview-4783436421"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Copilot reviewed 80 out of 80 changed files in this pull request and generated no new comments.",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27251:review:4783471861:sdk:Go:sdk/resourcemanager/hybridcompute/armhybridcompute",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-27T03:50:14Z",
+      "observedAt": "2026-07-27T03:50:14Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/hybridcompute/armhybridcompute",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "tadelesh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27251",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27251#pullrequestreview-4783471861"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48245:commit:ed5f1e0679cd:sdk:Python:azure-mgmt-hybridcompute",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-27T04:03:38Z",
+      "observedAt": "2026-07-27T04:03:38Z",
+      "trackId": "sdk:Python:azure-mgmt-hybridcompute",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48245",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/ed5f1e0679cded01bd0c31ea45bf650243821ff3"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48245:comment:5087132230:sdk:Python:azure-mgmt-hybridcompute",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-27T04:03:57Z",
+      "observedAt": "2026-07-27T04:03:57Z",
+      "trackId": "sdk:Python:azure-mgmt-hybridcompute",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48245",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48245#issuecomment-5087132230"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi, we have approved the PR and we will hold the PR merge and release until you explicitly ping us to merge then release.",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48245:review:4783518265:sdk:Python:azure-mgmt-hybridcompute",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-27T04:06:14Z",
+      "observedAt": "2026-07-27T04:06:14Z",
+      "trackId": "sdk:Python:azure-mgmt-hybridcompute",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48245",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48245#pullrequestreview-4783518265"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Copilot reviewed 80 out of 80 changed files in this pull request and generated no new comments.",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48245:review:4783521943:sdk:Python:azure-mgmt-hybridcompute",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-27T04:07:12Z",
+      "observedAt": "2026-07-27T04:07:12Z",
+      "trackId": "sdk:Python:azure-mgmt-hybridcompute",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48245",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48245#pullrequestreview-4783521943"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @yzirman, we have approved the PR and we will hold the PR merge and release until you explicitly ping us to merge then release.",
+      "reviewState": "approved",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48245:review:4783939645:sdk:Python:azure-mgmt-hybridcompute",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-27T05:45:37Z",
+      "observedAt": "2026-07-27T05:45:37Z",
+      "trackId": "sdk:Python:azure-mgmt-hybridcompute",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48245",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48245#pullrequestreview-4783939645"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39394:review:4785771293:sdk:JavaScript:@azure/arm-hybridcompute",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-27T09:58:04Z",
+      "observedAt": "2026-07-27T09:58:04Z",
+      "trackId": "sdk:JavaScript:@azure/arm-hybridcompute",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39394",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39394#pullrequestreview-4785771293"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This PR introduces `@azure/arm-hybridcompute@5.0.0` (api-version `2026-07-15`). Review found **2 issues** — 1 tool issue and 1 design concern. 1. **Tool issue**: `PagedAsyncIterableIterator` and `PageSettings` are declared locally in the pa",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39394:comment:5100552127:sdk:JavaScript:@azure/arm-hybridcompute",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-28T06:03:40Z",
+      "observedAt": "2026-07-28T06:03:40Z",
+      "trackId": "sdk:JavaScript:@azure/arm-hybridcompute",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39394",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39394#issuecomment-5100552127"
+      },
+      "confidence": "authoritative",
+      "excerpt": "LGTM cc @JialinHuang803",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39394:review:4806114608:sdk:JavaScript:@azure/arm-hybridcompute",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-29T09:04:19Z",
+      "observedAt": "2026-07-29T09:04:19Z",
+      "trackId": "sdk:JavaScript:@azure/arm-hybridcompute",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "JialinHuang803"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39394",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39394#pullrequestreview-4806114608"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "ado:35467:15:Custom.ReleaseStatusForDotnet",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-08-07T05:55:40.05Z",
+      "observedAt": "2026-08-07T05:55:40.05Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.HybridCompute",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35467",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35467"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35467:15:Custom.ReleasedVersionForDotnet",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-08-07T05:55:40.05Z",
+      "observedAt": "2026-08-07T05:55:40.05Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.HybridCompute",
+      "value": "1.1.0",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35467",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35467"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27251:pr.merged:sdk:Go:sdk/resourcemanager/hybridcompute/armhybridcompute",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T22:05:55Z",
+      "observedAt": "2026-08-13T22:05:55Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/hybridcompute/armhybridcompute",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27251",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27251"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48245:pr.merged:sdk:Python:azure-mgmt-hybridcompute",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T22:06:18Z",
+      "observedAt": "2026-08-13T22:06:18Z",
+      "trackId": "sdk:Python:azure-mgmt-hybridcompute",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48245",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48245"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49926:pr.merged:sdk:Java:azure-resourcemanager-hybridcompute",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T22:06:43Z",
+      "observedAt": "2026-08-13T22:06:43Z",
+      "trackId": "sdk:Java:azure-resourcemanager-hybridcompute",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49926",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49926"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6700792:release.queued:sdk:Python:azure-mgmt-hybridcompute",
+      "type": "release.queued",
+      "phase": "release",
+      "occurredAt": "2026-08-13T22:08:35.3875966Z",
+      "observedAt": "2026-08-13T22:08:35.3875966Z",
+      "trackId": "sdk:Python:azure-mgmt-hybridcompute",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6700792",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6700792"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6700793:release.queued:sdk:Go:sdk/resourcemanager/hybridcompute/armhybridcompute",
+      "type": "release.queued",
+      "phase": "release",
+      "occurredAt": "2026-08-13T22:08:50.2762992Z",
+      "observedAt": "2026-08-13T22:08:50.2762992Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/hybridcompute/armhybridcompute",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6700793",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6700793"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6700793:release.started:sdk:Go:sdk/resourcemanager/hybridcompute/armhybridcompute",
+      "type": "release.started",
+      "phase": "release",
+      "occurredAt": "2026-08-13T22:09:07.8091241Z",
+      "observedAt": "2026-08-13T22:09:07.8091241Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/hybridcompute/armhybridcompute",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6700793",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6700793"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6700792:release.started:sdk:Python:azure-mgmt-hybridcompute",
+      "type": "release.started",
+      "phase": "release",
+      "occurredAt": "2026-08-13T22:09:09.6082923Z",
+      "observedAt": "2026-08-13T22:09:09.6082923Z",
+      "trackId": "sdk:Python:azure-mgmt-hybridcompute",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6700792",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6700792"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6700796:release.queued:sdk:Java:azure-resourcemanager-hybridcompute",
+      "type": "release.queued",
+      "phase": "release",
+      "occurredAt": "2026-08-13T22:09:36.7545198Z",
+      "observedAt": "2026-08-13T22:09:36.7545198Z",
+      "trackId": "sdk:Java:azure-resourcemanager-hybridcompute",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6700796",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6700796"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6700796:release.started:sdk:Java:azure-resourcemanager-hybridcompute",
+      "type": "release.started",
+      "phase": "release",
+      "occurredAt": "2026-08-13T22:10:04.3946858Z",
+      "observedAt": "2026-08-13T22:10:04.3946858Z",
+      "trackId": "sdk:Java:azure-resourcemanager-hybridcompute",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6700796",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6700796"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:35467:16:Custom.ReleaseStatusForGo",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-08-13T22:32:34.283Z",
+      "observedAt": "2026-08-13T22:32:34.283Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/hybridcompute/armhybridcompute",
+      "value": "Approval Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35467",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35467"
+      },
+      "title": "Release status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:35467:17:Custom.ReleaseStatusForPython",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-08-13T22:55:41.54Z",
+      "observedAt": "2026-08-13T22:55:41.54Z",
+      "trackId": "sdk:Python:azure-mgmt-hybridcompute",
+      "value": "Approval Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35467",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35467"
+      },
+      "title": "Release status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:35467:18:Custom.ReleaseStatusForJava",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-08-13T23:08:10.937Z",
+      "observedAt": "2026-08-13T23:08:10.937Z",
+      "trackId": "sdk:Java:azure-resourcemanager-hybridcompute",
+      "value": "Approval Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35467",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35467"
+      },
+      "title": "Release status changed",
+      "stack": 3
+    }
+  ],
+  "quality": {
+    "warnings": [
+      "2 historical linked PR(s) closed without merge"
+    ],
+    "unavailablePullRequests": 0,
+    "unavailablePipelineRuns": 0
+  },
+  "boundaryFacts": {
+    "id": "35467",
+    "state": "in-progress",
+    "specPrs": [
+      {
+        "id": "github:Azure/azure-rest-api-specs#44618",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#44618",
+        "createdAt": "2026-07-13T17:38:18Z",
+        "mergedAt": "2026-07-24T16:49:02Z",
+        "closedAt": "2026-07-24T16:49:02Z",
+        "available": true
+      }
+    ],
+    "artifacts": [
+      {
+        "language": ".NET",
+        "package": "Azure.ResourceManager.HybridCompute",
+        "trackId": "sdk:.NET:Azure.ResourceManager.HybridCompute",
+        "prId": "github:Azure/azure-sdk-for-net#61338",
+        "prCreatedAt": "2026-07-24T17:06:40Z",
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-net#61338",
+            "createdAt": "2026-07-24T17:06:40Z",
+            "mergedAt": null,
+            "closedAt": null,
+            "state": "open"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6614114",
+        "generationStartAt": "2026-07-24T16:59:59.1459367Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-08-07T05:55:40.05Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.1.0",
+        "releaseBoundaryAt": "2026-08-07T05:55:40.05Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "JavaScript",
+        "package": "@azure/arm-hybridcompute",
+        "trackId": "sdk:JavaScript:@azure/arm-hybridcompute",
+        "prId": "github:Azure/azure-sdk-for-js#39394",
+        "prCreatedAt": "2026-07-24T17:06:34Z",
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-js#39394",
+            "createdAt": "2026-07-24T17:06:34Z",
+            "mergedAt": null,
+            "closedAt": null,
+            "state": "open"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6614116",
+        "generationStartAt": "2026-07-24T17:00:11.7847161Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Python",
+        "package": "azure-mgmt-hybridcompute",
+        "trackId": "sdk:Python:azure-mgmt-hybridcompute",
+        "prId": "github:Azure/azure-sdk-for-python#48245",
+        "prCreatedAt": "2026-07-24T17:07:24Z",
+        "prMergedAt": "2026-08-13T22:06:18Z",
+        "prClosedAt": "2026-08-13T22:06:18Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-python#48245",
+            "createdAt": "2026-07-24T17:07:24Z",
+            "mergedAt": "2026-08-13T22:06:18Z",
+            "closedAt": "2026-08-13T22:06:18Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6614117",
+        "generationStartAt": "2026-07-24T17:00:24.7058167Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-08-13T22:55:41.54Z",
+            "value": "Approval Pending"
+          }
+        ],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Java",
+        "package": "azure-resourcemanager-hybridcompute",
+        "trackId": "sdk:Java:azure-resourcemanager-hybridcompute",
+        "prId": "github:Azure/azure-sdk-for-java#49926",
+        "prCreatedAt": "2026-07-24T17:09:25Z",
+        "prMergedAt": "2026-08-13T22:06:43Z",
+        "prClosedAt": "2026-08-13T22:06:43Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-java#49926",
+            "createdAt": "2026-07-24T17:09:25Z",
+            "mergedAt": "2026-08-13T22:06:43Z",
+            "closedAt": "2026-08-13T22:06:43Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6614115",
+        "generationStartAt": "2026-07-24T17:00:05.6800481Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-08-13T23:08:10.937Z",
+            "value": "Approval Pending"
+          }
+        ],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Go",
+        "package": "sdk/resourcemanager/hybridcompute/armhybridcompute",
+        "trackId": "sdk:Go:sdk/resourcemanager/hybridcompute/armhybridcompute",
+        "prId": "github:Azure/azure-sdk-for-go#27251",
+        "prCreatedAt": "2026-07-24T17:05:59Z",
+        "prMergedAt": "2026-08-13T22:05:55Z",
+        "prClosedAt": "2026-08-13T22:05:55Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-go#27251",
+            "createdAt": "2026-07-24T17:05:59Z",
+            "mergedAt": "2026-08-13T22:05:55Z",
+            "closedAt": "2026-08-13T22:05:55Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6614120",
+        "generationStartAt": "2026-07-24T17:00:46.7850983Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-08-13T22:32:34.283Z",
+            "value": "Approval Pending"
+          }
+        ],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      }
+    ],
+    "cohortPlan": {
+      "id": "35467",
+      "releasePlanId": "35467",
+      "title": "GA release plan for HybridCompute",
+      "service": "HybridCompute",
+      "state": "in-progress"
+    },
+    "quality": {
+      "warnings": [
+        "2 historical linked PR(s) closed without merge"
+      ],
+      "unavailablePullRequests": 0,
+      "unavailablePipelineRuns": 0
+    }
+  },
+  "summary": {
+    "durationHours": 487.7,
+    "pullRequestCount": 6,
+    "humanReviewCount": 7,
+    "humanCommentCount": 7
+  }
+}

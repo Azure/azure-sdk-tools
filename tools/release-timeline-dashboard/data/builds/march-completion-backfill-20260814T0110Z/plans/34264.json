@@ -1,0 +1,252 @@
+{
+  "schemaVersion": 2,
+  "id": "34264",
+  "correlation": {
+    "policyVersion": 1,
+    "preflight": "passed"
+  },
+  "releasePlanId": "1565",
+  "title": "Release Plan - 1565 - Public Preview - Release Planner Test Product",
+  "service": "Contoso.Management",
+  "product": "Release",
+  "path": "specification/contosowidgetmanager/Contoso.Management",
+  "state": "in-progress",
+  "plane": "management",
+  "releaseType": "APEX Public Preview",
+  "intendedMonth": "June 2026",
+  "createdAt": "2026-05-07T14:19:23.747Z",
+  "completedAt": null,
+  "sourceUrl": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34264",
+  "range": {
+    "start": "2026-04-16T19:53:41.000Z",
+    "end": "2026-08-14T00:37:23.589Z"
+  },
+  "intendedArtifacts": [],
+  "links": [
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#42438",
+      "role": "spec-pr",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/42438",
+      "releasePlanIds": []
+    }
+  ],
+  "tracks": [
+    {
+      "id": "plan",
+      "kind": "plan",
+      "label": "Release Plan",
+      "detail": "APEX Public Preview"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#42438",
+      "kind": "spec",
+      "label": "Spec PR",
+      "detail": "azure-rest-api-specs #42438",
+      "artifactId": "github:Azure/azure-rest-api-specs#42438",
+      "state": "merged"
+    }
+  ],
+  "events": [
+    {
+      "id": "github:Azure/azure-rest-api-specs#42438:pr.created:spec:github:Azure/azure-rest-api-specs#42438",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-16T19:53:41Z",
+      "observedAt": "2026-04-16T19:53:41Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42438",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "praveenkuttappan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42438",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42438"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42438:comment:4262984999:spec:github:Azure/azure-rest-api-specs#42438",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-16T19:54:16Z",
+      "observedAt": "2026-04-16T19:54:16Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42438",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42438",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42438#issuecomment-4262984999"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>Next steps that must be taken to merge this PR: <br/><ul><li>❌ The required check named <code>Protected Files</code> has failed. Refer to the check in the PR's 'Checks' tab for details on how to fix it and consul",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42438:review:4124120884:spec:github:Azure/azure-rest-api-specs#42438",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-16T20:13:15Z",
+      "observedAt": "2026-04-16T20:13:15Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42438",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "benbp"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42438",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42438#pullrequestreview-4124120884"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42438:pr.merged:spec:github:Azure/azure-rest-api-specs#42438",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-16T20:14:13Z",
+      "observedAt": "2026-04-16T20:14:13Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42438",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42438",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42438"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado:34264:created",
+      "type": "plan.created",
+      "phase": "plan",
+      "occurredAt": "2026-05-07T14:19:23.747Z",
+      "observedAt": "2026-05-07T14:19:23.747Z",
+      "trackId": "plan",
+      "title": "Release Plan created",
+      "confidence": "authoritative",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34264",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34264"
+      },
+      "stack": 0
+    },
+    {
+      "id": "ado:34264:1:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-05-07T14:19:23.747Z",
+      "observedAt": "2026-05-07T14:19:23.747Z",
+      "trackId": "plan",
+      "value": "New",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34264",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34264"
+      },
+      "title": "Plan state changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34264:1:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-07T14:19:23.747Z",
+      "observedAt": "2026-05-07T14:19:23.747Z",
+      "trackId": "plan",
+      "value": "Not Available",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34264",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34264"
+      },
+      "title": "Spec approval changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:34265:2:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-07T16:13:41.353Z",
+      "observedAt": "2026-05-07T16:13:41.353Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42438",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/42438",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34265",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34265"
+      },
+      "title": "Spec PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado:34264:4:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-05-07T16:15:19.813Z",
+      "observedAt": "2026-05-07T16:15:19.813Z",
+      "trackId": "plan",
+      "value": "In Progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34264",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34264"
+      },
+      "title": "Plan state changed",
+      "stack": 3
+    }
+  ],
+  "quality": {
+    "warnings": [],
+    "unavailablePullRequests": 0,
+    "unavailablePipelineRuns": 0
+  },
+  "boundaryFacts": {
+    "id": "34264",
+    "state": "in-progress",
+    "specPrs": [
+      {
+        "id": "github:Azure/azure-rest-api-specs#42438",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#42438",
+        "createdAt": "2026-04-16T19:53:41Z",
+        "mergedAt": "2026-04-16T20:14:13Z",
+        "closedAt": "2026-04-16T20:14:13Z",
+        "available": true
+      }
+    ],
+    "artifacts": [],
+    "cohortPlan": {
+      "id": "34264",
+      "releasePlanId": "1565",
+      "title": "Release Plan - 1565 - Public Preview - Release Planner Test Product",
+      "service": "Contoso.Management",
+      "state": "in-progress"
+    },
+    "quality": {
+      "warnings": [],
+      "unavailablePullRequests": 0,
+      "unavailablePipelineRuns": 0
+    }
+  },
+  "summary": {
+    "durationHours": 2362.3,
+    "pullRequestCount": 1,
+    "humanReviewCount": 1,
+    "humanCommentCount": 0
+  }
+}

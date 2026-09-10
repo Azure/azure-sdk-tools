@@ -1,0 +1,912 @@
+{
+  "schemaVersion": 2,
+  "id": "35172",
+  "correlation": {
+    "policyVersion": 1,
+    "preflight": "passed"
+  },
+  "releasePlanId": "35172",
+  "title": "Private Preview release plan for DigitalAssets",
+  "service": "Digital Assets",
+  "product": "Release",
+  "path": "specification/digitalassets/resource-manager/Microsoft.DigitalAssets/DigitalAssets",
+  "state": "finished",
+  "plane": "management",
+  "releaseType": "APEX Private Preview",
+  "intendedMonth": "July 2026",
+  "createdAt": "2026-07-02T05:51:40.423Z",
+  "completedAt": "2026-07-14T21:20:15.553Z",
+  "sourceUrl": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35172",
+  "range": {
+    "start": "2026-06-30T14:15:26.000Z",
+    "end": "2026-07-14T21:20:15.553Z"
+  },
+  "intendedArtifacts": [],
+  "links": [
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs-pr#29182",
+      "role": "spec-pr-history",
+      "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/29182",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs-pr#29238",
+      "role": "spec-pr",
+      "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/29238",
+      "releasePlanIds": []
+    }
+  ],
+  "tracks": [
+    {
+      "id": "plan",
+      "kind": "plan",
+      "label": "Release Plan",
+      "detail": "APEX Private Preview"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs-pr#29182",
+      "kind": "spec",
+      "label": "Spec PR 1",
+      "detail": "azure-rest-api-specs-pr #29182",
+      "artifactId": "github:Azure/azure-rest-api-specs-pr#29182",
+      "state": "merged"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs-pr#29238",
+      "kind": "spec",
+      "label": "Spec PR 2",
+      "detail": "azure-rest-api-specs-pr #29238",
+      "artifactId": "github:Azure/azure-rest-api-specs-pr#29238",
+      "state": "closed"
+    }
+  ],
+  "events": [
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#29182:pr.created:spec:github:Azure/azure-rest-api-specs-pr#29182",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-30T14:15:26Z",
+      "observedAt": "2026-06-30T14:15:26Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#29182",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "sergius0301"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#29182",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/29182"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#29182:comment:4844454609:spec:github:Azure/azure-rest-api-specs-pr#29182",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-30T14:16:58Z",
+      "observedAt": "2026-06-30T14:16:58Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#29182",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#29182",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/29182#issuecomment-4844454609"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>Next steps that must be taken to merge this PR: <br/><ul><li>❌ The suppressions added to the AutoRest config files (README.mds) require review. Refer to step 1 in the <a href=\"https://aka.ms/azsdk/pr-diagram\">PR ",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#29182:comment:4844522714:spec:github:Azure/azure-rest-api-specs-pr#29182",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-30T14:24:09Z",
+      "observedAt": "2026-06-30T14:24:09Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#29182",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#29182",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/29182#issuecomment-4844522714"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews | Language | API Review for Package | |----------|---------| | TypeSpec | [Microsoft.DigitalAssets](https://spa.apiview.dev/review/ac2",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#29182:commit:132aff5f9b85:spec:github:Azure/azure-rest-api-specs-pr#29182",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-30T15:58:46Z",
+      "observedAt": "2026-06-30T15:58:46Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#29182",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#29182",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/commit/132aff5f9b8583ffa5ddea375fc2643a7c248fed"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#29182:comment:4845515284:spec:github:Azure/azure-rest-api-specs-pr#29182",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-30T16:01:51Z",
+      "observedAt": "2026-06-30T16:01:51Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#29182",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "sergius0301"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#29182",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/29182#issuecomment-4845515284"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@microsoft-github-policy-service agree company=\"Microsoft\"",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#29182:comment:4845517702:spec:github:Azure/azure-rest-api-specs-pr#29182",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-30T16:02:06Z",
+      "observedAt": "2026-06-30T16:02:06Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#29182",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "sergius0301"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#29182",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/29182#issuecomment-4845517702"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> @sergius0301 please read the following Contributor License Agreement(CLA). If you agree with the CLA, please reply with the following information. > > ``` > @microsoft-github-policy-service agree [company=\"{your company}\"] > ``` > > > Opt",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#29182:commit:256089236141:spec:github:Azure/azure-rest-api-specs-pr#29182",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-30T16:32:00Z",
+      "observedAt": "2026-06-30T16:32:00Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#29182",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#29182",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/commit/2560892361411da5d3f3d0c13cfefda797f72e19"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#29182:commit:3cebfe90d236:spec:github:Azure/azure-rest-api-specs-pr#29182",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-30T16:48:00Z",
+      "observedAt": "2026-06-30T16:48:00Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#29182",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#29182",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/commit/3cebfe90d236c14783c4731c2d2891422caffdc7"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#29182:commit:68c416ee091a:spec:github:Azure/azure-rest-api-specs-pr#29182",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-30T16:53:14Z",
+      "observedAt": "2026-06-30T16:53:14Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#29182",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#29182",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/commit/68c416ee091a813393eb81328990481749170108"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#29182:review:4602661492:spec:github:Azure/azure-rest-api-specs-pr#29182",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-30T17:26:34Z",
+      "observedAt": "2026-06-30T17:26:34Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#29182",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "seank-com"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#29182",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/29182#pullrequestreview-4602661492"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This looks like what we want",
+      "reviewState": "approved",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#29182:pr.merged:spec:github:Azure/azure-rest-api-specs-pr#29182",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-30T17:26:56Z",
+      "observedAt": "2026-06-30T17:26:56Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#29182",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#29182",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/29182"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#29182:comment:3500671955:spec:github:Azure/azure-rest-api-specs-pr#29182",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-30T17:28:10Z",
+      "observedAt": "2026-06-30T17:28:10Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#29182",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#29182",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/29182#discussion_r3500671955"
+      },
+      "confidence": "authoritative",
+      "excerpt": "PUT operation is marked as long-running (final-state-via: azure-async-operation), but the 200 (update) response does not declare the required polling headers. This makes the LRO contract inconsistent (SDKs polling via Azure-AsyncOperation w",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#29182:comment:3500671992:spec:github:Azure/azure-rest-api-specs-pr#29182",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-30T17:28:11Z",
+      "observedAt": "2026-06-30T17:28:11Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#29182",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#29182",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/29182#discussion_r3500671992"
+      },
+      "confidence": "authoritative",
+      "excerpt": "PUT operation is marked as long-running (final-state-via: azure-async-operation), but the 200 (update) response does not declare the required polling headers. Add Azure-AsyncOperation/Retry-After headers to the 200 response (matching 201).",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#29182:comment:3500672017:spec:github:Azure/azure-rest-api-specs-pr#29182",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-30T17:28:11Z",
+      "observedAt": "2026-06-30T17:28:11Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#29182",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#29182",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/29182#discussion_r3500672017"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Async DELETE 202 response is missing the Azure-AsyncOperation polling header (only Location is declared). ARM async DELETE requires both Location and Azure-AsyncOperation headers for polling; declare Azure-AsyncOperation here (and update ex",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#29182:comment:3500672040:spec:github:Azure/azure-rest-api-specs-pr#29182",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-30T17:28:11Z",
+      "observedAt": "2026-06-30T17:28:11Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#29182",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#29182",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/29182#discussion_r3500672040"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Async DELETE 202 response is missing the Azure-AsyncOperation polling header (only Location is declared). ARM async DELETE requires both Location and Azure-AsyncOperation headers for polling; declare Azure-AsyncOperation here (and update ex",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#29182:comment:3500672063:spec:github:Azure/azure-rest-api-specs-pr#29182",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-30T17:28:11Z",
+      "observedAt": "2026-06-30T17:28:11Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#29182",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#29182",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/29182#discussion_r3500672063"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`privateKeySecretName` is described as write-only and is not returned in responses (examples omit it), but the model makes it required. This forces it to appear in the generated Swagger `required` list, causing response examples (and GET/PA",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#29182:comment:3500672082:spec:github:Azure/azure-rest-api-specs-pr#29182",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-30T17:28:12Z",
+      "observedAt": "2026-06-30T17:28:12Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#29182",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#29182",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/29182#discussion_r3500672082"
+      },
+      "confidence": "authoritative",
+      "excerpt": "These `#suppress` directives appear unnecessary (the resource key/segment names already use valid characters) and the reasons look like placeholder/template text. Unneeded suppressions make it harder to trust future lint results; remove the",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#29182:comment:3500672110:spec:github:Azure/azure-rest-api-specs-pr#29182",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-30T17:28:12Z",
+      "observedAt": "2026-06-30T17:28:12Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#29182",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#29182",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/29182#discussion_r3500672110"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Resource docstring looks like a copy/paste artifact (\"DigitalAssetsProviderHub\") and doesn’t match the actual resource type. Please update it so generated Swagger descriptions are accurate.",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#29182:comment:3500672136:spec:github:Azure/azure-rest-api-specs-pr#29182",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-30T17:28:12Z",
+      "observedAt": "2026-06-30T17:28:12Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#29182",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#29182",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/29182#discussion_r3500672136"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Version enum is missing doc comments and the preview marker. For preview API versions, add `@Azure.Core.previewVersion` and doc comments so the version metadata is discoverable and consistent with other TypeSpec projects.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#29182:comment:3500672168:spec:github:Azure/azure-rest-api-specs-pr#29182",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-30T17:28:13Z",
+      "observedAt": "2026-06-30T17:28:13Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#29182",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#29182",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/29182#discussion_r3500672168"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The CreateOrUpdate example includes a 201 response body but omits the polling headers (`Azure-AsyncOperation`, `Retry-After`) that are declared in the Swagger for the 201 response. Add the headers so the example reflects the actual LRO cont",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#29182:comment:3500672195:spec:github:Azure/azure-rest-api-specs-pr#29182",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-30T17:28:13Z",
+      "observedAt": "2026-06-30T17:28:13Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#29182",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#29182",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/29182#discussion_r3500672195"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The CreateOrUpdate example includes a 201 response body but omits the polling headers (`Azure-AsyncOperation`, `Retry-After`) that are declared in the Swagger for the 201 response. Add the headers so the example reflects the actual LRO cont",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#29182:comment:3500672215:spec:github:Azure/azure-rest-api-specs-pr#29182",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-30T17:28:13Z",
+      "observedAt": "2026-06-30T17:28:13Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#29182",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#29182",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/29182#discussion_r3500672215"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This DELETE example matches the current Swagger (Location only), but once the spec is corrected to declare the required `Azure-AsyncOperation` header for async DELETE, the example should include it as well (plus Retry-After if applicable).",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#29182:comment:3500672242:spec:github:Azure/azure-rest-api-specs-pr#29182",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-30T17:28:13Z",
+      "observedAt": "2026-06-30T17:28:13Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#29182",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#29182",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/29182#discussion_r3500672242"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This DELETE example matches the current Swagger (Location only), but once the spec is corrected to declare the required `Azure-AsyncOperation` header for async DELETE, the example should include it as well (plus Retry-After if applicable).",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#29182:review:4602671990:spec:github:Azure/azure-rest-api-specs-pr#29182",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-30T17:28:14Z",
+      "observedAt": "2026-06-30T17:28:14Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#29182",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#29182",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/29182#pullrequestreview-4602671990"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Adds a new ARM control-plane (RPaaS) TypeSpec specification for **Microsoft.DigitalAssets** (preview `2025-09-01-preview`), including tracked `zkpRollups`, nested `partitions`, an operations list, and example payloa",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#29182:comment:3500672262:spec:github:Azure/azure-rest-api-specs-pr#29182",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-30T17:28:14Z",
+      "observedAt": "2026-06-30T17:28:14Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#29182",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#29182",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/29182#discussion_r3500672262"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Key Vault reference IDs can be validated and typed more strongly by constraining the `armResourceIdentifier` to the expected resource type (`Microsoft.KeyVault/vaults`). This improves SDK usability and catches invalid IDs earlier.",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#29182:comment:3500672281:spec:github:Azure/azure-rest-api-specs-pr#29182",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-30T17:28:14Z",
+      "observedAt": "2026-06-30T17:28:14Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#29182",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#29182",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/29182#discussion_r3500672281"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Scalar `EvmContractAddress` is documented as a contract address but is also used for `tokenOwners` (owner account addresses). Either adjust the docs/type name to represent a general EVM address, or introduce a separate scalar for owner addr",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#29182:comment:3500672301:spec:github:Azure/azure-rest-api-specs-pr#29182",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-30T17:28:14Z",
+      "observedAt": "2026-06-30T17:28:14Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#29182",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#29182",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/29182#discussion_r3500672301"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`PartitionBesuNode.privateKeySecretName` is required in the Swagger schema, but response examples omit it (as intended for a write-only secret). This makes the examples invalid against the current schema. The schema should not require a wri",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#29238:commit:2addcf565a67:spec:github:Azure/azure-rest-api-specs-pr#29238",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-02T05:40:50Z",
+      "observedAt": "2026-07-02T05:40:50Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#29238",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ankowdeed"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#29238",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/commit/2addcf565a67ca660ded7e7668df97246ed643d2"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#29238:pr.created:spec:github:Azure/azure-rest-api-specs-pr#29238",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-02T05:41:15Z",
+      "observedAt": "2026-07-02T05:41:15Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#29238",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "ankowdeed"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#29238",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/29238"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#29238:comment:4862564742:spec:github:Azure/azure-rest-api-specs-pr#29238",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-02T05:41:54Z",
+      "observedAt": "2026-07-02T05:41:54Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#29238",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#29238",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/29238#issuecomment-4862564742"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>Important checks have failed. As of today they are not blocking this PR, but in near future they may.<br/>Addressing the following failures is highly recommended:<br/><ul><li>⚠️ The check named <code>Swagger Brea",
+      "stack": 2
+    },
+    {
+      "id": "ado:35172:created",
+      "type": "plan.created",
+      "phase": "plan",
+      "occurredAt": "2026-07-02T05:51:40.423Z",
+      "observedAt": "2026-07-02T05:51:40.423Z",
+      "trackId": "plan",
+      "title": "Release Plan created",
+      "confidence": "authoritative",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35172",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35172"
+      },
+      "stack": 0
+    },
+    {
+      "id": "ado:35172:1:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-07-02T05:51:40.423Z",
+      "observedAt": "2026-07-02T05:51:40.423Z",
+      "trackId": "plan",
+      "value": "New",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35172",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35172"
+      },
+      "title": "Plan state changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35172:1:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-02T05:51:40.423Z",
+      "observedAt": "2026-07-02T05:51:40.423Z",
+      "trackId": "plan",
+      "value": "Not Available",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35172",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35172"
+      },
+      "title": "Spec approval changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:35173:1:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-02T05:51:40.693Z",
+      "observedAt": "2026-07-02T05:51:40.693Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#29238",
+      "value": "https://github.com/Azure/azure-rest-api-specs-pr/pull/29238",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35173",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35173"
+      },
+      "title": "Spec PR linked",
+      "stack": 3
+    },
+    {
+      "id": "ado:35172:2:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-07-02T05:51:41.37Z",
+      "observedAt": "2026-07-02T05:51:41.37Z",
+      "trackId": "plan",
+      "value": "In Progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35172",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35172"
+      },
+      "title": "Plan state changed",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#29238:commit:874629ee36aa:spec:github:Azure/azure-rest-api-specs-pr#29238",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-02T16:40:37Z",
+      "observedAt": "2026-07-02T16:40:37Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#29238",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ankowdeed"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#29238",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/commit/874629ee36aa32a9a1a72882727472d0b2de8093"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#29238:comment:4869281274:spec:github:Azure/azure-rest-api-specs-pr#29238",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-02T18:25:35Z",
+      "observedAt": "2026-07-02T18:25:35Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#29238",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ankowdeed"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#29238",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/29238#issuecomment-4869281274"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Closing as redundant. Microsoft.DigitalAssets 2025-09-01-preview is already onboarded to RPSaaSDev via #29182 (merged) with follow-up #29219. This hand-built duplicate targeted RPSaaSMaster and is superseded by the canonical RPSaaSDev spec.",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#29238:pr.closed:spec:github:Azure/azure-rest-api-specs-pr#29238",
+      "type": "pr.closed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-02T18:25:36Z",
+      "observedAt": "2026-07-02T18:25:36Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#29238",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#29238",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/29238"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:35173:2:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-02T18:25:56.34Z",
+      "observedAt": "2026-07-02T18:25:56.34Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#29182",
+      "value": "https://github.com/Azure/azure-rest-api-specs-pr/pull/29182",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35173",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35173"
+      },
+      "title": "Spec PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado:35172:6:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-07-14T21:20:15.553Z",
+      "observedAt": "2026-07-14T21:20:15.553Z",
+      "trackId": "plan",
+      "value": "Finished",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35172",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35172"
+      },
+      "title": "Plan state changed",
+      "stack": 0
+    }
+  ],
+  "quality": {
+    "warnings": [
+      "Multiple spec PRs are retained in link history",
+      "1 historical linked PR(s) closed without merge"
+    ],
+    "unavailablePullRequests": 0,
+    "unavailablePipelineRuns": 0
+  },
+  "boundaryFacts": {
+    "id": "35172",
+    "state": "finished",
+    "specPrs": [
+      {
+        "id": "github:Azure/azure-rest-api-specs-pr#29182",
+        "trackId": "spec:github:Azure/azure-rest-api-specs-pr#29182",
+        "createdAt": "2026-06-30T14:15:26Z",
+        "mergedAt": "2026-06-30T17:26:56Z",
+        "closedAt": "2026-06-30T17:26:56Z",
+        "available": true
+      },
+      {
+        "id": "github:Azure/azure-rest-api-specs-pr#29238",
+        "trackId": "spec:github:Azure/azure-rest-api-specs-pr#29238",
+        "createdAt": "2026-07-02T05:41:15Z",
+        "mergedAt": null,
+        "closedAt": "2026-07-02T18:25:36Z",
+        "available": true
+      }
+    ],
+    "artifacts": [],
+    "cohortPlan": {
+      "id": "35172",
+      "releasePlanId": "35172",
+      "title": "Private Preview release plan for DigitalAssets",
+      "service": "Digital Assets",
+      "state": "finished"
+    },
+    "quality": {
+      "warnings": [
+        "Multiple spec PRs are retained in link history",
+        "1 historical linked PR(s) closed without merge"
+      ],
+      "unavailablePullRequests": 0,
+      "unavailablePipelineRuns": 0
+    }
+  },
+  "summary": {
+    "durationHours": 303.5,
+    "pullRequestCount": 2,
+    "humanReviewCount": 1,
+    "humanCommentCount": 3
+  }
+}

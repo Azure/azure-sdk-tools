@@ -1,0 +1,2577 @@
+{
+  "schemaVersion": 2,
+  "id": "34968",
+  "correlation": {
+    "policyVersion": 1,
+    "preflight": "passed"
+  },
+  "releasePlanId": "34968",
+  "title": "GA release plan for Accounts",
+  "service": "Accounts",
+  "product": "Release",
+  "path": "specification/monitoringservice/resource-manager/Microsoft.Monitor/Accounts",
+  "state": "finished",
+  "plane": "management",
+  "releaseType": "GA",
+  "intendedMonth": "July 2026",
+  "createdAt": "2026-06-12T17:08:33.647Z",
+  "completedAt": "2026-07-15T03:12:58.527Z",
+  "sourceUrl": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34968",
+  "range": {
+    "start": "2026-04-13T18:06:00.000Z",
+    "end": "2026-07-15T03:12:58.527Z"
+  },
+  "intendedArtifacts": [
+    {
+      "prId": "github:Azure/azure-sdk-for-net#59845",
+      "language": ".NET",
+      "package": "Azure.ResourceManager.Monitor.Workspaces",
+      "version": "1.0.0",
+      "outcome": "released",
+      "generationPipelineUrl": null,
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-js#38918",
+      "language": "JavaScript",
+      "package": "@azure/arm-monitorworkspaces",
+      "version": "1.0.0",
+      "outcome": "released",
+      "generationPipelineUrl": null,
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-python#47453",
+      "language": "Python",
+      "package": "azure-mgmt-monitorworkspaces",
+      "version": "1.0.0",
+      "outcome": "released",
+      "generationPipelineUrl": null,
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-java#49459",
+      "language": "Java",
+      "package": "azure-resourcemanager-monitor-workspaces",
+      "version": "1.0.0",
+      "outcome": "released",
+      "generationPipelineUrl": null,
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-go#26999",
+      "language": "Go",
+      "package": "sdk/resourcemanager/monitor/armmonitorworkspaces",
+      "version": "1.0.0",
+      "outcome": "released",
+      "generationPipelineUrl": null,
+      "releasePipelineUrl": null
+    }
+  ],
+  "links": [
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#42326",
+      "role": "spec-pr",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/42326",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-net#59845",
+      "role": "sdk-pr",
+      "language": ".NET",
+      "url": "https://github.com/Azure/azure-sdk-for-net/pull/59845",
+      "releasePlanIds": [
+        "2207",
+        "34968"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-js#38918",
+      "role": "sdk-pr",
+      "language": "JavaScript",
+      "url": "https://github.com/Azure/azure-sdk-for-js/pull/38918",
+      "releasePlanIds": [
+        "2207",
+        "34968"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-python#47453",
+      "role": "sdk-pr",
+      "language": "Python",
+      "url": "https://github.com/Azure/azure-sdk-for-python/pull/47453",
+      "releasePlanIds": [
+        "34968"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-java#49459",
+      "role": "sdk-pr",
+      "language": "Java",
+      "url": "https://github.com/Azure/azure-sdk-for-java/pull/49459",
+      "releasePlanIds": [
+        "34968"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-go#26999",
+      "role": "sdk-pr",
+      "language": "Go",
+      "url": "https://github.com/Azure/azure-sdk-for-go/pull/26999",
+      "releasePlanIds": [
+        "34968"
+      ]
+    }
+  ],
+  "tracks": [
+    {
+      "id": "plan",
+      "kind": "plan",
+      "label": "Release Plan",
+      "detail": "GA"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#42326",
+      "kind": "spec",
+      "label": "Spec PR",
+      "detail": "azure-rest-api-specs #42326",
+      "artifactId": "github:Azure/azure-rest-api-specs#42326",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:.NET:Azure.ResourceManager.Monitor.Workspaces",
+      "kind": "sdk",
+      "label": ".NET",
+      "detail": "Azure.ResourceManager.Monitor.Workspaces",
+      "artifactId": "github:Azure/azure-sdk-for-net#59845",
+      "state": "closed"
+    },
+    {
+      "id": "sdk:JavaScript:@azure/arm-monitorworkspaces",
+      "kind": "sdk",
+      "label": "JavaScript",
+      "detail": "@azure/arm-monitorworkspaces",
+      "artifactId": "github:Azure/azure-sdk-for-js#38918",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Python:azure-mgmt-monitorworkspaces",
+      "kind": "sdk",
+      "label": "Python",
+      "detail": "azure-mgmt-monitorworkspaces",
+      "artifactId": "github:Azure/azure-sdk-for-python#47453",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Java:azure-resourcemanager-monitor-workspaces",
+      "kind": "sdk",
+      "label": "Java",
+      "detail": "azure-resourcemanager-monitor-workspaces",
+      "artifactId": "github:Azure/azure-sdk-for-java#49459",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Go:sdk/resourcemanager/monitor/armmonitorworkspaces",
+      "kind": "sdk",
+      "label": "Go",
+      "detail": "sdk/resourcemanager/monitor/armmonitorworkspaces",
+      "artifactId": "github:Azure/azure-sdk-for-go#26999",
+      "state": "merged"
+    }
+  ],
+  "events": [
+    {
+      "id": "github:Azure/azure-rest-api-specs#42326:pr.created:spec:github:Azure/azure-rest-api-specs#42326",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-13T18:06:00Z",
+      "observedAt": "2026-04-13T18:06:00Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42326",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "GokulPrasad-Work"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42326",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42326"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42326:comment:4238607485:spec:github:Azure/azure-rest-api-specs#42326",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-13T18:12:24Z",
+      "observedAt": "2026-04-13T18:12:24Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42326",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42326",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42326#issuecomment-4238607485"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>✅ All automated merging requirements have been met! To get your PR merged, see <a href=\"https://aka.ms/azsdk/specreview/merge\">aka.ms/azsdk/specreview/merge</a>.<br /><br />Comment generated by <a href=\"https://g",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42326:commit:4e5fcc88f19b:spec:github:Azure/azure-rest-api-specs#42326",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-13T18:45:20Z",
+      "observedAt": "2026-04-13T18:45:20Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42326",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42326",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/4e5fcc88f19b2578be51e381b02e9fc4ae56f288"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42326:commit:30415752c2df:spec:github:Azure/azure-rest-api-specs#42326",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-13T19:58:20Z",
+      "observedAt": "2026-04-13T19:58:20Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42326",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42326",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/30415752c2df44a83b645e6ed438c154701af440"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42326:commit:8fb1922618e2:spec:github:Azure/azure-rest-api-specs#42326",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-13T20:47:00Z",
+      "observedAt": "2026-04-13T20:47:00Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42326",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42326",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/8fb1922618e2feeff7a77705bf7edf152586c4ef"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42326:comment:4239969493:spec:github:Azure/azure-rest-api-specs#42326",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-13T22:14:55Z",
+      "observedAt": "2026-04-13T22:14:55Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42326",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42326",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42326#issuecomment-4239969493"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews | Language | API Review for Package | |----------|---------| | TypeSpec | [Microsoft.Monitor](https://spa.apiview.dev/review/cfaff915a",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42326:commit:24fcd8bd2a9e:spec:github:Azure/azure-rest-api-specs#42326",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-13T22:37:03Z",
+      "observedAt": "2026-04-13T22:37:03Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42326",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42326",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/24fcd8bd2a9e5de530094b77d72cc963e1a1bd87"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42326:commit:399bc01af17e:spec:github:Azure/azure-rest-api-specs#42326",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-15T08:43:37Z",
+      "observedAt": "2026-04-15T08:43:37Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42326",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42326",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/399bc01af17ea52092a287156b0e9d9708e665df"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42326:commit:3f491cdedb8e:spec:github:Azure/azure-rest-api-specs#42326",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-15T09:27:08Z",
+      "observedAt": "2026-04-15T09:27:08Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42326",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42326",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/3f491cdedb8eb44b704b51990975332bcfdd913d"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42326:review:4112957450:spec:github:Azure/azure-rest-api-specs#42326",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-15T11:05:45Z",
+      "observedAt": "2026-04-15T11:05:45Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42326",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "liadtal"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42326",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42326#pullrequestreview-4112957450"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42326:review:4165051926:spec:github:Azure/azure-rest-api-specs#42326",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-23T18:53:41Z",
+      "observedAt": "2026-04-23T18:53:41Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42326",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "jamlai"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42326",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42326#pullrequestreview-4165051926"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42326:review:4165672768:spec:github:Azure/azure-rest-api-specs#42326",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-23T20:21:55Z",
+      "observedAt": "2026-04-23T20:21:55Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42326",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "komlaafoutou"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42326",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42326#pullrequestreview-4165672768"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Looks good",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42326:pr.merged:spec:github:Azure/azure-rest-api-specs#42326",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-28T15:19:37Z",
+      "observedAt": "2026-04-28T15:19:37Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42326",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42326",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42326"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59845:commit:f4754285e6cd:sdk:.NET:Azure.ResourceManager.Monitor.Workspaces",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-11T04:51:22Z",
+      "observedAt": "2026-06-11T04:51:22Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Monitor.Workspaces",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59845",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/f4754285e6cd9160254c6bb290b2b4969a115e14"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59845:pr.created:sdk:.NET:Azure.ResourceManager.Monitor.Workspaces",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-11T04:51:46Z",
+      "observedAt": "2026-06-11T04:51:46Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Monitor.Workspaces",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "GokulPrasad-Work"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59845",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59845"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59845:review:4473811650:sdk:.NET:Azure.ResourceManager.Monitor.Workspaces",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-11T04:57:16Z",
+      "observedAt": "2026-06-11T04:57:16Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Monitor.Workspaces",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59845",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59845#pullrequestreview-4473811650"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This PR prepares **Azure.ResourceManager.Monitor.Workspaces** for its GA release by moving the package from `1.0.0-beta.2` to `1.0.0`, updating customer-facing install instructions, and updating the changelog for th",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59845:comment:3393369378:sdk:.NET:Azure.ResourceManager.Monitor.Workspaces",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-11T04:57:16Z",
+      "observedAt": "2026-06-11T04:57:16Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Monitor.Workspaces",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59845",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59845#discussion_r3393369378"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The 1.0.0 release entry is effectively empty (no bullet items) and it also drops the standard changelog subsections (Breaking Changes/Bugs Fixed/Other Changes). Most SDK CHANGELOGs in this repo keep these headings and also keep an (Unreleas",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59845:review:4473839504:sdk:.NET:Azure.ResourceManager.Monitor.Workspaces",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-11T05:04:58Z",
+      "observedAt": "2026-06-11T05:04:58Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Monitor.Workspaces",
+      "title": "Changes requested",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59845",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59845#pullrequestreview-4473839504"
+      },
+      "confidence": "authoritative",
+      "excerpt": "### Management SDK Review Summary - **Scope:** `Azure.ResourceManager.Monitor.Workspaces` - **Versioning:** pass (1.0.0-beta.2 → 1.0.0 is a valid GA promotion; no ApiCompatVersion was removed) - **API surface:** fail — 12 contextual naming ",
+      "reviewState": "changes_requested",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38918:commit:37ba66cbca9c:sdk:JavaScript:@azure/arm-monitorworkspaces",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-11T05:05:39Z",
+      "observedAt": "2026-06-11T05:05:39Z",
+      "trackId": "sdk:JavaScript:@azure/arm-monitorworkspaces",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38918",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/37ba66cbca9c3a2fba2eb1593bff39225138fdea"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38918:pr.created:sdk:JavaScript:@azure/arm-monitorworkspaces",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-11T05:06:12Z",
+      "observedAt": "2026-06-11T05:06:12Z",
+      "trackId": "sdk:JavaScript:@azure/arm-monitorworkspaces",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "GokulPrasad-Work"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38918",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38918"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38918:review:4473860033:sdk:JavaScript:@azure/arm-monitorworkspaces",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-11T05:09:38Z",
+      "observedAt": "2026-06-11T05:09:38Z",
+      "trackId": "sdk:JavaScript:@azure/arm-monitorworkspaces",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38918",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38918#pullrequestreview-4473860033"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This PR prepares `@azure/arm-monitorworkspaces` for GA by bumping the package version from `1.0.0-beta.1` to `1.0.0` and aligning the user-agent version string and changelog to reflect the GA release. **Changes:** -",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47453:commit:0a04ef7363d4:sdk:Python:azure-mgmt-monitorworkspaces",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-11T05:10:04Z",
+      "observedAt": "2026-06-11T05:10:04Z",
+      "trackId": "sdk:Python:azure-mgmt-monitorworkspaces",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47453",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/0a04ef7363d4d383ec00e637119c3da92c41fd1d"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47453:pr.created:sdk:Python:azure-mgmt-monitorworkspaces",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-11T05:10:22Z",
+      "observedAt": "2026-06-11T05:10:22Z",
+      "trackId": "sdk:Python:azure-mgmt-monitorworkspaces",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "GokulPrasad-Work"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47453",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47453"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49459:commit:c5e2b1c1eeb6:sdk:Java:azure-resourcemanager-monitor-workspaces",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-11T05:11:46Z",
+      "observedAt": "2026-06-11T05:11:46Z",
+      "trackId": "sdk:Java:azure-resourcemanager-monitor-workspaces",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49459",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/c5e2b1c1eeb623268ab6233f613c29dd921aebec"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49459:pr.created:sdk:Java:azure-resourcemanager-monitor-workspaces",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-11T05:12:00Z",
+      "observedAt": "2026-06-11T05:12:00Z",
+      "trackId": "sdk:Java:azure-resourcemanager-monitor-workspaces",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "GokulPrasad-Work"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49459",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49459"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47453:review:4473885219:sdk:Python:azure-mgmt-monitorworkspaces",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-11T05:13:21Z",
+      "observedAt": "2026-06-11T05:13:21Z",
+      "trackId": "sdk:Python:azure-mgmt-monitorworkspaces",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47453",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47453#pullrequestreview-4473885219"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This PR promotes `azure-mgmt-monitorworkspaces` from preview (`1.0.0b1`) to GA (`1.0.0`) by updating the package version metadata, changelog, and stability indicators for a stable release. **Changes:** - Updated the",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49459:comment:3393440002:sdk:Java:azure-resourcemanager-monitor-workspaces",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-11T05:15:13Z",
+      "observedAt": "2026-06-11T05:15:13Z",
+      "trackId": "sdk:Java:azure-resourcemanager-monitor-workspaces",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49459",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49459#discussion_r3393440002"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The GA version bump in this POM leaves other version-tracked references still on `1.0.0-beta.1` (for example the README dependency snippet and the `eng/versioning/version_client.txt` entry). This can cause docs and the versioning automation",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49459:review:4473892559:sdk:Java:azure-resourcemanager-monitor-workspaces",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-11T05:15:14Z",
+      "observedAt": "2026-06-11T05:15:14Z",
+      "trackId": "sdk:Java:azure-resourcemanager-monitor-workspaces",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49459",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49459#pullrequestreview-4473892559"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This PR prepares `azure-resourcemanager-monitor-workspaces` for GA by updating the Maven artifact version to `1.0.0` and adding a corresponding GA entry to the package changelog. **Changes:** - Bumped `azure-resourc",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49459:comment:3393440025:sdk:Java:azure-resourcemanager-monitor-workspaces",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-11T05:15:14Z",
+      "observedAt": "2026-06-11T05:15:14Z",
+      "trackId": "sdk:Java:azure-resourcemanager-monitor-workspaces",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49459",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49459#discussion_r3393440025"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This new GA entry doesn’t follow the changelog structure used elsewhere in the repo (and even within this file’s beta entry) where changes are grouped under section headers like `### Features Added`. Adding the section header keeps the chan",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59845:commit:a925181d96d9:sdk:.NET:Azure.ResourceManager.Monitor.Workspaces",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-11T16:07:48Z",
+      "observedAt": "2026-06-11T16:07:48Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Monitor.Workspaces",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59845",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/a925181d96d96ddc122c3038bed250469f4a2fb3"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59845:review:4478677637:sdk:.NET:Azure.ResourceManager.Monitor.Workspaces",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-11T16:32:31Z",
+      "observedAt": "2026-06-11T16:32:31Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Monitor.Workspaces",
+      "title": "Changes requested",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59845",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59845#pullrequestreview-4478677637"
+      },
+      "confidence": "authoritative",
+      "excerpt": "### Management SDK Review Summary - **Scope:** `Azure.ResourceManager.Monitor.Workspaces` - **Versioning:** pass (1.0.0-beta.2 → 1.0.0 is a valid GA promotion; CHANGELOG and README updated correctly) - **API surface:** fail — 12 contextual ",
+      "reviewState": "changes_requested",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59845:comment:3397557593:sdk:.NET:Azure.ResourceManager.Monitor.Workspaces",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-11T16:32:31Z",
+      "observedAt": "2026-06-11T16:32:31Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Monitor.Workspaces",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59845",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59845#discussion_r3397557593"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[Phase 1 — Non-blocking advisory]** Now that this package is being promoted to GA (1.0.0), consider adding `<ApiCompatVersion>1.0.0</ApiCompatVersion>` to this `.csproj` as a follow-up after the GA version is published. Without it, future",
+      "stack": 1
+    },
+    {
+      "id": "ado:34968:created",
+      "type": "plan.created",
+      "phase": "plan",
+      "occurredAt": "2026-06-12T17:08:33.647Z",
+      "observedAt": "2026-06-12T17:08:33.647Z",
+      "trackId": "plan",
+      "title": "Release Plan created",
+      "confidence": "authoritative",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34968",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34968"
+      },
+      "stack": 0
+    },
+    {
+      "id": "ado:34968:1:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-06-12T17:08:33.647Z",
+      "observedAt": "2026-06-12T17:08:33.647Z",
+      "trackId": "plan",
+      "value": "New",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34968",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34968"
+      },
+      "title": "Plan state changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34968:1:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-12T17:08:33.647Z",
+      "observedAt": "2026-06-12T17:08:33.647Z",
+      "trackId": "plan",
+      "value": "Not Available",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34968",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34968"
+      },
+      "title": "Spec approval changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:34968:1:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-12T17:08:33.647Z",
+      "observedAt": "2026-06-12T17:08:33.647Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Monitor.Workspaces",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34968",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34968"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:34968:1:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-12T17:08:33.647Z",
+      "observedAt": "2026-06-12T17:08:33.647Z",
+      "trackId": "sdk:JavaScript:@azure/arm-monitorworkspaces",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34968",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34968"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34968:1:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-12T17:08:33.647Z",
+      "observedAt": "2026-06-12T17:08:33.647Z",
+      "trackId": "sdk:Python:azure-mgmt-monitorworkspaces",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34968",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34968"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34968:1:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-12T17:08:33.647Z",
+      "observedAt": "2026-06-12T17:08:33.647Z",
+      "trackId": "sdk:Java:azure-resourcemanager-monitor-workspaces",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34968",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34968"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34968:1:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-12T17:08:33.647Z",
+      "observedAt": "2026-06-12T17:08:33.647Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/monitor/armmonitorworkspaces",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34968",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34968"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34968:2:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-06-12T17:08:34.627Z",
+      "observedAt": "2026-06-12T17:08:34.627Z",
+      "trackId": "plan",
+      "value": "In Progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34968",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34968"
+      },
+      "title": "Plan state changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:34968:3:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-12T17:08:46.623Z",
+      "observedAt": "2026-06-12T17:08:46.623Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Monitor.Workspaces",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34968",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34968"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:34968:3:Custom.SDKPullRequestForDotnet",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-06-12T17:08:46.623Z",
+      "observedAt": "2026-06-12T17:08:46.623Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Monitor.Workspaces",
+      "value": "https://github.com/Azure/azure-sdk-for-net/pull/59845",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34968",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34968"
+      },
+      "title": "SDK PR linked",
+      "stack": 4
+    },
+    {
+      "id": "ado:34968:4:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-12T17:08:54.133Z",
+      "observedAt": "2026-06-12T17:08:54.133Z",
+      "trackId": "sdk:JavaScript:@azure/arm-monitorworkspaces",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34968",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34968"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34968:4:Custom.SDKPullRequestForJavaScript",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-06-12T17:08:54.133Z",
+      "observedAt": "2026-06-12T17:08:54.133Z",
+      "trackId": "sdk:JavaScript:@azure/arm-monitorworkspaces",
+      "value": "https://github.com/Azure/azure-sdk-for-js/pull/38918",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34968",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34968"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "ado:34968:5:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-12T17:09:00.753Z",
+      "observedAt": "2026-06-12T17:09:00.753Z",
+      "trackId": "sdk:Python:azure-mgmt-monitorworkspaces",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34968",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34968"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34968:5:Custom.SDKPullRequestForPython",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-06-12T17:09:00.753Z",
+      "observedAt": "2026-06-12T17:09:00.753Z",
+      "trackId": "sdk:Python:azure-mgmt-monitorworkspaces",
+      "value": "https://github.com/Azure/azure-sdk-for-python/pull/47453",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34968",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34968"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "ado:34968:6:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-12T17:09:06.36Z",
+      "observedAt": "2026-06-12T17:09:06.36Z",
+      "trackId": "sdk:Java:azure-resourcemanager-monitor-workspaces",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34968",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34968"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34968:6:Custom.SDKPullRequestForJava",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-06-12T17:09:06.36Z",
+      "observedAt": "2026-06-12T17:09:06.36Z",
+      "trackId": "sdk:Java:azure-resourcemanager-monitor-workspaces",
+      "value": "https://github.com/Azure/azure-sdk-for-java/pull/49459",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34968",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34968"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "ado:34968:7:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-12T17:09:22.733Z",
+      "observedAt": "2026-06-12T17:09:22.733Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/monitor/armmonitorworkspaces",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34968",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34968"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26999:commit:b5a70643b3b7:sdk:Go:sdk/resourcemanager/monitor/armmonitorworkspaces",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-12T17:57:34Z",
+      "observedAt": "2026-06-12T17:57:34Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/monitor/armmonitorworkspaces",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26999",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/b5a70643b3b7a72d321bb1cdfc1c98e9d8b8941f"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26999:pr.created:sdk:Go:sdk/resourcemanager/monitor/armmonitorworkspaces",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-12T17:59:01Z",
+      "observedAt": "2026-06-12T17:59:01Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/monitor/armmonitorworkspaces",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "GokulPrasad-Work"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26999",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26999"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado:34968:8:Custom.SDKPullRequestForGo",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-06-12T17:59:14.703Z",
+      "observedAt": "2026-06-12T17:59:14.703Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/monitor/armmonitorworkspaces",
+      "value": "https://github.com/Azure/azure-sdk-for-go/pull/26999",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34968",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34968"
+      },
+      "title": "SDK PR linked",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26999:review:4488052585:sdk:Go:sdk/resourcemanager/monitor/armmonitorworkspaces",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-12T18:01:36Z",
+      "observedAt": "2026-06-12T18:01:36Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/monitor/armmonitorworkspaces",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26999",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26999#pullrequestreview-4488052585"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This PR prepares the `armmonitorworkspaces` Resource Manager module for its GA release by bumping the module version to `v1.0.0` and recording the GA release in the changelog. **Changes:** - Updated the generated mo",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59845:commit:6d52cc181eae:sdk:.NET:Azure.ResourceManager.Monitor.Workspaces",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-12T18:39:07Z",
+      "observedAt": "2026-06-12T18:39:07Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Monitor.Workspaces",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59845",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/6d52cc181eae9799eadb4324969ca8b745bb2fb6"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49459:commit:d13ea3946b5b:sdk:Java:azure-resourcemanager-monitor-workspaces",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-12T18:39:19Z",
+      "observedAt": "2026-06-12T18:39:19Z",
+      "trackId": "sdk:Java:azure-resourcemanager-monitor-workspaces",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49459",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/d13ea3946b5bd63b5e769811eba6f5af43e078bc"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38918:commit:3b00039372e1:sdk:JavaScript:@azure/arm-monitorworkspaces",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-12T18:39:31Z",
+      "observedAt": "2026-06-12T18:39:31Z",
+      "trackId": "sdk:JavaScript:@azure/arm-monitorworkspaces",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38918",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/3b00039372e10364ec7fb082598f89cba6fb4c41"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59845:review:4488354482:sdk:.NET:Azure.ResourceManager.Monitor.Workspaces",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-12T18:52:46Z",
+      "observedAt": "2026-06-12T18:52:46Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Monitor.Workspaces",
+      "title": "Changes requested",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59845",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59845#pullrequestreview-4488354482"
+      },
+      "confidence": "authoritative",
+      "excerpt": "### Management SDK Review Summary - **Scope:** `Azure.ResourceManager.Monitor.Workspaces` - **Versioning:** pass (1.0.0-beta.2 → 1.0.0 is a valid GA promotion; CHANGELOG updated with 1.0.0 entry; no `ApiCompatVersion` removed) - **API surfa",
+      "reviewState": "changes_requested",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26999:comment:4703942806:sdk:Go:sdk/resourcemanager/monitor/armmonitorworkspaces",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-15T02:13:26Z",
+      "observedAt": "2026-06-15T02:13:26Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/monitor/armmonitorworkspaces",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26999",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26999#issuecomment-4703942806"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## PR is ready to merge",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38918:comment:4704074979:sdk:JavaScript:@azure/arm-monitorworkspaces",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-15T02:51:10Z",
+      "observedAt": "2026-06-15T02:51:10Z",
+      "trackId": "sdk:JavaScript:@azure/arm-monitorworkspaces",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38918",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38918#issuecomment-4704074979"
+      },
+      "confidence": "authoritative",
+      "excerpt": "LGTM cc @JialinHuang803",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38918:review:4494715248:sdk:JavaScript:@azure/arm-monitorworkspaces",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-15T05:45:54Z",
+      "observedAt": "2026-06-15T05:45:54Z",
+      "trackId": "sdk:JavaScript:@azure/arm-monitorworkspaces",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "JialinHuang803"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38918",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38918#pullrequestreview-4494715248"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38918:pr.merged:sdk:JavaScript:@azure/arm-monitorworkspaces",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-15T05:47:26Z",
+      "observedAt": "2026-06-15T05:47:26Z",
+      "trackId": "sdk:JavaScript:@azure/arm-monitorworkspaces",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38918",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38918"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26999:review:4495115004:sdk:Go:sdk/resourcemanager/monitor/armmonitorworkspaces",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-15T07:09:56Z",
+      "observedAt": "2026-06-15T07:09:56Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/monitor/armmonitorworkspaces",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "tadelesh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26999",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26999#pullrequestreview-4495115004"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "ado:34969:2:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-16T15:05:27.97Z",
+      "observedAt": "2026-06-16T15:05:27.97Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42326",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/42326",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34969",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34969"
+      },
+      "title": "Spec PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado:34968:15:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-16T15:05:28.567Z",
+      "observedAt": "2026-06-16T15:05:28.567Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Monitor.Workspaces",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34968",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34968"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34968:15:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-16T15:05:28.567Z",
+      "observedAt": "2026-06-16T15:05:28.567Z",
+      "trackId": "sdk:JavaScript:@azure/arm-monitorworkspaces",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34968",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34968"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34968:15:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-16T15:05:28.567Z",
+      "observedAt": "2026-06-16T15:05:28.567Z",
+      "trackId": "sdk:Python:azure-mgmt-monitorworkspaces",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34968",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34968"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34968:15:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-16T15:05:28.567Z",
+      "observedAt": "2026-06-16T15:05:28.567Z",
+      "trackId": "sdk:Java:azure-resourcemanager-monitor-workspaces",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34968",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34968"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34968:15:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-16T15:05:28.567Z",
+      "observedAt": "2026-06-16T15:05:28.567Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/monitor/armmonitorworkspaces",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34968",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34968"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34968:16:Custom.ReleaseStatusForDotnet",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-06-17T15:10:41.537Z",
+      "observedAt": "2026-06-17T15:10:41.537Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Monitor.Workspaces",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34968",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34968"
+      },
+      "title": "Release status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34968:16:Custom.ReleasedVersionForDotnet",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-06-17T15:10:41.537Z",
+      "observedAt": "2026-06-17T15:10:41.537Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Monitor.Workspaces",
+      "value": "1.0.0",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34968",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34968"
+      },
+      "title": "Package version observed",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59845:comment:4773552940:sdk:.NET:Azure.ResourceManager.Monitor.Workspaces",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-22T22:15:14Z",
+      "observedAt": "2026-06-22T22:15:14Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Monitor.Workspaces",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "GokulPrasad-Work"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59845",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59845#issuecomment-4773552940"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@ArthurMa1978 Could you please review these changes and help unblock the check failures.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26999:pr.merged:sdk:Go:sdk/resourcemanager/monitor/armmonitorworkspaces",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-22T22:15:39Z",
+      "observedAt": "2026-06-22T22:15:39Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/monitor/armmonitorworkspaces",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26999",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26999"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49459:comment:4773566610:sdk:Java:azure-resourcemanager-monitor-workspaces",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-22T22:16:53Z",
+      "observedAt": "2026-06-22T22:16:53Z",
+      "trackId": "sdk:Java:azure-resourcemanager-monitor-workspaces",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "GokulPrasad-Work"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49459",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49459#issuecomment-4773566610"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@weidongxu-microsoft Please review and see if the changes are good. Thanks.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47453:comment:4773578780:sdk:Python:azure-mgmt-monitorworkspaces",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-22T22:18:24Z",
+      "observedAt": "2026-06-22T22:18:24Z",
+      "trackId": "sdk:Python:azure-mgmt-monitorworkspaces",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "GokulPrasad-Work"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47453",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47453#issuecomment-4773578780"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@msyyc / @ChenxiJiang333 - Could you please review this change",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49459:comment:4774871604:sdk:Java:azure-resourcemanager-monitor-workspaces",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-23T01:46:22Z",
+      "observedAt": "2026-06-23T01:46:22Z",
+      "trackId": "sdk:Java:azure-resourcemanager-monitor-workspaces",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49459",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49459#issuecomment-4774871604"
+      },
+      "confidence": "authoritative",
+      "excerpt": "No, changes are not good. And CI is not pass. Please create a new release plan and generate these updates.",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47453:commit:7550b137c760:sdk:Python:azure-mgmt-monitorworkspaces",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-23T02:49:13Z",
+      "observedAt": "2026-06-23T02:49:13Z",
+      "trackId": "sdk:Python:azure-mgmt-monitorworkspaces",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47453",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/7550b137c7604b0c5cde338d282f64ad63ea0273"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47453:commit:5c4344fab39b:sdk:Python:azure-mgmt-monitorworkspaces",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-23T03:02:56Z",
+      "observedAt": "2026-06-23T03:02:56Z",
+      "trackId": "sdk:Python:azure-mgmt-monitorworkspaces",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47453",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/5c4344fab39b922d6df6a36eb606d11350ee8b23"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47453:commit:65b4ceea7c98:sdk:Python:azure-mgmt-monitorworkspaces",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-23T03:12:30Z",
+      "observedAt": "2026-06-23T03:12:30Z",
+      "trackId": "sdk:Python:azure-mgmt-monitorworkspaces",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47453",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/65b4ceea7c98d5be31ce0919db5ed8c3385281ee"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado:34968:17:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-23T03:12:40.773Z",
+      "observedAt": "2026-06-23T03:12:40.773Z",
+      "trackId": "sdk:Python:azure-mgmt-monitorworkspaces",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34968",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34968"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47453:commit:09cb8e401951:sdk:Python:azure-mgmt-monitorworkspaces",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-23T05:18:43Z",
+      "observedAt": "2026-06-23T05:18:43Z",
+      "trackId": "sdk:Python:azure-mgmt-monitorworkspaces",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47453",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/09cb8e4019516a6e965325ca80bd459ae1478bc9"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47453:commit:a1e3f51a22dc:sdk:Python:azure-mgmt-monitorworkspaces",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-23T05:44:53Z",
+      "observedAt": "2026-06-23T05:44:53Z",
+      "trackId": "sdk:Python:azure-mgmt-monitorworkspaces",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47453",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/a1e3f51a22dc85c8eda3828cce0ef9c608d3f26e"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47453:commit:d507f2942fe1:sdk:Python:azure-mgmt-monitorworkspaces",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-23T05:47:41Z",
+      "observedAt": "2026-06-23T05:47:41Z",
+      "trackId": "sdk:Python:azure-mgmt-monitorworkspaces",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47453",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/d507f2942fe136dfd6d2ea1df5132e45332be52f"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47453:commit:fd0714114f49:sdk:Python:azure-mgmt-monitorworkspaces",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-23T05:57:25Z",
+      "observedAt": "2026-06-23T05:57:25Z",
+      "trackId": "sdk:Python:azure-mgmt-monitorworkspaces",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47453",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/fd0714114f494ccafff2659f68466007cc1000ce"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47453:commit:a6c229ab0511:sdk:Python:azure-mgmt-monitorworkspaces",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-23T06:48:29Z",
+      "observedAt": "2026-06-23T06:48:29Z",
+      "trackId": "sdk:Python:azure-mgmt-monitorworkspaces",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47453",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/a6c229ab05110e14d50566782f3e38981c59f81b"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47453:review:4550697876:sdk:Python:azure-mgmt-monitorworkspaces",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-23T06:49:12Z",
+      "observedAt": "2026-06-23T06:49:12Z",
+      "trackId": "sdk:Python:azure-mgmt-monitorworkspaces",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47453",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47453#pullrequestreview-4550697876"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47453:review:4550733514:sdk:Python:azure-mgmt-monitorworkspaces",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-23T06:54:31Z",
+      "observedAt": "2026-06-23T06:54:31Z",
+      "trackId": "sdk:Python:azure-mgmt-monitorworkspaces",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47453",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47453#pullrequestreview-4550733514"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47453:pr.merged:sdk:Python:azure-mgmt-monitorworkspaces",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-23T08:51:24Z",
+      "observedAt": "2026-06-23T08:51:24Z",
+      "trackId": "sdk:Python:azure-mgmt-monitorworkspaces",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47453",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47453"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47453:comment:4785362269:sdk:Python:azure-mgmt-monitorworkspaces",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-24T02:29:30Z",
+      "observedAt": "2026-06-24T02:29:30Z",
+      "trackId": "sdk:Python:azure-mgmt-monitorworkspaces",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47453",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47453#issuecomment-4785362269"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@GokulPrasad-Work, if no special request about target date, we will release the SDK soon.",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49459:commit:884ef95d13e2:sdk:Java:azure-resourcemanager-monitor-workspaces",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-25T09:14:50Z",
+      "observedAt": "2026-06-25T09:14:50Z",
+      "trackId": "sdk:Java:azure-resourcemanager-monitor-workspaces",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49459",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/884ef95d13e24d59d8e189a5e74aa10eb1cd171b"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49459:commit:434b2ed91796:sdk:Java:azure-resourcemanager-monitor-workspaces",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-25T09:23:10Z",
+      "observedAt": "2026-06-25T09:23:10Z",
+      "trackId": "sdk:Java:azure-resourcemanager-monitor-workspaces",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49459",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/434b2ed91796cd42e9cb9f8c36c239ba13a3423b"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47453:comment:4797781026:sdk:Python:azure-mgmt-monitorworkspaces",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-25T09:30:25Z",
+      "observedAt": "2026-06-25T09:30:25Z",
+      "trackId": "sdk:Python:azure-mgmt-monitorworkspaces",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "GokulPrasad-Work"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47453",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47453#issuecomment-4797781026"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@msyyc - Yes, Please go ahead and release the SDK, this is our first GA SDK release for Python.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59845:review:4569811052:sdk:.NET:Azure.ResourceManager.Monitor.Workspaces",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-25T09:53:05Z",
+      "observedAt": "2026-06-25T09:53:05Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Monitor.Workspaces",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "GokulPrasad-Work"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59845",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59845#pullrequestreview-4569811052"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59845:comment:3473455968:sdk:.NET:Azure.ResourceManager.Monitor.Workspaces",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-25T09:53:05Z",
+      "observedAt": "2026-06-25T09:53:05Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Monitor.Workspaces",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "GokulPrasad-Work"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59845",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59845#discussion_r3473455968"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Addressed: the CHANGELOG now keeps an (Unreleased) 1.1.0-beta.1 section with the standard Features Added / Breaking Changes / Bugs Fixed / Other Changes subsections, and the 1.0.0 entry contains the GA availability note. Resolving.",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59845:review:4569813791:sdk:.NET:Azure.ResourceManager.Monitor.Workspaces",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-25T09:53:21Z",
+      "observedAt": "2026-06-25T09:53:21Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Monitor.Workspaces",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "GokulPrasad-Work"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59845",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59845#pullrequestreview-4569813791"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59845:comment:3473457801:sdk:.NET:Azure.ResourceManager.Monitor.Workspaces",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-25T09:53:21Z",
+      "observedAt": "2026-06-25T09:53:21Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Monitor.Workspaces",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "GokulPrasad-Work"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59845",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59845#discussion_r3473457801"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Acknowledged. As the advisory notes, this is a non-blocking change that should not be in this PR \\u2014 ApiCompatVersion will be added as a post-GA follow-up once 1.0.0 is published (it needs a published stable baseline to compare against).",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59845:comment:4797987489:sdk:.NET:Azure.ResourceManager.Monitor.Workspaces",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-25T09:55:00Z",
+      "observedAt": "2026-06-25T09:55:00Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Monitor.Workspaces",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "GokulPrasad-Work"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59845",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59845#issuecomment-4797987489"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hello @ArthurMa1978 , We would like to release the preview SDK to GA, with just the version changes and no code changes. Could you please help on how to resolve this comment regarding [Contextual naming] Issue* family — missing Monitor pref",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49459:review:4571844754:sdk:Java:azure-resourcemanager-monitor-workspaces",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-25T14:23:02Z",
+      "observedAt": "2026-06-25T14:23:02Z",
+      "trackId": "sdk:Java:azure-resourcemanager-monitor-workspaces",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49459",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49459#pullrequestreview-4571844754"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49459:pr.merged:sdk:Java:azure-resourcemanager-monitor-workspaces",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-25T14:23:11Z",
+      "observedAt": "2026-06-25T14:23:11Z",
+      "trackId": "sdk:Java:azure-resourcemanager-monitor-workspaces",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49459",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49459"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59845:comment:4805676086:sdk:.NET:Azure.ResourceManager.Monitor.Workspaces",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-26T01:40:21Z",
+      "observedAt": "2026-06-26T01:40:21Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Monitor.Workspaces",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59845",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59845#issuecomment-4805676086"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> @ArthurMa1978 Could you please review these changes and help unblock the check failures. Please solve the conflicts",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47453:comment:4805691009:sdk:Python:azure-mgmt-monitorworkspaces",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-26T01:43:58Z",
+      "observedAt": "2026-06-26T01:43:58Z",
+      "trackId": "sdk:Python:azure-mgmt-monitorworkspaces",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47453",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47453#issuecomment-4805691009"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@ChenxiJiang333 Pls help release sdk",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59845:pr.closed:sdk:.NET:Azure.ResourceManager.Monitor.Workspaces",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-26T02:31:29Z",
+      "observedAt": "2026-06-26T02:31:29Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Monitor.Workspaces",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59845",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59845"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59845:comment:4805890123:sdk:.NET:Azure.ResourceManager.Monitor.Workspaces",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-26T02:32:12Z",
+      "observedAt": "2026-06-26T02:32:12Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Monitor.Workspaces",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "GokulPrasad-Work"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59845",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59845#issuecomment-4805890123"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Thanks @ArthurMa1978 . GA version is already updated. So closing this one.",
+      "stack": 1
+    },
+    {
+      "id": "ado:34968:18:Custom.ReleaseStatusForPython",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-06-26T02:57:27.18Z",
+      "observedAt": "2026-06-26T02:57:27.18Z",
+      "trackId": "sdk:Python:azure-mgmt-monitorworkspaces",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34968",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34968"
+      },
+      "title": "Release status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:34968:18:Custom.ReleasedVersionForPython",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-06-26T02:57:27.18Z",
+      "observedAt": "2026-06-26T02:57:27.18Z",
+      "trackId": "sdk:Python:azure-mgmt-monitorworkspaces",
+      "value": "1.0.0",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34968",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34968"
+      },
+      "title": "Package version observed",
+      "stack": 3
+    },
+    {
+      "id": "ado:34968:19:Custom.ReleaseStatusForJava",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-06-26T03:21:53.18Z",
+      "observedAt": "2026-06-26T03:21:53.18Z",
+      "trackId": "sdk:Java:azure-resourcemanager-monitor-workspaces",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34968",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34968"
+      },
+      "title": "Release status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:34968:19:Custom.ReleasedVersionForJava",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-06-26T03:21:53.18Z",
+      "observedAt": "2026-06-26T03:21:53.18Z",
+      "trackId": "sdk:Java:azure-resourcemanager-monitor-workspaces",
+      "value": "1.0.0",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34968",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34968"
+      },
+      "title": "Package version observed",
+      "stack": 5
+    },
+    {
+      "id": "ado:34968:20:Custom.ReleaseStatusForGo",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-07-08T19:14:42.41Z",
+      "observedAt": "2026-07-08T19:14:42.41Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/monitor/armmonitorworkspaces",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34968",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34968"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34968:20:Custom.ReleasedVersionForGo",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-07-08T19:14:42.41Z",
+      "observedAt": "2026-07-08T19:14:42.41Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/monitor/armmonitorworkspaces",
+      "value": "1.0.0",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34968",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34968"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34968:21:Custom.ReleaseStatusForJavaScript",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-07-15T03:12:58.303Z",
+      "observedAt": "2026-07-15T03:12:58.303Z",
+      "trackId": "sdk:JavaScript:@azure/arm-monitorworkspaces",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34968",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34968"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34968:21:Custom.ReleasedVersionForJavaScript",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-07-15T03:12:58.303Z",
+      "observedAt": "2026-07-15T03:12:58.303Z",
+      "trackId": "sdk:JavaScript:@azure/arm-monitorworkspaces",
+      "value": "1.0.0",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34968",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34968"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34968:22:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-07-15T03:12:58.527Z",
+      "observedAt": "2026-07-15T03:12:58.527Z",
+      "trackId": "plan",
+      "value": "Finished",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34968",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34968"
+      },
+      "title": "Plan state changed",
+      "stack": 0
+    }
+  ],
+  "quality": {
+    "warnings": [
+      "1 historical linked PR(s) closed without merge"
+    ],
+    "unavailablePullRequests": 0,
+    "unavailablePipelineRuns": 0
+  },
+  "boundaryFacts": {
+    "id": "34968",
+    "state": "finished",
+    "specPrs": [
+      {
+        "id": "github:Azure/azure-rest-api-specs#42326",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#42326",
+        "createdAt": "2026-04-13T18:06:00Z",
+        "mergedAt": "2026-04-28T15:19:37Z",
+        "closedAt": "2026-04-28T15:19:37Z",
+        "available": true
+      }
+    ],
+    "artifacts": [
+      {
+        "language": ".NET",
+        "package": "Azure.ResourceManager.Monitor.Workspaces",
+        "trackId": "sdk:.NET:Azure.ResourceManager.Monitor.Workspaces",
+        "prId": "github:Azure/azure-sdk-for-net#59845",
+        "prCreatedAt": "2026-06-11T04:51:46Z",
+        "prMergedAt": null,
+        "prClosedAt": "2026-06-26T02:31:29Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-net#59845",
+            "createdAt": "2026-06-11T04:51:46Z",
+            "mergedAt": null,
+            "closedAt": "2026-06-26T02:31:29Z",
+            "state": "closed"
+          }
+        ],
+        "generationRunId": null,
+        "generationStartAt": null,
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-06-17T15:10:41.537Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.0.0",
+        "releaseBoundaryAt": "2026-06-17T15:10:41.537Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "missing",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "JavaScript",
+        "package": "@azure/arm-monitorworkspaces",
+        "trackId": "sdk:JavaScript:@azure/arm-monitorworkspaces",
+        "prId": "github:Azure/azure-sdk-for-js#38918",
+        "prCreatedAt": "2026-06-11T05:06:12Z",
+        "prMergedAt": "2026-06-15T05:47:26Z",
+        "prClosedAt": "2026-06-15T05:47:26Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-js#38918",
+            "createdAt": "2026-06-11T05:06:12Z",
+            "mergedAt": "2026-06-15T05:47:26Z",
+            "closedAt": "2026-06-15T05:47:26Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": null,
+        "generationStartAt": null,
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-07-15T03:12:58.303Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.0.0",
+        "releaseBoundaryAt": "2026-07-15T03:12:58.303Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "missing",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Python",
+        "package": "azure-mgmt-monitorworkspaces",
+        "trackId": "sdk:Python:azure-mgmt-monitorworkspaces",
+        "prId": "github:Azure/azure-sdk-for-python#47453",
+        "prCreatedAt": "2026-06-11T05:10:22Z",
+        "prMergedAt": "2026-06-23T08:51:24Z",
+        "prClosedAt": "2026-06-23T08:51:24Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-python#47453",
+            "createdAt": "2026-06-11T05:10:22Z",
+            "mergedAt": "2026-06-23T08:51:24Z",
+            "closedAt": "2026-06-23T08:51:24Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": null,
+        "generationStartAt": null,
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-06-26T02:57:27.18Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.0.0",
+        "releaseBoundaryAt": "2026-06-26T02:57:27.18Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "missing",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Java",
+        "package": "azure-resourcemanager-monitor-workspaces",
+        "trackId": "sdk:Java:azure-resourcemanager-monitor-workspaces",
+        "prId": "github:Azure/azure-sdk-for-java#49459",
+        "prCreatedAt": "2026-06-11T05:12:00Z",
+        "prMergedAt": "2026-06-25T14:23:11Z",
+        "prClosedAt": "2026-06-25T14:23:11Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-java#49459",
+            "createdAt": "2026-06-11T05:12:00Z",
+            "mergedAt": "2026-06-25T14:23:11Z",
+            "closedAt": "2026-06-25T14:23:11Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": null,
+        "generationStartAt": null,
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-06-26T03:21:53.18Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.0.0",
+        "releaseBoundaryAt": "2026-06-26T03:21:53.18Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "missing",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Go",
+        "package": "sdk/resourcemanager/monitor/armmonitorworkspaces",
+        "trackId": "sdk:Go:sdk/resourcemanager/monitor/armmonitorworkspaces",
+        "prId": "github:Azure/azure-sdk-for-go#26999",
+        "prCreatedAt": "2026-06-12T17:59:01Z",
+        "prMergedAt": "2026-06-22T22:15:39Z",
+        "prClosedAt": "2026-06-22T22:15:39Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-go#26999",
+            "createdAt": "2026-06-12T17:59:01Z",
+            "mergedAt": "2026-06-22T22:15:39Z",
+            "closedAt": "2026-06-22T22:15:39Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": null,
+        "generationStartAt": null,
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-07-08T19:14:42.41Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.0.0",
+        "releaseBoundaryAt": "2026-07-08T19:14:42.41Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "missing",
+          "release": "release-plan"
+        }
+      }
+    ],
+    "cohortPlan": {
+      "id": "34968",
+      "releasePlanId": "34968",
+      "title": "GA release plan for Accounts",
+      "service": "Accounts",
+      "state": "finished"
+    },
+    "quality": {
+      "warnings": [
+        "1 historical linked PR(s) closed without merge"
+      ],
+      "unavailablePullRequests": 0,
+      "unavailablePipelineRuns": 0
+    }
+  },
+  "summary": {
+    "durationHours": 778.1,
+    "pullRequestCount": 6,
+    "humanReviewCount": 10,
+    "humanCommentCount": 13
+  }
+}

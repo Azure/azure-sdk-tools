@@ -1,0 +1,3598 @@
+{
+  "schemaVersion": 2,
+  "id": "33747",
+  "correlation": {
+    "policyVersion": 1,
+    "preflight": "passed"
+  },
+  "releasePlanId": "2176",
+  "title": "Release plan - 2176 - Public Preview - Liftr-Confluent",
+  "service": "Confluent.Management",
+  "product": "Release",
+  "path": "specification/confluent/Confluent.Management",
+  "state": "finished",
+  "plane": "management",
+  "releaseType": "APEX Public Preview",
+  "intendedMonth": "May 2026",
+  "createdAt": "2026-04-02T05:37:41.87Z",
+  "completedAt": "2026-06-15T14:58:57.553Z",
+  "sourceUrl": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33747",
+  "range": {
+    "start": "2025-08-18T12:41:41.000Z",
+    "end": "2026-06-15T14:58:57.553Z"
+  },
+  "intendedArtifacts": [
+    {
+      "prId": "github:Azure/azure-sdk-for-net#54889",
+      "language": ".NET",
+      "package": "Azure.ResourceManager.Confluent",
+      "version": null,
+      "outcome": "released",
+      "generationPipelineUrl": null,
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-js#37273",
+      "language": "JavaScript",
+      "package": "@azure/arm-confluent",
+      "version": null,
+      "outcome": "released",
+      "generationPipelineUrl": null,
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-python#45102",
+      "language": "Python",
+      "package": "azure-mgmt-confluent",
+      "version": null,
+      "outcome": "released",
+      "generationPipelineUrl": null,
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-java#47954",
+      "language": "Java",
+      "package": "azure-resourcemanager-confluent",
+      "version": null,
+      "outcome": "released",
+      "generationPipelineUrl": null,
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-go#26002",
+      "language": "Go",
+      "package": "sdk/resourcemanager/confluent/armconfluent",
+      "version": null,
+      "outcome": "released",
+      "generationPipelineUrl": null,
+      "releasePipelineUrl": null
+    }
+  ],
+  "links": [
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#36738",
+      "role": "spec-pr",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/36738",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-net#55617",
+      "role": "sdk-pr-history",
+      "language": ".NET",
+      "url": "https://github.com/Azure/azure-sdk-for-net/pull/55617",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-net#54889",
+      "role": "sdk-pr",
+      "language": ".NET",
+      "url": "https://github.com/Azure/azure-sdk-for-net/pull/54889",
+      "releasePlanIds": [
+        "2176",
+        "33747"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-js#37273",
+      "role": "sdk-pr",
+      "language": "JavaScript",
+      "url": "https://github.com/Azure/azure-sdk-for-js/pull/37273",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-python#45102",
+      "role": "sdk-pr",
+      "language": "Python",
+      "url": "https://github.com/Azure/azure-sdk-for-python/pull/45102",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-java#47954",
+      "role": "sdk-pr",
+      "language": "Java",
+      "url": "https://github.com/Azure/azure-sdk-for-java/pull/47954",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-go#26002",
+      "role": "sdk-pr",
+      "language": "Go",
+      "url": "https://github.com/Azure/azure-sdk-for-go/pull/26002",
+      "releasePlanIds": []
+    }
+  ],
+  "tracks": [
+    {
+      "id": "plan",
+      "kind": "plan",
+      "label": "Release Plan",
+      "detail": "APEX Public Preview"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#36738",
+      "kind": "spec",
+      "label": "Spec PR",
+      "detail": "azure-rest-api-specs #36738",
+      "artifactId": "github:Azure/azure-rest-api-specs#36738",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "kind": "sdk",
+      "label": ".NET",
+      "detail": "Azure.ResourceManager.Confluent",
+      "artifactId": "github:Azure/azure-sdk-for-net#54889",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:JavaScript:@azure/arm-confluent",
+      "kind": "sdk",
+      "label": "JavaScript",
+      "detail": "@azure/arm-confluent",
+      "artifactId": "github:Azure/azure-sdk-for-js#37273",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Python:azure-mgmt-confluent",
+      "kind": "sdk",
+      "label": "Python",
+      "detail": "azure-mgmt-confluent",
+      "artifactId": "github:Azure/azure-sdk-for-python#45102",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Java:azure-resourcemanager-confluent",
+      "kind": "sdk",
+      "label": "Java",
+      "detail": "azure-resourcemanager-confluent",
+      "artifactId": "github:Azure/azure-sdk-for-java#47954",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Go:sdk/resourcemanager/confluent/armconfluent",
+      "kind": "sdk",
+      "label": "Go",
+      "detail": "sdk/resourcemanager/confluent/armconfluent",
+      "artifactId": "github:Azure/azure-sdk-for-go#26002",
+      "state": "merged"
+    }
+  ],
+  "events": [
+    {
+      "id": "github:Azure/azure-rest-api-specs#36738:pr.created:spec:github:Azure/azure-rest-api-specs#36738",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-08-18T12:41:41Z",
+      "observedAt": "2025-08-18T12:41:41Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#36738",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "Shekar2004"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#36738",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/36738"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#36738:comment:3196596639:spec:github:Azure/azure-rest-api-specs#36738",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-08-18T12:41:57Z",
+      "observedAt": "2025-08-18T12:41:57Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#36738",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#36738",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/36738#issuecomment-3196596639"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>✅ All automated merging requirements have been met! To get your PR merged, see <a href=\"https://aka.ms/azsdk/specreview/merge\">aka.ms/azsdk/specreview/merge</a>.<br /><br />Comment generated by <a href=\"https://g",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#36738:comment:3196610312:spec:github:Azure/azure-rest-api-specs#36738",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-08-18T12:44:08Z",
+      "observedAt": "2025-08-18T12:44:08Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#36738",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#36738",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/36738#issuecomment-3196610312"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews | Language | API Review for Package | |----------|---------| | Swagger | [Microsoft.Confluent](https://apiview.dev/Assemblies/Review/a",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#36738:comment:3199167724:spec:github:Azure/azure-rest-api-specs#36738",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-08-19T04:30:35Z",
+      "observedAt": "2025-08-19T04:30:35Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#36738",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "Shekar2004"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#36738",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/36738#issuecomment-3199167724"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> @Shekar2004 please read the following Contributor License Agreement(CLA). If you agree with the CLA, please reply with the following information. > > ``` > @microsoft-github-policy-service agree [company=\"{your company}\"] > ``` > > > Opti",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#36738:comment:3199173401:spec:github:Azure/azure-rest-api-specs#36738",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-08-19T04:34:38Z",
+      "observedAt": "2025-08-19T04:34:38Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#36738",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "DeepikaNMS"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#36738",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/36738#issuecomment-3199173401"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Please check the CI checks errors. The rest of the changes looks good.",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#36738:commit:ef5dd8397d4a:spec:github:Azure/azure-rest-api-specs#36738",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2025-08-19T09:37:27Z",
+      "observedAt": "2025-08-19T09:37:27Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#36738",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "Shekar2004"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#36738",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/ef5dd8397d4ae7bdec2c51d00b5ad883a8d438db"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#36738:commit:3283fae53ffc:spec:github:Azure/azure-rest-api-specs#36738",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2025-09-02T08:54:24Z",
+      "observedAt": "2025-09-02T08:54:24Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#36738",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "Shekar2004"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#36738",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/3283fae53ffc92e51880d24973b53a3cafe7a61d"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#36738:commit:c649d87fe2b3:spec:github:Azure/azure-rest-api-specs#36738",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2025-09-02T09:38:45Z",
+      "observedAt": "2025-09-02T09:38:45Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#36738",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "Shekar2004"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#36738",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/c649d87fe2b3cdba1bde52d2baeb38ce5c8bca09"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#36738:commit:bf3840cc80d1:spec:github:Azure/azure-rest-api-specs#36738",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2025-09-03T04:14:55Z",
+      "observedAt": "2025-09-03T04:14:55Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#36738",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "Shekar2004"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#36738",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/bf3840cc80d1f89f5ba497119365d28720cbc977"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#36738:review:3179729508:spec:github:Azure/azure-rest-api-specs#36738",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2025-09-03T09:13:34Z",
+      "observedAt": "2025-09-03T09:13:34Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#36738",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "krisnaray"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#36738",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/36738#pullrequestreview-3179729508"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#36738:commit:cb5c4aea9bbb:spec:github:Azure/azure-rest-api-specs#36738",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2025-09-03T09:15:01Z",
+      "observedAt": "2025-09-03T09:15:01Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#36738",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "Shekar2004"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#36738",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/cb5c4aea9bbb5a29b5cd24406c4db6428481dddc"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#36738:commit:c08555898720:spec:github:Azure/azure-rest-api-specs#36738",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2025-09-04T05:14:20Z",
+      "observedAt": "2025-09-04T05:14:20Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#36738",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "alluri02"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#36738",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/c0855589872076ae842bce57b0f5c40a3baeb63a"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#36738:pr.merged:spec:github:Azure/azure-rest-api-specs#36738",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2025-09-04T05:26:43Z",
+      "observedAt": "2025-09-04T05:26:43Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#36738",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#36738",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/36738"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#54889:commit:3163c1ddd8bb:sdk:.NET:Azure.ResourceManager.Confluent",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-08T07:41:45Z",
+      "observedAt": "2026-01-08T07:41:45Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "mzhongl524"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#54889",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/3163c1ddd8bb00d9e6a81ac6016a742d8cddff04"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#54889:pr.created:sdk:.NET:Azure.ResourceManager.Confluent",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-08T08:00:26Z",
+      "observedAt": "2026-01-08T08:00:26Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "mzhongl524"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#54889",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/54889"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#54889:commit:3ad77a4f614e:sdk:.NET:Azure.ResourceManager.Confluent",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-20T03:09:48Z",
+      "observedAt": "2026-01-20T03:09:48Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "mzhongl524"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#54889",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/3ad77a4f614e3bb38b23d4d77ba6acc83a8145ee"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#54889:commit:92e534cd9e91:sdk:.NET:Azure.ResourceManager.Confluent",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-20T03:26:56Z",
+      "observedAt": "2026-01-20T03:26:56Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "mzhongl524"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#54889",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/92e534cd9e9104112fcb81a857bb270eaaf12f2c"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#54889:commit:9e46a70c52d8:sdk:.NET:Azure.ResourceManager.Confluent",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-09T06:41:17Z",
+      "observedAt": "2026-02-09T06:41:17Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "mzhongl524"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#54889",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/9e46a70c52d83759f3683cbd78e87f448e6652be"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26002:commit:0f99a788559a:sdk:Go:sdk/resourcemanager/confluent/armconfluent",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-10T05:00:32Z",
+      "observedAt": "2026-02-10T05:00:32Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/confluent/armconfluent",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26002",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/0f99a788559a020be931eb358508971d6c8fa6a6"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26002:pr.created:sdk:Go:sdk/resourcemanager/confluent/armconfluent",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-10T05:00:38Z",
+      "observedAt": "2026-02-10T05:00:38Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/confluent/armconfluent",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26002",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26002"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#55617:commit:ccb9419350c3:sdk:.NET:Azure.ResourceManager.Confluent",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-10T05:00:42Z",
+      "observedAt": "2026-02-10T05:00:42Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#55617",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/ccb9419350c37012d2936a6f69e6d822294ead9b"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#55617:pr.created:sdk:.NET:Azure.ResourceManager.Confluent",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-10T05:00:46Z",
+      "observedAt": "2026-02-10T05:00:46Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#55617",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/55617"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45102:commit:2540a8ff054e:sdk:Python:azure-mgmt-confluent",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-10T05:01:14Z",
+      "observedAt": "2026-02-10T05:01:14Z",
+      "trackId": "sdk:Python:azure-mgmt-confluent",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45102",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/2540a8ff054ee563599e39e6498b791abe5f4a48"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45102:pr.created:sdk:Python:azure-mgmt-confluent",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-10T05:01:17Z",
+      "observedAt": "2026-02-10T05:01:17Z",
+      "trackId": "sdk:Python:azure-mgmt-confluent",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45102",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45102"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37273:commit:08fd887c777c:sdk:JavaScript:@azure/arm-confluent",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-10T05:02:10Z",
+      "observedAt": "2026-02-10T05:02:10Z",
+      "trackId": "sdk:JavaScript:@azure/arm-confluent",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37273",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/08fd887c777c83a9d791cc248735b35c96a2f4aa"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37273:pr.created:sdk:JavaScript:@azure/arm-confluent",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-10T05:02:14Z",
+      "observedAt": "2026-02-10T05:02:14Z",
+      "trackId": "sdk:JavaScript:@azure/arm-confluent",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37273",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37273"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#47954:commit:aac856d3054c:sdk:Java:azure-resourcemanager-confluent",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-10T05:03:26Z",
+      "observedAt": "2026-02-10T05:03:26Z",
+      "trackId": "sdk:Java:azure-resourcemanager-confluent",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#47954",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/aac856d3054cc3bce263b62fd2ad28715c0ea3f1"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#47954:pr.created:sdk:Java:azure-resourcemanager-confluent",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-10T05:03:31Z",
+      "observedAt": "2026-02-10T05:03:31Z",
+      "trackId": "sdk:Java:azure-resourcemanager-confluent",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#47954",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/47954"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26002:comment:3875378784:sdk:Go:sdk/resourcemanager/confluent/armconfluent",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-10T05:10:31Z",
+      "observedAt": "2026-02-10T05:10:31Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/confluent/armconfluent",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26002",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26002#issuecomment-3875378784"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews [sdk/resourcemanager/confluent/armconfluent](https://spa.apiview.dev/review/0aad09afe38e4dd29dea544c6081db52?activeApiRevisionId=2f2d6",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37273:comment:3875386874:sdk:JavaScript:@azure/arm-confluent",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-10T05:13:59Z",
+      "observedAt": "2026-02-10T05:13:59Z",
+      "trackId": "sdk:JavaScript:@azure/arm-confluent",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37273",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37273#issuecomment-3875386874"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews [@azure/arm-confluent](https://spa.apiview.dev/review/a521b44205f74e4f91937cd40c4044b4?activeApiRevisionId=ab9b87f4439c40288bca8db060f",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#47954:comment:3875387592:sdk:Java:azure-resourcemanager-confluent",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-10T05:14:17Z",
+      "observedAt": "2026-02-10T05:14:17Z",
+      "trackId": "sdk:Java:azure-resourcemanager-confluent",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#47954",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/47954#issuecomment-3875387592"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews [com.azure.resourcemanager:azure-resourcemanager-confluent](https://spa.apiview.dev/review/7423ac19284641439b2f696e708e2255?activeApiR",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#47954:commit:69d75df58d13:sdk:Java:azure-resourcemanager-confluent",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-10T05:52:57Z",
+      "observedAt": "2026-02-10T05:52:57Z",
+      "trackId": "sdk:Java:azure-resourcemanager-confluent",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#47954",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/69d75df58d1329a2cdbf858c253b302da6592107"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37273:review:3817414168:sdk:JavaScript:@azure/arm-confluent",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-18T02:56:16Z",
+      "observedAt": "2026-02-18T02:56:16Z",
+      "trackId": "sdk:JavaScript:@azure/arm-confluent",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37273",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37273#pullrequestreview-3817414168"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This PR represents an automated SDK generation update for the Azure Confluent Management SDK, transitioning from an AutoRest-based implementation to a TypeSpec-based implementation with a new API version (2025-08-18",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#47954:review:3817414279:sdk:Java:azure-resourcemanager-confluent",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-18T02:56:17Z",
+      "observedAt": "2026-02-18T02:56:17Z",
+      "trackId": "sdk:Java:azure-resourcemanager-confluent",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#47954",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/47954#pullrequestreview-3817414279"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This pull request updates the Azure SDK for Java's Confluent Resource Manager library to use TypeSpec Code Generator instead of AutoRest Code Generator, targeting API version 2025-08-18-preview. **Changes:** - Migra",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45102:review:3817421385:sdk:Python:azure-mgmt-confluent",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-18T02:57:58Z",
+      "observedAt": "2026-02-18T02:57:58Z",
+      "trackId": "sdk:Python:azure-mgmt-confluent",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45102",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45102#pullrequestreview-3817421385"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This PR is an automated SDK regeneration for the Azure Confluent Management client library, transitioning from AutoRest to the Python Code Generator for API version 2025-08-18-preview. The changes represent a major ",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26002:review:3817422422:sdk:Go:sdk/resourcemanager/confluent/armconfluent",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-18T02:58:10Z",
+      "observedAt": "2026-02-18T02:58:10Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/confluent/armconfluent",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26002",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26002#pullrequestreview-3817422422"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This PR updates the Azure Confluent resource manager SDK from API version 2024-02-13 to 2025-08-18-preview, migrating from AutoRest to TypeSpec-based code generation. This is a major version bump (v2.0.0-beta.1) tha",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#55617:comment:2820108744:sdk:.NET:Azure.ResourceManager.Confluent",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-18T03:03:09Z",
+      "observedAt": "2026-02-18T03:03:09Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#55617",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/55617#discussion_r2820108744"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`PartnerInfoBase` is declared as `abstract` in PartnerInfoBase.cs, but this partial declaration is missing the `abstract` modifier. Partial type declarations must match modifiers; as-is this will not compile. Make this declaration `public a",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#55617:comment:2820108773:sdk:.NET:Azure.ResourceManager.Confluent",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-18T03:03:09Z",
+      "observedAt": "2026-02-18T03:03:09Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#55617",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/55617#discussion_r2820108773"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`ConnectorServiceTypeInfoBase` is declared as `abstract` in ConnectorServiceTypeInfoBase.cs, but this partial declaration is missing the `abstract` modifier. Partial type declarations must match modifiers; as-is this will not compile. Updat",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#55617:comment:2820108784:sdk:.NET:Azure.ResourceManager.Confluent",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-18T03:03:10Z",
+      "observedAt": "2026-02-18T03:03:10Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#55617",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/55617#discussion_r2820108784"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`nextLink` is deserialized with `new Uri(property.Value.GetString())` without guarding for empty string. If the service returns `nextLink: \"\"` (common when there is no next page), this will throw and break paging. Add a `string.IsNullOrEmpt",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#55617:comment:2820108796:sdk:.NET:Azure.ResourceManager.Confluent",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-18T03:03:10Z",
+      "observedAt": "2026-02-18T03:03:10Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#55617",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/55617#discussion_r2820108796"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`value` is passed through as-is when deserializing. If the `value` property is missing or null, `Value` becomes null and later enumeration can throw. Default `value` to an empty list before constructing the model (similar to other generated",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#55617:comment:2820108810:sdk:.NET:Azure.ResourceManager.Confluent",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-18T03:03:10Z",
+      "observedAt": "2026-02-18T03:03:10Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#55617",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/55617#discussion_r2820108810"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`nextLink` is deserialized with `new Uri(property.Value.GetString())` without guarding for empty string. If the service returns `nextLink: \"\"` when there is no next page, this will throw. Add a `string.IsNullOrEmpty(...)` check and treat em",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#55617:comment:2820108824:sdk:.NET:Azure.ResourceManager.Confluent",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-18T03:03:10Z",
+      "observedAt": "2026-02-18T03:03:10Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#55617",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/55617#discussion_r2820108824"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`value` is passed through as-is when deserializing. If the `value` property is missing or null, `Value` becomes null and later enumeration can throw. Default `value` to an empty list before constructing the model.",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#55617:comment:2820108838:sdk:.NET:Azure.ResourceManager.Confluent",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-18T03:03:11Z",
+      "observedAt": "2026-02-18T03:03:11Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#55617",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/55617#discussion_r2820108838"
+      },
+      "confidence": "authoritative",
+      "excerpt": "In tsp-location.yaml, `additionalDirectories:` is present but has no value. In other tsp-location.yaml files this is either omitted or set to an explicit empty array (`additionalDirectories: []`). Keeping it empty can be parsed differently ",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#55617:comment:2820108842:sdk:.NET:Azure.ResourceManager.Confluent",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-18T03:03:11Z",
+      "observedAt": "2026-02-18T03:03:11Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#55617",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/55617#discussion_r2820108842"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`value` is passed through as-is when deserializing. If the `value` property is missing or null, `Value` becomes null and later enumeration (including serialization) can throw. Default `value` to an empty list before constructing the respons",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#55617:comment:2820108856:sdk:.NET:Azure.ResourceManager.Confluent",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-18T03:03:11Z",
+      "observedAt": "2026-02-18T03:03:11Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#55617",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/55617#discussion_r2820108856"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`nextLink` is deserialized with `new Uri(property.Value.GetString())` without guarding for empty string. If the service returns an empty nextLink when paging ends, this will throw. Add a `string.IsNullOrEmpty(...)` check and treat empty as ",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#55617:comment:2820108874:sdk:.NET:Azure.ResourceManager.Confluent",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-18T03:03:11Z",
+      "observedAt": "2026-02-18T03:03:11Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#55617",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/55617#discussion_r2820108874"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`nextLink` is deserialized with `new Uri(property.Value.GetString())` without guarding for empty string. If the service returns an empty nextLink when paging ends, this will throw. Add a `string.IsNullOrEmpty(...)` check and treat empty as ",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#55617:review:3817447804:sdk:.NET:Azure.ResourceManager.Confluent",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-18T03:03:12Z",
+      "observedAt": "2026-02-18T03:03:12Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#55617",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/55617#pullrequestreview-3817447804"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This AutoPR updates **Azure.ResourceManager.Confluent** to the **2025-08-18-preview** API version using the TypeSpec-based generation inputs, replacing older AutoRest-era configuration and regenerating the SDK’s gen",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#55617:comment:2820108892:sdk:.NET:Azure.ResourceManager.Confluent",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-18T03:03:12Z",
+      "observedAt": "2026-02-18T03:03:12Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#55617",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/55617#discussion_r2820108892"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`value` is passed through as-is when deserializing. If the `value` property is missing or null, `Value` becomes null and later enumeration can throw. Default `value` to an empty list before constructing the model. ```suggestion } value ??= ",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45102:commit:9ba7fd42f19f:sdk:Python:azure-mgmt-confluent",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-19T18:25:51Z",
+      "observedAt": "2026-02-19T18:25:51Z",
+      "trackId": "sdk:Python:azure-mgmt-confluent",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "Shekar2004"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45102",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/9ba7fd42f19fd09b9874c5bf69af9a5105fcbdb9"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45102:commit:30f54d87d121:sdk:Python:azure-mgmt-confluent",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-19T19:11:44Z",
+      "observedAt": "2026-02-19T19:11:44Z",
+      "trackId": "sdk:Python:azure-mgmt-confluent",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "Shekar2004"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45102",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/30f54d87d121d27bcb4f64b6fa7c5b2fc3b7430c"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#47954:review:3834976564:sdk:Java:azure-resourcemanager-confluent",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-21T03:31:46Z",
+      "observedAt": "2026-02-21T03:31:46Z",
+      "trackId": "sdk:Java:azure-resourcemanager-confluent",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#47954",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/47954#pullrequestreview-3834976564"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37273:commit:ac08eb8c4332:sdk:JavaScript:@azure/arm-confluent",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-22T20:41:34Z",
+      "observedAt": "2026-02-22T20:41:34Z",
+      "trackId": "sdk:JavaScript:@azure/arm-confluent",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "Shekar2004"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37273",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/ac08eb8c4332cdcd1f31eb6cdcba81085911b50f"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37273:commit:202848975875:sdk:JavaScript:@azure/arm-confluent",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-23T04:19:47Z",
+      "observedAt": "2026-02-23T04:19:47Z",
+      "trackId": "sdk:JavaScript:@azure/arm-confluent",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "Shekar2004"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37273",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/202848975875977e409ef190e9aa05f9c0ecd7d3"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#55617:commit:e25f2a13c802:sdk:.NET:Azure.ResourceManager.Confluent",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-23T04:30:30Z",
+      "observedAt": "2026-02-23T04:30:30Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "Shekar2004"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#55617",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/e25f2a13c8029bfd3cc668c53afaecbeb705b2bb"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#55617:comment:3942584269:sdk:.NET:Azure.ResourceManager.Confluent",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-23T04:43:17Z",
+      "observedAt": "2026-02-23T04:43:17Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#55617",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/55617#issuecomment-3942584269"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews [Azure.ResourceManager.Confluent](https://spa.apiview.dev/review/7259f7aeb90540f59b1f237b656a66e9?activeApiRevisionId=c45528f45d8e4d77",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#55617:commit:d382d1309cac:sdk:.NET:Azure.ResourceManager.Confluent",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-23T07:16:40Z",
+      "observedAt": "2026-02-23T07:16:40Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "Shekar2004"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#55617",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/d382d1309cac8360dacef14439eef8018054a3c0"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#55617:commit:3b0a38b19274:sdk:.NET:Azure.ResourceManager.Confluent",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-23T07:28:54Z",
+      "observedAt": "2026-02-23T07:28:54Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "Shekar2004"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#55617",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/3b0a38b19274a77b3c748c2c62412577bcee3c1f"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26002:review:3844779957:sdk:Go:sdk/resourcemanager/confluent/armconfluent",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-24T03:09:16Z",
+      "observedAt": "2026-02-24T03:09:16Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/confluent/armconfluent",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "JiaqiZhang-Dev"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26002",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26002#pullrequestreview-3844779957"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45102:comment:3954522218:sdk:Python:azure-mgmt-confluent",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-24T20:24:13Z",
+      "observedAt": "2026-02-24T20:24:13Z",
+      "trackId": "sdk:Python:azure-mgmt-confluent",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "Shekar2004"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45102",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45102#issuecomment-3954522218"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@msyyc, @ChenxiJiang333 can you please Review this PR",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#55617:comment:3954535395:sdk:.NET:Azure.ResourceManager.Confluent",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-24T20:27:17Z",
+      "observedAt": "2026-02-24T20:27:17Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "Shekar2004"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#55617",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/55617#issuecomment-3954535395"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@m-redding, @jsquire, @ArthurMa1978, @ArcturusZhang Please review this PR",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#47954:pr.merged:sdk:Java:azure-resourcemanager-confluent",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-24T20:27:43Z",
+      "observedAt": "2026-02-24T20:27:43Z",
+      "trackId": "sdk:Java:azure-resourcemanager-confluent",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#47954",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/47954"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37273:comment:3954550278:sdk:JavaScript:@azure/arm-confluent",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-24T20:30:38Z",
+      "observedAt": "2026-02-24T20:30:38Z",
+      "trackId": "sdk:JavaScript:@azure/arm-confluent",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "Shekar2004"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37273",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37273#issuecomment-3954550278"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@qiaozha, @MaryGao, @JialinHuang803 , @Azure/azure-sdk-js-dev , @Azure/azure-sdk-for-js-core , @jeremymeng Request to please review this PR changes",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26002:pr.merged:sdk:Go:sdk/resourcemanager/confluent/armconfluent",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-24T20:30:50Z",
+      "observedAt": "2026-02-24T20:30:50Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/confluent/armconfluent",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26002",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26002"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45102:comment:3964792675:sdk:Python:azure-mgmt-confluent",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-26T07:56:20Z",
+      "observedAt": "2026-02-26T07:56:20Z",
+      "trackId": "sdk:Python:azure-mgmt-confluent",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45102",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45102#issuecomment-3964792675"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @Shekar2004 Pls create a release plan instead of trigger pipeline to generate SDK pr directly. If you don't know how to make release plan, you could seek help in teams channel https://teams.microsoft.com/l/channel/19%3A084875bb626242ed95",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#54889:commit:093b7a31049f:sdk:.NET:Azure.ResourceManager.Confluent",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-28T08:20:17Z",
+      "observedAt": "2026-02-28T08:20:17Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "mzhongl524"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#54889",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/093b7a31049fabf8178d1c65c347e8837ec81201"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#54889:commit:590584e1d990:sdk:.NET:Azure.ResourceManager.Confluent",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-28T09:53:33Z",
+      "observedAt": "2026-02-28T09:53:33Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "mzhongl524"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#54889",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/590584e1d990b96e04d9f0d2e2806ef26cb5857f"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37273:review:3873841546:sdk:JavaScript:@azure/arm-confluent",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-02T02:50:12Z",
+      "observedAt": "2026-03-02T02:50:12Z",
+      "trackId": "sdk:JavaScript:@azure/arm-confluent",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37273",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37273#pullrequestreview-3873841546"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37273:comment:2870275112:sdk:JavaScript:@azure/arm-confluent",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-02T02:50:12Z",
+      "observedAt": "2026-03-02T02:50:12Z",
+      "trackId": "sdk:JavaScript:@azure/arm-confluent",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37273",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37273#discussion_r2870275112"
+      },
+      "confidence": "authoritative",
+      "excerpt": "need revert these breakings pr: https://github.com/Azure/azure-rest-api-specs/pull/40840",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37273:commit:626c2bd0f528:sdk:JavaScript:@azure/arm-confluent",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-03T03:06:26Z",
+      "observedAt": "2026-03-03T03:06:26Z",
+      "trackId": "sdk:JavaScript:@azure/arm-confluent",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37273",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/626c2bd0f5282c721e4ac5077ac9c72ec09498b2"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#54889:commit:220c63950f05:sdk:.NET:Azure.ResourceManager.Confluent",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-04T05:57:53Z",
+      "observedAt": "2026-03-04T05:57:53Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "mzhongl524"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#54889",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/220c63950f0573d28dd10f95a6296646ef7a9469"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37273:commit:8bad8b231f94:sdk:JavaScript:@azure/arm-confluent",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-04T09:01:31Z",
+      "observedAt": "2026-03-04T09:01:31Z",
+      "trackId": "sdk:JavaScript:@azure/arm-confluent",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37273",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/8bad8b231f94068fbc892f6b87ab4229293c8b3b"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37273:commit:46b15fb1339a:sdk:JavaScript:@azure/arm-confluent",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-05T06:47:04Z",
+      "observedAt": "2026-03-05T06:47:04Z",
+      "trackId": "sdk:JavaScript:@azure/arm-confluent",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37273",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/46b15fb1339a7d93b0260ddea800b03b4d6b252f"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37273:review:3894237575:sdk:JavaScript:@azure/arm-confluent",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-05T06:48:22Z",
+      "observedAt": "2026-03-05T06:48:22Z",
+      "trackId": "sdk:JavaScript:@azure/arm-confluent",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37273",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37273#pullrequestreview-3894237575"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37273:comment:2888002644:sdk:JavaScript:@azure/arm-confluent",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-05T06:48:22Z",
+      "observedAt": "2026-03-05T06:48:22Z",
+      "trackId": "sdk:JavaScript:@azure/arm-confluent",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37273",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37273#discussion_r2888002644"
+      },
+      "confidence": "authoritative",
+      "excerpt": "https://github.com/Azure/azure-rest-api-specs/pull/41032",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37273:commit:d3a8eb332850:sdk:JavaScript:@azure/arm-confluent",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-05T07:35:05Z",
+      "observedAt": "2026-03-05T07:35:05Z",
+      "trackId": "sdk:JavaScript:@azure/arm-confluent",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37273",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/d3a8eb3328500a43e3f106794a5712046e8a7263"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37273:commit:cbb50bad6f3d:sdk:JavaScript:@azure/arm-confluent",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-05T07:51:04Z",
+      "observedAt": "2026-03-05T07:51:04Z",
+      "trackId": "sdk:JavaScript:@azure/arm-confluent",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37273",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/cbb50bad6f3dd49e39aba1ea62406833036c63dc"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37273:commit:433915cb1d3e:sdk:JavaScript:@azure/arm-confluent",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-05T08:03:50Z",
+      "observedAt": "2026-03-05T08:03:50Z",
+      "trackId": "sdk:JavaScript:@azure/arm-confluent",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37273",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/433915cb1d3ef764721ab117f50ec0b108331743"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37273:commit:2f42ef753f25:sdk:JavaScript:@azure/arm-confluent",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-05T08:15:09Z",
+      "observedAt": "2026-03-05T08:15:09Z",
+      "trackId": "sdk:JavaScript:@azure/arm-confluent",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37273",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/2f42ef753f250cf2f610a1803f9d4f8002ce4e56"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37273:review:3894816340:sdk:JavaScript:@azure/arm-confluent",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-05T08:36:49Z",
+      "observedAt": "2026-03-05T08:36:49Z",
+      "trackId": "sdk:JavaScript:@azure/arm-confluent",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37273",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37273#pullrequestreview-3894816340"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37273:comment:2888513804:sdk:JavaScript:@azure/arm-confluent",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-05T08:36:49Z",
+      "observedAt": "2026-03-05T08:36:49Z",
+      "trackId": "sdk:JavaScript:@azure/arm-confluent",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37273",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37273#discussion_r2888513804"
+      },
+      "confidence": "authoritative",
+      "excerpt": "```suggestion const userAgentInfo = `azsdk-js-arm-confluent/4.0.0-beta.1`; ```",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37273:commit:6ba9d2a74680:sdk:JavaScript:@azure/arm-confluent",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-05T08:36:56Z",
+      "observedAt": "2026-03-05T08:36:56Z",
+      "trackId": "sdk:JavaScript:@azure/arm-confluent",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37273",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/6ba9d2a746807c8a81559481344c2b81e2ecb2eb"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37273:review:3894992973:sdk:JavaScript:@azure/arm-confluent",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-05T09:05:55Z",
+      "observedAt": "2026-03-05T09:05:55Z",
+      "trackId": "sdk:JavaScript:@azure/arm-confluent",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "qiaozha"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37273",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37273#pullrequestreview-3894992973"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37273:pr.merged:sdk:JavaScript:@azure/arm-confluent",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-05T09:06:23Z",
+      "observedAt": "2026-03-05T09:06:23Z",
+      "trackId": "sdk:JavaScript:@azure/arm-confluent",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37273",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37273"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#55617:comment:4015860439:sdk:.NET:Azure.ResourceManager.Confluent",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-07T07:38:57Z",
+      "observedAt": "2026-03-07T07:38:57Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "Shekar2004"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#55617",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/55617#issuecomment-4015860439"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@m-redding, @jsquire, @ArthurMa1978, @ArcturusZhang Please review this PR",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#55617:comment:4036381515:sdk:.NET:Azure.ResourceManager.Confluent",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-11T04:51:32Z",
+      "observedAt": "2026-03-11T04:51:32Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "Shekar2004"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#55617",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/55617#issuecomment-4036381515"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@m-redding, @jsquire, @ArthurMa1978, @ArcturusZhang Request to Approve the PR changes",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45102:comment:4036447970:sdk:Python:azure-mgmt-confluent",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-11T05:02:38Z",
+      "observedAt": "2026-03-11T05:02:38Z",
+      "trackId": "sdk:Python:azure-mgmt-confluent",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "Shekar2004"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45102",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45102#issuecomment-4036447970"
+      },
+      "confidence": "authoritative",
+      "excerpt": "We have already created the release plan: https://apps.powerapps.com/play/e/ed2ffefd-774d-40dd-ab23-7fff01aeec9f/a/821ab569-ae60-420d-8264-d7b5d5ef734c?release-plan-id=946c92ae-4506-f111-8406-000d3a597585&tenantId=72f988bf-86f1-41af-91ab-2d",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45102:comment:4036588998:sdk:Python:azure-mgmt-confluent",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-11T05:34:51Z",
+      "observedAt": "2026-03-11T05:34:51Z",
+      "trackId": "sdk:Python:azure-mgmt-confluent",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45102",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45102#issuecomment-4036588998"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @Shekar2004, it looks like the prerequisite's checks of sdk release haven't be finished for this release plan. <img width=\"1534\" height=\"781\" alt=\"image\" src=\"https://github.com/user-attachments/assets/bfb5e1cd-8946-4529-8c69-3a7e75adf37",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#54889:commit:b321899a2422:sdk:.NET:Azure.ResourceManager.Confluent",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-11T08:12:22Z",
+      "observedAt": "2026-03-11T08:12:22Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#54889",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/b321899a2422a05960c1fad9fe5ebc49024eab8b"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#54889:commit:e5f038d19f38:sdk:.NET:Azure.ResourceManager.Confluent",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-11T09:11:55Z",
+      "observedAt": "2026-03-11T09:11:55Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#54889",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/e5f038d19f389869ada96cb8ecc7073a12ef2a60"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#54889:commit:2fcafb88da89:sdk:.NET:Azure.ResourceManager.Confluent",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-11T09:14:19Z",
+      "observedAt": "2026-03-11T09:14:19Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#54889",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/2fcafb88da89b320174ad63f0bd69b7e53d3277a"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#54889:review:3928207986:sdk:.NET:Azure.ResourceManager.Confluent",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-11T09:39:46Z",
+      "observedAt": "2026-03-11T09:39:46Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#54889",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/54889#pullrequestreview-3928207986"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## MPG Migration Review — Azure.ResourceManager.Confluent ### Phase 1: Versioning ✅ - Version `1.3.0-beta.1` — appropriate for new features - `ApiCompatVersion: 1.2.1` — preserved - No `ApiCompatBaseline.txt` changes ### Phase 2: API Surfac",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#54889:comment:2917104577:sdk:.NET:Azure.ResourceManager.Confluent",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-11T09:39:47Z",
+      "observedAt": "2026-03-11T09:39:47Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#54889",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/54889#discussion_r2917104577"
+      },
+      "confidence": "authoritative",
+      "excerpt": "🔴 All new extensible enum types use ALL_UPPERCASE member names. This violates .NET naming conventions — enum members should be PascalCase. Affected enums and their members: - `AuthType`: `KAFKAAPIKEY` → `KafkaApiKey`, `SERVICEACCOUNT` → `S",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#54889:comment:2917104582:sdk:.NET:Azure.ResourceManager.Confluent",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-11T09:39:47Z",
+      "observedAt": "2026-03-11T09:39:47Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#54889",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/54889#discussion_r2917104582"
+      },
+      "confidence": "authoritative",
+      "excerpt": "🟡 `Package` is an extremely generic name for an extensible enum — it provides no indication of which service or concept it belongs to. Same applies to `AuthType` (line 781) and `DataFormatType` (line 1286). Consider renaming via `@@clientN",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#54889:comment:2917104591:sdk:.NET:Azure.ResourceManager.Confluent",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-11T09:39:47Z",
+      "observedAt": "2026-03-11T09:39:47Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#54889",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/54889#discussion_r2917104591"
+      },
+      "confidence": "authoritative",
+      "excerpt": "🟡 The `data` parameter for PUT operations should be **required**, not optional (`= null`). This applies to all new resource `CreateOrUpdate`/`Update` methods: - `ConnectorResourceCollection.CreateOrUpdate` - `ConnectorResource.Update` - `S",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#54889:comment:2917104597:sdk:.NET:Azure.ResourceManager.Confluent",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-11T09:39:47Z",
+      "observedAt": "2026-03-11T09:39:47Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#54889",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/54889#discussion_r2917104597"
+      },
+      "confidence": "authoritative",
+      "excerpt": "🟡 The name `ConnectorResourceData` (and `ConnectorResourceCollection`) has \"\"Resource\"\" in the middle, which is unusual for Data/Collection types. This happens because the TypeSpec resource is named `ConnectorResource` instead of `Connecto",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#54889:commit:baf33c610f6e:sdk:.NET:Azure.ResourceManager.Confluent",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-11T11:31:49Z",
+      "observedAt": "2026-03-11T11:31:49Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#54889",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/baf33c610f6e49d4bbbf26441008cc1d66913bdc"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#54889:commit:8cf80295d426:sdk:.NET:Azure.ResourceManager.Confluent",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-11T11:45:37Z",
+      "observedAt": "2026-03-11T11:45:37Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#54889",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/8cf80295d4266258805c000739b85a7a57d2d75e"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#54889:commit:7a4a56bdbdf0:sdk:.NET:Azure.ResourceManager.Confluent",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-11T11:49:03Z",
+      "observedAt": "2026-03-11T11:49:03Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#54889",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/7a4a56bdbdf095b5780179a57527f56c1e7b3a83"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#55617:comment:2919960472:sdk:.NET:Azure.ResourceManager.Confluent",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-11T17:45:26Z",
+      "observedAt": "2026-03-11T17:45:26Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jsquire"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#55617",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/55617#discussion_r2919960472"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Please do not change the root .cspell. Make a local extension, as seen [here](https://github.com/Azure/azure-sdk-for-net/tree/58ee7b9d5085054a541c77e654e734440b5a9fd7/sdk/voicelive/Azure.AI.VoiceLive)",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#55617:review:3931375123:sdk:.NET:Azure.ResourceManager.Confluent",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-11T17:45:54Z",
+      "observedAt": "2026-03-11T17:45:54Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "title": "Changes requested",
+      "actor": {
+        "kind": "human",
+        "publicId": "jsquire"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#55617",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/55617#pullrequestreview-3931375123"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@Shekar2004: As a management library, please work with Arthur and team for review.",
+      "reviewState": "changes_requested",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#54889:commit:955e05188549:sdk:.NET:Azure.ResourceManager.Confluent",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-12T05:50:41Z",
+      "observedAt": "2026-03-12T05:50:41Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#54889",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/955e05188549f3de74ba953191ab7c13985ffc22"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#54889:comment:2922560797:sdk:.NET:Azure.ResourceManager.Confluent",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-12T06:26:50Z",
+      "observedAt": "2026-03-12T06:26:50Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#54889",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/54889#discussion_r2922560797"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The XML summary for Id is incorrect ('Type of cluster'). This is a backward-compat shim type meant for end users; please correct the summary to something like 'Cluster id.' to avoid confusing API documentation. ```suggestion /// <summary> C",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#54889:review:3934248477:sdk:.NET:Azure.ResourceManager.Confluent",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-12T06:26:51Z",
+      "observedAt": "2026-03-12T06:26:51Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#54889",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/54889#pullrequestreview-3934248477"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Migrates the Confluent Resource Manager SDK generation to the new TypeSpec-based code generator (per the linked TSP/spec changes), updating generated models/operations and keeping compatibility for previously shippe",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#54889:comment:2922560851:sdk:.NET:Azure.ResourceManager.Confluent",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-12T06:26:51Z",
+      "observedAt": "2026-03-12T06:26:51Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#54889",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/54889#discussion_r2922560851"
+      },
+      "confidence": "authoritative",
+      "excerpt": "System.Runtime.CompilerServices and System.Threading are not used in this file. Removing unused using directives reduces noise and avoids potential analyzer warnings. ```suggestion ```",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#54889:commit:712b2dd75097:sdk:.NET:Azure.ResourceManager.Confluent",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-12T07:24:49Z",
+      "observedAt": "2026-03-12T07:24:49Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#54889",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/712b2dd750979545874931d0f310a3b352f3ae7c"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#54889:commit:f256961e3bc0:sdk:.NET:Azure.ResourceManager.Confluent",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-12T07:40:19Z",
+      "observedAt": "2026-03-12T07:40:19Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#54889",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/f256961e3bc028ae5e9d5d6c776e57a6eabf6c8d"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#54889:commit:a9e04bcc2991:sdk:.NET:Azure.ResourceManager.Confluent",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-12T08:42:40Z",
+      "observedAt": "2026-03-12T08:42:40Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#54889",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/a9e04bcc2991f2f8e9718369e6495493470679fb"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#54889:commit:cbd2eddaf9c5:sdk:.NET:Azure.ResourceManager.Confluent",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-12T09:18:01Z",
+      "observedAt": "2026-03-12T09:18:01Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#54889",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/cbd2eddaf9c587986d39de6cc6ff0f5d30a865e7"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#54889:review:3935046528:sdk:.NET:Azure.ResourceManager.Confluent",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-12T09:18:52Z",
+      "observedAt": "2026-03-12T09:18:52Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "live1206"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#54889",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/54889#pullrequestreview-3935046528"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#54889:pr.merged:sdk:.NET:Azure.ResourceManager.Confluent",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-12T10:42:09Z",
+      "observedAt": "2026-03-12T10:42:09Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#54889",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/54889"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#55617:commit:aa13c159c844:sdk:.NET:Azure.ResourceManager.Confluent",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-12T10:48:17Z",
+      "observedAt": "2026-03-12T10:48:17Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#55617",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/aa13c159c8448318f3d689f92bb904461e5ad04f"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#55617:commit:02a813fa37a7:sdk:.NET:Azure.ResourceManager.Confluent",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-12T13:54:11Z",
+      "observedAt": "2026-03-12T13:54:11Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#55617",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/02a813fa37a797d0a52bbe9dba5160e47b61aec1"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#55617:review:3936808948:sdk:.NET:Azure.ResourceManager.Confluent",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-12T13:55:02Z",
+      "observedAt": "2026-03-12T13:55:02Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#55617",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/55617#pullrequestreview-3936808948"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#55617:comment:2924822657:sdk:.NET:Azure.ResourceManager.Confluent",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-12T13:55:02Z",
+      "observedAt": "2026-03-12T13:55:02Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#55617",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/55617#discussion_r2924822657"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @jsquire the change has been reverted, please take a look again.",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#55617:commit:56e0af9f9ea9:sdk:.NET:Azure.ResourceManager.Confluent",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-12T14:14:01Z",
+      "observedAt": "2026-03-12T14:14:01Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#55617",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/56e0af9f9ea9d3ce71a23fd239f5f7250d2ed815"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#55617:commit:7ebf4febd3b2:sdk:.NET:Azure.ResourceManager.Confluent",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-12T14:45:25Z",
+      "observedAt": "2026-03-12T14:45:25Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#55617",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/7ebf4febd3b2255be2772768d69fa3c0ccdfa19d"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#55617:commit:73905adc983c:sdk:.NET:Azure.ResourceManager.Confluent",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-12T15:19:25Z",
+      "observedAt": "2026-03-12T15:19:25Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#55617",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/73905adc983ccf167b52d3aa1cf74454ebbc9e32"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#55617:comment:4052294226:sdk:.NET:Azure.ResourceManager.Confluent",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-13T03:27:25Z",
+      "observedAt": "2026-03-13T03:27:25Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#55617",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/55617#issuecomment-4052294226"
+      },
+      "confidence": "authoritative",
+      "excerpt": "All the changes go to our generator migration PR: https://github.com/Azure/azure-sdk-for-net/pull/54889",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#55617:commit:7995ea0de59e:sdk:.NET:Azure.ResourceManager.Confluent",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-13T04:52:12Z",
+      "observedAt": "2026-03-13T04:52:12Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#55617",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/7995ea0de59ee64651c22d8d98c326c669a444ae"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#55617:pr.closed:sdk:.NET:Azure.ResourceManager.Confluent",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-15T11:38:19Z",
+      "observedAt": "2026-03-15T11:38:19Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#55617",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/55617"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#55617:comment:4062822569:sdk:.NET:Azure.ResourceManager.Confluent",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-15T11:38:19Z",
+      "observedAt": "2026-03-15T11:38:19Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "Shekar2004"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#55617",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/55617#issuecomment-4062822569"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Closing this PR, as the changes were already taken care of by the https://github.com/Azure/azure-sdk-for-net/pull/54889, Now the net changes show no significant changes.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45102:comment:4063153927:sdk:Python:azure-mgmt-confluent",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-15T14:49:47Z",
+      "observedAt": "2026-03-15T14:49:47Z",
+      "trackId": "sdk:Python:azure-mgmt-confluent",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "Shekar2004"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45102",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45102#issuecomment-4063153927"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Thank you for pointing out the gap in release plan @ChenxiJiang333, Updated the release plan to complete the Prequisite checks. Please let me know if anything else need to be done too??",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45102:commit:6ea5b62383b0:sdk:Python:azure-mgmt-confluent",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-16T02:44:53Z",
+      "observedAt": "2026-03-16T02:44:53Z",
+      "trackId": "sdk:Python:azure-mgmt-confluent",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45102",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/6ea5b62383b00e2a37ae734cfb0f0cf8349a2ef0"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45102:commit:61b40df57224:sdk:Python:azure-mgmt-confluent",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-16T06:06:08Z",
+      "observedAt": "2026-03-16T06:06:08Z",
+      "trackId": "sdk:Python:azure-mgmt-confluent",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45102",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/61b40df5722474b6cb76039a5fc5fddace29657d"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45102:commit:1f98788fba73:sdk:Python:azure-mgmt-confluent",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-16T06:39:19Z",
+      "observedAt": "2026-03-16T06:39:19Z",
+      "trackId": "sdk:Python:azure-mgmt-confluent",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45102",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/1f98788fba73f7bfb21e08662636e981d2e84382"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45102:review:3951933193:sdk:Python:azure-mgmt-confluent",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-16T07:35:20Z",
+      "observedAt": "2026-03-16T07:35:20Z",
+      "trackId": "sdk:Python:azure-mgmt-confluent",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45102",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45102#pullrequestreview-3951933193"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45102:review:3952020604:sdk:Python:azure-mgmt-confluent",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-16T07:57:50Z",
+      "observedAt": "2026-03-16T07:57:50Z",
+      "trackId": "sdk:Python:azure-mgmt-confluent",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45102",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45102#pullrequestreview-3952020604"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45102:comment:4065773459:sdk:Python:azure-mgmt-confluent",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-16T07:58:31Z",
+      "observedAt": "2026-03-16T07:58:31Z",
+      "trackId": "sdk:Python:azure-mgmt-confluent",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45102",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45102#issuecomment-4065773459"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@Shekar2004, pr ready, feel free to merge and release",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45102:pr.merged:sdk:Python:azure-mgmt-confluent",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-22T08:02:23Z",
+      "observedAt": "2026-03-22T08:02:23Z",
+      "trackId": "sdk:Python:azure-mgmt-confluent",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45102",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45102"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:33747:created",
+      "type": "plan.created",
+      "phase": "plan",
+      "occurredAt": "2026-04-02T05:37:41.87Z",
+      "observedAt": "2026-04-02T05:37:41.87Z",
+      "trackId": "plan",
+      "title": "Release Plan created",
+      "confidence": "authoritative",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33747",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33747"
+      },
+      "stack": 0
+    },
+    {
+      "id": "ado:33747:1:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-04-02T05:37:41.87Z",
+      "observedAt": "2026-04-02T05:37:41.87Z",
+      "trackId": "plan",
+      "value": "New",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33747",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33747"
+      },
+      "title": "Plan state changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33747:1:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-02T05:37:41.87Z",
+      "observedAt": "2026-04-02T05:37:41.87Z",
+      "trackId": "plan",
+      "value": "Not Available",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33747",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33747"
+      },
+      "title": "Spec approval changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:33747:1:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-02T05:37:41.87Z",
+      "observedAt": "2026-04-02T05:37:41.87Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33747",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33747"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33747:1:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-02T05:37:41.87Z",
+      "observedAt": "2026-04-02T05:37:41.87Z",
+      "trackId": "sdk:JavaScript:@azure/arm-confluent",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33747",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33747"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33747:1:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-02T05:37:41.87Z",
+      "observedAt": "2026-04-02T05:37:41.87Z",
+      "trackId": "sdk:Python:azure-mgmt-confluent",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33747",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33747"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33747:1:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-02T05:37:41.87Z",
+      "observedAt": "2026-04-02T05:37:41.87Z",
+      "trackId": "sdk:Java:azure-resourcemanager-confluent",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33747",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33747"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33747:1:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-02T05:37:41.87Z",
+      "observedAt": "2026-04-02T05:37:41.87Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/confluent/armconfluent",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33747",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33747"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33748:1:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-02T05:37:42.413Z",
+      "observedAt": "2026-04-02T05:37:42.413Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#36738",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/36738",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33748",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33748"
+      },
+      "title": "Spec PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado:33747:2:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-04-02T05:37:44.017Z",
+      "observedAt": "2026-04-02T05:37:44.017Z",
+      "trackId": "plan",
+      "value": "In Progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33747",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33747"
+      },
+      "title": "Plan state changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:33747:4:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-02T05:38:44.383Z",
+      "observedAt": "2026-04-02T05:38:44.383Z",
+      "trackId": "sdk:Python:azure-mgmt-confluent",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33747",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33747"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33747:4:Custom.SDKPullRequestForPython",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-04-02T05:38:44.383Z",
+      "observedAt": "2026-04-02T05:38:44.383Z",
+      "trackId": "sdk:Python:azure-mgmt-confluent",
+      "value": "https://github.com/Azure/azure-sdk-for-python/pull/45102",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33747",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33747"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "ado:33747:5:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-02T05:51:39.927Z",
+      "observedAt": "2026-04-02T05:51:39.927Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33747",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33747"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33747:5:Custom.SDKPullRequestForDotnet",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-04-02T05:51:39.927Z",
+      "observedAt": "2026-04-02T05:51:39.927Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "value": "https://github.com/Azure/azure-sdk-for-net/pull/55617",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33747",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33747"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "ado:33747:6:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-02T05:51:48.337Z",
+      "observedAt": "2026-04-02T05:51:48.337Z",
+      "trackId": "sdk:Java:azure-resourcemanager-confluent",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33747",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33747"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33747:6:Custom.SDKPullRequestForJava",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-04-02T05:51:48.337Z",
+      "observedAt": "2026-04-02T05:51:48.337Z",
+      "trackId": "sdk:Java:azure-resourcemanager-confluent",
+      "value": "https://github.com/Azure/azure-sdk-for-java/pull/47954",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33747",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33747"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "ado:33747:7:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-02T05:51:56.117Z",
+      "observedAt": "2026-04-02T05:51:56.117Z",
+      "trackId": "sdk:JavaScript:@azure/arm-confluent",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33747",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33747"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33747:7:Custom.SDKPullRequestForJavaScript",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-04-02T05:51:56.117Z",
+      "observedAt": "2026-04-02T05:51:56.117Z",
+      "trackId": "sdk:JavaScript:@azure/arm-confluent",
+      "value": "https://github.com/Azure/azure-sdk-for-js/pull/37273",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33747",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33747"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "ado:33747:8:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-02T05:52:04.17Z",
+      "observedAt": "2026-04-02T05:52:04.17Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/confluent/armconfluent",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33747",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33747"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33747:8:Custom.SDKPullRequestForGo",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-04-02T05:52:04.17Z",
+      "observedAt": "2026-04-02T05:52:04.17Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/confluent/armconfluent",
+      "value": "https://github.com/Azure/azure-sdk-for-go/pull/26002",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33747",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33747"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "github-release:33747:JavaScript:@azure/arm-confluent_4.0.0-beta.1",
+      "type": "package.github_release_published",
+      "phase": "release",
+      "occurredAt": "2026-04-02T06:42:30Z",
+      "observedAt": "2026-04-02T06:42:30Z",
+      "trackId": "sdk:JavaScript:@azure/arm-confluent",
+      "title": "GitHub Release published",
+      "value": "@azure/arm-confluent_4.0.0-beta.1",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "azure-sdk-for-js release @azure/arm-confluent_4.0.0-beta.1",
+        "url": "https://github.com/Azure/azure-sdk-for-js/releases/tag/%40azure/arm-confluent_4.0.0-beta.1"
+      },
+      "confidence": "inferred",
+      "stack": 3
+    },
+    {
+      "id": "github-release:33747:Go:sdk/resourcemanager/confluent/armconfluent/v2.0.0-beta.1",
+      "type": "package.github_release_published",
+      "phase": "release",
+      "occurredAt": "2026-04-02T06:45:48Z",
+      "observedAt": "2026-04-02T06:45:48Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/confluent/armconfluent",
+      "title": "GitHub Release published",
+      "value": "sdk/resourcemanager/confluent/armconfluent/v2.0.0-beta.1",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "azure-sdk-for-go release sdk/resourcemanager/confluent/armconfluent/v2.0.0-beta.1",
+        "url": "https://github.com/Azure/azure-sdk-for-go/releases/tag/sdk/resourcemanager/confluent/armconfluent/v2.0.0-beta.1"
+      },
+      "confidence": "inferred",
+      "stack": 3
+    },
+    {
+      "id": "ado:33747:9:Custom.ReleaseStatusForGo",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-04-02T06:46:05.523Z",
+      "observedAt": "2026-04-02T06:46:05.523Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/confluent/armconfluent",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33747",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33747"
+      },
+      "title": "Release status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:33747:10:Custom.ReleaseStatusForJavaScript",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-04-02T06:55:38.11Z",
+      "observedAt": "2026-04-02T06:55:38.11Z",
+      "trackId": "sdk:JavaScript:@azure/arm-confluent",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33747",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33747"
+      },
+      "title": "Release status changed",
+      "stack": 4
+    },
+    {
+      "id": "github-release:33747:Python:azure-mgmt-confluent_3.0.0b1",
+      "type": "package.github_release_published",
+      "phase": "release",
+      "occurredAt": "2026-04-02T07:07:53Z",
+      "observedAt": "2026-04-02T07:07:53Z",
+      "trackId": "sdk:Python:azure-mgmt-confluent",
+      "title": "GitHub Release published",
+      "value": "azure-mgmt-confluent_3.0.0b1",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "azure-sdk-for-python release azure-mgmt-confluent_3.0.0b1",
+        "url": "https://github.com/Azure/azure-sdk-for-python/releases/tag/azure-mgmt-confluent_3.0.0b1"
+      },
+      "confidence": "inferred",
+      "stack": 3
+    },
+    {
+      "id": "github-release:33747:Java:com.azure.resourcemanager+azure-resourcemanager-confluent_1.3.0-beta.1",
+      "type": "package.github_release_published",
+      "phase": "release",
+      "occurredAt": "2026-04-02T07:13:06Z",
+      "observedAt": "2026-04-02T07:13:06Z",
+      "trackId": "sdk:Java:azure-resourcemanager-confluent",
+      "title": "GitHub Release published",
+      "value": "com.azure.resourcemanager+azure-resourcemanager-confluent_1.3.0-beta.1",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "azure-sdk-for-java release com.azure.resourcemanager+azure-resourcemanager-confluent_1.3.0-beta.1",
+        "url": "https://github.com/Azure/azure-sdk-for-java/releases/tag/com.azure.resourcemanager%2Bazure-resourcemanager-confluent_1.3.0-beta.1"
+      },
+      "confidence": "inferred",
+      "stack": 3
+    },
+    {
+      "id": "ado:33747:11:Custom.ReleaseStatusForPython",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-04-02T07:19:03.607Z",
+      "observedAt": "2026-04-02T07:19:03.607Z",
+      "trackId": "sdk:Python:azure-mgmt-confluent",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33747",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33747"
+      },
+      "title": "Release status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:33747:12:Custom.ReleaseStatusForJava",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-04-02T07:26:53.597Z",
+      "observedAt": "2026-04-02T07:26:53.597Z",
+      "trackId": "sdk:Java:azure-resourcemanager-confluent",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33747",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33747"
+      },
+      "title": "Release status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:33747:26:Custom.SDKPullRequestForDotnet",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-06-03T07:36:06.55Z",
+      "observedAt": "2026-06-03T07:36:06.55Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "value": "https://github.com/Azure/azure-sdk-for-net/pull/54889",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33747",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33747"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado:33747:27:Custom.ReleaseStatusForDotnet",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-06-15T14:58:57.3Z",
+      "observedAt": "2026-06-15T14:58:57.3Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33747",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33747"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33747:28:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-06-15T14:58:57.553Z",
+      "observedAt": "2026-06-15T14:58:57.553Z",
+      "trackId": "plan",
+      "value": "Finished",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33747",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33747"
+      },
+      "title": "Plan state changed",
+      "stack": 0
+    }
+  ],
+  "quality": {
+    "warnings": [
+      "1 historical linked PR(s) closed without merge",
+      "1 superseded SDK PR link(s) retained"
+    ],
+    "unavailablePullRequests": 0,
+    "unavailablePipelineRuns": 0
+  },
+  "boundaryFacts": {
+    "id": "33747",
+    "state": "finished",
+    "specPrs": [
+      {
+        "id": "github:Azure/azure-rest-api-specs#36738",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#36738",
+        "createdAt": "2025-08-18T12:41:41Z",
+        "mergedAt": "2025-09-04T05:26:43Z",
+        "closedAt": "2025-09-04T05:26:43Z",
+        "available": true
+      }
+    ],
+    "artifacts": [
+      {
+        "language": ".NET",
+        "package": "Azure.ResourceManager.Confluent",
+        "trackId": "sdk:.NET:Azure.ResourceManager.Confluent",
+        "prId": "github:Azure/azure-sdk-for-net#54889",
+        "prCreatedAt": "2026-01-08T08:00:26Z",
+        "prMergedAt": "2026-03-12T10:42:09Z",
+        "prClosedAt": "2026-03-12T10:42:09Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-net#55617",
+            "createdAt": "2026-02-10T05:00:46Z",
+            "mergedAt": null,
+            "closedAt": "2026-03-15T11:38:19Z",
+            "state": "closed"
+          },
+          {
+            "id": "github:Azure/azure-sdk-for-net#54889",
+            "createdAt": "2026-01-08T08:00:26Z",
+            "mergedAt": "2026-03-12T10:42:09Z",
+            "closedAt": "2026-03-12T10:42:09Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": null,
+        "generationStartAt": null,
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-06-15T14:58:57.3Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "missing",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "JavaScript",
+        "package": "@azure/arm-confluent",
+        "trackId": "sdk:JavaScript:@azure/arm-confluent",
+        "prId": "github:Azure/azure-sdk-for-js#37273",
+        "prCreatedAt": "2026-02-10T05:02:14Z",
+        "prMergedAt": "2026-03-05T09:06:23Z",
+        "prClosedAt": "2026-03-05T09:06:23Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-js#37273",
+            "createdAt": "2026-02-10T05:02:14Z",
+            "mergedAt": "2026-03-05T09:06:23Z",
+            "closedAt": "2026-03-05T09:06:23Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": null,
+        "generationStartAt": null,
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-04-02T06:55:38.11Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": null,
+        "releaseBoundaryAt": "2026-04-02T06:42:30Z",
+        "releaseBoundarySource": "github-release",
+        "releaseBoundaryConfidence": "inferred",
+        "releaseBoundaryUrl": "https://github.com/Azure/azure-sdk-for-js/releases/tag/%40azure/arm-confluent_4.0.0-beta.1",
+        "releaseTag": "@azure/arm-confluent_4.0.0-beta.1",
+        "releaseMatchMethod": "unique-nearby-release",
+        "provenance": {
+          "pr": "exact",
+          "generation": "missing",
+          "release": "github-release"
+        }
+      },
+      {
+        "language": "Python",
+        "package": "azure-mgmt-confluent",
+        "trackId": "sdk:Python:azure-mgmt-confluent",
+        "prId": "github:Azure/azure-sdk-for-python#45102",
+        "prCreatedAt": "2026-02-10T05:01:17Z",
+        "prMergedAt": "2026-03-22T08:02:23Z",
+        "prClosedAt": "2026-03-22T08:02:23Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-python#45102",
+            "createdAt": "2026-02-10T05:01:17Z",
+            "mergedAt": "2026-03-22T08:02:23Z",
+            "closedAt": "2026-03-22T08:02:23Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": null,
+        "generationStartAt": null,
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-04-02T07:19:03.607Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": null,
+        "releaseBoundaryAt": "2026-04-02T07:07:53Z",
+        "releaseBoundarySource": "github-release",
+        "releaseBoundaryConfidence": "inferred",
+        "releaseBoundaryUrl": "https://github.com/Azure/azure-sdk-for-python/releases/tag/azure-mgmt-confluent_3.0.0b1",
+        "releaseTag": "azure-mgmt-confluent_3.0.0b1",
+        "releaseMatchMethod": "unique-nearby-release",
+        "provenance": {
+          "pr": "exact",
+          "generation": "missing",
+          "release": "github-release"
+        }
+      },
+      {
+        "language": "Java",
+        "package": "azure-resourcemanager-confluent",
+        "trackId": "sdk:Java:azure-resourcemanager-confluent",
+        "prId": "github:Azure/azure-sdk-for-java#47954",
+        "prCreatedAt": "2026-02-10T05:03:31Z",
+        "prMergedAt": "2026-02-24T20:27:43Z",
+        "prClosedAt": "2026-02-24T20:27:43Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-java#47954",
+            "createdAt": "2026-02-10T05:03:31Z",
+            "mergedAt": "2026-02-24T20:27:43Z",
+            "closedAt": "2026-02-24T20:27:43Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": null,
+        "generationStartAt": null,
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-04-02T07:26:53.597Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": null,
+        "releaseBoundaryAt": "2026-04-02T07:13:06Z",
+        "releaseBoundarySource": "github-release",
+        "releaseBoundaryConfidence": "inferred",
+        "releaseBoundaryUrl": "https://github.com/Azure/azure-sdk-for-java/releases/tag/com.azure.resourcemanager%2Bazure-resourcemanager-confluent_1.3.0-beta.1",
+        "releaseTag": "com.azure.resourcemanager+azure-resourcemanager-confluent_1.3.0-beta.1",
+        "releaseMatchMethod": "release-index-version",
+        "provenance": {
+          "pr": "exact",
+          "generation": "missing",
+          "release": "github-release"
+        }
+      },
+      {
+        "language": "Go",
+        "package": "sdk/resourcemanager/confluent/armconfluent",
+        "trackId": "sdk:Go:sdk/resourcemanager/confluent/armconfluent",
+        "prId": "github:Azure/azure-sdk-for-go#26002",
+        "prCreatedAt": "2026-02-10T05:00:38Z",
+        "prMergedAt": "2026-02-24T20:30:50Z",
+        "prClosedAt": "2026-02-24T20:30:50Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-go#26002",
+            "createdAt": "2026-02-10T05:00:38Z",
+            "mergedAt": "2026-02-24T20:30:50Z",
+            "closedAt": "2026-02-24T20:30:50Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": null,
+        "generationStartAt": null,
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-04-02T06:46:05.523Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": null,
+        "releaseBoundaryAt": "2026-04-02T06:45:48Z",
+        "releaseBoundarySource": "github-release",
+        "releaseBoundaryConfidence": "inferred",
+        "releaseBoundaryUrl": "https://github.com/Azure/azure-sdk-for-go/releases/tag/sdk/resourcemanager/confluent/armconfluent/v2.0.0-beta.1",
+        "releaseTag": "sdk/resourcemanager/confluent/armconfluent/v2.0.0-beta.1",
+        "releaseMatchMethod": "unique-nearby-release",
+        "provenance": {
+          "pr": "exact",
+          "generation": "missing",
+          "release": "github-release"
+        }
+      }
+    ],
+    "cohortPlan": {
+      "id": "33747",
+      "releasePlanId": "2176",
+      "title": "Release plan - 2176 - Public Preview - Liftr-Confluent",
+      "service": "Confluent.Management",
+      "state": "finished"
+    },
+    "quality": {
+      "warnings": [
+        "1 historical linked PR(s) closed without merge",
+        "1 superseded SDK PR link(s) retained"
+      ],
+      "unavailablePullRequests": 0,
+      "unavailablePipelineRuns": 0
+    }
+  },
+  "summary": {
+    "durationHours": 1785.4,
+    "pullRequestCount": 7,
+    "humanReviewCount": 13,
+    "humanCommentCount": 23
+  }
+}

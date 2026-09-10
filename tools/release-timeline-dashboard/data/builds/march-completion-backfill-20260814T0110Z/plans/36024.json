@@ -1,0 +1,3367 @@
+{
+  "schemaVersion": 2,
+  "id": "36024",
+  "correlation": {
+    "policyVersion": 1,
+    "preflight": "passed"
+  },
+  "releasePlanId": "36024",
+  "title": "GA release plan for SQL Instance Snapshot Backup",
+  "service": "SQL Instance Snapshot Backup",
+  "product": "Release",
+  "path": "specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup",
+  "state": "in-progress",
+  "plane": "management",
+  "releaseType": "GA",
+  "intendedMonth": "August 2026",
+  "createdAt": "2026-08-13T11:13:24.547Z",
+  "completedAt": null,
+  "sourceUrl": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/36024",
+  "range": {
+    "start": "2026-06-17T19:49:51.000Z",
+    "end": "2026-08-14T00:37:23.589Z"
+  },
+  "intendedArtifacts": [
+    {
+      "prId": "github:Azure/azure-sdk-for-net#62041",
+      "language": ".NET",
+      "package": "Azure.ResourceManager.RecoveryServicesBackup",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6698265",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-js#39592",
+      "language": "JavaScript",
+      "package": "@azure/arm-recoveryservicesbackup",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6698264",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-python#48574",
+      "language": "Python",
+      "package": "azure-mgmt-recoveryservicesbackup",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6698263",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-java#50125",
+      "language": "Java",
+      "package": "azure-resourcemanager-recoveryservicesbackup",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6698266",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-go#27380",
+      "language": "Go",
+      "package": "sdk/resourcemanager/recoveryservices/armrecoveryservicesbackup",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6698262",
+      "releasePipelineUrl": null
+    }
+  ],
+  "links": [
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#44057",
+      "role": "spec-pr",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/44057",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-net#62041",
+      "role": "sdk-pr",
+      "language": ".NET",
+      "url": "https://github.com/Azure/azure-sdk-for-net/pull/62041",
+      "releasePlanIds": [
+        "36024"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-js#39592",
+      "role": "sdk-pr",
+      "language": "JavaScript",
+      "url": "https://github.com/Azure/azure-sdk-for-js/pull/39592",
+      "releasePlanIds": [
+        "36024"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-python#48574",
+      "role": "sdk-pr",
+      "language": "Python",
+      "url": "https://github.com/Azure/azure-sdk-for-python/pull/48574",
+      "releasePlanIds": [
+        "36024"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-java#50125",
+      "role": "sdk-pr",
+      "language": "Java",
+      "url": "https://github.com/Azure/azure-sdk-for-java/pull/50125",
+      "releasePlanIds": [
+        "36024"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-go#27380",
+      "role": "sdk-pr",
+      "language": "Go",
+      "url": "https://github.com/Azure/azure-sdk-for-go/pull/27380",
+      "releasePlanIds": [
+        "36024"
+      ]
+    }
+  ],
+  "tracks": [
+    {
+      "id": "plan",
+      "kind": "plan",
+      "label": "Release Plan",
+      "detail": "GA"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#44057",
+      "kind": "spec",
+      "label": "Spec PR",
+      "detail": "azure-rest-api-specs #44057",
+      "artifactId": "github:Azure/azure-rest-api-specs#44057",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:.NET:Azure.ResourceManager.RecoveryServicesBackup",
+      "kind": "sdk",
+      "label": ".NET",
+      "detail": "Azure.ResourceManager.RecoveryServicesBackup",
+      "artifactId": "github:Azure/azure-sdk-for-net#62041",
+      "state": "open"
+    },
+    {
+      "id": "sdk:JavaScript:@azure/arm-recoveryservicesbackup",
+      "kind": "sdk",
+      "label": "JavaScript",
+      "detail": "@azure/arm-recoveryservicesbackup",
+      "artifactId": "github:Azure/azure-sdk-for-js#39592",
+      "state": "open"
+    },
+    {
+      "id": "sdk:Python:azure-mgmt-recoveryservicesbackup",
+      "kind": "sdk",
+      "label": "Python",
+      "detail": "azure-mgmt-recoveryservicesbackup",
+      "artifactId": "github:Azure/azure-sdk-for-python#48574",
+      "state": "open"
+    },
+    {
+      "id": "sdk:Java:azure-resourcemanager-recoveryservicesbackup",
+      "kind": "sdk",
+      "label": "Java",
+      "detail": "azure-resourcemanager-recoveryservicesbackup",
+      "artifactId": "github:Azure/azure-sdk-for-java#50125",
+      "state": "open"
+    },
+    {
+      "id": "sdk:Go:sdk/resourcemanager/recoveryservices/armrecoveryservicesbackup",
+      "kind": "sdk",
+      "label": "Go",
+      "detail": "sdk/resourcemanager/recoveryservices/armrecoveryservicesbackup",
+      "artifactId": "github:Azure/azure-sdk-for-go#27380",
+      "state": "open"
+    }
+  ],
+  "events": [
+    {
+      "id": "github:Azure/azure-rest-api-specs#44057:pr.created:spec:github:Azure/azure-rest-api-specs#44057",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-17T19:49:51Z",
+      "observedAt": "2026-06-17T19:49:51Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44057",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "asmaskar"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44057",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44057"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44057:comment:4734610100:spec:github:Azure/azure-rest-api-specs#44057",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-17T19:52:23Z",
+      "observedAt": "2026-06-17T19:52:23Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44057",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44057",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44057#issuecomment-4734610100"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>✅ All automated merging requirements have been met! To get your PR merged, see <a href=\"https://aka.ms/azsdk/specreview/merge\">aka.ms/azsdk/specreview/merge</a>.<br /><br />Comment generated by <a href=\"https://g",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44057:comment:4734673189:spec:github:Azure/azure-rest-api-specs#44057",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-17T19:58:13Z",
+      "observedAt": "2026-06-17T19:58:13Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44057",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44057",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44057#issuecomment-4734673189"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews | Language | API Review for Package | |----------|---------| | Swagger | [Microsoft.RecoveryServices-RecoveryServices](https://apiview",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44057:commit:91af5845de33:spec:github:Azure/azure-rest-api-specs#44057",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-18T08:47:33Z",
+      "observedAt": "2026-06-18T08:47:33Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44057",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "asmaskar"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44057",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/91af5845de33d011211d7c3e0b4252e399a388a9"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44057:commit:445bc1b509ef:spec:github:Azure/azure-rest-api-specs#44057",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-18T11:02:13Z",
+      "observedAt": "2026-06-18T11:02:13Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44057",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "risraj10"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44057",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/445bc1b509ef03397f155fa6c81dc004b86a05a2"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44057:commit:849898fb616e:spec:github:Azure/azure-rest-api-specs#44057",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-18T14:40:45Z",
+      "observedAt": "2026-06-18T14:40:45Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44057",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "risraj10"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44057",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/849898fb616e8ad495d3dee482a73743ae4dbf67"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44057:commit:72e4ff211532:spec:github:Azure/azure-rest-api-specs#44057",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-19T04:55:33Z",
+      "observedAt": "2026-06-19T04:55:33Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44057",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "risraj10"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44057",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/72e4ff21153277b573d44e8153ada612a794f617"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44057:commit:b2438eaa6d89:spec:github:Azure/azure-rest-api-specs#44057",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-19T10:13:34Z",
+      "observedAt": "2026-06-19T10:13:34Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44057",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "risraj10"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44057",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/b2438eaa6d890e76636ff6f4b48ffef5e783034b"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44057:commit:37bdd82635bc:spec:github:Azure/azure-rest-api-specs#44057",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-19T10:15:35Z",
+      "observedAt": "2026-06-19T10:15:35Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44057",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "risraj10"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44057",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/37bdd82635bc9d6dc0e6f452c05a9680829fcb20"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44057:commit:d5ea9585d8b6:spec:github:Azure/azure-rest-api-specs#44057",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-19T10:25:51Z",
+      "observedAt": "2026-06-19T10:25:51Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44057",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "risraj10"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44057",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/d5ea9585d8b6a6af893168daa19bb77c3b455ec1"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44057:commit:b06b1e9316fa:spec:github:Azure/azure-rest-api-specs#44057",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-19T10:56:11Z",
+      "observedAt": "2026-06-19T10:56:11Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44057",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "risraj10"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44057",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/b06b1e9316fa7158ff0d0e9b87312dcfa846ec27"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44057:commit:27531eb3822f:spec:github:Azure/azure-rest-api-specs#44057",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-19T12:08:19Z",
+      "observedAt": "2026-06-19T12:08:19Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44057",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "risraj10"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44057",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/27531eb3822f0cbb304600f762b8f7d7372abda5"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44057:commit:31668ee382f8:spec:github:Azure/azure-rest-api-specs#44057",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-19T12:10:26Z",
+      "observedAt": "2026-06-19T12:10:26Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44057",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "risraj10"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44057",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/31668ee382f885eae08b4d3498be441e38dc7d86"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44057:commit:969d49157797:spec:github:Azure/azure-rest-api-specs#44057",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-22T05:36:36Z",
+      "observedAt": "2026-06-22T05:36:36Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44057",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "risraj10"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44057",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/969d49157797f02da342b01e6b7d8b68ef1f308f"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44057:commit:d10d02433762:spec:github:Azure/azure-rest-api-specs#44057",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-22T12:11:59Z",
+      "observedAt": "2026-06-22T12:11:59Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44057",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "asmaskar"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44057",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/d10d02433762c3b4a77fbdeeb5dc44ccb4fa2f8a"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44057:review:4544831509:spec:github:Azure/azure-rest-api-specs#44057",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-22T14:08:17Z",
+      "observedAt": "2026-06-22T14:08:17Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44057",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ravimeda"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44057",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44057#pullrequestreview-4544831509"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## ARM API Review Posting findings from the [ARM API Reviewer agent](https://github.com/Azure/azure-rest-api-specs/blob/main/documentation/api-reviewer-agent.md) (critic-verified, 3 iterations, converged) against commit [`d10d024`](https://",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44057:comment:3452844269:spec:github:Azure/azure-rest-api-specs#44057",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-22T14:08:17Z",
+      "observedAt": "2026-06-22T14:08:17Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44057",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ravimeda"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44057",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44057#discussion_r3452844269"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[NEW] 🟠 Warning** **[[TSP-ARM-RESOURCE-ID](https://github.com/Azure/azure-rest-api-specs/blob/main/.github/instructions/typespec-review.instructions.md#63-use-armresourceidentifier-for-resource-references-tsp-arm-resource-id)]** `models.",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44057:comment:3452844286:spec:github:Azure/azure-rest-api-specs#44057",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-22T14:08:17Z",
+      "observedAt": "2026-06-22T14:08:17Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44057",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ravimeda"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44057",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44057#discussion_r3452844286"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[NEW] 🟠 Warning** **[[TSP §2.6 ARM POST Actions](https://github.com/Azure/azure-rest-api-specs/blob/main/.github/instructions/typespec-review.instructions.md#26-arm-post-actions)]** / **[[§4.1 Suppression Justification](https://github.co",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44057:comment:3452844295:spec:github:Azure/azure-rest-api-specs#44057",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-22T14:08:17Z",
+      "observedAt": "2026-06-22T14:08:17Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44057",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ravimeda"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44057",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44057#discussion_r3452844295"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[NEW] 🔵 Suggestion** — example/operation header consistency — `ProtectedItemResource.tsp` lines 148–149. **Classification reasoning:** [NEW] — part of the `@added(Versions.v2026_07_01)` `ConfigureSourceScan` action. The `ConfigureSourceS",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44057:comment:3452844299:spec:github:Azure/azure-rest-api-specs#44057",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-22T14:08:17Z",
+      "observedAt": "2026-06-22T14:08:17Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44057",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ravimeda"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44057",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44057#discussion_r3452844299"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[NEW] 🔵 Suggestion** (Low confidence — judgment call) **[[TSP-ARRAY-IDENTIFIERS §6.5](https://github.com/Azure/azure-rest-api-specs/blob/main/.github/instructions/typespec-review.instructions.md#65-array-identifiers--x-ms-identifiers-tsp",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44057:commit:1902ad9283dc:spec:github:Azure/azure-rest-api-specs#44057",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-24T17:44:44Z",
+      "observedAt": "2026-06-24T17:44:44Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44057",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "risraj10"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44057",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/1902ad9283dc6460296767d5752575930d3d33fe"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44057:commit:6ba9c316ab2d:spec:github:Azure/azure-rest-api-specs#44057",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-02T12:29:45Z",
+      "observedAt": "2026-07-02T12:29:45Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44057",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "risraj10"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44057",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/6ba9c316ab2df06b8a5f52f46fceadaba0f23b8f"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44057:commit:09417aeae92b:spec:github:Azure/azure-rest-api-specs#44057",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-02T12:32:57Z",
+      "observedAt": "2026-07-02T12:32:57Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44057",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "risraj10"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44057",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/09417aeae92ba1bbc21f5bc848b19ad8ccf322cf"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44057:commit:849c7de37d92:spec:github:Azure/azure-rest-api-specs#44057",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-02T13:14:26Z",
+      "observedAt": "2026-07-02T13:14:26Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44057",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "risraj10"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44057",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/849c7de37d9207367b1d00d466ab381932125501"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44057:commit:ebc93eaae250:spec:github:Azure/azure-rest-api-specs#44057",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-02T13:29:31Z",
+      "observedAt": "2026-07-02T13:29:31Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44057",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "risraj10"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44057",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/ebc93eaae2501ad2882983272977c213ae5a2078"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44057:commit:fa096ea8f0c3:spec:github:Azure/azure-rest-api-specs#44057",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-02T13:32:26Z",
+      "observedAt": "2026-07-02T13:32:26Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44057",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "risraj10"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44057",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/fa096ea8f0c3cd7a26360d8e093669f4a856aa30"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44057:comment:3513520085:spec:github:Azure/azure-rest-api-specs#44057",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-02T13:45:42Z",
+      "observedAt": "2026-07-02T13:45:42Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44057",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "risraj10"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44057",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44057#discussion_r3513520085"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Fixed",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44057:review:4618053252:spec:github:Azure/azure-rest-api-specs#44057",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-02T13:45:43Z",
+      "observedAt": "2026-07-02T13:45:43Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44057",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "risraj10"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44057",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44057#pullrequestreview-4618053252"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44057:comment:3513521112:spec:github:Azure/azure-rest-api-specs#44057",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-02T13:45:50Z",
+      "observedAt": "2026-07-02T13:45:50Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44057",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "risraj10"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44057",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44057#discussion_r3513521112"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Fixed",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44057:review:4618054446:spec:github:Azure/azure-rest-api-specs#44057",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-02T13:45:51Z",
+      "observedAt": "2026-07-02T13:45:51Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44057",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "risraj10"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44057",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44057#pullrequestreview-4618054446"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44057:commit:dcb03b886e62:spec:github:Azure/azure-rest-api-specs#44057",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-03T08:12:48Z",
+      "observedAt": "2026-07-03T08:12:48Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44057",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "risraj10"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44057",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/dcb03b886e62ca2f22103f0dee48482bd1c09f87"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44057:commit:5b06219babdb:spec:github:Azure/azure-rest-api-specs#44057",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-03T08:42:29Z",
+      "observedAt": "2026-07-03T08:42:29Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44057",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "risraj10"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44057",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/5b06219babdb4a5ae8703a753d45d8f7422b6550"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44057:commit:c35b20ec9228:spec:github:Azure/azure-rest-api-specs#44057",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-15T17:11:50Z",
+      "observedAt": "2026-07-15T17:11:50Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44057",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "asmaskar"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44057",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/c35b20ec922889e26533d9ea2f406f76b8fd71cc"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44057:commit:3d024ee9b8ba:spec:github:Azure/azure-rest-api-specs#44057",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-15T17:13:44Z",
+      "observedAt": "2026-07-15T17:13:44Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44057",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "asmaskar"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44057",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/3d024ee9b8ba229fe6c05da23bef03a0c4dca5c3"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44057:commit:5cd3b9f12fdf:spec:github:Azure/azure-rest-api-specs#44057",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-15T17:24:18Z",
+      "observedAt": "2026-07-15T17:24:18Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44057",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "asmaskar"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44057",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/5cd3b9f12fdf603a5ba5cef902e18feb7c1b00e2"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44057:commit:9e476d2964fe:spec:github:Azure/azure-rest-api-specs#44057",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-15T17:24:30Z",
+      "observedAt": "2026-07-15T17:24:30Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44057",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "asmaskar"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44057",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/9e476d2964fefa7f32f4ed23e887e1d346a73b96"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44057:commit:411e84d4aa64:spec:github:Azure/azure-rest-api-specs#44057",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-15T18:51:47Z",
+      "observedAt": "2026-07-15T18:51:47Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44057",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "asmaskar"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44057",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/411e84d4aa6482e2939450f19cfc3210dd68a29d"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44057:commit:81cf0f991dd4:spec:github:Azure/azure-rest-api-specs#44057",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-15T18:52:36Z",
+      "observedAt": "2026-07-15T18:52:36Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44057",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "asmaskar"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44057",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/81cf0f991dd42ea9d6444516bdddc2a17bf2706a"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44057:commit:302234dddb91:spec:github:Azure/azure-rest-api-specs#44057",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-15T19:12:01Z",
+      "observedAt": "2026-07-15T19:12:01Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44057",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "asmaskar"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44057",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/302234dddb91751d636546254480b5080b7eb3b0"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44057:commit:33a7a42b1e09:spec:github:Azure/azure-rest-api-specs#44057",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-15T19:20:59Z",
+      "observedAt": "2026-07-15T19:20:59Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44057",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "asmaskar"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44057",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/33a7a42b1e09c6502516de8b3be7d0f5a45e6588"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44057:commit:b565165ae95a:spec:github:Azure/azure-rest-api-specs#44057",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-16T09:16:41Z",
+      "observedAt": "2026-07-16T09:16:41Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44057",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44057",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/b565165ae95ae61629957a325456eca5f843bb4f"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44057:commit:fce4cf5a3146:spec:github:Azure/azure-rest-api-specs#44057",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-16T09:52:14Z",
+      "observedAt": "2026-07-16T09:52:14Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44057",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "asmaskar"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44057",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/fce4cf5a3146e79710a3b97290d4b626c62c2b91"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44057:comment:3594392081:spec:github:Azure/azure-rest-api-specs#44057",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-16T09:54:08Z",
+      "observedAt": "2026-07-16T09:54:08Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44057",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "asmaskar"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44057",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44057#discussion_r3594392081"
+      },
+      "confidence": "authoritative",
+      "excerpt": "fixed",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44057:review:4712500501:spec:github:Azure/azure-rest-api-specs#44057",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-16T09:54:09Z",
+      "observedAt": "2026-07-16T09:54:09Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44057",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "asmaskar"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44057",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44057#pullrequestreview-4712500501"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44057:commit:85fb86058939:spec:github:Azure/azure-rest-api-specs#44057",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-06T19:20:29Z",
+      "observedAt": "2026-08-06T19:20:29Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44057",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "asmaskar"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44057",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/85fb86058939f9786fa9cd0719b031b23a79b8b6"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44057:review:4895503195:spec:github:Azure/azure-rest-api-specs#44057",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-10T09:46:20Z",
+      "observedAt": "2026-08-10T09:46:20Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44057",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "bharatpurwar"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44057",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44057#pullrequestreview-4895503195"
+      },
+      "confidence": "authoritative",
+      "excerpt": "checked msi changes",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44057:commit:79c8f5500ba0:spec:github:Azure/azure-rest-api-specs#44057",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-10T12:26:52Z",
+      "observedAt": "2026-08-10T12:26:52Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44057",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "asmaskar"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44057",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/79c8f5500ba0f160a7cab0160d0c9745662d2396"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44057:commit:7d3cb3a6980c:spec:github:Azure/azure-rest-api-specs#44057",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-11T11:28:34Z",
+      "observedAt": "2026-08-11T11:28:34Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44057",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "asmaskar"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44057",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/7d3cb3a6980c603bf503966e1caa0bbb9142931a"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44057:commit:b20b485a3e2a:spec:github:Azure/azure-rest-api-specs#44057",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-11T11:30:27Z",
+      "observedAt": "2026-08-11T11:30:27Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44057",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "asmaskar"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44057",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/b20b485a3e2aeb14b723d5d8c3f19dfdd0274489"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44057:comment:5255824140:spec:github:Azure/azure-rest-api-specs#44057",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-11T16:20:16Z",
+      "observedAt": "2026-08-11T16:20:16Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44057",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "venu-sivanadham"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44057",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44057#issuecomment-5255824140"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Approved Avocado as its failing due to existing tag as passive version in the readme.md",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44057:commit:2143235f0154:spec:github:Azure/azure-rest-api-specs#44057",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-11T16:20:58Z",
+      "observedAt": "2026-08-11T16:20:58Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44057",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "venu-sivanadham"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44057",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/2143235f0154585a2cc8c2be21a34b10edd2f082"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44057:commit:a8860d0512af:spec:github:Azure/azure-rest-api-specs#44057",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-12T04:29:20Z",
+      "observedAt": "2026-08-12T04:29:20Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44057",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "asmaskar"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44057",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/a8860d0512af966c3fd6bff94a25b0281f353abd"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44057:review:4913038960:spec:github:Azure/azure-rest-api-specs#44057",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-12T04:33:50Z",
+      "observedAt": "2026-08-12T04:33:50Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44057",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "vidyadharijami"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44057",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44057#pullrequestreview-4913038960"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44057:commit:ab7748ec5490:spec:github:Azure/azure-rest-api-specs#44057",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-12T07:12:44Z",
+      "observedAt": "2026-08-12T07:12:44Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44057",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "asmaskar"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44057",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/ab7748ec54902025a70658f28b846ce06debfb2d"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44057:review:4913911313:spec:github:Azure/azure-rest-api-specs#44057",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-12T07:15:13Z",
+      "observedAt": "2026-08-12T07:15:13Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44057",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "hiaga"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44057",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44057#pullrequestreview-4913911313"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44057:pr.merged:spec:github:Azure/azure-rest-api-specs#44057",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-12T07:34:27Z",
+      "observedAt": "2026-08-12T07:34:27Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44057",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44057",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44057"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:36024:created",
+      "type": "plan.created",
+      "phase": "plan",
+      "occurredAt": "2026-08-13T11:13:24.547Z",
+      "observedAt": "2026-08-13T11:13:24.547Z",
+      "trackId": "plan",
+      "title": "Release Plan created",
+      "confidence": "authoritative",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:36024",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/36024"
+      },
+      "stack": 0
+    },
+    {
+      "id": "ado:36024:1:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-08-13T11:13:24.547Z",
+      "observedAt": "2026-08-13T11:13:24.547Z",
+      "trackId": "plan",
+      "value": "New",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:36024",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/36024"
+      },
+      "title": "Plan state changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:36024:1:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-13T11:13:24.547Z",
+      "observedAt": "2026-08-13T11:13:24.547Z",
+      "trackId": "plan",
+      "value": "Not Available",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:36024",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/36024"
+      },
+      "title": "Spec approval changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:36024:1:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-13T11:13:24.547Z",
+      "observedAt": "2026-08-13T11:13:24.547Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.RecoveryServicesBackup",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:36024",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/36024"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:36024:1:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-13T11:13:24.547Z",
+      "observedAt": "2026-08-13T11:13:24.547Z",
+      "trackId": "sdk:JavaScript:@azure/arm-recoveryservicesbackup",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:36024",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/36024"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:36024:1:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-13T11:13:24.547Z",
+      "observedAt": "2026-08-13T11:13:24.547Z",
+      "trackId": "sdk:Python:azure-mgmt-recoveryservicesbackup",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:36024",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/36024"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:36024:1:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-13T11:13:24.547Z",
+      "observedAt": "2026-08-13T11:13:24.547Z",
+      "trackId": "sdk:Java:azure-resourcemanager-recoveryservicesbackup",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:36024",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/36024"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:36024:1:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-13T11:13:24.547Z",
+      "observedAt": "2026-08-13T11:13:24.547Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/recoveryservices/armrecoveryservicesbackup",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:36024",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/36024"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:36024:2:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-08-13T11:13:26.297Z",
+      "observedAt": "2026-08-13T11:13:26.297Z",
+      "trackId": "plan",
+      "value": "In Progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:36024",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/36024"
+      },
+      "title": "Plan state changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:36025:2:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-13T11:17:22.367Z",
+      "observedAt": "2026-08-13T11:17:22.367Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44057",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/44057",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:36025",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/36025"
+      },
+      "title": "Spec PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado:36024:4:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-13T11:17:22.89Z",
+      "observedAt": "2026-08-13T11:17:22.89Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.RecoveryServicesBackup",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:36024",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/36024"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:36024:4:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-13T11:17:22.89Z",
+      "observedAt": "2026-08-13T11:17:22.89Z",
+      "trackId": "sdk:JavaScript:@azure/arm-recoveryservicesbackup",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:36024",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/36024"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:36024:4:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-13T11:17:22.89Z",
+      "observedAt": "2026-08-13T11:17:22.89Z",
+      "trackId": "sdk:Python:azure-mgmt-recoveryservicesbackup",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:36024",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/36024"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:36024:4:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-13T11:17:22.89Z",
+      "observedAt": "2026-08-13T11:17:22.89Z",
+      "trackId": "sdk:Java:azure-resourcemanager-recoveryservicesbackup",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:36024",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/36024"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:36024:4:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-13T11:17:22.89Z",
+      "observedAt": "2026-08-13T11:17:22.89Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/recoveryservices/armrecoveryservicesbackup",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:36024",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/36024"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6698265:generation.queued:sdk:.NET:Azure.ResourceManager.RecoveryServicesBackup",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-08-13T11:18:51.4624104Z",
+      "observedAt": "2026-08-13T11:31:17.1981454Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.RecoveryServicesBackup",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6698265",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6698265"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6698264:generation.queued:sdk:JavaScript:@azure/arm-recoveryservicesbackup",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-08-13T11:18:51.4988819Z",
+      "observedAt": "2026-08-13T11:30:23.4018669Z",
+      "trackId": "sdk:JavaScript:@azure/arm-recoveryservicesbackup",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6698264",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6698264"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6698262:generation.queued:sdk:Go:sdk/resourcemanager/recoveryservices/armrecoveryservicesbackup",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-08-13T11:18:51.5085927Z",
+      "observedAt": "2026-08-13T11:27:56.1086634Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/recoveryservices/armrecoveryservicesbackup",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6698262",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6698262"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6698263:generation.queued:sdk:Python:azure-mgmt-recoveryservicesbackup",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-08-13T11:18:51.6029599Z",
+      "observedAt": "2026-08-13T11:32:27.459978Z",
+      "trackId": "sdk:Python:azure-mgmt-recoveryservicesbackup",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6698263",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6698263"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6698266:generation.queued:sdk:Java:azure-resourcemanager-recoveryservicesbackup",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-08-13T11:18:51.6248221Z",
+      "observedAt": "2026-08-13T11:42:34.5103957Z",
+      "trackId": "sdk:Java:azure-resourcemanager-recoveryservicesbackup",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6698266",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6698266"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6698262:generation.started:sdk:Go:sdk/resourcemanager/recoveryservices/armrecoveryservicesbackup",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-08-13T11:21:12.2200059Z",
+      "observedAt": "2026-08-13T11:27:56.1086634Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/recoveryservices/armrecoveryservicesbackup",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6698262",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6698262"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6698264:generation.started:sdk:JavaScript:@azure/arm-recoveryservicesbackup",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-08-13T11:21:25.4540868Z",
+      "observedAt": "2026-08-13T11:30:23.4018669Z",
+      "trackId": "sdk:JavaScript:@azure/arm-recoveryservicesbackup",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6698264",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6698264"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6698263:generation.started:sdk:Python:azure-mgmt-recoveryservicesbackup",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-08-13T11:21:31.2763903Z",
+      "observedAt": "2026-08-13T11:32:27.459978Z",
+      "trackId": "sdk:Python:azure-mgmt-recoveryservicesbackup",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6698263",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6698263"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6698265:generation.started:sdk:.NET:Azure.ResourceManager.RecoveryServicesBackup",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-08-13T11:22:19.6669683Z",
+      "observedAt": "2026-08-13T11:31:17.1981454Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.RecoveryServicesBackup",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6698265",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6698265"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6698266:generation.started:sdk:Java:azure-resourcemanager-recoveryservicesbackup",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-08-13T11:22:23.7426631Z",
+      "observedAt": "2026-08-13T11:42:34.5103957Z",
+      "trackId": "sdk:Java:azure-resourcemanager-recoveryservicesbackup",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6698266",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6698266"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27380:commit:cd12d2b9b29b:sdk:Go:sdk/resourcemanager/recoveryservices/armrecoveryservicesbackup",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T11:26:37Z",
+      "observedAt": "2026-08-13T11:26:37Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/recoveryservices/armrecoveryservicesbackup",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27380",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/cd12d2b9b29bb74345900276f731159d31afb14b"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27380:pr.created:sdk:Go:sdk/resourcemanager/recoveryservices/armrecoveryservicesbackup",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T11:26:42Z",
+      "observedAt": "2026-08-13T11:26:42Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/recoveryservices/armrecoveryservicesbackup",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27380",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27380"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:36024:10:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-13T11:26:49.51Z",
+      "observedAt": "2026-08-13T11:26:49.51Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/recoveryservices/armrecoveryservicesbackup",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:36024",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/36024"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:36024:10:Custom.SDKPullRequestForGo",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-08-13T11:26:49.51Z",
+      "observedAt": "2026-08-13T11:26:49.51Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/recoveryservices/armrecoveryservicesbackup",
+      "value": "https://github.com/Azure/azure-sdk-for-go/pull/27380",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:36024",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/36024"
+      },
+      "title": "SDK PR linked",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27380:comment:5279797727:sdk:Go:sdk/resourcemanager/recoveryservices/armrecoveryservicesbackup",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T11:27:14Z",
+      "observedAt": "2026-08-13T11:27:14Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/recoveryservices/armrecoveryservicesbackup",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27380",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27380#issuecomment-5279797727"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 6 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6698262:generation.completed:sdk:Go:sdk/resourcemanager/recoveryservices/armrecoveryservicesbackup",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-08-13T11:27:56.1086634Z",
+      "observedAt": "2026-08-13T11:27:56.1086634Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/recoveryservices/armrecoveryservicesbackup",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6698262",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6698262"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39592:commit:5f65c10596d1:sdk:JavaScript:@azure/arm-recoveryservicesbackup",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T11:29:12Z",
+      "observedAt": "2026-08-13T11:29:12Z",
+      "trackId": "sdk:JavaScript:@azure/arm-recoveryservicesbackup",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39592",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/5f65c10596d1e3d4488327d054275ccf3b6f24bc"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39592:pr.created:sdk:JavaScript:@azure/arm-recoveryservicesbackup",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T11:29:18Z",
+      "observedAt": "2026-08-13T11:29:18Z",
+      "trackId": "sdk:JavaScript:@azure/arm-recoveryservicesbackup",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39592",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39592"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39592:review:4926474497:sdk:JavaScript:@azure/arm-recoveryservicesbackup",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T11:29:24Z",
+      "observedAt": "2026-08-13T11:29:24Z",
+      "trackId": "sdk:JavaScript:@azure/arm-recoveryservicesbackup",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39592",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39592#pullrequestreview-4926474497"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot wasn't able to review this pull request because it exceeds the maximum number of files (300). Try reducing the number of changed files and requesting a review from Copilot again.",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27380:review:4926474556:sdk:Go:sdk/resourcemanager/recoveryservices/armrecoveryservicesbackup",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T11:29:25Z",
+      "observedAt": "2026-08-13T11:29:25Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/recoveryservices/armrecoveryservicesbackup",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27380",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27380#pullrequestreview-4926474556"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview > [!NOTE] > Copilot could not run the full agentic suite for this review because it was automatically requested on a bot-authored pull request. Request a review from Copilot under Reviewers to retry with the full ag",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "ado:36024:11:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-13T11:29:25.67Z",
+      "observedAt": "2026-08-13T11:29:25.67Z",
+      "trackId": "sdk:JavaScript:@azure/arm-recoveryservicesbackup",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:36024",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/36024"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:36024:11:Custom.SDKPullRequestForJavaScript",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-08-13T11:29:25.67Z",
+      "observedAt": "2026-08-13T11:29:25.67Z",
+      "trackId": "sdk:JavaScript:@azure/arm-recoveryservicesbackup",
+      "value": "https://github.com/Azure/azure-sdk-for-js/pull/39592",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:36024",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/36024"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#62041:commit:3c1457b74978:sdk:.NET:Azure.ResourceManager.RecoveryServicesBackup",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T11:29:56Z",
+      "observedAt": "2026-08-13T11:29:56Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.RecoveryServicesBackup",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#62041",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/3c1457b74978fc5dab0811bbcfffde3d44e11d30"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39592:comment:5279822254:sdk:JavaScript:@azure/arm-recoveryservicesbackup",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T11:29:57Z",
+      "observedAt": "2026-08-13T11:29:57Z",
+      "trackId": "sdk:JavaScript:@azure/arm-recoveryservicesbackup",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39592",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39592#issuecomment-5279822254"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 10 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#62041:pr.created:sdk:.NET:Azure.ResourceManager.RecoveryServicesBackup",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T11:30:01Z",
+      "observedAt": "2026-08-13T11:30:01Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.RecoveryServicesBackup",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#62041",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/62041"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:36024:12:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-13T11:30:09.73Z",
+      "observedAt": "2026-08-13T11:30:09.73Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.RecoveryServicesBackup",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:36024",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/36024"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:36024:12:Custom.SDKPullRequestForDotnet",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-08-13T11:30:09.73Z",
+      "observedAt": "2026-08-13T11:30:09.73Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.RecoveryServicesBackup",
+      "value": "https://github.com/Azure/azure-sdk-for-net/pull/62041",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:36024",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/36024"
+      },
+      "title": "SDK PR linked",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6698264:generation.completed:sdk:JavaScript:@azure/arm-recoveryservicesbackup",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-08-13T11:30:23.4018669Z",
+      "observedAt": "2026-08-13T11:30:23.4018669Z",
+      "trackId": "sdk:JavaScript:@azure/arm-recoveryservicesbackup",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6698264",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6698264"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#62041:comment:5279829304:sdk:.NET:Azure.ResourceManager.RecoveryServicesBackup",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T11:30:42Z",
+      "observedAt": "2026-08-13T11:30:42Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.RecoveryServicesBackup",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#62041",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/62041#issuecomment-5279829304"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 11 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48574:commit:f3cdf0415552:sdk:Python:azure-mgmt-recoveryservicesbackup",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T11:31:04Z",
+      "observedAt": "2026-08-13T11:31:04Z",
+      "trackId": "sdk:Python:azure-mgmt-recoveryservicesbackup",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48574",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/f3cdf04155525efc9eabbec2e6c82f8ec230a183"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48574:pr.created:sdk:Python:azure-mgmt-recoveryservicesbackup",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T11:31:10Z",
+      "observedAt": "2026-08-13T11:31:10Z",
+      "trackId": "sdk:Python:azure-mgmt-recoveryservicesbackup",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48574",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48574"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:6698265:generation.completed:sdk:.NET:Azure.ResourceManager.RecoveryServicesBackup",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-08-13T11:31:17.1981454Z",
+      "observedAt": "2026-08-13T11:31:17.1981454Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.RecoveryServicesBackup",
+      "title": "Pipeline completed with issues",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6698265",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6698265"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado:36024:13:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-13T11:31:19.03Z",
+      "observedAt": "2026-08-13T11:31:19.03Z",
+      "trackId": "sdk:Python:azure-mgmt-recoveryservicesbackup",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:36024",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/36024"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:36024:13:Custom.SDKPullRequestForPython",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-08-13T11:31:19.03Z",
+      "observedAt": "2026-08-13T11:31:19.03Z",
+      "trackId": "sdk:Python:azure-mgmt-recoveryservicesbackup",
+      "value": "https://github.com/Azure/azure-sdk-for-python/pull/48574",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:36024",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/36024"
+      },
+      "title": "SDK PR linked",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50125:commit:b9673da48b77:sdk:Java:azure-resourcemanager-recoveryservicesbackup",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T11:31:47Z",
+      "observedAt": "2026-08-13T11:31:47Z",
+      "trackId": "sdk:Java:azure-resourcemanager-recoveryservicesbackup",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50125",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/b9673da48b77c59ff17eb5a7caccdcc683abc9e9"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48574:comment:5279839675:sdk:Python:azure-mgmt-recoveryservicesbackup",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T11:31:49Z",
+      "observedAt": "2026-08-13T11:31:49Z",
+      "trackId": "sdk:Python:azure-mgmt-recoveryservicesbackup",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48574",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48574#issuecomment-5279839675"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 9 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50125:pr.created:sdk:Java:azure-resourcemanager-recoveryservicesbackup",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T11:31:53Z",
+      "observedAt": "2026-08-13T11:31:53Z",
+      "trackId": "sdk:Java:azure-resourcemanager-recoveryservicesbackup",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50125",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/50125"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50125:review:4926495422:sdk:Java:azure-resourcemanager-recoveryservicesbackup",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T11:32:00Z",
+      "observedAt": "2026-08-13T11:32:00Z",
+      "trackId": "sdk:Java:azure-resourcemanager-recoveryservicesbackup",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50125",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/50125#pullrequestreview-4926495422"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot wasn't able to review this pull request because it exceeds the maximum number of files (300). Try reducing the number of changed files and requesting a review from Copilot again.",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "ado:36024:14:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-13T11:32:02.18Z",
+      "observedAt": "2026-08-13T11:32:02.18Z",
+      "trackId": "sdk:Java:azure-resourcemanager-recoveryservicesbackup",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:36024",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/36024"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:36024:14:Custom.SDKPullRequestForJava",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-08-13T11:32:02.18Z",
+      "observedAt": "2026-08-13T11:32:02.18Z",
+      "trackId": "sdk:Java:azure-resourcemanager-recoveryservicesbackup",
+      "value": "https://github.com/Azure/azure-sdk-for-java/pull/50125",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:36024",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/36024"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6698263:generation.completed:sdk:Python:azure-mgmt-recoveryservicesbackup",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-08-13T11:32:27.459978Z",
+      "observedAt": "2026-08-13T11:32:27.459978Z",
+      "trackId": "sdk:Python:azure-mgmt-recoveryservicesbackup",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6698263",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6698263"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50125:comment:5279848329:sdk:Java:azure-resourcemanager-recoveryservicesbackup",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T11:32:44Z",
+      "observedAt": "2026-08-13T11:32:44Z",
+      "trackId": "sdk:Java:azure-resourcemanager-recoveryservicesbackup",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50125",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/50125#issuecomment-5279848329"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 35 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#62041:comment:3774946681:sdk:.NET:Azure.ResourceManager.RecoveryServicesBackup",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T11:33:10Z",
+      "observedAt": "2026-08-13T11:33:10Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.RecoveryServicesBackup",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#62041",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/62041#discussion_r3774946681"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This PR removes multiple public API surfaces (e.g., `WorkloadSqlRecoveryPointExtendedInfo.IncludedDatabases`, `VmWorkloadSqlDatabaseProtectedItem.ParentProtectedItem`/`ProtectionLevel`, `IaasVmRestoreContent.SecuredVmOSDiskEncryptionSetId`,",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#62041:review:4926504808:sdk:.NET:Azure.ResourceManager.RecoveryServicesBackup",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T11:33:11Z",
+      "observedAt": "2026-08-13T11:33:11Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.RecoveryServicesBackup",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#62041",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/62041#pullrequestreview-4926504808"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview > [!NOTE] > Copilot could not run the full agentic suite for this review because it was automatically requested on a bot-authored pull request. Request a review from Copilot under Reviewers to retry with the full ag",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48574:comment:3774957392:sdk:Python:azure-mgmt-recoveryservicesbackup",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T11:34:46Z",
+      "observedAt": "2026-08-13T11:34:46Z",
+      "trackId": "sdk:Python:azure-mgmt-recoveryservicesbackup",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48574",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48574#discussion_r3774957392"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`isodate.parse_duration()` can return `isodate.Duration` (e.g., when months/years are present). In that case the `else attr` branch will pass a non-numeric object to `int()`/`float()`, raising at runtime. Consider explicitly handling `isoda",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48574:comment:3774957441:sdk:Python:azure-mgmt-recoveryservicesbackup",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T11:34:47Z",
+      "observedAt": "2026-08-13T11:34:47Z",
+      "trackId": "sdk:Python:azure-mgmt-recoveryservicesbackup",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48574",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48574#discussion_r3774957441"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The new fast-path boolean parsing is not case-insensitive and falls back to `bool(response_data)`, which will treat unexpected strings like `'FALSE'` or `'0 '` as `True`. To avoid incorrect behavior, normalize (e.g., `strip().lower()`) and ",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48574:comment:3774957470:sdk:Python:azure-mgmt-recoveryservicesbackup",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T11:34:47Z",
+      "observedAt": "2026-08-13T11:34:47Z",
+      "trackId": "sdk:Python:azure-mgmt-recoveryservicesbackup",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48574",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48574#discussion_r3774957470"
+      },
+      "confidence": "authoritative",
+      "excerpt": "In the XML fast-path, `attribute` and `text` fields fall back to returning raw strings when `deser` is not provided. This changes behavior vs the previous implementation (which called `_deserialize(rf._type, ...)`) and can silently break ty",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48574:comment:3774957515:sdk:Python:azure-mgmt-recoveryservicesbackup",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T11:34:47Z",
+      "observedAt": "2026-08-13T11:34:47Z",
+      "trackId": "sdk:Python:azure-mgmt-recoveryservicesbackup",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48574",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48574#discussion_r3774957515"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The docstring says the default `api_version` is `None` and that `None` is a known value, but the implementation defaults to `'2026-07-01'` and the type is `str`. Passing `api_version=None` would likely raise during request building/serializ",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48574:review:4926518189:sdk:Python:azure-mgmt-recoveryservicesbackup",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T11:34:48Z",
+      "observedAt": "2026-08-13T11:34:48Z",
+      "trackId": "sdk:Python:azure-mgmt-recoveryservicesbackup",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48574",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48574#pullrequestreview-4926518189"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview > [!NOTE] > Copilot could not run the full agentic suite for this review because it was automatically requested on a bot-authored pull request. Request a review from Copilot under Reviewers to retry with the full ag",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48574:comment:3774957550:sdk:Python:azure-mgmt-recoveryservicesbackup",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T11:34:48Z",
+      "observedAt": "2026-08-13T11:34:48Z",
+      "trackId": "sdk:Python:azure-mgmt-recoveryservicesbackup",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48574",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48574#discussion_r3774957550"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The docstring says the default `api_version` is `None` and that `None` is a known value, but the implementation defaults to `'2026-07-01'` and the type is `str`. Passing `api_version=None` would likely raise during request building/serializ",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50125:comment:5279889125:sdk:Java:azure-resourcemanager-recoveryservicesbackup",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T11:37:17Z",
+      "observedAt": "2026-08-13T11:37:17Z",
+      "trackId": "sdk:Java:azure-resourcemanager-recoveryservicesbackup",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50125",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/50125#issuecomment-5279889125"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Automated management AutoPR review - Head SHA: `b9673da48b77c59ff17eb5a7caccdcc683abc9e9` - Package: `azure-resourcemanager-recoveryservicesbackup` - Release type: `stable` - API version: `2026-07-01` - CHANGELOG: `1.7.0 (2026-08-13)` - ",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50125:comment:5279928491:sdk:Java:azure-resourcemanager-recoveryservicesbackup",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T11:41:40Z",
+      "observedAt": "2026-08-13T11:41:40Z",
+      "trackId": "sdk:Java:azure-resourcemanager-recoveryservicesbackup",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50125",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/50125#issuecomment-5279928491"
+      },
+      "confidence": "authoritative",
+      "excerpt": "/azp run java - recoveryservicesbackup - mgmt - tests",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50125:comment:5279931348:sdk:Java:azure-resourcemanager-recoveryservicesbackup",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T11:41:58Z",
+      "observedAt": "2026-08-13T11:41:58Z",
+      "trackId": "sdk:Java:azure-resourcemanager-recoveryservicesbackup",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50125",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/50125#issuecomment-5279931348"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> </samp>",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6698266:generation.completed:sdk:Java:azure-resourcemanager-recoveryservicesbackup",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-08-13T11:42:34.5103957Z",
+      "observedAt": "2026-08-13T11:42:34.5103957Z",
+      "trackId": "sdk:Java:azure-resourcemanager-recoveryservicesbackup",
+      "title": "Pipeline completed with issues",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6698266",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6698266"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50125:commit:06ac5906f0c8:sdk:Java:azure-resourcemanager-recoveryservicesbackup",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T11:45:36Z",
+      "observedAt": "2026-08-13T11:45:36Z",
+      "trackId": "sdk:Java:azure-resourcemanager-recoveryservicesbackup",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50125",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/06ac5906f0c839cb9cedc5def31a35d49fb30f96"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50125:review:4926608960:sdk:Java:azure-resourcemanager-recoveryservicesbackup",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T11:46:04Z",
+      "observedAt": "2026-08-13T11:46:04Z",
+      "trackId": "sdk:Java:azure-resourcemanager-recoveryservicesbackup",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50125",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/50125#pullrequestreview-4926608960"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39592:comment:5280011467:sdk:JavaScript:@azure/arm-recoveryservicesbackup",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T11:50:38Z",
+      "observedAt": "2026-08-13T11:50:38Z",
+      "trackId": "sdk:JavaScript:@azure/arm-recoveryservicesbackup",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39592",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39592#issuecomment-5280011467"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Next Steps to Merge ✅ All CI checks have passed — this PR is ready for review! The SDK engineer will review this PR shortly. Once it's approved, you can go ahead and merge it. To make things easier, feel free to [enable auto-merge](https",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50125:comment:5280241547:sdk:Java:azure-resourcemanager-recoveryservicesbackup",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T12:13:39Z",
+      "observedAt": "2026-08-13T12:13:39Z",
+      "trackId": "sdk:Java:azure-resourcemanager-recoveryservicesbackup",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50125",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/50125#issuecomment-5280241547"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Live test passed.",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#62041:comment:5280436243:sdk:.NET:Azure.ResourceManager.RecoveryServicesBackup",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T12:31:39Z",
+      "observedAt": "2026-08-13T12:31:39Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.RecoveryServicesBackup",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#62041",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/62041#issuecomment-5280436243"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## 🔍 CI Failure Analysis for PR #62041 ### Check Status Summary | Check | Status | |---|---| | net - pullrequest | ❌ Failed | | Build Build PRBatch | ❌ Failed | | Build Analyze PRBatch | ❌ Failed | | Build and Package for PR | ❌ Failed | |",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#62041:commit:cc03af081c57:sdk:.NET:Azure.ResourceManager.RecoveryServicesBackup",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T12:56:18Z",
+      "observedAt": "2026-08-13T12:56:18Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.RecoveryServicesBackup",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "vidyadharijami"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#62041",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/cc03af081c577c50fe746b4d41766dbbe27493cc"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#62041:review:4927288627:sdk:.NET:Azure.ResourceManager.RecoveryServicesBackup",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T12:56:47Z",
+      "observedAt": "2026-08-13T12:56:47Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.RecoveryServicesBackup",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "vidyadharijami"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#62041",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/62041#pullrequestreview-4927288627"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#62041:comment:3775516494:sdk:.NET:Azure.ResourceManager.RecoveryServicesBackup",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T12:56:47Z",
+      "observedAt": "2026-08-13T12:56:47Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.RecoveryServicesBackup",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "vidyadharijami"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#62041",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/62041#discussion_r3775516494"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Resolved in cc03af081c5. The shipped 1.3.1 API break was `IaasVmRestoreContent.SecuredVmOSDiskEncryptionSetId`; it is restored as a wire-compatible forwarding property over `SecuredVMDetails`. The other listed symbols were beta-only/stale A",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48574:comment:5280885319:sdk:Python:azure-mgmt-recoveryservicesbackup",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T13:12:12Z",
+      "observedAt": "2026-08-13T13:12:12Z",
+      "trackId": "sdk:Python:azure-mgmt-recoveryservicesbackup",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48574",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48574#issuecomment-5280885319"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<details> <summary><strong>[Pilot] PR Pipeline Failure Analysis</strong></summary> A CI pipeline failed on this pull request. Here is an automated analysis of what went wrong and how to get the build green. ### What failed The **`python - p",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#62041:review:4927675467:sdk:.NET:Azure.ResourceManager.RecoveryServicesBackup",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T13:38:31Z",
+      "observedAt": "2026-08-13T13:38:31Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.RecoveryServicesBackup",
+      "title": "Changes requested",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#62041",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/62041#pullrequestreview-4927675467"
+      },
+      "confidence": "authoritative",
+      "excerpt": "### Management SDK Review Summary - **Scope:** `Azure.ResourceManager.RecoveryServicesBackup` (1.3.1 → 1.4.0 stable, TypeSpec-backed) - **Versioning:** ✅ Pass — version bump 1.3.1 → 1.4.0, `ApiCompatVersion` present and correct, no major ve",
+      "reviewState": "changes_requested",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#62041:comment:3775829111:sdk:.NET:Azure.ResourceManager.RecoveryServicesBackup",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T13:38:31Z",
+      "observedAt": "2026-08-13T13:38:31Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.RecoveryServicesBackup",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#62041",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/62041#discussion_r3775829111"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[ACRONYM001]** The class name `SecuredVMDetails` uses the all-caps acronym `VM`, which violates Azure SDK naming conventions for .NET. Per the guidelines, `Vm` is always treated as a title-case two-letter word (not `VM`), matching existin",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48574:commit:d8c4bd81aea2:sdk:Python:azure-mgmt-recoveryservicesbackup",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T14:05:38Z",
+      "observedAt": "2026-08-13T14:05:38Z",
+      "trackId": "sdk:Python:azure-mgmt-recoveryservicesbackup",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "vidyadharijami"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48574",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/d8c4bd81aea253dfea03273994292f430d0e78d2"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48574:commit:de5b3a3cdf76:sdk:Python:azure-mgmt-recoveryservicesbackup",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T14:06:35Z",
+      "observedAt": "2026-08-13T14:06:35Z",
+      "trackId": "sdk:Python:azure-mgmt-recoveryservicesbackup",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "vidyadharijami"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48574",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/de5b3a3cdf766d216b2676eeefb757f819ac09e9"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48574:review:4927966948:sdk:Python:azure-mgmt-recoveryservicesbackup",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T14:07:14Z",
+      "observedAt": "2026-08-13T14:07:14Z",
+      "trackId": "sdk:Python:azure-mgmt-recoveryservicesbackup",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "vidyadharijami"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48574",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48574#pullrequestreview-4927966948"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48574:comment:3776066036:sdk:Python:azure-mgmt-recoveryservicesbackup",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T14:07:14Z",
+      "observedAt": "2026-08-13T14:07:14Z",
+      "trackId": "sdk:Python:azure-mgmt-recoveryservicesbackup",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "vidyadharijami"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48574",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48574#discussion_r3776066036"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Fixed in d8c4bd81ae: numeric duration serialization now rejects calendar durations containing years or months with a clear SerializationError.",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48574:review:4927967411:sdk:Python:azure-mgmt-recoveryservicesbackup",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T14:07:17Z",
+      "observedAt": "2026-08-13T14:07:17Z",
+      "trackId": "sdk:Python:azure-mgmt-recoveryservicesbackup",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "vidyadharijami"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48574",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48574#pullrequestreview-4927967411"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48574:comment:3776066416:sdk:Python:azure-mgmt-recoveryservicesbackup",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T14:07:17Z",
+      "observedAt": "2026-08-13T14:07:17Z",
+      "trackId": "sdk:Python:azure-mgmt-recoveryservicesbackup",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "vidyadharijami"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48574",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48574#discussion_r3776066416"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Fixed in d8c4bd81ae: boolean strings are normalized with strip/lower, true/false/1/0 are mapped explicitly, and unknown values raise DeserializationError.",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48574:review:4927967808:sdk:Python:azure-mgmt-recoveryservicesbackup",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T14:07:20Z",
+      "observedAt": "2026-08-13T14:07:20Z",
+      "trackId": "sdk:Python:azure-mgmt-recoveryservicesbackup",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "vidyadharijami"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48574",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48574#pullrequestreview-4927967808"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48574:comment:3776066721:sdk:Python:azure-mgmt-recoveryservicesbackup",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T14:07:20Z",
+      "observedAt": "2026-08-13T14:07:20Z",
+      "trackId": "sdk:Python:azure-mgmt-recoveryservicesbackup",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "vidyadharijami"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48574",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48574#discussion_r3776066721"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Fixed in d8c4bd81ae: XML attribute and text fallbacks now call _deserialize(rf_type, value), preserving typed-field behavior.",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48574:review:4927968230:sdk:Python:azure-mgmt-recoveryservicesbackup",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T14:07:23Z",
+      "observedAt": "2026-08-13T14:07:23Z",
+      "trackId": "sdk:Python:azure-mgmt-recoveryservicesbackup",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "vidyadharijami"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48574",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48574#pullrequestreview-4927968230"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48574:comment:3776067064:sdk:Python:azure-mgmt-recoveryservicesbackup",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T14:07:23Z",
+      "observedAt": "2026-08-13T14:07:23Z",
+      "trackId": "sdk:Python:azure-mgmt-recoveryservicesbackup",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "vidyadharijami"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48574",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48574#discussion_r3776067064"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Fixed in de5b3a3cdf: the synchronous configuration documentation now matches the str implementation default of 2026-07-01 and no longer lists None as supported.",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48574:review:4927968723:sdk:Python:azure-mgmt-recoveryservicesbackup",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T14:07:26Z",
+      "observedAt": "2026-08-13T14:07:26Z",
+      "trackId": "sdk:Python:azure-mgmt-recoveryservicesbackup",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "vidyadharijami"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48574",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48574#pullrequestreview-4927968723"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48574:comment:3776067464:sdk:Python:azure-mgmt-recoveryservicesbackup",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T14:07:26Z",
+      "observedAt": "2026-08-13T14:07:26Z",
+      "trackId": "sdk:Python:azure-mgmt-recoveryservicesbackup",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "vidyadharijami"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48574",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48574#discussion_r3776067464"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Fixed in de5b3a3cdf: the asynchronous configuration documentation now matches the str implementation default of 2026-07-01 and no longer lists None as supported.",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48574:review:4928001338:sdk:Python:azure-mgmt-recoveryservicesbackup",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T14:10:38Z",
+      "observedAt": "2026-08-13T14:10:38Z",
+      "trackId": "sdk:Python:azure-mgmt-recoveryservicesbackup",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48574",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48574#pullrequestreview-4928001338"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Copilot reviewed 136 out of 141 changed files in this pull request and generated no new comments. <details> <summary>Suppressed comments (3)</summary> **sdk/recoveryservices/azure-mgmt-recoveryservicesbackup/CHANGEL",
+      "reviewState": "commented",
+      "stack": 0
+    }
+  ],
+  "quality": {
+    "warnings": [
+      "5 historical linked PR(s) closed without merge"
+    ],
+    "unavailablePullRequests": 0,
+    "unavailablePipelineRuns": 0
+  },
+  "boundaryFacts": {
+    "id": "36024",
+    "state": "in-progress",
+    "specPrs": [
+      {
+        "id": "github:Azure/azure-rest-api-specs#44057",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#44057",
+        "createdAt": "2026-06-17T19:49:51Z",
+        "mergedAt": "2026-08-12T07:34:27Z",
+        "closedAt": "2026-08-12T07:34:27Z",
+        "available": true
+      }
+    ],
+    "artifacts": [
+      {
+        "language": ".NET",
+        "package": "Azure.ResourceManager.RecoveryServicesBackup",
+        "trackId": "sdk:.NET:Azure.ResourceManager.RecoveryServicesBackup",
+        "prId": "github:Azure/azure-sdk-for-net#62041",
+        "prCreatedAt": "2026-08-13T11:30:01Z",
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-net#62041",
+            "createdAt": "2026-08-13T11:30:01Z",
+            "mergedAt": null,
+            "closedAt": null,
+            "state": "open"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6698265",
+        "generationStartAt": "2026-08-13T11:22:19.6669683Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "JavaScript",
+        "package": "@azure/arm-recoveryservicesbackup",
+        "trackId": "sdk:JavaScript:@azure/arm-recoveryservicesbackup",
+        "prId": "github:Azure/azure-sdk-for-js#39592",
+        "prCreatedAt": "2026-08-13T11:29:18Z",
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-js#39592",
+            "createdAt": "2026-08-13T11:29:18Z",
+            "mergedAt": null,
+            "closedAt": null,
+            "state": "open"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6698264",
+        "generationStartAt": "2026-08-13T11:21:25.4540868Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Python",
+        "package": "azure-mgmt-recoveryservicesbackup",
+        "trackId": "sdk:Python:azure-mgmt-recoveryservicesbackup",
+        "prId": "github:Azure/azure-sdk-for-python#48574",
+        "prCreatedAt": "2026-08-13T11:31:10Z",
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-python#48574",
+            "createdAt": "2026-08-13T11:31:10Z",
+            "mergedAt": null,
+            "closedAt": null,
+            "state": "open"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6698263",
+        "generationStartAt": "2026-08-13T11:21:31.2763903Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Java",
+        "package": "azure-resourcemanager-recoveryservicesbackup",
+        "trackId": "sdk:Java:azure-resourcemanager-recoveryservicesbackup",
+        "prId": "github:Azure/azure-sdk-for-java#50125",
+        "prCreatedAt": "2026-08-13T11:31:53Z",
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-java#50125",
+            "createdAt": "2026-08-13T11:31:53Z",
+            "mergedAt": null,
+            "closedAt": null,
+            "state": "open"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6698266",
+        "generationStartAt": "2026-08-13T11:22:23.7426631Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Go",
+        "package": "sdk/resourcemanager/recoveryservices/armrecoveryservicesbackup",
+        "trackId": "sdk:Go:sdk/resourcemanager/recoveryservices/armrecoveryservicesbackup",
+        "prId": "github:Azure/azure-sdk-for-go#27380",
+        "prCreatedAt": "2026-08-13T11:26:42Z",
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-go#27380",
+            "createdAt": "2026-08-13T11:26:42Z",
+            "mergedAt": null,
+            "closedAt": null,
+            "state": "open"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6698262",
+        "generationStartAt": "2026-08-13T11:21:12.2200059Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      }
+    ],
+    "cohortPlan": {
+      "id": "36024",
+      "releasePlanId": "36024",
+      "title": "GA release plan for SQL Instance Snapshot Backup",
+      "service": "SQL Instance Snapshot Backup",
+      "state": "in-progress"
+    },
+    "quality": {
+      "warnings": [
+        "5 historical linked PR(s) closed without merge"
+      ],
+      "unavailablePullRequests": 0,
+      "unavailablePipelineRuns": 0
+    }
+  },
+  "summary": {
+    "durationHours": 13.4,
+    "pullRequestCount": 6,
+    "humanReviewCount": 14,
+    "humanCommentCount": 16
+  }
+}

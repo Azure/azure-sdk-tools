@@ -1,0 +1,4875 @@
+{
+  "schemaVersion": 2,
+  "id": "32653",
+  "correlation": {
+    "policyVersion": 1,
+    "preflight": "passed"
+  },
+  "releasePlanId": "2082",
+  "title": "Release Plan - 2082 - GA - disconnected operations",
+  "service": "disconnected operations",
+  "product": "Release",
+  "path": "specification/edge/Microsoft.Edge.DisconnectedOperations.Management",
+  "state": "finished",
+  "plane": "management",
+  "releaseType": "APEX GA",
+  "intendedMonth": "March 2026",
+  "createdAt": "2026-02-10T06:24:53.317Z",
+  "completedAt": "2026-03-11T16:28:13.623Z",
+  "sourceUrl": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653",
+  "range": {
+    "start": "2026-02-04T04:44:39.000Z",
+    "end": "2026-03-11T16:28:13.623Z"
+  },
+  "intendedArtifacts": [
+    {
+      "prId": "github:Azure/azure-sdk-for-net#56468",
+      "language": ".NET",
+      "package": "Azure.ResourceManager.DisconnectedOperations",
+      "version": null,
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5930745",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-js#37392",
+      "language": "JavaScript",
+      "package": "@azure/arm-disconnectedoperations",
+      "version": null,
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5930962",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-python#45363",
+      "language": "Python",
+      "package": "azure-mgmt-disconnectedoperations",
+      "version": null,
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5930746",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-java#48103",
+      "language": "Java",
+      "package": "azure-resourcemanager-disconnectedoperations",
+      "version": null,
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5930870",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-go#26053",
+      "language": "Go",
+      "package": "sdk/resourcemanager/disconnectedoperations/armdisconnectedoperations",
+      "version": null,
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5930869",
+      "releasePipelineUrl": null
+    }
+  ],
+  "links": [
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#40778",
+      "role": "spec-pr-history",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/40778",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#40142",
+      "role": "spec-pr",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/40142",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-net#56468",
+      "role": "sdk-pr",
+      "language": ".NET",
+      "url": "https://github.com/Azure/azure-sdk-for-net/pull/56468",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-js#37392",
+      "role": "sdk-pr",
+      "language": "JavaScript",
+      "url": "https://github.com/Azure/azure-sdk-for-js/pull/37392",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-python#45363",
+      "role": "sdk-pr",
+      "language": "Python",
+      "url": "https://github.com/Azure/azure-sdk-for-python/pull/45363",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-java#48103",
+      "role": "sdk-pr",
+      "language": "Java",
+      "url": "https://github.com/Azure/azure-sdk-for-java/pull/48103",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-go#26053",
+      "role": "sdk-pr",
+      "language": "Go",
+      "url": "https://github.com/Azure/azure-sdk-for-go/pull/26053",
+      "releasePlanIds": []
+    }
+  ],
+  "tracks": [
+    {
+      "id": "plan",
+      "kind": "plan",
+      "label": "Release Plan",
+      "detail": "APEX GA"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#40778",
+      "kind": "spec",
+      "label": "Spec PR 1",
+      "detail": "azure-rest-api-specs #40778",
+      "artifactId": "github:Azure/azure-rest-api-specs#40778",
+      "state": "merged"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#40142",
+      "kind": "spec",
+      "label": "Spec PR 2",
+      "detail": "azure-rest-api-specs #40142",
+      "artifactId": "github:Azure/azure-rest-api-specs#40142",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "kind": "sdk",
+      "label": ".NET",
+      "detail": "Azure.ResourceManager.DisconnectedOperations",
+      "artifactId": "github:Azure/azure-sdk-for-net#56468",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "kind": "sdk",
+      "label": "JavaScript",
+      "detail": "@azure/arm-disconnectedoperations",
+      "artifactId": "github:Azure/azure-sdk-for-js#37392",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Python:azure-mgmt-disconnectedoperations",
+      "kind": "sdk",
+      "label": "Python",
+      "detail": "azure-mgmt-disconnectedoperations",
+      "artifactId": "github:Azure/azure-sdk-for-python#45363",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Java:azure-resourcemanager-disconnectedoperations",
+      "kind": "sdk",
+      "label": "Java",
+      "detail": "azure-resourcemanager-disconnectedoperations",
+      "artifactId": "github:Azure/azure-sdk-for-java#48103",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Go:sdk/resourcemanager/disconnectedoperations/armdisconnectedoperations",
+      "kind": "sdk",
+      "label": "Go",
+      "detail": "sdk/resourcemanager/disconnectedoperations/armdisconnectedoperations",
+      "artifactId": "github:Azure/azure-sdk-for-go#26053",
+      "state": "merged"
+    }
+  ],
+  "events": [
+    {
+      "id": "github:Azure/azure-rest-api-specs#40142:pr.created:spec:github:Azure/azure-rest-api-specs#40142",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-04T04:44:39Z",
+      "observedAt": "2026-02-04T04:44:39Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40142",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "christinekc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40142",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40142"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40142:comment:3845230600:spec:github:Azure/azure-rest-api-specs#40142",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-04T04:45:03Z",
+      "observedAt": "2026-02-04T04:45:03Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40142",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40142",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40142#issuecomment-3845230600"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>Next steps that must be taken to merge this PR: <br/><ul><li>❌ This PR is in purview of the ARM review (label: <code>ARMReview</code>). This PR must get <code>ARMSignedOff</code> label from an ARM reviewer.<br/>❗",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40142:comment:3845244452:spec:github:Azure/azure-rest-api-specs#40142",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-04T04:47:19Z",
+      "observedAt": "2026-02-04T04:47:19Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40142",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40142",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40142#issuecomment-3845244452"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews | Language | API Review for Package | |----------|---------| | Swagger | [Microsoft.Edge-disconnectedOperations](https://apiview.dev/A",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40142:commit:522be37f01fc:spec:github:Azure/azure-rest-api-specs#40142",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-04T04:51:29Z",
+      "observedAt": "2026-02-04T04:51:29Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40142",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40142",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/522be37f01fc55d3186d2749dd3f032d33789102"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40142:commit:14d0ee522487:spec:github:Azure/azure-rest-api-specs#40142",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-04T04:58:04Z",
+      "observedAt": "2026-02-04T04:58:04Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40142",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40142",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/14d0ee5224873c80f4ce8730b2f42b58583acb61"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40142:commit:40dc25839e1a:spec:github:Azure/azure-rest-api-specs#40142",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-04T05:49:36Z",
+      "observedAt": "2026-02-04T05:49:36Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40142",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40142",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/40dc25839e1a40d35bedc4b672ac491313460aef"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:32653:created",
+      "type": "plan.created",
+      "phase": "plan",
+      "occurredAt": "2026-02-10T06:24:53.317Z",
+      "observedAt": "2026-02-10T06:24:53.317Z",
+      "trackId": "plan",
+      "title": "Release Plan created",
+      "confidence": "authoritative",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "stack": 0
+    },
+    {
+      "id": "ado:32653:1:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-02-10T06:24:53.317Z",
+      "observedAt": "2026-02-10T06:24:53.317Z",
+      "trackId": "plan",
+      "value": "New",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Plan state changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:32653:1:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-10T06:24:53.317Z",
+      "observedAt": "2026-02-10T06:24:53.317Z",
+      "trackId": "plan",
+      "value": "Not Available",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Spec approval changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:32653:1:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-10T06:24:53.317Z",
+      "observedAt": "2026-02-10T06:24:53.317Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32653:1:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-10T06:24:53.317Z",
+      "observedAt": "2026-02-10T06:24:53.317Z",
+      "trackId": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32653:1:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-10T06:24:53.317Z",
+      "observedAt": "2026-02-10T06:24:53.317Z",
+      "trackId": "sdk:Python:azure-mgmt-disconnectedoperations",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32653:1:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-10T06:24:53.317Z",
+      "observedAt": "2026-02-10T06:24:53.317Z",
+      "trackId": "sdk:Java:azure-resourcemanager-disconnectedoperations",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32653:1:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-10T06:24:53.317Z",
+      "observedAt": "2026-02-10T06:24:53.317Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/disconnectedoperations/armdisconnectedoperations",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32653:9:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-02-11T06:09:08.057Z",
+      "observedAt": "2026-02-11T06:09:08.057Z",
+      "trackId": "plan",
+      "value": "In Progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Plan state changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32654:2:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-11T06:10:30.607Z",
+      "observedAt": "2026-02-11T06:10:30.607Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40142",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/40142",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32654",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32654"
+      },
+      "title": "Spec PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado:32653:10:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-11T06:10:36.707Z",
+      "observedAt": "2026-02-11T06:10:36.707Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32653:10:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-11T06:10:36.707Z",
+      "observedAt": "2026-02-11T06:10:36.707Z",
+      "trackId": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32653:10:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-11T06:10:36.707Z",
+      "observedAt": "2026-02-11T06:10:36.707Z",
+      "trackId": "sdk:Python:azure-mgmt-disconnectedoperations",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32653:10:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-11T06:10:36.707Z",
+      "observedAt": "2026-02-11T06:10:36.707Z",
+      "trackId": "sdk:Java:azure-resourcemanager-disconnectedoperations",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32653:10:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-11T06:10:36.707Z",
+      "observedAt": "2026-02-11T06:10:36.707Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/disconnectedoperations/armdisconnectedoperations",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40142:review:3849356661:spec:github:Azure/azure-rest-api-specs#40142",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-24T17:10:46Z",
+      "observedAt": "2026-02-24T17:10:46Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40142",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "aneesh-ponneth"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40142",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40142#pullrequestreview-3849356661"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40142:review:3849362010:spec:github:Azure/azure-rest-api-specs#40142",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-24T17:11:41Z",
+      "observedAt": "2026-02-24T17:11:41Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40142",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "aneesh-ponneth"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40142",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40142#pullrequestreview-3849362010"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40142:pr.merged:spec:github:Azure/azure-rest-api-specs#40142",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-24T17:54:15Z",
+      "observedAt": "2026-02-24T17:54:15Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40142",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40142",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40142"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:32653:26:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-25T03:53:46.64Z",
+      "observedAt": "2026-02-25T03:53:46.64Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32653:27:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-25T03:53:52.853Z",
+      "observedAt": "2026-02-25T03:53:52.853Z",
+      "trackId": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32653:28:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-25T03:53:59.69Z",
+      "observedAt": "2026-02-25T03:53:59.69Z",
+      "trackId": "sdk:Python:azure-mgmt-disconnectedoperations",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32653:29:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-25T03:54:24.2Z",
+      "observedAt": "2026-02-25T03:54:24.2Z",
+      "trackId": "sdk:Java:azure-resourcemanager-disconnectedoperations",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32653:30:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-25T03:54:30.223Z",
+      "observedAt": "2026-02-25T03:54:30.223Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/disconnectedoperations/armdisconnectedoperations",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26053:commit:1787d583e49a:sdk:Go:sdk/resourcemanager/disconnectedoperations/armdisconnectedoperations",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-25T04:00:41Z",
+      "observedAt": "2026-02-25T04:00:41Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/disconnectedoperations/armdisconnectedoperations",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26053",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/1787d583e49a5680d785404dd3b3131482ae45e2"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26053:pr.created:sdk:Go:sdk/resourcemanager/disconnectedoperations/armdisconnectedoperations",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-25T04:00:44Z",
+      "observedAt": "2026-02-25T04:00:44Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/disconnectedoperations/armdisconnectedoperations",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26053",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26053"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:32653:31:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-25T04:00:51.65Z",
+      "observedAt": "2026-02-25T04:00:51.65Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/disconnectedoperations/armdisconnectedoperations",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:32653:31:Custom.SDKPullRequestForGo",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-02-25T04:00:51.65Z",
+      "observedAt": "2026-02-25T04:00:51.65Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/disconnectedoperations/armdisconnectedoperations",
+      "value": "https://github.com/Azure/azure-sdk-for-go/pull/26053",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "SDK PR linked",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56468:commit:f5f39966e7dd:sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-25T04:01:01Z",
+      "observedAt": "2026-02-25T04:01:01Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56468",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/f5f39966e7dd9b7ef8ef6147c9657b1575c94f97"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56468:pr.created:sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-25T04:01:05Z",
+      "observedAt": "2026-02-25T04:01:05Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56468",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56468"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:32653:32:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-25T04:01:11.883Z",
+      "observedAt": "2026-02-25T04:01:11.883Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:32653:32:Custom.SDKPullRequestForDotnet",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-02-25T04:01:11.883Z",
+      "observedAt": "2026-02-25T04:01:11.883Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "value": "https://github.com/Azure/azure-sdk-for-net/pull/56468",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "SDK PR linked",
+      "stack": 4
+    },
+    {
+      "id": "ado:32653:33:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-25T04:01:24.267Z",
+      "observedAt": "2026-02-25T04:01:24.267Z",
+      "trackId": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45363:commit:85747d2dffe6:sdk:Python:azure-mgmt-disconnectedoperations",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-25T04:01:59Z",
+      "observedAt": "2026-02-25T04:01:59Z",
+      "trackId": "sdk:Python:azure-mgmt-disconnectedoperations",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45363",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/85747d2dffe6dfa62f61b8b7f2f221f8b8fe84d4"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45363:pr.created:sdk:Python:azure-mgmt-disconnectedoperations",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-25T04:02:02Z",
+      "observedAt": "2026-02-25T04:02:02Z",
+      "trackId": "sdk:Python:azure-mgmt-disconnectedoperations",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45363",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45363"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:32653:35:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-25T04:02:09.15Z",
+      "observedAt": "2026-02-25T04:02:09.15Z",
+      "trackId": "sdk:Python:azure-mgmt-disconnectedoperations",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:32653:35:Custom.SDKPullRequestForPython",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-02-25T04:02:09.15Z",
+      "observedAt": "2026-02-25T04:02:09.15Z",
+      "trackId": "sdk:Python:azure-mgmt-disconnectedoperations",
+      "value": "https://github.com/Azure/azure-sdk-for-python/pull/45363",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "SDK PR linked",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48103:commit:6d01b8849af5:sdk:Java:azure-resourcemanager-disconnectedoperations",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-25T04:03:18Z",
+      "observedAt": "2026-02-25T04:03:18Z",
+      "trackId": "sdk:Java:azure-resourcemanager-disconnectedoperations",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48103",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/6d01b8849af50dafb5461e6de1982a6e753a7d1e"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48103:pr.created:sdk:Java:azure-resourcemanager-disconnectedoperations",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-25T04:03:21Z",
+      "observedAt": "2026-02-25T04:03:21Z",
+      "trackId": "sdk:Java:azure-resourcemanager-disconnectedoperations",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48103",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48103"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:32653:36:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-25T04:03:27.98Z",
+      "observedAt": "2026-02-25T04:03:27.98Z",
+      "trackId": "sdk:Java:azure-resourcemanager-disconnectedoperations",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:32653:36:Custom.SDKPullRequestForJava",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-02-25T04:03:27.98Z",
+      "observedAt": "2026-02-25T04:03:27.98Z",
+      "trackId": "sdk:Java:azure-resourcemanager-disconnectedoperations",
+      "value": "https://github.com/Azure/azure-sdk-for-java/pull/48103",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "SDK PR linked",
+      "stack": 4
+    },
+    {
+      "id": "ado:32653:37:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-25T04:15:57.88Z",
+      "observedAt": "2026-02-25T04:15:57.88Z",
+      "trackId": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56468:review:3851746883:sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-25T04:18:19Z",
+      "observedAt": "2026-02-25T04:18:19Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56468",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56468#pullrequestreview-3851746883"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This pull request is an auto-generated SDK update for Azure.ResourceManager.DisconnectedOperations based on TypeSpec specification changes. The PR transitions the API from preview (2025-06-01-preview) to stable (202",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56468:comment:2850734002:sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-25T04:18:19Z",
+      "observedAt": "2026-02-25T04:18:19Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56468",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56468#discussion_r2850734002"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Using Guid.Parse on subscription IDs is inconsistent with Azure SDK conventions. According to the stored memory about API semantics, subscription IDs in Azure Resource Manager SDKs should be string type, not Guid. The subscription ID should",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26053:review:3851751090:sdk:Go:sdk/resourcemanager/disconnectedoperations/armdisconnectedoperations",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-25T04:20:18Z",
+      "observedAt": "2026-02-25T04:20:18Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/disconnectedoperations/armdisconnectedoperations",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26053",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26053#pullrequestreview-3851751090"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This PR updates the `armdisconnectedoperations` management-plane Go module to the `2026-03-15` API version generated from TypeSpec, promoting the module to a stable `v1.0.0` release and adding new HardwareSettings s",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26053:comment:2850738368:sdk:Go:sdk/resourcemanager/disconnectedoperations/armdisconnectedoperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-25T04:20:18Z",
+      "observedAt": "2026-02-25T04:20:18Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/disconnectedoperations/armdisconnectedoperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26053",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26053#discussion_r2850738368"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The example definition filename has a duplicated extension (\".json.json\"). This looks like a generation typo and should be corrected to end with a single \".json\". ```suggestion // Generated from example definition: 2026-03-15/Images_ListByD",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26053:comment:2850738380:sdk:Go:sdk/resourcemanager/disconnectedoperations/armdisconnectedoperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-25T04:20:18Z",
+      "observedAt": "2026-02-25T04:20:18Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/disconnectedoperations/armdisconnectedoperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26053",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26053#discussion_r2850738380"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Exported identifiers should keep acronyms uppercased. Consider renaming `DiskSpaceInGb` to `DiskSpaceInGB` (and update the corresponding serde + example references) to align with Azure Go SDK naming guidelines.",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26053:comment:2850738388:sdk:Go:sdk/resourcemanager/disconnectedoperations/armdisconnectedoperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-25T04:20:19Z",
+      "observedAt": "2026-02-25T04:20:19Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/disconnectedoperations/armdisconnectedoperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26053",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26053#discussion_r2850738388"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Exported identifiers should keep acronyms uppercased. Consider renaming `MemoryInGb` to `MemoryInGB` (and update the corresponding serde + example references) to align with Azure Go SDK naming guidelines.",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48103:review:3851751615:sdk:Java:azure-resourcemanager-disconnectedoperations",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-25T04:20:33Z",
+      "observedAt": "2026-02-25T04:20:33Z",
+      "trackId": "sdk:Java:azure-resourcemanager-disconnectedoperations",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48103",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48103#pullrequestreview-3851751615"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This is an auto-generated SDK update for the Azure Resource Manager Disconnected Operations library, transitioning from beta (1.0.0-beta.1) to GA (1.0.0) with API version 2026-03-15. **Changes:** - Version bump from",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48103:comment:2850738981:sdk:Java:azure-resourcemanager-disconnectedoperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-25T04:20:33Z",
+      "observedAt": "2026-02-25T04:20:33Z",
+      "trackId": "sdk:Java:azure-resourcemanager-disconnectedoperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48103",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48103#discussion_r2850738981"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The x-ms-original-file comment has an extra \".json\" extension at the end. It should be \"2026-03-15/Images_ListByDisconnectedOperation_MaximumSet_Gen.json\" not \"2026-03-15/Images_ListByDisconnectedOperation_MaximumSet_Gen.json.json\" ```sugge",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45363:comment:2850743884:sdk:Python:azure-mgmt-disconnectedoperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-25T04:22:43Z",
+      "observedAt": "2026-02-25T04:22:43Z",
+      "trackId": "sdk:Python:azure-mgmt-disconnectedoperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45363",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45363#discussion_r2850743884"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The x-ms-original-file reference ends with \".json.json\" (double extension), which looks like a typo and makes it harder to trace the source swagger/sample. It should likely end with a single \".json\".",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45363:review:3851756106:sdk:Python:azure-mgmt-disconnectedoperations",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-25T04:22:44Z",
+      "observedAt": "2026-02-25T04:22:44Z",
+      "trackId": "sdk:Python:azure-mgmt-disconnectedoperations",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45363",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45363#pullrequestreview-3851756106"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Auto-generated update for `azure-mgmt-disconnectedoperations` from TypeSpec (API version `2026-03-15`) moving the package to stable `1.0.0`, adding new service surface (hardware settings) plus new models/enums and r",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45363:comment:2850743894:sdk:Python:azure-mgmt-disconnectedoperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-25T04:22:44Z",
+      "observedAt": "2026-02-25T04:22:44Z",
+      "trackId": "sdk:Python:azure-mgmt-disconnectedoperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45363",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45363#discussion_r2850743894"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This changelog entry says \"Added model `HardwareSettingsOperations`\", but `HardwareSettingsOperations` is an operation-group class (and the operation group addition is already captured in the first bullet). Consider removing this bullet or ",
+      "stack": 1
+    },
+    {
+      "id": "ado:32653:38:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-25T04:23:15.387Z",
+      "observedAt": "2026-02-25T04:23:15.387Z",
+      "trackId": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:32653:39:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-25T04:28:02.213Z",
+      "observedAt": "2026-02-25T04:28:02.213Z",
+      "trackId": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:32653:40:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-25T04:33:41.8Z",
+      "observedAt": "2026-02-25T04:33:41.8Z",
+      "trackId": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48103:review:3851797235:sdk:Java:azure-resourcemanager-disconnectedoperations",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-25T04:38:51Z",
+      "observedAt": "2026-02-25T04:38:51Z",
+      "trackId": "sdk:Java:azure-resourcemanager-disconnectedoperations",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48103",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48103#pullrequestreview-3851797235"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "ado:32653:41:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-25T04:41:32.93Z",
+      "observedAt": "2026-02-25T04:41:32.93Z",
+      "trackId": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32653:42:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-25T04:47:24.793Z",
+      "observedAt": "2026-02-25T04:47:24.793Z",
+      "trackId": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48103:commit:b56e76fdf552:sdk:Java:azure-resourcemanager-disconnectedoperations",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-26T02:28:44Z",
+      "observedAt": "2026-02-26T02:28:44Z",
+      "trackId": "sdk:Java:azure-resourcemanager-disconnectedoperations",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48103",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/b56e76fdf552d6b5d847b6af154cdb29480bce5c"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48103:commit:bc9494a54646:sdk:Java:azure-resourcemanager-disconnectedoperations",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-26T02:40:12Z",
+      "observedAt": "2026-02-26T02:40:12Z",
+      "trackId": "sdk:Java:azure-resourcemanager-disconnectedoperations",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48103",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/bc9494a54646c87420b253485405e448524c91a9"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48103:review:3858097614:sdk:Java:azure-resourcemanager-disconnectedoperations",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-26T02:43:08Z",
+      "observedAt": "2026-02-26T02:43:08Z",
+      "trackId": "sdk:Java:azure-resourcemanager-disconnectedoperations",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48103",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48103#pullrequestreview-3858097614"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26053:review:3858219229:sdk:Go:sdk/resourcemanager/disconnectedoperations/armdisconnectedoperations",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-26T03:38:20Z",
+      "observedAt": "2026-02-26T03:38:20Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/disconnectedoperations/armdisconnectedoperations",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "JiaqiZhang-Dev"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26053",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26053#pullrequestreview-3858219229"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40778:commit:a35dc0e9b0f3:spec:github:Azure/azure-rest-api-specs#40778",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-26T05:15:07Z",
+      "observedAt": "2026-02-26T05:15:07Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40778",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "aviranjan24"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40778",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/a35dc0e9b0f30c58ad9870b6d98494cf37cf9149"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40778:pr.created:spec:github:Azure/azure-rest-api-specs#40778",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-26T05:19:14Z",
+      "observedAt": "2026-02-26T05:19:14Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40778",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "aviranjan24"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40778",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40778"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40778:comment:3964181672:spec:github:Azure/azure-rest-api-specs#40778",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-26T05:19:52Z",
+      "observedAt": "2026-02-26T05:19:52Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40778",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40778",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40778#issuecomment-3964181672"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>✅ All automated merging requirements have been met! To get your PR merged, see <a href=\"https://aka.ms/azsdk/specreview/merge\">aka.ms/azsdk/specreview/merge</a>.<br /><br />Comment generated by <a href=\"https://g",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40778:commit:b9f96411b73f:spec:github:Azure/azure-rest-api-specs#40778",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-26T06:28:47Z",
+      "observedAt": "2026-02-26T06:28:47Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40778",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "aviranjan24"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40778",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/b9f96411b73f6b501b11b20e7b2a4106a4629776"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40778:review:3858810325:spec:github:Azure/azure-rest-api-specs#40778",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-26T06:47:20Z",
+      "observedAt": "2026-02-26T06:47:20Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40778",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "aneesh-ponneth"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40778",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40778#pullrequestreview-3858810325"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40778:pr.merged:spec:github:Azure/azure-rest-api-specs#40778",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-26T06:48:22Z",
+      "observedAt": "2026-02-26T06:48:22Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40778",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40778",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40778"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:32653:51:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-26T06:48:53.187Z",
+      "observedAt": "2026-02-26T06:48:53.187Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32653:51:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-26T06:48:53.187Z",
+      "observedAt": "2026-02-26T06:48:53.187Z",
+      "trackId": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32653:51:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-26T06:48:53.187Z",
+      "observedAt": "2026-02-26T06:48:53.187Z",
+      "trackId": "sdk:Python:azure-mgmt-disconnectedoperations",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32653:51:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-26T06:48:53.187Z",
+      "observedAt": "2026-02-26T06:48:53.187Z",
+      "trackId": "sdk:Java:azure-resourcemanager-disconnectedoperations",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:32653:51:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-26T06:48:53.187Z",
+      "observedAt": "2026-02-26T06:48:53.187Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/disconnectedoperations/armdisconnectedoperations",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:32653:52:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-26T06:51:31.383Z",
+      "observedAt": "2026-02-26T06:51:31.383Z",
+      "trackId": "sdk:Java:azure-resourcemanager-disconnectedoperations",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:32653:53:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-26T06:51:38.12Z",
+      "observedAt": "2026-02-26T06:51:38.12Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/disconnectedoperations/armdisconnectedoperations",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:32653:54:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-26T06:51:44.967Z",
+      "observedAt": "2026-02-26T06:51:44.967Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:32653:55:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-26T06:51:53.687Z",
+      "observedAt": "2026-02-26T06:51:53.687Z",
+      "trackId": "sdk:Python:azure-mgmt-disconnectedoperations",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:32653:56:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-26T06:51:59.213Z",
+      "observedAt": "2026-02-26T06:51:59.213Z",
+      "trackId": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:32653:62:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-26T06:59:59.52Z",
+      "observedAt": "2026-02-26T06:59:59.52Z",
+      "trackId": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:32653:63:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-26T07:00:27.497Z",
+      "observedAt": "2026-02-26T07:00:27.497Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/disconnectedoperations/armdisconnectedoperations",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56468:commit:41fe40e4ce90:sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-26T07:01:02Z",
+      "observedAt": "2026-02-26T07:01:02Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56468",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/41fe40e4ce901a9fe8252406669c699f64f55b36"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:32653:64:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-26T07:01:09.937Z",
+      "observedAt": "2026-02-26T07:01:09.937Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45363:commit:51adbc607ce5:sdk:Python:azure-mgmt-disconnectedoperations",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-26T07:02:16Z",
+      "observedAt": "2026-02-26T07:02:16Z",
+      "trackId": "sdk:Python:azure-mgmt-disconnectedoperations",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45363",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/51adbc607ce5d54d8a82c595c75852969a3e69be"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:32653:65:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-26T07:02:24.2Z",
+      "observedAt": "2026-02-26T07:02:24.2Z",
+      "trackId": "sdk:Python:azure-mgmt-disconnectedoperations",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48103:commit:ff90540eeddc:sdk:Java:azure-resourcemanager-disconnectedoperations",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-26T07:03:46Z",
+      "observedAt": "2026-02-26T07:03:46Z",
+      "trackId": "sdk:Java:azure-resourcemanager-disconnectedoperations",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48103",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/ff90540eeddcf91459f8f948b236d54b15dd1015"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:32653:71:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-26T07:03:53.98Z",
+      "observedAt": "2026-02-26T07:03:53.98Z",
+      "trackId": "sdk:Java:azure-resourcemanager-disconnectedoperations",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48103:review:3858895724:sdk:Java:azure-resourcemanager-disconnectedoperations",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-26T07:11:43Z",
+      "observedAt": "2026-02-26T07:11:43Z",
+      "trackId": "sdk:Java:azure-resourcemanager-disconnectedoperations",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48103",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48103#pullrequestreview-3858895724"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48103:commit:d0133fa5a09d:sdk:Java:azure-resourcemanager-disconnectedoperations",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-26T07:31:24Z",
+      "observedAt": "2026-02-26T07:31:24Z",
+      "trackId": "sdk:Java:azure-resourcemanager-disconnectedoperations",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48103",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/d0133fa5a09df58594de87550d9aba1aa071c073"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:32653:75:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-26T07:33:53Z",
+      "observedAt": "2026-02-26T07:33:53Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:32653:75:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-26T07:33:53Z",
+      "observedAt": "2026-02-26T07:33:53Z",
+      "trackId": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:32653:75:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-26T07:33:53Z",
+      "observedAt": "2026-02-26T07:33:53Z",
+      "trackId": "sdk:Python:azure-mgmt-disconnectedoperations",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:32653:75:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-26T07:33:53Z",
+      "observedAt": "2026-02-26T07:33:53Z",
+      "trackId": "sdk:Java:azure-resourcemanager-disconnectedoperations",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:32653:75:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-26T07:33:53Z",
+      "observedAt": "2026-02-26T07:33:53Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/disconnectedoperations/armdisconnectedoperations",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:32653:76:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-26T07:34:16.247Z",
+      "observedAt": "2026-02-26T07:34:16.247Z",
+      "trackId": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:32653:78:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-26T07:36:45.2Z",
+      "observedAt": "2026-02-26T07:36:45.2Z",
+      "trackId": "sdk:Java:azure-resourcemanager-disconnectedoperations",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:32653:79:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-26T07:36:53.3Z",
+      "observedAt": "2026-02-26T07:36:53.3Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/disconnectedoperations/armdisconnectedoperations",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:5930745:generation.queued:sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-02-26T07:36:57.2949278Z",
+      "observedAt": "2026-02-26T07:45:10.7042236Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5930745",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5930745"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:32653:80:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-26T07:36:59.143Z",
+      "observedAt": "2026-02-26T07:36:59.143Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:5930746:generation.queued:sdk:Python:azure-mgmt-disconnectedoperations",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-02-26T07:37:03.0958862Z",
+      "observedAt": "2026-02-26T07:46:25.7747618Z",
+      "trackId": "sdk:Python:azure-mgmt-disconnectedoperations",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5930746",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5930746"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:32653:81:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-26T07:37:06.103Z",
+      "observedAt": "2026-02-26T07:37:06.103Z",
+      "trackId": "sdk:Python:azure-mgmt-disconnectedoperations",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:5930746:generation.started:sdk:Python:azure-mgmt-disconnectedoperations",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-02-26T07:38:33.8870002Z",
+      "observedAt": "2026-02-26T07:46:25.7747618Z",
+      "trackId": "sdk:Python:azure-mgmt-disconnectedoperations",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5930746",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5930746"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:5930745:generation.started:sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-02-26T07:38:33.9863739Z",
+      "observedAt": "2026-02-26T07:45:10.7042236Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5930745",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5930745"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:32653:83:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-26T07:43:02.457Z",
+      "observedAt": "2026-02-26T07:43:02.457Z",
+      "trackId": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:32653:84:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-26T07:43:38.353Z",
+      "observedAt": "2026-02-26T07:43:38.353Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/disconnectedoperations/armdisconnectedoperations",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32653:85:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-26T07:44:09.65Z",
+      "observedAt": "2026-02-26T07:44:09.65Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:32653:86:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-26T07:44:57.883Z",
+      "observedAt": "2026-02-26T07:44:57.883Z",
+      "trackId": "sdk:Python:azure-mgmt-disconnectedoperations",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:5930745:generation.completed:sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-02-26T07:45:10.7042236Z",
+      "observedAt": "2026-02-26T07:45:10.7042236Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5930745",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5930745"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48103:commit:bacca438d30e:sdk:Java:azure-resourcemanager-disconnectedoperations",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-26T07:45:50Z",
+      "observedAt": "2026-02-26T07:45:50Z",
+      "trackId": "sdk:Java:azure-resourcemanager-disconnectedoperations",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48103",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/bacca438d30e76e1d1102faa4854f0f12d7cda5b"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:32653:87:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-26T07:45:58.033Z",
+      "observedAt": "2026-02-26T07:45:58.033Z",
+      "trackId": "sdk:Java:azure-resourcemanager-disconnectedoperations",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:5930746:generation.completed:sdk:Python:azure-mgmt-disconnectedoperations",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-02-26T07:46:25.7747618Z",
+      "observedAt": "2026-02-26T07:46:25.7747618Z",
+      "trackId": "sdk:Python:azure-mgmt-disconnectedoperations",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5930746",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5930746"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:5930869:generation.queued:sdk:Go:sdk/resourcemanager/disconnectedoperations/armdisconnectedoperations",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-02-26T07:58:57.8702212Z",
+      "observedAt": "2026-02-26T15:55:36.4937142Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/disconnectedoperations/armdisconnectedoperations",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5930869",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5930869"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:32653:89:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-26T07:59:00.39Z",
+      "observedAt": "2026-02-26T07:59:00.39Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/disconnectedoperations/armdisconnectedoperations",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:32653:90:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-26T07:59:00.94Z",
+      "observedAt": "2026-02-26T07:59:00.94Z",
+      "trackId": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:5930870:generation.queued:sdk:Java:azure-resourcemanager-disconnectedoperations",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-02-26T07:59:06.5921022Z",
+      "observedAt": "2026-02-26T08:07:32.3755792Z",
+      "trackId": "sdk:Java:azure-resourcemanager-disconnectedoperations",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5930870",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5930870"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:32653:91:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-26T07:59:08.367Z",
+      "observedAt": "2026-02-26T07:59:08.367Z",
+      "trackId": "sdk:Java:azure-resourcemanager-disconnectedoperations",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:5930870:generation.started:sdk:Java:azure-resourcemanager-disconnectedoperations",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-02-26T08:02:32.5928075Z",
+      "observedAt": "2026-02-26T08:07:32.3755792Z",
+      "trackId": "sdk:Java:azure-resourcemanager-disconnectedoperations",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5930870",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5930870"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado:32653:93:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-26T08:02:42.333Z",
+      "observedAt": "2026-02-26T08:02:42.333Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/disconnectedoperations/armdisconnectedoperations",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:5930870:00be4b52-4a63-5865-8e02-c61723ad0692:sdk:Java:azure-resourcemanager-disconnectedoperations",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-02-26T08:06:43.1266667Z",
+      "observedAt": "2026-02-26T08:07:32.3755792Z",
+      "trackId": "sdk:Java:azure-resourcemanager-disconnectedoperations",
+      "title": "task failed: Generate SDK",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5930870",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5930870"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 4
+    },
+    {
+      "id": "ado:32653:98:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-26T08:07:06.667Z",
+      "observedAt": "2026-02-26T08:07:06.667Z",
+      "trackId": "sdk:Java:azure-resourcemanager-disconnectedoperations",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:5930870:83516c17-6666-5250-abde-63983ce72a49:sdk:Java:azure-resourcemanager-disconnectedoperations",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-02-26T08:07:26.4666667Z",
+      "observedAt": "2026-02-26T08:07:32.3755792Z",
+      "trackId": "sdk:Java:azure-resourcemanager-disconnectedoperations",
+      "title": "job failed: Job",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5930870",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5930870"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:5930870:6884a131-87da-5381-61f3-d7acc3b91d76:sdk:Java:azure-resourcemanager-disconnectedoperations",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-02-26T08:07:32.0366667Z",
+      "observedAt": "2026-02-26T08:07:32.3755792Z",
+      "trackId": "sdk:Java:azure-resourcemanager-disconnectedoperations",
+      "title": "stage failed: SDK Generation",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5930870",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5930870"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:5930870:generation.failed:sdk:Java:azure-resourcemanager-disconnectedoperations",
+      "type": "generation.failed",
+      "phase": "generation",
+      "occurredAt": "2026-02-26T08:07:32.3755792Z",
+      "observedAt": "2026-02-26T08:07:32.3755792Z",
+      "trackId": "sdk:Java:azure-resourcemanager-disconnectedoperations",
+      "title": "Pipeline failed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5930870",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5930870"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:32653:99:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-26T08:08:11.88Z",
+      "observedAt": "2026-02-26T08:08:11.88Z",
+      "trackId": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:5930962:generation.queued:sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-02-26T08:13:54.7786259Z",
+      "observedAt": "2026-02-26T08:22:41.0348157Z",
+      "trackId": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5930962",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5930962"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:32653:100:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-26T08:13:58.42Z",
+      "observedAt": "2026-02-26T08:13:58.42Z",
+      "trackId": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:5930962:generation.started:sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-02-26T08:16:28.6103819Z",
+      "observedAt": "2026-02-26T08:22:41.0348157Z",
+      "trackId": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5930962",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5930962"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:5930962:00be4b52-4a63-5865-8e02-c61723ad0692:sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-02-26T08:21:46.38Z",
+      "observedAt": "2026-02-26T08:22:41.0348157Z",
+      "trackId": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "title": "task failed: Generate SDK",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5930962",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5930962"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 5
+    },
+    {
+      "id": "ado:32653:101:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-26T08:21:59.66Z",
+      "observedAt": "2026-02-26T08:21:59.66Z",
+      "trackId": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:5930962:83516c17-6666-5250-abde-63983ce72a49:sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-02-26T08:22:19.99Z",
+      "observedAt": "2026-02-26T08:22:41.0348157Z",
+      "trackId": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "title": "job failed: Job",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5930962",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5930962"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:5930962:6884a131-87da-5381-61f3-d7acc3b91d76:sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-02-26T08:22:40.7233333Z",
+      "observedAt": "2026-02-26T08:22:41.0348157Z",
+      "trackId": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "title": "stage failed: SDK Generation",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5930962",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5930962"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:5930962:generation.failed:sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "type": "generation.failed",
+      "phase": "generation",
+      "occurredAt": "2026-02-26T08:22:41.0348157Z",
+      "observedAt": "2026-02-26T08:22:41.0348157Z",
+      "trackId": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "title": "Pipeline failed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5930962",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5930962"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56468:commit:d26f61bd410b:sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-26T10:12:39Z",
+      "observedAt": "2026-02-26T10:12:39Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "aviranjan24"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56468",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/d26f61bd410b7c3e76f93012d2e62ff1de0cadd2"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48103:review:3860362590:sdk:Java:azure-resourcemanager-disconnectedoperations",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-26T11:33:39Z",
+      "observedAt": "2026-02-26T11:33:39Z",
+      "trackId": "sdk:Java:azure-resourcemanager-disconnectedoperations",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "XiaofeiCao"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48103",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48103#pullrequestreview-3860362590"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 3
+    },
+    {
+      "id": "ado:32654:6:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-26T12:35:36.227Z",
+      "observedAt": "2026-02-26T12:35:36.227Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40778",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/40778",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32654",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32654"
+      },
+      "title": "Spec PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado:32653:104:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-26T12:35:40.523Z",
+      "observedAt": "2026-02-26T12:35:40.523Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:32653:104:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-26T12:35:40.523Z",
+      "observedAt": "2026-02-26T12:35:40.523Z",
+      "trackId": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:32653:104:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-26T12:35:40.523Z",
+      "observedAt": "2026-02-26T12:35:40.523Z",
+      "trackId": "sdk:Python:azure-mgmt-disconnectedoperations",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:32653:104:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-26T12:35:40.523Z",
+      "observedAt": "2026-02-26T12:35:40.523Z",
+      "trackId": "sdk:Java:azure-resourcemanager-disconnectedoperations",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:32653:104:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-26T12:35:40.523Z",
+      "observedAt": "2026-02-26T12:35:40.523Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/disconnectedoperations/armdisconnectedoperations",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:32653:106:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-26T12:35:43.32Z",
+      "observedAt": "2026-02-26T12:35:43.32Z",
+      "trackId": "plan",
+      "value": "Approved",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Spec approval changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32653:107:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-26T12:59:21.82Z",
+      "observedAt": "2026-02-26T12:59:21.82Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/disconnectedoperations/armdisconnectedoperations",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:5930869:generation.started:sdk:Go:sdk/resourcemanager/disconnectedoperations/armdisconnectedoperations",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-02-26T15:49:40.6171013Z",
+      "observedAt": "2026-02-26T15:55:36.4937142Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/disconnectedoperations/armdisconnectedoperations",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5930869",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5930869"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26053:commit:8b95f4598577:sdk:Go:sdk/resourcemanager/disconnectedoperations/armdisconnectedoperations",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-26T15:54:41Z",
+      "observedAt": "2026-02-26T15:54:41Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/disconnectedoperations/armdisconnectedoperations",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26053",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/8b95f45985774bb81bef9353fa3584e838a4120a"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:5930869:generation.completed:sdk:Go:sdk/resourcemanager/disconnectedoperations/armdisconnectedoperations",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-02-26T15:55:36.4937142Z",
+      "observedAt": "2026-02-26T15:55:36.4937142Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/disconnectedoperations/armdisconnectedoperations",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5930869",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5930869"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26053:review:3864526484:sdk:Go:sdk/resourcemanager/disconnectedoperations/armdisconnectedoperations",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-27T02:35:15Z",
+      "observedAt": "2026-02-27T02:35:15Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/disconnectedoperations/armdisconnectedoperations",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "JiaqiZhang-Dev"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26053",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26053#pullrequestreview-3864526484"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45363:comment:3971050086:sdk:Python:azure-mgmt-disconnectedoperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-27T06:22:42Z",
+      "observedAt": "2026-02-27T06:22:42Z",
+      "trackId": "sdk:Python:azure-mgmt-disconnectedoperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45363",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45363#issuecomment-3971050086"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @aviranjan24, the new api version `2026-03-15` seems not deployed on portal yet, we recommend making sure the api version to be deployed before releasing the SDK, though we won't block the release in self-serve release flow. You can cont",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45363:commit:c667a709c087:sdk:Python:azure-mgmt-disconnectedoperations",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-27T07:32:20Z",
+      "observedAt": "2026-02-27T07:32:20Z",
+      "trackId": "sdk:Python:azure-mgmt-disconnectedoperations",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45363",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/c667a709c087033b328a9b50a0c332df8b32f9ab"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45363:review:3865469222:sdk:Python:azure-mgmt-disconnectedoperations",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-27T07:36:13Z",
+      "observedAt": "2026-02-27T07:36:13Z",
+      "trackId": "sdk:Python:azure-mgmt-disconnectedoperations",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45363",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45363#pullrequestreview-3865469222"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 2
+    },
+    {
+      "id": "ado:32653:113:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-27T09:24:15.993Z",
+      "observedAt": "2026-02-27T09:24:15.993Z",
+      "trackId": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37392:commit:90341b608c9a:sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-27T09:52:32Z",
+      "observedAt": "2026-02-27T09:52:32Z",
+      "trackId": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37392",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/90341b608c9aa0f0d6ef93edd33cebc1a03a47ba"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37392:pr.created:sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-27T09:52:36Z",
+      "observedAt": "2026-02-27T09:52:36Z",
+      "trackId": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37392",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37392"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:32653:114:Custom.SDKPullRequestForJavaScript",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-02-27T09:52:43.117Z",
+      "observedAt": "2026-02-27T09:52:43.117Z",
+      "trackId": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "value": "https://github.com/Azure/azure-sdk-for-js/pull/37392",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "SDK PR linked",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37392:commit:08ccf6351e66:sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-28T08:24:26Z",
+      "observedAt": "2026-02-28T08:24:26Z",
+      "trackId": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37392",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/08ccf6351e669ccb227031ff2effe56df3678fa7"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37392:commit:1ed15fc76b25:sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-28T08:35:23Z",
+      "observedAt": "2026-02-28T08:35:23Z",
+      "trackId": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37392",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/1ed15fc76b25a00b7e0f45bb0fdc2ee9e7bce977"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37392:commit:4a34ee7cc178:sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-28T08:47:17Z",
+      "observedAt": "2026-02-28T08:47:17Z",
+      "trackId": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37392",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/4a34ee7cc178d37813494ab031f1c520027d7323"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56468:review:3874528960:sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-02T07:36:50Z",
+      "observedAt": "2026-03-02T07:36:50Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56468",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56468#pullrequestreview-3874528960"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Review Summary ### Issues on pre-existing (non-diff) lines **Should Fix Contextual Naming for pre-existing types:** Several types in the `Models` namespace lack service-specific context prefixes. This is inconsistent with other types in ",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56468:comment:2870945234:sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-02T07:36:50Z",
+      "observedAt": "2026-03-02T07:36:50Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56468",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56468#discussion_r2870945234"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**Must Fix:** The CHANGELOG bumps to `1.0.0` (GA) but all sections (Features Added, Breaking Changes, etc.) are empty. A GA release must document changes at minimum the new `HardwareSetting` resource and API version update to `2026-03-15` s",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56468:comment:2870945238:sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-02T07:36:50Z",
+      "observedAt": "2026-03-02T07:36:50Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56468",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56468#discussion_r2870945238"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**Should Fix (Contextual Naming):** `HardwareSettingProperties` lacks a service-specific context prefix. Consider renaming to `DisconnectedOperationsHardwareSettingProperties` for consistency with other types in this package (e.g., `Disconn",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56468:comment:2870945242:sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-02T07:36:50Z",
+      "observedAt": "2026-03-02T07:36:50Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56468",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56468#discussion_r2870945242"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**Should Investigate:** `DeviceId` is typed as `string` but described as *\"The unique Id of the device.\"* If this is a UUID, it should be `Guid`. If it's an ARM resource ID, it should be `ResourceIdentifier`. Please verify in the TypeSpec s",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56468:comment:2870945244:sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-02T07:36:50Z",
+      "observedAt": "2026-03-02T07:36:50Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56468",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56468#discussion_r2870945244"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**Minor:** Missing trailing newline at end of file.",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56468:comment:3982666483:sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-02T07:40:06Z",
+      "observedAt": "2026-03-02T07:40:06Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56468",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56468#issuecomment-3982666483"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Should Fix Contextual Naming for Types The following types in the API surface lack service-specific context prefixes. This is inconsistent with other types in the same package that already have prefixes (e.g., `DisconnectedOperationsBill",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37392:commit:1533ce62509c:sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-03T08:43:38Z",
+      "observedAt": "2026-03-03T08:43:38Z",
+      "trackId": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37392",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/1533ce62509c790d0dca2cc108cd9f77da6ade9f"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37392:commit:2d75cab2ef2b:sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-03T09:26:41Z",
+      "observedAt": "2026-03-03T09:26:41Z",
+      "trackId": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37392",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/2d75cab2ef2b0db8e41092b90dfe9677f5ad1386"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37392:comment:2879666775:sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-03T17:45:27Z",
+      "observedAt": "2026-03-03T17:45:27Z",
+      "trackId": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37392",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37392#discussion_r2879666775"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`normalizeUnreserved` uses the regex `/[.~-]/`, where `-` creates a character *range* (`.` through `~`) rather than matching just `.`, `~`, and `-`. This will decode many percent-encoded reserved characters (e.g. `%2F` -> `/`), potentially ",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37392:review:3884153682:sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-03T17:45:28Z",
+      "observedAt": "2026-03-03T17:45:28Z",
+      "trackId": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37392",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37392#pullrequestreview-3884153682"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This PR updates `@azure/arm-disconnectedoperations` based on the 2026-03-15 stable TypeSpec configuration, adds newly generated HardwareSettings support, and refreshes generated models/operations/samples for the sta",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56468:commit:7bb9c49b5586:sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-03T18:11:31Z",
+      "observedAt": "2026-03-03T18:11:31Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "aviranjan24"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56468",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/7bb9c49b5586c7376df209ae1acd7da2a1b37e3c"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56468:review:3886677215:sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-04T04:51:53Z",
+      "observedAt": "2026-03-04T04:51:53Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56468",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56468#pullrequestreview-3886677215"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Please merge the latest main branch and then update the code by regenerating them: ``` dotnet build /t:GenerateCode && <RepoRoot>/eng/scripts/Export-API.ps1 disconnectedoperations ```",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56468:review:3886684569:sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-04T04:53:36Z",
+      "observedAt": "2026-03-04T04:53:36Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56468",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56468#pullrequestreview-3886684569"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56468:comment:2881793483:sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-04T04:53:36Z",
+      "observedAt": "2026-03-04T04:53:36Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56468",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56468#discussion_r2881793483"
+      },
+      "confidence": "authoritative",
+      "excerpt": "please also include a desired release date here for `Unreleased` (yyyy-mm-dd) and remove the empty sections",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37392:commit:b15ea1dfd00c:sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-04T09:26:17Z",
+      "observedAt": "2026-03-04T09:26:17Z",
+      "trackId": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37392",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/b15ea1dfd00c404d2142fd32334916f96bca53dd"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37392:commit:93fd93e4d070:sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-04T09:36:01Z",
+      "observedAt": "2026-03-04T09:36:01Z",
+      "trackId": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37392",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/93fd93e4d0700996c0030b69817933aa3cb629e0"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56468:commit:190aeea58a9c:sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-05T02:59:17Z",
+      "observedAt": "2026-03-05T02:59:17Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "aviranjan24"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56468",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/190aeea58a9cc2e3a46c250ae88bb0b8543791d4"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37392:review:3893361713:sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-05T03:11:42Z",
+      "observedAt": "2026-03-05T03:11:42Z",
+      "trackId": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "MaryGao"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37392",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37392#pullrequestreview-3893361713"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37392:comment:2887329748:sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-05T03:11:42Z",
+      "observedAt": "2026-03-05T03:11:42Z",
+      "trackId": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "MaryGao"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37392",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37392#discussion_r2887329748"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@skywing918 why we generate stable version if the preview is not released?",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37392:review:3893367618:sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-05T03:13:56Z",
+      "observedAt": "2026-03-05T03:13:56Z",
+      "trackId": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "MaryGao"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37392",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37392#pullrequestreview-3893367618"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37392:comment:2887335600:sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-05T03:13:57Z",
+      "observedAt": "2026-03-05T03:13:57Z",
+      "trackId": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "MaryGao"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37392",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37392#discussion_r2887335600"
+      },
+      "confidence": "authoritative",
+      "excerpt": "the version is in-constant. @skywing918 @kazrael2119 Could you have a regression to fix all issues?",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37392:commit:28e377458459:sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-05T03:26:48Z",
+      "observedAt": "2026-03-05T03:26:48Z",
+      "trackId": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37392",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/28e37745845993e2ba0787e48b891a323fc1ea4c"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37392:commit:b7baa2de019d:sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-05T03:37:42Z",
+      "observedAt": "2026-03-05T03:37:42Z",
+      "trackId": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37392",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/b7baa2de019d733bfd020cad0423905d601110ed"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56468:commit:7c1d56afed5c:sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-05T04:24:16Z",
+      "observedAt": "2026-03-05T04:24:16Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "aviranjan24"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56468",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/7c1d56afed5cfa173b38638800391b09f49e1ab2"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56468:commit:cf2f23ab4cb0:sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-05T04:41:52Z",
+      "observedAt": "2026-03-05T04:41:52Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "aviranjan24"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56468",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/cf2f23ab4cb0b9d1d780cc559e56c6305da264db"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26053:comment:4002166663:sdk:Go:sdk/resourcemanager/disconnectedoperations/armdisconnectedoperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-05T04:47:38Z",
+      "observedAt": "2026-03-05T04:47:38Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/disconnectedoperations/armdisconnectedoperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "aviranjan24"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26053",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26053#issuecomment-4002166663"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@JiaqiZhang-Dev can I go ahead and merge this PR?",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56468:review:3893902788:sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-05T05:29:36Z",
+      "observedAt": "2026-03-05T05:29:36Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56468",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56468#pullrequestreview-3893902788"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Management SDK PR Review — Azure.ResourceManager.DisconnectedOperations ### Phase 1: Versioning Review ✅ PASS - **Version**: `1.0.0` (from `1.0.0-beta.1`) — standard beta-to-GA transition, no major version bump. ✅ - **ApiCompatVersion**:",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37392:comment:4002497772:sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-05T06:11:32Z",
+      "observedAt": "2026-03-05T06:11:32Z",
+      "trackId": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37392",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37392#issuecomment-4002497772"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@aviranjan24 I noticed that you haven't release this package with the api version 2025-06-01-preview regarding this pr https://github.com/Azure/azure-sdk-for-js/pull/35891 Is this expected? This time, the api version is 2026-03-15, but acco",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26053:comment:4002638092:sdk:Go:sdk/resourcemanager/disconnectedoperations/armdisconnectedoperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-05T06:39:50Z",
+      "observedAt": "2026-03-05T06:39:50Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/disconnectedoperations/armdisconnectedoperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "tadelesh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26053",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26053#issuecomment-4002638092"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> @JiaqiZhang-Dev can I go ahead and merge this PR? Yes.",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56468:review:3894384886:sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-05T07:18:24Z",
+      "observedAt": "2026-03-05T07:18:24Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "aneesh-ponneth"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56468",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56468#pullrequestreview-3894384886"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56468:comment:2888133156:sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-05T07:18:24Z",
+      "observedAt": "2026-03-05T07:18:24Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "aneesh-ponneth"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56468",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56468#discussion_r2888133156"
+      },
+      "confidence": "authoritative",
+      "excerpt": "It is a Guid. As we have already released API, I believe we cannot change it now. Is there a way to make it as Guid in SDK?",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56468:commit:7cff582b98a0:sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-05T08:42:16Z",
+      "observedAt": "2026-03-05T08:42:16Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "aviranjan24"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56468",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/7cff582b98a0632bc438e35d51081d94027c9fb5"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56468:commit:74ddd9d2db7a:sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-06T03:25:48Z",
+      "observedAt": "2026-03-06T03:25:48Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "aviranjan24"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56468",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/74ddd9d2db7ab25940ae612dead0eaf10f3de815"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56468:commit:f88e1956d5bd:sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-06T03:32:30Z",
+      "observedAt": "2026-03-06T03:32:30Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "aviranjan24"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56468",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/f88e1956d5bdad70315a203c09ae07475219f0cb"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56468:review:3901109801:sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-06T03:44:23Z",
+      "observedAt": "2026-03-06T03:44:23Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "aviranjan24"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56468",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56468#pullrequestreview-3901109801"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56468:comment:2893649874:sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-06T03:44:23Z",
+      "observedAt": "2026-03-06T03:44:23Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "aviranjan24"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56468",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56468#discussion_r2893649874"
+      },
+      "confidence": "authoritative",
+      "excerpt": "We already did @aneesh-ponneth in .NET SDK",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37392:comment:4009374260:sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-06T03:50:46Z",
+      "observedAt": "2026-03-06T03:50:46Z",
+      "trackId": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "aviranjan24"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37392",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37392#issuecomment-4009374260"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @kazrael2119 , @MaryGao we already released the preview SDK and I also got the package here https://www.npmjs.com/package/@azure/arm-disconnectedoperations****, not sure why it is not coming into the release planner as well, please take ",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37392:comment:4009422398:sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-06T04:08:49Z",
+      "observedAt": "2026-03-06T04:08:49Z",
+      "trackId": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "MaryGao"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37392",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37392#issuecomment-4009422398"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@aviranjan24 your release is not preview just alpha versions. and we have the policy to release stable one one month before preview ones. /cc @josefree",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37392:comment:4020614557:sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-09T01:56:24Z",
+      "observedAt": "2026-03-09T01:56:24Z",
+      "trackId": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "MaryGao"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37392",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37392#issuecomment-4020614557"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> @aviranjan24 your release is not preview just alpha versions. and we have the policy to release stable one one month before preview ones. > > /cc @josefree Offline confirmed and PM thinks this should be low risk considering other language",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26053:pr.merged:sdk:Go:sdk/resourcemanager/disconnectedoperations/armdisconnectedoperations",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-09T04:53:40Z",
+      "observedAt": "2026-03-09T04:53:40Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/disconnectedoperations/armdisconnectedoperations",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26053",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26053"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45363:comment:4021095910:sdk:Python:azure-mgmt-disconnectedoperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-09T04:54:15Z",
+      "observedAt": "2026-03-09T04:54:15Z",
+      "trackId": "sdk:Python:azure-mgmt-disconnectedoperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "aviranjan24"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45363",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45363#issuecomment-4021095910"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@msyyc can I go ahead and merge this PR?",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48103:pr.merged:sdk:Java:azure-resourcemanager-disconnectedoperations",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-09T04:54:57Z",
+      "observedAt": "2026-03-09T04:54:57Z",
+      "trackId": "sdk:Java:azure-resourcemanager-disconnectedoperations",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48103",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48103"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45363:comment:4021111313:sdk:Python:azure-mgmt-disconnectedoperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-09T04:58:14Z",
+      "observedAt": "2026-03-09T04:58:14Z",
+      "trackId": "sdk:Python:azure-mgmt-disconnectedoperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45363",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45363#issuecomment-4021111313"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@aviranjan24 Yeah.",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37392:commit:1b8d93fdcc3e:sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-09T06:41:46Z",
+      "observedAt": "2026-03-09T06:41:46Z",
+      "trackId": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37392",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/1b8d93fdcc3e10065d18e33f395aa4831849e280"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37392:commit:e4b05837f368:sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-09T07:01:11Z",
+      "observedAt": "2026-03-09T07:01:11Z",
+      "trackId": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37392",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/e4b05837f36843dbb427e06e87f4da367a123102"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45363:pr.merged:sdk:Python:azure-mgmt-disconnectedoperations",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-09T07:36:50Z",
+      "observedAt": "2026-03-09T07:36:50Z",
+      "trackId": "sdk:Python:azure-mgmt-disconnectedoperations",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45363",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45363"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56468:commit:7de8b6e6bb9e:sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-10T02:52:57Z",
+      "observedAt": "2026-03-10T02:52:57Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56468",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/7de8b6e6bb9e47f4847e840332d9c636da21ada1"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56468:review:3919387435:sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-10T02:53:47Z",
+      "observedAt": "2026-03-10T02:53:47Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56468",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56468#pullrequestreview-3919387435"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37392:review:3919797944:sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-10T05:12:03Z",
+      "observedAt": "2026-03-10T05:12:03Z",
+      "trackId": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "MaryGao"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37392",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37392#pullrequestreview-3919797944"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37392:review:3919802559:sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-10T05:13:06Z",
+      "observedAt": "2026-03-10T05:13:06Z",
+      "trackId": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "MaryGao"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37392",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37392#pullrequestreview-3919802559"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37392:comment:2909383638:sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-10T05:13:06Z",
+      "observedAt": "2026-03-10T05:13:06Z",
+      "trackId": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "MaryGao"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37392",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37392#discussion_r2909383638"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The versions is incorrect and should be stable one.",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37392:review:3919805531:sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-10T05:13:46Z",
+      "observedAt": "2026-03-10T05:13:46Z",
+      "trackId": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "MaryGao"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37392",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37392#pullrequestreview-3919805531"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37392:comment:2909386224:sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-10T05:13:46Z",
+      "observedAt": "2026-03-10T05:13:46Z",
+      "trackId": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "MaryGao"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37392",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37392#discussion_r2909386224"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Stable version and the same as package.json.",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37392:review:3919879972:sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-10T05:35:18Z",
+      "observedAt": "2026-03-10T05:35:18Z",
+      "trackId": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37392",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37392#pullrequestreview-3919879972"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37392:comment:2909452157:sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-10T05:35:18Z",
+      "observedAt": "2026-03-10T05:35:18Z",
+      "trackId": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37392",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37392#discussion_r2909452157"
+      },
+      "confidence": "authoritative",
+      "excerpt": "now 1.0.0-beta.1 is released, this will be updated after re-running changelog tool",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37392:commit:c8fcb8803213:sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-10T05:46:51Z",
+      "observedAt": "2026-03-10T05:46:51Z",
+      "trackId": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37392",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/c8fcb88032136d9258b7424842251124d3eb2e0f"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56468:review:3920026551:sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-10T06:13:32Z",
+      "observedAt": "2026-03-10T06:13:32Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56468",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56468#pullrequestreview-3920026551"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56468:pr.merged:sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-10T06:15:01Z",
+      "observedAt": "2026-03-10T06:15:01Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56468",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56468"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37392:review:3920265824:sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-10T07:13:48Z",
+      "observedAt": "2026-03-10T07:13:48Z",
+      "trackId": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "MaryGao"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37392",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37392#pullrequestreview-3920265824"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37392:pr.merged:sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-10T07:15:14Z",
+      "observedAt": "2026-03-10T07:15:14Z",
+      "trackId": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37392",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37392"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github-release:32653:.NET:Azure.ResourceManager.DisconnectedOperations_1.0.0",
+      "type": "package.github_release_published",
+      "phase": "release",
+      "occurredAt": "2026-03-10T09:20:44Z",
+      "observedAt": "2026-03-10T09:20:44Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "title": "GitHub Release published",
+      "value": "Azure.ResourceManager.DisconnectedOperations_1.0.0",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "azure-sdk-for-net release Azure.ResourceManager.DisconnectedOperations_1.0.0",
+        "url": "https://github.com/Azure/azure-sdk-for-net/releases/tag/Azure.ResourceManager.DisconnectedOperations_1.0.0"
+      },
+      "confidence": "inferred",
+      "stack": 4
+    },
+    {
+      "id": "github-release:32653:Go:sdk/resourcemanager/disconnectedoperations/armdisconnectedoperations/v1.0.0",
+      "type": "package.github_release_published",
+      "phase": "release",
+      "occurredAt": "2026-03-11T03:30:25Z",
+      "observedAt": "2026-03-11T03:30:25Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/disconnectedoperations/armdisconnectedoperations",
+      "title": "GitHub Release published",
+      "value": "sdk/resourcemanager/disconnectedoperations/armdisconnectedoperations/v1.0.0",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "azure-sdk-for-go release sdk/resourcemanager/disconnectedoperations/armdisconnectedoperations/v1.0.0",
+        "url": "https://github.com/Azure/azure-sdk-for-go/releases/tag/sdk/resourcemanager/disconnectedoperations/armdisconnectedoperations/v1.0.0"
+      },
+      "confidence": "inferred",
+      "stack": 0
+    },
+    {
+      "id": "ado:32653:121:Custom.ReleaseStatusForGo",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-03-11T03:30:42.11Z",
+      "observedAt": "2026-03-11T03:30:42.11Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/disconnectedoperations/armdisconnectedoperations",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Release status changed",
+      "stack": 1
+    },
+    {
+      "id": "github-release:32653:JavaScript:@azure/arm-disconnectedoperations_1.0.0",
+      "type": "package.github_release_published",
+      "phase": "release",
+      "occurredAt": "2026-03-11T03:32:52Z",
+      "observedAt": "2026-03-11T03:32:52Z",
+      "trackId": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "title": "GitHub Release published",
+      "value": "@azure/arm-disconnectedoperations_1.0.0",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "azure-sdk-for-js release @azure/arm-disconnectedoperations_1.0.0",
+        "url": "https://github.com/Azure/azure-sdk-for-js/releases/tag/%40azure/arm-disconnectedoperations_1.0.0"
+      },
+      "confidence": "inferred",
+      "stack": 0
+    },
+    {
+      "id": "ado:32653:122:Custom.ReleaseStatusForJavaScript",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-03-11T03:43:44.193Z",
+      "observedAt": "2026-03-11T03:43:44.193Z",
+      "trackId": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Release status changed",
+      "stack": 1
+    },
+    {
+      "id": "github-release:32653:Java:com.azure.resourcemanager+azure-resourcemanager-disconnectedoperations_1.0.0",
+      "type": "package.github_release_published",
+      "phase": "release",
+      "occurredAt": "2026-03-11T04:26:23Z",
+      "observedAt": "2026-03-11T04:26:23Z",
+      "trackId": "sdk:Java:azure-resourcemanager-disconnectedoperations",
+      "title": "GitHub Release published",
+      "value": "com.azure.resourcemanager+azure-resourcemanager-disconnectedoperations_1.0.0",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "azure-sdk-for-java release com.azure.resourcemanager+azure-resourcemanager-disconnectedoperations_1.0.0",
+        "url": "https://github.com/Azure/azure-sdk-for-java/releases/tag/com.azure.resourcemanager%2Bazure-resourcemanager-disconnectedoperations_1.0.0"
+      },
+      "confidence": "inferred",
+      "stack": 0
+    },
+    {
+      "id": "ado:32653:123:Custom.ReleaseStatusForJava",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-03-11T04:39:50.24Z",
+      "observedAt": "2026-03-11T04:39:50.24Z",
+      "trackId": "sdk:Java:azure-resourcemanager-disconnectedoperations",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Release status changed",
+      "stack": 1
+    },
+    {
+      "id": "github-release:32653:Python:azure-mgmt-disconnectedoperations_1.0.0",
+      "type": "package.github_release_published",
+      "phase": "release",
+      "occurredAt": "2026-03-11T04:45:07Z",
+      "observedAt": "2026-03-11T04:45:07Z",
+      "trackId": "sdk:Python:azure-mgmt-disconnectedoperations",
+      "title": "GitHub Release published",
+      "value": "azure-mgmt-disconnectedoperations_1.0.0",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "azure-sdk-for-python release azure-mgmt-disconnectedoperations_1.0.0",
+        "url": "https://github.com/Azure/azure-sdk-for-python/releases/tag/azure-mgmt-disconnectedoperations_1.0.0"
+      },
+      "confidence": "inferred",
+      "stack": 0
+    },
+    {
+      "id": "ado:32653:124:Custom.ReleaseStatusForPython",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-03-11T04:54:41.73Z",
+      "observedAt": "2026-03-11T04:54:41.73Z",
+      "trackId": "sdk:Python:azure-mgmt-disconnectedoperations",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Release status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:32653:125:Custom.ReleaseStatusForDotnet",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-03-11T16:27:51.86Z",
+      "observedAt": "2026-03-11T16:27:51.86Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32653:126:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-03-11T16:28:13.623Z",
+      "observedAt": "2026-03-11T16:28:13.623Z",
+      "trackId": "plan",
+      "value": "Finished",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32653",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32653"
+      },
+      "title": "Plan state changed",
+      "stack": 0
+    }
+  ],
+  "quality": {
+    "warnings": [
+      "Multiple spec PRs are retained in link history"
+    ],
+    "unavailablePullRequests": 0,
+    "unavailablePipelineRuns": 0
+  },
+  "boundaryFacts": {
+    "id": "32653",
+    "state": "finished",
+    "specPrs": [
+      {
+        "id": "github:Azure/azure-rest-api-specs#40778",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#40778",
+        "createdAt": "2026-02-26T05:19:14Z",
+        "mergedAt": "2026-02-26T06:48:22Z",
+        "closedAt": "2026-02-26T06:48:22Z",
+        "available": true
+      },
+      {
+        "id": "github:Azure/azure-rest-api-specs#40142",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#40142",
+        "createdAt": "2026-02-04T04:44:39Z",
+        "mergedAt": "2026-02-24T17:54:15Z",
+        "closedAt": "2026-02-24T17:54:15Z",
+        "available": true
+      }
+    ],
+    "artifacts": [
+      {
+        "language": ".NET",
+        "package": "Azure.ResourceManager.DisconnectedOperations",
+        "trackId": "sdk:.NET:Azure.ResourceManager.DisconnectedOperations",
+        "prId": "github:Azure/azure-sdk-for-net#56468",
+        "prCreatedAt": "2026-02-25T04:01:05Z",
+        "prMergedAt": "2026-03-10T06:15:01Z",
+        "prClosedAt": "2026-03-10T06:15:02Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-net#56468",
+            "createdAt": "2026-02-25T04:01:05Z",
+            "mergedAt": "2026-03-10T06:15:01Z",
+            "closedAt": "2026-03-10T06:15:02Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:5930745",
+        "generationStartAt": "2026-02-26T07:38:33.9863739Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-03-11T16:27:51.86Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": null,
+        "releaseBoundaryAt": "2026-03-10T09:20:44Z",
+        "releaseBoundarySource": "github-release",
+        "releaseBoundaryConfidence": "inferred",
+        "releaseBoundaryUrl": "https://github.com/Azure/azure-sdk-for-net/releases/tag/Azure.ResourceManager.DisconnectedOperations_1.0.0",
+        "releaseTag": "Azure.ResourceManager.DisconnectedOperations_1.0.0",
+        "releaseMatchMethod": "unique-nearby-release",
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "github-release"
+        }
+      },
+      {
+        "language": "JavaScript",
+        "package": "@azure/arm-disconnectedoperations",
+        "trackId": "sdk:JavaScript:@azure/arm-disconnectedoperations",
+        "prId": "github:Azure/azure-sdk-for-js#37392",
+        "prCreatedAt": "2026-02-27T09:52:36Z",
+        "prMergedAt": "2026-03-10T07:15:14Z",
+        "prClosedAt": "2026-03-10T07:15:14Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-js#37392",
+            "createdAt": "2026-02-27T09:52:36Z",
+            "mergedAt": "2026-03-10T07:15:14Z",
+            "closedAt": "2026-03-10T07:15:14Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:5930962",
+        "generationStartAt": "2026-02-26T08:16:28.6103819Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-03-11T03:43:44.193Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": null,
+        "releaseBoundaryAt": "2026-03-11T03:32:52Z",
+        "releaseBoundarySource": "github-release",
+        "releaseBoundaryConfidence": "inferred",
+        "releaseBoundaryUrl": "https://github.com/Azure/azure-sdk-for-js/releases/tag/%40azure/arm-disconnectedoperations_1.0.0",
+        "releaseTag": "@azure/arm-disconnectedoperations_1.0.0",
+        "releaseMatchMethod": "release-index-version",
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "github-release"
+        }
+      },
+      {
+        "language": "Python",
+        "package": "azure-mgmt-disconnectedoperations",
+        "trackId": "sdk:Python:azure-mgmt-disconnectedoperations",
+        "prId": "github:Azure/azure-sdk-for-python#45363",
+        "prCreatedAt": "2026-02-25T04:02:02Z",
+        "prMergedAt": "2026-03-09T07:36:50Z",
+        "prClosedAt": "2026-03-09T07:36:51Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-python#45363",
+            "createdAt": "2026-02-25T04:02:02Z",
+            "mergedAt": "2026-03-09T07:36:50Z",
+            "closedAt": "2026-03-09T07:36:51Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:5930746",
+        "generationStartAt": "2026-02-26T07:38:33.8870002Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-03-11T04:54:41.73Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": null,
+        "releaseBoundaryAt": "2026-03-11T04:45:07Z",
+        "releaseBoundarySource": "github-release",
+        "releaseBoundaryConfidence": "inferred",
+        "releaseBoundaryUrl": "https://github.com/Azure/azure-sdk-for-python/releases/tag/azure-mgmt-disconnectedoperations_1.0.0",
+        "releaseTag": "azure-mgmt-disconnectedoperations_1.0.0",
+        "releaseMatchMethod": "unique-nearby-release",
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "github-release"
+        }
+      },
+      {
+        "language": "Java",
+        "package": "azure-resourcemanager-disconnectedoperations",
+        "trackId": "sdk:Java:azure-resourcemanager-disconnectedoperations",
+        "prId": "github:Azure/azure-sdk-for-java#48103",
+        "prCreatedAt": "2026-02-25T04:03:21Z",
+        "prMergedAt": "2026-03-09T04:54:57Z",
+        "prClosedAt": "2026-03-09T04:54:57Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-java#48103",
+            "createdAt": "2026-02-25T04:03:21Z",
+            "mergedAt": "2026-03-09T04:54:57Z",
+            "closedAt": "2026-03-09T04:54:57Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:5930870",
+        "generationStartAt": "2026-02-26T08:02:32.5928075Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-03-11T04:39:50.24Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": null,
+        "releaseBoundaryAt": "2026-03-11T04:26:23Z",
+        "releaseBoundarySource": "github-release",
+        "releaseBoundaryConfidence": "inferred",
+        "releaseBoundaryUrl": "https://github.com/Azure/azure-sdk-for-java/releases/tag/com.azure.resourcemanager%2Bazure-resourcemanager-disconnectedoperations_1.0.0",
+        "releaseTag": "com.azure.resourcemanager+azure-resourcemanager-disconnectedoperations_1.0.0",
+        "releaseMatchMethod": "release-index-version",
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "github-release"
+        }
+      },
+      {
+        "language": "Go",
+        "package": "sdk/resourcemanager/disconnectedoperations/armdisconnectedoperations",
+        "trackId": "sdk:Go:sdk/resourcemanager/disconnectedoperations/armdisconnectedoperations",
+        "prId": "github:Azure/azure-sdk-for-go#26053",
+        "prCreatedAt": "2026-02-25T04:00:44Z",
+        "prMergedAt": "2026-03-09T04:53:40Z",
+        "prClosedAt": "2026-03-09T04:53:40Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-go#26053",
+            "createdAt": "2026-02-25T04:00:44Z",
+            "mergedAt": "2026-03-09T04:53:40Z",
+            "closedAt": "2026-03-09T04:53:40Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:5930869",
+        "generationStartAt": "2026-02-26T15:49:40.6171013Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-03-11T03:30:42.11Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": null,
+        "releaseBoundaryAt": "2026-03-11T03:30:25Z",
+        "releaseBoundarySource": "github-release",
+        "releaseBoundaryConfidence": "inferred",
+        "releaseBoundaryUrl": "https://github.com/Azure/azure-sdk-for-go/releases/tag/sdk/resourcemanager/disconnectedoperations/armdisconnectedoperations/v1.0.0",
+        "releaseTag": "sdk/resourcemanager/disconnectedoperations/armdisconnectedoperations/v1.0.0",
+        "releaseMatchMethod": "unique-nearby-release",
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "github-release"
+        }
+      }
+    ],
+    "cohortPlan": {
+      "id": "32653",
+      "releasePlanId": "2082",
+      "title": "Release Plan - 2082 - GA - disconnected operations",
+      "service": "disconnected operations",
+      "state": "finished"
+    },
+    "quality": {
+      "warnings": [
+        "Multiple spec PRs are retained in link history"
+      ],
+      "unavailablePullRequests": 0,
+      "unavailablePipelineRuns": 0
+    }
+  },
+  "summary": {
+    "durationHours": 706.1,
+    "pullRequestCount": 7,
+    "humanReviewCount": 25,
+    "humanCommentCount": 22
+  }
+}

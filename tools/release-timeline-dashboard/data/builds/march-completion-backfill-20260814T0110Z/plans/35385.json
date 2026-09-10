@@ -1,0 +1,256 @@
+{
+  "schemaVersion": 2,
+  "id": "35385",
+  "correlation": {
+    "policyVersion": 1,
+    "preflight": "passed"
+  },
+  "releasePlanId": "35385",
+  "title": "Public Preview release plan for Widget",
+  "service": "Widget",
+  "product": "Release",
+  "path": "specification/widget/resource-manager/Microsoft.Widget/Widget",
+  "state": "abandoned",
+  "plane": "management",
+  "releaseType": "APEX Public Preview",
+  "intendedMonth": "2026-07",
+  "createdAt": "2026-07-17T22:48:25.977Z",
+  "completedAt": "2026-07-21T20:34:25.043Z",
+  "sourceUrl": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35385",
+  "range": {
+    "start": "2026-07-17T22:41:40.000Z",
+    "end": "2026-07-21T20:34:25.043Z"
+  },
+  "intendedArtifacts": [],
+  "links": [
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#44776",
+      "role": "spec-pr",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/44776",
+      "releasePlanIds": []
+    }
+  ],
+  "tracks": [
+    {
+      "id": "plan",
+      "kind": "plan",
+      "label": "Release Plan",
+      "detail": "APEX Public Preview"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#44776",
+      "kind": "spec",
+      "label": "Spec PR",
+      "detail": "azure-rest-api-specs #44776",
+      "artifactId": "github:Azure/azure-rest-api-specs#44776",
+      "state": "open"
+    }
+  ],
+  "events": [
+    {
+      "id": "github:Azure/azure-rest-api-specs#44776:pr.created:spec:github:Azure/azure-rest-api-specs#44776",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-17T22:41:40Z",
+      "observedAt": "2026-07-17T22:41:40Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44776",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "MrJustinB"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44776",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44776"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44776:comment:5008193021:spec:github:Azure/azure-rest-api-specs#44776",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-17T22:42:45Z",
+      "observedAt": "2026-07-17T22:42:45Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44776",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44776",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44776#issuecomment-5008193021"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>Next steps that must be taken to merge this PR: <br/><ul><li>❌ This PR targets either the <code>main</code> branch of the public specs repo or the <code>RPSaaSMaster</code> branch of the private specs repo. These",
+      "stack": 1
+    },
+    {
+      "id": "ado:35385:created",
+      "type": "plan.created",
+      "phase": "plan",
+      "occurredAt": "2026-07-17T22:48:25.977Z",
+      "observedAt": "2026-07-17T22:48:25.977Z",
+      "trackId": "plan",
+      "title": "Release Plan created",
+      "confidence": "authoritative",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35385",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35385"
+      },
+      "stack": 0
+    },
+    {
+      "id": "ado:35385:1:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-07-17T22:48:25.977Z",
+      "observedAt": "2026-07-17T22:48:25.977Z",
+      "trackId": "plan",
+      "value": "New",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35385",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35385"
+      },
+      "title": "Plan state changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35385:1:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-17T22:48:25.977Z",
+      "observedAt": "2026-07-17T22:48:25.977Z",
+      "trackId": "plan",
+      "value": "Not Available",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35385",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35385"
+      },
+      "title": "Spec approval changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:35386:1:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-17T22:48:26.457Z",
+      "observedAt": "2026-07-17T22:48:26.457Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44776",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/44776",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35386",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35386"
+      },
+      "title": "Spec PR linked",
+      "stack": 2
+    },
+    {
+      "id": "ado:35385:2:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-07-17T22:48:27.327Z",
+      "observedAt": "2026-07-17T22:48:27.327Z",
+      "trackId": "plan",
+      "value": "In Progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35385",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35385"
+      },
+      "title": "Plan state changed",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44776:comment:5008266529:spec:github:Azure/azure-rest-api-specs#44776",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-17T22:52:33Z",
+      "observedAt": "2026-07-17T22:52:33Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44776",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44776",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44776#issuecomment-5008266529"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews | Language | API Review for Package | |----------|---------| | Swagger | [Microsoft.Widget-Widget](https://apiview.dev/Assemblies/Revi",
+      "stack": 3
+    },
+    {
+      "id": "ado:35385:3:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-07-21T20:34:25.043Z",
+      "observedAt": "2026-07-21T20:34:25.043Z",
+      "trackId": "plan",
+      "value": "Abandoned",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35385",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35385"
+      },
+      "title": "Plan state changed",
+      "stack": 0
+    }
+  ],
+  "quality": {
+    "warnings": [
+      "1 historical linked PR(s) closed without merge"
+    ],
+    "unavailablePullRequests": 0,
+    "unavailablePipelineRuns": 0
+  },
+  "boundaryFacts": {
+    "id": "35385",
+    "state": "abandoned",
+    "specPrs": [
+      {
+        "id": "github:Azure/azure-rest-api-specs#44776",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#44776",
+        "createdAt": "2026-07-17T22:41:40Z",
+        "mergedAt": null,
+        "closedAt": null,
+        "available": true
+      }
+    ],
+    "artifacts": [],
+    "cohortPlan": {
+      "id": "35385",
+      "releasePlanId": "35385",
+      "title": "Public Preview release plan for Widget",
+      "service": "Widget",
+      "state": "abandoned"
+    },
+    "quality": {
+      "warnings": [
+        "1 historical linked PR(s) closed without merge"
+      ],
+      "unavailablePullRequests": 0,
+      "unavailablePipelineRuns": 0
+    }
+  },
+  "summary": {
+    "durationHours": 93.8,
+    "pullRequestCount": 1,
+    "humanReviewCount": 0,
+    "humanCommentCount": 0
+  }
+}

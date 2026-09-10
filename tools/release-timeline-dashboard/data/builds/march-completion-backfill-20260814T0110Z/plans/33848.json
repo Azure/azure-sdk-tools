@@ -1,0 +1,4563 @@
+{
+  "schemaVersion": 2,
+  "id": "33848",
+  "correlation": {
+    "policyVersion": 1,
+    "preflight": "passed"
+  },
+  "releasePlanId": "2180",
+  "title": "Release Plan - 2180 - GA - Microsoft.FileShares",
+  "service": "Microsoft.FileShares",
+  "product": "Release",
+  "path": "specification/fileshares/resource-manager/Microsoft.FileShares/FileShares",
+  "state": "finished",
+  "plane": "management",
+  "releaseType": "APEX GA",
+  "intendedMonth": "May 2026",
+  "createdAt": "2026-04-10T16:13:19.613Z",
+  "completedAt": "2026-05-13T21:15:21.383Z",
+  "sourceUrl": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33848",
+  "range": {
+    "start": "2026-02-13T16:53:24.000Z",
+    "end": "2026-05-13T21:15:21.383Z"
+  },
+  "intendedArtifacts": [
+    {
+      "prId": "github:Azure/azure-sdk-for-net#58902",
+      "language": ".NET",
+      "package": "Azure.ResourceManager.FileShares",
+      "version": "1.0.0",
+      "outcome": "released",
+      "generationPipelineUrl": null,
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-js#38343",
+      "language": "JavaScript",
+      "package": "@azure/arm-fileshares",
+      "version": "1.0.0-beta.1",
+      "outcome": "released",
+      "generationPipelineUrl": null,
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-python#46749",
+      "language": "Python",
+      "package": "azure-mgmt-fileshares",
+      "version": "1.0.0b1",
+      "outcome": "released",
+      "generationPipelineUrl": null,
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-java#48976",
+      "language": "Java",
+      "package": "azure-resourcemanager-fileshares",
+      "version": "1.0.0-beta.1",
+      "outcome": "released",
+      "generationPipelineUrl": null,
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-go#26695",
+      "language": "Go",
+      "package": "sdk/resourcemanager/fileshares/armfileshares",
+      "version": "0.1.0",
+      "outcome": "released",
+      "generationPipelineUrl": null,
+      "releasePipelineUrl": null
+    }
+  ],
+  "links": [
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#40449",
+      "role": "spec-pr",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/40449",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-net#58902",
+      "role": "sdk-pr",
+      "language": ".NET",
+      "url": "https://github.com/Azure/azure-sdk-for-net/pull/58902",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-js#38343",
+      "role": "sdk-pr",
+      "language": "JavaScript",
+      "url": "https://github.com/Azure/azure-sdk-for-js/pull/38343",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-python#46602",
+      "role": "sdk-pr-history",
+      "language": "Python",
+      "url": "https://github.com/Azure/azure-sdk-for-python/pull/46602",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-python#46749",
+      "role": "sdk-pr",
+      "language": "Python",
+      "url": "https://github.com/Azure/azure-sdk-for-python/pull/46749",
+      "releasePlanIds": [
+        "33848"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-java#48976",
+      "role": "sdk-pr",
+      "language": "Java",
+      "url": "https://github.com/Azure/azure-sdk-for-java/pull/48976",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-go#26695",
+      "role": "sdk-pr",
+      "language": "Go",
+      "url": "https://github.com/Azure/azure-sdk-for-go/pull/26695",
+      "releasePlanIds": []
+    }
+  ],
+  "tracks": [
+    {
+      "id": "plan",
+      "kind": "plan",
+      "label": "Release Plan",
+      "detail": "APEX GA"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#40449",
+      "kind": "spec",
+      "label": "Spec PR",
+      "detail": "azure-rest-api-specs #40449",
+      "artifactId": "github:Azure/azure-rest-api-specs#40449",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:.NET:Azure.ResourceManager.FileShares",
+      "kind": "sdk",
+      "label": ".NET",
+      "detail": "Azure.ResourceManager.FileShares",
+      "artifactId": "github:Azure/azure-sdk-for-net#58902",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:JavaScript:@azure/arm-fileshares",
+      "kind": "sdk",
+      "label": "JavaScript",
+      "detail": "@azure/arm-fileshares",
+      "artifactId": "github:Azure/azure-sdk-for-js#38343",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Python:azure-mgmt-fileshares",
+      "kind": "sdk",
+      "label": "Python",
+      "detail": "azure-mgmt-fileshares",
+      "artifactId": "github:Azure/azure-sdk-for-python#46749",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Java:azure-resourcemanager-fileshares",
+      "kind": "sdk",
+      "label": "Java",
+      "detail": "azure-resourcemanager-fileshares",
+      "artifactId": "github:Azure/azure-sdk-for-java#48976",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Go:sdk/resourcemanager/fileshares/armfileshares",
+      "kind": "sdk",
+      "label": "Go",
+      "detail": "sdk/resourcemanager/fileshares/armfileshares",
+      "artifactId": "github:Azure/azure-sdk-for-go#26695",
+      "state": "merged"
+    }
+  ],
+  "events": [
+    {
+      "id": "github:Azure/azure-rest-api-specs#40449:pr.created:spec:github:Azure/azure-rest-api-specs#40449",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-13T16:53:24Z",
+      "observedAt": "2026-02-13T16:53:24Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40449",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "ankushbindlish2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40449",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40449"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40449:comment:3898234507:spec:github:Azure/azure-rest-api-specs#40449",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-13T16:53:51Z",
+      "observedAt": "2026-02-13T16:53:51Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40449",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40449",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40449#issuecomment-3898234507"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>✅ All automated merging requirements have been met! To get your PR merged, see <a href=\"https://aka.ms/azsdk/specreview/merge\">aka.ms/azsdk/specreview/merge</a>.<br /><br />Comment generated by <a href=\"https://g",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40449:comment:3898242731:spec:github:Azure/azure-rest-api-specs#40449",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-13T16:55:35Z",
+      "observedAt": "2026-02-13T16:55:35Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40449",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40449",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40449#issuecomment-3898242731"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews | Language | API Review for Package | |----------|---------| | Swagger | [Microsoft.FileShares-FileShares](https://apiview.dev/Assembl",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40449:commit:bc8beae2bb28:spec:github:Azure/azure-rest-api-specs#40449",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-13T17:35:59Z",
+      "observedAt": "2026-02-13T17:35:59Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40449",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ankushbindlish2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40449",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/bc8beae2bb28ba08ab36b1ad6e260c37cc0e435a"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40449:commit:41ce846a6ae8:spec:github:Azure/azure-rest-api-specs#40449",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-13T17:37:08Z",
+      "observedAt": "2026-02-13T17:37:08Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40449",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ankushbindlish2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40449",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/41ce846a6ae89c67e462e7504ed4eb42c2141fd1"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40449:commit:2a9dc55553f0:spec:github:Azure/azure-rest-api-specs#40449",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-25T19:21:13Z",
+      "observedAt": "2026-02-25T19:21:13Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40449",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "stefong99"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40449",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/2a9dc55553f094f0172a92602e28cc7faaf11e4b"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40449:commit:b4f976aa2bd6:spec:github:Azure/azure-rest-api-specs#40449",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-25T21:49:12Z",
+      "observedAt": "2026-02-25T21:49:12Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40449",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "stefong99"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40449",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/b4f976aa2bd651b2b8fcac4e5bfc2b9a5649786f"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40449:commit:8b429af9a1e0:spec:github:Azure/azure-rest-api-specs#40449",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-26T00:27:24Z",
+      "observedAt": "2026-02-26T00:27:24Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40449",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "stefong99"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40449",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/8b429af9a1e095d39f7cdb6815979171d2d2cc20"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40449:commit:5ece48a71c85:spec:github:Azure/azure-rest-api-specs#40449",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-03T22:06:52Z",
+      "observedAt": "2026-03-03T22:06:52Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40449",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40449",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/5ece48a71c85c114807648fc5ba1603e9de90748"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40449:commit:cad7cad77b76:spec:github:Azure/azure-rest-api-specs#40449",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-03T23:00:22Z",
+      "observedAt": "2026-03-03T23:00:22Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40449",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40449",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/cad7cad77b76b0def66297c8ad137e0490eea949"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40449:commit:f1202267bf45:spec:github:Azure/azure-rest-api-specs#40449",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-04T06:25:44Z",
+      "observedAt": "2026-03-04T06:25:44Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40449",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40449",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/f1202267bf4578ab64598d05ca97f4b5f4e87484"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40449:commit:cb5b703a0243:spec:github:Azure/azure-rest-api-specs#40449",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-04T06:40:39Z",
+      "observedAt": "2026-03-04T06:40:39Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40449",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40449",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/cb5b703a0243f76e61ccfff17d5ce30a76aa0f9e"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40449:commit:0d5b61c7f92f:spec:github:Azure/azure-rest-api-specs#40449",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-05T00:53:56Z",
+      "observedAt": "2026-03-05T00:53:56Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40449",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "stefong99"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40449",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/0d5b61c7f92f612e40638194c6ad6f6c2bd3ff9c"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40449:commit:12a004ed6469:spec:github:Azure/azure-rest-api-specs#40449",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-06T07:19:12Z",
+      "observedAt": "2026-03-06T07:19:12Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40449",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ankushbindlish2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40449",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/12a004ed6469c412952fbb9b63f6cb17f0ccfd41"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40449:commit:c9c2f09bc40e:spec:github:Azure/azure-rest-api-specs#40449",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-06T07:19:23Z",
+      "observedAt": "2026-03-06T07:19:23Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40449",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ankushbindlish2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40449",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/c9c2f09bc40e30847b772b9d70bb702b9dd829ca"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40449:commit:35775e4f2d15:spec:github:Azure/azure-rest-api-specs#40449",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-06T07:20:13Z",
+      "observedAt": "2026-03-06T07:20:13Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40449",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ankushbindlish2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40449",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/35775e4f2d154af831e6e05f40fc97fb20317c4b"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40449:commit:21cc6c042782:spec:github:Azure/azure-rest-api-specs#40449",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-06T07:21:55Z",
+      "observedAt": "2026-03-06T07:21:55Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40449",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ankushbindlish2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40449",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/21cc6c0427823c94ec0df5854d867e86f7a56f31"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40449:commit:c2cd5d4fe1c4:spec:github:Azure/azure-rest-api-specs#40449",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-06T07:23:21Z",
+      "observedAt": "2026-03-06T07:23:21Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40449",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ankushbindlish2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40449",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/c2cd5d4fe1c405bece2c07598d16f03b49166871"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40449:commit:e741abf1f013:spec:github:Azure/azure-rest-api-specs#40449",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-06T17:28:23Z",
+      "observedAt": "2026-03-06T17:28:23Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40449",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ankushbindlish2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40449",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/e741abf1f0133babac3a77e28e1ed1e11370c977"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40449:commit:6789a5d1c237:spec:github:Azure/azure-rest-api-specs#40449",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-07T10:14:31Z",
+      "observedAt": "2026-03-07T10:14:31Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40449",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ankushbindlish2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40449",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/6789a5d1c23757cdf55cc703758c9dd6ea061851"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40449:commit:c9b5678ab0b0:spec:github:Azure/azure-rest-api-specs#40449",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-12T20:34:35Z",
+      "observedAt": "2026-03-12T20:34:35Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40449",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "jlindamood"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40449",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/c9b5678ab0b0a4b6a2208aa1702f5e8ba67091be"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40449:commit:b3f7e01145d3:spec:github:Azure/azure-rest-api-specs#40449",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-04T02:14:46Z",
+      "observedAt": "2026-04-04T02:14:46Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40449",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "jlindamood"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40449",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/b3f7e01145d3a440edc197fb7455f029d1da9e3a"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:33848:created",
+      "type": "plan.created",
+      "phase": "plan",
+      "occurredAt": "2026-04-10T16:13:19.613Z",
+      "observedAt": "2026-04-10T16:13:19.613Z",
+      "trackId": "plan",
+      "title": "Release Plan created",
+      "confidence": "authoritative",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33848",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33848"
+      },
+      "stack": 0
+    },
+    {
+      "id": "ado:33848:1:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-04-10T16:13:19.613Z",
+      "observedAt": "2026-04-10T16:13:19.613Z",
+      "trackId": "plan",
+      "value": "New",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33848",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33848"
+      },
+      "title": "Plan state changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33848:1:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T16:13:19.613Z",
+      "observedAt": "2026-04-10T16:13:19.613Z",
+      "trackId": "plan",
+      "value": "Not Available",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33848",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33848"
+      },
+      "title": "Spec approval changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:33848:1:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-10T16:13:19.613Z",
+      "observedAt": "2026-04-10T16:13:19.613Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.FileShares",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33848",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33848"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33848:1:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-10T16:13:19.613Z",
+      "observedAt": "2026-04-10T16:13:19.613Z",
+      "trackId": "sdk:JavaScript:@azure/arm-fileshares",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33848",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33848"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33848:1:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-10T16:13:19.613Z",
+      "observedAt": "2026-04-10T16:13:19.613Z",
+      "trackId": "sdk:Python:azure-mgmt-fileshares",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33848",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33848"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33848:1:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-10T16:13:19.613Z",
+      "observedAt": "2026-04-10T16:13:19.613Z",
+      "trackId": "sdk:Java:azure-resourcemanager-fileshares",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33848",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33848"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33848:1:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-10T16:13:19.613Z",
+      "observedAt": "2026-04-10T16:13:19.613Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/fileshares/armfileshares",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33848",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33848"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40449:comment:3120131311:spec:github:Azure/azure-rest-api-specs#40449",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-21T20:28:11Z",
+      "observedAt": "2026-04-21T20:28:11Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40449",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40449",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40449#discussion_r3120131311"
+      },
+      "confidence": "authoritative",
+      "excerpt": "FileShareSnapshotProperties.snapshotTime represents a UTC timestamp but is modeled as a plain string without an RFC3339 `date-time` format. Per Azure REST API Guidelines, date/time fields should use `format: date-time` to enable client vali",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40449:comment:3120131342:spec:github:Azure/azure-rest-api-specs#40449",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-21T20:28:11Z",
+      "observedAt": "2026-04-21T20:28:11Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40449",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40449",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40449#discussion_r3120131342"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The example response headers contain URLs with `api-version=2025-09-01-preview`, but this example is for api-version 2026-06-01. Update the header URLs to use 2026-06-01 so the example is self-consistent and matches the operation being demo",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40449:comment:3120131381:spec:github:Azure/azure-rest-api-specs#40449",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-21T20:28:12Z",
+      "observedAt": "2026-04-21T20:28:12Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40449",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40449",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40449#discussion_r3120131381"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The example response headers contain URLs with `api-version=2025-09-01-preview`, but this example is for api-version 2026-06-01. Update the header URLs to use 2026-06-01 so the example is self-consistent and matches the operation being demo",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40449:comment:3120131403:spec:github:Azure/azure-rest-api-specs#40449",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-21T20:28:12Z",
+      "observedAt": "2026-04-21T20:28:12Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40449",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40449",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40449#discussion_r3120131403"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`metadata` on FileShareSnapshotProperties is annotated with `x-ms-mutability: [\"update\"]`, which implies it cannot be set on create/read. However, the snapshot create example includes `metadata` in the PUT request body, so SDKs may incorrec",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40449:comment:3120131427:spec:github:Azure/azure-rest-api-specs#40449",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-21T20:28:12Z",
+      "observedAt": "2026-04-21T20:28:12Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40449",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40449",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40449#discussion_r3120131427"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`metadata` on FileShareSnapshotProperties is annotated with `x-ms-mutability: [\"update\"]`, which implies it cannot be set on create/read. If snapshots accept `metadata` on create (as your examples indicate), this mutability is too restricti",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40449:comment:3120131450:spec:github:Azure/azure-rest-api-specs#40449",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-21T20:28:12Z",
+      "observedAt": "2026-04-21T20:28:12Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40449",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40449",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40449#discussion_r3120131450"
+      },
+      "confidence": "authoritative",
+      "excerpt": "FileShareProperties embeds the full PrivateEndpointConnection child resources inline via `privateEndpointConnections`. This violates ARM ARG compatibility guidance (ARG001: no embedded child resources in parent GET) and can lead to stale/ov",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40449:comment:3120131473:spec:github:Azure/azure-rest-api-specs#40449",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-21T20:28:13Z",
+      "observedAt": "2026-04-21T20:28:13Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40449",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40449",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40449#discussion_r3120131473"
+      },
+      "confidence": "authoritative",
+      "excerpt": "In the example resource payload, the `type` value is `Microsoft.FileShares/privateLinkResources`, but the resource is nested under `fileShares` (see the `id`). ARM resource `type` should include the full type including parent segments (e.g.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40449:comment:3120131487:spec:github:Azure/azure-rest-api-specs#40449",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-21T20:28:13Z",
+      "observedAt": "2026-04-21T20:28:13Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40449",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40449",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40449#discussion_r3120131487"
+      },
+      "confidence": "authoritative",
+      "excerpt": "FileShareSnapshot_CreateOrUpdate (PUT) only defines a 202 response. For ARM, PUT should return 200/201 (with the resource schema) and use LRO headers when long-running; modeling PUT with only 202 breaks standard PUT status code expectations",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40449:comment:3120131505:spec:github:Azure/azure-rest-api-specs#40449",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-21T20:28:13Z",
+      "observedAt": "2026-04-21T20:28:13Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40449",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40449",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40449#discussion_r3120131505"
+      },
+      "confidence": "authoritative",
+      "excerpt": "PrivateEndpointConnections_Delete defines a 200 success response without a response body schema. ARM RPC-Delete-V1-01 expects 200 to include a body (or alternatively use 204 for success if no body is returned). Either add an explicit schema",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40449:comment:3120131525:spec:github:Azure/azure-rest-api-specs#40449",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-21T20:28:13Z",
+      "observedAt": "2026-04-21T20:28:13Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40449",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40449",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40449#discussion_r3120131525"
+      },
+      "confidence": "authoritative",
+      "excerpt": "FileShares_Update is marked as a long-running operation (x-ms-long-running-operation: true). Azure REST API Guidelines recommend not modeling PATCH as an LRO; if updates are long-running, prefer a POST action (e.g., :update) or another LRO ",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40449:comment:3120131552:spec:github:Azure/azure-rest-api-specs#40449",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-21T20:28:14Z",
+      "observedAt": "2026-04-21T20:28:14Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40449",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40449",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40449#discussion_r3120131552"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The example response headers contain URLs with `api-version=2025-09-01-preview`, but this example is for api-version 2026-06-01. Update the header URLs to use 2026-06-01 so the example is self-consistent and matches the operation being demo",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40449:comment:3120131572:spec:github:Azure/azure-rest-api-specs#40449",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-21T20:28:14Z",
+      "observedAt": "2026-04-21T20:28:14Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40449",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40449",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40449#discussion_r3120131572"
+      },
+      "confidence": "authoritative",
+      "excerpt": "In the example resource payload, the `type` value is `Microsoft.FileShares/privateLinkResources`, but the resource is nested under `fileShares` (see the `id`). ARM resource `type` should include the full type including parent segments (e.g.",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40449:comment:3120131589:spec:github:Azure/azure-rest-api-specs#40449",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-21T20:28:14Z",
+      "observedAt": "2026-04-21T20:28:14Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40449",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40449",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40449#discussion_r3120131589"
+      },
+      "confidence": "authoritative",
+      "excerpt": "FileShares_Delete is modeled as an async DELETE (202) but is missing a 200 success response. Per ARM RPC-Delete-V1-01, DELETE operations should include 200 (with body) and 204 (already deleted/not found), and async deletes should also inclu",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40449:comment:3120131602:spec:github:Azure/azure-rest-api-specs#40449",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-21T20:28:15Z",
+      "observedAt": "2026-04-21T20:28:15Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40449",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40449",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40449#discussion_r3120131602"
+      },
+      "confidence": "authoritative",
+      "excerpt": "FileShareSnapshot_Delete is modeled as an async DELETE (202) but is missing a 200 success response. Per ARM RPC-Delete-V1-01, include 200 and 204 (and 202 for async). Add a 200 response (with schema) to avoid an incomplete/invalid delete co",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40449:comment:3120131623:spec:github:Azure/azure-rest-api-specs#40449",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-21T20:28:15Z",
+      "observedAt": "2026-04-21T20:28:15Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40449",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40449",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40449#discussion_r3120131623"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The example response headers contain URLs with `api-version=2025-09-01-preview`, but this example is for api-version 2026-06-01. Update the header URLs to use 2026-06-01 so the example is self-consistent and matches the operation being demo",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40449:comment:3120131642:spec:github:Azure/azure-rest-api-specs#40449",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-21T20:28:15Z",
+      "observedAt": "2026-04-21T20:28:15Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40449",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40449",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40449#discussion_r3120131642"
+      },
+      "confidence": "authoritative",
+      "excerpt": "In the example resource payload, the `type` value is `Microsoft.FileShares/privateLinkResources`, but the resource is nested under `fileShares` (see the `id`). ARM resource `type` should include the full type including parent segments (e.g.",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40449:comment:3120131658:spec:github:Azure/azure-rest-api-specs#40449",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-21T20:28:15Z",
+      "observedAt": "2026-04-21T20:28:15Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40449",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40449",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40449#discussion_r3120131658"
+      },
+      "confidence": "authoritative",
+      "excerpt": "In the example resource payload, the `type` value is `Microsoft.FileShares/privateLinkResources`, but the resource is nested under `fileShares` (see the `id`). ARM resource `type` should include the full type including parent segments (e.g.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40449:review:4150591182:spec:github:Azure/azure-rest-api-specs#40449",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-21T20:28:16Z",
+      "observedAt": "2026-04-21T20:28:16Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40449",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40449",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40449#pullrequestreview-4150591182"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Adds a new stable (GA) API version `2026-06-01` for the Microsoft.FileShares ARM RP, including generated swagger and a large set of generated examples, and updates the TypeSpec source/config to emit and describe the",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40449:commit:dabe6af25d46:spec:github:Azure/azure-rest-api-specs#40449",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-24T20:31:05Z",
+      "observedAt": "2026-04-24T20:31:05Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40449",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40449",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/dabe6af25d467e5ceba7998a2f0ce2bfb41f787c"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40449:commit:9c8a487b5a85:spec:github:Azure/azure-rest-api-specs#40449",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-24T21:01:56Z",
+      "observedAt": "2026-04-24T21:01:56Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40449",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40449",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/9c8a487b5a85ab474663aa068682bfbe8833b8fe"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40449:commit:8391f3eda95b:spec:github:Azure/azure-rest-api-specs#40449",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-27T17:58:17Z",
+      "observedAt": "2026-04-27T17:58:17Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40449",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40449",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/8391f3eda95bf5da64c024d319286b78761fd444"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40449:commit:9c71cf672c25:spec:github:Azure/azure-rest-api-specs#40449",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-27T22:02:38Z",
+      "observedAt": "2026-04-27T22:02:38Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40449",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40449",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/9c71cf672c2590c5b9bc8a421eeb5785f88d781e"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40449:commit:c7e254f5b4a8:spec:github:Azure/azure-rest-api-specs#40449",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-27T22:15:34Z",
+      "observedAt": "2026-04-27T22:15:34Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40449",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40449",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/c7e254f5b4a8a70ce39b8e88e3ff463f986bd4b6"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40449:commit:32cb5fb2e0df:spec:github:Azure/azure-rest-api-specs#40449",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-28T07:28:11Z",
+      "observedAt": "2026-04-28T07:28:11Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40449",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40449",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/32cb5fb2e0dfacb8e602ab21c1754707a4073797"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40449:commit:e76cc34c804f:spec:github:Azure/azure-rest-api-specs#40449",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-28T19:01:46Z",
+      "observedAt": "2026-04-28T19:01:46Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40449",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40449",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/e76cc34c804f0fb630847cd9c7bac6e8dbfc4ea2"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40449:commit:ee15c50c3838:spec:github:Azure/azure-rest-api-specs#40449",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-28T19:04:11Z",
+      "observedAt": "2026-04-28T19:04:11Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40449",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40449",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/ee15c50c38387afef24e31b2cb9193e01494604d"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40449:commit:bb86057cc017:spec:github:Azure/azure-rest-api-specs#40449",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-28T19:55:25Z",
+      "observedAt": "2026-04-28T19:55:25Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40449",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ankushbindlish2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40449",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/bb86057cc0176c7701df8dc2452bc09b5b606fef"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40449:commit:10936f358080:spec:github:Azure/azure-rest-api-specs#40449",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-29T04:51:07Z",
+      "observedAt": "2026-04-29T04:51:07Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40449",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ankushbindlish2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40449",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/10936f3580808a031acfadffe8eae35aa29a9b5d"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26695:commit:7dbe988da23c:sdk:Go:sdk/resourcemanager/fileshares/armfileshares",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-29T05:29:26Z",
+      "observedAt": "2026-04-29T05:29:26Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/fileshares/armfileshares",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ankushbindlish2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26695",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/7dbe988da23c010613cc5aac3825d6f52840f316"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26695:pr.created:sdk:Go:sdk/resourcemanager/fileshares/armfileshares",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-29T05:31:16Z",
+      "observedAt": "2026-04-29T05:31:16Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/fileshares/armfileshares",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "ankushbindlish2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26695",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26695"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26695:comment:3158816384:sdk:Go:sdk/resourcemanager/fileshares/armfileshares",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-29T05:34:48Z",
+      "observedAt": "2026-04-29T05:34:48Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/fileshares/armfileshares",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26695",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26695#discussion_r3158816384"
+      },
+      "confidence": "authoritative",
+      "excerpt": "tsp-location.yaml should point to the upstream specs repo (Azure/azure-rest-api-specs). Using a personal fork here will make regeneration non-reproducible for others and is inconsistent with other RM modules’ tsp-location.yaml files.",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26695:comment:3158816408:sdk:Go:sdk/resourcemanager/fileshares/armfileshares",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-29T05:34:48Z",
+      "observedAt": "2026-04-29T05:34:48Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/fileshares/armfileshares",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26695",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26695#discussion_r3158816408"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The README prerequisites say \"Go 1.24 or later\", but this module’s go.mod declares `go 1.25.0`, which means Go 1.25 is required to build. Update the README to match the module’s minimum Go version (or follow the standard RM README wording t",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26695:review:4194406235:sdk:Go:sdk/resourcemanager/fileshares/armfileshares",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-29T05:34:49Z",
+      "observedAt": "2026-04-29T05:34:49Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/fileshares/armfileshares",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26695",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26695#pullrequestreview-4194406235"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Adds a new Azure Resource Manager Go module (`armfileshares`) for managing Azure File Shares, including generated clients/models plus supporting assets for CI, examples, and testing. **Changes:** - Introduces genera",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46602:commit:7b1a0587da3a:sdk:Python:azure-mgmt-fileshares",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-29T06:37:57Z",
+      "observedAt": "2026-04-29T06:37:57Z",
+      "trackId": "sdk:Python:azure-mgmt-fileshares",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ankushbindlish2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46602",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/7b1a0587da3a18f1b030a30026a638c21cda4b78"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46602:pr.created:sdk:Python:azure-mgmt-fileshares",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-29T06:38:54Z",
+      "observedAt": "2026-04-29T06:38:54Z",
+      "trackId": "sdk:Python:azure-mgmt-fileshares",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "ankushbindlish2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46602",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46602"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46602:comment:3159070928:sdk:Python:azure-mgmt-fileshares",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-29T06:45:19Z",
+      "observedAt": "2026-04-29T06:45:19Z",
+      "trackId": "sdk:Python:azure-mgmt-fileshares",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46602",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46602#discussion_r3159070928"
+      },
+      "confidence": "authoritative",
+      "excerpt": "tsp-location.yaml points to a forked specs repo (ankushbindlish2/azure-rest-api-specs). In this repo, tsp-location.yaml files consistently reference the official `Azure/azure-rest-api-specs`; switch to the upstream repo so the source-of-tru",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46602:comment:3159070968:sdk:Python:azure-mgmt-fileshares",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-29T06:45:20Z",
+      "observedAt": "2026-04-29T06:45:20Z",
+      "trackId": "sdk:Python:azure-mgmt-fileshares",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46602",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46602#discussion_r3159070968"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This pyproject.toml is missing the standard `[tool.azure-sdk-build]` and `[packaging]` sections that other azure-mgmt-* packages in this repo include (e.g., `is_stable`, `is_arm`, and `title`). Without them, repo tooling/validation may not ",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46602:comment:3159070989:sdk:Python:azure-mgmt-fileshares",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-29T06:45:20Z",
+      "observedAt": "2026-04-29T06:45:20Z",
+      "trackId": "sdk:Python:azure-mgmt-fileshares",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46602",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46602#discussion_r3159070989"
+      },
+      "confidence": "authoritative",
+      "excerpt": "toc_tree.rst includes an absolute local Windows path to a generated .rst file. This will not exist in CI/doc builds and will break documentation generation; replace it with a repo-relative ref entry (e.g., under ref/) for this package inste",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46602:comment:3159071014:sdk:Python:azure-mgmt-fileshares",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-29T06:45:20Z",
+      "observedAt": "2026-04-29T06:45:20Z",
+      "trackId": "sdk:Python:azure-mgmt-fileshares",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46602",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46602#discussion_r3159071014"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The README has a typo in the heading \"Prequisites\"; this should be \"Prerequisites\". ```suggestion #### Prerequisites ```",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46602:review:4194700481:sdk:Python:azure-mgmt-fileshares",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-29T06:45:21Z",
+      "observedAt": "2026-04-29T06:45:21Z",
+      "trackId": "sdk:Python:azure-mgmt-fileshares",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46602",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46602#pullrequestreview-4194700481"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This PR introduces a new management-plane Python SDK package, **azure-mgmt-fileshares** (1.0.0b1), under the new `sdk/fileshares/` service directory, along with CI wiring and the generated client implementation, doc",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46602:comment:3159071035:sdk:Python:azure-mgmt-fileshares",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-29T06:45:21Z",
+      "observedAt": "2026-04-29T06:45:21Z",
+      "trackId": "sdk:Python:azure-mgmt-fileshares",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46602",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46602#discussion_r3159071035"
+      },
+      "confidence": "authoritative",
+      "excerpt": "README code snippets construct FileSharesClient with an `endpoint` keyword argument, but the generated client constructor takes `credential`, `subscription_id`, and optional `base_url` (not `endpoint`). Update the snippets to match the actu",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46602:comment:3159071057:sdk:Python:azure-mgmt-fileshares",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-29T06:45:21Z",
+      "observedAt": "2026-04-29T06:45:21Z",
+      "trackId": "sdk:Python:azure-mgmt-fileshares",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46602",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46602#discussion_r3159071057"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The example snippet contains an HTML placeholder (``) inside a Python code block, which is invalid Python and makes the README example unusable. Replace the placeholder with real Python code (or remove it) so the snippet is copy/pasteable. ",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38343:commit:bf5dd50c4188:sdk:JavaScript:@azure/arm-fileshares",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-29T06:59:37Z",
+      "observedAt": "2026-04-29T06:59:37Z",
+      "trackId": "sdk:JavaScript:@azure/arm-fileshares",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ankushbindlish2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38343",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/bf5dd50c4188f4b9557bf8633e8b8825fc9e75d7"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38343:pr.created:sdk:JavaScript:@azure/arm-fileshares",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-29T07:00:21Z",
+      "observedAt": "2026-04-29T07:00:21Z",
+      "trackId": "sdk:JavaScript:@azure/arm-fileshares",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "ankushbindlish2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38343",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38343"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38343:comment:3159176000:sdk:JavaScript:@azure/arm-fileshares",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-29T07:09:56Z",
+      "observedAt": "2026-04-29T07:09:56Z",
+      "trackId": "sdk:JavaScript:@azure/arm-fileshares",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38343",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38343#discussion_r3159176000"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`vitest.esm.config.ts` imports `../../../vitest.esm.shared.config.ts`, but that file doesn't exist at the repo root (only `vitest.shared.config.ts` and `vitest.browser.shared.config.ts` are present). This will cause `test:node:esm` / `dev-t",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38343:comment:3159176039:sdk:JavaScript:@azure/arm-fileshares",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-29T07:09:56Z",
+      "observedAt": "2026-04-29T07:09:56Z",
+      "trackId": "sdk:JavaScript:@azure/arm-fileshares",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38343",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38343#discussion_r3159176039"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The path filters include both `sdk/fileshares/arm-fileshares/` and `sdk/fileshares/arm-fileshares`. Other `ci.mgmt.yml` files in this repo typically list the directory once (without the trailing slash). Consider removing the duplicate entry",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38343:review:4194815025:sdk:JavaScript:@azure/arm-fileshares",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-29T07:09:57Z",
+      "observedAt": "2026-04-29T07:09:57Z",
+      "trackId": "sdk:JavaScript:@azure/arm-fileshares",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38343",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38343#pullrequestreview-4194815025"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This PR introduces a new Azure Resource Manager (management-plane) JavaScript/TypeScript package under `sdk/fileshares/arm-fileshares` targeting the `2026-06-01` API version, along with the supporting build/test con",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38343:comment:3159176076:sdk:JavaScript:@azure/arm-fileshares",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-29T07:09:57Z",
+      "observedAt": "2026-04-29T07:09:57Z",
+      "trackId": "sdk:JavaScript:@azure/arm-fileshares",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38343",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38343#discussion_r3159176076"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`tsp-location.yaml` points to `repo: ankushbindlish2/azure-rest-api-specs`. For reproducible generation and to match other service directories, this should typically reference the canonical `Azure/azure-rest-api-specs` repo (or clearly docu",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48976:commit:eef124f99384:sdk:Java:azure-resourcemanager-fileshares",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-29T13:41:09Z",
+      "observedAt": "2026-04-29T13:41:09Z",
+      "trackId": "sdk:Java:azure-resourcemanager-fileshares",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ankushbindlish2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48976",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/eef124f99384116354732e2bf009d41fdf9a21ce"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48976:pr.created:sdk:Java:azure-resourcemanager-fileshares",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-29T13:44:04Z",
+      "observedAt": "2026-04-29T13:44:04Z",
+      "trackId": "sdk:Java:azure-resourcemanager-fileshares",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "ankushbindlish2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48976",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48976"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48976:comment:3161511803:sdk:Java:azure-resourcemanager-fileshares",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-29T13:51:07Z",
+      "observedAt": "2026-04-29T13:51:07Z",
+      "trackId": "sdk:Java:azure-resourcemanager-fileshares",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48976",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48976#discussion_r3161511803"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`tsp-location.yaml` points at a personal fork (`repo: ankushbindlish2/azure-rest-api-specs`). In this repo, `tsp-location.yaml` files consistently reference `Azure/azure-rest-api-specs`, and using a fork will break downstream automation tha",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48976:comment:3161511881:sdk:Java:azure-resourcemanager-fileshares",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-29T13:51:07Z",
+      "observedAt": "2026-04-29T13:51:07Z",
+      "trackId": "sdk:Java:azure-resourcemanager-fileshares",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48976",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48976#discussion_r3161511881"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`PrivateLinkResourceProperties` has populated fields (`groupId`, `requiredMembers`, `requiredZoneNames`) but `toJson` serializes an empty object. This breaks round-trip serialization (e.g., `BinaryData.fromObject(...)`) and can lead to sile",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48976:review:4197567035:sdk:Java:azure-resourcemanager-fileshares",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-29T13:51:08Z",
+      "observedAt": "2026-04-29T13:51:08Z",
+      "trackId": "sdk:Java:azure-resourcemanager-fileshares",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48976",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48976#pullrequestreview-4197567035"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Adds a new **Fileshares** service directory under `sdk/` and introduces the **`azure-resourcemanager-fileshares`** management-plane SDK module (v`1.0.0-beta.1`, targeting `api-version 2026-06-01`) with generated sou",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48976:comment:3161511914:sdk:Java:azure-resourcemanager-fileshares",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-29T13:51:08Z",
+      "observedAt": "2026-04-29T13:51:08Z",
+      "trackId": "sdk:Java:azure-resourcemanager-fileshares",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48976",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48976#discussion_r3161511914"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`PrivateEndpoint` reads an `id` field in `fromJson`, but `toJson` writes an empty object. This means serializing an instance (e.g., via `BinaryData.fromObject`) will drop `id`, which is inconsistent with the rest of the models in this packa",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48976:comment:3161511956:sdk:Java:azure-resourcemanager-fileshares",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-29T13:51:08Z",
+      "observedAt": "2026-04-29T13:51:08Z",
+      "trackId": "sdk:Java:azure-resourcemanager-fileshares",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48976",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48976#discussion_r3161511956"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The PR description is still the autogenerated template (it asks to “Please add an informative description…” and the checklist is unchecked). Before merging, update the PR description to summarize the change (new `azure-resourcemanager-files",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46602:commit:3577885c5222:sdk:Python:azure-mgmt-fileshares",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-30T05:40:31Z",
+      "observedAt": "2026-04-30T05:40:31Z",
+      "trackId": "sdk:Python:azure-mgmt-fileshares",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ankushbindlish2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46602",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/3577885c5222effb7d8bc3a58cc3e19b84fd7cc0"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46602:review:4202675406:sdk:Python:azure-mgmt-fileshares",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-30T05:41:20Z",
+      "observedAt": "2026-04-30T05:41:20Z",
+      "trackId": "sdk:Python:azure-mgmt-fileshares",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ankushbindlish2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46602",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46602#pullrequestreview-4202675406"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46602:comment:3165854752:sdk:Python:azure-mgmt-fileshares",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-30T05:41:20Z",
+      "observedAt": "2026-04-30T05:41:20Z",
+      "trackId": "sdk:Python:azure-mgmt-fileshares",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ankushbindlish2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46602",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46602#discussion_r3165854752"
+      },
+      "confidence": "authoritative",
+      "excerpt": "this is temporary until we merge spec repo",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46602:commit:461c2cd7e6b6:sdk:Python:azure-mgmt-fileshares",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-30T05:44:10Z",
+      "observedAt": "2026-04-30T05:44:10Z",
+      "trackId": "sdk:Python:azure-mgmt-fileshares",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ankushbindlish2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46602",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/461c2cd7e6b6cfb692e9a9c4afc7bda0d8899544"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58902:commit:a1844facd087:sdk:.NET:Azure.ResourceManager.FileShares",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-30T14:25:12Z",
+      "observedAt": "2026-04-30T14:25:12Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.FileShares",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ankushbindlish2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58902",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/a1844facd0872de77b0af5b282516f40fd94a743"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58902:pr.created:sdk:.NET:Azure.ResourceManager.FileShares",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-30T14:27:22Z",
+      "observedAt": "2026-04-30T14:27:22Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.FileShares",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "ankushbindlish2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58902",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58902"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58902:comment:3168691476:sdk:.NET:Azure.ResourceManager.FileShares",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-30T14:34:51Z",
+      "observedAt": "2026-04-30T14:34:51Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.FileShares",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58902",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58902#discussion_r3168691476"
+      },
+      "confidence": "authoritative",
+      "excerpt": "tsp-location.yaml now points to a personal fork (`ankushbindlish2/azure-rest-api-specs`). For reproducible builds and supply-chain safety, this should reference the canonical `Azure/azure-rest-api-specs` repo (and a commit SHA that exists i",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58902:review:4206014112:sdk:.NET:Azure.ResourceManager.FileShares",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-30T14:34:52Z",
+      "observedAt": "2026-04-30T14:34:52Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.FileShares",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58902",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58902#pullrequestreview-4206014112"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Updates the Azure.ResourceManager.FileShares management SDK to the `2026-06-01` GA API version and finalizes the package as `1.0.0`, including NFS protocol surface-area updates and related public API changes. **Chan",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58902:commit:55c1043975d0:sdk:.NET:Azure.ResourceManager.FileShares",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-30T14:47:20Z",
+      "observedAt": "2026-04-30T14:47:20Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.FileShares",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ankushbindlish2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58902",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/55c1043975d022def86c89c5708ff10620d7559f"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46602:commit:e6f41982b213:sdk:Python:azure-mgmt-fileshares",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-30T17:46:27Z",
+      "observedAt": "2026-04-30T17:46:27Z",
+      "trackId": "sdk:Python:azure-mgmt-fileshares",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ankushbindlish2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46602",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/e6f41982b213c15d8403652a053b05ee37be4315"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46602:commit:9478a7d0526b:sdk:Python:azure-mgmt-fileshares",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-30T17:48:03Z",
+      "observedAt": "2026-04-30T17:48:03Z",
+      "trackId": "sdk:Python:azure-mgmt-fileshares",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ankushbindlish2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46602",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/9478a7d0526bebcbd7767c3d41e38603c7a45d26"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46602:commit:3f4aa665bb49:sdk:Python:azure-mgmt-fileshares",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-30T18:09:28Z",
+      "observedAt": "2026-04-30T18:09:28Z",
+      "trackId": "sdk:Python:azure-mgmt-fileshares",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ankushbindlish2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46602",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/3f4aa665bb492d865532107f98130e1e8657dbd2"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46602:commit:bd4330fef5f2:sdk:Python:azure-mgmt-fileshares",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-30T18:11:24Z",
+      "observedAt": "2026-04-30T18:11:24Z",
+      "trackId": "sdk:Python:azure-mgmt-fileshares",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ankushbindlish2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46602",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/bd4330fef5f28c69834e36abff0ee6ac72eaf997"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46602:commit:a95502855e04:sdk:Python:azure-mgmt-fileshares",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-30T20:59:42Z",
+      "observedAt": "2026-04-30T20:59:42Z",
+      "trackId": "sdk:Python:azure-mgmt-fileshares",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ankushbindlish2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46602",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/a95502855e04cfcc2f0bfa53283979a5cc16a86d"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40449:commit:f82a6a4b1659:spec:github:Azure/azure-rest-api-specs#40449",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-01T08:02:18Z",
+      "observedAt": "2026-05-01T08:02:18Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40449",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ankushbindlish2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40449",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/f82a6a4b165952c47df52a8cb1ca1c83ed09a683"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38343:commit:0ce1c0ad790b:sdk:JavaScript:@azure/arm-fileshares",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-01T09:04:17Z",
+      "observedAt": "2026-05-01T09:04:17Z",
+      "trackId": "sdk:JavaScript:@azure/arm-fileshares",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ankushbindlish2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38343",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/0ce1c0ad790b3aa29f6a3be83f3dc690eb32a5c9"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48976:commit:30f8c35008da:sdk:Java:azure-resourcemanager-fileshares",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-01T09:15:27Z",
+      "observedAt": "2026-05-01T09:15:27Z",
+      "trackId": "sdk:Java:azure-resourcemanager-fileshares",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ankushbindlish2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48976",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/30f8c35008da8637a20504d8be0c97495433c51d"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58902:commit:980e6868a4f0:sdk:.NET:Azure.ResourceManager.FileShares",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-01T09:35:17Z",
+      "observedAt": "2026-05-01T09:35:17Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.FileShares",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ankushbindlish2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58902",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/980e6868a4f0f61d530c494d977941cdcde42f77"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58902:commit:f96381340099:sdk:.NET:Azure.ResourceManager.FileShares",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-01T09:51:09Z",
+      "observedAt": "2026-05-01T09:51:09Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.FileShares",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ankushbindlish2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58902",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/f96381340099139c5e821417c8319f3823e81436"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48976:commit:4cebfb342de0:sdk:Java:azure-resourcemanager-fileshares",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-01T10:18:18Z",
+      "observedAt": "2026-05-01T10:18:18Z",
+      "trackId": "sdk:Java:azure-resourcemanager-fileshares",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ankushbindlish2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48976",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/4cebfb342de00d003799f6a7127774b12d3bf533"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38343:commit:d56999c2b8a7:sdk:JavaScript:@azure/arm-fileshares",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-01T10:44:05Z",
+      "observedAt": "2026-05-01T10:44:05Z",
+      "trackId": "sdk:JavaScript:@azure/arm-fileshares",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ankushbindlish2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38343",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/d56999c2b8a7e57a756299f384e67176e3ce9a69"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48976:commit:55c528f37afc:sdk:Java:azure-resourcemanager-fileshares",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-01T10:50:23Z",
+      "observedAt": "2026-05-01T10:50:23Z",
+      "trackId": "sdk:Java:azure-resourcemanager-fileshares",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ankushbindlish2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48976",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/55c528f37afcafddc01b71745fbfefdaf1c4178e"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40449:review:4212064198:spec:github:Azure/azure-rest-api-specs#40449",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-01T16:17:31Z",
+      "observedAt": "2026-05-01T16:17:31Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40449",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "VincentLiu777"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40449",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40449#pullrequestreview-4212064198"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40449:commit:afc7af96fbc7:spec:github:Azure/azure-rest-api-specs#40449",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-01T16:20:53Z",
+      "observedAt": "2026-05-01T16:20:53Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40449",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ankushbindlish2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40449",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/afc7af96fbc72066e389cb66a6fbc59b9f17d326"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40449:review:4212396501:spec:github:Azure/azure-rest-api-specs#40449",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-01T17:27:03Z",
+      "observedAt": "2026-05-01T17:27:03Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40449",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "kszobi"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40449",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40449#pullrequestreview-4212396501"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40449:pr.merged:spec:github:Azure/azure-rest-api-specs#40449",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-01T17:27:07Z",
+      "observedAt": "2026-05-01T17:27:07Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40449",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40449",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40449"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26695:commit:f017ac55835d:sdk:Go:sdk/resourcemanager/fileshares/armfileshares",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-01T17:33:37Z",
+      "observedAt": "2026-05-01T17:33:37Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/fileshares/armfileshares",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ankushbindlish2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26695",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/f017ac55835d698d1ab19e9e5c9116737c9d041a"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38343:commit:4366727b36f4:sdk:JavaScript:@azure/arm-fileshares",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-01T17:35:11Z",
+      "observedAt": "2026-05-01T17:35:11Z",
+      "trackId": "sdk:JavaScript:@azure/arm-fileshares",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ankushbindlish2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38343",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/4366727b36f4857f7f7061208ba5bce99caf8a14"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58902:commit:966c4d16e1be:sdk:.NET:Azure.ResourceManager.FileShares",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-01T17:35:25Z",
+      "observedAt": "2026-05-01T17:35:25Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.FileShares",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ankushbindlish2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58902",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/966c4d16e1be31923714a8c2486e72bfcde89067"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46602:commit:ad37854f9be6:sdk:Python:azure-mgmt-fileshares",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-01T17:35:35Z",
+      "observedAt": "2026-05-01T17:35:35Z",
+      "trackId": "sdk:Python:azure-mgmt-fileshares",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ankushbindlish2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46602",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/ad37854f9be632e9694fc043da98fd55e4fec25d"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48976:commit:9c7967ba71f0:sdk:Java:azure-resourcemanager-fileshares",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-01T17:35:48Z",
+      "observedAt": "2026-05-01T17:35:48Z",
+      "trackId": "sdk:Java:azure-resourcemanager-fileshares",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ankushbindlish2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48976",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/9c7967ba71f065b37402b0648b7987185481bfd3"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48976:commit:28bd237257d9:sdk:Java:azure-resourcemanager-fileshares",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-01T17:50:32Z",
+      "observedAt": "2026-05-01T17:50:32Z",
+      "trackId": "sdk:Java:azure-resourcemanager-fileshares",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ankushbindlish2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48976",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/28bd237257d99cfe35e99821af85581e35906174"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26695:commit:099c729a6d00:sdk:Go:sdk/resourcemanager/fileshares/armfileshares",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-02T14:41:50Z",
+      "observedAt": "2026-05-02T14:41:50Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/fileshares/armfileshares",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ankushbindlish2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26695",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/099c729a6d00b50c7fe323acfac76307530c9a52"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48976:commit:950ae6c27330:sdk:Java:azure-resourcemanager-fileshares",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-02T14:46:02Z",
+      "observedAt": "2026-05-02T14:46:02Z",
+      "trackId": "sdk:Java:azure-resourcemanager-fileshares",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ankushbindlish2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48976",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/950ae6c273302c60d4d729a11ad93d36759bb768"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48976:commit:e6bfbae5be93:sdk:Java:azure-resourcemanager-fileshares",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-02T14:46:15Z",
+      "observedAt": "2026-05-02T14:46:15Z",
+      "trackId": "sdk:Java:azure-resourcemanager-fileshares",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ankushbindlish2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48976",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/e6bfbae5be932cc2a2fe8985d864a00248a76e3d"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58902:comment:4381015308:sdk:.NET:Azure.ResourceManager.FileShares",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-05T16:11:54Z",
+      "observedAt": "2026-05-05T16:11:54Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.FileShares",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "VincentLiu777"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58902",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58902#issuecomment-4381015308"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Release Plan: https://aka.ms/sdk-release-planner?release-plan-id=1122d42a-f834-f111-88b4-000d3a5a7991",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46602:comment:4381017284:sdk:Python:azure-mgmt-fileshares",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-05T16:12:13Z",
+      "observedAt": "2026-05-05T16:12:13Z",
+      "trackId": "sdk:Python:azure-mgmt-fileshares",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "VincentLiu777"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46602",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46602#issuecomment-4381017284"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Release Plan: https://aka.ms/sdk-release-planner?release-plan-id=1122d42a-f834-f111-88b4-000d3a5a7991",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48976:comment:4381041993:sdk:Java:azure-resourcemanager-fileshares",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-05T16:16:06Z",
+      "observedAt": "2026-05-05T16:16:06Z",
+      "trackId": "sdk:Java:azure-resourcemanager-fileshares",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "VincentLiu777"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48976",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48976#issuecomment-4381041993"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Release Plan: https://aka.ms/sdk-release-planner?release-plan-id=1122d42a-f834-f111-88b4-000d3a5a7991",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38343:comment:4381047618:sdk:JavaScript:@azure/arm-fileshares",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-05T16:16:50Z",
+      "observedAt": "2026-05-05T16:16:50Z",
+      "trackId": "sdk:JavaScript:@azure/arm-fileshares",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "VincentLiu777"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38343",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38343#issuecomment-4381047618"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Release Plan: https://aka.ms/sdk-release-planner?release-plan-id=1122d42a-f834-f111-88b4-000d3a5a7991",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26695:comment:4381048014:sdk:Go:sdk/resourcemanager/fileshares/armfileshares",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-05T16:16:54Z",
+      "observedAt": "2026-05-05T16:16:54Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/fileshares/armfileshares",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "VincentLiu777"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26695",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26695#issuecomment-4381048014"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Release Plan: https://aka.ms/sdk-release-planner?release-plan-id=1122d42a-f834-f111-88b4-000d3a5a7991",
+      "stack": 0
+    },
+    {
+      "id": "ado:33848:7:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-05-05T16:21:08.067Z",
+      "observedAt": "2026-05-05T16:21:08.067Z",
+      "trackId": "plan",
+      "value": "In Progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33848",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33848"
+      },
+      "title": "Plan state changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33849:2:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-05T16:22:24.77Z",
+      "observedAt": "2026-05-05T16:22:24.77Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40449",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/40449",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33849",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33849"
+      },
+      "title": "Spec PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado:33848:9:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-05T16:22:28.31Z",
+      "observedAt": "2026-05-05T16:22:28.31Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.FileShares",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33848",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33848"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33848:9:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-05T16:22:28.31Z",
+      "observedAt": "2026-05-05T16:22:28.31Z",
+      "trackId": "sdk:JavaScript:@azure/arm-fileshares",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33848",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33848"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33848:9:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-05T16:22:28.31Z",
+      "observedAt": "2026-05-05T16:22:28.31Z",
+      "trackId": "sdk:Python:azure-mgmt-fileshares",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33848",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33848"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33848:9:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-05T16:22:28.31Z",
+      "observedAt": "2026-05-05T16:22:28.31Z",
+      "trackId": "sdk:Java:azure-resourcemanager-fileshares",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33848",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33848"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33848:9:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-05T16:22:28.31Z",
+      "observedAt": "2026-05-05T16:22:28.31Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/fileshares/armfileshares",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33848",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33848"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33848:10:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-05T16:22:39.64Z",
+      "observedAt": "2026-05-05T16:22:39.64Z",
+      "trackId": "plan",
+      "value": "Approved",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33848",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33848"
+      },
+      "title": "Spec approval changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33848:24:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-05T17:34:40.717Z",
+      "observedAt": "2026-05-05T17:34:40.717Z",
+      "trackId": "sdk:JavaScript:@azure/arm-fileshares",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33848",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33848"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:33848:24:Custom.SDKPullRequestForJavaScript",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-05-05T17:34:40.717Z",
+      "observedAt": "2026-05-05T17:34:40.717Z",
+      "trackId": "sdk:JavaScript:@azure/arm-fileshares",
+      "value": "https://github.com/Azure/azure-sdk-for-js/pull/38343",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33848",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33848"
+      },
+      "title": "SDK PR linked",
+      "stack": 3
+    },
+    {
+      "id": "ado:33848:25:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-05T17:34:40.837Z",
+      "observedAt": "2026-05-05T17:34:40.837Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.FileShares",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33848",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33848"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:33848:25:Custom.SDKPullRequestForDotnet",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-05-05T17:34:40.837Z",
+      "observedAt": "2026-05-05T17:34:40.837Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.FileShares",
+      "value": "https://github.com/Azure/azure-sdk-for-net/pull/58902",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33848",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33848"
+      },
+      "title": "SDK PR linked",
+      "stack": 3
+    },
+    {
+      "id": "ado:33848:26:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-05T17:34:42.097Z",
+      "observedAt": "2026-05-05T17:34:42.097Z",
+      "trackId": "sdk:Java:azure-resourcemanager-fileshares",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33848",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33848"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:33848:26:Custom.SDKPullRequestForJava",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-05-05T17:34:42.097Z",
+      "observedAt": "2026-05-05T17:34:42.097Z",
+      "trackId": "sdk:Java:azure-resourcemanager-fileshares",
+      "value": "https://github.com/Azure/azure-sdk-for-java/pull/48976",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33848",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33848"
+      },
+      "title": "SDK PR linked",
+      "stack": 3
+    },
+    {
+      "id": "ado:33848:27:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-05T17:34:47.32Z",
+      "observedAt": "2026-05-05T17:34:47.32Z",
+      "trackId": "sdk:Python:azure-mgmt-fileshares",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33848",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33848"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:33848:27:Custom.SDKPullRequestForPython",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-05-05T17:34:47.32Z",
+      "observedAt": "2026-05-05T17:34:47.32Z",
+      "trackId": "sdk:Python:azure-mgmt-fileshares",
+      "value": "https://github.com/Azure/azure-sdk-for-python/pull/46602",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33848",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33848"
+      },
+      "title": "SDK PR linked",
+      "stack": 3
+    },
+    {
+      "id": "ado:33848:28:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-05T17:34:49.433Z",
+      "observedAt": "2026-05-05T17:34:49.433Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/fileshares/armfileshares",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33848",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33848"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:33848:28:Custom.SDKPullRequestForGo",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-05-05T17:34:49.433Z",
+      "observedAt": "2026-05-05T17:34:49.433Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/fileshares/armfileshares",
+      "value": "https://github.com/Azure/azure-sdk-for-go/pull/26695",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33848",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33848"
+      },
+      "title": "SDK PR linked",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38343:comment:4384576264:sdk:JavaScript:@azure/arm-fileshares",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-06T02:08:25Z",
+      "observedAt": "2026-05-06T02:08:25Z",
+      "trackId": "sdk:JavaScript:@azure/arm-fileshares",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38343",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38343#issuecomment-4384576264"
+      },
+      "confidence": "authoritative",
+      "excerpt": "why this pr is not generated by release plan?",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48976:comment:4386227742:sdk:Java:azure-resourcemanager-fileshares",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-06T08:18:02Z",
+      "observedAt": "2026-05-06T08:18:02Z",
+      "trackId": "sdk:Java:azure-resourcemanager-fileshares",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48976",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48976#issuecomment-4386227742"
+      },
+      "confidence": "authoritative",
+      "excerpt": "namespace review completed https://github.com/Azure/azure-sdk/issues/9492",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48976:comment:4386228811:sdk:Java:azure-resourcemanager-fileshares",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-06T08:18:10Z",
+      "observedAt": "2026-05-06T08:18:10Z",
+      "trackId": "sdk:Java:azure-resourcemanager-fileshares",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48976",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48976#issuecomment-4386228811"
+      },
+      "confidence": "authoritative",
+      "excerpt": "/azp run prepare-pipelines",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48976:comment:4386230177:sdk:Java:azure-resourcemanager-fileshares",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-06T08:18:21Z",
+      "observedAt": "2026-05-06T08:18:21Z",
+      "trackId": "sdk:Java:azure-resourcemanager-fileshares",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48976",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48976#issuecomment-4386230177"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines successfully started running 1 pipeline(s).<br> </samp>",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46749:commit:ee0435c3e8b9:sdk:Python:azure-mgmt-fileshares",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-06T08:28:16Z",
+      "observedAt": "2026-05-06T08:28:16Z",
+      "trackId": "sdk:Python:azure-mgmt-fileshares",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46749",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/ee0435c3e8b9a76301db7bfabb324a7f4de3688b"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46749:pr.created:sdk:Python:azure-mgmt-fileshares",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-06T08:28:20Z",
+      "observedAt": "2026-05-06T08:28:20Z",
+      "trackId": "sdk:Python:azure-mgmt-fileshares",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46749",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46749"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46749:commit:b7e9dbb68755:sdk:Python:azure-mgmt-fileshares",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-06T08:42:49Z",
+      "observedAt": "2026-05-06T08:42:49Z",
+      "trackId": "sdk:Python:azure-mgmt-fileshares",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46749",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/b7e9dbb6875572bead3298882d718d19f2512f93"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46602:comment:4386408305:sdk:Python:azure-mgmt-fileshares",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-06T08:45:53Z",
+      "observedAt": "2026-05-06T08:45:53Z",
+      "trackId": "sdk:Python:azure-mgmt-fileshares",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46602",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46602#issuecomment-4386408305"
+      },
+      "confidence": "authoritative",
+      "excerpt": "move this PR to https://github.com/Azure/azure-sdk-for-python/pull/46749. NOTE: mainly for the test files which was added by ankushbindlish2 CC @ankushbindlish2",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46602:pr.closed:sdk:Python:azure-mgmt-fileshares",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-06T08:45:56Z",
+      "observedAt": "2026-05-06T08:45:56Z",
+      "trackId": "sdk:Python:azure-mgmt-fileshares",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46602",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46602"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46749:comment:4386411197:sdk:Python:azure-mgmt-fileshares",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-06T08:46:22Z",
+      "observedAt": "2026-05-06T08:46:22Z",
+      "trackId": "sdk:Python:azure-mgmt-fileshares",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46749",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46749#issuecomment-4386411197"
+      },
+      "confidence": "authoritative",
+      "excerpt": "test files are copied from https://github.com/Azure/azure-sdk-for-python/pull/46602",
+      "stack": 3
+    },
+    {
+      "id": "ado:33848:36:Custom.SDKPullRequestForPython",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T08:49:13.52Z",
+      "observedAt": "2026-05-06T08:49:13.52Z",
+      "trackId": "sdk:Python:azure-mgmt-fileshares",
+      "value": "https://github.com/Azure/azure-sdk-for-python/pull/46749",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33848",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33848"
+      },
+      "title": "SDK PR linked",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46749:comment:3194156015:sdk:Python:azure-mgmt-fileshares",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-06T08:56:18Z",
+      "observedAt": "2026-05-06T08:56:18Z",
+      "trackId": "sdk:Python:azure-mgmt-fileshares",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46749",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46749#discussion_r3194156015"
+      },
+      "confidence": "authoritative",
+      "excerpt": "“Fileshares” should be capitalized consistently with the RP/package name (e.g., “FileShares” or “File Shares”). This is user-facing package documentation and should match the branding used elsewhere (including the client name in the snippet",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46749:comment:3194156059:sdk:Python:azure-mgmt-fileshares",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-06T08:56:18Z",
+      "observedAt": "2026-05-06T08:56:18Z",
+      "trackId": "sdk:Python:azure-mgmt-fileshares",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46749",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46749#discussion_r3194156059"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The tests’ default configuration hard-codes a specific canary ARM endpoint, location, and a pre-provisioned resource group name. This makes re-recording and running tests in different subscriptions/environments fragile and can create cross-",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46749:review:4234617606:sdk:Python:azure-mgmt-fileshares",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-06T08:56:19Z",
+      "observedAt": "2026-05-06T08:56:19Z",
+      "trackId": "sdk:Python:azure-mgmt-fileshares",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46749",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46749#pullrequestreview-4234617606"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This PR introduces a new management-plane Python package, **azure-mgmt-fileshares**, generated from the Microsoft.FileShares TypeSpec configuration, along with CI wiring and an initial set of tests/samples to suppor",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46749:comment:3194156087:sdk:Python:azure-mgmt-fileshares",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-06T08:56:19Z",
+      "observedAt": "2026-05-06T08:56:19Z",
+      "trackId": "sdk:Python:azure-mgmt-fileshares",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46749",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46749#discussion_r3194156087"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This test uses a fixed share name (\"fsa\"). If these tests run live/record against a shared, long-lived resource group, concurrent runs (or leftover resources from a failed run) can cause name collisions and flaky recordings. Using a per-tes",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46749:comment:3194156115:sdk:Python:azure-mgmt-fileshares",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-06T08:56:19Z",
+      "observedAt": "2026-05-06T08:56:19Z",
+      "trackId": "sdk:Python:azure-mgmt-fileshares",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46749",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46749#discussion_r3194156115"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`test_get_nonexistent_resource_group_raises` uses a hard-coded resource group name. If that RG ever exists in a subscription, this test may still pass (because the share is missing) but it will no longer validate the intended “missing RG” e",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46749:comment:3194156137:sdk:Python:azure-mgmt-fileshares",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-06T08:56:19Z",
+      "observedAt": "2026-05-06T08:56:19Z",
+      "trackId": "sdk:Python:azure-mgmt-fileshares",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46749",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46749#discussion_r3194156137"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Importing `ResourceNotFoundError` inside the test function is likely to trigger lint warnings (e.g., import-outside-toplevel) and is inconsistent with the rest of the module’s imports. Prefer moving this import to the top of the file with t",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46749:commit:0aad2d10b099:sdk:Python:azure-mgmt-fileshares",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-06T09:00:37Z",
+      "observedAt": "2026-05-06T09:00:37Z",
+      "trackId": "sdk:Python:azure-mgmt-fileshares",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46749",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/0aad2d10b09900a50be79b2526ea5abe162555c4"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38343:comment:4386573112:sdk:JavaScript:@azure/arm-fileshares",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-06T09:08:18Z",
+      "observedAt": "2026-05-06T09:08:18Z",
+      "trackId": "sdk:JavaScript:@azure/arm-fileshares",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38343",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38343#issuecomment-4386573112"
+      },
+      "confidence": "authoritative",
+      "excerpt": "namespace https://github.com/Azure/azure-sdk/issues/9492",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46749:commit:d331f512a776:sdk:Python:azure-mgmt-fileshares",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-06T09:08:48Z",
+      "observedAt": "2026-05-06T09:08:48Z",
+      "trackId": "sdk:Python:azure-mgmt-fileshares",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46749",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/d331f512a776435e16e7e0daf6013746aca393f1"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38343:comment:4386613428:sdk:JavaScript:@azure/arm-fileshares",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-06T09:13:23Z",
+      "observedAt": "2026-05-06T09:13:23Z",
+      "trackId": "sdk:JavaScript:@azure/arm-fileshares",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38343",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38343#issuecomment-4386613428"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Next Steps to Merge Only failed checks and required actions are listed below. - 🔄 **pnpm-lock conflict**: The PR branch has a merge conflict (`mergeable_state: dirty`), most likely in `pnpm-lock.yaml`. Follow the [conflict guide](https:",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38343:review:4234738201:sdk:JavaScript:@azure/arm-fileshares",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-06T09:13:24Z",
+      "observedAt": "2026-05-06T09:13:24Z",
+      "trackId": "sdk:JavaScript:@azure/arm-fileshares",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38343",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38343#pullrequestreview-4234738201"
+      },
+      "confidence": "authoritative",
+      "excerpt": "No API design issues found. This is a new package (`@azure/arm-fileshares` v1.0.0-beta.1) targeting API version `2026-06-01`. The public API surface in `arm-fileshares-node.api.md` follows standard modular management SDK conventions — clien",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46749:review:4234765907:sdk:Python:azure-mgmt-fileshares",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-06T09:16:51Z",
+      "observedAt": "2026-05-06T09:16:51Z",
+      "trackId": "sdk:Python:azure-mgmt-fileshares",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46749",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46749#pullrequestreview-4234765907"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46749:comment:4386674021:sdk:Python:azure-mgmt-fileshares",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-06T09:20:51Z",
+      "observedAt": "2026-05-06T09:20:51Z",
+      "trackId": "sdk:Python:azure-mgmt-fileshares",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46749",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46749#issuecomment-4386674021"
+      },
+      "confidence": "authoritative",
+      "excerpt": "/azp run prepare-pipelines",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46749:comment:4386675492:sdk:Python:azure-mgmt-fileshares",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-06T09:21:02Z",
+      "observedAt": "2026-05-06T09:21:02Z",
+      "trackId": "sdk:Python:azure-mgmt-fileshares",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46749",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46749#issuecomment-4386675492"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines successfully started running 1 pipeline(s).<br> </samp>",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48976:commit:988b38cb3a94:sdk:Java:azure-resourcemanager-fileshares",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-06T09:21:32Z",
+      "observedAt": "2026-05-06T09:21:32Z",
+      "trackId": "sdk:Java:azure-resourcemanager-fileshares",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48976",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/988b38cb3a941bcd9c64678838d6b3fa5c06fcff"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46749:commit:11a293656efb:sdk:Python:azure-mgmt-fileshares",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-06T09:32:55Z",
+      "observedAt": "2026-05-06T09:32:55Z",
+      "trackId": "sdk:Python:azure-mgmt-fileshares",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46749",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/11a293656efb68e89b9bd5d34785c37fff396bca"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46749:review:4234923156:sdk:Python:azure-mgmt-fileshares",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-06T09:36:43Z",
+      "observedAt": "2026-05-06T09:36:43Z",
+      "trackId": "sdk:Python:azure-mgmt-fileshares",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46749",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46749#pullrequestreview-4234923156"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46749:commit:e1373ce6fb0b:sdk:Python:azure-mgmt-fileshares",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-06T09:45:45Z",
+      "observedAt": "2026-05-06T09:45:45Z",
+      "trackId": "sdk:Python:azure-mgmt-fileshares",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46749",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/e1373ce6fb0b87aa2d27cd881557e0b66028d0a4"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48976:commit:0af94d8d8f70:sdk:Java:azure-resourcemanager-fileshares",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-06T09:55:31Z",
+      "observedAt": "2026-05-06T09:55:31Z",
+      "trackId": "sdk:Java:azure-resourcemanager-fileshares",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48976",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/0af94d8d8f70d70dffd26db087cd096562ad98fa"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48976:review:4235273520:sdk:Java:azure-resourcemanager-fileshares",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-06T10:28:32Z",
+      "observedAt": "2026-05-06T10:28:32Z",
+      "trackId": "sdk:Java:azure-resourcemanager-fileshares",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48976",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48976#pullrequestreview-4235273520"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@XiaofeiCao for review and merge (I am the last pusher)",
+      "reviewState": "approved",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48976:review:4240378489:sdk:Java:azure-resourcemanager-fileshares",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-06T23:56:54Z",
+      "observedAt": "2026-05-06T23:56:54Z",
+      "trackId": "sdk:Java:azure-resourcemanager-fileshares",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "XiaofeiCao"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48976",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48976#pullrequestreview-4240378489"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48976:pr.merged:sdk:Java:azure-resourcemanager-fileshares",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-07T01:38:17Z",
+      "observedAt": "2026-05-07T01:38:17Z",
+      "trackId": "sdk:Java:azure-resourcemanager-fileshares",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48976",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48976"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38343:comment:4393560353:sdk:JavaScript:@azure/arm-fileshares",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-07T01:53:54Z",
+      "observedAt": "2026-05-07T01:53:54Z",
+      "trackId": "sdk:JavaScript:@azure/arm-fileshares",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38343",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38343#issuecomment-4393560353"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> ## Next Steps to Merge > Only failed checks and required actions are listed below. > > * 🔄 **pnpm-lock conflict**: The PR branch has a merge conflict (`mergeable_state: dirty`), most likely in `pnpm-lock.yaml`. Follow the [conflict guide",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26695:comment:4393709183:sdk:Go:sdk/resourcemanager/fileshares/armfileshares",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-07T02:18:42Z",
+      "observedAt": "2026-05-07T02:18:42Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/fileshares/armfileshares",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26695",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26695#issuecomment-4393709183"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## PR is ready to merge All CI checks have passed ✅: - `go - pullrequest (Build Build/Test on ubuntu_go_1261)` — success - `go - pullrequest (Build Build/Test on ubuntu_go_1258)` — success - `go - pullrequest (Build Build/Test on windows_go",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26695:review:4241035246:sdk:Go:sdk/resourcemanager/fileshares/armfileshares",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-07T03:22:18Z",
+      "observedAt": "2026-05-07T03:22:18Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/fileshares/armfileshares",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "JiaqiZhang-Dev"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26695",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26695#pullrequestreview-4241035246"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26695:pr.merged:sdk:Go:sdk/resourcemanager/fileshares/armfileshares",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-07T03:22:20Z",
+      "observedAt": "2026-05-07T03:22:20Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/fileshares/armfileshares",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26695",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26695"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46749:review:4241040109:sdk:Python:azure-mgmt-fileshares",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-07T03:24:26Z",
+      "observedAt": "2026-05-07T03:24:26Z",
+      "trackId": "sdk:Python:azure-mgmt-fileshares",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46749",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46749#pullrequestreview-4241040109"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46749:pr.merged:sdk:Python:azure-mgmt-fileshares",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-07T03:25:27Z",
+      "observedAt": "2026-05-07T03:25:27Z",
+      "trackId": "sdk:Python:azure-mgmt-fileshares",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46749",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46749"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58902:review:4241056907:sdk:.NET:Azure.ResourceManager.FileShares",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-07T03:31:59Z",
+      "observedAt": "2026-05-07T03:31:59Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.FileShares",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58902",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58902#pullrequestreview-4241056907"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58902:comment:3198793949:sdk:.NET:Azure.ResourceManager.FileShares",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-07T03:31:59Z",
+      "observedAt": "2026-05-07T03:31:59Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.FileShares",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58902",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58902#discussion_r3198793949"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Please correct the property name back to `ProvisionedStorageInGiB`. Fix add @@clientName in client.tsp: ``` @@clientName(FileSharePatchProperties.provisionedStorageGiB, \"ProvisionedStorageInGiB\", \"csharp\"); ```",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58902:review:4241072345:sdk:.NET:Azure.ResourceManager.FileShares",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-07T03:38:29Z",
+      "observedAt": "2026-05-07T03:38:29Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.FileShares",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ankushbindlish2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58902",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58902#pullrequestreview-4241072345"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58902:comment:3198809245:sdk:.NET:Azure.ResourceManager.FileShares",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-07T03:38:29Z",
+      "observedAt": "2026-05-07T03:38:29Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.FileShares",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ankushbindlish2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58902",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58902#discussion_r3198809245"
+      },
+      "confidence": "authoritative",
+      "excerpt": "[azure-rest-api-specs/specification/fileshares/resource-manager/Microsoft.FileShares/FileShares/file…](https://github.com/Azure/azure-rest-api-specs/blob/af257d7a3d5506068e614b494d5bc0e94b7a60ce/specification/fileshares/resource-manager/Mic",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38343:commit:c92accbf05d7:sdk:JavaScript:@azure/arm-fileshares",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-07T04:02:59Z",
+      "observedAt": "2026-05-07T04:02:59Z",
+      "trackId": "sdk:JavaScript:@azure/arm-fileshares",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ankushbindlish2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38343",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/c92accbf05d701c4e6368acade5c172137690f63"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38343:review:4241610378:sdk:JavaScript:@azure/arm-fileshares",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-07T06:30:34Z",
+      "observedAt": "2026-05-07T06:30:34Z",
+      "trackId": "sdk:JavaScript:@azure/arm-fileshares",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38343",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38343#pullrequestreview-4241610378"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38343:comment:3199330491:sdk:JavaScript:@azure/arm-fileshares",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-07T06:30:34Z",
+      "observedAt": "2026-05-07T06:30:34Z",
+      "trackId": "sdk:JavaScript:@azure/arm-fileshares",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38343",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38343#discussion_r3199330491"
+      },
+      "confidence": "authoritative",
+      "excerpt": "this date should out of date",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38343:commit:193dc7e93fff:sdk:JavaScript:@azure/arm-fileshares",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-07T07:02:46Z",
+      "observedAt": "2026-05-07T07:02:46Z",
+      "trackId": "sdk:JavaScript:@azure/arm-fileshares",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ankushbindlish2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38343",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/193dc7e93fff685c304cd79a4841d36b15ad88c2"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38343:review:4241825363:sdk:JavaScript:@azure/arm-fileshares",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-07T07:07:29Z",
+      "observedAt": "2026-05-07T07:07:29Z",
+      "trackId": "sdk:JavaScript:@azure/arm-fileshares",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "JialinHuang803"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38343",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38343#pullrequestreview-4241825363"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38343:pr.merged:sdk:JavaScript:@azure/arm-fileshares",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-07T07:19:37Z",
+      "observedAt": "2026-05-07T07:19:37Z",
+      "trackId": "sdk:JavaScript:@azure/arm-fileshares",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38343",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38343"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58902:commit:6bbc420e2927:sdk:.NET:Azure.ResourceManager.FileShares",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-07T07:26:20Z",
+      "observedAt": "2026-05-07T07:26:20Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.FileShares",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ankushbindlish2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58902",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/6bbc420e292735fd62aaa21296226f90422d4f99"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58902:commit:3fd2db401f5b:sdk:.NET:Azure.ResourceManager.FileShares",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-07T07:48:53Z",
+      "observedAt": "2026-05-07T07:48:53Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.FileShares",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ankushbindlish2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58902",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/3fd2db401f5b62949a73259145f4d3e61e12b5d4"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58902:review:4242082982:sdk:.NET:Azure.ResourceManager.FileShares",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-07T07:49:26Z",
+      "observedAt": "2026-05-07T07:49:26Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.FileShares",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58902",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58902#pullrequestreview-4242082982"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58902:pr.merged:sdk:.NET:Azure.ResourceManager.FileShares",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-07T08:13:38Z",
+      "observedAt": "2026-05-07T08:13:38Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.FileShares",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58902",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58902"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38343:comment:4395945947:sdk:JavaScript:@azure/arm-fileshares",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-07T09:36:40Z",
+      "observedAt": "2026-05-07T09:36:40Z",
+      "trackId": "sdk:JavaScript:@azure/arm-fileshares",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "JialinHuang803"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38343",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38343#issuecomment-4395945947"
+      },
+      "confidence": "authoritative",
+      "excerpt": "/azp run prepare-pipelines",
+      "stack": 3
+    },
+    {
+      "id": "ado:33848:48:Custom.ReleaseStatusForJavaScript",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-05-13T16:21:08.09Z",
+      "observedAt": "2026-05-13T16:21:08.09Z",
+      "trackId": "sdk:JavaScript:@azure/arm-fileshares",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33848",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33848"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33848:48:Custom.ReleasedVersionForJavaScript",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-05-13T16:21:08.09Z",
+      "observedAt": "2026-05-13T16:21:08.09Z",
+      "trackId": "sdk:JavaScript:@azure/arm-fileshares",
+      "value": "1.0.0-beta.1",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33848",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33848"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33848:49:Custom.ReleaseStatusForDotnet",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-05-13T16:22:14.173Z",
+      "observedAt": "2026-05-13T16:22:14.173Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.FileShares",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33848",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33848"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33848:49:Custom.ReleasedVersionForDotnet",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-05-13T16:22:14.173Z",
+      "observedAt": "2026-05-13T16:22:14.173Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.FileShares",
+      "value": "1.0.0",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33848",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33848"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33848:50:Custom.ReleasedVersionForPython",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-05-13T16:24:46.82Z",
+      "observedAt": "2026-05-13T16:24:46.82Z",
+      "trackId": "sdk:Python:azure-mgmt-fileshares",
+      "value": "1.0.0b1",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33848",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33848"
+      },
+      "title": "Package version observed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33848:50:Custom.ReleasedVersionForJava",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-05-13T16:24:46.82Z",
+      "observedAt": "2026-05-13T16:24:46.82Z",
+      "trackId": "sdk:Java:azure-resourcemanager-fileshares",
+      "value": "1.0.0-beta.1",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33848",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33848"
+      },
+      "title": "Package version observed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33848:50:Custom.ReleasedVersionForGo",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-05-13T16:24:46.82Z",
+      "observedAt": "2026-05-13T16:24:46.82Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/fileshares/armfileshares",
+      "value": "1.0.0",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33848",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33848"
+      },
+      "title": "Package version observed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33848:51:Custom.ReleaseStatusForGo",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-05-13T20:00:59.51Z",
+      "observedAt": "2026-05-13T20:00:59.51Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/fileshares/armfileshares",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33848",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33848"
+      },
+      "title": "Release status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33848:51:Custom.ReleasedVersionForGo",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-05-13T20:00:59.51Z",
+      "observedAt": "2026-05-13T20:00:59.51Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/fileshares/armfileshares",
+      "value": "0.1.0",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33848",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33848"
+      },
+      "title": "Package version observed",
+      "stack": 2
+    },
+    {
+      "id": "ado:33848:52:Custom.ReleaseStatusForJava",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-05-13T21:11:13.907Z",
+      "observedAt": "2026-05-13T21:11:13.907Z",
+      "trackId": "sdk:Java:azure-resourcemanager-fileshares",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33848",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33848"
+      },
+      "title": "Release status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33848:53:Custom.ReleaseStatusForPython",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-05-13T21:14:24.253Z",
+      "observedAt": "2026-05-13T21:14:24.253Z",
+      "trackId": "sdk:Python:azure-mgmt-fileshares",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33848",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33848"
+      },
+      "title": "Release status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33848:54:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-05-13T21:15:21.383Z",
+      "observedAt": "2026-05-13T21:15:21.383Z",
+      "trackId": "plan",
+      "value": "Finished",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33848",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33848"
+      },
+      "title": "Plan state changed",
+      "stack": 0
+    }
+  ],
+  "quality": {
+    "warnings": [
+      "1 historical linked PR(s) closed without merge",
+      "1 superseded SDK PR link(s) retained"
+    ],
+    "unavailablePullRequests": 0,
+    "unavailablePipelineRuns": 0
+  },
+  "boundaryFacts": {
+    "id": "33848",
+    "state": "finished",
+    "specPrs": [
+      {
+        "id": "github:Azure/azure-rest-api-specs#40449",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#40449",
+        "createdAt": "2026-02-13T16:53:24Z",
+        "mergedAt": "2026-05-01T17:27:07Z",
+        "closedAt": "2026-05-01T17:27:07Z",
+        "available": true
+      }
+    ],
+    "artifacts": [
+      {
+        "language": ".NET",
+        "package": "Azure.ResourceManager.FileShares",
+        "trackId": "sdk:.NET:Azure.ResourceManager.FileShares",
+        "prId": "github:Azure/azure-sdk-for-net#58902",
+        "prCreatedAt": "2026-04-30T14:27:22Z",
+        "prMergedAt": "2026-05-07T08:13:38Z",
+        "prClosedAt": "2026-05-07T08:13:38Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-net#58902",
+            "createdAt": "2026-04-30T14:27:22Z",
+            "mergedAt": "2026-05-07T08:13:38Z",
+            "closedAt": "2026-05-07T08:13:38Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": null,
+        "generationStartAt": null,
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-05-13T16:22:14.173Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.0.0",
+        "releaseBoundaryAt": "2026-05-13T16:22:14.173Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "missing",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "JavaScript",
+        "package": "@azure/arm-fileshares",
+        "trackId": "sdk:JavaScript:@azure/arm-fileshares",
+        "prId": "github:Azure/azure-sdk-for-js#38343",
+        "prCreatedAt": "2026-04-29T07:00:21Z",
+        "prMergedAt": "2026-05-07T07:19:37Z",
+        "prClosedAt": "2026-05-07T07:19:37Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-js#38343",
+            "createdAt": "2026-04-29T07:00:21Z",
+            "mergedAt": "2026-05-07T07:19:37Z",
+            "closedAt": "2026-05-07T07:19:37Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": null,
+        "generationStartAt": null,
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-05-13T16:21:08.09Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.0.0-beta.1",
+        "releaseBoundaryAt": "2026-05-13T16:21:08.09Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "missing",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Python",
+        "package": "azure-mgmt-fileshares",
+        "trackId": "sdk:Python:azure-mgmt-fileshares",
+        "prId": "github:Azure/azure-sdk-for-python#46749",
+        "prCreatedAt": "2026-05-06T08:28:20Z",
+        "prMergedAt": "2026-05-07T03:25:27Z",
+        "prClosedAt": "2026-05-07T03:25:27Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-python#46602",
+            "createdAt": "2026-04-29T06:38:54Z",
+            "mergedAt": null,
+            "closedAt": "2026-05-06T08:45:56Z",
+            "state": "closed"
+          },
+          {
+            "id": "github:Azure/azure-sdk-for-python#46749",
+            "createdAt": "2026-05-06T08:28:20Z",
+            "mergedAt": "2026-05-07T03:25:27Z",
+            "closedAt": "2026-05-07T03:25:27Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": null,
+        "generationStartAt": null,
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-05-13T21:14:24.253Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.0.0b1",
+        "releaseBoundaryAt": "2026-05-13T21:14:24.253Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "missing",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Java",
+        "package": "azure-resourcemanager-fileshares",
+        "trackId": "sdk:Java:azure-resourcemanager-fileshares",
+        "prId": "github:Azure/azure-sdk-for-java#48976",
+        "prCreatedAt": "2026-04-29T13:44:04Z",
+        "prMergedAt": "2026-05-07T01:38:17Z",
+        "prClosedAt": "2026-05-07T01:38:17Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-java#48976",
+            "createdAt": "2026-04-29T13:44:04Z",
+            "mergedAt": "2026-05-07T01:38:17Z",
+            "closedAt": "2026-05-07T01:38:17Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": null,
+        "generationStartAt": null,
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-05-13T21:11:13.907Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.0.0-beta.1",
+        "releaseBoundaryAt": "2026-05-13T21:11:13.907Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "missing",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Go",
+        "package": "sdk/resourcemanager/fileshares/armfileshares",
+        "trackId": "sdk:Go:sdk/resourcemanager/fileshares/armfileshares",
+        "prId": "github:Azure/azure-sdk-for-go#26695",
+        "prCreatedAt": "2026-04-29T05:31:16Z",
+        "prMergedAt": "2026-05-07T03:22:20Z",
+        "prClosedAt": "2026-05-07T03:22:20Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-go#26695",
+            "createdAt": "2026-04-29T05:31:16Z",
+            "mergedAt": "2026-05-07T03:22:20Z",
+            "closedAt": "2026-05-07T03:22:20Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": null,
+        "generationStartAt": null,
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-05-13T20:00:59.51Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "0.1.0",
+        "releaseBoundaryAt": "2026-05-13T20:00:59.51Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "missing",
+          "release": "release-plan"
+        }
+      }
+    ],
+    "cohortPlan": {
+      "id": "33848",
+      "releasePlanId": "2180",
+      "title": "Release Plan - 2180 - GA - Microsoft.FileShares",
+      "service": "Microsoft.FileShares",
+      "state": "finished"
+    },
+    "quality": {
+      "warnings": [
+        "1 historical linked PR(s) closed without merge",
+        "1 superseded SDK PR link(s) retained"
+      ],
+      "unavailablePullRequests": 0,
+      "unavailablePipelineRuns": 0
+    }
+  },
+  "summary": {
+    "durationHours": 797,
+    "pullRequestCount": 7,
+    "humanReviewCount": 14,
+    "humanCommentCount": 18
+  }
+}

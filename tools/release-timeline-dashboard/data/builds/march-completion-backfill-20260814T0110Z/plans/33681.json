@@ -1,0 +1,2616 @@
+{
+  "schemaVersion": 2,
+  "id": "33681",
+  "correlation": {
+    "policyVersion": 1,
+    "preflight": "passed"
+  },
+  "releasePlanId": "2153",
+  "title": "Release Plan - 2153 - GA - Azure App Testing",
+  "service": "Azure App Testing",
+  "product": "Release",
+  "path": null,
+  "state": "in-progress",
+  "plane": "management",
+  "releaseType": "APEX GA",
+  "intendedMonth": "April 2026",
+  "createdAt": "2026-03-31T17:51:37.757Z",
+  "completedAt": null,
+  "sourceUrl": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33681",
+  "range": {
+    "start": "2026-02-04T08:38:51.000Z",
+    "end": "2026-08-14T00:37:23.589Z"
+  },
+  "intendedArtifacts": [
+    {
+      "prId": "github:Azure/azure-sdk-for-net#57661",
+      "language": ".NET",
+      "package": "Azure.ResourceManager.Playwright",
+      "version": null,
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6092965",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-js#37926",
+      "language": "JavaScript",
+      "package": "@azure/arm-playwright",
+      "version": null,
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6092964",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-python#46051",
+      "language": "Python",
+      "package": "azure-mgmt-playwright",
+      "version": null,
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6092963",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-java#48660",
+      "language": "Java",
+      "package": "azure-resourcemanager-playwright",
+      "version": null,
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6092967",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-go#26469",
+      "language": "Go",
+      "package": "sdk/resourcemanager/playwright/armplaywright",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6092966",
+      "releasePipelineUrl": null
+    }
+  ],
+  "links": [
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#40148",
+      "role": "spec-pr",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/40148",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-net#57661",
+      "role": "sdk-pr",
+      "language": ".NET",
+      "url": "https://github.com/Azure/azure-sdk-for-net/pull/57661",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-js#37926",
+      "role": "sdk-pr",
+      "language": "JavaScript",
+      "url": "https://github.com/Azure/azure-sdk-for-js/pull/37926",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-python#46051",
+      "role": "sdk-pr",
+      "language": "Python",
+      "url": "https://github.com/Azure/azure-sdk-for-python/pull/46051",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-java#48660",
+      "role": "sdk-pr",
+      "language": "Java",
+      "url": "https://github.com/Azure/azure-sdk-for-java/pull/48660",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-go#26469",
+      "role": "sdk-pr",
+      "language": "Go",
+      "url": "https://github.com/Azure/azure-sdk-for-go/pull/26469",
+      "releasePlanIds": []
+    }
+  ],
+  "tracks": [
+    {
+      "id": "plan",
+      "kind": "plan",
+      "label": "Release Plan",
+      "detail": "APEX GA"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#40148",
+      "kind": "spec",
+      "label": "Spec PR",
+      "detail": "azure-rest-api-specs #40148",
+      "artifactId": "github:Azure/azure-rest-api-specs#40148",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:.NET:Azure.ResourceManager.Playwright",
+      "kind": "sdk",
+      "label": ".NET",
+      "detail": "Azure.ResourceManager.Playwright",
+      "artifactId": "github:Azure/azure-sdk-for-net#57661",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:JavaScript:@azure/arm-playwright",
+      "kind": "sdk",
+      "label": "JavaScript",
+      "detail": "@azure/arm-playwright",
+      "artifactId": "github:Azure/azure-sdk-for-js#37926",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Python:azure-mgmt-playwright",
+      "kind": "sdk",
+      "label": "Python",
+      "detail": "azure-mgmt-playwright",
+      "artifactId": "github:Azure/azure-sdk-for-python#46051",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Java:azure-resourcemanager-playwright",
+      "kind": "sdk",
+      "label": "Java",
+      "detail": "azure-resourcemanager-playwright",
+      "artifactId": "github:Azure/azure-sdk-for-java#48660",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Go:sdk/resourcemanager/playwright/armplaywright",
+      "kind": "sdk",
+      "label": "Go",
+      "detail": "sdk/resourcemanager/playwright/armplaywright",
+      "artifactId": "github:Azure/azure-sdk-for-go#26469",
+      "state": "merged"
+    }
+  ],
+  "events": [
+    {
+      "id": "github:Azure/azure-rest-api-specs#40148:pr.created:spec:github:Azure/azure-rest-api-specs#40148",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-04T08:38:51Z",
+      "observedAt": "2026-02-04T08:38:51Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40148",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "mjmadhu"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40148",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40148"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40148:comment:3846092870:spec:github:Azure/azure-rest-api-specs#40148",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-04T08:39:14Z",
+      "observedAt": "2026-02-04T08:39:14Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40148",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40148",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40148#issuecomment-3846092870"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>✅ All automated merging requirements have been met! To get your PR merged, see <a href=\"https://aka.ms/azsdk/specreview/merge\">aka.ms/azsdk/specreview/merge</a>.<br /><br />Comment generated by <a href=\"https://g",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40148:review:3749699560:spec:github:Azure/azure-rest-api-specs#40148",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-04T08:40:19Z",
+      "observedAt": "2026-02-04T08:40:19Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40148",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "mitsha-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40148",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40148#pullrequestreview-3749699560"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40148:review:3749707736:spec:github:Azure/azure-rest-api-specs#40148",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-04T08:42:28Z",
+      "observedAt": "2026-02-04T08:42:28Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40148",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "kashish2508"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40148",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40148#pullrequestreview-3749707736"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40148:comment:3846111141:spec:github:Azure/azure-rest-api-specs#40148",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-04T08:43:59Z",
+      "observedAt": "2026-02-04T08:43:59Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40148",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40148",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40148#issuecomment-3846111141"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews | Language | API Review for Package | |----------|---------| | Swagger | [Microsoft.LoadTestService-playwright](https://apiview.dev/As",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40148:comment:3846145562:spec:github:Azure/azure-rest-api-specs#40148",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-04T08:52:17Z",
+      "observedAt": "2026-02-04T08:52:17Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40148",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "mjmadhu"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40148",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40148#issuecomment-3846145562"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This version was merged yesterday only and not yet live to the users.",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40148:commit:00543f2fe731:spec:github:Azure/azure-rest-api-specs#40148",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-05T08:27:04Z",
+      "observedAt": "2026-02-05T08:27:04Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40148",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "mjmadhu"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40148",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/00543f2fe73198cfc76620bb07177dab6c185517"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40148:commit:83b9600b19c2:spec:github:Azure/azure-rest-api-specs#40148",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-05T16:13:31Z",
+      "observedAt": "2026-02-05T16:13:31Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40148",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "mjmadhu"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40148",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/83b9600b19c2b78a1cf5f027b8648a739c09693a"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40148:commit:23bfc1f59957:spec:github:Azure/azure-rest-api-specs#40148",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-06T05:24:00Z",
+      "observedAt": "2026-02-06T05:24:00Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40148",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "mjmadhu"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40148",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/23bfc1f599573540eb8e12874ef8344a53f3af9f"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40148:commit:f8ecb1986fd5:spec:github:Azure/azure-rest-api-specs#40148",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-06T05:45:56Z",
+      "observedAt": "2026-02-06T05:45:56Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40148",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "mjmadhu"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40148",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/f8ecb1986fd55d9cf0eb92f5ff489f131387330f"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40148:commit:5b8685e8ae3a:spec:github:Azure/azure-rest-api-specs#40148",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-06T06:34:13Z",
+      "observedAt": "2026-02-06T06:34:13Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40148",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "mjmadhu"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40148",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/5b8685e8ae3aa19f079a9343d269efca3489832d"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40148:commit:937508c03c9a:spec:github:Azure/azure-rest-api-specs#40148",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-09T10:24:01Z",
+      "observedAt": "2026-02-09T10:24:01Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40148",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "mjmadhu"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40148",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/937508c03c9a77b05ec5cabf1be8a4dbff56b4b1"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40148:pr.merged:spec:github:Azure/azure-rest-api-specs#40148",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-11T17:45:03Z",
+      "observedAt": "2026-02-11T17:45:03Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40148",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40148",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40148"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:33681:created",
+      "type": "plan.created",
+      "phase": "plan",
+      "occurredAt": "2026-03-31T17:51:37.757Z",
+      "observedAt": "2026-03-31T17:51:37.757Z",
+      "trackId": "plan",
+      "title": "Release Plan created",
+      "confidence": "authoritative",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33681",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33681"
+      },
+      "stack": 0
+    },
+    {
+      "id": "ado:33681:1:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-03-31T17:51:37.757Z",
+      "observedAt": "2026-03-31T17:51:37.757Z",
+      "trackId": "plan",
+      "value": "New",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33681",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33681"
+      },
+      "title": "Plan state changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33681:1:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-31T17:51:37.757Z",
+      "observedAt": "2026-03-31T17:51:37.757Z",
+      "trackId": "plan",
+      "value": "Not Available",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33681",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33681"
+      },
+      "title": "Spec approval changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:33681:1:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-31T17:51:37.757Z",
+      "observedAt": "2026-03-31T17:51:37.757Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Playwright",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33681",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33681"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33681:1:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-31T17:51:37.757Z",
+      "observedAt": "2026-03-31T17:51:37.757Z",
+      "trackId": "sdk:JavaScript:@azure/arm-playwright",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33681",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33681"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33681:1:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-31T17:51:37.757Z",
+      "observedAt": "2026-03-31T17:51:37.757Z",
+      "trackId": "sdk:Python:azure-mgmt-playwright",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33681",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33681"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33681:1:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-31T17:51:37.757Z",
+      "observedAt": "2026-03-31T17:51:37.757Z",
+      "trackId": "sdk:Java:azure-resourcemanager-playwright",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33681",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33681"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33681:1:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-31T17:51:37.757Z",
+      "observedAt": "2026-03-31T17:51:37.757Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/playwright/armplaywright",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33681",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33681"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33681:3:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-03-31T17:54:49.653Z",
+      "observedAt": "2026-03-31T17:54:49.653Z",
+      "trackId": "plan",
+      "value": "In Progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33681",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33681"
+      },
+      "title": "Plan state changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:33682:2:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-01T09:45:43.533Z",
+      "observedAt": "2026-04-01T09:45:43.533Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40148",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/40148",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33682",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33682"
+      },
+      "title": "Spec PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado:33681:6:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T09:45:47.433Z",
+      "observedAt": "2026-04-01T09:45:47.433Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Playwright",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33681",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33681"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33681:6:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T09:45:47.433Z",
+      "observedAt": "2026-04-01T09:45:47.433Z",
+      "trackId": "sdk:JavaScript:@azure/arm-playwright",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33681",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33681"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33681:6:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T09:45:47.433Z",
+      "observedAt": "2026-04-01T09:45:47.433Z",
+      "trackId": "sdk:Python:azure-mgmt-playwright",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33681",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33681"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33681:6:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T09:45:47.433Z",
+      "observedAt": "2026-04-01T09:45:47.433Z",
+      "trackId": "sdk:Java:azure-resourcemanager-playwright",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33681",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33681"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33681:6:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T09:45:47.433Z",
+      "observedAt": "2026-04-01T09:45:47.433Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/playwright/armplaywright",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33681",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33681"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33681:7:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-01T09:46:22.013Z",
+      "observedAt": "2026-04-01T09:46:22.013Z",
+      "trackId": "plan",
+      "value": "Approved",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33681",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33681"
+      },
+      "title": "Spec approval changed",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6092965:generation.queued:sdk:.NET:Azure.ResourceManager.Playwright",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T10:15:39.8945428Z",
+      "observedAt": "2026-04-01T10:23:29.4634432Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Playwright",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6092965",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6092965"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6092966:generation.queued:sdk:Go:sdk/resourcemanager/playwright/armplaywright",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T10:15:39.9496073Z",
+      "observedAt": "2026-04-01T10:23:00.7662691Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/playwright/armplaywright",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6092966",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6092966"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6092967:generation.queued:sdk:Java:azure-resourcemanager-playwright",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T10:15:40.032725Z",
+      "observedAt": "2026-04-01T10:34:46.1409873Z",
+      "trackId": "sdk:Java:azure-resourcemanager-playwright",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6092967",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6092967"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6092964:generation.queued:sdk:JavaScript:@azure/arm-playwright",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T10:15:40.1263209Z",
+      "observedAt": "2026-04-01T10:23:34.3112023Z",
+      "trackId": "sdk:JavaScript:@azure/arm-playwright",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6092964",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6092964"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6092963:generation.queued:sdk:Python:azure-mgmt-playwright",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T10:15:40.518509Z",
+      "observedAt": "2026-04-01T10:24:55.7207126Z",
+      "trackId": "sdk:Python:azure-mgmt-playwright",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6092963",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6092963"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:33681:20:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T10:15:43.41Z",
+      "observedAt": "2026-04-01T10:15:43.41Z",
+      "trackId": "sdk:Python:azure-mgmt-playwright",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33681",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33681"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:33681:21:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T10:15:44.857Z",
+      "observedAt": "2026-04-01T10:15:44.857Z",
+      "trackId": "sdk:JavaScript:@azure/arm-playwright",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33681",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33681"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:33681:22:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T10:15:45.05Z",
+      "observedAt": "2026-04-01T10:15:45.05Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Playwright",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33681",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33681"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:33681:23:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T10:15:45.59Z",
+      "observedAt": "2026-04-01T10:15:45.59Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/playwright/armplaywright",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33681",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33681"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:33681:24:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T10:15:46.297Z",
+      "observedAt": "2026-04-01T10:15:46.297Z",
+      "trackId": "sdk:Java:azure-resourcemanager-playwright",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33681",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33681"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6092967:generation.started:sdk:Java:azure-resourcemanager-playwright",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T10:16:18.1737806Z",
+      "observedAt": "2026-04-01T10:34:46.1409873Z",
+      "trackId": "sdk:Java:azure-resourcemanager-playwright",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6092967",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6092967"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6092963:generation.started:sdk:Python:azure-mgmt-playwright",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T10:16:19.2247874Z",
+      "observedAt": "2026-04-01T10:24:55.7207126Z",
+      "trackId": "sdk:Python:azure-mgmt-playwright",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6092963",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6092963"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6092966:generation.started:sdk:Go:sdk/resourcemanager/playwright/armplaywright",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T10:16:19.2769756Z",
+      "observedAt": "2026-04-01T10:23:00.7662691Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/playwright/armplaywright",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6092966",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6092966"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6092964:generation.started:sdk:JavaScript:@azure/arm-playwright",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T10:16:19.539212Z",
+      "observedAt": "2026-04-01T10:23:34.3112023Z",
+      "trackId": "sdk:JavaScript:@azure/arm-playwright",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6092964",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6092964"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6092965:generation.started:sdk:.NET:Azure.ResourceManager.Playwright",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T10:16:21.6618972Z",
+      "observedAt": "2026-04-01T10:23:29.4634432Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Playwright",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6092965",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6092965"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26469:commit:31660d4bc0d7:sdk:Go:sdk/resourcemanager/playwright/armplaywright",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-01T10:21:43Z",
+      "observedAt": "2026-04-01T10:21:43Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/playwright/armplaywright",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26469",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/31660d4bc0d7d80f8ec2f468ff5df457c07e8af6"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26469:pr.created:sdk:Go:sdk/resourcemanager/playwright/armplaywright",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-01T10:21:46Z",
+      "observedAt": "2026-04-01T10:21:46Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/playwright/armplaywright",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26469",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26469"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:33681:25:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T10:21:53.483Z",
+      "observedAt": "2026-04-01T10:21:53.483Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/playwright/armplaywright",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33681",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33681"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33681:25:Custom.SDKPullRequestForGo",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T10:21:53.483Z",
+      "observedAt": "2026-04-01T10:21:53.483Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/playwright/armplaywright",
+      "value": "https://github.com/Azure/azure-sdk-for-go/pull/26469",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33681",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33681"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57661:commit:0a5bf4f68358:sdk:.NET:Azure.ResourceManager.Playwright",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-01T10:22:19Z",
+      "observedAt": "2026-04-01T10:22:19Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Playwright",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57661",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/0a5bf4f68358380d281d1c9bb007d49172c9376c"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57661:pr.created:sdk:.NET:Azure.ResourceManager.Playwright",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-01T10:22:23Z",
+      "observedAt": "2026-04-01T10:22:23Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Playwright",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57661",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57661"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37926:commit:3673f3f09ab9:sdk:JavaScript:@azure/arm-playwright",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-01T10:22:23Z",
+      "observedAt": "2026-04-01T10:22:23Z",
+      "trackId": "sdk:JavaScript:@azure/arm-playwright",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37926",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/3673f3f09ab9b99683caa14194bd0b99a0692b08"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37926:pr.created:sdk:JavaScript:@azure/arm-playwright",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-01T10:22:26Z",
+      "observedAt": "2026-04-01T10:22:26Z",
+      "trackId": "sdk:JavaScript:@azure/arm-playwright",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37926",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37926"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:33681:26:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T10:22:30.93Z",
+      "observedAt": "2026-04-01T10:22:30.93Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Playwright",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33681",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33681"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33681:26:Custom.SDKPullRequestForDotnet",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T10:22:30.93Z",
+      "observedAt": "2026-04-01T10:22:30.93Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Playwright",
+      "value": "https://github.com/Azure/azure-sdk-for-net/pull/57661",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33681",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33681"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "ado:33681:27:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T10:22:33.907Z",
+      "observedAt": "2026-04-01T10:22:33.907Z",
+      "trackId": "sdk:JavaScript:@azure/arm-playwright",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33681",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33681"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33681:27:Custom.SDKPullRequestForJavaScript",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T10:22:33.907Z",
+      "observedAt": "2026-04-01T10:22:33.907Z",
+      "trackId": "sdk:JavaScript:@azure/arm-playwright",
+      "value": "https://github.com/Azure/azure-sdk-for-js/pull/37926",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33681",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33681"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6092966:generation.completed:sdk:Go:sdk/resourcemanager/playwright/armplaywright",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T10:23:00.7662691Z",
+      "observedAt": "2026-04-01T10:23:00.7662691Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/playwright/armplaywright",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6092966",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6092966"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46051:commit:dd742223c00e:sdk:Python:azure-mgmt-playwright",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-01T10:23:13Z",
+      "observedAt": "2026-04-01T10:23:13Z",
+      "trackId": "sdk:Python:azure-mgmt-playwright",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46051",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/dd742223c00e101206d3c20469222755a8feb498"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46051:pr.created:sdk:Python:azure-mgmt-playwright",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-01T10:23:18Z",
+      "observedAt": "2026-04-01T10:23:18Z",
+      "trackId": "sdk:Python:azure-mgmt-playwright",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46051",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46051"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:33681:28:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T10:23:26.003Z",
+      "observedAt": "2026-04-01T10:23:26.003Z",
+      "trackId": "sdk:Python:azure-mgmt-playwright",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33681",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33681"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33681:28:Custom.SDKPullRequestForPython",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T10:23:26.003Z",
+      "observedAt": "2026-04-01T10:23:26.003Z",
+      "trackId": "sdk:Python:azure-mgmt-playwright",
+      "value": "https://github.com/Azure/azure-sdk-for-python/pull/46051",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33681",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33681"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6092965:generation.completed:sdk:.NET:Azure.ResourceManager.Playwright",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T10:23:29.4634432Z",
+      "observedAt": "2026-04-01T10:23:29.4634432Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Playwright",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6092965",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6092965"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6092964:generation.completed:sdk:JavaScript:@azure/arm-playwright",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T10:23:34.3112023Z",
+      "observedAt": "2026-04-01T10:23:34.3112023Z",
+      "trackId": "sdk:JavaScript:@azure/arm-playwright",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6092964",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6092964"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48660:commit:9d89f6f44c48:sdk:Java:azure-resourcemanager-playwright",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-01T10:24:46Z",
+      "observedAt": "2026-04-01T10:24:46Z",
+      "trackId": "sdk:Java:azure-resourcemanager-playwright",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48660",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/9d89f6f44c482749c8512d1c21e2c2b258dbc7a6"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48660:pr.created:sdk:Java:azure-resourcemanager-playwright",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-01T10:24:50Z",
+      "observedAt": "2026-04-01T10:24:50Z",
+      "trackId": "sdk:Java:azure-resourcemanager-playwright",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48660",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48660"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6092963:generation.completed:sdk:Python:azure-mgmt-playwright",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T10:24:55.7207126Z",
+      "observedAt": "2026-04-01T10:24:55.7207126Z",
+      "trackId": "sdk:Python:azure-mgmt-playwright",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6092963",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6092963"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado:33681:29:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T10:24:57.353Z",
+      "observedAt": "2026-04-01T10:24:57.353Z",
+      "trackId": "sdk:Java:azure-resourcemanager-playwright",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33681",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33681"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33681:29:Custom.SDKPullRequestForJava",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T10:24:57.353Z",
+      "observedAt": "2026-04-01T10:24:57.353Z",
+      "trackId": "sdk:Java:azure-resourcemanager-playwright",
+      "value": "https://github.com/Azure/azure-sdk-for-java/pull/48660",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33681",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33681"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26469:comment:4169123681:sdk:Go:sdk/resourcemanager/playwright/armplaywright",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-01T10:33:51Z",
+      "observedAt": "2026-04-01T10:33:51Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/playwright/armplaywright",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26469",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26469#issuecomment-4169123681"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews [sdk/resourcemanager/playwright/armplaywright](https://spa.apiview.dev/review/5b21b5f7310f41b297d6d405c1be941f?activeApiRevisionId=ef3",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6092967:generation.completed:sdk:Java:azure-resourcemanager-playwright",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T10:34:46.1409873Z",
+      "observedAt": "2026-04-01T10:34:46.1409873Z",
+      "trackId": "sdk:Java:azure-resourcemanager-playwright",
+      "title": "Pipeline completed with issues",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6092967",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6092967"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37926:comment:4169128347:sdk:JavaScript:@azure/arm-playwright",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-01T10:34:47Z",
+      "observedAt": "2026-04-01T10:34:47Z",
+      "trackId": "sdk:JavaScript:@azure/arm-playwright",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37926",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37926#issuecomment-4169128347"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews [@azure/arm-playwright](https://spa.apiview.dev/review/5e66e9e2551f47c994cdc704b1ddcac2?activeApiRevisionId=8df2df93837e4a418009ff0174",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48660:comment:4169143056:sdk:Java:azure-resourcemanager-playwright",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-01T10:37:45Z",
+      "observedAt": "2026-04-01T10:37:45Z",
+      "trackId": "sdk:Java:azure-resourcemanager-playwright",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48660",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48660#issuecomment-4169143056"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews [com.azure.resourcemanager:azure-resourcemanager-playwright](https://spa.apiview.dev/review/0b8b4e12858f408a9fada19e7d91aec6?activeApi",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57661:comment:4169164755:sdk:.NET:Azure.ResourceManager.Playwright",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-01T10:42:02Z",
+      "observedAt": "2026-04-01T10:42:02Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Playwright",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57661",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57661#issuecomment-4169164755"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews [Azure.ResourceManager.Playwright](https://spa.apiview.dev/review/e4c860f5080d4db4b79edabcdf00a38e?activeApiRevisionId=a2e59ced4bd04f1",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57661:commit:b35c3920c314:sdk:.NET:Azure.ResourceManager.Playwright",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-01T11:05:30Z",
+      "observedAt": "2026-04-01T11:05:30Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Playwright",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kashish2508"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57661",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/b35c3920c314275f52df54aa45521e2d8a5cd23d"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48660:commit:05dd7f5e1acc:sdk:Java:azure-resourcemanager-playwright",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-01T11:09:23Z",
+      "observedAt": "2026-04-01T11:09:23Z",
+      "trackId": "sdk:Java:azure-resourcemanager-playwright",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kashish2508"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48660",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/05dd7f5e1accd8e054f62e6129a3374888a279a0"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26469:commit:44f5bbd2fa2b:sdk:Go:sdk/resourcemanager/playwright/armplaywright",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-01T11:09:45Z",
+      "observedAt": "2026-04-01T11:09:45Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/playwright/armplaywright",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kashish2508"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26469",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/44f5bbd2fa2bdbdafe6e5bba7e34bc24450521b0"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46051:commit:28dc8ac15f24:sdk:Python:azure-mgmt-playwright",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-01T11:10:17Z",
+      "observedAt": "2026-04-01T11:10:17Z",
+      "trackId": "sdk:Python:azure-mgmt-playwright",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kashish2508"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46051",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/28dc8ac15f24bc600d30629dee31cd609f9c9e8c"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37926:commit:1a030cb7c870:sdk:JavaScript:@azure/arm-playwright",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-01T11:11:11Z",
+      "observedAt": "2026-04-01T11:11:11Z",
+      "trackId": "sdk:JavaScript:@azure/arm-playwright",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kashish2508"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37926",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/1a030cb7c870d85f78a7046e3194028b4e5cf52c"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48660:comment:4169451693:sdk:Java:azure-resourcemanager-playwright",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-01T11:37:01Z",
+      "observedAt": "2026-04-01T11:37:01Z",
+      "trackId": "sdk:Java:azure-resourcemanager-playwright",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kashish2508"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48660",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48660#issuecomment-4169451693"
+      },
+      "confidence": "authoritative",
+      "excerpt": "/check-enforcer override",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26469:comment:3021544458:sdk:Go:sdk/resourcemanager/playwright/armplaywright",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-01T11:42:13Z",
+      "observedAt": "2026-04-01T11:42:13Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/playwright/armplaywright",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26469",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26469#discussion_r3021544458"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This doc comment says \"When set to true\" but the field type is EnablementStatus (Enabled/Disabled), not a boolean. Please reword the comment to match the actual enum values (e.g., \"When set to Enabled\"). ```suggestion // Indicates whether r",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26469:review:4043583160:sdk:Go:sdk/resourcemanager/playwright/armplaywright",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-01T11:42:14Z",
+      "observedAt": "2026-04-01T11:42:14Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/playwright/armplaywright",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26469",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26469#pullrequestreview-4043583160"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Updates the `armplaywright` Resource Manager Go SDK package to the `2026-02-01-preview` API version and regenerates the SDK to include newly surfaced service features (managed identity + reporting/storage properties",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26469:comment:3021544521:sdk:Go:sdk/resourcemanager/playwright/armplaywright",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-01T11:42:14Z",
+      "observedAt": "2026-04-01T11:42:14Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/playwright/armplaywright",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26469",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26469#discussion_r3021544521"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This doc comment says \"When set to true\" but the field type is EnablementStatus (Enabled/Disabled), not a boolean. Please reword the comment to match the actual enum values (e.g., \"When set to Enabled\"). ```suggestion // Indicates whether r",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46051:review:4043592297:sdk:Python:azure-mgmt-playwright",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-01T11:43:16Z",
+      "observedAt": "2026-04-01T11:43:16Z",
+      "trackId": "sdk:Python:azure-mgmt-playwright",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46051",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46051#pullrequestreview-4043592297"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Updates the `azure-mgmt-playwright` management-plane SDK to a newer TypeSpec source and API version (`2026-02-01-preview`), and aligns packaging/build metadata with current repo standards for mgmt libraries. **Chang",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57661:review:4043593517:sdk:.NET:Azure.ResourceManager.Playwright",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-01T11:43:25Z",
+      "observedAt": "2026-04-01T11:43:25Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Playwright",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57661",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57661#pullrequestreview-4043593517"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Updates the **Azure.ResourceManager.Playwright** management-plane SDK to align with the latest TypeSpec spec snapshot for **API version `2026-02-01-preview`** (beta release), including new resource fields surfaced b",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57661:comment:3021553318:sdk:.NET:Azure.ResourceManager.Playwright",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-01T11:43:25Z",
+      "observedAt": "2026-04-01T11:43:25Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Playwright",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57661",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57661#discussion_r3021553318"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`StorageUri` is deserialized with `UriKind.RelativeOrAbsolute`, but serialization uses `StorageUri.AbsoluteUri`. `AbsoluteUri` throws for relative URIs, which can break update serialization if the service returns (or callers set) a relative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57661:comment:3021553383:sdk:.NET:Azure.ResourceManager.Playwright",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-01T11:43:25Z",
+      "observedAt": "2026-04-01T11:43:25Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Playwright",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57661",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57661#discussion_r3021553383"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`StorageUri` is deserialized as `UriKind.RelativeOrAbsolute`, but serialization writes `StorageUri.AbsoluteUri`. `AbsoluteUri` can throw for relative URIs, so this can crash model serialization. Consider using `StorageUri.ToString()`/`Origi",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48660:comment:3021557509:sdk:Java:azure-resourcemanager-playwright",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-01T11:44:01Z",
+      "observedAt": "2026-04-01T11:44:01Z",
+      "trackId": "sdk:Java:azure-resourcemanager-playwright",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48660",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48660#discussion_r3021557509"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The Javadoc for `reporting` says “When set to true”, but the property type is `EnablementStatus` (ENABLED/DISABLED), not a boolean. Please update the wording to match the enum semantics (for example, “when set to ENABLED”). ```suggestion * ",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48660:comment:3021557569:sdk:Java:azure-resourcemanager-playwright",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-01T11:44:02Z",
+      "observedAt": "2026-04-01T11:44:02Z",
+      "trackId": "sdk:Java:azure-resourcemanager-playwright",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48660",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48660#discussion_r3021557569"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The Javadoc for `reporting` says “When set to true”, but the property type is `EnablementStatus` (ENABLED/DISABLED), not a boolean. Please update the wording to match the enum semantics (for example, “when set to ENABLED”). ```suggestion * ",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48660:comment:3021557593:sdk:Java:azure-resourcemanager-playwright",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-01T11:44:02Z",
+      "observedAt": "2026-04-01T11:44:02Z",
+      "trackId": "sdk:Java:azure-resourcemanager-playwright",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48660",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48660#discussion_r3021557593"
+      },
+      "confidence": "authoritative",
+      "excerpt": "There’s a double period in the new identity stage Javadoc (“resource..”). Please fix the punctuation to keep generated public API docs clean.",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48660:comment:3021557617:sdk:Java:azure-resourcemanager-playwright",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-01T11:44:02Z",
+      "observedAt": "2026-04-01T11:44:02Z",
+      "trackId": "sdk:Java:azure-resourcemanager-playwright",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48660",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48660#discussion_r3021557617"
+      },
+      "confidence": "authoritative",
+      "excerpt": "There’s a double period in the new identity stage Javadoc (“resource..”). Please fix the punctuation to keep generated public API docs clean.",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48660:review:4043598212:sdk:Java:azure-resourcemanager-playwright",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-01T11:44:03Z",
+      "observedAt": "2026-04-01T11:44:03Z",
+      "trackId": "sdk:Java:azure-resourcemanager-playwright",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48660",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48660#pullrequestreview-4043598212"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This AutoPR updates the **azure-resourcemanager-playwright** Java management SDK to align with the **2026-02-01-preview** ARM specification, including new workspace properties and identity support. **Changes:** - Bu",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37926:review:4043607602:sdk:JavaScript:@azure/arm-playwright",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-01T11:45:23Z",
+      "observedAt": "2026-04-01T11:45:23Z",
+      "trackId": "sdk:JavaScript:@azure/arm-playwright",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37926",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37926#pullrequestreview-4043607602"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Updates the `@azure/arm-playwright` management-plane SDK generated from the `2026-02-01-preview` swagger/TypeSpec configuration, including model/API surface updates and regenerated beta samples for JS/TS. **Changes:",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57661:review:4047904698:sdk:.NET:Azure.ResourceManager.Playwright",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-02T01:42:31Z",
+      "observedAt": "2026-04-02T01:42:31Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Playwright",
+      "title": "Changes requested",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57661",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57661#pullrequestreview-4047904698"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Please update the changelog.md file to specify the released date",
+      "reviewState": "changes_requested",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26469:review:4047955478:sdk:Go:sdk/resourcemanager/playwright/armplaywright",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-02T02:06:26Z",
+      "observedAt": "2026-04-02T02:06:26Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/playwright/armplaywright",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "tadelesh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26469",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26469#pullrequestreview-4047955478"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48660:review:4048014574:sdk:Java:azure-resourcemanager-playwright",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-02T02:32:15Z",
+      "observedAt": "2026-04-02T02:32:15Z",
+      "trackId": "sdk:Java:azure-resourcemanager-playwright",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48660",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48660#pullrequestreview-4048014574"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46051:commit:92f0d5e283ee:sdk:Python:azure-mgmt-playwright",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-02T05:33:18Z",
+      "observedAt": "2026-04-02T05:33:18Z",
+      "trackId": "sdk:Python:azure-mgmt-playwright",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kashish2508"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46051",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/92f0d5e283eeccda692d8a4e0de97e7bf6b9c2b0"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57661:commit:f3793f1cd796:sdk:.NET:Azure.ResourceManager.Playwright",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-02T05:54:14Z",
+      "observedAt": "2026-04-02T05:54:14Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Playwright",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kashish2508"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57661",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/f3793f1cd7964def9c20ef5cd593c8510cb7064f"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57661:commit:08bf24f2726f:sdk:.NET:Azure.ResourceManager.Playwright",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-02T06:22:09Z",
+      "observedAt": "2026-04-02T06:22:09Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Playwright",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kashish2508"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57661",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/08bf24f2726f087ce8a2bca51bbfb3f9b40b1eed"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48660:commit:df7187b247d0:sdk:Java:azure-resourcemanager-playwright",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-02T06:29:08Z",
+      "observedAt": "2026-04-02T06:29:08Z",
+      "trackId": "sdk:Java:azure-resourcemanager-playwright",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kashish2508"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48660",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/df7187b247d02c26b733fc455dd3cc1df32c9451"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46051:commit:95ca201bf7b3:sdk:Python:azure-mgmt-playwright",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-02T06:32:57Z",
+      "observedAt": "2026-04-02T06:32:57Z",
+      "trackId": "sdk:Python:azure-mgmt-playwright",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kashish2508"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46051",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/95ca201bf7b3a2c2b62d0bb0780e87a739921153"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46051:review:4048724212:sdk:Python:azure-mgmt-playwright",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-02T06:54:04Z",
+      "observedAt": "2026-04-02T06:54:04Z",
+      "trackId": "sdk:Python:azure-mgmt-playwright",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46051",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46051#pullrequestreview-4048724212"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46051:pr.merged:sdk:Python:azure-mgmt-playwright",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-02T07:44:31Z",
+      "observedAt": "2026-04-02T07:44:31Z",
+      "trackId": "sdk:Python:azure-mgmt-playwright",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46051",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46051"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48660:pr.merged:sdk:Java:azure-resourcemanager-playwright",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-02T07:45:18Z",
+      "observedAt": "2026-04-02T07:45:18Z",
+      "trackId": "sdk:Java:azure-resourcemanager-playwright",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48660",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48660"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26469:pr.merged:sdk:Go:sdk/resourcemanager/playwright/armplaywright",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-02T07:45:25Z",
+      "observedAt": "2026-04-02T07:45:25Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/playwright/armplaywright",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26469",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26469"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37926:comment:4175816628:sdk:JavaScript:@azure/arm-playwright",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-02T09:10:31Z",
+      "observedAt": "2026-04-02T09:10:31Z",
+      "trackId": "sdk:JavaScript:@azure/arm-playwright",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37926",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37926#issuecomment-4175816628"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Next Steps to Merge Only failed checks and required actions are listed below. All CI checks have passed. The PR is currently blocked pending required approvals from the requested reviewers. - ✅ CI checks: All checks passed (checkenforcer",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37926:review:4049369159:sdk:JavaScript:@azure/arm-playwright",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-02T09:10:32Z",
+      "observedAt": "2026-04-02T09:10:32Z",
+      "trackId": "sdk:JavaScript:@azure/arm-playwright",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37926",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37926#pullrequestreview-4049369159"
+      },
+      "confidence": "authoritative",
+      "excerpt": "No API design issues found. The `@azure/arm-playwright` v`1.1.0-beta.1` update looks clean: - **Versions consistent**: `package.json`, `playwrightManagementContext.ts` user-agent string, and `CHANGELOG.md` all reflect `1.1.0-beta.1`. No alp",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37926:comment:4175863032:sdk:JavaScript:@azure/arm-playwright",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-02T09:18:32Z",
+      "observedAt": "2026-04-02T09:18:32Z",
+      "trackId": "sdk:JavaScript:@azure/arm-playwright",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37926",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37926#issuecomment-4175863032"
+      },
+      "confidence": "authoritative",
+      "excerpt": "LGTM cc @JialinHuang803",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57661:review:4049479666:sdk:.NET:Azure.ResourceManager.Playwright",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-02T09:30:13Z",
+      "observedAt": "2026-04-02T09:30:13Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Playwright",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57661",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57661#pullrequestreview-4049479666"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57661:pr.merged:sdk:.NET:Azure.ResourceManager.Playwright",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-02T09:30:25Z",
+      "observedAt": "2026-04-02T09:30:25Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Playwright",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57661",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57661"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37926:review:4049711646:sdk:JavaScript:@azure/arm-playwright",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-02T10:16:33Z",
+      "observedAt": "2026-04-02T10:16:33Z",
+      "trackId": "sdk:JavaScript:@azure/arm-playwright",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "JialinHuang803"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37926",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37926#pullrequestreview-4049711646"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37926:pr.merged:sdk:JavaScript:@azure/arm-playwright",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-02T11:02:36Z",
+      "observedAt": "2026-04-02T11:02:36Z",
+      "trackId": "sdk:JavaScript:@azure/arm-playwright",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37926",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37926"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:33681:41:Custom.ReleaseStatusForDotnet",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-04-06T05:31:00.767Z",
+      "observedAt": "2026-04-06T05:31:00.767Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Playwright",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33681",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33681"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33681:42:Custom.ReleaseStatusForJavaScript",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-04-06T05:55:28.96Z",
+      "observedAt": "2026-04-06T05:55:28.96Z",
+      "trackId": "sdk:JavaScript:@azure/arm-playwright",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33681",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33681"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33681:43:Custom.ReleaseStatusForPython",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-04-06T06:32:49.023Z",
+      "observedAt": "2026-04-06T06:32:49.023Z",
+      "trackId": "sdk:Python:azure-mgmt-playwright",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33681",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33681"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33681:44:Custom.ReleaseStatusForJava",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-04-06T06:39:47.37Z",
+      "observedAt": "2026-04-06T06:39:47.37Z",
+      "trackId": "sdk:Java:azure-resourcemanager-playwright",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33681",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33681"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    }
+  ],
+  "quality": {
+    "warnings": [
+      "API specification path is missing"
+    ],
+    "unavailablePullRequests": 0,
+    "unavailablePipelineRuns": 0
+  },
+  "boundaryFacts": {
+    "id": "33681",
+    "state": "in-progress",
+    "specPrs": [
+      {
+        "id": "github:Azure/azure-rest-api-specs#40148",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#40148",
+        "createdAt": "2026-02-04T08:38:51Z",
+        "mergedAt": "2026-02-11T17:45:03Z",
+        "closedAt": "2026-02-11T17:45:03Z",
+        "available": true
+      }
+    ],
+    "artifacts": [
+      {
+        "language": ".NET",
+        "package": "Azure.ResourceManager.Playwright",
+        "trackId": "sdk:.NET:Azure.ResourceManager.Playwright",
+        "prId": "github:Azure/azure-sdk-for-net#57661",
+        "prCreatedAt": "2026-04-01T10:22:23Z",
+        "prMergedAt": "2026-04-02T09:30:25Z",
+        "prClosedAt": "2026-04-02T09:30:25Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-net#57661",
+            "createdAt": "2026-04-01T10:22:23Z",
+            "mergedAt": "2026-04-02T09:30:25Z",
+            "closedAt": "2026-04-02T09:30:25Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6092965",
+        "generationStartAt": "2026-04-01T10:16:21.6618972Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-04-06T05:31:00.767Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "JavaScript",
+        "package": "@azure/arm-playwright",
+        "trackId": "sdk:JavaScript:@azure/arm-playwright",
+        "prId": "github:Azure/azure-sdk-for-js#37926",
+        "prCreatedAt": "2026-04-01T10:22:26Z",
+        "prMergedAt": "2026-04-02T11:02:36Z",
+        "prClosedAt": "2026-04-02T11:02:37Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-js#37926",
+            "createdAt": "2026-04-01T10:22:26Z",
+            "mergedAt": "2026-04-02T11:02:36Z",
+            "closedAt": "2026-04-02T11:02:37Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6092964",
+        "generationStartAt": "2026-04-01T10:16:19.539212Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-04-06T05:55:28.96Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Python",
+        "package": "azure-mgmt-playwright",
+        "trackId": "sdk:Python:azure-mgmt-playwright",
+        "prId": "github:Azure/azure-sdk-for-python#46051",
+        "prCreatedAt": "2026-04-01T10:23:18Z",
+        "prMergedAt": "2026-04-02T07:44:31Z",
+        "prClosedAt": "2026-04-02T07:44:31Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-python#46051",
+            "createdAt": "2026-04-01T10:23:18Z",
+            "mergedAt": "2026-04-02T07:44:31Z",
+            "closedAt": "2026-04-02T07:44:31Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6092963",
+        "generationStartAt": "2026-04-01T10:16:19.2247874Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-04-06T06:32:49.023Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Java",
+        "package": "azure-resourcemanager-playwright",
+        "trackId": "sdk:Java:azure-resourcemanager-playwright",
+        "prId": "github:Azure/azure-sdk-for-java#48660",
+        "prCreatedAt": "2026-04-01T10:24:50Z",
+        "prMergedAt": "2026-04-02T07:45:18Z",
+        "prClosedAt": "2026-04-02T07:45:18Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-java#48660",
+            "createdAt": "2026-04-01T10:24:50Z",
+            "mergedAt": "2026-04-02T07:45:18Z",
+            "closedAt": "2026-04-02T07:45:18Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6092967",
+        "generationStartAt": "2026-04-01T10:16:18.1737806Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-04-06T06:39:47.37Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Go",
+        "package": "sdk/resourcemanager/playwright/armplaywright",
+        "trackId": "sdk:Go:sdk/resourcemanager/playwright/armplaywright",
+        "prId": "github:Azure/azure-sdk-for-go#26469",
+        "prCreatedAt": "2026-04-01T10:21:46Z",
+        "prMergedAt": "2026-04-02T07:45:25Z",
+        "prClosedAt": "2026-04-02T07:45:25Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-go#26469",
+            "createdAt": "2026-04-01T10:21:46Z",
+            "mergedAt": "2026-04-02T07:45:25Z",
+            "closedAt": "2026-04-02T07:45:25Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6092966",
+        "generationStartAt": "2026-04-01T10:16:19.2769756Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      }
+    ],
+    "cohortPlan": {
+      "id": "33681",
+      "releasePlanId": "2153",
+      "title": "Release Plan - 2153 - GA - Azure App Testing",
+      "service": "Azure App Testing",
+      "state": "in-progress"
+    },
+    "quality": {
+      "warnings": [
+        "API specification path is missing"
+      ],
+      "unavailablePullRequests": 0,
+      "unavailablePipelineRuns": 0
+    }
+  },
+  "summary": {
+    "durationHours": 3246.8,
+    "pullRequestCount": 6,
+    "humanReviewCount": 8,
+    "humanCommentCount": 3
+  }
+}

@@ -1,0 +1,1840 @@
+{
+  "schemaVersion": 2,
+  "id": "33825",
+  "correlation": {
+    "policyVersion": 1,
+    "preflight": "passed"
+  },
+  "releasePlanId": "518",
+  "title": "Release Plan - 518 - Public Preview - Release Planner Test Product",
+  "service": "Contoso.Widget Manager",
+  "product": "Release",
+  "path": "specification/contosowidgetmanager/Contoso.WidgetManager",
+  "state": "in-progress",
+  "plane": "management",
+  "releaseType": "APEX Public Preview",
+  "intendedMonth": "May 2026",
+  "createdAt": "2026-04-08T21:45:13.53Z",
+  "completedAt": null,
+  "sourceUrl": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33825",
+  "range": {
+    "start": "2025-04-24T09:59:42.000Z",
+    "end": "2026-08-14T00:37:23.589Z"
+  },
+  "intendedArtifacts": [
+    {
+      "prId": "github:Azure/azure-sdk-for-net#58386",
+      "language": ".NET",
+      "package": "Azure.AI.ResourceManager.DocumentIntelligence",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6181018",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-js#38219",
+      "language": "JavaScript",
+      "package": "@azure/arm-deviceregistry",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6181020",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-python#46410",
+      "language": "Python",
+      "package": "azure-arm-test",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6181014",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-java#48873",
+      "language": "Java",
+      "package": "aure-ai-resourcemanager-document-intelligence",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6181022",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-go#26631",
+      "language": "Go",
+      "package": "sdk/resourcemanager/deviceregistry/armdeviceregistry",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6181019",
+      "releasePipelineUrl": null
+    }
+  ],
+  "links": [
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#34210",
+      "role": "spec-pr",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/34210",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-net#58386",
+      "role": "sdk-pr",
+      "language": ".NET",
+      "url": "https://github.com/Azure/azure-sdk-for-net/pull/58386",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-js#38219",
+      "role": "sdk-pr",
+      "language": "JavaScript",
+      "url": "https://github.com/Azure/azure-sdk-for-js/pull/38219",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-python#46410",
+      "role": "sdk-pr",
+      "language": "Python",
+      "url": "https://github.com/Azure/azure-sdk-for-python/pull/46410",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-java#48873",
+      "role": "sdk-pr",
+      "language": "Java",
+      "url": "https://github.com/Azure/azure-sdk-for-java/pull/48873",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-go#26631",
+      "role": "sdk-pr",
+      "language": "Go",
+      "url": "https://github.com/Azure/azure-sdk-for-go/pull/26631",
+      "releasePlanIds": []
+    }
+  ],
+  "tracks": [
+    {
+      "id": "plan",
+      "kind": "plan",
+      "label": "Release Plan",
+      "detail": "APEX Public Preview"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#34210",
+      "kind": "spec",
+      "label": "Spec PR",
+      "detail": "azure-rest-api-specs #34210",
+      "artifactId": "github:Azure/azure-rest-api-specs#34210",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:.NET:Azure.AI.ResourceManager.DocumentIntelligence",
+      "kind": "sdk",
+      "label": ".NET",
+      "detail": "Azure.AI.ResourceManager.DocumentIntelligence",
+      "artifactId": "github:Azure/azure-sdk-for-net#58386",
+      "state": "closed"
+    },
+    {
+      "id": "sdk:JavaScript:@azure/arm-deviceregistry",
+      "kind": "sdk",
+      "label": "JavaScript",
+      "detail": "@azure/arm-deviceregistry",
+      "artifactId": "github:Azure/azure-sdk-for-js#38219",
+      "state": "closed"
+    },
+    {
+      "id": "sdk:Python:azure-arm-test",
+      "kind": "sdk",
+      "label": "Python",
+      "detail": "azure-arm-test",
+      "artifactId": "github:Azure/azure-sdk-for-python#46410",
+      "state": "closed"
+    },
+    {
+      "id": "sdk:Java:aure-ai-resourcemanager-document-intelligence",
+      "kind": "sdk",
+      "label": "Java",
+      "detail": "aure-ai-resourcemanager-document-intelligence",
+      "artifactId": "github:Azure/azure-sdk-for-java#48873",
+      "state": "closed"
+    },
+    {
+      "id": "sdk:Go:sdk/resourcemanager/deviceregistry/armdeviceregistry",
+      "kind": "sdk",
+      "label": "Go",
+      "detail": "sdk/resourcemanager/deviceregistry/armdeviceregistry",
+      "artifactId": "github:Azure/azure-sdk-for-go#26631",
+      "state": "closed"
+    }
+  ],
+  "events": [
+    {
+      "id": "github:Azure/azure-rest-api-specs#34210:pr.created:spec:github:Azure/azure-rest-api-specs#34210",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-04-24T09:59:42Z",
+      "observedAt": "2025-04-24T09:59:42Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#34210",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "v-jiaodi"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#34210",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/34210"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#34210:comment:2827044102:spec:github:Azure/azure-rest-api-specs#34210",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-04-24T09:59:46Z",
+      "observedAt": "2025-04-24T09:59:46Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#34210",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "openapi-pipeline-app[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#34210",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/34210#issuecomment-2827044102"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>✅ All automated merging requirements have been met! To get your PR merged, see <a href=\"https://aka.ms/azsdk/specreview/merge\">aka.ms/azsdk/specreview/merge</a>.",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#34210:comment:2827044122:spec:github:Azure/azure-rest-api-specs#34210",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-04-24T09:59:47Z",
+      "observedAt": "2025-04-24T09:59:47Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#34210",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "openapi-pipeline-app[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#34210",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/34210#issuecomment-2827044122"
+      },
+      "confidence": "authoritative",
+      "excerpt": "PR validation pipeline restarted successfully. If there is ApiView generated, it will be updated in this comment.",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#34210:comment:2827064479:spec:github:Azure/azure-rest-api-specs#34210",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-04-24T10:08:02Z",
+      "observedAt": "2025-04-24T10:08:02Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#34210",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#34210",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/34210#issuecomment-2827064479"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews | Language | API Review for Package | |----------|---------| | Go | [sdk/contosowidget/azmanager](https://spa.apiview.dev/review/dcfd9",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#34210:commit:04d3da573cb6:spec:github:Azure/azure-rest-api-specs#34210",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2025-05-12T02:41:39Z",
+      "observedAt": "2025-05-12T02:41:39Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#34210",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "v-jiaodi"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#34210",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/04d3da573cb617243594492e5f327bde272d3d43"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#34210:commit:66984fcd4f64:spec:github:Azure/azure-rest-api-specs#34210",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2025-05-12T02:41:55Z",
+      "observedAt": "2025-05-12T02:41:55Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#34210",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "v-jiaodi"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#34210",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/66984fcd4f64ddc987c15affe8903029827e2d84"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#34210:commit:44f9a9dc2d7f:spec:github:Azure/azure-rest-api-specs#34210",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2025-05-12T02:44:45Z",
+      "observedAt": "2025-05-12T02:44:45Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#34210",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "v-jiaodi"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#34210",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/44f9a9dc2d7f71bd539ac364daabcac6a01842b5"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#34210:review:2831761501:spec:github:Azure/azure-rest-api-specs#34210",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2025-05-12T04:23:02Z",
+      "observedAt": "2025-05-12T04:23:02Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#34210",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "MaryGao"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#34210",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/34210#pullrequestreview-2831761501"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#34210:review:2831780098:spec:github:Azure/azure-rest-api-specs#34210",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2025-05-12T04:42:39Z",
+      "observedAt": "2025-05-12T04:42:39Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#34210",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "maririos"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#34210",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/34210#pullrequestreview-2831780098"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#34210:pr.merged:spec:github:Azure/azure-rest-api-specs#34210",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2025-05-12T04:43:45Z",
+      "observedAt": "2025-05-12T04:43:45Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#34210",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#34210",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/34210"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:33825:created",
+      "type": "plan.created",
+      "phase": "plan",
+      "occurredAt": "2026-04-08T21:45:13.53Z",
+      "observedAt": "2026-04-08T21:45:13.53Z",
+      "trackId": "plan",
+      "title": "Release Plan created",
+      "confidence": "authoritative",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33825",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33825"
+      },
+      "stack": 0
+    },
+    {
+      "id": "ado:33825:1:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-04-08T21:45:13.53Z",
+      "observedAt": "2026-04-08T21:45:13.53Z",
+      "trackId": "plan",
+      "value": "New",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33825",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33825"
+      },
+      "title": "Plan state changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33825:1:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-08T21:45:13.53Z",
+      "observedAt": "2026-04-08T21:45:13.53Z",
+      "trackId": "plan",
+      "value": "Not Available",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33825",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33825"
+      },
+      "title": "Spec approval changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:33825:1:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-08T21:45:13.53Z",
+      "observedAt": "2026-04-08T21:45:13.53Z",
+      "trackId": "sdk:.NET:Azure.AI.ResourceManager.DocumentIntelligence",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33825",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33825"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33825:1:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-08T21:45:13.53Z",
+      "observedAt": "2026-04-08T21:45:13.53Z",
+      "trackId": "sdk:JavaScript:@azure/arm-deviceregistry",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33825",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33825"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33825:1:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-08T21:45:13.53Z",
+      "observedAt": "2026-04-08T21:45:13.53Z",
+      "trackId": "sdk:Python:azure-arm-test",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33825",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33825"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33825:1:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-08T21:45:13.53Z",
+      "observedAt": "2026-04-08T21:45:13.53Z",
+      "trackId": "sdk:Java:aure-ai-resourcemanager-document-intelligence",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33825",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33825"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33825:1:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-08T21:45:13.53Z",
+      "observedAt": "2026-04-08T21:45:13.53Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/deviceregistry/armdeviceregistry",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33825",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33825"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33825:5:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-04-16T15:40:39.237Z",
+      "observedAt": "2026-04-16T15:40:39.237Z",
+      "trackId": "plan",
+      "value": "In Progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33825",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33825"
+      },
+      "title": "Plan state changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33825:20:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-20T16:04:13.893Z",
+      "observedAt": "2026-04-20T16:04:13.893Z",
+      "trackId": "sdk:.NET:Azure.AI.ResourceManager.DocumentIntelligence",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33825",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33825"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33825:20:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-20T16:04:13.893Z",
+      "observedAt": "2026-04-20T16:04:13.893Z",
+      "trackId": "sdk:JavaScript:@azure/arm-deviceregistry",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33825",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33825"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33825:20:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-20T16:04:13.893Z",
+      "observedAt": "2026-04-20T16:04:13.893Z",
+      "trackId": "sdk:Python:azure-arm-test",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33825",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33825"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33825:20:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-20T16:04:13.893Z",
+      "observedAt": "2026-04-20T16:04:13.893Z",
+      "trackId": "sdk:Java:aure-ai-resourcemanager-document-intelligence",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33825",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33825"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33825:20:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-20T16:04:13.893Z",
+      "observedAt": "2026-04-20T16:04:13.893Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/deviceregistry/armdeviceregistry",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33825",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33825"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33826:2:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-20T16:09:30.713Z",
+      "observedAt": "2026-04-20T16:09:30.713Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#34210",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/34210",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33826",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33826"
+      },
+      "title": "Spec PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado:33825:21:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-20T16:09:30.873Z",
+      "observedAt": "2026-04-20T16:09:30.873Z",
+      "trackId": "sdk:.NET:Azure.AI.ResourceManager.DocumentIntelligence",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33825",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33825"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33825:21:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-20T16:09:30.873Z",
+      "observedAt": "2026-04-20T16:09:30.873Z",
+      "trackId": "sdk:JavaScript:@azure/arm-deviceregistry",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33825",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33825"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33825:21:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-20T16:09:30.873Z",
+      "observedAt": "2026-04-20T16:09:30.873Z",
+      "trackId": "sdk:Python:azure-arm-test",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33825",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33825"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33825:21:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-20T16:09:30.873Z",
+      "observedAt": "2026-04-20T16:09:30.873Z",
+      "trackId": "sdk:Java:aure-ai-resourcemanager-document-intelligence",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33825",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33825"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33825:21:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-20T16:09:30.873Z",
+      "observedAt": "2026-04-20T16:09:30.873Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/deviceregistry/armdeviceregistry",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33825",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33825"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6181014:generation.queued:sdk:Python:azure-arm-test",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-04-20T16:09:49.4542185Z",
+      "observedAt": "2026-04-20T16:16:50.1496876Z",
+      "trackId": "sdk:Python:azure-arm-test",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6181014",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6181014"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6181018:generation.queued:sdk:.NET:Azure.AI.ResourceManager.DocumentIntelligence",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-04-20T16:10:02.095624Z",
+      "observedAt": "2026-04-20T16:17:41.7571722Z",
+      "trackId": "sdk:.NET:Azure.AI.ResourceManager.DocumentIntelligence",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6181018",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6181018"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6181014:generation.started:sdk:Python:azure-arm-test",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-04-20T16:10:09.173187Z",
+      "observedAt": "2026-04-20T16:16:50.1496876Z",
+      "trackId": "sdk:Python:azure-arm-test",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6181014",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6181014"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6181019:generation.queued:sdk:Go:sdk/resourcemanager/deviceregistry/armdeviceregistry",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-04-20T16:10:14.0376427Z",
+      "observedAt": "2026-04-20T16:16:37.8403699Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/deviceregistry/armdeviceregistry",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6181019",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6181019"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6181018:generation.started:sdk:.NET:Azure.AI.ResourceManager.DocumentIntelligence",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-04-20T16:10:25.0165188Z",
+      "observedAt": "2026-04-20T16:17:41.7571722Z",
+      "trackId": "sdk:.NET:Azure.AI.ResourceManager.DocumentIntelligence",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6181018",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6181018"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6181020:generation.queued:sdk:JavaScript:@azure/arm-deviceregistry",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-04-20T16:10:30.0297085Z",
+      "observedAt": "2026-04-20T16:17:52.6523932Z",
+      "trackId": "sdk:JavaScript:@azure/arm-deviceregistry",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6181020",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6181020"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6181019:generation.started:sdk:Go:sdk/resourcemanager/deviceregistry/armdeviceregistry",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-04-20T16:10:37.4380733Z",
+      "observedAt": "2026-04-20T16:16:37.8403699Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/deviceregistry/armdeviceregistry",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6181019",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6181019"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6181022:generation.queued:sdk:Java:aure-ai-resourcemanager-document-intelligence",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-04-20T16:10:42.5435061Z",
+      "observedAt": "2026-04-20T16:29:19.3795703Z",
+      "trackId": "sdk:Java:aure-ai-resourcemanager-document-intelligence",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6181022",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6181022"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6181020:generation.started:sdk:JavaScript:@azure/arm-deviceregistry",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-04-20T16:10:50.9322841Z",
+      "observedAt": "2026-04-20T16:17:52.6523932Z",
+      "trackId": "sdk:JavaScript:@azure/arm-deviceregistry",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6181020",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6181020"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6181022:generation.started:sdk:Java:aure-ai-resourcemanager-document-intelligence",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-04-20T16:11:02.503488Z",
+      "observedAt": "2026-04-20T16:29:19.3795703Z",
+      "trackId": "sdk:Java:aure-ai-resourcemanager-document-intelligence",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6181022",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6181022"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46410:commit:4ff528d539d7:sdk:Python:azure-arm-test",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-20T16:15:19Z",
+      "observedAt": "2026-04-20T16:15:19Z",
+      "trackId": "sdk:Python:azure-arm-test",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46410",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/4ff528d539d726110957c6ca714987620c826c53"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46410:pr.created:sdk:Python:azure-arm-test",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-20T16:15:24Z",
+      "observedAt": "2026-04-20T16:15:24Z",
+      "trackId": "sdk:Python:azure-arm-test",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46410",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46410"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26631:commit:68dd4deb0f17:sdk:Go:sdk/resourcemanager/deviceregistry/armdeviceregistry",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-20T16:15:30Z",
+      "observedAt": "2026-04-20T16:15:30Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/deviceregistry/armdeviceregistry",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26631",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/68dd4deb0f175fed0ba697989c1a95bac34e43d9"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:33825:27:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-20T16:15:31.09Z",
+      "observedAt": "2026-04-20T16:15:31.09Z",
+      "trackId": "sdk:Python:azure-arm-test",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33825",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33825"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33825:27:Custom.SDKPullRequestForPython",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-04-20T16:15:31.09Z",
+      "observedAt": "2026-04-20T16:15:31.09Z",
+      "trackId": "sdk:Python:azure-arm-test",
+      "value": "https://github.com/Azure/azure-sdk-for-python/pull/46410",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33825",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33825"
+      },
+      "title": "SDK PR linked",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26631:pr.created:sdk:Go:sdk/resourcemanager/deviceregistry/armdeviceregistry",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-20T16:15:34Z",
+      "observedAt": "2026-04-20T16:15:34Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/deviceregistry/armdeviceregistry",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26631",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26631"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:33825:28:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-20T16:15:41.143Z",
+      "observedAt": "2026-04-20T16:15:41.143Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/deviceregistry/armdeviceregistry",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33825",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33825"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33825:28:Custom.SDKPullRequestForGo",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-04-20T16:15:41.143Z",
+      "observedAt": "2026-04-20T16:15:41.143Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/deviceregistry/armdeviceregistry",
+      "value": "https://github.com/Azure/azure-sdk-for-go/pull/26631",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33825",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33825"
+      },
+      "title": "SDK PR linked",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6181019:generation.completed:sdk:Go:sdk/resourcemanager/deviceregistry/armdeviceregistry",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-04-20T16:16:37.8403699Z",
+      "observedAt": "2026-04-20T16:16:37.8403699Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/deviceregistry/armdeviceregistry",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6181019",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6181019"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58386:commit:17ed255f3bb9:sdk:.NET:Azure.AI.ResourceManager.DocumentIntelligence",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-20T16:16:38Z",
+      "observedAt": "2026-04-20T16:16:38Z",
+      "trackId": "sdk:.NET:Azure.AI.ResourceManager.DocumentIntelligence",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58386",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/17ed255f3bb952e7fe1e91e1b3517415bf40b776"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58386:pr.created:sdk:.NET:Azure.AI.ResourceManager.DocumentIntelligence",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-20T16:16:42Z",
+      "observedAt": "2026-04-20T16:16:42Z",
+      "trackId": "sdk:.NET:Azure.AI.ResourceManager.DocumentIntelligence",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58386",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58386"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38219:commit:8c3f2f51ecee:sdk:JavaScript:@azure/arm-deviceregistry",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-20T16:16:44Z",
+      "observedAt": "2026-04-20T16:16:44Z",
+      "trackId": "sdk:JavaScript:@azure/arm-deviceregistry",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38219",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/8c3f2f51ecee686ddde235366725dcbccaf311ce"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38219:pr.created:sdk:JavaScript:@azure/arm-deviceregistry",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-20T16:16:48Z",
+      "observedAt": "2026-04-20T16:16:48Z",
+      "trackId": "sdk:JavaScript:@azure/arm-deviceregistry",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38219",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38219"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:33825:29:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-20T16:16:49.87Z",
+      "observedAt": "2026-04-20T16:16:49.87Z",
+      "trackId": "sdk:.NET:Azure.AI.ResourceManager.DocumentIntelligence",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33825",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33825"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33825:29:Custom.SDKPullRequestForDotnet",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-04-20T16:16:49.87Z",
+      "observedAt": "2026-04-20T16:16:49.87Z",
+      "trackId": "sdk:.NET:Azure.AI.ResourceManager.DocumentIntelligence",
+      "value": "https://github.com/Azure/azure-sdk-for-net/pull/58386",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33825",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33825"
+      },
+      "title": "SDK PR linked",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6181014:generation.completed:sdk:Python:azure-arm-test",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-04-20T16:16:50.1496876Z",
+      "observedAt": "2026-04-20T16:16:50.1496876Z",
+      "trackId": "sdk:Python:azure-arm-test",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6181014",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6181014"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:33825:30:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-20T16:16:55.013Z",
+      "observedAt": "2026-04-20T16:16:55.013Z",
+      "trackId": "sdk:JavaScript:@azure/arm-deviceregistry",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33825",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33825"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33825:30:Custom.SDKPullRequestForJavaScript",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-04-20T16:16:55.013Z",
+      "observedAt": "2026-04-20T16:16:55.013Z",
+      "trackId": "sdk:JavaScript:@azure/arm-deviceregistry",
+      "value": "https://github.com/Azure/azure-sdk-for-js/pull/38219",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33825",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33825"
+      },
+      "title": "SDK PR linked",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6181018:generation.completed:sdk:.NET:Azure.AI.ResourceManager.DocumentIntelligence",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-04-20T16:17:41.7571722Z",
+      "observedAt": "2026-04-20T16:17:41.7571722Z",
+      "trackId": "sdk:.NET:Azure.AI.ResourceManager.DocumentIntelligence",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6181018",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6181018"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6181020:generation.completed:sdk:JavaScript:@azure/arm-deviceregistry",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-04-20T16:17:52.6523932Z",
+      "observedAt": "2026-04-20T16:17:52.6523932Z",
+      "trackId": "sdk:JavaScript:@azure/arm-deviceregistry",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6181020",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6181020"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48873:commit:8f56bb7bf47b:sdk:Java:aure-ai-resourcemanager-document-intelligence",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-20T16:18:34Z",
+      "observedAt": "2026-04-20T16:18:34Z",
+      "trackId": "sdk:Java:aure-ai-resourcemanager-document-intelligence",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48873",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/8f56bb7bf47b9e3912ca2e3b128e016ff0b14faf"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48873:pr.created:sdk:Java:aure-ai-resourcemanager-document-intelligence",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-20T16:18:39Z",
+      "observedAt": "2026-04-20T16:18:39Z",
+      "trackId": "sdk:Java:aure-ai-resourcemanager-document-intelligence",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48873",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48873"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:33825:31:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-20T16:18:47.53Z",
+      "observedAt": "2026-04-20T16:18:47.53Z",
+      "trackId": "sdk:Java:aure-ai-resourcemanager-document-intelligence",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33825",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33825"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33825:31:Custom.SDKPullRequestForJava",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-04-20T16:18:47.53Z",
+      "observedAt": "2026-04-20T16:18:47.53Z",
+      "trackId": "sdk:Java:aure-ai-resourcemanager-document-intelligence",
+      "value": "https://github.com/Azure/azure-sdk-for-java/pull/48873",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33825",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33825"
+      },
+      "title": "SDK PR linked",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6181022:generation.completed:sdk:Java:aure-ai-resourcemanager-document-intelligence",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-04-20T16:29:19.3795703Z",
+      "observedAt": "2026-04-20T16:29:19.3795703Z",
+      "trackId": "sdk:Java:aure-ai-resourcemanager-document-intelligence",
+      "title": "Pipeline completed with issues",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6181022",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6181022"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26631:pr.closed:sdk:Go:sdk/resourcemanager/deviceregistry/armdeviceregistry",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-21T08:43:16Z",
+      "observedAt": "2026-04-21T08:43:16Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/deviceregistry/armdeviceregistry",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26631",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26631"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46410:comment:4806895540:sdk:Python:azure-arm-test",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-26T06:20:48Z",
+      "observedAt": "2026-06-26T06:20:48Z",
+      "trackId": "sdk:Python:azure-arm-test",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46410",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46410#issuecomment-4806895540"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @azure-sdk. Thank you for your interest in helping to improve the Azure SDK experience and for your contribution. We've noticed that there hasn't been recent engagement on this pull request. If this is still an active work stream, please",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38219:comment:4806915649:sdk:JavaScript:@azure/arm-deviceregistry",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-26T06:24:38Z",
+      "observedAt": "2026-06-26T06:24:38Z",
+      "trackId": "sdk:JavaScript:@azure/arm-deviceregistry",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38219",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38219#issuecomment-4806915649"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @azure-sdk. Thank you for your interest in helping to improve the Azure SDK experience and for your contribution. We've noticed that there hasn't been recent engagement on this pull request. If this is still an active work stream, please",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48873:comment:4806918618:sdk:Java:aure-ai-resourcemanager-document-intelligence",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-26T06:25:11Z",
+      "observedAt": "2026-06-26T06:25:11Z",
+      "trackId": "sdk:Java:aure-ai-resourcemanager-document-intelligence",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48873",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48873#issuecomment-4806918618"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @azure-sdk. Thank you for your interest in helping to improve the Azure SDK experience and for your contribution. We've noticed that there hasn't been recent engagement on this pull request. If this is still an active work stream, please",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58386:comment:4806924252:sdk:.NET:Azure.AI.ResourceManager.DocumentIntelligence",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-26T06:26:14Z",
+      "observedAt": "2026-06-26T06:26:14Z",
+      "trackId": "sdk:.NET:Azure.AI.ResourceManager.DocumentIntelligence",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58386",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58386#issuecomment-4806924252"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @azure-sdk. Thank you for your interest in helping to improve the Azure SDK experience and for your contribution. We've noticed that there hasn't been recent engagement on this pull request. If this is still an active work stream, please",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58386:comment:4874846631:sdk:.NET:Azure.AI.ResourceManager.DocumentIntelligence",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-03T09:35:47Z",
+      "observedAt": "2026-07-03T09:35:47Z",
+      "trackId": "sdk:.NET:Azure.AI.ResourceManager.DocumentIntelligence",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58386",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58386#issuecomment-4874846631"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @azure-sdk. Thank you for your contribution. Since there hasn't been recent engagement, we're going to close this out. Feel free to respond with a comment containing `/reopen` if you'd like to continue working on these changes. Please be",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58386:pr.closed:sdk:.NET:Azure.AI.ResourceManager.DocumentIntelligence",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-03T09:35:55Z",
+      "observedAt": "2026-07-03T09:35:55Z",
+      "trackId": "sdk:.NET:Azure.AI.ResourceManager.DocumentIntelligence",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58386",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58386"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46410:comment:4874848713:sdk:Python:azure-arm-test",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-03T09:35:58Z",
+      "observedAt": "2026-07-03T09:35:58Z",
+      "trackId": "sdk:Python:azure-arm-test",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46410",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46410#issuecomment-4874848713"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @azure-sdk. Thank you for your contribution. Since there hasn't been recent engagement, we're going to close this out. Feel free to respond with a comment containing `/reopen` if you'd like to continue working on these changes. Please be",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46410:pr.closed:sdk:Python:azure-arm-test",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-03T09:36:17Z",
+      "observedAt": "2026-07-03T09:36:17Z",
+      "trackId": "sdk:Python:azure-arm-test",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46410",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46410"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48873:comment:4874865848:sdk:Java:aure-ai-resourcemanager-document-intelligence",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-03T09:37:48Z",
+      "observedAt": "2026-07-03T09:37:48Z",
+      "trackId": "sdk:Java:aure-ai-resourcemanager-document-intelligence",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48873",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48873#issuecomment-4874865848"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @azure-sdk. Thank you for your contribution. Since there hasn't been recent engagement, we're going to close this out. Feel free to respond with a comment containing `/reopen` if you'd like to continue working on these changes. Please be",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48873:pr.closed:sdk:Java:aure-ai-resourcemanager-document-intelligence",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-03T09:37:56Z",
+      "observedAt": "2026-07-03T09:37:56Z",
+      "trackId": "sdk:Java:aure-ai-resourcemanager-document-intelligence",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48873",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48873"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38219:comment:4874867735:sdk:JavaScript:@azure/arm-deviceregistry",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-03T09:38:04Z",
+      "observedAt": "2026-07-03T09:38:04Z",
+      "trackId": "sdk:JavaScript:@azure/arm-deviceregistry",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38219",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38219#issuecomment-4874867735"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @azure-sdk. Thank you for your contribution. Since there hasn't been recent engagement, we're going to close this out. Feel free to respond with a comment containing `/reopen` if you'd like to continue working on these changes. Please be",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38219:pr.closed:sdk:JavaScript:@azure/arm-deviceregistry",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-03T09:38:11Z",
+      "observedAt": "2026-07-03T09:38:11Z",
+      "trackId": "sdk:JavaScript:@azure/arm-deviceregistry",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38219",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38219"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    }
+  ],
+  "quality": {
+    "warnings": [
+      "5 historical linked PR(s) closed without merge"
+    ],
+    "unavailablePullRequests": 0,
+    "unavailablePipelineRuns": 0
+  },
+  "boundaryFacts": {
+    "id": "33825",
+    "state": "in-progress",
+    "specPrs": [
+      {
+        "id": "github:Azure/azure-rest-api-specs#34210",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#34210",
+        "createdAt": "2025-04-24T09:59:42Z",
+        "mergedAt": "2025-05-12T04:43:45Z",
+        "closedAt": "2025-05-12T04:43:45Z",
+        "available": true
+      }
+    ],
+    "artifacts": [
+      {
+        "language": ".NET",
+        "package": "Azure.AI.ResourceManager.DocumentIntelligence",
+        "trackId": "sdk:.NET:Azure.AI.ResourceManager.DocumentIntelligence",
+        "prId": "github:Azure/azure-sdk-for-net#58386",
+        "prCreatedAt": "2026-04-20T16:16:42Z",
+        "prMergedAt": null,
+        "prClosedAt": "2026-07-03T09:35:55Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-net#58386",
+            "createdAt": "2026-04-20T16:16:42Z",
+            "mergedAt": null,
+            "closedAt": "2026-07-03T09:35:55Z",
+            "state": "closed"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6181018",
+        "generationStartAt": "2026-04-20T16:10:25.0165188Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "JavaScript",
+        "package": "@azure/arm-deviceregistry",
+        "trackId": "sdk:JavaScript:@azure/arm-deviceregistry",
+        "prId": "github:Azure/azure-sdk-for-js#38219",
+        "prCreatedAt": "2026-04-20T16:16:48Z",
+        "prMergedAt": null,
+        "prClosedAt": "2026-07-03T09:38:11Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-js#38219",
+            "createdAt": "2026-04-20T16:16:48Z",
+            "mergedAt": null,
+            "closedAt": "2026-07-03T09:38:11Z",
+            "state": "closed"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6181020",
+        "generationStartAt": "2026-04-20T16:10:50.9322841Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Python",
+        "package": "azure-arm-test",
+        "trackId": "sdk:Python:azure-arm-test",
+        "prId": "github:Azure/azure-sdk-for-python#46410",
+        "prCreatedAt": "2026-04-20T16:15:24Z",
+        "prMergedAt": null,
+        "prClosedAt": "2026-07-03T09:36:17Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-python#46410",
+            "createdAt": "2026-04-20T16:15:24Z",
+            "mergedAt": null,
+            "closedAt": "2026-07-03T09:36:17Z",
+            "state": "closed"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6181014",
+        "generationStartAt": "2026-04-20T16:10:09.173187Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Java",
+        "package": "aure-ai-resourcemanager-document-intelligence",
+        "trackId": "sdk:Java:aure-ai-resourcemanager-document-intelligence",
+        "prId": "github:Azure/azure-sdk-for-java#48873",
+        "prCreatedAt": "2026-04-20T16:18:39Z",
+        "prMergedAt": null,
+        "prClosedAt": "2026-07-03T09:37:56Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-java#48873",
+            "createdAt": "2026-04-20T16:18:39Z",
+            "mergedAt": null,
+            "closedAt": "2026-07-03T09:37:56Z",
+            "state": "closed"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6181022",
+        "generationStartAt": "2026-04-20T16:11:02.503488Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Go",
+        "package": "sdk/resourcemanager/deviceregistry/armdeviceregistry",
+        "trackId": "sdk:Go:sdk/resourcemanager/deviceregistry/armdeviceregistry",
+        "prId": "github:Azure/azure-sdk-for-go#26631",
+        "prCreatedAt": "2026-04-20T16:15:34Z",
+        "prMergedAt": null,
+        "prClosedAt": "2026-04-21T08:43:16Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-go#26631",
+            "createdAt": "2026-04-20T16:15:34Z",
+            "mergedAt": null,
+            "closedAt": "2026-04-21T08:43:16Z",
+            "state": "closed"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6181019",
+        "generationStartAt": "2026-04-20T16:10:37.4380733Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      }
+    ],
+    "cohortPlan": {
+      "id": "33825",
+      "releasePlanId": "518",
+      "title": "Release Plan - 518 - Public Preview - Release Planner Test Product",
+      "service": "Contoso.Widget Manager",
+      "state": "in-progress"
+    },
+    "quality": {
+      "warnings": [
+        "5 historical linked PR(s) closed without merge"
+      ],
+      "unavailablePullRequests": 0,
+      "unavailablePipelineRuns": 0
+    }
+  },
+  "summary": {
+    "durationHours": 3050.9,
+    "pullRequestCount": 6,
+    "humanReviewCount": 2,
+    "humanCommentCount": 0
+  }
+}

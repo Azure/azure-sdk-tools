@@ -1,0 +1,2721 @@
+{
+  "schemaVersion": 2,
+  "id": "35433",
+  "correlation": {
+    "policyVersion": 1,
+    "preflight": "passed"
+  },
+  "releasePlanId": "35433",
+  "title": "Public Preview release plan for ServiceBus",
+  "service": "ServiceBus",
+  "product": "Release",
+  "path": "specification/servicebus/resource-manager/Microsoft.ServiceBus/ServiceBus",
+  "state": "in-progress",
+  "plane": "management",
+  "releaseType": "APEX Public Preview",
+  "intendedMonth": "August 2026",
+  "createdAt": "2026-07-22T18:53:02.967Z",
+  "completedAt": null,
+  "sourceUrl": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35433",
+  "range": {
+    "start": "2026-07-17T02:45:27.000Z",
+    "end": "2026-08-14T00:37:23.589Z"
+  },
+  "intendedArtifacts": [
+    {
+      "prId": "github:Azure/azure-sdk-for-net#61217",
+      "language": ".NET",
+      "package": "Azure.ResourceManager.ServiceBus",
+      "version": "1.2.0",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6603226",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-js#39365",
+      "language": "JavaScript",
+      "package": "@azure/arm-servicebus",
+      "version": "7.0.0",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6603231",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-python#48213",
+      "language": "Python",
+      "package": "azure-mgmt-servicebus",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6603233",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-java#49903",
+      "language": "Java",
+      "package": "azure-resourcemanager-servicebus",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6603228",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-go#27235",
+      "language": "Go",
+      "package": "sdk/resourcemanager/servicebus/armservicebus",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6603235",
+      "releasePipelineUrl": null
+    }
+  ],
+  "links": [
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#44752",
+      "role": "spec-pr",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/44752",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-net#61217",
+      "role": "sdk-pr",
+      "language": ".NET",
+      "url": "https://github.com/Azure/azure-sdk-for-net/pull/61217",
+      "releasePlanIds": [
+        "35433"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-js#39365",
+      "role": "sdk-pr",
+      "language": "JavaScript",
+      "url": "https://github.com/Azure/azure-sdk-for-js/pull/39365",
+      "releasePlanIds": [
+        "35433"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-python#48213",
+      "role": "sdk-pr",
+      "language": "Python",
+      "url": "https://github.com/Azure/azure-sdk-for-python/pull/48213",
+      "releasePlanIds": [
+        "35433"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-java#49903",
+      "role": "sdk-pr",
+      "language": "Java",
+      "url": "https://github.com/Azure/azure-sdk-for-java/pull/49903",
+      "releasePlanIds": [
+        "35433"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-go#27235",
+      "role": "sdk-pr",
+      "language": "Go",
+      "url": "https://github.com/Azure/azure-sdk-for-go/pull/27235",
+      "releasePlanIds": [
+        "35433"
+      ]
+    }
+  ],
+  "tracks": [
+    {
+      "id": "plan",
+      "kind": "plan",
+      "label": "Release Plan",
+      "detail": "APEX Public Preview"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#44752",
+      "kind": "spec",
+      "label": "Spec PR",
+      "detail": "azure-rest-api-specs #44752",
+      "artifactId": "github:Azure/azure-rest-api-specs#44752",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:.NET:Azure.ResourceManager.ServiceBus",
+      "kind": "sdk",
+      "label": ".NET",
+      "detail": "Azure.ResourceManager.ServiceBus",
+      "artifactId": "github:Azure/azure-sdk-for-net#61217",
+      "state": "open"
+    },
+    {
+      "id": "sdk:JavaScript:@azure/arm-servicebus",
+      "kind": "sdk",
+      "label": "JavaScript",
+      "detail": "@azure/arm-servicebus",
+      "artifactId": "github:Azure/azure-sdk-for-js#39365",
+      "state": "open"
+    },
+    {
+      "id": "sdk:Python:azure-mgmt-servicebus",
+      "kind": "sdk",
+      "label": "Python",
+      "detail": "azure-mgmt-servicebus",
+      "artifactId": "github:Azure/azure-sdk-for-python#48213",
+      "state": "open"
+    },
+    {
+      "id": "sdk:Java:azure-resourcemanager-servicebus",
+      "kind": "sdk",
+      "label": "Java",
+      "detail": "azure-resourcemanager-servicebus",
+      "artifactId": "github:Azure/azure-sdk-for-java#49903",
+      "state": "open"
+    },
+    {
+      "id": "sdk:Go:sdk/resourcemanager/servicebus/armservicebus",
+      "kind": "sdk",
+      "label": "Go",
+      "detail": "sdk/resourcemanager/servicebus/armservicebus",
+      "artifactId": "github:Azure/azure-sdk-for-go#27235",
+      "state": "open"
+    }
+  ],
+  "events": [
+    {
+      "id": "github:Azure/azure-rest-api-specs#44752:pr.created:spec:github:Azure/azure-rest-api-specs#44752",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-17T02:45:27Z",
+      "observedAt": "2026-07-17T02:45:27Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44752",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "mashrafsiddiquee"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44752",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44752"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44752:comment:4998486326:spec:github:Azure/azure-rest-api-specs#44752",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-17T02:46:28Z",
+      "observedAt": "2026-07-17T02:46:28Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44752",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44752",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44752#issuecomment-4998486326"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>✅ All automated merging requirements have been met! To get your PR merged, see <a href=\"https://aka.ms/azsdk/specreview/merge\">aka.ms/azsdk/specreview/merge</a>.<br /><br />Comment generated by <a href=\"https://g",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44752:comment:4998517080:spec:github:Azure/azure-rest-api-specs#44752",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-17T02:52:53Z",
+      "observedAt": "2026-07-17T02:52:53Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44752",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44752",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44752#issuecomment-4998517080"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews | Language | API Review for Package | |----------|---------| | Swagger | [Microsoft.ServiceBus-ServiceBus](https://apiview.dev/Assembl",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44752:commit:2d5c1e680e21:spec:github:Azure/azure-rest-api-specs#44752",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-17T03:26:42Z",
+      "observedAt": "2026-07-17T03:26:42Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44752",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "asiddiqiuee"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44752",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/2d5c1e680e21e36f92f8cd10e72d0bcf2e14d7f1"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44752:review:4739064777:spec:github:Azure/azure-rest-api-specs#44752",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-20T21:17:21Z",
+      "observedAt": "2026-07-20T21:17:21Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44752",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "sandipsh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44752",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44752#pullrequestreview-4739064777"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## ARM API Review Posting findings from the [ARM API Reviewer agent](https://github.com/Azure/azure-rest-api-specs/blob/main/documentation/api-reviewer-agent.md) (critic-verified, 1 iteration(s), converged) against commit [2d5c1e6](https://",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44752:review:4739065787:spec:github:Azure/azure-rest-api-specs#44752",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-20T21:17:30Z",
+      "observedAt": "2026-07-20T21:17:30Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44752",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "sandipsh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44752",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44752#pullrequestreview-4739065787"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44752:comment:3617635269:spec:github:Azure/azure-rest-api-specs#44752",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-20T21:17:31Z",
+      "observedAt": "2026-07-20T21:17:31Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44752",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "sandipsh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44752",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44752#discussion_r3617635269"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[NEW] 🔴 Blocking** **[[Section 11.2 - Incremental Version Progression](https://github.com/Azure/azure-rest-api-specs/blob/main/.github/instructions/arm-api-review.instructions.md#112-incremental-version-progression)]** specification/serv",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44752:comment:5027391534:spec:github:Azure/azure-rest-api-specs#44752",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-20T21:19:37Z",
+      "observedAt": "2026-07-20T21:19:37Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44752",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "sandipsh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44752",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44752#issuecomment-5027391534"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## ARM API Review Posting findings from the [ARM API Reviewer agent](https://github.com/Azure/azure-rest-api-specs/blob/main/documentation/api-reviewer-agent.md) (critic-verified, 1 iteration(s), converged) against commit [2d5c1e6](https://",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44752:comment:5027402823:spec:github:Azure/azure-rest-api-specs#44752",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-20T21:20:58Z",
+      "observedAt": "2026-07-20T21:20:58Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44752",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "sandipsh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44752",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44752#issuecomment-5027402823"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## ARM API Review Posting findings from the [ARM API Reviewer agent](https://github.com/Azure/azure-rest-api-specs/blob/main/documentation/api-reviewer-agent.md) (critic-verified, 1 iteration(s), converged) against commit [2d5c1e6](https://",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44752:commit:506a7b71d8b6:spec:github:Azure/azure-rest-api-specs#44752",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-21T15:35:40Z",
+      "observedAt": "2026-07-21T15:35:40Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44752",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "asiddiqiuee"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44752",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/506a7b71d8b6ba326986fa9d5638716505dba8c7"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44752:review:4748480768:spec:github:Azure/azure-rest-api-specs#44752",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-21T19:48:09Z",
+      "observedAt": "2026-07-21T19:48:09Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44752",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "sandipsh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44752",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44752#pullrequestreview-4748480768"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44752:comment:3625240541:spec:github:Azure/azure-rest-api-specs#44752",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-21T19:48:09Z",
+      "observedAt": "2026-07-21T19:48:09Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44752",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "sandipsh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44752",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44752#discussion_r3625240541"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Thanks for addressing this. Default tag now points to the latest stable package (package-2026-01), and preview remains opt-in via explicit tag. Resolving this thread.",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44752:review:4748482545:spec:github:Azure/azure-rest-api-specs#44752",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-21T19:48:22Z",
+      "observedAt": "2026-07-21T19:48:22Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44752",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "sandipsh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44752",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44752#pullrequestreview-4748482545"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44752:comment:3625241997:spec:github:Azure/azure-rest-api-specs#44752",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-21T19:48:22Z",
+      "observedAt": "2026-07-21T19:48:22Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44752",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "sandipsh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44752",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44752#discussion_r3625241997"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Thanks for addressing this. Default tag now points to the latest stable package (package-2026-01), and preview remains opt-in via explicit tag. Resolving this thread.",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44752:review:4757296722:spec:github:Azure/azure-rest-api-specs#44752",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-22T18:05:01Z",
+      "observedAt": "2026-07-22T18:05:01Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44752",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "dsouzaarun"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44752",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44752#pullrequestreview-4757296722"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44752:pr.merged:spec:github:Azure/azure-rest-api-specs#44752",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-22T18:49:15Z",
+      "observedAt": "2026-07-22T18:49:15Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44752",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44752",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44752"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:35433:created",
+      "type": "plan.created",
+      "phase": "plan",
+      "occurredAt": "2026-07-22T18:53:02.967Z",
+      "observedAt": "2026-07-22T18:53:02.967Z",
+      "trackId": "plan",
+      "title": "Release Plan created",
+      "confidence": "authoritative",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35433",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35433"
+      },
+      "stack": 0
+    },
+    {
+      "id": "ado:35433:1:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-07-22T18:53:02.967Z",
+      "observedAt": "2026-07-22T18:53:02.967Z",
+      "trackId": "plan",
+      "value": "New",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35433",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35433"
+      },
+      "title": "Plan state changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35433:1:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-22T18:53:02.967Z",
+      "observedAt": "2026-07-22T18:53:02.967Z",
+      "trackId": "plan",
+      "value": "Not Available",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35433",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35433"
+      },
+      "title": "Spec approval changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:35433:1:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-22T18:53:02.967Z",
+      "observedAt": "2026-07-22T18:53:02.967Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ServiceBus",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35433",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35433"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35433:1:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-22T18:53:02.967Z",
+      "observedAt": "2026-07-22T18:53:02.967Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicebus",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35433",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35433"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35433:1:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-22T18:53:02.967Z",
+      "observedAt": "2026-07-22T18:53:02.967Z",
+      "trackId": "sdk:Python:azure-mgmt-servicebus",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35433",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35433"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35433:1:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-22T18:53:02.967Z",
+      "observedAt": "2026-07-22T18:53:02.967Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicebus",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35433",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35433"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35433:1:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-22T18:53:02.967Z",
+      "observedAt": "2026-07-22T18:53:02.967Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicebus/armservicebus",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35433",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35433"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35434:1:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-22T18:53:03.317Z",
+      "observedAt": "2026-07-22T18:53:03.317Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44752",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/44752",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35434",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35434"
+      },
+      "title": "Spec PR linked",
+      "stack": 2
+    },
+    {
+      "id": "ado:35433:2:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-07-22T18:53:03.913Z",
+      "observedAt": "2026-07-22T18:53:03.913Z",
+      "trackId": "plan",
+      "value": "In Progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35433",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35433"
+      },
+      "title": "Plan state changed",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44752:comment:5050174070:spec:github:Azure/azure-rest-api-specs#44752",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-22T18:53:09Z",
+      "observedAt": "2026-07-22T18:53:09Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44752",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44752",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44752#issuecomment-5050174070"
+      },
+      "confidence": "authoritative",
+      "excerpt": "### ✅ Release Plan Created | Field | Value | |-------|-------| | **Release Plan** | [View Release Plan](https://azsdk-releaseplan-dashboard-hveph5aqhhcfhtgu.westus-01.azurewebsites.net/?releaseplan=35433) | | **API Version** | `2026-07-01-p",
+      "stack": 3
+    },
+    {
+      "id": "ado:35433:4:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-22T18:53:19.487Z",
+      "observedAt": "2026-07-22T18:53:19.487Z",
+      "trackId": "plan",
+      "value": "Approved",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35433",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35433"
+      },
+      "title": "Spec approval changed",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6603226:generation.queued:sdk:.NET:Azure.ResourceManager.ServiceBus",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-07-22T18:58:05.4238739Z",
+      "observedAt": "2026-07-22T19:07:03.9598866Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ServiceBus",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6603226",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6603226"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:35433:5:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-22T18:58:10.347Z",
+      "observedAt": "2026-07-22T18:58:10.347Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ServiceBus",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35433",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35433"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6603228:generation.queued:sdk:Java:azure-resourcemanager-servicebus",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-07-22T18:58:14.2589678Z",
+      "observedAt": "2026-07-22T19:20:09.3663951Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicebus",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6603228",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6603228"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:35433:6:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-22T18:58:21.43Z",
+      "observedAt": "2026-07-22T18:58:21.43Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicebus",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35433",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35433"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6603231:generation.queued:sdk:JavaScript:@azure/arm-servicebus",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-07-22T18:58:25.3362321Z",
+      "observedAt": "2026-07-22T19:06:03.6325569Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicebus",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6603231",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6603231"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6603226:generation.started:sdk:.NET:Azure.ResourceManager.ServiceBus",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-07-22T18:58:26.9089106Z",
+      "observedAt": "2026-07-22T19:07:03.9598866Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ServiceBus",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6603226",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6603226"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado:35433:7:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-22T18:58:27.953Z",
+      "observedAt": "2026-07-22T18:58:27.953Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicebus",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35433",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35433"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6603233:generation.queued:sdk:Python:azure-mgmt-servicebus",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-07-22T18:58:32.51531Z",
+      "observedAt": "2026-07-22T19:06:22.8688293Z",
+      "trackId": "sdk:Python:azure-mgmt-servicebus",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6603233",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6603233"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:35433:8:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-22T18:58:35.71Z",
+      "observedAt": "2026-07-22T18:58:35.71Z",
+      "trackId": "sdk:Python:azure-mgmt-servicebus",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35433",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35433"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6603228:generation.started:sdk:Java:azure-resourcemanager-servicebus",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-07-22T18:58:38.9299974Z",
+      "observedAt": "2026-07-22T19:20:09.3663951Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicebus",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6603228",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6603228"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6603231:generation.started:sdk:JavaScript:@azure/arm-servicebus",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-07-22T18:58:39.0275209Z",
+      "observedAt": "2026-07-22T19:06:03.6325569Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicebus",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6603231",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6603231"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6603235:generation.queued:sdk:Go:sdk/resourcemanager/servicebus/armservicebus",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-07-22T18:58:39.7693861Z",
+      "observedAt": "2026-07-22T19:04:59.574848Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicebus/armservicebus",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6603235",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6603235"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:35433:9:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-22T18:58:42.22Z",
+      "observedAt": "2026-07-22T18:58:42.22Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicebus/armservicebus",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35433",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35433"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6603233:generation.started:sdk:Python:azure-mgmt-servicebus",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-07-22T18:58:52.900125Z",
+      "observedAt": "2026-07-22T19:06:22.8688293Z",
+      "trackId": "sdk:Python:azure-mgmt-servicebus",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6603233",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6603233"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6603235:generation.started:sdk:Go:sdk/resourcemanager/servicebus/armservicebus",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-07-22T18:58:56.7825943Z",
+      "observedAt": "2026-07-22T19:04:59.574848Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicebus/armservicebus",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6603235",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6603235"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27235:commit:8cc6d1d77c10:sdk:Go:sdk/resourcemanager/servicebus/armservicebus",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T19:03:49Z",
+      "observedAt": "2026-07-22T19:03:49Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicebus/armservicebus",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27235",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/8cc6d1d77c10e7fb2e1dc82f9f35646a0d9768c7"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27235:pr.created:sdk:Go:sdk/resourcemanager/servicebus/armservicebus",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T19:03:53Z",
+      "observedAt": "2026-07-22T19:03:53Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicebus/armservicebus",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27235",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27235"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:35433:10:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-22T19:04:00.637Z",
+      "observedAt": "2026-07-22T19:04:00.637Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicebus/armservicebus",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35433",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35433"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35433:10:Custom.SDKPullRequestForGo",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-22T19:04:00.637Z",
+      "observedAt": "2026-07-22T19:04:00.637Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicebus/armservicebus",
+      "value": "https://github.com/Azure/azure-sdk-for-go/pull/27235",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35433",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35433"
+      },
+      "title": "SDK PR linked",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27235:comment:5050287674:sdk:Go:sdk/resourcemanager/servicebus/armservicebus",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T19:04:21Z",
+      "observedAt": "2026-07-22T19:04:21Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicebus/armservicebus",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27235",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27235#issuecomment-5050287674"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 5 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27235:review:4757825297:sdk:Go:sdk/resourcemanager/servicebus/armservicebus",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T19:04:37Z",
+      "observedAt": "2026-07-22T19:04:37Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicebus/armservicebus",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27235",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27235#pullrequestreview-4757825297"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview > [!NOTE] > Copilot could not run the full agentic suite for this review because it was automatically requested on a bot-authored pull request. Request a review from Copilot under Reviewers to retry with the full ag",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39365:commit:19bf87327567:sdk:JavaScript:@azure/arm-servicebus",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T19:04:55Z",
+      "observedAt": "2026-07-22T19:04:55Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicebus",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39365",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/19bf873275679193a67f3ad3cf3a3fa5c975f638"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39365:pr.created:sdk:JavaScript:@azure/arm-servicebus",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T19:04:59Z",
+      "observedAt": "2026-07-22T19:04:59Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicebus",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39365",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39365"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:6603235:generation.completed:sdk:Go:sdk/resourcemanager/servicebus/armservicebus",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-07-22T19:04:59.574848Z",
+      "observedAt": "2026-07-22T19:04:59.574848Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicebus/armservicebus",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6603235",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6603235"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48213:commit:c91565dc4b5b:sdk:Python:azure-mgmt-servicebus",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T19:05:05Z",
+      "observedAt": "2026-07-22T19:05:05Z",
+      "trackId": "sdk:Python:azure-mgmt-servicebus",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48213",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/c91565dc4b5b9209c9e983f46beb2578af10ebd9"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:35433:11:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-22T19:05:06.63Z",
+      "observedAt": "2026-07-22T19:05:06.63Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicebus",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35433",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35433"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35433:11:Custom.SDKPullRequestForJavaScript",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-22T19:05:06.63Z",
+      "observedAt": "2026-07-22T19:05:06.63Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicebus",
+      "value": "https://github.com/Azure/azure-sdk-for-js/pull/39365",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35433",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35433"
+      },
+      "title": "SDK PR linked",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48213:pr.created:sdk:Python:azure-mgmt-servicebus",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T19:05:10Z",
+      "observedAt": "2026-07-22T19:05:10Z",
+      "trackId": "sdk:Python:azure-mgmt-servicebus",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48213",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48213"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:35433:12:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-22T19:05:17.117Z",
+      "observedAt": "2026-07-22T19:05:17.117Z",
+      "trackId": "sdk:Python:azure-mgmt-servicebus",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35433",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35433"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35433:12:Custom.SDKPullRequestForPython",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-22T19:05:17.117Z",
+      "observedAt": "2026-07-22T19:05:17.117Z",
+      "trackId": "sdk:Python:azure-mgmt-servicebus",
+      "value": "https://github.com/Azure/azure-sdk-for-python/pull/48213",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35433",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35433"
+      },
+      "title": "SDK PR linked",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39365:comment:5050300962:sdk:JavaScript:@azure/arm-servicebus",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T19:05:35Z",
+      "observedAt": "2026-07-22T19:05:35Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicebus",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39365",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39365#issuecomment-5050300962"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 9 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48213:comment:5050302828:sdk:Python:azure-mgmt-servicebus",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T19:05:45Z",
+      "observedAt": "2026-07-22T19:05:45Z",
+      "trackId": "sdk:Python:azure-mgmt-servicebus",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48213",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48213#issuecomment-5050302828"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> 9 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61217:commit:2a1da0abe9b6:sdk:.NET:Azure.ResourceManager.ServiceBus",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T19:06:01Z",
+      "observedAt": "2026-07-22T19:06:01Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ServiceBus",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61217",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/2a1da0abe9b6230889b5ae1e0e459d2837b79b5c"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6603231:generation.completed:sdk:JavaScript:@azure/arm-servicebus",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-07-22T19:06:03.6325569Z",
+      "observedAt": "2026-07-22T19:06:03.6325569Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicebus",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6603231",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6603231"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61217:pr.created:sdk:.NET:Azure.ResourceManager.ServiceBus",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T19:06:05Z",
+      "observedAt": "2026-07-22T19:06:05Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ServiceBus",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61217",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61217"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:35433:13:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-22T19:06:12.633Z",
+      "observedAt": "2026-07-22T19:06:12.633Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ServiceBus",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35433",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35433"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35433:13:Custom.SDKPullRequestForDotnet",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-22T19:06:12.633Z",
+      "observedAt": "2026-07-22T19:06:12.633Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ServiceBus",
+      "value": "https://github.com/Azure/azure-sdk-for-net/pull/61217",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35433",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35433"
+      },
+      "title": "SDK PR linked",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6603233:generation.completed:sdk:Python:azure-mgmt-servicebus",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-07-22T19:06:22.8688293Z",
+      "observedAt": "2026-07-22T19:06:22.8688293Z",
+      "trackId": "sdk:Python:azure-mgmt-servicebus",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6603233",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6603233"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48213:review:4757841641:sdk:Python:azure-mgmt-servicebus",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T19:06:31Z",
+      "observedAt": "2026-07-22T19:06:31Z",
+      "trackId": "sdk:Python:azure-mgmt-servicebus",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48213",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48213#pullrequestreview-4757841641"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview > [!NOTE] > Copilot could not run the full agentic suite for this review because it was automatically requested on a bot-authored pull request. Request a review from Copilot under Reviewers to retry with the full ag",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48213:comment:3633053858:sdk:Python:azure-mgmt-servicebus",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T19:06:31Z",
+      "observedAt": "2026-07-22T19:06:31Z",
+      "trackId": "sdk:Python:azure-mgmt-servicebus",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48213",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48213#discussion_r3633053858"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The changelog entry contains a tool placeholder sentence. This should be replaced with real release notes (e.g., key API/version changes and any breaking changes) or removed before publishing, since it will ship to end users as-is.",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48213:comment:3633053891:sdk:Python:azure-mgmt-servicebus",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T19:06:31Z",
+      "observedAt": "2026-07-22T19:06:31Z",
+      "trackId": "sdk:Python:azure-mgmt-servicebus",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48213",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48213#discussion_r3633053891"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The docstring now states the only known API version is the preview one. If the SDK still supports the prior stable version (e.g., via `api_version=` override), include it in the 'Known values' list; otherwise, consider removing the 'Known v",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61217:comment:5050311519:sdk:.NET:Azure.ResourceManager.ServiceBus",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T19:06:38Z",
+      "observedAt": "2026-07-22T19:06:38Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ServiceBus",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61217",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61217#issuecomment-5050311519"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 10 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6603226:generation.completed:sdk:.NET:Azure.ResourceManager.ServiceBus",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-07-22T19:07:03.9598866Z",
+      "observedAt": "2026-07-22T19:07:03.9598866Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ServiceBus",
+      "title": "Pipeline completed with issues",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6603226",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6603226"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61217:comment:3633061076:sdk:.NET:Azure.ResourceManager.ServiceBus",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T19:07:38Z",
+      "observedAt": "2026-07-22T19:07:38Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ServiceBus",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61217",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61217#discussion_r3633061076"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The default API version is now a preview (`2026-07-01-preview`). This means consumers who don't explicitly configure an API version will be calling preview endpoints by default, which can introduce unexpected behavior changes and increased ",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61217:review:4757850585:sdk:.NET:Azure.ResourceManager.ServiceBus",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T19:07:39Z",
+      "observedAt": "2026-07-22T19:07:39Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ServiceBus",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61217",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61217#pullrequestreview-4757850585"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview > [!NOTE] > Copilot could not run the full agentic suite for this review because it was automatically requested on a bot-authored pull request. Request a review from Copilot under Reviewers to retry with the full ag",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39365:review:4757857960:sdk:JavaScript:@azure/arm-servicebus",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T19:08:33Z",
+      "observedAt": "2026-07-22T19:08:33Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicebus",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39365",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39365#pullrequestreview-4757857960"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview > [!NOTE] > Copilot could not run the full agentic suite for this review because it was automatically requested on a bot-authored pull request. Request a review from Copilot under Reviewers to retry with the full ag",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39365:comment:3633066890:sdk:JavaScript:@azure/arm-servicebus",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T19:08:33Z",
+      "observedAt": "2026-07-22T19:08:33Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicebus",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39365",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39365#discussion_r3633066890"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The generated API surface shows additional breaking changes in this PR (e.g., `SBNamespace.ipV6Enabled` replaced by `ipAddressType`, and `NamespaceReplicaLocation.clusterArmId` removed), but they are not listed under 'Breaking Changes'. Con",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49903:commit:5e0fea8530a8:sdk:Java:azure-resourcemanager-servicebus",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T19:09:22Z",
+      "observedAt": "2026-07-22T19:09:22Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicebus",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49903",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/5e0fea8530a8613cdd1f4770427c762aa4851a57"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49903:pr.created:sdk:Java:azure-resourcemanager-servicebus",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T19:09:27Z",
+      "observedAt": "2026-07-22T19:09:27Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicebus",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49903",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49903"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:35433:14:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-22T19:09:39.47Z",
+      "observedAt": "2026-07-22T19:09:39.47Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicebus",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35433",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35433"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35433:14:Custom.SDKPullRequestForJava",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-22T19:09:39.47Z",
+      "observedAt": "2026-07-22T19:09:39.47Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicebus",
+      "value": "https://github.com/Azure/azure-sdk-for-java/pull/49903",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35433",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35433"
+      },
+      "title": "SDK PR linked",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49903:comment:5050349443:sdk:Java:azure-resourcemanager-servicebus",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T19:10:10Z",
+      "observedAt": "2026-07-22T19:10:10Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicebus",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49903",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49903#issuecomment-5050349443"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 34 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6603228:generation.completed:sdk:Java:azure-resourcemanager-servicebus",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-07-22T19:20:09.3663951Z",
+      "observedAt": "2026-07-22T19:20:09.3663951Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicebus",
+      "title": "Pipeline completed with issues",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6603228",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6603228"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39365:comment:5050554808:sdk:JavaScript:@azure/arm-servicebus",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T19:30:32Z",
+      "observedAt": "2026-07-22T19:30:32Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicebus",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39365",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39365#issuecomment-5050554808"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Next Steps to Merge Only failed checks and required actions are listed below. - ❌ **UnitTest (all environments)**: Stale test recordings — the SDK now uses `api-version=2026-07-01-preview` but recordings were made with `api-version=2026-",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49903:review:4758146021:sdk:Java:azure-resourcemanager-servicebus",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T19:42:55Z",
+      "observedAt": "2026-07-22T19:42:55Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicebus",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49903",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49903#pullrequestreview-4758146021"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot encountered an error and was unable to review this pull request. You can try again by re-requesting a review. > [!NOTE] > This error may be related to your runner configuration. You can now configure runners for Copilot code review ",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61217:comment:5050713223:sdk:.NET:Azure.ResourceManager.ServiceBus",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T19:46:05Z",
+      "observedAt": "2026-07-22T19:46:05Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ServiceBus",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61217",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61217#issuecomment-5050713223"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## 🔍 CI Failure Analysis for PR #61217 ### Summary | Check | Status | |---|---| | `net - pullrequest` | ❌ Failed | | `net - pullrequest (Build Build PRBatch)` | ❌ Failed | | `net - pullrequest (Build Analyze PRBatch)` | ✅ Passed | | All ot",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27235:comment:5053215540:sdk:Go:sdk/resourcemanager/servicebus/armservicebus",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T01:06:24Z",
+      "observedAt": "2026-07-23T01:06:24Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicebus/armservicebus",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27235",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27235#issuecomment-5053215540"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Next Steps to Merge Only failed checks and required actions are listed below. - ❌ `go - pullrequest (Build Build/Test on windows_go_1261)`: build/test failed on Windows with Go 1.26.1. [ADO logs]((dev.azure.com/redacted) - Fix: Confirm w",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49903:commit:2cb6d40f3f65:sdk:Java:azure-resourcemanager-servicebus",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T01:36:55Z",
+      "observedAt": "2026-07-23T01:36:55Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicebus",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49903",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/2cb6d40f3f65b3088e682b525e92788ccac6a824"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49903:review:4760110245:sdk:Java:azure-resourcemanager-servicebus",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T01:37:09Z",
+      "observedAt": "2026-07-23T01:37:09Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicebus",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49903",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49903#pullrequestreview-4760110245"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@XiaofeiCao for review",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48213:comment:5053795534:sdk:Python:azure-mgmt-servicebus",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T02:53:58Z",
+      "observedAt": "2026-07-23T02:53:58Z",
+      "trackId": "sdk:Python:azure-mgmt-servicebus",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48213",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48213#issuecomment-5053795534"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi, the new api version `2026-07-01-preview` seems not deployed on portal yet, we recommend making sure the api version to be deployed before releasing the SDK, though we won't block the release in self-serve release flow.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48213:commit:28625946c56d:sdk:Python:azure-mgmt-servicebus",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T02:54:22Z",
+      "observedAt": "2026-07-23T02:54:22Z",
+      "trackId": "sdk:Python:azure-mgmt-servicebus",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48213",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/28625946c56d899e9812fe360bea67a13c2b5bdb"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48213:comment:5053799472:sdk:Python:azure-mgmt-servicebus",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T02:54:42Z",
+      "observedAt": "2026-07-23T02:54:42Z",
+      "trackId": "sdk:Python:azure-mgmt-servicebus",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48213",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48213#issuecomment-5053799472"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @mashrafsiddiquee, we have approved the PR and we will hold the PR merge and release until you explicitly ping us to merge then release.",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48213:review:4760404635:sdk:Python:azure-mgmt-servicebus",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T02:57:00Z",
+      "observedAt": "2026-07-23T02:57:00Z",
+      "trackId": "sdk:Python:azure-mgmt-servicebus",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48213",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48213#pullrequestreview-4760404635"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Copilot reviewed 85 out of 85 changed files in this pull request and generated no new comments.",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48213:commit:b43f5cb905c8:sdk:Python:azure-mgmt-servicebus",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T03:13:07Z",
+      "observedAt": "2026-07-23T03:13:07Z",
+      "trackId": "sdk:Python:azure-mgmt-servicebus",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48213",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/b43f5cb905c85e489539de8c3214f9224611887e"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48213:review:4760476073:sdk:Python:azure-mgmt-servicebus",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T03:15:46Z",
+      "observedAt": "2026-07-23T03:15:46Z",
+      "trackId": "sdk:Python:azure-mgmt-servicebus",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48213",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48213#pullrequestreview-4760476073"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Copilot reviewed 85 out of 85 changed files in this pull request and generated no new comments.",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27235:review:4761319631:sdk:Go:sdk/resourcemanager/servicebus/armservicebus",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T06:25:12Z",
+      "observedAt": "2026-07-23T06:25:12Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicebus/armservicebus",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "tadelesh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27235",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27235#pullrequestreview-4761319631"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39365:review:4761889619:sdk:JavaScript:@azure/arm-servicebus",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T07:44:40Z",
+      "observedAt": "2026-07-23T07:44:40Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicebus",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39365",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39365#pullrequestreview-4761889619"
+      },
+      "confidence": "authoritative",
+      "excerpt": "2 design concerns found in the `arm-servicebus-node.api.md` API surface for `@azure/arm-servicebus` `7.0.0-beta.2`. Both relate to duplicate/poorly-named interfaces that appear to be TypeSpec model-flattening artifacts: (1) `FailOver` and `",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27235:comment:5065111069:sdk:Go:sdk/resourcemanager/servicebus/armservicebus",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T01:12:22Z",
+      "observedAt": "2026-07-24T01:12:22Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicebus/armservicebus",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27235",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27235#issuecomment-5065111069"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## PR is ready to merge",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48213:review:4783931005:sdk:Python:azure-mgmt-servicebus",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-27T05:43:50Z",
+      "observedAt": "2026-07-27T05:43:50Z",
+      "trackId": "sdk:Python:azure-mgmt-servicebus",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48213",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48213#pullrequestreview-4783931005"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48213:review:4784006119:sdk:Python:azure-mgmt-servicebus",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-27T05:55:48Z",
+      "observedAt": "2026-07-27T05:55:48Z",
+      "trackId": "sdk:Python:azure-mgmt-servicebus",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48213",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48213#pullrequestreview-4784006119"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "ado:35433:15:Custom.ReleaseStatusForJavaScript",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-07-29T06:59:22.65Z",
+      "observedAt": "2026-07-29T06:59:22.65Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicebus",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35433",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35433"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35433:15:Custom.ReleasedVersionForJavaScript",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-07-29T06:59:22.65Z",
+      "observedAt": "2026-07-29T06:59:22.65Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicebus",
+      "value": "7.0.0",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35433",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35433"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35433:16:Custom.ReleaseStatusForDotnet",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-08-06T07:03:25.623Z",
+      "observedAt": "2026-08-06T07:03:25.623Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ServiceBus",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35433",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35433"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35433:16:Custom.ReleasedVersionForDotnet",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-08-06T07:03:25.623Z",
+      "observedAt": "2026-08-06T07:03:25.623Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ServiceBus",
+      "value": "1.2.0",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35433",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35433"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39365:commit:aa533e7664bd:sdk:JavaScript:@azure/arm-servicebus",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-07T03:05:13Z",
+      "observedAt": "2026-08-07T03:05:13Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicebus",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39365",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/aa533e7664bdfcdc6ad419c3b323083c083f7783"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39365:review:4879643686:sdk:JavaScript:@azure/arm-servicebus",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-07T03:16:58Z",
+      "observedAt": "2026-08-07T03:16:58Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicebus",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39365",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39365#pullrequestreview-4879643686"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Copilot reviewed 256 out of 256 changed files in this pull request and generated no new comments. <details> <summary>Suppressed comments (2)</summary> **sdk/servicebus/arm-servicebus/CHANGELOG.md:3** * The top chang",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39365:commit:5c7b25db77d0:sdk:JavaScript:@azure/arm-servicebus",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-07T05:47:17Z",
+      "observedAt": "2026-08-07T05:47:17Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicebus",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39365",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/5c7b25db77d0123af455dbec4973dbc57747ea3d"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39365:comment:3733732648:sdk:JavaScript:@azure/arm-servicebus",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-07T05:53:58Z",
+      "observedAt": "2026-08-07T05:53:58Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicebus",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39365",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39365#discussion_r3733732648"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This update operation now exposes `void` as a possible result. Management SDK create/update/get/list operations must return their resource model (using `undefined` for a bodyless response if compatibility requires it), not `void`; please co",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39365:review:4880307157:sdk:JavaScript:@azure/arm-servicebus",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-07T05:53:59Z",
+      "observedAt": "2026-08-07T05:53:59Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicebus",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39365",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39365#pullrequestreview-4880307157"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Copilot reviewed 254 out of 254 changed files in this pull request and generated 1 comment. <details> <summary>Suppressed comments (3)</summary> **sdk/servicebus/arm-servicebus/metadata.json:3** * The PR is configur",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39365:commit:158c943cb8fd:sdk:JavaScript:@azure/arm-servicebus",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-07T05:57:55Z",
+      "observedAt": "2026-08-07T05:57:55Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicebus",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39365",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/158c943cb8fd087a66691d4aae3b880f36f27cc8"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39365:review:4880337980:sdk:JavaScript:@azure/arm-servicebus",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-07T06:01:08Z",
+      "observedAt": "2026-08-07T06:01:08Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicebus",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39365",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39365#pullrequestreview-4880337980"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Copilot reviewed 262 out of 268 changed files in this pull request and generated no new comments. <details> <summary>Suppressed comments (8)</summary> **sdk/servicebus/arm-servicebus/test/servicebus_example.spec.ts:",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39365:review:4880603466:sdk:JavaScript:@azure/arm-servicebus",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-07T06:52:11Z",
+      "observedAt": "2026-08-07T06:52:11Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicebus",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39365",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39365#pullrequestreview-4880603466"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Reviewed PR #39365 (`@azure/arm-servicebus` 8.0.0-beta.1). Package version, CHANGELOG top version, and client context (`serviceBusManagementContext.ts`) are consistent at `8.0.0-beta.1`; the new `api-version` (`2026-07-01-preview`) is stric",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39365:comment:3733976170:sdk:JavaScript:@azure/arm-servicebus",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-07T06:52:11Z",
+      "observedAt": "2026-08-07T06:52:11Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicebus",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39365",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39365#discussion_r3733976170"
+      },
+      "confidence": "authoritative",
+      "excerpt": "🔴 **Design Concern** — `package.json:3` (version `8.0.0-beta.1`) The previous major version `7.0.0` was released on 2026-07-27, and this PR bumps to `8.0.0-beta.1` on 2026-08-07 — only ~11 days later, and it already introduces breaking cha",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39365:comment:3733976179:sdk:JavaScript:@azure/arm-servicebus",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-07T06:52:11Z",
+      "observedAt": "2026-08-07T06:52:11Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicebus",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39365",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39365#discussion_r3733976179"
+      },
+      "confidence": "authoritative",
+      "excerpt": "🔴 **Design Concern** — `review/arm-servicebus-node.api.md:557` `update: (...) => Promise<SBNamespace | void>` — the return type changed from `Promise<SBNamespace | undefined>` to `Promise<SBNamespace | void>`. Per the type-safety guideline",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39365:review:4880732014:sdk:JavaScript:@azure/arm-servicebus",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-07T07:14:42Z",
+      "observedAt": "2026-08-07T07:14:42Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicebus",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39365",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39365#pullrequestreview-4880732014"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39365:comment:3734082026:sdk:JavaScript:@azure/arm-servicebus",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-07T07:14:42Z",
+      "observedAt": "2026-08-07T07:14:42Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicebus",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39365",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39365#discussion_r3734082026"
+      },
+      "confidence": "authoritative",
+      "excerpt": "breakings are from Azure/azure-rest-api-specs#43547",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39365:comment:5236891684:sdk:JavaScript:@azure/arm-servicebus",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-10T06:57:13Z",
+      "observedAt": "2026-08-10T06:57:13Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicebus",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39365",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39365#issuecomment-5236891684"
+      },
+      "confidence": "authoritative",
+      "excerpt": "LGTM cc @JialinHuang803",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39365:review:4902545345:sdk:JavaScript:@azure/arm-servicebus",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T02:45:47Z",
+      "observedAt": "2026-08-11T02:45:47Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicebus",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "JialinHuang803"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39365",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39365#pullrequestreview-4902545345"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49903:review:4913965855:sdk:Java:azure-resourcemanager-servicebus",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T07:22:45Z",
+      "observedAt": "2026-08-12T07:22:45Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicebus",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "XiaofeiCao"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49903",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49903#pullrequestreview-4913965855"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    }
+  ],
+  "quality": {
+    "warnings": [
+      "5 historical linked PR(s) closed without merge"
+    ],
+    "unavailablePullRequests": 0,
+    "unavailablePipelineRuns": 0
+  },
+  "boundaryFacts": {
+    "id": "35433",
+    "state": "in-progress",
+    "specPrs": [
+      {
+        "id": "github:Azure/azure-rest-api-specs#44752",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#44752",
+        "createdAt": "2026-07-17T02:45:27Z",
+        "mergedAt": "2026-07-22T18:49:15Z",
+        "closedAt": "2026-07-22T18:49:15Z",
+        "available": true
+      }
+    ],
+    "artifacts": [
+      {
+        "language": ".NET",
+        "package": "Azure.ResourceManager.ServiceBus",
+        "trackId": "sdk:.NET:Azure.ResourceManager.ServiceBus",
+        "prId": "github:Azure/azure-sdk-for-net#61217",
+        "prCreatedAt": "2026-07-22T19:06:05Z",
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-net#61217",
+            "createdAt": "2026-07-22T19:06:05Z",
+            "mergedAt": null,
+            "closedAt": null,
+            "state": "open"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6603226",
+        "generationStartAt": "2026-07-22T18:58:26.9089106Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-08-06T07:03:25.623Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.2.0",
+        "releaseBoundaryAt": "2026-08-06T07:03:25.623Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "JavaScript",
+        "package": "@azure/arm-servicebus",
+        "trackId": "sdk:JavaScript:@azure/arm-servicebus",
+        "prId": "github:Azure/azure-sdk-for-js#39365",
+        "prCreatedAt": "2026-07-22T19:04:59Z",
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-js#39365",
+            "createdAt": "2026-07-22T19:04:59Z",
+            "mergedAt": null,
+            "closedAt": null,
+            "state": "open"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6603231",
+        "generationStartAt": "2026-07-22T18:58:39.0275209Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-07-29T06:59:22.65Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "7.0.0",
+        "releaseBoundaryAt": "2026-07-29T06:59:22.65Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Python",
+        "package": "azure-mgmt-servicebus",
+        "trackId": "sdk:Python:azure-mgmt-servicebus",
+        "prId": "github:Azure/azure-sdk-for-python#48213",
+        "prCreatedAt": "2026-07-22T19:05:10Z",
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-python#48213",
+            "createdAt": "2026-07-22T19:05:10Z",
+            "mergedAt": null,
+            "closedAt": null,
+            "state": "open"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6603233",
+        "generationStartAt": "2026-07-22T18:58:52.900125Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Java",
+        "package": "azure-resourcemanager-servicebus",
+        "trackId": "sdk:Java:azure-resourcemanager-servicebus",
+        "prId": "github:Azure/azure-sdk-for-java#49903",
+        "prCreatedAt": "2026-07-22T19:09:27Z",
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-java#49903",
+            "createdAt": "2026-07-22T19:09:27Z",
+            "mergedAt": null,
+            "closedAt": null,
+            "state": "open"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6603228",
+        "generationStartAt": "2026-07-22T18:58:38.9299974Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Go",
+        "package": "sdk/resourcemanager/servicebus/armservicebus",
+        "trackId": "sdk:Go:sdk/resourcemanager/servicebus/armservicebus",
+        "prId": "github:Azure/azure-sdk-for-go#27235",
+        "prCreatedAt": "2026-07-22T19:03:53Z",
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-go#27235",
+            "createdAt": "2026-07-22T19:03:53Z",
+            "mergedAt": null,
+            "closedAt": null,
+            "state": "open"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6603235",
+        "generationStartAt": "2026-07-22T18:58:56.7825943Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      }
+    ],
+    "cohortPlan": {
+      "id": "35433",
+      "releasePlanId": "35433",
+      "title": "Public Preview release plan for ServiceBus",
+      "service": "ServiceBus",
+      "state": "in-progress"
+    },
+    "quality": {
+      "warnings": [
+        "5 historical linked PR(s) closed without merge"
+      ],
+      "unavailablePullRequests": 0,
+      "unavailablePipelineRuns": 0
+    }
+  },
+  "summary": {
+    "durationHours": 533.7,
+    "pullRequestCount": 6,
+    "humanReviewCount": 12,
+    "humanCommentCount": 9
+  }
+}

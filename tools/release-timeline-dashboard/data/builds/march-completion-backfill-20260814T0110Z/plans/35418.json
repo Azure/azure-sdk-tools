@@ -1,0 +1,4706 @@
+{
+  "schemaVersion": 2,
+  "id": "35418",
+  "correlation": {
+    "policyVersion": 1,
+    "preflight": "passed"
+  },
+  "releasePlanId": "35418",
+  "title": "Public Preview release plan for Microsoft Connected Cache for Enterprise",
+  "service": "Microsoft Connected Cache for Enterprise",
+  "product": "Release",
+  "path": "specification/connectedcache/ConnectedCache.Management",
+  "state": "in-progress",
+  "plane": "management",
+  "releaseType": "APEX Public Preview",
+  "intendedMonth": "August 2026",
+  "createdAt": "2026-07-21T23:52:13.53Z",
+  "completedAt": null,
+  "sourceUrl": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35418",
+  "range": {
+    "start": "2026-07-21T01:29:16.000Z",
+    "end": "2026-08-14T00:37:23.589Z"
+  },
+  "intendedArtifacts": [
+    {
+      "prId": "github:Azure/azure-sdk-for-net#61184",
+      "language": ".NET",
+      "package": "Azure.ResourceManager.ConnectedCache",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6598329",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-js#39357",
+      "language": "JavaScript",
+      "package": "@azure/arm-connectedcache",
+      "version": "1.0.0",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6598331",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-python#48229",
+      "language": "Python",
+      "package": "azure-mgmt-connectedcache",
+      "version": "1.0.0",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6598333",
+      "releasePipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6636769"
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-java#49884",
+      "language": "Java",
+      "package": "azure-resourcemanager-connectedcache",
+      "version": "1.0.0",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6598330",
+      "releasePipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6636881"
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-go#27229",
+      "language": "Go",
+      "package": "sdk/resourcemanager/connectedcache/armconnectedcache",
+      "version": "1.0.0",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6598335",
+      "releasePipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6636770"
+    }
+  ],
+  "links": [
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#44819",
+      "role": "spec-pr",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/44819",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-net#61184",
+      "role": "sdk-pr",
+      "language": ".NET",
+      "url": "https://github.com/Azure/azure-sdk-for-net/pull/61184",
+      "releasePlanIds": [
+        "35418"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-js#39357",
+      "role": "sdk-pr",
+      "language": "JavaScript",
+      "url": "https://github.com/Azure/azure-sdk-for-js/pull/39357",
+      "releasePlanIds": [
+        "35418"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-python#48188",
+      "role": "sdk-pr-history",
+      "language": "Python",
+      "url": "https://github.com/Azure/azure-sdk-for-python/pull/48188",
+      "releasePlanIds": [
+        "35418"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-python#48229",
+      "role": "sdk-pr",
+      "language": "Python",
+      "url": "https://github.com/Azure/azure-sdk-for-python/pull/48229",
+      "releasePlanIds": [
+        "35418"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-java#49884",
+      "role": "sdk-pr",
+      "language": "Java",
+      "url": "https://github.com/Azure/azure-sdk-for-java/pull/49884",
+      "releasePlanIds": [
+        "35418"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-java#49913",
+      "role": "sdk-pr-history",
+      "language": "Java",
+      "url": "https://github.com/Azure/azure-sdk-for-java/pull/49913",
+      "releasePlanIds": [
+        "35418"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-go#27229",
+      "role": "sdk-pr",
+      "language": "Go",
+      "url": "https://github.com/Azure/azure-sdk-for-go/pull/27229",
+      "releasePlanIds": [
+        "35418"
+      ]
+    }
+  ],
+  "tracks": [
+    {
+      "id": "plan",
+      "kind": "plan",
+      "label": "Release Plan",
+      "detail": "APEX Public Preview"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#44819",
+      "kind": "spec",
+      "label": "Spec PR",
+      "detail": "azure-rest-api-specs #44819",
+      "artifactId": "github:Azure/azure-rest-api-specs#44819",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "kind": "sdk",
+      "label": ".NET",
+      "detail": "Azure.ResourceManager.ConnectedCache",
+      "artifactId": "github:Azure/azure-sdk-for-net#61184",
+      "state": "open"
+    },
+    {
+      "id": "sdk:JavaScript:@azure/arm-connectedcache",
+      "kind": "sdk",
+      "label": "JavaScript",
+      "detail": "@azure/arm-connectedcache",
+      "artifactId": "github:Azure/azure-sdk-for-js#39357",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Python:azure-mgmt-connectedcache",
+      "kind": "sdk",
+      "label": "Python",
+      "detail": "azure-mgmt-connectedcache",
+      "artifactId": "github:Azure/azure-sdk-for-python#48229",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Java:azure-resourcemanager-connectedcache",
+      "kind": "sdk",
+      "label": "Java",
+      "detail": "azure-resourcemanager-connectedcache",
+      "artifactId": "github:Azure/azure-sdk-for-java#49884",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Go:sdk/resourcemanager/connectedcache/armconnectedcache",
+      "kind": "sdk",
+      "label": "Go",
+      "detail": "sdk/resourcemanager/connectedcache/armconnectedcache",
+      "artifactId": "github:Azure/azure-sdk-for-go#27229",
+      "state": "merged"
+    }
+  ],
+  "events": [
+    {
+      "id": "github:Azure/azure-rest-api-specs#44819:pr.created:spec:github:Azure/azure-rest-api-specs#44819",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-21T01:29:16Z",
+      "observedAt": "2026-07-21T01:29:16Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44819",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "Bharam-Msft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44819",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44819"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44819:comment:5029175990:spec:github:Azure/azure-rest-api-specs#44819",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-21T01:29:42Z",
+      "observedAt": "2026-07-21T01:29:42Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44819",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44819",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44819#issuecomment-5029175990"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>✅ All automated merging requirements have been met! To get your PR merged, see <a href=\"https://aka.ms/azsdk/specreview/merge\">aka.ms/azsdk/specreview/merge</a>.<br /><br />Comment generated by <a href=\"https://g",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44819:commit:1b5a8321cded:spec:github:Azure/azure-rest-api-specs#44819",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-21T01:30:02Z",
+      "observedAt": "2026-07-21T01:30:02Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44819",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "Bharam-Msft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44819",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/1b5a8321cded2dd8f78976c162828a0a7fe1f0bd"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44819:comment:5029227272:spec:github:Azure/azure-rest-api-specs#44819",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-21T01:38:15Z",
+      "observedAt": "2026-07-21T01:38:15Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44819",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44819",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44819#issuecomment-5029227272"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews | Language | API Review for Package | |----------|---------| | Swagger | [Microsoft.ConnectedCache](https://apiview.dev/Assemblies/Rev",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44819:commit:826b243991e5:spec:github:Azure/azure-rest-api-specs#44819",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-21T01:53:27Z",
+      "observedAt": "2026-07-21T01:53:27Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44819",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "Bharam-Msft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44819",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/826b243991e5800da3d2fce61617c89a6f01e899"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44819:commit:03d98bcc3b57:spec:github:Azure/azure-rest-api-specs#44819",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-21T01:53:42Z",
+      "observedAt": "2026-07-21T01:53:42Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44819",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "Bharam-Msft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44819",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/03d98bcc3b574d8720238ff5e038b59227fa5664"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44819:commit:480bb55363f2:spec:github:Azure/azure-rest-api-specs#44819",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-21T06:38:54Z",
+      "observedAt": "2026-07-21T06:38:54Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44819",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "Bharam-Msft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44819",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/480bb55363f23b5b7cbcd9263bbdb05565e2af0f"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44819:review:4747796633:spec:github:Azure/azure-rest-api-specs#44819",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-21T18:25:46Z",
+      "observedAt": "2026-07-21T18:25:46Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44819",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "dcwell"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44819",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44819#pullrequestreview-4747796633"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44819:commit:8ce0ca37fb4e:spec:github:Azure/azure-rest-api-specs#44819",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-21T18:30:45Z",
+      "observedAt": "2026-07-21T18:30:45Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44819",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "Bharam-Msft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44819",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/8ce0ca37fb4e1f061c3de40c80829c934b2dbc26"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44819:commit:6e40503e53d7:spec:github:Azure/azure-rest-api-specs#44819",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-21T21:15:23Z",
+      "observedAt": "2026-07-21T21:15:23Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44819",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "Bharam-Msft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44819",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/6e40503e53d72553443b6720f1e160ca61b59676"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44819:review:4749715477:spec:github:Azure/azure-rest-api-specs#44819",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-21T23:14:42Z",
+      "observedAt": "2026-07-21T23:14:42Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44819",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "dcwell"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44819",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44819#pullrequestreview-4749715477"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44819:commit:85225c458f0b:spec:github:Azure/azure-rest-api-specs#44819",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-21T23:28:25Z",
+      "observedAt": "2026-07-21T23:28:25Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44819",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "Bharam-Msft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44819",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/85225c458f0bfcf72bc17f3158948e6b9448a005"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44819:commit:aa92e98c3acf:spec:github:Azure/azure-rest-api-specs#44819",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-21T23:36:54Z",
+      "observedAt": "2026-07-21T23:36:54Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44819",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "Bharam-Msft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44819",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/aa92e98c3acf9465b5136d959ad4e0f3886f5d45"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44819:pr.merged:spec:github:Azure/azure-rest-api-specs#44819",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-21T23:48:30Z",
+      "observedAt": "2026-07-21T23:48:30Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44819",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44819",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44819"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:35418:created",
+      "type": "plan.created",
+      "phase": "plan",
+      "occurredAt": "2026-07-21T23:52:13.53Z",
+      "observedAt": "2026-07-21T23:52:13.53Z",
+      "trackId": "plan",
+      "title": "Release Plan created",
+      "confidence": "authoritative",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35418",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35418"
+      },
+      "stack": 0
+    },
+    {
+      "id": "ado:35418:1:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-07-21T23:52:13.53Z",
+      "observedAt": "2026-07-21T23:52:13.53Z",
+      "trackId": "plan",
+      "value": "New",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35418",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35418"
+      },
+      "title": "Plan state changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35418:1:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-21T23:52:13.53Z",
+      "observedAt": "2026-07-21T23:52:13.53Z",
+      "trackId": "plan",
+      "value": "Not Available",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35418",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35418"
+      },
+      "title": "Spec approval changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:35418:1:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-21T23:52:13.53Z",
+      "observedAt": "2026-07-21T23:52:13.53Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35418",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35418"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35418:1:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-21T23:52:13.53Z",
+      "observedAt": "2026-07-21T23:52:13.53Z",
+      "trackId": "sdk:JavaScript:@azure/arm-connectedcache",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35418",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35418"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35418:1:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-21T23:52:13.53Z",
+      "observedAt": "2026-07-21T23:52:13.53Z",
+      "trackId": "sdk:Python:azure-mgmt-connectedcache",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35418",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35418"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35418:1:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-21T23:52:13.53Z",
+      "observedAt": "2026-07-21T23:52:13.53Z",
+      "trackId": "sdk:Java:azure-resourcemanager-connectedcache",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35418",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35418"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35418:1:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-21T23:52:13.53Z",
+      "observedAt": "2026-07-21T23:52:13.53Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/connectedcache/armconnectedcache",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35418",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35418"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35419:1:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-21T23:52:13.767Z",
+      "observedAt": "2026-07-21T23:52:13.767Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44819",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/44819",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35419",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35419"
+      },
+      "title": "Spec PR linked",
+      "stack": 5
+    },
+    {
+      "id": "ado:35418:2:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-07-21T23:52:14.477Z",
+      "observedAt": "2026-07-21T23:52:14.477Z",
+      "trackId": "plan",
+      "value": "In Progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35418",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35418"
+      },
+      "title": "Plan state changed",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44819:comment:5040250239:spec:github:Azure/azure-rest-api-specs#44819",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-21T23:52:19Z",
+      "observedAt": "2026-07-21T23:52:19Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44819",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44819",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44819#issuecomment-5040250239"
+      },
+      "confidence": "authoritative",
+      "excerpt": "### ✅ Release Plan Created | Field | Value | |-------|-------| | **Release Plan** | [View Release Plan](https://azsdk-releaseplan-dashboard-hveph5aqhhcfhtgu.westus-01.azurewebsites.net/?releaseplan=35418) | | **API Version** | `2026-06-01` ",
+      "stack": 2
+    },
+    {
+      "id": "ado:35418:4:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-21T23:52:28.897Z",
+      "observedAt": "2026-07-21T23:52:28.897Z",
+      "trackId": "plan",
+      "value": "Approved",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35418",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35418"
+      },
+      "title": "Spec approval changed",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6598329:generation.queued:sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-07-21T23:56:36.1192985Z",
+      "observedAt": "2026-07-22T00:04:55.1513451Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6598329",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6598329"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:35418:5:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-21T23:56:40.75Z",
+      "observedAt": "2026-07-21T23:56:40.75Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35418",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35418"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6598330:generation.queued:sdk:Java:azure-resourcemanager-connectedcache",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-07-21T23:56:44.4756451Z",
+      "observedAt": "2026-07-22T00:17:03.246307Z",
+      "trackId": "sdk:Java:azure-resourcemanager-connectedcache",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6598330",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6598330"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:35418:6:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-21T23:56:48.51Z",
+      "observedAt": "2026-07-21T23:56:48.51Z",
+      "trackId": "sdk:Java:azure-resourcemanager-connectedcache",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35418",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35418"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6598331:generation.queued:sdk:JavaScript:@azure/arm-connectedcache",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-07-21T23:56:52.2803032Z",
+      "observedAt": "2026-07-22T00:04:55.2863734Z",
+      "trackId": "sdk:JavaScript:@azure/arm-connectedcache",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6598331",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6598331"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:35418:7:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-21T23:56:55.083Z",
+      "observedAt": "2026-07-21T23:56:55.083Z",
+      "trackId": "sdk:JavaScript:@azure/arm-connectedcache",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35418",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35418"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6598333:generation.queued:sdk:Python:azure-mgmt-connectedcache",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-07-21T23:56:59.1248491Z",
+      "observedAt": "2026-07-22T00:04:32.7903853Z",
+      "trackId": "sdk:Python:azure-mgmt-connectedcache",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6598333",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6598333"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6598329:generation.started:sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-07-21T23:56:59.5376483Z",
+      "observedAt": "2026-07-22T00:04:55.1513451Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6598329",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6598329"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado:35418:8:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-21T23:57:01.827Z",
+      "observedAt": "2026-07-21T23:57:01.827Z",
+      "trackId": "sdk:Python:azure-mgmt-connectedcache",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35418",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35418"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6598330:generation.started:sdk:Java:azure-resourcemanager-connectedcache",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-07-21T23:57:05.6665906Z",
+      "observedAt": "2026-07-22T00:17:03.246307Z",
+      "trackId": "sdk:Java:azure-resourcemanager-connectedcache",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6598330",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6598330"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6598335:generation.queued:sdk:Go:sdk/resourcemanager/connectedcache/armconnectedcache",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-07-21T23:57:06.1686908Z",
+      "observedAt": "2026-07-22T00:03:18.0456808Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/connectedcache/armconnectedcache",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6598335",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6598335"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:35418:9:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-21T23:57:09.403Z",
+      "observedAt": "2026-07-21T23:57:09.403Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/connectedcache/armconnectedcache",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35418",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35418"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6598331:generation.started:sdk:JavaScript:@azure/arm-connectedcache",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-07-21T23:57:11.9960214Z",
+      "observedAt": "2026-07-22T00:04:55.2863734Z",
+      "trackId": "sdk:JavaScript:@azure/arm-connectedcache",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6598331",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6598331"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6598333:generation.started:sdk:Python:azure-mgmt-connectedcache",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-07-21T23:57:19.3570439Z",
+      "observedAt": "2026-07-22T00:04:32.7903853Z",
+      "trackId": "sdk:Python:azure-mgmt-connectedcache",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6598333",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6598333"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6598335:generation.started:sdk:Go:sdk/resourcemanager/connectedcache/armconnectedcache",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-07-21T23:57:23.1510058Z",
+      "observedAt": "2026-07-22T00:03:18.0456808Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/connectedcache/armconnectedcache",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6598335",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6598335"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27229:commit:56e8a03228f9:sdk:Go:sdk/resourcemanager/connectedcache/armconnectedcache",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T00:02:10Z",
+      "observedAt": "2026-07-22T00:02:10Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/connectedcache/armconnectedcache",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27229",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/56e8a03228f9ca5eb5080e17a08cb739cabdc9aa"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27229:pr.created:sdk:Go:sdk/resourcemanager/connectedcache/armconnectedcache",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T00:02:14Z",
+      "observedAt": "2026-07-22T00:02:14Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/connectedcache/armconnectedcache",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27229",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27229"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:35418:10:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-22T00:02:21.043Z",
+      "observedAt": "2026-07-22T00:02:21.043Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/connectedcache/armconnectedcache",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35418",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35418"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35418:10:Custom.SDKPullRequestForGo",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-22T00:02:21.043Z",
+      "observedAt": "2026-07-22T00:02:21.043Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/connectedcache/armconnectedcache",
+      "value": "https://github.com/Azure/azure-sdk-for-go/pull/27229",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35418",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35418"
+      },
+      "title": "SDK PR linked",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27229:comment:5040311234:sdk:Go:sdk/resourcemanager/connectedcache/armconnectedcache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T00:02:43Z",
+      "observedAt": "2026-07-22T00:02:43Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/connectedcache/armconnectedcache",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27229",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27229#issuecomment-5040311234"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 5 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27229:review:4749912777:sdk:Go:sdk/resourcemanager/connectedcache/armconnectedcache",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T00:02:54Z",
+      "observedAt": "2026-07-22T00:02:54Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/connectedcache/armconnectedcache",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27229",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27229#pullrequestreview-4749912777"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview > [!NOTE] > Copilot could not run the full agentic suite for this review because it was automatically requested on a bot-authored pull request. Request a review from Copilot under Reviewers to retry with the full ag",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27229:comment:3626502976:sdk:Go:sdk/resourcemanager/connectedcache/armconnectedcache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T00:02:54Z",
+      "observedAt": "2026-07-22T00:02:54Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/connectedcache/armconnectedcache",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27229",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27229#discussion_r3626502976"
+      },
+      "confidence": "authoritative",
+      "excerpt": "There are two consecutive blank lines at the end of the new `0.3.0` section. Consider reducing to a single blank line to keep changelog formatting consistent and avoid noisy diffs in future updates.",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39357:commit:8f6a8571656d:sdk:JavaScript:@azure/arm-connectedcache",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T00:03:15Z",
+      "observedAt": "2026-07-22T00:03:15Z",
+      "trackId": "sdk:JavaScript:@azure/arm-connectedcache",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39357",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/8f6a8571656d44bc9ec53e081e69573aeb48a0dc"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6598335:generation.completed:sdk:Go:sdk/resourcemanager/connectedcache/armconnectedcache",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-07-22T00:03:18.0456808Z",
+      "observedAt": "2026-07-22T00:03:18.0456808Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/connectedcache/armconnectedcache",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6598335",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6598335"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39357:pr.created:sdk:JavaScript:@azure/arm-connectedcache",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T00:03:19Z",
+      "observedAt": "2026-07-22T00:03:19Z",
+      "trackId": "sdk:JavaScript:@azure/arm-connectedcache",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39357",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39357"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48188:commit:6ba97375d629:sdk:Python:azure-mgmt-connectedcache",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T00:03:21Z",
+      "observedAt": "2026-07-22T00:03:21Z",
+      "trackId": "sdk:Python:azure-mgmt-connectedcache",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48188",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/6ba97375d629777ec06327e58f05d0c7bd2f8145"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48188:pr.created:sdk:Python:azure-mgmt-connectedcache",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T00:03:25Z",
+      "observedAt": "2026-07-22T00:03:25Z",
+      "trackId": "sdk:Python:azure-mgmt-connectedcache",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48188",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48188"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:35418:11:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-22T00:03:25.877Z",
+      "observedAt": "2026-07-22T00:03:25.877Z",
+      "trackId": "sdk:JavaScript:@azure/arm-connectedcache",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35418",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35418"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35418:11:Custom.SDKPullRequestForJavaScript",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-22T00:03:25.877Z",
+      "observedAt": "2026-07-22T00:03:25.877Z",
+      "trackId": "sdk:JavaScript:@azure/arm-connectedcache",
+      "value": "https://github.com/Azure/azure-sdk-for-js/pull/39357",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35418",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35418"
+      },
+      "title": "SDK PR linked",
+      "stack": 1
+    },
+    {
+      "id": "ado:35418:12:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-22T00:03:33.13Z",
+      "observedAt": "2026-07-22T00:03:33.13Z",
+      "trackId": "sdk:Python:azure-mgmt-connectedcache",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35418",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35418"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35418:12:Custom.SDKPullRequestForPython",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-22T00:03:33.13Z",
+      "observedAt": "2026-07-22T00:03:33.13Z",
+      "trackId": "sdk:Python:azure-mgmt-connectedcache",
+      "value": "https://github.com/Azure/azure-sdk-for-python/pull/48188",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35418",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35418"
+      },
+      "title": "SDK PR linked",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61184:commit:0e0d014f497d:sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T00:03:53Z",
+      "observedAt": "2026-07-22T00:03:53Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61184",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/0e0d014f497dfaf837a4aac46f44d092fb960bea"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39357:comment:5040318201:sdk:JavaScript:@azure/arm-connectedcache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T00:03:53Z",
+      "observedAt": "2026-07-22T00:03:53Z",
+      "trackId": "sdk:JavaScript:@azure/arm-connectedcache",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39357",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39357#issuecomment-5040318201"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 2 pipeline(s).<br> 8 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61184:pr.created:sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T00:03:58Z",
+      "observedAt": "2026-07-22T00:03:58Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61184",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61184"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48188:comment:5040319329:sdk:Python:azure-mgmt-connectedcache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T00:04:04Z",
+      "observedAt": "2026-07-22T00:04:04Z",
+      "trackId": "sdk:Python:azure-mgmt-connectedcache",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48188",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48188#issuecomment-5040319329"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 2 pipeline(s).<br> 8 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 2
+    },
+    {
+      "id": "ado:35418:13:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-22T00:04:05.72Z",
+      "observedAt": "2026-07-22T00:04:05.72Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35418",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35418"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35418:13:Custom.SDKPullRequestForDotnet",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-22T00:04:05.72Z",
+      "observedAt": "2026-07-22T00:04:05.72Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "value": "https://github.com/Azure/azure-sdk-for-net/pull/61184",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35418",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35418"
+      },
+      "title": "SDK PR linked",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6598333:generation.completed:sdk:Python:azure-mgmt-connectedcache",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-07-22T00:04:32.7903853Z",
+      "observedAt": "2026-07-22T00:04:32.7903853Z",
+      "trackId": "sdk:Python:azure-mgmt-connectedcache",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6598333",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6598333"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61184:comment:5040322703:sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T00:04:38Z",
+      "observedAt": "2026-07-22T00:04:38Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61184",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61184#issuecomment-5040322703"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 10 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6598329:generation.completed:sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-07-22T00:04:55.1513451Z",
+      "observedAt": "2026-07-22T00:04:55.1513451Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6598329",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6598329"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6598331:generation.completed:sdk:JavaScript:@azure/arm-connectedcache",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-07-22T00:04:55.2863734Z",
+      "observedAt": "2026-07-22T00:04:55.2863734Z",
+      "trackId": "sdk:JavaScript:@azure/arm-connectedcache",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6598331",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6598331"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48188:comment:3626512010:sdk:Python:azure-mgmt-connectedcache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T00:05:29Z",
+      "observedAt": "2026-07-22T00:05:29Z",
+      "trackId": "sdk:Python:azure-mgmt-connectedcache",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48188",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48188#discussion_r3626512010"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Boolean deserialization is not case-insensitive (e.g., \"FALSE\" will fall through and become True because it's a non-empty string). Normalize the input (e.g., via lower()/casefold()) and only accept known true/false tokens; otherwise either ",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48188:review:4749922621:sdk:Python:azure-mgmt-connectedcache",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T00:05:30Z",
+      "observedAt": "2026-07-22T00:05:30Z",
+      "trackId": "sdk:Python:azure-mgmt-connectedcache",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48188",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48188#pullrequestreview-4749922621"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview > [!NOTE] > Copilot could not run the full agentic suite for this review because it was automatically requested on a bot-authored pull request. Request a review from Copilot under Reviewers to retry with the full ag",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48188:comment:3626512030:sdk:Python:azure-mgmt-connectedcache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T00:05:30Z",
+      "observedAt": "2026-07-22T00:05:30Z",
+      "trackId": "sdk:Python:azure-mgmt-connectedcache",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48188",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48188#discussion_r3626512030"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The public method signature now requires a TypedDict type (`_types.IspCustomerResource`) where the previous generated surface accepted a generic JSON mapping (and runtime likely still supports plain dicts). This can be a breaking change for",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48188:comment:3626512041:sdk:Python:azure-mgmt-connectedcache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T00:05:30Z",
+      "observedAt": "2026-07-22T00:05:30Z",
+      "trackId": "sdk:Python:azure-mgmt-connectedcache",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48188",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48188#discussion_r3626512041"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The docstring says the default api_version is None, but the implementation defaults it to \"2026-06-01\". Please align the docstring with the actual behavior (or change the default to None and handle fallback elsewhere), and make the stated a",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48188:comment:3626512049:sdk:Python:azure-mgmt-connectedcache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T00:05:30Z",
+      "observedAt": "2026-07-22T00:05:30Z",
+      "trackId": "sdk:Python:azure-mgmt-connectedcache",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48188",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48188#discussion_r3626512049"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The docstring says the default api_version is None, but the implementation defaults it to \"2026-06-01\". Please align the docstring with the actual behavior (or change the default to None and handle fallback elsewhere), and make the stated a",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61184:comment:3626512511:sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T00:05:37Z",
+      "observedAt": "2026-07-22T00:05:37Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61184",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61184#discussion_r3626512511"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The public model-factory method signatures insert new optional parameters *before* existing same-typed parameters (notably multiple `string` parameters in `MccCacheNodeAdditionalProperties`, and `certType` inserted before `thumbprint` in `M",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61184:comment:3626512527:sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T00:05:37Z",
+      "observedAt": "2026-07-22T00:05:37Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61184",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61184#discussion_r3626512527"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The public model-factory method signatures insert new optional parameters *before* existing same-typed parameters (notably multiple `string` parameters in `MccCacheNodeAdditionalProperties`, and `certType` inserted before `thumbprint` in `M",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61184:review:4749923126:sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T00:05:38Z",
+      "observedAt": "2026-07-22T00:05:38Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61184",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61184#pullrequestreview-4749923126"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview > [!NOTE] > Copilot could not run the full agentic suite for this review because it was automatically requested on a bot-authored pull request. Request a review from Copilot under Reviewers to retry with the full ag",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61184:comment:3626512540:sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T00:05:38Z",
+      "observedAt": "2026-07-22T00:05:38Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61184",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61184#discussion_r3626512540"
+      },
+      "confidence": "authoritative",
+      "excerpt": "These new/updated XML docs are grammatically unclear and may confuse SDK users (run-on sentence; inconsistent casing for values; unclear what 'as new values' means). Recommend rewriting to explicitly list supported values and clarify legacy",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61184:comment:3626512559:sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T00:05:38Z",
+      "observedAt": "2026-07-22T00:05:38Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61184",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61184#discussion_r3626512559"
+      },
+      "confidence": "authoritative",
+      "excerpt": "These new/updated XML docs are grammatically unclear and may confuse SDK users (run-on sentence; inconsistent casing for values; unclear what 'as new values' means). Recommend rewriting to explicitly list supported values and clarify legacy",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39357:review:4749923163:sdk:JavaScript:@azure/arm-connectedcache",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T00:05:38Z",
+      "observedAt": "2026-07-22T00:05:38Z",
+      "trackId": "sdk:JavaScript:@azure/arm-connectedcache",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39357",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39357#pullrequestreview-4749923163"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview > [!NOTE] > Copilot could not run the full agentic suite for this review because it was automatically requested on a bot-authored pull request. Request a review from Copilot under Reviewers to retry with the full ag",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49884:commit:ab0a41c1480a:sdk:Java:azure-resourcemanager-connectedcache",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T00:06:18Z",
+      "observedAt": "2026-07-22T00:06:18Z",
+      "trackId": "sdk:Java:azure-resourcemanager-connectedcache",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49884",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/ab0a41c1480a7055e7d45e79a5903fbee0262a86"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49884:pr.created:sdk:Java:azure-resourcemanager-connectedcache",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T00:06:22Z",
+      "observedAt": "2026-07-22T00:06:22Z",
+      "trackId": "sdk:Java:azure-resourcemanager-connectedcache",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49884",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49884"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:35418:14:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-22T00:06:30.353Z",
+      "observedAt": "2026-07-22T00:06:30.353Z",
+      "trackId": "sdk:Java:azure-resourcemanager-connectedcache",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35418",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35418"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35418:14:Custom.SDKPullRequestForJava",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-22T00:06:30.353Z",
+      "observedAt": "2026-07-22T00:06:30.353Z",
+      "trackId": "sdk:Java:azure-resourcemanager-connectedcache",
+      "value": "https://github.com/Azure/azure-sdk-for-java/pull/49884",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35418",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35418"
+      },
+      "title": "SDK PR linked",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49884:comment:5040337411:sdk:Java:azure-resourcemanager-connectedcache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T00:07:03Z",
+      "observedAt": "2026-07-22T00:07:03Z",
+      "trackId": "sdk:Java:azure-resourcemanager-connectedcache",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49884",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49884#issuecomment-5040337411"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 35 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49884:comment:3626521836:sdk:Java:azure-resourcemanager-connectedcache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T00:08:17Z",
+      "observedAt": "2026-07-22T00:08:17Z",
+      "trackId": "sdk:Java:azure-resourcemanager-connectedcache",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49884",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49884#discussion_r3626521836"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`openFirewallPort*` fields are nullable (`Boolean`), but `writeBooleanField(...)` may auto-unbox and throw `NullPointerException` when a value is unset. To avoid runtime NPEs during serialization, write these fields only when the value is n",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49884:comment:3626521849:sdk:Java:azure-resourcemanager-connectedcache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T00:08:17Z",
+      "observedAt": "2026-07-22T00:08:17Z",
+      "trackId": "sdk:Java:azure-resourcemanager-connectedcache",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49884",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49884#discussion_r3626521849"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The wording is internally inconsistent: if `Stable/Beta` are the new values introduced with `2026-06-01`, `Slow/Fast` would be legacy from *earlier* versions, not 'legacy from version 2026-06-01'. Consider rephrasing to something like 'Slow",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49884:comment:3626521860:sdk:Java:azure-resourcemanager-connectedcache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T00:08:17Z",
+      "observedAt": "2026-07-22T00:08:17Z",
+      "trackId": "sdk:Java:azure-resourcemanager-connectedcache",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49884",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49884#discussion_r3626521860"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The wording is internally inconsistent: if `Stable/Beta` are the new values introduced with `2026-06-01`, `Slow/Fast` would be legacy from *earlier* versions, not 'legacy from version 2026-06-01'. Consider rephrasing to something like 'Slow",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49884:review:4749933853:sdk:Java:azure-resourcemanager-connectedcache",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T00:08:18Z",
+      "observedAt": "2026-07-22T00:08:18Z",
+      "trackId": "sdk:Java:azure-resourcemanager-connectedcache",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49884",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49884#pullrequestreview-4749933853"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview > [!NOTE] > Copilot could not run the full agentic suite for this review because it was automatically requested on a bot-authored pull request. Request a review from Copilot under Reviewers to retry with the full ag",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49884:comment:3626521869:sdk:Java:azure-resourcemanager-connectedcache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T00:08:18Z",
+      "observedAt": "2026-07-22T00:08:18Z",
+      "trackId": "sdk:Java:azure-resourcemanager-connectedcache",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49884",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49884#discussion_r3626521869"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The wording is internally inconsistent: if `Stable/Beta` are the new values introduced with `2026-06-01`, `Slow/Fast` would be legacy from *earlier* versions, not 'legacy from version 2026-06-01'. Consider rephrasing to something like 'Slow",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6598330:generation.completed:sdk:Java:azure-resourcemanager-connectedcache",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-07-22T00:17:03.246307Z",
+      "observedAt": "2026-07-22T00:17:03.246307Z",
+      "trackId": "sdk:Java:azure-resourcemanager-connectedcache",
+      "title": "Pipeline completed with issues",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6598330",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6598330"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39357:comment:5040475501:sdk:JavaScript:@azure/arm-connectedcache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T00:30:18Z",
+      "observedAt": "2026-07-22T00:30:18Z",
+      "trackId": "sdk:JavaScript:@azure/arm-connectedcache",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39357",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39357#issuecomment-5040475501"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Next Steps to Merge ✅ All CI checks have passed — this PR is ready for review! The SDK engineer will review this PR shortly. Once it's approved, you can go ahead and merge it. To make things easier, feel free to [enable auto-merge](https",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61184:comment:5040536827:sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T00:40:46Z",
+      "observedAt": "2026-07-22T00:40:46Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61184",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61184#issuecomment-5040536827"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## 🔍 CI Failure Analysis for PR #61184 **Package:** `Azure.ResourceManager.ConnectedCache` **Service:** `connectedcache` ### Check Status Summary | Check | Status | |---|---| | net - pullrequest | ❌ Failed | | Build Analyze PRBatch | ❌ Fai",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27229:comment:5040669012:sdk:Go:sdk/resourcemanager/connectedcache/armconnectedcache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T01:04:51Z",
+      "observedAt": "2026-07-22T01:04:51Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/connectedcache/armconnectedcache",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27229",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27229#issuecomment-5040669012"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Next Steps to Merge Only failed checks and required actions are listed below. - ❌ `go - pullrequest (Build Build/Test on windows_go_1258)`: Build/Test failed on Windows with Go 1.25.8. [ADO logs]((dev.azure.com/redacted) - Fix: Confirm w",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48188:review:4750518653:sdk:Python:azure-mgmt-connectedcache",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T02:41:44Z",
+      "observedAt": "2026-07-22T02:41:44Z",
+      "trackId": "sdk:Python:azure-mgmt-connectedcache",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48188",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48188#pullrequestreview-4750518653"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48188:comment:5041240515:sdk:Python:azure-mgmt-connectedcache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T02:45:56Z",
+      "observedAt": "2026-07-22T02:45:56Z",
+      "trackId": "sdk:Python:azure-mgmt-connectedcache",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48188",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48188#issuecomment-5041240515"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @Bharam-Msft, we have approved the PR and we will hold the PR merge and release until you explicitly ping us to merge then release.",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27229:review:4750742271:sdk:Go:sdk/resourcemanager/connectedcache/armconnectedcache",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T03:27:03Z",
+      "observedAt": "2026-07-22T03:27:03Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/connectedcache/armconnectedcache",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "tadelesh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27229",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27229#pullrequestreview-4750742271"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27229:comment:5041738471:sdk:Go:sdk/resourcemanager/connectedcache/armconnectedcache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T04:05:49Z",
+      "observedAt": "2026-07-22T04:05:49Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/connectedcache/armconnectedcache",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27229",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27229#issuecomment-5041738471"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## PR is ready to merge",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39357:review:4751355874:sdk:JavaScript:@azure/arm-connectedcache",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T05:48:19Z",
+      "observedAt": "2026-07-22T05:48:19Z",
+      "trackId": "sdk:JavaScript:@azure/arm-connectedcache",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39357",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39357#pullrequestreview-4751355874"
+      },
+      "confidence": "authoritative",
+      "excerpt": "3 tool issues found in `@azure/arm-connectedcache` v1.0.0-beta.3: 1. **CHANGELOG comparison baseline** — `CHANGELOG.md` compares `1.0.0-beta.3` against `1.0.0-beta.1`, but since this package has no stable release, the generator should basel",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39357:comment:3627761527:sdk:JavaScript:@azure/arm-connectedcache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T05:48:20Z",
+      "observedAt": "2026-07-22T05:48:20Z",
+      "trackId": "sdk:JavaScript:@azure/arm-connectedcache",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39357",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39357#discussion_r3627761527"
+      },
+      "confidence": "authoritative",
+      "excerpt": "🔴 **Tool Issue** — `CHANGELOG.md:4` `Compared with version 1.0.0-beta.1` This package has never had a stable (GA) release, so the changelog generator should compare with the **immediately preceding preview** (`1.0.0-beta.2`), not the first",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39357:comment:3627761533:sdk:JavaScript:@azure/arm-connectedcache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T05:48:20Z",
+      "observedAt": "2026-07-22T05:48:20Z",
+      "trackId": "sdk:JavaScript:@azure/arm-connectedcache",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39357",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39357#discussion_r3627761533"
+      },
+      "confidence": "authoritative",
+      "excerpt": "🔴 **Tool Issue** — `arm-connectedcache-node.api.md:510` `export { isRestError }` `isRestError` is an implementation detail imported from `@azure/core-rest-pipeline` and should not be re-exported as part of this package's public API surface",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39357:comment:3627761539:sdk:JavaScript:@azure/arm-connectedcache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T05:48:20Z",
+      "observedAt": "2026-07-22T05:48:20Z",
+      "trackId": "sdk:JavaScript:@azure/arm-connectedcache",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39357",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39357#discussion_r3627761539"
+      },
+      "confidence": "authoritative",
+      "excerpt": "🔴 **Tool Issue** — `arm-connectedcache-node.api.md:743` `export { RestError }` `RestError` is an implementation detail imported from `@azure/core-rest-pipeline` and should not be re-exported as part of this package's public API surface. Ex",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39357:comment:5042607272:sdk:JavaScript:@azure/arm-connectedcache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T06:24:41Z",
+      "observedAt": "2026-07-22T06:24:41Z",
+      "trackId": "sdk:JavaScript:@azure/arm-connectedcache",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39357",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39357#issuecomment-5042607272"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@Bharam-Msft this release PR uses apiversion 2026-06-01, in common, it's expected to generate as a stable version, but actually, it generates as a beta version. could you help confirm whether we should release a stable or preview version fo",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49884:review:4751604596:sdk:Java:azure-resourcemanager-connectedcache",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T06:28:49Z",
+      "observedAt": "2026-07-22T06:28:49Z",
+      "trackId": "sdk:Java:azure-resourcemanager-connectedcache",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49884",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49884#pullrequestreview-4751604596"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39357:comment:5049048825:sdk:JavaScript:@azure/arm-connectedcache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T16:59:38Z",
+      "observedAt": "2026-07-22T16:59:38Z",
+      "trackId": "sdk:JavaScript:@azure/arm-connectedcache",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "Bharam-Msft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39357",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39357#issuecomment-5049048825"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi this need to be a first stable version release for us. Please let me know what need to be fixed to get them as stable version. Thanks Bharathi Get Outlook for iOS<https://aka.ms/o0ukef> ________________________________ From: ZiWei Chen *",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39357:commit:9c27c593aadd:sdk:JavaScript:@azure/arm-connectedcache",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T06:09:10Z",
+      "observedAt": "2026-07-23T06:09:10Z",
+      "trackId": "sdk:JavaScript:@azure/arm-connectedcache",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39357",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/9c27c593aadd10b55cd31ad1c3f57f0d12805a72"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39357:review:4761242341:sdk:JavaScript:@azure/arm-connectedcache",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T06:11:43Z",
+      "observedAt": "2026-07-23T06:11:43Z",
+      "trackId": "sdk:JavaScript:@azure/arm-connectedcache",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39357",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39357#pullrequestreview-4761242341"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Copilot reviewed 137 out of 139 changed files in this pull request and generated no new comments. <details> <summary>Comments suppressed due to low confidence (7)</summary> **sdk/connectedcache/arm-connectedcache/sr",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27229:commit:195e4783438e:sdk:Go:sdk/resourcemanager/connectedcache/armconnectedcache",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T06:17:18Z",
+      "observedAt": "2026-07-23T06:17:18Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/connectedcache/armconnectedcache",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27229",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/195e4783438e9c198b0546351f93317c5e4e83b6"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48229:commit:8be593697969:sdk:Python:azure-mgmt-connectedcache",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T06:18:04Z",
+      "observedAt": "2026-07-23T06:18:04Z",
+      "trackId": "sdk:Python:azure-mgmt-connectedcache",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48229",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/8be593697969800b740ed7b640e7b48c6ab37efa"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48229:pr.created:sdk:Python:azure-mgmt-connectedcache",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T06:18:08Z",
+      "observedAt": "2026-07-23T06:18:08Z",
+      "trackId": "sdk:Python:azure-mgmt-connectedcache",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48229",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48229"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27229:review:4761277888:sdk:Go:sdk/resourcemanager/connectedcache/armconnectedcache",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T06:18:21Z",
+      "observedAt": "2026-07-23T06:18:21Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/connectedcache/armconnectedcache",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27229",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27229#pullrequestreview-4761277888"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Copilot reviewed 4 out of 19 changed files in this pull request and generated 1 comment. <details> <summary>Files not reviewed (14)</summary> * **sdk/resourcemanager/connectedcache/armconnectedcache/constants.go**: ",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27229:comment:3635957966:sdk:Go:sdk/resourcemanager/connectedcache/armconnectedcache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T06:18:21Z",
+      "observedAt": "2026-07-23T06:18:21Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/connectedcache/armconnectedcache",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27229",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27229#discussion_r3635957966"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The `1.0.0` and `0.3.0` sections list identical 'Features Added' entries, which makes the changelog ambiguous (it reads like the same changes were released twice). Consider collapsing these into a single release entry or updating one of the",
+      "stack": 2
+    },
+    {
+      "id": "ado:35418:15:Custom.SDKPullRequestForPython",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-23T06:18:25.95Z",
+      "observedAt": "2026-07-23T06:18:25.95Z",
+      "trackId": "sdk:Python:azure-mgmt-connectedcache",
+      "value": "https://github.com/Azure/azure-sdk-for-python/pull/48229",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35418",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35418"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48229:comment:5055120588:sdk:Python:azure-mgmt-connectedcache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T06:18:47Z",
+      "observedAt": "2026-07-23T06:18:47Z",
+      "trackId": "sdk:Python:azure-mgmt-connectedcache",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48229",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48229#issuecomment-5055120588"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 2 pipeline(s).<br> 8 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48229:comment:3635965212:sdk:Python:azure-mgmt-connectedcache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T06:20:00Z",
+      "observedAt": "2026-07-23T06:20:00Z",
+      "trackId": "sdk:Python:azure-mgmt-connectedcache",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48229",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48229#discussion_r3635965212"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The docstring states the default is `None` and that an operation default will be used, but the implementation defaults `api_version` to `\"2026-06-01\"`. Update the docstring to match the actual default behavior (or update the code to honor `",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48229:comment:3635965233:sdk:Python:azure-mgmt-connectedcache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T06:20:01Z",
+      "observedAt": "2026-07-23T06:20:01Z",
+      "trackId": "sdk:Python:azure-mgmt-connectedcache",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48229",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48229#discussion_r3635965233"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The docstring states the default is `None` and that an operation default will be used, but the implementation defaults `api_version` to `\"2026-06-01\"`. Update the docstring to match the actual default behavior (or update the code to honor `",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48229:comment:3635965251:sdk:Python:azure-mgmt-connectedcache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T06:20:01Z",
+      "observedAt": "2026-07-23T06:20:01Z",
+      "trackId": "sdk:Python:azure-mgmt-connectedcache",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48229",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48229#discussion_r3635965251"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The optimized header fast-path for `bool` is case-sensitive and falls back to `bool(response_data)`, which will evaluate any non-empty string (including `\"FALSE\"` or `\"no\"`) to `True`. Consider normalizing `response_data` (e.g., `lower()` +",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48229:comment:3635965269:sdk:Python:azure-mgmt-connectedcache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T06:20:01Z",
+      "observedAt": "2026-07-23T06:20:01Z",
+      "trackId": "sdk:Python:azure-mgmt-connectedcache",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48229",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48229#discussion_r3635965269"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This changes request-wire behavior by injecting *all* client defaults into `_data` even when callers didn’t set those fields, which can cause optional properties to be sent unintentionally (and “absence” vs “default value” can be semantical",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48229:review:4761287119:sdk:Python:azure-mgmt-connectedcache",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T06:20:02Z",
+      "observedAt": "2026-07-23T06:20:02Z",
+      "trackId": "sdk:Python:azure-mgmt-connectedcache",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48229",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48229#pullrequestreview-4761287119"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview > [!NOTE] > Copilot could not run the full agentic suite for this review because it was automatically requested on a bot-authored pull request. Request a review from Copilot under Reviewers to retry with the full ag",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48188:pr.closed:sdk:Python:azure-mgmt-connectedcache",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T06:24:13Z",
+      "observedAt": "2026-07-23T06:24:13Z",
+      "trackId": "sdk:Python:azure-mgmt-connectedcache",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48188",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48188"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48188:comment:5055158856:sdk:Python:azure-mgmt-connectedcache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T06:24:13Z",
+      "observedAt": "2026-07-23T06:24:13Z",
+      "trackId": "sdk:Python:azure-mgmt-connectedcache",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48188",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48188#issuecomment-5055158856"
+      },
+      "confidence": "authoritative",
+      "excerpt": "moved to https://github.com/Azure/azure-sdk-for-python/pull/48229",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48229:review:4761316074:sdk:Python:azure-mgmt-connectedcache",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T06:24:31Z",
+      "observedAt": "2026-07-23T06:24:31Z",
+      "trackId": "sdk:Python:azure-mgmt-connectedcache",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48229",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48229#pullrequestreview-4761316074"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48229:comment:5055162064:sdk:Python:azure-mgmt-connectedcache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T06:24:40Z",
+      "observedAt": "2026-07-23T06:24:40Z",
+      "trackId": "sdk:Python:azure-mgmt-connectedcache",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48229",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48229#issuecomment-5055162064"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @Bharam-Msft, we have approved the PR and we will hold the PR merge and release until you explicitly ping us to merge then release.",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39357:comment:5055195621:sdk:JavaScript:@azure/arm-connectedcache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T06:29:20Z",
+      "observedAt": "2026-07-23T06:29:20Z",
+      "trackId": "sdk:JavaScript:@azure/arm-connectedcache",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39357",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39357#issuecomment-5055195621"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Next Steps to Merge ✅ All CI checks have passed — this PR is ready for review! The SDK engineer will review this PR shortly. Once it's approved, you can go ahead and merge it. To make things easier, feel free to [enable auto-merge](https",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27229:commit:f602dc58e407:sdk:Go:sdk/resourcemanager/connectedcache/armconnectedcache",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T06:56:56Z",
+      "observedAt": "2026-07-23T06:56:56Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/connectedcache/armconnectedcache",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27229",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/f602dc58e407f9dfc204b79e61c6d2847fee63f7"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27229:review:4761530168:sdk:Go:sdk/resourcemanager/connectedcache/armconnectedcache",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T06:59:25Z",
+      "observedAt": "2026-07-23T06:59:25Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/connectedcache/armconnectedcache",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27229",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27229#pullrequestreview-4761530168"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Copilot reviewed 4 out of 19 changed files in this pull request and generated no new comments. <details> <summary>Files not reviewed (14)</summary> * **sdk/resourcemanager/connectedcache/armconnectedcache/constants.",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39357:review:4761882028:sdk:JavaScript:@azure/arm-connectedcache",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T07:43:46Z",
+      "observedAt": "2026-07-23T07:43:46Z",
+      "trackId": "sdk:JavaScript:@azure/arm-connectedcache",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39357",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39357#pullrequestreview-4761882028"
+      },
+      "confidence": "authoritative",
+      "excerpt": "No API design or tooling issues found in this PR. This PR promotes `@azure/arm-connectedcache` from `1.0.0-beta.3` to `1.0.0` (stable) with API version `2026-06-01`. The public API surface additions are purely additive. Only preview `KnownV",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39357:comment:5055834736:sdk:JavaScript:@azure/arm-connectedcache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T07:49:26Z",
+      "observedAt": "2026-07-23T07:49:26Z",
+      "trackId": "sdk:JavaScript:@azure/arm-connectedcache",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39357",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39357#issuecomment-5055834736"
+      },
+      "confidence": "authoritative",
+      "excerpt": "LGTM cc @qiaozha",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27229:review:4762045572:sdk:Go:sdk/resourcemanager/connectedcache/armconnectedcache",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T08:06:16Z",
+      "observedAt": "2026-07-23T08:06:16Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/connectedcache/armconnectedcache",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "tadelesh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27229",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27229#pullrequestreview-4762045572"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49913:commit:ab4f70b8156d:sdk:Java:azure-resourcemanager-connectedcache",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T08:12:59Z",
+      "observedAt": "2026-07-23T08:12:59Z",
+      "trackId": "sdk:Java:azure-resourcemanager-connectedcache",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49913",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/ab4f70b8156d667fc0f7fb96ef5bd9565105e8ed"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49913:pr.created:sdk:Java:azure-resourcemanager-connectedcache",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T08:13:04Z",
+      "observedAt": "2026-07-23T08:13:04Z",
+      "trackId": "sdk:Java:azure-resourcemanager-connectedcache",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49913",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49913"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:35418:16:Custom.SDKPullRequestForJava",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-23T08:13:12.317Z",
+      "observedAt": "2026-07-23T08:13:12.317Z",
+      "trackId": "sdk:Java:azure-resourcemanager-connectedcache",
+      "value": "https://github.com/Azure/azure-sdk-for-java/pull/49913",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35418",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35418"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49913:comment:3636571050:sdk:Java:azure-resourcemanager-connectedcache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T08:15:23Z",
+      "observedAt": "2026-07-23T08:15:23Z",
+      "trackId": "sdk:Java:azure-resourcemanager-connectedcache",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49913",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49913#discussion_r3636571050"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`openFirewallPort*` fields are declared as `Boolean` and are deserialized using `reader.getNullable(...)`, so they can be `null`. Writing them via `writeBooleanField(...)` risks a `NullPointerException` due to auto-unboxing (or may emit inc",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49913:comment:3636571083:sdk:Java:azure-resourcemanager-connectedcache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T08:15:23Z",
+      "observedAt": "2026-07-23T08:15:23Z",
+      "trackId": "sdk:Java:azure-resourcemanager-connectedcache",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49913",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49913#discussion_r3636571083"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`openFirewallPort*` fields are declared as `Boolean` and are deserialized using `reader.getNullable(...)`, so they can be `null`. Writing them via `writeBooleanField(...)` risks a `NullPointerException` due to auto-unboxing (or may emit inc",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49913:comment:3636571112:sdk:Java:azure-resourcemanager-connectedcache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T08:15:24Z",
+      "observedAt": "2026-07-23T08:15:24Z",
+      "trackId": "sdk:Java:azure-resourcemanager-connectedcache",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49913",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49913#discussion_r3636571112"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`certType` is added and deserialized, but this diff doesn't update JSON serialization to include the new field. If `MccCacheNodeTlsCertificate` supports being serialized (it implements `JsonSerializable`), ensure `toJson(...)` writes `certT",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49913:comment:3636571134:sdk:Java:azure-resourcemanager-connectedcache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T08:15:24Z",
+      "observedAt": "2026-07-23T08:15:24Z",
+      "trackId": "sdk:Java:azure-resourcemanager-connectedcache",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49913",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49913#discussion_r3636571134"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`certType` is added and deserialized, but this diff doesn't update JSON serialization to include the new field. If `MccCacheNodeTlsCertificate` supports being serialized (it implements `JsonSerializable`), ensure `toJson(...)` writes `certT",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49913:comment:3636571164:sdk:Java:azure-resourcemanager-connectedcache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T08:15:24Z",
+      "observedAt": "2026-07-23T08:15:24Z",
+      "trackId": "sdk:Java:azure-resourcemanager-connectedcache",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49913",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49913#discussion_r3636571164"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The wording is internally inconsistent: it states `stable`/`beta` are new values but also says `slow`/`fast` are legacy \\\"from version 2026-06-01\\\". If `stable`/`beta` were introduced in `2026-06-01`, then `slow`/`fast` would be legacy *pri",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49913:comment:3636571199:sdk:Java:azure-resourcemanager-connectedcache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T08:15:24Z",
+      "observedAt": "2026-07-23T08:15:24Z",
+      "trackId": "sdk:Java:azure-resourcemanager-connectedcache",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49913",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49913#discussion_r3636571199"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The wording is internally inconsistent: it states `stable`/`beta` are new values but also says `slow`/`fast` are legacy \\\"from version 2026-06-01\\\". If `stable`/`beta` were introduced in `2026-06-01`, then `slow`/`fast` would be legacy *pri",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49913:comment:3636571232:sdk:Java:azure-resourcemanager-connectedcache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T08:15:24Z",
+      "observedAt": "2026-07-23T08:15:24Z",
+      "trackId": "sdk:Java:azure-resourcemanager-connectedcache",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49913",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49913#discussion_r3636571232"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The wording is internally inconsistent: it states `stable`/`beta` are new values but also says `slow`/`fast` are legacy \\\"from version 2026-06-01\\\". If `stable`/`beta` were introduced in `2026-06-01`, then `slow`/`fast` would be legacy *pri",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49913:review:4762110320:sdk:Java:azure-resourcemanager-connectedcache",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T08:15:25Z",
+      "observedAt": "2026-07-23T08:15:25Z",
+      "trackId": "sdk:Java:azure-resourcemanager-connectedcache",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49913",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49913#pullrequestreview-4762110320"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview > [!NOTE] > Copilot could not run the full agentic suite for this review because it was automatically requested on a bot-authored pull request. Request a review from Copilot under Reviewers to retry with the full ag",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49913:pr.closed:sdk:Java:azure-resourcemanager-connectedcache",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T08:18:40Z",
+      "observedAt": "2026-07-23T08:18:40Z",
+      "trackId": "sdk:Java:azure-resourcemanager-connectedcache",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49913",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49913"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49884:commit:0b40d88374b3:sdk:Java:azure-resourcemanager-connectedcache",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T08:28:26Z",
+      "observedAt": "2026-07-23T08:28:26Z",
+      "trackId": "sdk:Java:azure-resourcemanager-connectedcache",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49884",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/0b40d88374b3a012308f1b7717bc0916773d24e1"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:35418:17:Custom.SDKPullRequestForJava",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-23T08:28:37.28Z",
+      "observedAt": "2026-07-23T08:28:37.28Z",
+      "trackId": "sdk:Java:azure-resourcemanager-connectedcache",
+      "value": "https://github.com/Azure/azure-sdk-for-java/pull/49884",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35418",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35418"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49884:review:4762248781:sdk:Java:azure-resourcemanager-connectedcache",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T08:35:13Z",
+      "observedAt": "2026-07-23T08:35:13Z",
+      "trackId": "sdk:Java:azure-resourcemanager-connectedcache",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49884",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49884#pullrequestreview-4762248781"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39357:review:4771212276:sdk:JavaScript:@azure/arm-connectedcache",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T07:43:54Z",
+      "observedAt": "2026-07-24T07:43:54Z",
+      "trackId": "sdk:JavaScript:@azure/arm-connectedcache",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "qiaozha"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39357",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39357#pullrequestreview-4771212276"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39357:comment:3643756679:sdk:JavaScript:@azure/arm-connectedcache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T07:43:54Z",
+      "observedAt": "2026-07-24T07:43:54Z",
+      "trackId": "sdk:JavaScript:@azure/arm-connectedcache",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "qiaozha"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39357",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39357#discussion_r3643756679"
+      },
+      "confidence": "authoritative",
+      "excerpt": "why there's some service has this label some don't?",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39357:review:4771216790:sdk:JavaScript:@azure/arm-connectedcache",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T07:44:44Z",
+      "observedAt": "2026-07-24T07:44:44Z",
+      "trackId": "sdk:JavaScript:@azure/arm-connectedcache",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "qiaozha"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39357",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39357#pullrequestreview-4771216790"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39357:comment:3643760463:sdk:JavaScript:@azure/arm-connectedcache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T07:44:44Z",
+      "observedAt": "2026-07-24T07:44:44Z",
+      "trackId": "sdk:JavaScript:@azure/arm-connectedcache",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "qiaozha"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39357",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39357#discussion_r3643760463"
+      },
+      "confidence": "authoritative",
+      "excerpt": "why we have this change?",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39357:review:4771227775:sdk:JavaScript:@azure/arm-connectedcache",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T07:46:35Z",
+      "observedAt": "2026-07-24T07:46:35Z",
+      "trackId": "sdk:JavaScript:@azure/arm-connectedcache",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "qiaozha"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39357",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39357#pullrequestreview-4771227775"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39357:comment:3643768742:sdk:JavaScript:@azure/arm-connectedcache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T07:46:35Z",
+      "observedAt": "2026-07-24T07:46:35Z",
+      "trackId": "sdk:JavaScript:@azure/arm-connectedcache",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "qiaozha"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39357",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39357#discussion_r3643768742"
+      },
+      "confidence": "authoritative",
+      "excerpt": "is this a codegen change or a typespec change?",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39357:review:4771297642:sdk:JavaScript:@azure/arm-connectedcache",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T07:56:26Z",
+      "observedAt": "2026-07-24T07:56:26Z",
+      "trackId": "sdk:JavaScript:@azure/arm-connectedcache",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39357",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39357#pullrequestreview-4771297642"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39357:comment:3643825712:sdk:JavaScript:@azure/arm-connectedcache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T07:56:26Z",
+      "observedAt": "2026-07-24T07:56:26Z",
+      "trackId": "sdk:JavaScript:@azure/arm-connectedcache",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39357",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39357#discussion_r3643825712"
+      },
+      "confidence": "authoritative",
+      "excerpt": "release tool will add this label when triggering a new generation if this label hasn't been added for this service.",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39357:review:4771413414:sdk:JavaScript:@azure/arm-connectedcache",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T08:11:24Z",
+      "observedAt": "2026-07-24T08:11:24Z",
+      "trackId": "sdk:JavaScript:@azure/arm-connectedcache",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39357",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39357#pullrequestreview-4771413414"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39357:comment:3643919719:sdk:JavaScript:@azure/arm-connectedcache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T08:11:24Z",
+      "observedAt": "2026-07-24T08:11:24Z",
+      "trackId": "sdk:JavaScript:@azure/arm-connectedcache",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39357",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39357#discussion_r3643919719"
+      },
+      "confidence": "authoritative",
+      "excerpt": "codegen change https://github.com/Azure/autorest.typescript/pull/3695",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39357:review:4771439772:sdk:JavaScript:@azure/arm-connectedcache",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T08:14:23Z",
+      "observedAt": "2026-07-24T08:14:23Z",
+      "trackId": "sdk:JavaScript:@azure/arm-connectedcache",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "qiaozha"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39357",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39357#pullrequestreview-4771439772"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39357:pr.merged:sdk:JavaScript:@azure/arm-connectedcache",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-29T23:39:38Z",
+      "observedAt": "2026-07-29T23:39:38Z",
+      "trackId": "sdk:JavaScript:@azure/arm-connectedcache",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39357",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39357"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27229:pr.merged:sdk:Go:sdk/resourcemanager/connectedcache/armconnectedcache",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-29T23:40:45Z",
+      "observedAt": "2026-07-29T23:40:45Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/connectedcache/armconnectedcache",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27229",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27229"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48229:pr.merged:sdk:Python:azure-mgmt-connectedcache",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-29T23:41:12Z",
+      "observedAt": "2026-07-29T23:41:12Z",
+      "trackId": "sdk:Python:azure-mgmt-connectedcache",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48229",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48229"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49884:commit:31ab14930bfd:sdk:Java:azure-resourcemanager-connectedcache",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-29T23:42:06Z",
+      "observedAt": "2026-07-29T23:42:06Z",
+      "trackId": "sdk:Java:azure-resourcemanager-connectedcache",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "Bharam-Msft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49884",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/31ab14930bfd931e7baa8c09ae113e029bc46bbe"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6636769:release.queued:sdk:Python:azure-mgmt-connectedcache",
+      "type": "release.queued",
+      "phase": "release",
+      "occurredAt": "2026-07-29T23:42:38.2450038Z",
+      "observedAt": "2026-08-04T01:10:50.1002748Z",
+      "trackId": "sdk:Python:azure-mgmt-connectedcache",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6636769",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6636769"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6636770:release.queued:sdk:Go:sdk/resourcemanager/connectedcache/armconnectedcache",
+      "type": "release.queued",
+      "phase": "release",
+      "occurredAt": "2026-07-29T23:42:51.013759Z",
+      "observedAt": "2026-07-30T02:13:45.2363227Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/connectedcache/armconnectedcache",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6636770",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6636770"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6636770:release.started:sdk:Go:sdk/resourcemanager/connectedcache/armconnectedcache",
+      "type": "release.started",
+      "phase": "release",
+      "occurredAt": "2026-07-29T23:43:10.7785655Z",
+      "observedAt": "2026-07-30T02:13:45.2363227Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/connectedcache/armconnectedcache",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6636770",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6636770"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49884:pr.merged:sdk:Java:azure-resourcemanager-connectedcache",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-29T23:55:51Z",
+      "observedAt": "2026-07-29T23:55:51Z",
+      "trackId": "sdk:Java:azure-resourcemanager-connectedcache",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49884",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49884"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:35418:18:Custom.ReleaseStatusForGo",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-07-29T23:57:07.83Z",
+      "observedAt": "2026-07-29T23:57:07.83Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/connectedcache/armconnectedcache",
+      "value": "Approval Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35418",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35418"
+      },
+      "title": "Release status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6636881:release.queued:sdk:Java:azure-resourcemanager-connectedcache",
+      "type": "release.queued",
+      "phase": "release",
+      "occurredAt": "2026-07-29T23:57:32.6385569Z",
+      "observedAt": "2026-07-30T20:28:27.6763465Z",
+      "trackId": "sdk:Java:azure-resourcemanager-connectedcache",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6636881",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6636881"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6636881:release.started:sdk:Java:azure-resourcemanager-connectedcache",
+      "type": "release.started",
+      "phase": "release",
+      "occurredAt": "2026-07-29T23:57:56.431852Z",
+      "observedAt": "2026-07-30T20:28:27.6763465Z",
+      "trackId": "sdk:Java:azure-resourcemanager-connectedcache",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6636881",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6636881"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado:35418:19:Custom.ReleaseStatusForPython",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-07-30T00:17:30.357Z",
+      "observedAt": "2026-07-30T00:17:30.357Z",
+      "trackId": "sdk:Python:azure-mgmt-connectedcache",
+      "value": "Approval Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35418",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35418"
+      },
+      "title": "Release status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:35418:20:Custom.ReleaseStatusForJava",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-07-30T00:45:50.79Z",
+      "observedAt": "2026-07-30T00:45:50.79Z",
+      "trackId": "sdk:Java:azure-resourcemanager-connectedcache",
+      "value": "Approval Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35418",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35418"
+      },
+      "title": "Release status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:35418:21:Custom.ReleaseStatusForJavaScript",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-07-30T02:06:21Z",
+      "observedAt": "2026-07-30T02:06:21Z",
+      "trackId": "sdk:JavaScript:@azure/arm-connectedcache",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35418",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35418"
+      },
+      "title": "Release status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35418:21:Custom.ReleasedVersionForJavaScript",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-07-30T02:06:21Z",
+      "observedAt": "2026-07-30T02:06:21Z",
+      "trackId": "sdk:JavaScript:@azure/arm-connectedcache",
+      "value": "1.0.0",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35418",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35418"
+      },
+      "title": "Package version observed",
+      "stack": 2
+    },
+    {
+      "id": "ado:35418:22:Custom.ReleaseStatusForGo",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-07-30T02:13:13.68Z",
+      "observedAt": "2026-07-30T02:13:13.68Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/connectedcache/armconnectedcache",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35418",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35418"
+      },
+      "title": "Release status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:35418:22:Custom.ReleasedVersionForGo",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-07-30T02:13:13.68Z",
+      "observedAt": "2026-07-30T02:13:13.68Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/connectedcache/armconnectedcache",
+      "value": "1.0.0",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35418",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35418"
+      },
+      "title": "Package version observed",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:6636770:release.completed:sdk:Go:sdk/resourcemanager/connectedcache/armconnectedcache",
+      "type": "release.completed",
+      "phase": "release",
+      "occurredAt": "2026-07-30T02:13:45.2363227Z",
+      "observedAt": "2026-07-30T02:13:45.2363227Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/connectedcache/armconnectedcache",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6636770",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6636770"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:35418:23:Custom.ReleaseStatusForJava",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-07-30T20:19:32.287Z",
+      "observedAt": "2026-07-30T20:19:32.287Z",
+      "trackId": "sdk:Java:azure-resourcemanager-connectedcache",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35418",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35418"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35418:23:Custom.ReleasedVersionForJava",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-07-30T20:19:32.287Z",
+      "observedAt": "2026-07-30T20:19:32.287Z",
+      "trackId": "sdk:Java:azure-resourcemanager-connectedcache",
+      "value": "1.0.0",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35418",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35418"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6636881:release.completed:sdk:Java:azure-resourcemanager-connectedcache",
+      "type": "release.completed",
+      "phase": "release",
+      "occurredAt": "2026-07-30T20:28:27.6763465Z",
+      "observedAt": "2026-07-30T20:28:27.6763465Z",
+      "trackId": "sdk:Java:azure-resourcemanager-connectedcache",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6636881",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6636881"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61184:commit:d4e4eb2b38f4:sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-30T21:37:00Z",
+      "observedAt": "2026-07-30T21:37:00Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61184",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/d4e4eb2b38f47ee3a363aefb36d1042866a41f04"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61184:review:4823416468:sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-30T21:37:17Z",
+      "observedAt": "2026-07-30T21:37:17Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-swe-agent[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61184",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61184#pullrequestreview-4823416468"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61184:comment:3686408188:sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-30T21:37:17Z",
+      "observedAt": "2026-07-30T21:37:17Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61184",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61184#discussion_r3686408188"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Fixed in commit that moves `hostOsEdition`, `hostOsVersion`, `hostOsBuild`, `distroOsEditionWsl`, `distroOsVersionWsl`, `distroOsBuildWsl`, `containerOsEdition`, `containerOsVersion`, `containerOsBuild`, `installVersionMsix`, `installVersio",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61184:commit:16fd4df9ae46:sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-30T22:03:05Z",
+      "observedAt": "2026-07-30T22:03:05Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61184",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/16fd4df9ae461702cc3360933f89be7890b24704"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61184:review:4823597938:sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-30T22:03:18Z",
+      "observedAt": "2026-07-30T22:03:18Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-swe-agent[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61184",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61184#pullrequestreview-4823597938"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61184:comment:3686554011:sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-30T22:03:18Z",
+      "observedAt": "2026-07-30T22:03:18Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61184",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61184#discussion_r3686554011"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Fixed in the latest commit. The doc comment at line 297 has been rewritten to: ``` Auto Update Ring Type for the cache node. Current supported values are Stable and Beta. Slow and Fast are legacy values used prior to 2026-06-01. ``` This ex",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61184:review:4823638452:sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-30T22:10:18Z",
+      "observedAt": "2026-07-30T22:10:18Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "Bharam-Msft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61184",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61184#pullrequestreview-4823638452"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61184:comment:3686588217:sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-30T22:10:18Z",
+      "observedAt": "2026-07-30T22:10:18Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "Bharam-Msft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61184",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61184#discussion_r3686588217"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Fixed",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61184:commit:180993b8a41b:sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-30T22:55:50Z",
+      "observedAt": "2026-07-30T22:55:50Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "Bharam-Msft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61184",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/180993b8a41b535a5d83bbb603be975762968e1a"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61184:comment:5137126489:sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-30T22:58:37Z",
+      "observedAt": "2026-07-30T22:58:37Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "Bharam-Msft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61184",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61184#issuecomment-5137126489"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@copilot resolve the merge conflicts in this pull request",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61184:comment:5137186792:sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-30T23:07:50Z",
+      "observedAt": "2026-07-30T23:07:50Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61184",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61184#issuecomment-5137186792"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> @copilot resolve the merge conflicts in this pull request Merge conflicts resolved. The 9 conflicting generated files in `src/Generated/` had conflicts between the new API version (`2026-06-01`) from this PR and the updated REST client co",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61184:commit:e02ac99a66de:sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-31T01:12:22Z",
+      "observedAt": "2026-07-31T01:12:22Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "Bharam-Msft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61184",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/e02ac99a66de0880edec592c6d747a2ba8aab209"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61184:comment:5138027229:sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-31T01:13:35Z",
+      "observedAt": "2026-07-31T01:13:35Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61184",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61184#issuecomment-5138027229"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @azure-sdk-automation[bot]. We've noticed that new changes have been pushed to this pull request. Because it is set to automatically merge, we've reset the approvals to allow the opportunity to review the updates.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61184:comment:5138286270:sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-31T01:47:57Z",
+      "observedAt": "2026-07-31T01:47:57Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61184",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61184#issuecomment-5138286270"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## 🔍 CI Failure Analysis for PR #61184 **Package:** `Azure.ResourceManager.ConnectedCache` **Service:** `connectedcache` ### Check Status Summary | Check | Status | |---|---| | net - pullrequest | ❌ Failed | | Build Build PRBatch | ❌ Faile",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61184:comment:3692099131:sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-31T17:05:25Z",
+      "observedAt": "2026-07-31T17:05:25Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jsquire"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61184",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61184#discussion_r3692099131"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Please do not make changes to the root `.cspell`. Add a local entry. - [Example](https://github.com/Azure/azure-sdk-for-net/blob/main/sdk/computebulkactions/cspell.yaml#L4)",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61184:review:4830636607:sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-31T17:05:30Z",
+      "observedAt": "2026-07-31T17:05:30Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "title": "Changes requested",
+      "actor": {
+        "kind": "human",
+        "publicId": "jsquire"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61184",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61184#pullrequestreview-4830636607"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "changes_requested",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61184:commit:ed08c64bcdfe:sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-04T01:03:21Z",
+      "observedAt": "2026-08-04T01:03:21Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "Bharam-Msft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61184",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/ed08c64bcdfea1d6a9bc4b16e9ea9dd21d80fc4f"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61184:comment:5173398782:sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-04T01:03:56Z",
+      "observedAt": "2026-08-04T01:03:56Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61184",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61184#issuecomment-5173398782"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @azure-sdk-automation[bot]. We've noticed that new changes have been pushed to this pull request. Because it is set to automatically merge, we've reset the approvals to allow the opportunity to review the updates.",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61184:review:4849708719:sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-04T01:04:26Z",
+      "observedAt": "2026-08-04T01:04:26Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "Bharam-Msft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61184",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61184#pullrequestreview-4849708719"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61184:comment:3708724438:sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-04T01:04:26Z",
+      "observedAt": "2026-08-04T01:04:26Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "Bharam-Msft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61184",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61184#discussion_r3708724438"
+      },
+      "confidence": "authoritative",
+      "excerpt": "fixed",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6636769:release.started:sdk:Python:azure-mgmt-connectedcache",
+      "type": "release.started",
+      "phase": "release",
+      "occurredAt": "2026-08-04T01:05:34.0028936Z",
+      "observedAt": "2026-08-04T01:10:50.1002748Z",
+      "trackId": "sdk:Python:azure-mgmt-connectedcache",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6636769",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6636769"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6636769:b7603ac9-ea05-5c29-c985-6d0524e21a2b:sdk:Python:azure-mgmt-connectedcache",
+      "type": "release.stage_failed",
+      "phase": "release",
+      "occurredAt": "2026-08-04T01:10:38.3533333Z",
+      "observedAt": "2026-08-04T01:10:50.1002748Z",
+      "trackId": "sdk:Python:azure-mgmt-connectedcache",
+      "title": "task failed: Publish to ESRP",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6636769",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6636769"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6636769:2b830c39-16e2-5ad8-3b93-3dcf58d61251:sdk:Python:azure-mgmt-connectedcache",
+      "type": "release.stage_failed",
+      "phase": "release",
+      "occurredAt": "2026-08-04T01:10:42.0066667Z",
+      "observedAt": "2026-08-04T01:10:50.1002748Z",
+      "trackId": "sdk:Python:azure-mgmt-connectedcache",
+      "title": "job failed: Publish to PyPi",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6636769",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6636769"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6636769:fbd802f3-15ec-5aba-8661-b1b653ab8d14:sdk:Python:azure-mgmt-connectedcache",
+      "type": "release.stage_failed",
+      "phase": "release",
+      "occurredAt": "2026-08-04T01:10:48.1433333Z",
+      "observedAt": "2026-08-04T01:10:50.1002748Z",
+      "trackId": "sdk:Python:azure-mgmt-connectedcache",
+      "title": "stage failed: Release: azure-mgmt-connectedcache",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6636769",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6636769"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6636769:release.failed:sdk:Python:azure-mgmt-connectedcache",
+      "type": "release.failed",
+      "phase": "release",
+      "occurredAt": "2026-08-04T01:10:50.1002748Z",
+      "observedAt": "2026-08-04T01:10:50.1002748Z",
+      "trackId": "sdk:Python:azure-mgmt-connectedcache",
+      "title": "Pipeline failed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6636769",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6636769"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61184:commit:ffde807965ce:sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-04T01:33:01Z",
+      "observedAt": "2026-08-04T01:33:01Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "Bharam-Msft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61184",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/ffde807965ce7391ef8fa343bafda338a8c47918"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61184:comment:5173574491:sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-04T01:34:23Z",
+      "observedAt": "2026-08-04T01:34:23Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61184",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61184#issuecomment-5173574491"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @azure-sdk-automation[bot]. We've noticed that new changes have been pushed to this pull request. Because it is set to automatically merge, we've reset the approvals to allow the opportunity to review the updates.",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61184:review:4849847319:sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-04T01:39:24Z",
+      "observedAt": "2026-08-04T01:39:24Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "title": "Changes requested",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61184",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61184#pullrequestreview-4849847319"
+      },
+      "confidence": "authoritative",
+      "excerpt": "### Management SDK Review Summary - **Scope**: `Azure.ResourceManager.ConnectedCache` - **Versioning**: ❌ FAIL — version mismatch (see below) - **API surface**: ❌ FAIL — 7 BOOL001 errors - **Contextual naming**: evaluated 45 new public type",
+      "reviewState": "changes_requested",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61184:comment:3708844197:sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-04T01:39:24Z",
+      "observedAt": "2026-08-04T01:39:24Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61184",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61184#discussion_r3708844197"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[BOOL001]** Four new boolean properties are missing a verb prefix, which is required by the .NET Azure SDK naming conventions: ```csharp public bool? OpenFirewallPort80 { get; set; } public bool? OpenFirewallPort443 { get; set; } public b",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61184:commit:35fc37f54d68:sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-04T01:59:36Z",
+      "observedAt": "2026-08-04T01:59:36Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "Bharam-Msft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61184",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/35fc37f54d686eabf7f33ed2e4e551b10b04802a"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61184:comment:5173732722:sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-04T02:00:03Z",
+      "observedAt": "2026-08-04T02:00:03Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61184",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61184#issuecomment-5173732722"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @azure-sdk-automation[bot]. We've noticed that new changes have been pushed to this pull request. Because it is set to automatically merge, we've reset the approvals to allow the opportunity to review the updates.",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61184:review:4849983962:sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-04T02:09:42Z",
+      "observedAt": "2026-08-04T02:09:42Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "title": "Changes requested",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61184",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61184#pullrequestreview-4849983962"
+      },
+      "confidence": "authoritative",
+      "excerpt": "### Management SDK Review Summary - **Scope**: `Azure.ResourceManager.ConnectedCache` - **Versioning**: ❌ FAIL — version mismatch between `.csproj` and `CHANGELOG.md` - **API surface**: ❌ FAIL — 7 BOOL001 errors (unchanged from previous rev",
+      "reviewState": "changes_requested",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61184:comment:5173861463:sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-04T02:20:48Z",
+      "observedAt": "2026-08-04T02:20:48Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61184",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61184#issuecomment-5173861463"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## 🔍 CI Failure Analysis for PR #61184 **Package:** `Azure.ResourceManager.ConnectedCache` **Service:** `connectedcache` **Head commit:** `5bd9c8d` ### Check Status Summary | Check | Status | |---|---| | net - pullrequest | ❌ Failed | | ne",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61184:commit:c8a1869a33c9:sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-04T20:49:29Z",
+      "observedAt": "2026-08-04T20:49:29Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "Bharam-Msft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61184",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/c8a1869a33c96880ac8525ed88da092f8031d392"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61184:comment:5184760146:sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-04T21:20:55Z",
+      "observedAt": "2026-08-04T21:20:55Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61184",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61184#issuecomment-5184760146"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## 🔍 CI Failure Analysis for PR #61184 **Package:** `Azure.ResourceManager.ConnectedCache` **Service:** `connectedcache` **Head commit:** `b07ef17` ### Check Status Summary | Check | Status | |---|---| | net - pullrequest | ❌ Failed | | ne",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61184:commit:f087d6c5dafb:sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-05T01:09:48Z",
+      "observedAt": "2026-08-05T01:09:48Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "Bharam-Msft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61184",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/f087d6c5dafb06a81e66080ee78c21ecf56c8f09"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61184:review:4860301804:sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-05T01:42:01Z",
+      "observedAt": "2026-08-05T01:42:01Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ConnectedCache",
+      "title": "Changes requested",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61184",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61184#pullrequestreview-4860301804"
+      },
+      "confidence": "authoritative",
+      "excerpt": "### Management SDK Review Summary - **Scope**: `Azure.ResourceManager.ConnectedCache` - **Versioning**: ✅ PASS — `<Version>1.0.0</Version>` in `.csproj` now matches `## 1.0.0 (2026-07-30)` in `CHANGELOG.md`. No `ApiCompatVersion` is correct",
+      "reviewState": "changes_requested",
+      "stack": 3
+    },
+    {
+      "id": "ado:35418:24:Custom.ReleaseStatusForPython",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-08-06T23:56:05.51Z",
+      "observedAt": "2026-08-06T23:56:05.51Z",
+      "trackId": "sdk:Python:azure-mgmt-connectedcache",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35418",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35418"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35418:24:Custom.ReleasedVersionForPython",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-08-06T23:56:05.51Z",
+      "observedAt": "2026-08-06T23:56:05.51Z",
+      "trackId": "sdk:Python:azure-mgmt-connectedcache",
+      "value": "1.0.0",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35418",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35418"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    }
+  ],
+  "quality": {
+    "warnings": [
+      "3 historical linked PR(s) closed without merge",
+      "2 superseded SDK PR link(s) retained"
+    ],
+    "unavailablePullRequests": 0,
+    "unavailablePipelineRuns": 0
+  },
+  "boundaryFacts": {
+    "id": "35418",
+    "state": "in-progress",
+    "specPrs": [
+      {
+        "id": "github:Azure/azure-rest-api-specs#44819",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#44819",
+        "createdAt": "2026-07-21T01:29:16Z",
+        "mergedAt": "2026-07-21T23:48:30Z",
+        "closedAt": "2026-07-21T23:48:30Z",
+        "available": true
+      }
+    ],
+    "artifacts": [
+      {
+        "language": ".NET",
+        "package": "Azure.ResourceManager.ConnectedCache",
+        "trackId": "sdk:.NET:Azure.ResourceManager.ConnectedCache",
+        "prId": "github:Azure/azure-sdk-for-net#61184",
+        "prCreatedAt": "2026-07-22T00:03:58Z",
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-net#61184",
+            "createdAt": "2026-07-22T00:03:58Z",
+            "mergedAt": null,
+            "closedAt": null,
+            "state": "open"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6598329",
+        "generationStartAt": "2026-07-21T23:56:59.5376483Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "JavaScript",
+        "package": "@azure/arm-connectedcache",
+        "trackId": "sdk:JavaScript:@azure/arm-connectedcache",
+        "prId": "github:Azure/azure-sdk-for-js#39357",
+        "prCreatedAt": "2026-07-22T00:03:19Z",
+        "prMergedAt": "2026-07-29T23:39:38Z",
+        "prClosedAt": "2026-07-29T23:39:38Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-js#39357",
+            "createdAt": "2026-07-22T00:03:19Z",
+            "mergedAt": "2026-07-29T23:39:38Z",
+            "closedAt": "2026-07-29T23:39:38Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6598331",
+        "generationStartAt": "2026-07-21T23:57:11.9960214Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-07-30T02:06:21Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.0.0",
+        "releaseBoundaryAt": "2026-07-30T02:06:21Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Python",
+        "package": "azure-mgmt-connectedcache",
+        "trackId": "sdk:Python:azure-mgmt-connectedcache",
+        "prId": "github:Azure/azure-sdk-for-python#48229",
+        "prCreatedAt": "2026-07-23T06:18:08Z",
+        "prMergedAt": "2026-07-29T23:41:12Z",
+        "prClosedAt": "2026-07-29T23:41:12Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-python#48188",
+            "createdAt": "2026-07-22T00:03:25Z",
+            "mergedAt": null,
+            "closedAt": "2026-07-23T06:24:13Z",
+            "state": "closed"
+          },
+          {
+            "id": "github:Azure/azure-sdk-for-python#48229",
+            "createdAt": "2026-07-23T06:18:08Z",
+            "mergedAt": "2026-07-29T23:41:12Z",
+            "closedAt": "2026-07-29T23:41:12Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6598333",
+        "generationStartAt": "2026-07-21T23:57:19.3570439Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-07-30T00:17:30.357Z",
+            "value": "Approval Pending"
+          },
+          {
+            "occurredAt": "2026-08-06T23:56:05.51Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.0.0",
+        "releaseBoundaryAt": "2026-08-06T23:56:05.51Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Java",
+        "package": "azure-resourcemanager-connectedcache",
+        "trackId": "sdk:Java:azure-resourcemanager-connectedcache",
+        "prId": "github:Azure/azure-sdk-for-java#49884",
+        "prCreatedAt": "2026-07-22T00:06:22Z",
+        "prMergedAt": "2026-07-29T23:55:51Z",
+        "prClosedAt": "2026-07-29T23:55:51Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-java#49884",
+            "createdAt": "2026-07-22T00:06:22Z",
+            "mergedAt": "2026-07-29T23:55:51Z",
+            "closedAt": "2026-07-29T23:55:51Z",
+            "state": "merged"
+          },
+          {
+            "id": "github:Azure/azure-sdk-for-java#49913",
+            "createdAt": "2026-07-23T08:13:04Z",
+            "mergedAt": null,
+            "closedAt": "2026-07-23T08:18:40Z",
+            "state": "closed"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6598330",
+        "generationStartAt": "2026-07-21T23:57:05.6665906Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-07-30T00:45:50.79Z",
+            "value": "Approval Pending"
+          },
+          {
+            "occurredAt": "2026-07-30T20:19:32.287Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.0.0",
+        "releaseBoundaryAt": "2026-07-30T20:19:32.287Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Go",
+        "package": "sdk/resourcemanager/connectedcache/armconnectedcache",
+        "trackId": "sdk:Go:sdk/resourcemanager/connectedcache/armconnectedcache",
+        "prId": "github:Azure/azure-sdk-for-go#27229",
+        "prCreatedAt": "2026-07-22T00:02:14Z",
+        "prMergedAt": "2026-07-29T23:40:45Z",
+        "prClosedAt": "2026-07-29T23:40:45Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-go#27229",
+            "createdAt": "2026-07-22T00:02:14Z",
+            "mergedAt": "2026-07-29T23:40:45Z",
+            "closedAt": "2026-07-29T23:40:45Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6598335",
+        "generationStartAt": "2026-07-21T23:57:23.1510058Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-07-29T23:57:07.83Z",
+            "value": "Approval Pending"
+          },
+          {
+            "occurredAt": "2026-07-30T02:13:13.68Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.0.0",
+        "releaseBoundaryAt": "2026-07-30T02:13:13.68Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      }
+    ],
+    "cohortPlan": {
+      "id": "35418",
+      "releasePlanId": "35418",
+      "title": "Public Preview release plan for Microsoft Connected Cache for Enterprise",
+      "service": "Microsoft Connected Cache for Enterprise",
+      "state": "in-progress"
+    },
+    "quality": {
+      "warnings": [
+        "3 historical linked PR(s) closed without merge",
+        "2 superseded SDK PR link(s) retained"
+      ],
+      "unavailablePullRequests": 0,
+      "unavailablePipelineRuns": 0
+    }
+  },
+  "summary": {
+    "durationHours": 552.8,
+    "pullRequestCount": 8,
+    "humanReviewCount": 17,
+    "humanCommentCount": 15
+  }
+}

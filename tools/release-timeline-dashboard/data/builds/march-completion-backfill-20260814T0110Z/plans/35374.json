@@ -1,0 +1,2078 @@
+{
+  "schemaVersion": 2,
+  "id": "35374",
+  "correlation": {
+    "policyVersion": 1,
+    "preflight": "passed"
+  },
+  "releasePlanId": "35374",
+  "title": "Public Preview release plan for QumuloStorage",
+  "service": "QumuloStorage",
+  "product": "Release",
+  "path": "specification/liftrqumulo/resource-manager/Qumulo.Storage/QumuloStorage",
+  "state": "abandoned",
+  "plane": "management",
+  "releaseType": "APEX Public Preview",
+  "intendedMonth": "August 2026",
+  "createdAt": "2026-07-17T07:00:07.817Z",
+  "completedAt": "2026-07-17T14:13:15.35Z",
+  "sourceUrl": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35374",
+  "range": {
+    "start": "2026-07-07T08:57:27.000Z",
+    "end": "2026-07-17T14:13:15.350Z"
+  },
+  "intendedArtifacts": [
+    {
+      "prId": "github:Azure/azure-sdk-for-net#61091",
+      "language": ".NET",
+      "package": "Azure.ResourceManager.Qumulo",
+      "version": null,
+      "outcome": "not-released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6577963",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-js#39321",
+      "language": "JavaScript",
+      "package": "@azure/arm-qumulo",
+      "version": null,
+      "outcome": "not-released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6577965",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-python#48111",
+      "language": "Python",
+      "package": "azure-mgmt-qumulo",
+      "version": null,
+      "outcome": "not-released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6577966",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-java#49854",
+      "language": "Java",
+      "package": "azure-resourcemanager-qumulo",
+      "version": null,
+      "outcome": "not-released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6577964",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-go#27210",
+      "language": "Go",
+      "package": "sdk/resourcemanager/liftrqumulo/armqumulo",
+      "version": null,
+      "outcome": "not-released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6577967",
+      "releasePipelineUrl": null
+    }
+  ],
+  "links": [
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#44491",
+      "role": "spec-pr",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/44491",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-net#61091",
+      "role": "sdk-pr",
+      "language": ".NET",
+      "url": "https://github.com/Azure/azure-sdk-for-net/pull/61091",
+      "releasePlanIds": [
+        "35374"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-js#39321",
+      "role": "sdk-pr",
+      "language": "JavaScript",
+      "url": "https://github.com/Azure/azure-sdk-for-js/pull/39321",
+      "releasePlanIds": [
+        "35374"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-python#48111",
+      "role": "sdk-pr",
+      "language": "Python",
+      "url": "https://github.com/Azure/azure-sdk-for-python/pull/48111",
+      "releasePlanIds": [
+        "35374"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-java#49854",
+      "role": "sdk-pr",
+      "language": "Java",
+      "url": "https://github.com/Azure/azure-sdk-for-java/pull/49854",
+      "releasePlanIds": [
+        "35374"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-go#27210",
+      "role": "sdk-pr",
+      "language": "Go",
+      "url": "https://github.com/Azure/azure-sdk-for-go/pull/27210",
+      "releasePlanIds": [
+        "35374"
+      ]
+    }
+  ],
+  "tracks": [
+    {
+      "id": "plan",
+      "kind": "plan",
+      "label": "Release Plan",
+      "detail": "APEX Public Preview"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#44491",
+      "kind": "spec",
+      "label": "Spec PR",
+      "detail": "azure-rest-api-specs #44491",
+      "artifactId": "github:Azure/azure-rest-api-specs#44491",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:.NET:Azure.ResourceManager.Qumulo",
+      "kind": "sdk",
+      "label": ".NET",
+      "detail": "Azure.ResourceManager.Qumulo",
+      "artifactId": "github:Azure/azure-sdk-for-net#61091",
+      "state": "closed"
+    },
+    {
+      "id": "sdk:JavaScript:@azure/arm-qumulo",
+      "kind": "sdk",
+      "label": "JavaScript",
+      "detail": "@azure/arm-qumulo",
+      "artifactId": "github:Azure/azure-sdk-for-js#39321",
+      "state": "closed"
+    },
+    {
+      "id": "sdk:Python:azure-mgmt-qumulo",
+      "kind": "sdk",
+      "label": "Python",
+      "detail": "azure-mgmt-qumulo",
+      "artifactId": "github:Azure/azure-sdk-for-python#48111",
+      "state": "closed"
+    },
+    {
+      "id": "sdk:Java:azure-resourcemanager-qumulo",
+      "kind": "sdk",
+      "label": "Java",
+      "detail": "azure-resourcemanager-qumulo",
+      "artifactId": "github:Azure/azure-sdk-for-java#49854",
+      "state": "closed"
+    },
+    {
+      "id": "sdk:Go:sdk/resourcemanager/liftrqumulo/armqumulo",
+      "kind": "sdk",
+      "label": "Go",
+      "detail": "sdk/resourcemanager/liftrqumulo/armqumulo",
+      "artifactId": "github:Azure/azure-sdk-for-go#27210",
+      "state": "closed"
+    }
+  ],
+  "events": [
+    {
+      "id": "github:Azure/azure-rest-api-specs#44491:pr.created:spec:github:Azure/azure-rest-api-specs#44491",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-07T08:57:27Z",
+      "observedAt": "2026-07-07T08:57:27Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44491",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "v-xuto"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44491",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44491"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44491:comment:4902005217:spec:github:Azure/azure-rest-api-specs#44491",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-07T08:58:17Z",
+      "observedAt": "2026-07-07T08:58:17Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44491",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44491",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44491#issuecomment-4902005217"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>Next steps that must be taken to merge this PR: <br/><ul><li>❌ This PR is in purview of the ARM review (label: <code>ARMReview</code>). This PR must get <code>ARMSignedOff</code> label from an ARM reviewer.<br/>T",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44491:comment:4902074958:spec:github:Azure/azure-rest-api-specs#44491",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-07T09:04:54Z",
+      "observedAt": "2026-07-07T09:04:54Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44491",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44491",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44491#issuecomment-4902074958"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews | Language | API Review for Package | |----------|---------| | Swagger | [Qumulo.Storage-QumuloStorage](https://apiview.dev/Assemblies",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44491:commit:4584fc3a2663:spec:github:Azure/azure-rest-api-specs#44491",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-08T10:16:47Z",
+      "observedAt": "2026-07-08T10:16:47Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44491",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "v-xuto"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44491",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/4584fc3a2663eb3bec5bb0d406e31833943618c5"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44491:commit:3c4d1d0e2db2:spec:github:Azure/azure-rest-api-specs#44491",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-09T10:31:01Z",
+      "observedAt": "2026-07-09T10:31:01Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44491",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "v-xuto"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44491",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/3c4d1d0e2db273be68380dc836ce39a513241ced"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44491:comment:4924115092:spec:github:Azure/azure-rest-api-specs#44491",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-09T10:32:59Z",
+      "observedAt": "2026-07-09T10:32:59Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44491",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44491",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44491#issuecomment-4924115092"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Namespace Review Required **Plane:** Management Plane | Language | Proposed Namespace | Format | Status | Approvers | |----------|-------------------|--------|--------|----------| | typescript | `@azure/arm-qumulo` | ✅ | ✅ Approved by @A",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44491:review:4681617137:spec:github:Azure/azure-rest-api-specs#44491",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-13T03:46:45Z",
+      "observedAt": "2026-07-13T03:46:45Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44491",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "qiaozha"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44491",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44491#pullrequestreview-4681617137"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44491:comment:4954295451:spec:github:Azure/azure-rest-api-specs#44491",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-13T03:59:09Z",
+      "observedAt": "2026-07-13T03:59:09Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44491",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44491",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44491#issuecomment-4954295451"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## ✅ Namespace Approved All required namespace approvals received. This PR is clear to merge from a namespace perspective.",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44491:commit:95e10d1ea54a:spec:github:Azure/azure-rest-api-specs#44491",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-16T06:31:31Z",
+      "observedAt": "2026-07-16T06:31:31Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44491",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "v-xuto"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44491",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/95e10d1ea54a748b6704568bedacd260f6c269bc"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44491:review:4720030697:spec:github:Azure/azure-rest-api-specs#44491",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-17T06:48:00Z",
+      "observedAt": "2026-07-17T06:48:00Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44491",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "qiaozha"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44491",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44491#pullrequestreview-4720030697"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44491:pr.merged:spec:github:Azure/azure-rest-api-specs#44491",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-17T06:52:28Z",
+      "observedAt": "2026-07-17T06:52:28Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44491",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44491",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44491"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:35374:created",
+      "type": "plan.created",
+      "phase": "plan",
+      "occurredAt": "2026-07-17T07:00:07.817Z",
+      "observedAt": "2026-07-17T07:00:07.817Z",
+      "trackId": "plan",
+      "title": "Release Plan created",
+      "confidence": "authoritative",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35374",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35374"
+      },
+      "stack": 0
+    },
+    {
+      "id": "ado:35374:1:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-07-17T07:00:07.817Z",
+      "observedAt": "2026-07-17T07:00:07.817Z",
+      "trackId": "plan",
+      "value": "New",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35374",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35374"
+      },
+      "title": "Plan state changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35374:1:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-17T07:00:07.817Z",
+      "observedAt": "2026-07-17T07:00:07.817Z",
+      "trackId": "plan",
+      "value": "Not Available",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35374",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35374"
+      },
+      "title": "Spec approval changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:35374:1:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-17T07:00:07.817Z",
+      "observedAt": "2026-07-17T07:00:07.817Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Qumulo",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35374",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35374"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35374:1:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-17T07:00:07.817Z",
+      "observedAt": "2026-07-17T07:00:07.817Z",
+      "trackId": "sdk:JavaScript:@azure/arm-qumulo",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35374",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35374"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35374:1:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-17T07:00:07.817Z",
+      "observedAt": "2026-07-17T07:00:07.817Z",
+      "trackId": "sdk:Python:azure-mgmt-qumulo",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35374",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35374"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35374:1:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-17T07:00:07.817Z",
+      "observedAt": "2026-07-17T07:00:07.817Z",
+      "trackId": "sdk:Java:azure-resourcemanager-qumulo",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35374",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35374"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35374:1:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-17T07:00:07.817Z",
+      "observedAt": "2026-07-17T07:00:07.817Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/liftrqumulo/armqumulo",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35374",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35374"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35375:1:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-17T07:00:08.167Z",
+      "observedAt": "2026-07-17T07:00:08.167Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44491",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/44491",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35375",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35375"
+      },
+      "title": "Spec PR linked",
+      "stack": 2
+    },
+    {
+      "id": "ado:35374:2:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-07-17T07:00:08.857Z",
+      "observedAt": "2026-07-17T07:00:08.857Z",
+      "trackId": "plan",
+      "value": "In Progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35374",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35374"
+      },
+      "title": "Plan state changed",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44491:comment:4999938361:spec:github:Azure/azure-rest-api-specs#44491",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-17T07:00:13Z",
+      "observedAt": "2026-07-17T07:00:13Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44491",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44491",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44491#issuecomment-4999938361"
+      },
+      "confidence": "authoritative",
+      "excerpt": "### ✅ Release Plan Created | Field | Value | |-------|-------| | **Release Plan** | [View Release Plan](https://azsdk-releaseplan-dashboard-hveph5aqhhcfhtgu.westus-01.azurewebsites.net/?releaseplan=35374) | | **API Version** | `2026-04-16` ",
+      "stack": 3
+    },
+    {
+      "id": "ado:35374:4:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-17T07:00:21.79Z",
+      "observedAt": "2026-07-17T07:00:21.79Z",
+      "trackId": "plan",
+      "value": "Approved",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35374",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35374"
+      },
+      "title": "Spec approval changed",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6577963:generation.queued:sdk:.NET:Azure.ResourceManager.Qumulo",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-07-17T07:08:17.978487Z",
+      "observedAt": "2026-07-17T07:19:09.3410231Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Qumulo",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6577963",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6577963"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:35374:5:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-17T07:08:24.763Z",
+      "observedAt": "2026-07-17T07:08:24.763Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Qumulo",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35374",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35374"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6577964:generation.queued:sdk:Java:azure-resourcemanager-qumulo",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-07-17T07:08:28.6257183Z",
+      "observedAt": "2026-07-17T07:29:31.4713591Z",
+      "trackId": "sdk:Java:azure-resourcemanager-qumulo",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6577964",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6577964"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:35374:6:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-17T07:08:32.27Z",
+      "observedAt": "2026-07-17T07:08:32.27Z",
+      "trackId": "sdk:Java:azure-resourcemanager-qumulo",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35374",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35374"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6577965:generation.queued:sdk:JavaScript:@azure/arm-qumulo",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-07-17T07:08:36.5920529Z",
+      "observedAt": "2026-07-17T07:18:08.1609026Z",
+      "trackId": "sdk:JavaScript:@azure/arm-qumulo",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6577965",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6577965"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:35374:7:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-17T07:08:39.753Z",
+      "observedAt": "2026-07-17T07:08:39.753Z",
+      "trackId": "sdk:JavaScript:@azure/arm-qumulo",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35374",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35374"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6577966:generation.queued:sdk:Python:azure-mgmt-qumulo",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-07-17T07:08:44.6048807Z",
+      "observedAt": "2026-07-17T07:19:02.9955603Z",
+      "trackId": "sdk:Python:azure-mgmt-qumulo",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6577966",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6577966"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:35374:8:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-17T07:08:47.433Z",
+      "observedAt": "2026-07-17T07:08:47.433Z",
+      "trackId": "sdk:Python:azure-mgmt-qumulo",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35374",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35374"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6577967:generation.queued:sdk:Go:sdk/resourcemanager/liftrqumulo/armqumulo",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-07-17T07:08:51.1718562Z",
+      "observedAt": "2026-07-17T07:16:51.8143483Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/liftrqumulo/armqumulo",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6577967",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6577967"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:35374:9:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-17T07:08:53.913Z",
+      "observedAt": "2026-07-17T07:08:53.913Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/liftrqumulo/armqumulo",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35374",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35374"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6577963:generation.started:sdk:.NET:Azure.ResourceManager.Qumulo",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-07-17T07:10:35.147363Z",
+      "observedAt": "2026-07-17T07:19:09.3410231Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Qumulo",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6577963",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6577963"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6577964:generation.started:sdk:Java:azure-resourcemanager-qumulo",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-07-17T07:10:37.0306772Z",
+      "observedAt": "2026-07-17T07:29:31.4713591Z",
+      "trackId": "sdk:Java:azure-resourcemanager-qumulo",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6577964",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6577964"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6577965:generation.started:sdk:JavaScript:@azure/arm-qumulo",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-07-17T07:10:37.0973067Z",
+      "observedAt": "2026-07-17T07:18:08.1609026Z",
+      "trackId": "sdk:JavaScript:@azure/arm-qumulo",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6577965",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6577965"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6577966:generation.started:sdk:Python:azure-mgmt-qumulo",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-07-17T07:10:39.1403917Z",
+      "observedAt": "2026-07-17T07:19:02.9955603Z",
+      "trackId": "sdk:Python:azure-mgmt-qumulo",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6577966",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6577966"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6577967:generation.started:sdk:Go:sdk/resourcemanager/liftrqumulo/armqumulo",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-07-17T07:10:40.1653927Z",
+      "observedAt": "2026-07-17T07:16:51.8143483Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/liftrqumulo/armqumulo",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6577967",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6577967"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27210:commit:86a282b41c45:sdk:Go:sdk/resourcemanager/liftrqumulo/armqumulo",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-17T07:15:48Z",
+      "observedAt": "2026-07-17T07:15:48Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/liftrqumulo/armqumulo",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27210",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/86a282b41c45b03fee7fde0e1d56d7f7d41afcb4"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27210:pr.created:sdk:Go:sdk/resourcemanager/liftrqumulo/armqumulo",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-17T07:15:52Z",
+      "observedAt": "2026-07-17T07:15:52Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/liftrqumulo/armqumulo",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27210",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27210"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27210:review:4720236597:sdk:Go:sdk/resourcemanager/liftrqumulo/armqumulo",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-17T07:15:54Z",
+      "observedAt": "2026-07-17T07:15:54Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/liftrqumulo/armqumulo",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27210",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27210#pullrequestreview-4720236597"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot can't review bot-authored pull requests automatically. A user with Copilot access can request a review manually.",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "ado:35374:10:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-17T07:15:59.733Z",
+      "observedAt": "2026-07-17T07:15:59.733Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/liftrqumulo/armqumulo",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35374",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35374"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35374:10:Custom.SDKPullRequestForGo",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-17T07:15:59.733Z",
+      "observedAt": "2026-07-17T07:15:59.733Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/liftrqumulo/armqumulo",
+      "value": "https://github.com/Azure/azure-sdk-for-go/pull/27210",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35374",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35374"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27210:comment:5000062015:sdk:Go:sdk/resourcemanager/liftrqumulo/armqumulo",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-17T07:16:20Z",
+      "observedAt": "2026-07-17T07:16:20Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/liftrqumulo/armqumulo",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27210",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27210#issuecomment-5000062015"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 6 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6577967:generation.completed:sdk:Go:sdk/resourcemanager/liftrqumulo/armqumulo",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-07-17T07:16:51.8143483Z",
+      "observedAt": "2026-07-17T07:16:51.8143483Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/liftrqumulo/armqumulo",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6577967",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6577967"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39321:commit:73141147c621:sdk:JavaScript:@azure/arm-qumulo",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-17T07:16:56Z",
+      "observedAt": "2026-07-17T07:16:56Z",
+      "trackId": "sdk:JavaScript:@azure/arm-qumulo",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39321",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/73141147c621e998f4baacd6bcee1f91865aea09"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39321:pr.created:sdk:JavaScript:@azure/arm-qumulo",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-17T07:17:00Z",
+      "observedAt": "2026-07-17T07:17:00Z",
+      "trackId": "sdk:JavaScript:@azure/arm-qumulo",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39321",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39321"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39321:review:4720245257:sdk:JavaScript:@azure/arm-qumulo",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-17T07:17:02Z",
+      "observedAt": "2026-07-17T07:17:02Z",
+      "trackId": "sdk:JavaScript:@azure/arm-qumulo",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39321",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39321#pullrequestreview-4720245257"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot can't review bot-authored pull requests automatically. A user with Copilot access can request a review manually.",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "ado:35374:11:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-17T07:17:07.687Z",
+      "observedAt": "2026-07-17T07:17:07.687Z",
+      "trackId": "sdk:JavaScript:@azure/arm-qumulo",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35374",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35374"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35374:11:Custom.SDKPullRequestForJavaScript",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-17T07:17:07.687Z",
+      "observedAt": "2026-07-17T07:17:07.687Z",
+      "trackId": "sdk:JavaScript:@azure/arm-qumulo",
+      "value": "https://github.com/Azure/azure-sdk-for-js/pull/39321",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35374",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35374"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48111:commit:46959f41f3d3:sdk:Python:azure-mgmt-qumulo",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-17T07:17:16Z",
+      "observedAt": "2026-07-17T07:17:16Z",
+      "trackId": "sdk:Python:azure-mgmt-qumulo",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48111",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/46959f41f3d3d9b43db4d8403bcff787b2f98900"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48111:pr.created:sdk:Python:azure-mgmt-qumulo",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-17T07:17:20Z",
+      "observedAt": "2026-07-17T07:17:20Z",
+      "trackId": "sdk:Python:azure-mgmt-qumulo",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48111",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48111"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48111:review:4720247634:sdk:Python:azure-mgmt-qumulo",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-17T07:17:22Z",
+      "observedAt": "2026-07-17T07:17:22Z",
+      "trackId": "sdk:Python:azure-mgmt-qumulo",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48111",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48111#pullrequestreview-4720247634"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot can't review bot-authored pull requests automatically. A user with Copilot access can request a review manually.",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "ado:35374:12:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-17T07:17:28.677Z",
+      "observedAt": "2026-07-17T07:17:28.677Z",
+      "trackId": "sdk:Python:azure-mgmt-qumulo",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35374",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35374"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35374:12:Custom.SDKPullRequestForPython",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-17T07:17:28.677Z",
+      "observedAt": "2026-07-17T07:17:28.677Z",
+      "trackId": "sdk:Python:azure-mgmt-qumulo",
+      "value": "https://github.com/Azure/azure-sdk-for-python/pull/48111",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35374",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35374"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39321:comment:5000072042:sdk:JavaScript:@azure/arm-qumulo",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-17T07:17:39Z",
+      "observedAt": "2026-07-17T07:17:39Z",
+      "trackId": "sdk:JavaScript:@azure/arm-qumulo",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39321",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39321#issuecomment-5000072042"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 9 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61091:commit:6ff98eb73f2c:sdk:.NET:Azure.ResourceManager.Qumulo",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-17T07:17:48Z",
+      "observedAt": "2026-07-17T07:17:48Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Qumulo",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61091",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/6ff98eb73f2ce85847ec02c04eb210f924c63350"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61091:pr.created:sdk:.NET:Azure.ResourceManager.Qumulo",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-17T07:17:52Z",
+      "observedAt": "2026-07-17T07:17:52Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Qumulo",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61091",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61091"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48111:comment:5000073900:sdk:Python:azure-mgmt-qumulo",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-17T07:17:53Z",
+      "observedAt": "2026-07-17T07:17:53Z",
+      "trackId": "sdk:Python:azure-mgmt-qumulo",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48111",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48111#issuecomment-5000073900"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 9 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61091:review:4720251487:sdk:.NET:Azure.ResourceManager.Qumulo",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-17T07:17:54Z",
+      "observedAt": "2026-07-17T07:17:54Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Qumulo",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61091",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61091#pullrequestreview-4720251487"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot can't review bot-authored pull requests automatically. A user with Copilot access can request a review manually.",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "ado:35374:13:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-17T07:18:00.603Z",
+      "observedAt": "2026-07-17T07:18:00.603Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Qumulo",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35374",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35374"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35374:13:Custom.SDKPullRequestForDotnet",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-17T07:18:00.603Z",
+      "observedAt": "2026-07-17T07:18:00.603Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Qumulo",
+      "value": "https://github.com/Azure/azure-sdk-for-net/pull/61091",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35374",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35374"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6577965:generation.completed:sdk:JavaScript:@azure/arm-qumulo",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-07-17T07:18:08.1609026Z",
+      "observedAt": "2026-07-17T07:18:08.1609026Z",
+      "trackId": "sdk:JavaScript:@azure/arm-qumulo",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6577965",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6577965"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61091:comment:5000077509:sdk:.NET:Azure.ResourceManager.Qumulo",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-17T07:18:24Z",
+      "observedAt": "2026-07-17T07:18:24Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Qumulo",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61091",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61091#issuecomment-5000077509"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 10 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6577966:generation.completed:sdk:Python:azure-mgmt-qumulo",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-07-17T07:19:02.9955603Z",
+      "observedAt": "2026-07-17T07:19:02.9955603Z",
+      "trackId": "sdk:Python:azure-mgmt-qumulo",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6577966",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6577966"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49854:commit:17a19bc98c03:sdk:Java:azure-resourcemanager-qumulo",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-17T07:19:03Z",
+      "observedAt": "2026-07-17T07:19:03Z",
+      "trackId": "sdk:Java:azure-resourcemanager-qumulo",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49854",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/17a19bc98c03c647d152f938ec1ff126d9d524f5"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49854:pr.created:sdk:Java:azure-resourcemanager-qumulo",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-17T07:19:07Z",
+      "observedAt": "2026-07-17T07:19:07Z",
+      "trackId": "sdk:Java:azure-resourcemanager-qumulo",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49854",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49854"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:6577963:generation.completed:sdk:.NET:Azure.ResourceManager.Qumulo",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-07-17T07:19:09.3410231Z",
+      "observedAt": "2026-07-17T07:19:09.3410231Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Qumulo",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6577963",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6577963"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49854:review:4720260023:sdk:Java:azure-resourcemanager-qumulo",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-17T07:19:10Z",
+      "observedAt": "2026-07-17T07:19:10Z",
+      "trackId": "sdk:Java:azure-resourcemanager-qumulo",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49854",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49854#pullrequestreview-4720260023"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot can't review bot-authored pull requests automatically. A user with Copilot access can request a review manually.",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "ado:35374:14:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-17T07:19:15.25Z",
+      "observedAt": "2026-07-17T07:19:15.25Z",
+      "trackId": "sdk:Java:azure-resourcemanager-qumulo",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35374",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35374"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35374:14:Custom.SDKPullRequestForJava",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-17T07:19:15.25Z",
+      "observedAt": "2026-07-17T07:19:15.25Z",
+      "trackId": "sdk:Java:azure-resourcemanager-qumulo",
+      "value": "https://github.com/Azure/azure-sdk-for-java/pull/49854",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35374",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35374"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48111:commit:e3479dfcd4b3:sdk:Python:azure-mgmt-qumulo",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-17T07:19:25Z",
+      "observedAt": "2026-07-17T07:19:25Z",
+      "trackId": "sdk:Python:azure-mgmt-qumulo",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48111",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/e3479dfcd4b38bd5f3c15631911c2472176939c6"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49854:comment:5000088680:sdk:Java:azure-resourcemanager-qumulo",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-17T07:19:49Z",
+      "observedAt": "2026-07-17T07:19:49Z",
+      "trackId": "sdk:Java:azure-resourcemanager-qumulo",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49854",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49854#issuecomment-5000088680"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 35 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48111:review:4720288147:sdk:Python:azure-mgmt-qumulo",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-17T07:23:02Z",
+      "observedAt": "2026-07-17T07:23:02Z",
+      "trackId": "sdk:Python:azure-mgmt-qumulo",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48111",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48111#pullrequestreview-4720288147"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Copilot reviewed 12 out of 12 changed files in this pull request and generated 1 comment.",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48111:comment:3601179480:sdk:Python:azure-mgmt-qumulo",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-17T07:23:02Z",
+      "observedAt": "2026-07-17T07:23:02Z",
+      "trackId": "sdk:Python:azure-mgmt-qumulo",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48111",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48111#discussion_r3601179480"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The release adds the public `azure.mgmt.qumulo.types` module and uses its typed-dictionary request types in create/update overloads, but “Regular Release” does not tell users about that API change. Please describe the new public types so th",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6577964:generation.completed:sdk:Java:azure-resourcemanager-qumulo",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-07-17T07:29:31.4713591Z",
+      "observedAt": "2026-07-17T07:29:31.4713591Z",
+      "trackId": "sdk:Java:azure-resourcemanager-qumulo",
+      "title": "Pipeline completed with issues",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6577964",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6577964"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48111:pr.closed:sdk:Python:azure-mgmt-qumulo",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-17T07:36:49Z",
+      "observedAt": "2026-07-17T07:36:49Z",
+      "trackId": "sdk:Python:azure-mgmt-qumulo",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48111",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48111"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48111:comment:5000230946:sdk:Python:azure-mgmt-qumulo",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-17T07:36:49Z",
+      "observedAt": "2026-07-17T07:36:49Z",
+      "trackId": "sdk:Python:azure-mgmt-qumulo",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48111",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48111#issuecomment-5000230946"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Target api-version \"2026-04-16\" was already released in last SDK release so no need to release again.",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61091:review:4720495156:sdk:.NET:Azure.ResourceManager.Qumulo",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-17T07:50:05Z",
+      "observedAt": "2026-07-17T07:50:05Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Qumulo",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61091",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61091#pullrequestreview-4720495156"
+      },
+      "confidence": "authoritative",
+      "excerpt": "### Management SDK Review Summary - Scope: `Azure.ResourceManager.Qumulo` - Versioning: not applicable (no `.csproj` or `CHANGELOG.md` changes) - API surface: pass — no API surface changes - Contextual naming: evaluated 0 new public types, ",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49854:pr.closed:sdk:Java:azure-resourcemanager-qumulo",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-17T08:18:31Z",
+      "observedAt": "2026-07-17T08:18:31Z",
+      "trackId": "sdk:Java:azure-resourcemanager-qumulo",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49854",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49854"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49854:comment:5000613828:sdk:Java:azure-resourcemanager-qumulo",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-17T08:18:31Z",
+      "observedAt": "2026-07-17T08:18:31Z",
+      "trackId": "sdk:Java:azure-resourcemanager-qumulo",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49854",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49854#issuecomment-5000613828"
+      },
+      "confidence": "authoritative",
+      "excerpt": "no change",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61091:pr.closed:sdk:.NET:Azure.ResourceManager.Qumulo",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-17T14:12:19Z",
+      "observedAt": "2026-07-17T14:12:19Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Qumulo",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61091",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61091"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61091:comment:5004156651:sdk:.NET:Azure.ResourceManager.Qumulo",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-17T14:12:19Z",
+      "observedAt": "2026-07-17T14:12:19Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Qumulo",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "praveenkuttappan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61091",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61091#issuecomment-5004156651"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Release plan was created due to folder migration. Closing SDK PR.",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39321:pr.closed:sdk:JavaScript:@azure/arm-qumulo",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-17T14:12:31Z",
+      "observedAt": "2026-07-17T14:12:31Z",
+      "trackId": "sdk:JavaScript:@azure/arm-qumulo",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39321",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39321"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39321:comment:5004158403:sdk:JavaScript:@azure/arm-qumulo",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-17T14:12:31Z",
+      "observedAt": "2026-07-17T14:12:31Z",
+      "trackId": "sdk:JavaScript:@azure/arm-qumulo",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "praveenkuttappan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39321",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39321#issuecomment-5004158403"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Release plan was created due to folder migration. Closing SDK PR.",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27210:pr.closed:sdk:Go:sdk/resourcemanager/liftrqumulo/armqumulo",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-17T14:12:46Z",
+      "observedAt": "2026-07-17T14:12:46Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/liftrqumulo/armqumulo",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27210",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27210"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27210:comment:5004160427:sdk:Go:sdk/resourcemanager/liftrqumulo/armqumulo",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-17T14:12:46Z",
+      "observedAt": "2026-07-17T14:12:46Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/liftrqumulo/armqumulo",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "praveenkuttappan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27210",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27210#issuecomment-5004160427"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Release plan was created due to folder migration. Closing SDK PR.",
+      "stack": 1
+    },
+    {
+      "id": "ado:35374:15:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-07-17T14:13:15.35Z",
+      "observedAt": "2026-07-17T14:13:15.35Z",
+      "trackId": "plan",
+      "value": "Abandoned",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35374",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35374"
+      },
+      "title": "Plan state changed",
+      "stack": 0
+    }
+  ],
+  "quality": {
+    "warnings": [
+      "5 historical linked PR(s) closed without merge"
+    ],
+    "unavailablePullRequests": 0,
+    "unavailablePipelineRuns": 0
+  },
+  "boundaryFacts": {
+    "id": "35374",
+    "state": "abandoned",
+    "specPrs": [
+      {
+        "id": "github:Azure/azure-rest-api-specs#44491",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#44491",
+        "createdAt": "2026-07-07T08:57:27Z",
+        "mergedAt": "2026-07-17T06:52:28Z",
+        "closedAt": "2026-07-17T06:52:28Z",
+        "available": true
+      }
+    ],
+    "artifacts": [
+      {
+        "language": ".NET",
+        "package": "Azure.ResourceManager.Qumulo",
+        "trackId": "sdk:.NET:Azure.ResourceManager.Qumulo",
+        "prId": "github:Azure/azure-sdk-for-net#61091",
+        "prCreatedAt": "2026-07-17T07:17:52Z",
+        "prMergedAt": null,
+        "prClosedAt": "2026-07-17T14:12:19Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-net#61091",
+            "createdAt": "2026-07-17T07:17:52Z",
+            "mergedAt": null,
+            "closedAt": "2026-07-17T14:12:19Z",
+            "state": "closed"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6577963",
+        "generationStartAt": "2026-07-17T07:10:35.147363Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "JavaScript",
+        "package": "@azure/arm-qumulo",
+        "trackId": "sdk:JavaScript:@azure/arm-qumulo",
+        "prId": "github:Azure/azure-sdk-for-js#39321",
+        "prCreatedAt": "2026-07-17T07:17:00Z",
+        "prMergedAt": null,
+        "prClosedAt": "2026-07-17T14:12:31Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-js#39321",
+            "createdAt": "2026-07-17T07:17:00Z",
+            "mergedAt": null,
+            "closedAt": "2026-07-17T14:12:31Z",
+            "state": "closed"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6577965",
+        "generationStartAt": "2026-07-17T07:10:37.0973067Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Python",
+        "package": "azure-mgmt-qumulo",
+        "trackId": "sdk:Python:azure-mgmt-qumulo",
+        "prId": "github:Azure/azure-sdk-for-python#48111",
+        "prCreatedAt": "2026-07-17T07:17:20Z",
+        "prMergedAt": null,
+        "prClosedAt": "2026-07-17T07:36:49Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-python#48111",
+            "createdAt": "2026-07-17T07:17:20Z",
+            "mergedAt": null,
+            "closedAt": "2026-07-17T07:36:49Z",
+            "state": "closed"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6577966",
+        "generationStartAt": "2026-07-17T07:10:39.1403917Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Java",
+        "package": "azure-resourcemanager-qumulo",
+        "trackId": "sdk:Java:azure-resourcemanager-qumulo",
+        "prId": "github:Azure/azure-sdk-for-java#49854",
+        "prCreatedAt": "2026-07-17T07:19:07Z",
+        "prMergedAt": null,
+        "prClosedAt": "2026-07-17T08:18:31Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-java#49854",
+            "createdAt": "2026-07-17T07:19:07Z",
+            "mergedAt": null,
+            "closedAt": "2026-07-17T08:18:31Z",
+            "state": "closed"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6577964",
+        "generationStartAt": "2026-07-17T07:10:37.0306772Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Go",
+        "package": "sdk/resourcemanager/liftrqumulo/armqumulo",
+        "trackId": "sdk:Go:sdk/resourcemanager/liftrqumulo/armqumulo",
+        "prId": "github:Azure/azure-sdk-for-go#27210",
+        "prCreatedAt": "2026-07-17T07:15:52Z",
+        "prMergedAt": null,
+        "prClosedAt": "2026-07-17T14:12:46Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-go#27210",
+            "createdAt": "2026-07-17T07:15:52Z",
+            "mergedAt": null,
+            "closedAt": "2026-07-17T14:12:46Z",
+            "state": "closed"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6577967",
+        "generationStartAt": "2026-07-17T07:10:40.1653927Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      }
+    ],
+    "cohortPlan": {
+      "id": "35374",
+      "releasePlanId": "35374",
+      "title": "Public Preview release plan for QumuloStorage",
+      "service": "QumuloStorage",
+      "state": "abandoned"
+    },
+    "quality": {
+      "warnings": [
+        "5 historical linked PR(s) closed without merge"
+      ],
+      "unavailablePullRequests": 0,
+      "unavailablePipelineRuns": 0
+    }
+  },
+  "summary": {
+    "durationHours": 7.2,
+    "pullRequestCount": 6,
+    "humanReviewCount": 2,
+    "humanCommentCount": 5
+  }
+}

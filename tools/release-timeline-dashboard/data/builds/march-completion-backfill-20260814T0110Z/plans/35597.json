@@ -1,0 +1,1104 @@
+{
+  "schemaVersion": 2,
+  "id": "35597",
+  "correlation": {
+    "policyVersion": 1,
+    "preflight": "passed"
+  },
+  "releasePlanId": "35597",
+  "title": "GA release plan for Microsoft.Relationships",
+  "service": "Microsoft.Relationships",
+  "product": "Release",
+  "path": "specification/relationships/Relationships.Management",
+  "state": "in-progress",
+  "plane": "management",
+  "releaseType": "GA",
+  "intendedMonth": "August 2026",
+  "createdAt": "2026-07-27T23:54:05.35Z",
+  "completedAt": null,
+  "sourceUrl": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35597",
+  "range": {
+    "start": "2026-07-27T23:54:05.350Z",
+    "end": "2026-08-14T00:37:23.589Z"
+  },
+  "intendedArtifacts": [
+    {
+      "prId": null,
+      "language": ".NET",
+      "package": "Azure.ResourceManager.Relationships",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": null,
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": null,
+      "language": "JavaScript",
+      "package": "@azure/arm-relationships",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": null,
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": null,
+      "language": "Python",
+      "package": "azure-mgmt-relationships",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": null,
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": null,
+      "language": "Java",
+      "package": "azure-resourcemanager-relationships",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": null,
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": null,
+      "language": "Go",
+      "package": "sdk/resourcemanager/relationships/armrelationships",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": null,
+      "releasePipelineUrl": null
+    }
+  ],
+  "links": [
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#45024",
+      "role": "spec-pr",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/45024",
+      "releasePlanIds": []
+    }
+  ],
+  "tracks": [
+    {
+      "id": "plan",
+      "kind": "plan",
+      "label": "Release Plan",
+      "detail": "GA"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#45024",
+      "kind": "spec",
+      "label": "Spec PR",
+      "detail": "azure-rest-api-specs #45024",
+      "artifactId": "github:Azure/azure-rest-api-specs#45024",
+      "state": "open"
+    },
+    {
+      "id": "sdk:.NET:Azure.ResourceManager.Relationships",
+      "kind": "sdk",
+      "label": ".NET",
+      "detail": "Azure.ResourceManager.Relationships",
+      "artifactId": null,
+      "state": "missing"
+    },
+    {
+      "id": "sdk:JavaScript:@azure/arm-relationships",
+      "kind": "sdk",
+      "label": "JavaScript",
+      "detail": "@azure/arm-relationships",
+      "artifactId": null,
+      "state": "missing"
+    },
+    {
+      "id": "sdk:Python:azure-mgmt-relationships",
+      "kind": "sdk",
+      "label": "Python",
+      "detail": "azure-mgmt-relationships",
+      "artifactId": null,
+      "state": "missing"
+    },
+    {
+      "id": "sdk:Java:azure-resourcemanager-relationships",
+      "kind": "sdk",
+      "label": "Java",
+      "detail": "azure-resourcemanager-relationships",
+      "artifactId": null,
+      "state": "missing"
+    },
+    {
+      "id": "sdk:Go:sdk/resourcemanager/relationships/armrelationships",
+      "kind": "sdk",
+      "label": "Go",
+      "detail": "sdk/resourcemanager/relationships/armrelationships",
+      "artifactId": null,
+      "state": "missing"
+    }
+  ],
+  "events": [
+    {
+      "id": "ado:35597:created",
+      "type": "plan.created",
+      "phase": "plan",
+      "occurredAt": "2026-07-27T23:54:05.35Z",
+      "observedAt": "2026-07-27T23:54:05.35Z",
+      "trackId": "plan",
+      "title": "Release Plan created",
+      "confidence": "authoritative",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35597",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35597"
+      },
+      "stack": 0
+    },
+    {
+      "id": "ado:35597:1:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-07-27T23:54:05.35Z",
+      "observedAt": "2026-07-27T23:54:05.35Z",
+      "trackId": "plan",
+      "value": "New",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35597",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35597"
+      },
+      "title": "Plan state changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35597:1:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-27T23:54:05.35Z",
+      "observedAt": "2026-07-27T23:54:05.35Z",
+      "trackId": "plan",
+      "value": "Not Available",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35597",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35597"
+      },
+      "title": "Spec approval changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:35597:1:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-27T23:54:05.35Z",
+      "observedAt": "2026-07-27T23:54:05.35Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Relationships",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35597",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35597"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35597:1:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-27T23:54:05.35Z",
+      "observedAt": "2026-07-27T23:54:05.35Z",
+      "trackId": "sdk:JavaScript:@azure/arm-relationships",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35597",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35597"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35597:1:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-27T23:54:05.35Z",
+      "observedAt": "2026-07-27T23:54:05.35Z",
+      "trackId": "sdk:Python:azure-mgmt-relationships",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35597",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35597"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35597:1:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-27T23:54:05.35Z",
+      "observedAt": "2026-07-27T23:54:05.35Z",
+      "trackId": "sdk:Java:azure-resourcemanager-relationships",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35597",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35597"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35597:1:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-27T23:54:05.35Z",
+      "observedAt": "2026-07-27T23:54:05.35Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/relationships/armrelationships",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35597",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35597"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35597:2:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-07-27T23:54:06Z",
+      "observedAt": "2026-07-27T23:54:06Z",
+      "trackId": "plan",
+      "value": "In Progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35597",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35597"
+      },
+      "title": "Plan state changed",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#45024:pr.created:spec:github:Azure/azure-rest-api-specs#45024",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-28T00:08:21Z",
+      "observedAt": "2026-07-28T00:08:21Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#45024",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "meghanagupta95"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#45024",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/45024"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#45024:comment:5098264762:spec:github:Azure/azure-rest-api-specs#45024",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-28T00:09:07Z",
+      "observedAt": "2026-07-28T00:09:07Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#45024",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#45024",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/45024#issuecomment-5098264762"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>Next steps that must be taken to merge this PR: <br/><ul><li>❌ Your PR has breaking changes in the generated SDK for Python (label: <code>BreakingChange-Python-Sdk</code>). Refer to step 3 in the <a href=\"https:/",
+      "stack": 1
+    },
+    {
+      "id": "ado:35598:2:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-28T00:10:09.313Z",
+      "observedAt": "2026-07-28T00:10:09.313Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#45024",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/45024",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35598",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35598"
+      },
+      "title": "Spec PR linked",
+      "stack": 2
+    },
+    {
+      "id": "ado:35597:6:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-28T00:10:09.523Z",
+      "observedAt": "2026-07-28T00:10:09.523Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Relationships",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35597",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35597"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35597:6:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-28T00:10:09.523Z",
+      "observedAt": "2026-07-28T00:10:09.523Z",
+      "trackId": "sdk:JavaScript:@azure/arm-relationships",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35597",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35597"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35597:6:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-28T00:10:09.523Z",
+      "observedAt": "2026-07-28T00:10:09.523Z",
+      "trackId": "sdk:Python:azure-mgmt-relationships",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35597",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35597"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35597:6:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-28T00:10:09.523Z",
+      "observedAt": "2026-07-28T00:10:09.523Z",
+      "trackId": "sdk:Java:azure-resourcemanager-relationships",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35597",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35597"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35597:6:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-28T00:10:09.523Z",
+      "observedAt": "2026-07-28T00:10:09.523Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/relationships/armrelationships",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35597",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35597"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#45024:comment:5098294008:spec:github:Azure/azure-rest-api-specs#45024",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-28T00:13:37Z",
+      "observedAt": "2026-07-28T00:13:37Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#45024",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#45024",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/45024#issuecomment-5098294008"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews | Language | API Review for Package | |----------|---------| | TypeSpec | [Microsoft.Relationships](https://spa.apiview.dev/review/064",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#45024:comment:3661916424:spec:github:Azure/azure-rest-api-specs#45024",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-28T00:38:19Z",
+      "observedAt": "2026-07-28T00:38:19Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#45024",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#45024",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/45024#discussion_r3661916424"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`$.paths['/{resourceUri}/providers/Microsoft.Relationships/dependencyOf/{name}']` exposes only a point GET. This extension child resource also needs a collection GET at `.../dependencyOf` so Azure Policy can enumerate instances; [PLCY008](h",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#45024:comment:3661916450:spec:github:Azure/azure-rest-api-specs#45024",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-28T00:38:19Z",
+      "observedAt": "2026-07-28T00:38:19Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#45024",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#45024",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/45024#discussion_r3661916450"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`$.paths['/{resourceUri}/providers/Microsoft.Relationships/dependencyOf/{name}'].put.x-ms-long-running-operation-options` makes SDKs deserialize the Azure-AsyncOperation status monitor as the final `DependencyOfRelationship`. For a standard",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#45024:comment:3661916462:spec:github:Azure/azure-rest-api-specs#45024",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-28T00:38:19Z",
+      "observedAt": "2026-07-28T00:38:19Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#45024",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#45024",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/45024#discussion_r3661916462"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`$.paths['/{resourceUri}/providers/Microsoft.Relationships/dependencyOf/{name}'].delete.responses['202'].headers` declares only `Location`. Async DELETE responses must expose both `Location` and `Azure-AsyncOperation` under [RPC-Async-V1-09",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#45024:comment:3661916476:spec:github:Azure/azure-rest-api-specs#45024",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-28T00:38:20Z",
+      "observedAt": "2026-07-28T00:38:20Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#45024",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#45024",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/45024#discussion_r3661916476"
+      },
+      "confidence": "authoritative",
+      "excerpt": "At `$.definitions.DependencyOfRelationshipProperties.properties.originInformation`, `readOnly` is a sibling of `$ref`, so OpenAPI 2.0 tooling ignores it under [SCHEMA-REF-SIBLINGS](https://github.com/Azure/azure-rest-api-specs/blob/main/.gi",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#45024:comment:3661916493:spec:github:Azure/azure-rest-api-specs#45024",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-28T00:38:20Z",
+      "observedAt": "2026-07-28T00:38:20Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#45024",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#45024",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/45024#discussion_r3661916493"
+      },
+      "confidence": "authoritative",
+      "excerpt": "At `$.definitions.ServiceGroupMemberRelationshipProperties.properties.originInformation`, `readOnly` is a sibling of `$ref`, so OpenAPI 2.0 tooling ignores it under [SCHEMA-REF-SIBLINGS](https://github.com/Azure/azure-rest-api-specs/blob/ma",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#45024:comment:3661916506:spec:github:Azure/azure-rest-api-specs#45024",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-28T00:38:20Z",
+      "observedAt": "2026-07-28T00:38:20Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#45024",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#45024",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/45024#discussion_r3661916506"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`SystemExplicitlyCreated` is not a value in the `RelationshipOrigins` schema; the published value is `ServiceExplicitlyCreated`. This response therefore fails example/schema validation under [EX-PAYLOAD](https://github.com/Azure/azure-rest-",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#45024:comment:3661916522:spec:github:Azure/azure-rest-api-specs#45024",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-28T00:38:20Z",
+      "observedAt": "2026-07-28T00:38:20Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#45024",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#45024",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/45024#discussion_r3661916522"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`SystemExplicitlyCreated` is not a value in the `RelationshipOrigins` schema; the published value is `ServiceExplicitlyCreated`. This response therefore fails example/schema validation under [EX-PAYLOAD](https://github.com/Azure/azure-rest-",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#45024:comment:3661916537:spec:github:Azure/azure-rest-api-specs#45024",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-28T00:38:21Z",
+      "observedAt": "2026-07-28T00:38:21Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#45024",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#45024",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/45024#discussion_r3661916537"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`SystemExplicitlyCreated` is not a value in the `RelationshipOrigins` schema; the published value is `ServiceExplicitlyCreated`. This response therefore fails example/schema validation under [EX-PAYLOAD](https://github.com/Azure/azure-rest-",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#45024:comment:3661916553:spec:github:Azure/azure-rest-api-specs#45024",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-28T00:38:21Z",
+      "observedAt": "2026-07-28T00:38:21Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#45024",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#45024",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/45024#discussion_r3661916553"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`SystemExplicitlyCreated` is not a value in the `RelationshipOrigins` schema; the published value is `ServiceExplicitlyCreated`. This response therefore fails example/schema validation under [EX-PAYLOAD](https://github.com/Azure/azure-rest-",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#45024:comment:3661916562:spec:github:Azure/azure-rest-api-specs#45024",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-28T00:38:21Z",
+      "observedAt": "2026-07-28T00:38:21Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#45024",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#45024",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/45024#discussion_r3661916562"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The response identity uses `ServiceGroupMember`, but the declared resource type and route segment are case-sensitive `serviceGroupMember`. Both the `id` segment and `type` therefore violate [EX-RESOURCE-ID](https://github.com/Azure/azure-re",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#45024:comment:3661916572:spec:github:Azure/azure-rest-api-specs#45024",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-28T00:38:21Z",
+      "observedAt": "2026-07-28T00:38:21Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#45024",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#45024",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/45024#discussion_r3661916572"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This resource `id` uses the case-sensitive segment `ServiceGroupMember`, while the operation path declares `serviceGroupMember`. [EX-RESOURCE-ID](https://github.com/Azure/azure-rest-api-specs/blob/main/.github/instructions/openapi-review.in",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#45024:comment:3661916581:spec:github:Azure/azure-rest-api-specs#45024",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-28T00:38:22Z",
+      "observedAt": "2026-07-28T00:38:22Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#45024",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#45024",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/45024#discussion_r3661916581"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This LRO `201` example omits the `Azure-AsyncOperation` polling header declared by the operation. [EX-LRO-HEADERS](https://github.com/Azure/azure-rest-api-specs/blob/main/.github/instructions/openapi-review.instructions.md#225-lro-example-h",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#45024:comment:3661916584:spec:github:Azure/azure-rest-api-specs#45024",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-28T00:38:22Z",
+      "observedAt": "2026-07-28T00:38:22Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#45024",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#45024",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/45024#discussion_r3661916584"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This LRO `201` example omits the `Azure-AsyncOperation` polling header declared by the operation. [EX-LRO-HEADERS](https://github.com/Azure/azure-rest-api-specs/blob/main/.github/instructions/openapi-review.instructions.md#225-lro-example-h",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#45024:comment:3661916591:spec:github:Azure/azure-rest-api-specs#45024",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-28T00:38:22Z",
+      "observedAt": "2026-07-28T00:38:22Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#45024",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#45024",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/45024#discussion_r3661916591"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This `nextLink` neither points back to `/providers/Microsoft.Relationships/operations` nor includes `api-version=2026-08-01`, so clients cannot follow the example link. [EX-PAGINATION](https://github.com/Azure/azure-rest-api-specs/blob/main",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#45024:comment:3661916599:spec:github:Azure/azure-rest-api-specs#45024",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-28T00:38:22Z",
+      "observedAt": "2026-07-28T00:38:22Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#45024",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#45024",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/45024#discussion_r3661916599"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This async DELETE example omits the required `Azure-AsyncOperation` header, and its `Location` value is a placeholder without `api-version`. [EX-LRO-HEADERS](https://github.com/Azure/azure-rest-api-specs/blob/main/.github/instructions/opena",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#45024:review:4792699442:spec:github:Azure/azure-rest-api-specs#45024",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-28T00:38:23Z",
+      "observedAt": "2026-07-28T00:38:23Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#45024",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#45024",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/45024#pullrequestreview-4792699442"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Adds the stable `2026-08-01` Microsoft.Relationships management API. **Changes:** - Adds the stable version to TypeSpec and AutoRest packaging. - Generates the stable Swagger specification. - Adds source and generat",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#45024:comment:3661916610:spec:github:Azure/azure-rest-api-specs#45024",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-28T00:38:23Z",
+      "observedAt": "2026-07-28T00:38:23Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#45024",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#45024",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/45024#discussion_r3661916610"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This async DELETE example omits the required `Azure-AsyncOperation` header, and its `Location` value is a placeholder without `api-version`. [EX-LRO-HEADERS](https://github.com/Azure/azure-rest-api-specs/blob/main/.github/instructions/opena",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#45024:review:4798044855:spec:github:Azure/azure-rest-api-specs#45024",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-28T13:58:42Z",
+      "observedAt": "2026-07-28T13:58:42Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#45024",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "alexchro93"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#45024",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/45024#pullrequestreview-4798044855"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#45024:comment:3666135337:spec:github:Azure/azure-rest-api-specs#45024",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-28T13:58:42Z",
+      "observedAt": "2026-07-28T13:58:42Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#45024",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "alexchro93"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#45024",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/45024#discussion_r3666135337"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Should we first integrate the 2026-03-01 preview changes into this stable version - https://github.com/Azure/azure-rest-api-specs/pull/44941 There are some big changes in there related to model shape and adding new APIs.",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#45024:commit:36c43fdb4d57:spec:github:Azure/azure-rest-api-specs#45024",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-13T03:13:28Z",
+      "observedAt": "2026-08-13T03:13:28Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#45024",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "meghanagupta95"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#45024",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/36c43fdb4d57c6353739a9b75bb8c9d2b90ab437"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#45024:commit:a61b3b694e6e:spec:github:Azure/azure-rest-api-specs#45024",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-13T03:18:43Z",
+      "observedAt": "2026-08-13T03:18:43Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#45024",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "meghanagupta95"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#45024",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/a61b3b694e6ea8ebccb5d44b692ea1b8d0e9e0a2"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#45024:review:4923116857:spec:github:Azure/azure-rest-api-specs#45024",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-13T03:26:39Z",
+      "observedAt": "2026-08-13T03:26:39Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#45024",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#45024",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/45024#pullrequestreview-4923116857"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Copilot reviewed 26 out of 26 changed files in this pull request and generated no new comments. <details> <summary>Suppressed comments (13)</summary> **specification/relationships/resource-manager/Microsoft.Relation",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#45024:commit:e57d1cdbf2a8:spec:github:Azure/azure-rest-api-specs#45024",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-13T17:35:39Z",
+      "observedAt": "2026-08-13T17:35:39Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#45024",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "meghanagupta95"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#45024",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/e57d1cdbf2a83e39cea103ad46fa577236837c19"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    }
+  ],
+  "quality": {
+    "warnings": [
+      "1 historical linked PR(s) closed without merge"
+    ],
+    "unavailablePullRequests": 0,
+    "unavailablePipelineRuns": 0
+  },
+  "boundaryFacts": {
+    "id": "35597",
+    "state": "in-progress",
+    "specPrs": [
+      {
+        "id": "github:Azure/azure-rest-api-specs#45024",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#45024",
+        "createdAt": "2026-07-28T00:08:21Z",
+        "mergedAt": null,
+        "closedAt": null,
+        "available": true
+      }
+    ],
+    "artifacts": [
+      {
+        "language": ".NET",
+        "package": "Azure.ResourceManager.Relationships",
+        "trackId": "sdk:.NET:Azure.ResourceManager.Relationships",
+        "prId": null,
+        "prCreatedAt": null,
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [],
+        "generationRunId": null,
+        "generationStartAt": null,
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "missing",
+          "generation": "missing",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "JavaScript",
+        "package": "@azure/arm-relationships",
+        "trackId": "sdk:JavaScript:@azure/arm-relationships",
+        "prId": null,
+        "prCreatedAt": null,
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [],
+        "generationRunId": null,
+        "generationStartAt": null,
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "missing",
+          "generation": "missing",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Python",
+        "package": "azure-mgmt-relationships",
+        "trackId": "sdk:Python:azure-mgmt-relationships",
+        "prId": null,
+        "prCreatedAt": null,
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [],
+        "generationRunId": null,
+        "generationStartAt": null,
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "missing",
+          "generation": "missing",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Java",
+        "package": "azure-resourcemanager-relationships",
+        "trackId": "sdk:Java:azure-resourcemanager-relationships",
+        "prId": null,
+        "prCreatedAt": null,
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [],
+        "generationRunId": null,
+        "generationStartAt": null,
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "missing",
+          "generation": "missing",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Go",
+        "package": "sdk/resourcemanager/relationships/armrelationships",
+        "trackId": "sdk:Go:sdk/resourcemanager/relationships/armrelationships",
+        "prId": null,
+        "prCreatedAt": null,
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [],
+        "generationRunId": null,
+        "generationStartAt": null,
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "missing",
+          "generation": "missing",
+          "release": "missing"
+        }
+      }
+    ],
+    "cohortPlan": {
+      "id": "35597",
+      "releasePlanId": "35597",
+      "title": "GA release plan for Microsoft.Relationships",
+      "service": "Microsoft.Relationships",
+      "state": "in-progress"
+    },
+    "quality": {
+      "warnings": [
+        "1 historical linked PR(s) closed without merge"
+      ],
+      "unavailablePullRequests": 0,
+      "unavailablePipelineRuns": 0
+    }
+  },
+  "summary": {
+    "durationHours": 408.7,
+    "pullRequestCount": 1,
+    "humanReviewCount": 1,
+    "humanCommentCount": 1
+  }
+}

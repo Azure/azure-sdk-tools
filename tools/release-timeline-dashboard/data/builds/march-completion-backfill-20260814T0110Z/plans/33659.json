@@ -1,0 +1,1089 @@
+{
+  "schemaVersion": 2,
+  "id": "33659",
+  "correlation": {
+    "policyVersion": 1,
+    "preflight": "passed"
+  },
+  "releasePlanId": "2149",
+  "title": "Release Plan - 2149 - GA - Azure SQL Database",
+  "service": "Azure SQL Database",
+  "product": "Release",
+  "path": "specification/SQL/resource-manager/Microsoft.Sql",
+  "state": "in-progress",
+  "plane": "management",
+  "releaseType": "APEX GA",
+  "intendedMonth": "April 2026",
+  "createdAt": "2026-03-30T20:39:18.27Z",
+  "completedAt": null,
+  "sourceUrl": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33659",
+  "range": {
+    "start": "2026-03-25T17:04:00.000Z",
+    "end": "2026-08-14T00:37:23.589Z"
+  },
+  "intendedArtifacts": [
+    {
+      "prId": null,
+      "language": ".NET",
+      "package": "Azure.ResourceManager.Sql",
+      "version": null,
+      "outcome": "released",
+      "generationPipelineUrl": null,
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": null,
+      "language": "JavaScript",
+      "package": null,
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": null,
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": null,
+      "language": "Python",
+      "package": "azure-mgmt-sql",
+      "version": "4.0.0b25",
+      "outcome": "released",
+      "generationPipelineUrl": null,
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": null,
+      "language": "Java",
+      "package": "azure-resourcemanager-sql",
+      "version": "2.54.0",
+      "outcome": "released",
+      "generationPipelineUrl": null,
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": null,
+      "language": "Go",
+      "package": "sdk/resourcemanager/sql/armsql",
+      "version": "2.0.0-beta.8",
+      "outcome": "released",
+      "generationPipelineUrl": null,
+      "releasePipelineUrl": null
+    }
+  ],
+  "links": [
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#41758",
+      "role": "spec-pr",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/41758",
+      "releasePlanIds": []
+    }
+  ],
+  "tracks": [
+    {
+      "id": "plan",
+      "kind": "plan",
+      "label": "Release Plan",
+      "detail": "APEX GA"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#41758",
+      "kind": "spec",
+      "label": "Spec PR",
+      "detail": "azure-rest-api-specs #41758",
+      "artifactId": "github:Azure/azure-rest-api-specs#41758",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:.NET:Azure.ResourceManager.Sql",
+      "kind": "sdk",
+      "label": ".NET",
+      "detail": "Azure.ResourceManager.Sql",
+      "artifactId": null,
+      "state": "missing"
+    },
+    {
+      "id": "sdk:JavaScript:JavaScript",
+      "kind": "sdk",
+      "label": "JavaScript",
+      "detail": "Package not recorded",
+      "artifactId": null,
+      "state": "missing"
+    },
+    {
+      "id": "sdk:Python:azure-mgmt-sql",
+      "kind": "sdk",
+      "label": "Python",
+      "detail": "azure-mgmt-sql",
+      "artifactId": null,
+      "state": "missing"
+    },
+    {
+      "id": "sdk:Java:azure-resourcemanager-sql",
+      "kind": "sdk",
+      "label": "Java",
+      "detail": "azure-resourcemanager-sql",
+      "artifactId": null,
+      "state": "missing"
+    },
+    {
+      "id": "sdk:Go:sdk/resourcemanager/sql/armsql",
+      "kind": "sdk",
+      "label": "Go",
+      "detail": "sdk/resourcemanager/sql/armsql",
+      "artifactId": null,
+      "state": "missing"
+    }
+  ],
+  "events": [
+    {
+      "id": "github:Azure/azure-rest-api-specs#41758:pr.created:spec:github:Azure/azure-rest-api-specs#41758",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-25T17:04:00Z",
+      "observedAt": "2026-03-25T17:04:00Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41758",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "jeremyfrosti"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41758",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41758"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41758:review:4008356898:spec:github:Azure/azure-rest-api-specs#41758",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-25T17:06:03Z",
+      "observedAt": "2026-03-25T17:06:03Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41758",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "ericshape"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41758",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41758#pullrequestreview-4008356898"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41758:comment:4128269306:spec:github:Azure/azure-rest-api-specs#41758",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-25T17:07:12Z",
+      "observedAt": "2026-03-25T17:07:12Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41758",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jeremyfrosti"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41758",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41758#issuecomment-4128269306"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This PR is to release the stable 2025-01-01 version. It was approved in this PR: https://github.com/Azure/azure-rest-api-specs/pull/41659 And that approval was based on these prior two PRs on another branch (that is no longer being used do ",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41758:comment:4128341111:spec:github:Azure/azure-rest-api-specs#41758",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-25T17:18:27Z",
+      "observedAt": "2026-03-25T17:18:27Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41758",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41758",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41758#issuecomment-4128341111"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>Next steps that must be taken to merge this PR: <br/><ul><li>❌ This PR is in purview of the ARM review (label: <code>ARMReview</code>). This PR must get <code>ARMSignedOff</code> label from an ARM reviewer.<br/>T",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41758:comment:4128341130:spec:github:Azure/azure-rest-api-specs#41758",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-25T17:18:27Z",
+      "observedAt": "2026-03-25T17:18:27Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41758",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41758",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41758#issuecomment-4128341130"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>✅ All automated merging requirements have been met! To get your PR merged, see <a href=\"https://aka.ms/azsdk/specreview/merge\">aka.ms/azsdk/specreview/merge</a>.<br /><br />Comment generated by <a href=\"https://g",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41758:review:4018354971:spec:github:Azure/azure-rest-api-specs#41758",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-27T01:30:06Z",
+      "observedAt": "2026-03-27T01:30:06Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41758",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41758",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41758#pullrequestreview-4018354971"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41758:comment:2998520865:spec:github:Azure/azure-rest-api-specs#41758",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-27T01:30:06Z",
+      "observedAt": "2026-03-27T01:30:06Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41758",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41758",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41758#discussion_r2998520865"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Is the tag correct? The tag you added is not preview -- package-2025-01-01",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41758:review:4018467907:spec:github:Azure/azure-rest-api-specs#41758",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-27T02:18:27Z",
+      "observedAt": "2026-03-27T02:18:27Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41758",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "qiaozha"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41758",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41758#pullrequestreview-4018467907"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41758:comment:2998627396:spec:github:Azure/azure-rest-api-specs#41758",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-27T02:18:27Z",
+      "observedAt": "2026-03-27T02:18:27Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41758",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "qiaozha"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41758",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41758#discussion_r2998627396"
+      },
+      "confidence": "authoritative",
+      "excerpt": "```suggestion tag: package-2025-01-01 ```",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41758:review:4018892771:spec:github:Azure/azure-rest-api-specs#41758",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-27T05:02:41Z",
+      "observedAt": "2026-03-27T05:02:41Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41758",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "pshao25"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41758",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41758#pullrequestreview-4018892771"
+      },
+      "confidence": "authoritative",
+      "excerpt": "All active Azure services must convert to TypeSpec by March 31, 2026. Starting July 1, 2026, SDK generation from the autorest toolchain will be blocked. Please reach out [[email redacted]](mailto:[email redacted]",
+      "reviewState": "dismissed",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41758:comment:4140416184:spec:github:Azure/azure-rest-api-specs#41758",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-27T06:06:45Z",
+      "observedAt": "2026-03-27T06:06:45Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41758",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jeremyfrosti"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41758",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41758#issuecomment-4140416184"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> All active Azure services must convert to TypeSpec by March 31, 2026. Starting July 1, 2026, SDK generation from the autorest toolchain will be blocked. Please reach out [[email redacted]](mailto:tspconversion@service.m",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41758:commit:9b5838614bf4:spec:github:Azure/azure-rest-api-specs#41758",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-27T16:13:30Z",
+      "observedAt": "2026-03-27T16:13:30Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41758",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "jeremyfrosti"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41758",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/9b5838614bf41a22ffec28557df45bff114e3f21"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41758:review:4022542841:spec:github:Azure/azure-rest-api-specs#41758",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-27T17:12:01Z",
+      "observedAt": "2026-03-27T17:12:01Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41758",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "jeremyfrosti"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41758",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41758#pullrequestreview-4022542841"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41758:comment:3002201951:spec:github:Azure/azure-rest-api-specs#41758",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-27T17:12:01Z",
+      "observedAt": "2026-03-27T17:12:01Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41758",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jeremyfrosti"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41758",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41758#discussion_r3002201951"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This has been fixed, thanks!",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41758:review:4022544239:spec:github:Azure/azure-rest-api-specs#41758",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-27T17:12:18Z",
+      "observedAt": "2026-03-27T17:12:18Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41758",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "jeremyfrosti"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41758",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41758#pullrequestreview-4022544239"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41758:comment:3002203248:spec:github:Azure/azure-rest-api-specs#41758",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-27T17:12:18Z",
+      "observedAt": "2026-03-27T17:12:18Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41758",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jeremyfrosti"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41758",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41758#discussion_r3002203248"
+      },
+      "confidence": "authoritative",
+      "excerpt": "You are correct, I have fixed it, thank you!",
+      "stack": 3
+    },
+    {
+      "id": "ado:33659:created",
+      "type": "plan.created",
+      "phase": "plan",
+      "occurredAt": "2026-03-30T20:39:18.27Z",
+      "observedAt": "2026-03-30T20:39:18.27Z",
+      "trackId": "plan",
+      "title": "Release Plan created",
+      "confidence": "authoritative",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33659",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33659"
+      },
+      "stack": 0
+    },
+    {
+      "id": "ado:33659:1:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-03-30T20:39:18.27Z",
+      "observedAt": "2026-03-30T20:39:18.27Z",
+      "trackId": "plan",
+      "value": "New",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33659",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33659"
+      },
+      "title": "Plan state changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33659:1:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-30T20:39:18.27Z",
+      "observedAt": "2026-03-30T20:39:18.27Z",
+      "trackId": "plan",
+      "value": "Not Available",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33659",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33659"
+      },
+      "title": "Spec approval changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:33659:1:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-30T20:39:18.27Z",
+      "observedAt": "2026-03-30T20:39:18.27Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Sql",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33659",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33659"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33659:1:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-30T20:39:18.27Z",
+      "observedAt": "2026-03-30T20:39:18.27Z",
+      "trackId": "sdk:JavaScript:JavaScript",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33659",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33659"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33659:1:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-30T20:39:18.27Z",
+      "observedAt": "2026-03-30T20:39:18.27Z",
+      "trackId": "sdk:Python:azure-mgmt-sql",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33659",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33659"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33659:1:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-30T20:39:18.27Z",
+      "observedAt": "2026-03-30T20:39:18.27Z",
+      "trackId": "sdk:Java:azure-resourcemanager-sql",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33659",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33659"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33659:1:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-30T20:39:18.27Z",
+      "observedAt": "2026-03-30T20:39:18.27Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/sql/armsql",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33659",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33659"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33659:6:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-03-30T20:40:16.227Z",
+      "observedAt": "2026-03-30T20:40:16.227Z",
+      "trackId": "plan",
+      "value": "In Progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33659",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33659"
+      },
+      "title": "Plan state changed",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41758:review:4033206550:spec:github:Azure/azure-rest-api-specs#41758",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-30T20:43:00Z",
+      "observedAt": "2026-03-30T20:43:00Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41758",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "achyuth-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41758",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41758#pullrequestreview-4033206550"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41758:pr.merged:spec:github:Azure/azure-rest-api-specs#41758",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-30T20:43:54Z",
+      "observedAt": "2026-03-30T20:43:54Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41758",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41758",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41758"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:33660:2:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-30T20:46:19.66Z",
+      "observedAt": "2026-03-30T20:46:19.66Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41758",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/41758",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33660",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33660"
+      },
+      "title": "Spec PR linked",
+      "stack": 2
+    },
+    {
+      "id": "ado:33659:8:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-30T20:46:24.01Z",
+      "observedAt": "2026-03-30T20:46:24.01Z",
+      "trackId": "plan",
+      "value": "Approved",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33659",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33659"
+      },
+      "title": "Spec approval changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:33659:9:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-30T20:46:26.07Z",
+      "observedAt": "2026-03-30T20:46:26.07Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Sql",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33659",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33659"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33659:9:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-30T20:46:26.07Z",
+      "observedAt": "2026-03-30T20:46:26.07Z",
+      "trackId": "sdk:JavaScript:JavaScript",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33659",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33659"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33659:9:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-30T20:46:26.07Z",
+      "observedAt": "2026-03-30T20:46:26.07Z",
+      "trackId": "sdk:Python:azure-mgmt-sql",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33659",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33659"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33659:9:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-30T20:46:26.07Z",
+      "observedAt": "2026-03-30T20:46:26.07Z",
+      "trackId": "sdk:Java:azure-resourcemanager-sql",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33659",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33659"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33659:9:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-30T20:46:26.07Z",
+      "observedAt": "2026-03-30T20:46:26.07Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/sql/armsql",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33659",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33659"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33659:22:Custom.ReleaseStatusForDotnet",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-04-09T10:04:30.76Z",
+      "observedAt": "2026-04-09T10:04:30.76Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Sql",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33659",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33659"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33659:24:Custom.ReleaseStatusForGo",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-05-27T03:32:47.107Z",
+      "observedAt": "2026-05-27T03:32:47.107Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/sql/armsql",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33659",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33659"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33659:24:Custom.ReleasedVersionForGo",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-05-27T03:32:47.107Z",
+      "observedAt": "2026-05-27T03:32:47.107Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/sql/armsql",
+      "value": "2.0.0-beta.8",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33659",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33659"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33659:25:Custom.ReleaseStatusForPython",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-06-03T07:44:36.36Z",
+      "observedAt": "2026-06-03T07:44:36.36Z",
+      "trackId": "sdk:Python:azure-mgmt-sql",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33659",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33659"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33659:25:Custom.ReleasedVersionForPython",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-06-03T07:44:36.36Z",
+      "observedAt": "2026-06-03T07:44:36.36Z",
+      "trackId": "sdk:Python:azure-mgmt-sql",
+      "value": "4.0.0b25",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33659",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33659"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33659:26:Custom.ReleaseStatusForJava",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-07-16T05:14:58.957Z",
+      "observedAt": "2026-07-16T05:14:58.957Z",
+      "trackId": "sdk:Java:azure-resourcemanager-sql",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33659",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33659"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33659:26:Custom.ReleasedVersionForJava",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-07-16T05:14:58.957Z",
+      "observedAt": "2026-07-16T05:14:58.957Z",
+      "trackId": "sdk:Java:azure-resourcemanager-sql",
+      "value": "2.54.0",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33659",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33659"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    }
+  ],
+  "quality": {
+    "warnings": [],
+    "unavailablePullRequests": 0,
+    "unavailablePipelineRuns": 0
+  },
+  "boundaryFacts": {
+    "id": "33659",
+    "state": "in-progress",
+    "specPrs": [
+      {
+        "id": "github:Azure/azure-rest-api-specs#41758",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#41758",
+        "createdAt": "2026-03-25T17:04:00Z",
+        "mergedAt": "2026-03-30T20:43:54Z",
+        "closedAt": "2026-03-30T20:43:54Z",
+        "available": true
+      }
+    ],
+    "artifacts": [
+      {
+        "language": ".NET",
+        "package": "Azure.ResourceManager.Sql",
+        "trackId": "sdk:.NET:Azure.ResourceManager.Sql",
+        "prId": null,
+        "prCreatedAt": null,
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [],
+        "generationRunId": null,
+        "generationStartAt": null,
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-04-09T10:04:30.76Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "missing",
+          "generation": "missing",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "JavaScript",
+        "package": null,
+        "trackId": "sdk:JavaScript:JavaScript",
+        "prId": null,
+        "prCreatedAt": null,
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [],
+        "generationRunId": null,
+        "generationStartAt": null,
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "missing",
+          "generation": "missing",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Python",
+        "package": "azure-mgmt-sql",
+        "trackId": "sdk:Python:azure-mgmt-sql",
+        "prId": null,
+        "prCreatedAt": null,
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [],
+        "generationRunId": null,
+        "generationStartAt": null,
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-06-03T07:44:36.36Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "4.0.0b25",
+        "releaseBoundaryAt": "2026-06-03T07:44:36.36Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "missing",
+          "generation": "missing",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Java",
+        "package": "azure-resourcemanager-sql",
+        "trackId": "sdk:Java:azure-resourcemanager-sql",
+        "prId": null,
+        "prCreatedAt": null,
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [],
+        "generationRunId": null,
+        "generationStartAt": null,
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-07-16T05:14:58.957Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "2.54.0",
+        "releaseBoundaryAt": "2026-07-16T05:14:58.957Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "missing",
+          "generation": "missing",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Go",
+        "package": "sdk/resourcemanager/sql/armsql",
+        "trackId": "sdk:Go:sdk/resourcemanager/sql/armsql",
+        "prId": null,
+        "prCreatedAt": null,
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [],
+        "generationRunId": null,
+        "generationStartAt": null,
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-05-27T03:32:47.107Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "2.0.0-beta.8",
+        "releaseBoundaryAt": "2026-05-27T03:32:47.107Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "missing",
+          "generation": "missing",
+          "release": "release-plan"
+        }
+      }
+    ],
+    "cohortPlan": {
+      "id": "33659",
+      "releasePlanId": "2149",
+      "title": "Release Plan - 2149 - GA - Azure SQL Database",
+      "service": "Azure SQL Database",
+      "state": "in-progress"
+    },
+    "quality": {
+      "warnings": [],
+      "unavailablePullRequests": 0,
+      "unavailablePipelineRuns": 0
+    }
+  },
+  "summary": {
+    "durationHours": 3268,
+    "pullRequestCount": 1,
+    "humanReviewCount": 7,
+    "humanCommentCount": 6
+  }
+}

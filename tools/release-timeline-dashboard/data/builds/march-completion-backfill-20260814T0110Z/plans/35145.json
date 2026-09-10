@@ -1,0 +1,1895 @@
+{
+  "schemaVersion": 2,
+  "id": "35145",
+  "correlation": {
+    "policyVersion": 1,
+    "preflight": "passed"
+  },
+  "releasePlanId": "35145",
+  "title": "GA release plan for Informatica.DataManagement.Management",
+  "service": "Informatica.DataManagement.Management",
+  "product": "Release",
+  "path": "specification/informatica/Informatica.DataManagement.Management",
+  "state": "abandoned",
+  "plane": "management",
+  "releaseType": "GA",
+  "intendedMonth": "June 2026",
+  "createdAt": "2026-06-30T10:44:30.597Z",
+  "completedAt": "2026-08-05T14:25:58.987Z",
+  "sourceUrl": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35145",
+  "range": {
+    "start": "2026-04-13T08:22:41.000Z",
+    "end": "2026-08-05T14:25:58.987Z"
+  },
+  "intendedArtifacts": [
+    {
+      "prId": "github:Azure/azure-sdk-for-net#60464",
+      "language": ".NET",
+      "package": "Azure.ResourceManager.InformaticaDataManagement",
+      "version": null,
+      "outcome": "not-released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6499933",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-js#39143",
+      "language": "JavaScript",
+      "package": "@azure/arm-informaticadatamanagement",
+      "version": null,
+      "outcome": "not-released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6499936",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-python#47771",
+      "language": "Python",
+      "package": "azure-mgmt-informaticadatamanagement",
+      "version": null,
+      "outcome": "not-released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6499935",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-java#49677",
+      "language": "Java",
+      "package": "azure-resourcemanager-informaticadatamanagement",
+      "version": null,
+      "outcome": "not-released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6499937",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-go#27120",
+      "language": "Go",
+      "package": "sdk/resourcemanager/informaticadatamgmt/arminformaticadatamgmt",
+      "version": null,
+      "outcome": "not-released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6499934",
+      "releasePipelineUrl": null
+    }
+  ],
+  "links": [
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#42313",
+      "role": "spec-pr",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/42313",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-net#60464",
+      "role": "sdk-pr",
+      "language": ".NET",
+      "url": "https://github.com/Azure/azure-sdk-for-net/pull/60464",
+      "releasePlanIds": [
+        "35145"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-js#39143",
+      "role": "sdk-pr",
+      "language": "JavaScript",
+      "url": "https://github.com/Azure/azure-sdk-for-js/pull/39143",
+      "releasePlanIds": [
+        "35145"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-python#47771",
+      "role": "sdk-pr",
+      "language": "Python",
+      "url": "https://github.com/Azure/azure-sdk-for-python/pull/47771",
+      "releasePlanIds": [
+        "35145"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-java#49677",
+      "role": "sdk-pr",
+      "language": "Java",
+      "url": "https://github.com/Azure/azure-sdk-for-java/pull/49677",
+      "releasePlanIds": [
+        "35145"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-go#27120",
+      "role": "sdk-pr",
+      "language": "Go",
+      "url": "https://github.com/Azure/azure-sdk-for-go/pull/27120",
+      "releasePlanIds": [
+        "35145"
+      ]
+    }
+  ],
+  "tracks": [
+    {
+      "id": "plan",
+      "kind": "plan",
+      "label": "Release Plan",
+      "detail": "GA"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#42313",
+      "kind": "spec",
+      "label": "Spec PR",
+      "detail": "azure-rest-api-specs #42313",
+      "artifactId": "github:Azure/azure-rest-api-specs#42313",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:.NET:Azure.ResourceManager.InformaticaDataManagement",
+      "kind": "sdk",
+      "label": ".NET",
+      "detail": "Azure.ResourceManager.InformaticaDataManagement",
+      "artifactId": "github:Azure/azure-sdk-for-net#60464",
+      "state": "closed"
+    },
+    {
+      "id": "sdk:JavaScript:@azure/arm-informaticadatamanagement",
+      "kind": "sdk",
+      "label": "JavaScript",
+      "detail": "@azure/arm-informaticadatamanagement",
+      "artifactId": "github:Azure/azure-sdk-for-js#39143",
+      "state": "closed"
+    },
+    {
+      "id": "sdk:Python:azure-mgmt-informaticadatamanagement",
+      "kind": "sdk",
+      "label": "Python",
+      "detail": "azure-mgmt-informaticadatamanagement",
+      "artifactId": "github:Azure/azure-sdk-for-python#47771",
+      "state": "closed"
+    },
+    {
+      "id": "sdk:Java:azure-resourcemanager-informaticadatamanagement",
+      "kind": "sdk",
+      "label": "Java",
+      "detail": "azure-resourcemanager-informaticadatamanagement",
+      "artifactId": "github:Azure/azure-sdk-for-java#49677",
+      "state": "closed"
+    },
+    {
+      "id": "sdk:Go:sdk/resourcemanager/informaticadatamgmt/arminformaticadatamgmt",
+      "kind": "sdk",
+      "label": "Go",
+      "detail": "sdk/resourcemanager/informaticadatamgmt/arminformaticadatamgmt",
+      "artifactId": "github:Azure/azure-sdk-for-go#27120",
+      "state": "closed"
+    }
+  ],
+  "events": [
+    {
+      "id": "github:Azure/azure-rest-api-specs#42313:pr.created:spec:github:Azure/azure-rest-api-specs#42313",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-13T08:22:41Z",
+      "observedAt": "2026-04-13T08:22:41Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42313",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "rsinghal26"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42313",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42313"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42313:comment:4234906533:spec:github:Azure/azure-rest-api-specs#42313",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-13T08:23:22Z",
+      "observedAt": "2026-04-13T08:23:22Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42313",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42313",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42313#issuecomment-4234906533"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>✅ All automated merging requirements have been met! To get your PR merged, see <a href=\"https://aka.ms/azsdk/specreview/merge\">aka.ms/azsdk/specreview/merge</a>.<br /><br />Comment generated by <a href=\"https://g",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42313:commit:2f65ba902032:spec:github:Azure/azure-rest-api-specs#42313",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-13T08:26:01Z",
+      "observedAt": "2026-04-13T08:26:01Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42313",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "rsinghal26"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42313",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/2f65ba902032fc0aee58596a7a57b400a49c2616"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42313:comment:4236847048:spec:github:Azure/azure-rest-api-specs#42313",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-13T13:45:11Z",
+      "observedAt": "2026-04-13T13:45:11Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42313",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "rsinghal26"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42313",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42313#issuecomment-4236847048"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This change we are making as part of security ICM to reclassify token as secret and avoid it in the response of create/get calls.",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42313:review:4111327119:spec:github:Azure/azure-rest-api-specs#42313",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-15T06:36:37Z",
+      "observedAt": "2026-04-15T06:36:37Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42313",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "nikhgup"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42313",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42313#pullrequestreview-4111327119"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42313:commit:3303c9041ac2:spec:github:Azure/azure-rest-api-specs#42313",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-15T07:27:32Z",
+      "observedAt": "2026-04-15T07:27:32Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42313",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "rsinghal26"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42313",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/3303c9041ac248ca5747fe84d5d5bd1377444bdc"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42313:comment:4250151581:spec:github:Azure/azure-rest-api-specs#42313",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-15T07:40:35Z",
+      "observedAt": "2026-04-15T07:40:35Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42313",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42313",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42313#issuecomment-4250151581"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews | Language | API Review for Package | |----------|---------| | Swagger | [Informatica.DataManagement](https://apiview.dev/Assemblies/R",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42313:pr.merged:spec:github:Azure/azure-rest-api-specs#42313",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-17T06:22:30Z",
+      "observedAt": "2026-04-17T06:22:30Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42313",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42313",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42313"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:35145:created",
+      "type": "plan.created",
+      "phase": "plan",
+      "occurredAt": "2026-06-30T10:44:30.597Z",
+      "observedAt": "2026-06-30T10:44:30.597Z",
+      "trackId": "plan",
+      "title": "Release Plan created",
+      "confidence": "authoritative",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35145",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35145"
+      },
+      "stack": 0
+    },
+    {
+      "id": "ado:35145:1:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-06-30T10:44:30.597Z",
+      "observedAt": "2026-06-30T10:44:30.597Z",
+      "trackId": "plan",
+      "value": "New",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35145",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35145"
+      },
+      "title": "Plan state changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35145:1:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-30T10:44:30.597Z",
+      "observedAt": "2026-06-30T10:44:30.597Z",
+      "trackId": "plan",
+      "value": "Not Available",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35145",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35145"
+      },
+      "title": "Spec approval changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:35145:1:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-30T10:44:30.597Z",
+      "observedAt": "2026-06-30T10:44:30.597Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.InformaticaDataManagement",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35145",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35145"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35145:1:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-30T10:44:30.597Z",
+      "observedAt": "2026-06-30T10:44:30.597Z",
+      "trackId": "sdk:JavaScript:@azure/arm-informaticadatamanagement",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35145",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35145"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35145:1:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-30T10:44:30.597Z",
+      "observedAt": "2026-06-30T10:44:30.597Z",
+      "trackId": "sdk:Python:azure-mgmt-informaticadatamanagement",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35145",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35145"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35145:1:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-30T10:44:30.597Z",
+      "observedAt": "2026-06-30T10:44:30.597Z",
+      "trackId": "sdk:Java:azure-resourcemanager-informaticadatamanagement",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35145",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35145"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35145:1:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-30T10:44:30.597Z",
+      "observedAt": "2026-06-30T10:44:30.597Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/informaticadatamgmt/arminformaticadatamgmt",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35145",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35145"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35146:1:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-30T10:44:31.233Z",
+      "observedAt": "2026-06-30T10:44:31.233Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42313",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/42313",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35146",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35146"
+      },
+      "title": "Spec PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado:35145:2:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-06-30T10:44:32.553Z",
+      "observedAt": "2026-06-30T10:44:32.553Z",
+      "trackId": "plan",
+      "value": "In Progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35145",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35145"
+      },
+      "title": "Plan state changed",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6499933:generation.queued:sdk:.NET:Azure.ResourceManager.InformaticaDataManagement",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-06-30T10:46:37.5437554Z",
+      "observedAt": "2026-06-30T10:58:27.1070484Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.InformaticaDataManagement",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6499933",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6499933"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:35145:4:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-30T10:46:42.543Z",
+      "observedAt": "2026-06-30T10:46:42.543Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.InformaticaDataManagement",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35145",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35145"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6499934:generation.queued:sdk:Go:sdk/resourcemanager/informaticadatamgmt/arminformaticadatamgmt",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-06-30T10:47:08.8003926Z",
+      "observedAt": "2026-06-30T10:56:03.8679488Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/informaticadatamgmt/arminformaticadatamgmt",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6499934",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6499934"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6499937:generation.queued:sdk:Java:azure-resourcemanager-informaticadatamanagement",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-06-30T10:47:08.9828462Z",
+      "observedAt": "2026-06-30T11:11:37.5654483Z",
+      "trackId": "sdk:Java:azure-resourcemanager-informaticadatamanagement",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6499937",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6499937"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6499936:generation.queued:sdk:JavaScript:@azure/arm-informaticadatamanagement",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-06-30T10:47:09.4063549Z",
+      "observedAt": "2026-06-30T10:58:40.6195874Z",
+      "trackId": "sdk:JavaScript:@azure/arm-informaticadatamanagement",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6499936",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6499936"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6499935:generation.queued:sdk:Python:azure-mgmt-informaticadatamanagement",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-06-30T10:47:09.577801Z",
+      "observedAt": "2026-06-30T11:00:50.1071071Z",
+      "trackId": "sdk:Python:azure-mgmt-informaticadatamanagement",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6499935",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6499935"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:35145:5:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-30T10:47:11.403Z",
+      "observedAt": "2026-06-30T10:47:11.403Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/informaticadatamgmt/arminformaticadatamgmt",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35145",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35145"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:35145:6:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-30T10:47:11.99Z",
+      "observedAt": "2026-06-30T10:47:11.99Z",
+      "trackId": "sdk:JavaScript:@azure/arm-informaticadatamanagement",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35145",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35145"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:35145:7:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-30T10:47:12.14Z",
+      "observedAt": "2026-06-30T10:47:12.14Z",
+      "trackId": "sdk:Python:azure-mgmt-informaticadatamanagement",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35145",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35145"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:35145:8:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-30T10:47:12.797Z",
+      "observedAt": "2026-06-30T10:47:12.797Z",
+      "trackId": "sdk:Java:azure-resourcemanager-informaticadatamanagement",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35145",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35145"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6499933:generation.started:sdk:.NET:Azure.ResourceManager.InformaticaDataManagement",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-06-30T10:49:29.7748041Z",
+      "observedAt": "2026-06-30T10:58:27.1070484Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.InformaticaDataManagement",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6499933",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6499933"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6499934:generation.started:sdk:Go:sdk/resourcemanager/informaticadatamgmt/arminformaticadatamgmt",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-06-30T10:49:34.4449863Z",
+      "observedAt": "2026-06-30T10:56:03.8679488Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/informaticadatamgmt/arminformaticadatamgmt",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6499934",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6499934"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6499936:generation.started:sdk:JavaScript:@azure/arm-informaticadatamanagement",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-06-30T10:50:11.9678159Z",
+      "observedAt": "2026-06-30T10:58:40.6195874Z",
+      "trackId": "sdk:JavaScript:@azure/arm-informaticadatamanagement",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6499936",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6499936"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6499935:generation.started:sdk:Python:azure-mgmt-informaticadatamanagement",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-06-30T10:50:34.7895167Z",
+      "observedAt": "2026-06-30T11:00:50.1071071Z",
+      "trackId": "sdk:Python:azure-mgmt-informaticadatamanagement",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6499935",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6499935"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6499937:generation.started:sdk:Java:azure-resourcemanager-informaticadatamanagement",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-06-30T10:50:48.3181268Z",
+      "observedAt": "2026-06-30T11:11:37.5654483Z",
+      "trackId": "sdk:Java:azure-resourcemanager-informaticadatamanagement",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6499937",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6499937"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27120:commit:c8e30f5d7136:sdk:Go:sdk/resourcemanager/informaticadatamgmt/arminformaticadatamgmt",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-30T10:54:54Z",
+      "observedAt": "2026-06-30T10:54:54Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/informaticadatamgmt/arminformaticadatamgmt",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27120",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/c8e30f5d7136007988d7086907caecf519b8bbd3"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27120:pr.created:sdk:Go:sdk/resourcemanager/informaticadatamgmt/arminformaticadatamgmt",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-30T10:54:57Z",
+      "observedAt": "2026-06-30T10:54:57Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/informaticadatamgmt/arminformaticadatamgmt",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27120",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27120"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27120:review:4599667193:sdk:Go:sdk/resourcemanager/informaticadatamgmt/arminformaticadatamgmt",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-30T10:55:00Z",
+      "observedAt": "2026-06-30T10:55:00Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/informaticadatamgmt/arminformaticadatamgmt",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27120",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27120#pullrequestreview-4599667193"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot can't review bot-authored pull requests automatically. A user with Copilot access can request a review manually.",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "ado:35145:9:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-30T10:55:04.457Z",
+      "observedAt": "2026-06-30T10:55:04.457Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/informaticadatamgmt/arminformaticadatamgmt",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35145",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35145"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35145:9:Custom.SDKPullRequestForGo",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-06-30T10:55:04.457Z",
+      "observedAt": "2026-06-30T10:55:04.457Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/informaticadatamgmt/arminformaticadatamgmt",
+      "value": "https://github.com/Azure/azure-sdk-for-go/pull/27120",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35145",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35145"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6499934:generation.completed:sdk:Go:sdk/resourcemanager/informaticadatamgmt/arminformaticadatamgmt",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-06-30T10:56:03.8679488Z",
+      "observedAt": "2026-06-30T10:56:03.8679488Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/informaticadatamgmt/arminformaticadatamgmt",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6499934",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6499934"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60464:commit:bea8770a43dc:sdk:.NET:Azure.ResourceManager.InformaticaDataManagement",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-30T10:57:09Z",
+      "observedAt": "2026-06-30T10:57:09Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.InformaticaDataManagement",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60464",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/bea8770a43dc873eb3922a922954da92ab90914f"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60464:pr.created:sdk:.NET:Azure.ResourceManager.InformaticaDataManagement",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-30T10:57:13Z",
+      "observedAt": "2026-06-30T10:57:13Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.InformaticaDataManagement",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60464",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60464"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60464:review:4599682682:sdk:.NET:Azure.ResourceManager.InformaticaDataManagement",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-30T10:57:16Z",
+      "observedAt": "2026-06-30T10:57:16Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.InformaticaDataManagement",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60464",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60464#pullrequestreview-4599682682"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot can't review bot-authored pull requests automatically. A user with Copilot access can request a review manually.",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39143:commit:6fba5b8f25bf:sdk:JavaScript:@azure/arm-informaticadatamanagement",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-30T10:57:17Z",
+      "observedAt": "2026-06-30T10:57:17Z",
+      "trackId": "sdk:JavaScript:@azure/arm-informaticadatamanagement",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39143",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/6fba5b8f25bff4018826ff32d34fa8cf481c0cfb"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:35145:10:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-30T10:57:20.097Z",
+      "observedAt": "2026-06-30T10:57:20.097Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.InformaticaDataManagement",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35145",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35145"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35145:10:Custom.SDKPullRequestForDotnet",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-06-30T10:57:20.097Z",
+      "observedAt": "2026-06-30T10:57:20.097Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.InformaticaDataManagement",
+      "value": "https://github.com/Azure/azure-sdk-for-net/pull/60464",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35145",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35145"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39143:pr.created:sdk:JavaScript:@azure/arm-informaticadatamanagement",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-30T10:57:21Z",
+      "observedAt": "2026-06-30T10:57:21Z",
+      "trackId": "sdk:JavaScript:@azure/arm-informaticadatamanagement",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39143",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39143"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39143:review:4599683658:sdk:JavaScript:@azure/arm-informaticadatamanagement",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-30T10:57:24Z",
+      "observedAt": "2026-06-30T10:57:24Z",
+      "trackId": "sdk:JavaScript:@azure/arm-informaticadatamanagement",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39143",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39143#pullrequestreview-4599683658"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot can't review bot-authored pull requests automatically. A user with Copilot access can request a review manually.",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "ado:35145:11:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-30T10:57:28.173Z",
+      "observedAt": "2026-06-30T10:57:28.173Z",
+      "trackId": "sdk:JavaScript:@azure/arm-informaticadatamanagement",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35145",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35145"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35145:11:Custom.SDKPullRequestForJavaScript",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-06-30T10:57:28.173Z",
+      "observedAt": "2026-06-30T10:57:28.173Z",
+      "trackId": "sdk:JavaScript:@azure/arm-informaticadatamanagement",
+      "value": "https://github.com/Azure/azure-sdk-for-js/pull/39143",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35145",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35145"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6499933:generation.completed:sdk:.NET:Azure.ResourceManager.InformaticaDataManagement",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-06-30T10:58:27.1070484Z",
+      "observedAt": "2026-06-30T10:58:27.1070484Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.InformaticaDataManagement",
+      "title": "Pipeline completed with issues",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6499933",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6499933"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47771:commit:cee721fcd6a9:sdk:Python:azure-mgmt-informaticadatamanagement",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-30T10:58:34Z",
+      "observedAt": "2026-06-30T10:58:34Z",
+      "trackId": "sdk:Python:azure-mgmt-informaticadatamanagement",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47771",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/cee721fcd6a997a82c4b151aab5aac3fd97fece6"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47771:pr.created:sdk:Python:azure-mgmt-informaticadatamanagement",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-30T10:58:38Z",
+      "observedAt": "2026-06-30T10:58:38Z",
+      "trackId": "sdk:Python:azure-mgmt-informaticadatamanagement",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47771",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47771"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:6499936:generation.completed:sdk:JavaScript:@azure/arm-informaticadatamanagement",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-06-30T10:58:40.6195874Z",
+      "observedAt": "2026-06-30T10:58:40.6195874Z",
+      "trackId": "sdk:JavaScript:@azure/arm-informaticadatamanagement",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6499936",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6499936"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47771:review:4599691616:sdk:Python:azure-mgmt-informaticadatamanagement",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-30T10:58:42Z",
+      "observedAt": "2026-06-30T10:58:42Z",
+      "trackId": "sdk:Python:azure-mgmt-informaticadatamanagement",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47771",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47771#pullrequestreview-4599691616"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot can't review bot-authored pull requests automatically. A user with Copilot access can request a review manually.",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "ado:35145:12:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-30T10:58:45.717Z",
+      "observedAt": "2026-06-30T10:58:45.717Z",
+      "trackId": "sdk:Python:azure-mgmt-informaticadatamanagement",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35145",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35145"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35145:12:Custom.SDKPullRequestForPython",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-06-30T10:58:45.717Z",
+      "observedAt": "2026-06-30T10:58:45.717Z",
+      "trackId": "sdk:Python:azure-mgmt-informaticadatamanagement",
+      "value": "https://github.com/Azure/azure-sdk-for-python/pull/47771",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35145",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35145"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49677:commit:f9b526492487:sdk:Java:azure-resourcemanager-informaticadatamanagement",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-30T11:00:43Z",
+      "observedAt": "2026-06-30T11:00:43Z",
+      "trackId": "sdk:Java:azure-resourcemanager-informaticadatamanagement",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49677",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/f9b52649248713f050d4fb8a6e8dcb1003a6c0ce"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49677:pr.created:sdk:Java:azure-resourcemanager-informaticadatamanagement",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-30T11:00:48Z",
+      "observedAt": "2026-06-30T11:00:48Z",
+      "trackId": "sdk:Java:azure-resourcemanager-informaticadatamanagement",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49677",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49677"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:6499935:generation.completed:sdk:Python:azure-mgmt-informaticadatamanagement",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-06-30T11:00:50.1071071Z",
+      "observedAt": "2026-06-30T11:00:50.1071071Z",
+      "trackId": "sdk:Python:azure-mgmt-informaticadatamanagement",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6499935",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6499935"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49677:review:4599705189:sdk:Java:azure-resourcemanager-informaticadatamanagement",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-30T11:00:51Z",
+      "observedAt": "2026-06-30T11:00:51Z",
+      "trackId": "sdk:Java:azure-resourcemanager-informaticadatamanagement",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49677",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49677#pullrequestreview-4599705189"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot can't review bot-authored pull requests automatically. A user with Copilot access can request a review manually.",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "ado:35145:13:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-30T11:01:06.7Z",
+      "observedAt": "2026-06-30T11:01:06.7Z",
+      "trackId": "sdk:Java:azure-resourcemanager-informaticadatamanagement",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35145",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35145"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35145:13:Custom.SDKPullRequestForJava",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-06-30T11:01:06.7Z",
+      "observedAt": "2026-06-30T11:01:06.7Z",
+      "trackId": "sdk:Java:azure-resourcemanager-informaticadatamanagement",
+      "value": "https://github.com/Azure/azure-sdk-for-java/pull/49677",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35145",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35145"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6499937:generation.completed:sdk:Java:azure-resourcemanager-informaticadatamanagement",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-06-30T11:11:37.5654483Z",
+      "observedAt": "2026-06-30T11:11:37.5654483Z",
+      "trackId": "sdk:Java:azure-resourcemanager-informaticadatamanagement",
+      "title": "Pipeline completed with issues",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6499937",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6499937"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49677:commit:aa85a51eed6b:sdk:Java:azure-resourcemanager-informaticadatamanagement",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-01T01:53:20Z",
+      "observedAt": "2026-07-01T01:53:20Z",
+      "trackId": "sdk:Java:azure-resourcemanager-informaticadatamanagement",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49677",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/aa85a51eed6b3d6dbb98df549e5d61ed93b5c85b"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49677:review:4605199268:sdk:Java:azure-resourcemanager-informaticadatamanagement",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-01T01:59:12Z",
+      "observedAt": "2026-07-01T01:59:12Z",
+      "trackId": "sdk:Java:azure-resourcemanager-informaticadatamanagement",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49677",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49677#pullrequestreview-4605199268"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Reviewed. Breaking changes are the standard framework-wide migration (paged *ListResult wrapper removals, validate() removals, serviceClient() return-type change); no suspicious LRO Headers/Response artifacts; single api-version 2025-11-27;",
+      "reviewState": "approved",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49677:review:4605199579:sdk:Java:azure-resourcemanager-informaticadatamanagement",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-01T01:59:17Z",
+      "observedAt": "2026-07-01T01:59:17Z",
+      "trackId": "sdk:Java:azure-resourcemanager-informaticadatamanagement",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49677",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49677#pullrequestreview-4605199579"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@XiaofeiCao for review",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49677:review:4605367814:sdk:Java:azure-resourcemanager-informaticadatamanagement",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-01T02:47:25Z",
+      "observedAt": "2026-07-01T02:47:25Z",
+      "trackId": "sdk:Java:azure-resourcemanager-informaticadatamanagement",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "XiaofeiCao"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49677",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49677#pullrequestreview-4605367814"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27120:comment:4850124074:sdk:Go:sdk/resourcemanager/informaticadatamgmt/arminformaticadatamgmt",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-01T03:59:35Z",
+      "observedAt": "2026-07-01T03:59:35Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/informaticadatamgmt/arminformaticadatamgmt",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27120",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27120#issuecomment-4850124074"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## PR is ready to merge",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27120:review:4605823103:sdk:Go:sdk/resourcemanager/informaticadatamgmt/arminformaticadatamgmt",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-01T04:45:27Z",
+      "observedAt": "2026-07-01T04:45:27Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/informaticadatamgmt/arminformaticadatamgmt",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "tadelesh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27120",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27120#pullrequestreview-4605823103"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27120:pr.closed:sdk:Go:sdk/resourcemanager/informaticadatamgmt/arminformaticadatamgmt",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-01T05:48:19Z",
+      "observedAt": "2026-07-01T05:48:19Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/informaticadatamgmt/arminformaticadatamgmt",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27120",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27120"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49677:pr.closed:sdk:Java:azure-resourcemanager-informaticadatamanagement",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-01T05:48:36Z",
+      "observedAt": "2026-07-01T05:48:36Z",
+      "trackId": "sdk:Java:azure-resourcemanager-informaticadatamanagement",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49677",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49677"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47771:pr.closed:sdk:Python:azure-mgmt-informaticadatamanagement",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-01T05:48:46Z",
+      "observedAt": "2026-07-01T05:48:46Z",
+      "trackId": "sdk:Python:azure-mgmt-informaticadatamanagement",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47771",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47771"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39143:pr.closed:sdk:JavaScript:@azure/arm-informaticadatamanagement",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-01T05:48:56Z",
+      "observedAt": "2026-07-01T05:48:56Z",
+      "trackId": "sdk:JavaScript:@azure/arm-informaticadatamanagement",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39143",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39143"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60464:pr.closed:sdk:.NET:Azure.ResourceManager.InformaticaDataManagement",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-01T05:49:02Z",
+      "observedAt": "2026-07-01T05:49:02Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.InformaticaDataManagement",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60464",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60464"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49677:comment:4850720515:sdk:Java:azure-resourcemanager-informaticadatamanagement",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-01T05:59:28Z",
+      "observedAt": "2026-07-01T05:59:28Z",
+      "trackId": "sdk:Java:azure-resourcemanager-informaticadatamanagement",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49677",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49677#issuecomment-4850720515"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@yashikajain14 Why do you close it?",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49677:comment:4850741260:sdk:Java:azure-resourcemanager-informaticadatamanagement",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-01T06:03:12Z",
+      "observedAt": "2026-07-01T06:03:12Z",
+      "trackId": "sdk:Java:azure-resourcemanager-informaticadatamanagement",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "yashikajain14"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49677",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49677#issuecomment-4850741260"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@weidongxu-microsoft This got created as part of testing for the sdk mcp server. It is not needed right now.",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49677:comment:4850756329:sdk:Java:azure-resourcemanager-informaticadatamanagement",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-01T06:05:54Z",
+      "observedAt": "2026-07-01T06:05:54Z",
+      "trackId": "sdk:Java:azure-resourcemanager-informaticadatamanagement",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49677",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49677#issuecomment-4850756329"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Do you know who are testing the mcp server? Since these AutoPR now get created as ready-to-review, these tests now waste SDK dev time that had to review the PR. Not blaming, just want to see if we need to add guide that \"testing\" would be e",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49677:comment:4850810251:sdk:Java:azure-resourcemanager-informaticadatamanagement",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-01T06:15:14Z",
+      "observedAt": "2026-07-01T06:15:14Z",
+      "trackId": "sdk:Java:azure-resourcemanager-informaticadatamanagement",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "yashikajain14"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49677",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49677#issuecomment-4850810251"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Sorry about that, will make sure next time that test is added in PR title itself.",
+      "stack": 0
+    },
+    {
+      "id": "ado:35145:15:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-08-05T14:25:58.987Z",
+      "observedAt": "2026-08-05T14:25:58.987Z",
+      "trackId": "plan",
+      "value": "Abandoned",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35145",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35145"
+      },
+      "title": "Plan state changed",
+      "stack": 0
+    }
+  ],
+  "quality": {
+    "warnings": [
+      "5 historical linked PR(s) closed without merge"
+    ],
+    "unavailablePullRequests": 0,
+    "unavailablePipelineRuns": 0
+  },
+  "boundaryFacts": {
+    "id": "35145",
+    "state": "abandoned",
+    "specPrs": [
+      {
+        "id": "github:Azure/azure-rest-api-specs#42313",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#42313",
+        "createdAt": "2026-04-13T08:22:41Z",
+        "mergedAt": "2026-04-17T06:22:30Z",
+        "closedAt": "2026-04-17T06:22:30Z",
+        "available": true
+      }
+    ],
+    "artifacts": [
+      {
+        "language": ".NET",
+        "package": "Azure.ResourceManager.InformaticaDataManagement",
+        "trackId": "sdk:.NET:Azure.ResourceManager.InformaticaDataManagement",
+        "prId": "github:Azure/azure-sdk-for-net#60464",
+        "prCreatedAt": "2026-06-30T10:57:13Z",
+        "prMergedAt": null,
+        "prClosedAt": "2026-07-01T05:49:02Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-net#60464",
+            "createdAt": "2026-06-30T10:57:13Z",
+            "mergedAt": null,
+            "closedAt": "2026-07-01T05:49:02Z",
+            "state": "closed"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6499933",
+        "generationStartAt": "2026-06-30T10:49:29.7748041Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "JavaScript",
+        "package": "@azure/arm-informaticadatamanagement",
+        "trackId": "sdk:JavaScript:@azure/arm-informaticadatamanagement",
+        "prId": "github:Azure/azure-sdk-for-js#39143",
+        "prCreatedAt": "2026-06-30T10:57:21Z",
+        "prMergedAt": null,
+        "prClosedAt": "2026-07-01T05:48:56Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-js#39143",
+            "createdAt": "2026-06-30T10:57:21Z",
+            "mergedAt": null,
+            "closedAt": "2026-07-01T05:48:56Z",
+            "state": "closed"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6499936",
+        "generationStartAt": "2026-06-30T10:50:11.9678159Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Python",
+        "package": "azure-mgmt-informaticadatamanagement",
+        "trackId": "sdk:Python:azure-mgmt-informaticadatamanagement",
+        "prId": "github:Azure/azure-sdk-for-python#47771",
+        "prCreatedAt": "2026-06-30T10:58:38Z",
+        "prMergedAt": null,
+        "prClosedAt": "2026-07-01T05:48:46Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-python#47771",
+            "createdAt": "2026-06-30T10:58:38Z",
+            "mergedAt": null,
+            "closedAt": "2026-07-01T05:48:46Z",
+            "state": "closed"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6499935",
+        "generationStartAt": "2026-06-30T10:50:34.7895167Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Java",
+        "package": "azure-resourcemanager-informaticadatamanagement",
+        "trackId": "sdk:Java:azure-resourcemanager-informaticadatamanagement",
+        "prId": "github:Azure/azure-sdk-for-java#49677",
+        "prCreatedAt": "2026-06-30T11:00:48Z",
+        "prMergedAt": null,
+        "prClosedAt": "2026-07-01T05:48:36Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-java#49677",
+            "createdAt": "2026-06-30T11:00:48Z",
+            "mergedAt": null,
+            "closedAt": "2026-07-01T05:48:36Z",
+            "state": "closed"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6499937",
+        "generationStartAt": "2026-06-30T10:50:48.3181268Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Go",
+        "package": "sdk/resourcemanager/informaticadatamgmt/arminformaticadatamgmt",
+        "trackId": "sdk:Go:sdk/resourcemanager/informaticadatamgmt/arminformaticadatamgmt",
+        "prId": "github:Azure/azure-sdk-for-go#27120",
+        "prCreatedAt": "2026-06-30T10:54:57Z",
+        "prMergedAt": null,
+        "prClosedAt": "2026-07-01T05:48:19Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-go#27120",
+            "createdAt": "2026-06-30T10:54:57Z",
+            "mergedAt": null,
+            "closedAt": "2026-07-01T05:48:19Z",
+            "state": "closed"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6499934",
+        "generationStartAt": "2026-06-30T10:49:34.4449863Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      }
+    ],
+    "cohortPlan": {
+      "id": "35145",
+      "releasePlanId": "35145",
+      "title": "GA release plan for Informatica.DataManagement.Management",
+      "service": "Informatica.DataManagement.Management",
+      "state": "abandoned"
+    },
+    "quality": {
+      "warnings": [
+        "5 historical linked PR(s) closed without merge"
+      ],
+      "unavailablePullRequests": 0,
+      "unavailablePipelineRuns": 0
+    }
+  },
+  "summary": {
+    "durationHours": 867.7,
+    "pullRequestCount": 6,
+    "humanReviewCount": 5,
+    "humanCommentCount": 5
+  }
+}

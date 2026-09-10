@@ -1,0 +1,3742 @@
+{
+  "schemaVersion": 2,
+  "id": "35044",
+  "correlation": {
+    "policyVersion": 1,
+    "preflight": "passed"
+  },
+  "releasePlanId": "35044",
+  "title": "Public Preview release plan for MongoDB.Atlas.Management",
+  "service": "MongoDB.Atlas.Management",
+  "product": "Release",
+  "path": "specification/liftrmongodb/MongoDB.Atlas.Management",
+  "state": "finished",
+  "plane": "management",
+  "releaseType": "APEX Public Preview",
+  "intendedMonth": "July 2026",
+  "createdAt": "2026-06-20T14:11:35.33Z",
+  "completedAt": "2026-07-12T07:09:53.15Z",
+  "sourceUrl": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35044",
+  "range": {
+    "start": "2026-06-05T11:56:50.000Z",
+    "end": "2026-07-12T07:09:53.150Z"
+  },
+  "intendedArtifacts": [
+    {
+      "prId": "github:Azure/azure-sdk-for-net#60084",
+      "language": ".NET",
+      "package": "Azure.ResourceManager.MongoDBAtlas",
+      "version": "1.1.0-beta.1",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6477194",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-js#39021",
+      "language": "JavaScript",
+      "package": "@azure/arm-mongodbatlas",
+      "version": "1.1.0-beta.1",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6461789",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-python#47585",
+      "language": "Python",
+      "package": "azure-mgmt-mongodbatlas",
+      "version": "1.1.0b1",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6461788",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-java#49580",
+      "language": "Java",
+      "package": "azure-resourcemanager-mongodbatlas",
+      "version": "1.1.0-beta.1",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6461791",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-go#27037",
+      "language": "Go",
+      "package": "sdk/resourcemanager/mongodbatlas/armmongodbatlas",
+      "version": "1.1.0-beta.1",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6461787",
+      "releasePipelineUrl": null
+    }
+  ],
+  "links": [
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#44132",
+      "role": "spec-pr-history",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/44132",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#43780",
+      "role": "spec-pr",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/43780",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-net#60084",
+      "role": "sdk-pr",
+      "language": ".NET",
+      "url": "https://github.com/Azure/azure-sdk-for-net/pull/60084",
+      "releasePlanIds": [
+        "35044"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-js#39021",
+      "role": "sdk-pr",
+      "language": "JavaScript",
+      "url": "https://github.com/Azure/azure-sdk-for-js/pull/39021",
+      "releasePlanIds": [
+        "35044"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-python#47585",
+      "role": "sdk-pr",
+      "language": "Python",
+      "url": "https://github.com/Azure/azure-sdk-for-python/pull/47585",
+      "releasePlanIds": [
+        "35044"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-python#47617",
+      "role": "sdk-pr-history",
+      "language": "Python",
+      "url": "https://github.com/Azure/azure-sdk-for-python/pull/47617",
+      "releasePlanIds": [
+        "35044"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-java#49580",
+      "role": "sdk-pr",
+      "language": "Java",
+      "url": "https://github.com/Azure/azure-sdk-for-java/pull/49580",
+      "releasePlanIds": [
+        "35044"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-go#27037",
+      "role": "sdk-pr",
+      "language": "Go",
+      "url": "https://github.com/Azure/azure-sdk-for-go/pull/27037",
+      "releasePlanIds": [
+        "35044"
+      ]
+    }
+  ],
+  "tracks": [
+    {
+      "id": "plan",
+      "kind": "plan",
+      "label": "Release Plan",
+      "detail": "APEX Public Preview"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#44132",
+      "kind": "spec",
+      "label": "Spec PR 1",
+      "detail": "azure-rest-api-specs #44132",
+      "artifactId": "github:Azure/azure-rest-api-specs#44132",
+      "state": "merged"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#43780",
+      "kind": "spec",
+      "label": "Spec PR 2",
+      "detail": "azure-rest-api-specs #43780",
+      "artifactId": "github:Azure/azure-rest-api-specs#43780",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "kind": "sdk",
+      "label": ".NET",
+      "detail": "Azure.ResourceManager.MongoDBAtlas",
+      "artifactId": "github:Azure/azure-sdk-for-net#60084",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:JavaScript:@azure/arm-mongodbatlas",
+      "kind": "sdk",
+      "label": "JavaScript",
+      "detail": "@azure/arm-mongodbatlas",
+      "artifactId": "github:Azure/azure-sdk-for-js#39021",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Python:azure-mgmt-mongodbatlas",
+      "kind": "sdk",
+      "label": "Python",
+      "detail": "azure-mgmt-mongodbatlas",
+      "artifactId": "github:Azure/azure-sdk-for-python#47585",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Java:azure-resourcemanager-mongodbatlas",
+      "kind": "sdk",
+      "label": "Java",
+      "detail": "azure-resourcemanager-mongodbatlas",
+      "artifactId": "github:Azure/azure-sdk-for-java#49580",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Go:sdk/resourcemanager/mongodbatlas/armmongodbatlas",
+      "kind": "sdk",
+      "label": "Go",
+      "detail": "sdk/resourcemanager/mongodbatlas/armmongodbatlas",
+      "artifactId": "github:Azure/azure-sdk-for-go#27037",
+      "state": "merged"
+    }
+  ],
+  "events": [
+    {
+      "id": "github:Azure/azure-rest-api-specs#43780:pr.created:spec:github:Azure/azure-rest-api-specs#43780",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-05T11:56:50Z",
+      "observedAt": "2026-06-05T11:56:50Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43780",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "sharmaanuj334"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43780",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43780"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43780:comment:4631340420:spec:github:Azure/azure-rest-api-specs#43780",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-05T11:58:20Z",
+      "observedAt": "2026-06-05T11:58:20Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43780",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43780",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43780#issuecomment-4631340420"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>✅ All automated merging requirements have been met! To get your PR merged, see <a href=\"https://aka.ms/azsdk/specreview/merge\">aka.ms/azsdk/specreview/merge</a>.<br /><br />Comment generated by <a href=\"https://g",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43780:comment:4631366434:spec:github:Azure/azure-rest-api-specs#43780",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-05T12:02:38Z",
+      "observedAt": "2026-06-05T12:02:38Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43780",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43780",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43780#issuecomment-4631366434"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews | Language | API Review for Package | |----------|---------| | Swagger | [MongoDB.Atlas](https://apiview.dev/Assemblies/Review/6fa79c5",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43780:commit:055d45eab1c6:spec:github:Azure/azure-rest-api-specs#43780",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-08T07:23:43Z",
+      "observedAt": "2026-06-08T07:23:43Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43780",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "sharmaanuj334"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43780",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/055d45eab1c6977c4f49bc3e38bf9d811554e067"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43780:review:4447667055:spec:github:Azure/azure-rest-api-specs#43780",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-08T08:21:48Z",
+      "observedAt": "2026-06-08T08:21:48Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43780",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "samsaha-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43780",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43780#pullrequestreview-4447667055"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43780:comment:3371709119:spec:github:Azure/azure-rest-api-specs#43780",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-08T08:21:48Z",
+      "observedAt": "2026-06-08T08:21:48Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43780",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "samsaha-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43780",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43780#discussion_r3371709119"
+      },
+      "confidence": "authoritative",
+      "excerpt": "For which API this suppression is added?",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43780:review:4447799756:spec:github:Azure/azure-rest-api-specs#43780",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-08T08:43:44Z",
+      "observedAt": "2026-06-08T08:43:44Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43780",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "sharmaanuj334"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43780",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43780#pullrequestreview-4447799756"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43780:comment:3371826494:spec:github:Azure/azure-rest-api-specs#43780",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-08T08:43:44Z",
+      "observedAt": "2026-06-08T08:43:44Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43780",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "sharmaanuj334"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43780",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43780#discussion_r3371826494"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This `RepeatedPathInfo` suppression in the readme applies to the **Projects** and **Clusters** APIs added in this PR (2026-03-01-preview). The linter flags `projectName` and `clusterName` in the resource properties as repeating path info, b",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43780:review:4448044681:spec:github:Azure/azure-rest-api-specs#43780",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-08T09:20:24Z",
+      "observedAt": "2026-06-08T09:20:24Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43780",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "samsaha-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43780",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43780#pullrequestreview-4448044681"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43780:pr.merged:spec:github:Azure/azure-rest-api-specs#43780",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-08T09:20:27Z",
+      "observedAt": "2026-06-08T09:20:27Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43780",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43780",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43780"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:35044:created",
+      "type": "plan.created",
+      "phase": "plan",
+      "occurredAt": "2026-06-20T14:11:35.33Z",
+      "observedAt": "2026-06-20T14:11:35.33Z",
+      "trackId": "plan",
+      "title": "Release Plan created",
+      "confidence": "authoritative",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35044",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35044"
+      },
+      "stack": 0
+    },
+    {
+      "id": "ado:35044:1:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-06-20T14:11:35.33Z",
+      "observedAt": "2026-06-20T14:11:35.33Z",
+      "trackId": "plan",
+      "value": "New",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35044",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35044"
+      },
+      "title": "Plan state changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35044:1:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-20T14:11:35.33Z",
+      "observedAt": "2026-06-20T14:11:35.33Z",
+      "trackId": "plan",
+      "value": "Not Available",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35044",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35044"
+      },
+      "title": "Spec approval changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:35044:1:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-20T14:11:35.33Z",
+      "observedAt": "2026-06-20T14:11:35.33Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35044",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35044"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35044:1:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-20T14:11:35.33Z",
+      "observedAt": "2026-06-20T14:11:35.33Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongodbatlas",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35044",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35044"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35044:1:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-20T14:11:35.33Z",
+      "observedAt": "2026-06-20T14:11:35.33Z",
+      "trackId": "sdk:Python:azure-mgmt-mongodbatlas",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35044",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35044"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35044:1:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-20T14:11:35.33Z",
+      "observedAt": "2026-06-20T14:11:35.33Z",
+      "trackId": "sdk:Java:azure-resourcemanager-mongodbatlas",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35044",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35044"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35044:1:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-20T14:11:35.33Z",
+      "observedAt": "2026-06-20T14:11:35.33Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/mongodbatlas/armmongodbatlas",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35044",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35044"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35045:1:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-20T14:11:35.853Z",
+      "observedAt": "2026-06-20T14:11:35.853Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43780",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/43780",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35045",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35045"
+      },
+      "title": "Spec PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado:35044:2:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-06-20T14:11:37.133Z",
+      "observedAt": "2026-06-20T14:11:37.133Z",
+      "trackId": "plan",
+      "value": "In Progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35044",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35044"
+      },
+      "title": "Plan state changed",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6461789:generation.queued:sdk:JavaScript:@azure/arm-mongodbatlas",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-06-20T14:13:51.0728383Z",
+      "observedAt": "2026-06-20T14:25:06.4543495Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongodbatlas",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6461789",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6461789"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6461788:generation.queued:sdk:Python:azure-mgmt-mongodbatlas",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-06-20T14:13:51.102304Z",
+      "observedAt": "2026-06-20T14:25:58.799519Z",
+      "trackId": "sdk:Python:azure-mgmt-mongodbatlas",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6461788",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6461788"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6461787:generation.queued:sdk:Go:sdk/resourcemanager/mongodbatlas/armmongodbatlas",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-06-20T14:13:51.1576856Z",
+      "observedAt": "2026-06-20T14:24:23.6462171Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/mongodbatlas/armmongodbatlas",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6461787",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6461787"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6461791:generation.queued:sdk:Java:azure-resourcemanager-mongodbatlas",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-06-20T14:13:51.5766117Z",
+      "observedAt": "2026-06-20T14:37:14.7596728Z",
+      "trackId": "sdk:Java:azure-resourcemanager-mongodbatlas",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6461791",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6461791"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:35044:4:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-20T14:13:55.51Z",
+      "observedAt": "2026-06-20T14:13:55.51Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/mongodbatlas/armmongodbatlas",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35044",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35044"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:35044:5:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-20T14:13:55.727Z",
+      "observedAt": "2026-06-20T14:13:55.727Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35044",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35044"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35044:6:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-20T14:13:56.83Z",
+      "observedAt": "2026-06-20T14:13:56.83Z",
+      "trackId": "sdk:Java:azure-resourcemanager-mongodbatlas",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35044",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35044"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:35044:7:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-20T14:13:57.107Z",
+      "observedAt": "2026-06-20T14:13:57.107Z",
+      "trackId": "sdk:Python:azure-mgmt-mongodbatlas",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35044",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35044"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:35044:8:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-20T14:13:59.707Z",
+      "observedAt": "2026-06-20T14:13:59.707Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongodbatlas",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35044",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35044"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6461789:generation.started:sdk:JavaScript:@azure/arm-mongodbatlas",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-06-20T14:18:03.225108Z",
+      "observedAt": "2026-06-20T14:25:06.4543495Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongodbatlas",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6461789",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6461789"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6461787:generation.started:sdk:Go:sdk/resourcemanager/mongodbatlas/armmongodbatlas",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-06-20T14:18:26.660998Z",
+      "observedAt": "2026-06-20T14:24:23.6462171Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/mongodbatlas/armmongodbatlas",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6461787",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6461787"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6461791:generation.started:sdk:Java:azure-resourcemanager-mongodbatlas",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-06-20T14:18:34.4181858Z",
+      "observedAt": "2026-06-20T14:37:14.7596728Z",
+      "trackId": "sdk:Java:azure-resourcemanager-mongodbatlas",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6461791",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6461791"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6461788:generation.started:sdk:Python:azure-mgmt-mongodbatlas",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-06-20T14:18:35.8151698Z",
+      "observedAt": "2026-06-20T14:25:58.799519Z",
+      "trackId": "sdk:Python:azure-mgmt-mongodbatlas",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6461788",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6461788"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado:35044:10:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-20T14:19:15.41Z",
+      "observedAt": "2026-06-20T14:19:15.41Z",
+      "trackId": "plan",
+      "value": "Approved",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35044",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35044"
+      },
+      "title": "Spec approval changed",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27037:commit:2fedb5c2cf18:sdk:Go:sdk/resourcemanager/mongodbatlas/armmongodbatlas",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-20T14:23:17Z",
+      "observedAt": "2026-06-20T14:23:17Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/mongodbatlas/armmongodbatlas",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27037",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/2fedb5c2cf18ff39921e93e9899879afea805922"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27037:pr.created:sdk:Go:sdk/resourcemanager/mongodbatlas/armmongodbatlas",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-20T14:23:21Z",
+      "observedAt": "2026-06-20T14:23:21Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/mongodbatlas/armmongodbatlas",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27037",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27037"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:35044:11:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-20T14:23:28.933Z",
+      "observedAt": "2026-06-20T14:23:28.933Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/mongodbatlas/armmongodbatlas",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35044",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35044"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35044:11:Custom.SDKPullRequestForGo",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-06-20T14:23:28.933Z",
+      "observedAt": "2026-06-20T14:23:28.933Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/mongodbatlas/armmongodbatlas",
+      "value": "https://github.com/Azure/azure-sdk-for-go/pull/27037",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35044",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35044"
+      },
+      "title": "SDK PR linked",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39021:commit:8100c9d98998:sdk:JavaScript:@azure/arm-mongodbatlas",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-20T14:23:50Z",
+      "observedAt": "2026-06-20T14:23:50Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongodbatlas",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39021",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/8100c9d98998c779161e1413872f929475bb7e0b"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39021:pr.created:sdk:JavaScript:@azure/arm-mongodbatlas",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-20T14:23:54Z",
+      "observedAt": "2026-06-20T14:23:54Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongodbatlas",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39021",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39021"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:35044:12:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-20T14:24:02.04Z",
+      "observedAt": "2026-06-20T14:24:02.04Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongodbatlas",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35044",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35044"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35044:12:Custom.SDKPullRequestForJavaScript",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-06-20T14:24:02.04Z",
+      "observedAt": "2026-06-20T14:24:02.04Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongodbatlas",
+      "value": "https://github.com/Azure/azure-sdk-for-js/pull/39021",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35044",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35044"
+      },
+      "title": "SDK PR linked",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60084:commit:19fbe8927d32:sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-20T14:24:14Z",
+      "observedAt": "2026-06-20T14:24:14Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60084",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/19fbe8927d32d426e62f6fbb41aa78d39a87a0de"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60084:pr.created:sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-20T14:24:17Z",
+      "observedAt": "2026-06-20T14:24:17Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60084",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60084"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6461787:generation.completed:sdk:Go:sdk/resourcemanager/mongodbatlas/armmongodbatlas",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-06-20T14:24:23.6462171Z",
+      "observedAt": "2026-06-20T14:24:23.6462171Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/mongodbatlas/armmongodbatlas",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6461787",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6461787"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:35044:13:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-20T14:24:24.19Z",
+      "observedAt": "2026-06-20T14:24:24.19Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35044",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35044"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:35044:13:Custom.SDKPullRequestForDotnet",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-06-20T14:24:24.19Z",
+      "observedAt": "2026-06-20T14:24:24.19Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "value": "https://github.com/Azure/azure-sdk-for-net/pull/60084",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35044",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35044"
+      },
+      "title": "SDK PR linked",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47585:commit:1201b6748dec:sdk:Python:azure-mgmt-mongodbatlas",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-20T14:24:45Z",
+      "observedAt": "2026-06-20T14:24:45Z",
+      "trackId": "sdk:Python:azure-mgmt-mongodbatlas",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47585",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/1201b6748dec55fa8bafe9ebfbec665a616280d4"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47585:pr.created:sdk:Python:azure-mgmt-mongodbatlas",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-20T14:24:49Z",
+      "observedAt": "2026-06-20T14:24:49Z",
+      "trackId": "sdk:Python:azure-mgmt-mongodbatlas",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47585",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47585"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:35044:14:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-20T14:24:56.677Z",
+      "observedAt": "2026-06-20T14:24:56.677Z",
+      "trackId": "sdk:Python:azure-mgmt-mongodbatlas",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35044",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35044"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35044:14:Custom.SDKPullRequestForPython",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-06-20T14:24:56.677Z",
+      "observedAt": "2026-06-20T14:24:56.677Z",
+      "trackId": "sdk:Python:azure-mgmt-mongodbatlas",
+      "value": "https://github.com/Azure/azure-sdk-for-python/pull/47585",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35044",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35044"
+      },
+      "title": "SDK PR linked",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6461789:generation.completed:sdk:JavaScript:@azure/arm-mongodbatlas",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-06-20T14:25:06.4543495Z",
+      "observedAt": "2026-06-20T14:25:06.4543495Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongodbatlas",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6461789",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6461789"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6461788:generation.completed:sdk:Python:azure-mgmt-mongodbatlas",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-06-20T14:25:58.799519Z",
+      "observedAt": "2026-06-20T14:25:58.799519Z",
+      "trackId": "sdk:Python:azure-mgmt-mongodbatlas",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6461788",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6461788"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27037:review:4537877575:sdk:Go:sdk/resourcemanager/mongodbatlas/armmongodbatlas",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-20T14:26:10Z",
+      "observedAt": "2026-06-20T14:26:10Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/mongodbatlas/armmongodbatlas",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27037",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27037#pullrequestreview-4537877575"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This PR is an automated SDK regeneration for the `armmongodbatlas` management module, advancing it from the stable `2025-06-01` API version (module `v1.0.0`) to the preview `2026-03-01-preview` API version as a beta",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49580:commit:93618e527629:sdk:Java:azure-resourcemanager-mongodbatlas",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-20T14:26:25Z",
+      "observedAt": "2026-06-20T14:26:25Z",
+      "trackId": "sdk:Java:azure-resourcemanager-mongodbatlas",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49580",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/93618e527629bbb0cdbc32294afb8af00516f0b4"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49580:pr.created:sdk:Java:azure-resourcemanager-mongodbatlas",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-20T14:26:29Z",
+      "observedAt": "2026-06-20T14:26:29Z",
+      "trackId": "sdk:Java:azure-resourcemanager-mongodbatlas",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49580",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49580"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:35044:16:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-20T14:26:36.77Z",
+      "observedAt": "2026-06-20T14:26:36.77Z",
+      "trackId": "sdk:Java:azure-resourcemanager-mongodbatlas",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35044",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35044"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35044:16:Custom.SDKPullRequestForJava",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-06-20T14:26:36.77Z",
+      "observedAt": "2026-06-20T14:26:36.77Z",
+      "trackId": "sdk:Java:azure-resourcemanager-mongodbatlas",
+      "value": "https://github.com/Azure/azure-sdk-for-java/pull/49580",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35044",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35044"
+      },
+      "title": "SDK PR linked",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47585:review:4537885192:sdk:Python:azure-mgmt-mongodbatlas",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-20T14:27:55Z",
+      "observedAt": "2026-06-20T14:27:55Z",
+      "trackId": "sdk:Python:azure-mgmt-mongodbatlas",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47585",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47585#pullrequestreview-4537885192"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This is an auto-generated PR (AutoPR) that regenerates the `azure-mgmt-mongodbatlas` management SDK from a newer TypeSpec spec (API version `2026-03-01-preview`, commit `18ebae7`) using a newer emitter (`0.45.5` → `",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39021:review:4537895824:sdk:JavaScript:@azure/arm-mongodbatlas",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-20T14:30:41Z",
+      "observedAt": "2026-06-20T14:30:41Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongodbatlas",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39021",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39021#pullrequestreview-4537895824"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This PR is an automated regeneration of the `@azure/arm-mongodbatlas` management SDK against API version `2026-03-01-preview`, bumping the package from `1.0.1` to the beta `1.1.0-beta.1`. It expands the public API s",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49580:comment:3446651453:sdk:Java:azure-resourcemanager-mongodbatlas",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-20T14:31:26Z",
+      "observedAt": "2026-06-20T14:31:26Z",
+      "trackId": "sdk:Java:azure-resourcemanager-mongodbatlas",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49580",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49580#discussion_r3446651453"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`Projects.getById(String)` returns a `Project`, but the JavaDoc says it returns a Project \"along with Response\". This is misleading for users skimming the API docs.",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49580:review:4537899216:sdk:Java:azure-resourcemanager-mongodbatlas",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-20T14:31:27Z",
+      "observedAt": "2026-06-20T14:31:27Z",
+      "trackId": "sdk:Java:azure-resourcemanager-mongodbatlas",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49580",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49580#pullrequestreview-4537899216"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This PR is an automated TypeSpec regeneration for `azure-resourcemanager-mongodbatlas`, updating the pinned swagger/spec commit and moving the SDK to API version **2026-03-01-preview** (beta), including newly genera",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49580:comment:3446651473:sdk:Java:azure-resourcemanager-mongodbatlas",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-20T14:31:27Z",
+      "observedAt": "2026-06-20T14:31:27Z",
+      "trackId": "sdk:Java:azure-resourcemanager-mongodbatlas",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49580",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49580#discussion_r3446651473"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`Clusters.getById(String)` returns a `Cluster`, but the JavaDoc says it returns a Cluster \"along with Response\". This is inaccurate and can confuse users about what they get back.",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60084:comment:3446672304:sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-20T14:36:48Z",
+      "observedAt": "2026-06-20T14:36:48Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60084",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60084#discussion_r3446672304"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The continuation token returned from AsPages() is currently derived from the URI used to fetch the *current* page (`nextPage`), not the service-provided `NextLink` for the *next* page (`result.NextLink`). This makes the page continuation to",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60084:comment:3446672315:sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-20T14:36:48Z",
+      "observedAt": "2026-06-20T14:36:48Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60084",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60084#discussion_r3446672315"
+      },
+      "confidence": "authoritative",
+      "excerpt": "AsPages() should return a continuation token for the *next* page (`result.NextLink`), but the current implementation uses the URI used to fetch the current page (`nextPage`). This makes the continuation token unusable for resuming paging fr",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60084:comment:3446672323:sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-20T14:36:48Z",
+      "observedAt": "2026-06-20T14:36:48Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60084",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60084#discussion_r3446672323"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The continuation token on the returned Page should be based on the response's `NextLink` (`result.NextLink`), not the URI used to fetch the current page (`nextPage`). Using `nextPage` breaks token-based paging resumption via AsPages().",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60084:comment:3446672329:sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-20T14:36:48Z",
+      "observedAt": "2026-06-20T14:36:48Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60084",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60084#discussion_r3446672329"
+      },
+      "confidence": "authoritative",
+      "excerpt": "AsPages() currently sets the Page continuation token from `nextPage` (the current request URI) rather than `result.NextLink` (the next-page link). This produces an incorrect continuation token for callers that page manually using AsPages().",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60084:comment:3446672347:sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-20T14:36:49Z",
+      "observedAt": "2026-06-20T14:36:49Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60084",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60084#discussion_r3446672347"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Type names ending in \"Response\" are discouraged in Azure .NET mgmt SDKs because they read like protocol-layer shapes. Consider renaming this model to a \"Result\" (for example, `TierLimitReachedResult`) and updating the corresponding operatio",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60084:comment:3446672359:sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-20T14:36:49Z",
+      "observedAt": "2026-06-20T14:36:49Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60084",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60084#discussion_r3446672359"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Per mgmt naming guidelines, avoid public model names ending with \"Response\". Consider renaming this to a \"Result\" type (e.g., `RegionsByTierResult`) and updating the corresponding operation return types.",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60084:comment:3446672374:sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-20T14:36:49Z",
+      "observedAt": "2026-06-20T14:36:49Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60084",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60084#discussion_r3446672374"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`Regions` is exposed as `IList<string>` but is a get-only property. For response/read-only models, the mgmt SDKs typically prefer `IReadOnlyList<T>` to avoid implying callers can mutate the model state. Consider changing this to `IReadOnlyL",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60084:comment:3446672398:sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-20T14:36:49Z",
+      "observedAt": "2026-06-20T14:36:49Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60084",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60084#discussion_r3446672398"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`ProjectResource`/`ProjectData`/`ProjectCollection` are very generic names and are likely to collide with other ARM SDKs (many resource providers have their own “Project” resources). Mgmt naming guidance (RESNAME001/contextual naming) recom",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60084:comment:3446672417:sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-20T14:36:50Z",
+      "observedAt": "2026-06-20T14:36:50Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60084",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60084#discussion_r3446672417"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This PR introduces a new public resource type (`ProjectResource`), but the package API listing files under `api/` currently do not include `ProjectResource` (or the related project/cluster types). Please regenerate and commit the API listin",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60084:comment:3446672438:sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-20T14:36:50Z",
+      "observedAt": "2026-06-20T14:36:50Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60084",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60084#discussion_r3446672438"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`ClusterResource`/`ClusterData`/`ClusterCollection` are very generic names for a management-plane API and are likely to conflict with other ARM SDKs. Consider renaming the resource trio to include RP/domain context (e.g., `MongoDBAtlasClust",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60084:comment:3446672453:sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-20T14:36:50Z",
+      "observedAt": "2026-06-20T14:36:50Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60084",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60084#discussion_r3446672453"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Public static members on extensible-enum structs should follow .NET PascalCase naming. `FREE`/`FLEX` are all-caps and stand out from the typical Azure SDK pattern (`Free`, `Flex`, etc.). Consider renaming these members (while keeping the un",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60084:comment:3446672468:sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-20T14:36:50Z",
+      "observedAt": "2026-06-20T14:36:50Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60084",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60084#discussion_r3446672468"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The `<see cref=\"MongoDBAtlas.ProjectData\"/>` reference doesn't appear to resolve to an actual type/namespace from this context (the type is `ProjectData` in `Azure.ResourceManager.MongoDBAtlas`). Unresolvable `cref` values can generate XML ",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60084:comment:3446672477:sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-20T14:36:50Z",
+      "observedAt": "2026-06-20T14:36:50Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60084",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60084#discussion_r3446672477"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The `<see cref=\"MongoDBAtlas.ClusterData\"/>` cref likely doesn't resolve (the type is `ClusterData` in `Azure.ResourceManager.MongoDBAtlas`). Consider changing the cref to `ClusterData` (or fully-qualifying it) to avoid XML doc warnings and",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60084:review:4537922500:sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-20T14:36:51Z",
+      "observedAt": "2026-06-20T14:36:51Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60084",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60084#pullrequestreview-4537922500"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This AutoPR updates the `Azure.ResourceManager.MongoDBAtlas` management SDK generated output from the TypeSpec configuration at `specification/liftrmongodb/MongoDB.Atlas.Management` (commit `18ebae7e…`) and moves th",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:6461791:generation.completed:sdk:Java:azure-resourcemanager-mongodbatlas",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-06-20T14:37:14.7596728Z",
+      "observedAt": "2026-06-20T14:37:14.7596728Z",
+      "trackId": "sdk:Java:azure-resourcemanager-mongodbatlas",
+      "title": "Pipeline completed with issues",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6461791",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6461791"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60084:review:4537944428:sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-20T14:42:51Z",
+      "observedAt": "2026-06-20T14:42:51Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60084",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60084#pullrequestreview-4537944428"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60084:comment:3446691676:sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-20T14:42:52Z",
+      "observedAt": "2026-06-20T14:42:52Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60084",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60084#discussion_r3446691676"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[RESNAME001]** The resource trio `ClusterResource` / `ClusterData` / `ClusterCollection` is missing RP/domain context. After stripping the `Resource`, `Data`, and `Collection` suffixes, the base noun `Cluster` is too generic — in IntelliS",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60084:comment:3446691680:sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-20T14:42:52Z",
+      "observedAt": "2026-06-20T14:42:52Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60084",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60084#discussion_r3446691680"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[RESNAME001]** The resource trio `ProjectResource` / `ProjectData` / `ProjectCollection` is missing RP/domain context. After stripping the suffixes, `Project` is extremely generic — in IntelliSense it is indistinguishable from Azure DevOp",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60084:comment:3446691685:sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-20T14:42:52Z",
+      "observedAt": "2026-06-20T14:42:52Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60084",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60084#discussion_r3446691685"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[Contextual naming]** `ClusterProperties` is an unprefixed `*Properties` model. The naming guidelines call out unprefixed `*Properties` models as needing extra attention — without the RP prefix, `ClusterProperties` could be any service's ",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60084:comment:3446691689:sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-20T14:42:52Z",
+      "observedAt": "2026-06-20T14:42:52Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60084",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60084#discussion_r3446691689"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[BOOL001]** The bool property `Backups` is missing the required `Is`/`Has`/`Can`/etc. prefix. The rule requires boolean properties to start with `Is`, `Can`, `Has`, `Does`, `Should`, `Allow`, `Enable`, `Disable`, `Use`, or `Support`. Rena",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60084:comment:3446691692:sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-20T14:42:52Z",
+      "observedAt": "2026-06-20T14:42:52Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60084",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60084#discussion_r3446691692"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[Contextual naming]** `ClusterTier` is missing the RP/domain context prefix. In IntelliSense, `ClusterTier` is ambiguous across many Azure services that have cluster tiers. Rename to `MongoDBAtlasClusterTier`. Fix via TypeSpec: ```typespe",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60084:comment:3446691695:sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-20T14:42:52Z",
+      "observedAt": "2026-06-20T14:42:52Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60084",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60084#discussion_r3446691695"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[Contextual naming / ACRONYM001]** The static members `FREE` and `FLEX` use ALL_CAPS, which violates .NET naming conventions. Public static members of extensible enum structs must use PascalCase. Rename: - `FREE` → `Free` - `FLEX` → `Flex",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49580:review:4540704124:sdk:Java:azure-resourcemanager-mongodbatlas",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-22T02:15:44Z",
+      "observedAt": "2026-06-22T02:15:44Z",
+      "trackId": "sdk:Java:azure-resourcemanager-mongodbatlas",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49580",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49580#pullrequestreview-4540704124"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39021:review:4540798129:sdk:JavaScript:@azure/arm-mongodbatlas",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-22T02:56:11Z",
+      "observedAt": "2026-06-22T02:56:11Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongodbatlas",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39021",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39021#pullrequestreview-4540798129"
+      },
+      "confidence": "authoritative",
+      "excerpt": "No API design issues found. The `@azure/arm-mongodbatlas` package version `1.1.0-beta.1` is consistent across `package.json`, `atlasContext.ts`, and `CHANGELOG.md`; the new API version `2026-03-01-preview` is strictly newer than the existin",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44132:commit:449dbbc0f70e:spec:github:Azure/azure-rest-api-specs#44132",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-22T09:37:16Z",
+      "observedAt": "2026-06-22T09:37:16Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44132",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "sharmaanuj334"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44132",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/449dbbc0f70ea2ba3e9e0f3bd33215c258498280"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44132:pr.created:spec:github:Azure/azure-rest-api-specs#44132",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-22T09:38:32Z",
+      "observedAt": "2026-06-22T09:38:32Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44132",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "sharmaanuj334"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44132",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44132"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60084:comment:4766926645:sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-22T09:39:04Z",
+      "observedAt": "2026-06-22T09:39:04Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "sharmaanuj334"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60084",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60084#issuecomment-4766926645"
+      },
+      "confidence": "authoritative",
+      "excerpt": "### Naming fix moved to the spec source The `MongoDBAtlas*` naming for the Project/Cluster resources is now being fixed upstream in the spec via **Azure/azure-rest-api-specs#44132**. That PR adds `@@clientName` decorators in `client.tsp` so",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44132:comment:4766927955:spec:github:Azure/azure-rest-api-specs#44132",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-22T09:39:15Z",
+      "observedAt": "2026-06-22T09:39:15Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44132",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44132",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44132#issuecomment-4766927955"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>✅ All automated merging requirements have been met! To get your PR merged, see <a href=\"https://aka.ms/azsdk/specreview/merge\">aka.ms/azsdk/specreview/merge</a>.<br /><br />Comment generated by <a href=\"https://g",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44132:comment:4767007476:spec:github:Azure/azure-rest-api-specs#44132",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-22T09:49:35Z",
+      "observedAt": "2026-06-22T09:49:35Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44132",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44132",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44132#issuecomment-4767007476"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews | Language | API Review for Package | |----------|---------| | TypeSpec | [MongoDB.Atlas](https://spa.apiview.dev/review/3e614162f6e54",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27037:review:4549592557:sdk:Go:sdk/resourcemanager/mongodbatlas/armmongodbatlas",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-23T02:40:24Z",
+      "observedAt": "2026-06-23T02:40:24Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/mongodbatlas/armmongodbatlas",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "JiaqiZhang-Dev"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27037",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27037#pullrequestreview-4549592557"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47585:commit:968824edb15b:sdk:Python:azure-mgmt-mongodbatlas",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-23T03:24:53Z",
+      "observedAt": "2026-06-23T03:24:53Z",
+      "trackId": "sdk:Python:azure-mgmt-mongodbatlas",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47585",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/968824edb15b93e6734c38d7c46f1c0716ef20a6"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47585:review:4549765861:sdk:Python:azure-mgmt-mongodbatlas",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-23T03:29:32Z",
+      "observedAt": "2026-06-23T03:29:32Z",
+      "trackId": "sdk:Python:azure-mgmt-mongodbatlas",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47585",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47585#pullrequestreview-4549765861"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47585:review:4549773536:sdk:Python:azure-mgmt-mongodbatlas",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-23T03:31:46Z",
+      "observedAt": "2026-06-23T03:31:46Z",
+      "trackId": "sdk:Python:azure-mgmt-mongodbatlas",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47585",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47585#pullrequestreview-4549773536"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39021:comment:4776098741:sdk:JavaScript:@azure/arm-mongodbatlas",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-23T05:52:33Z",
+      "observedAt": "2026-06-23T05:52:33Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongodbatlas",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39021",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39021#issuecomment-4776098741"
+      },
+      "confidence": "authoritative",
+      "excerpt": "LGTM cc @JialinHuang803",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47585:commit:6db86359e9dd:sdk:Python:azure-mgmt-mongodbatlas",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-23T07:35:34Z",
+      "observedAt": "2026-06-23T07:35:34Z",
+      "trackId": "sdk:Python:azure-mgmt-mongodbatlas",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47585",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/6db86359e9dd4de40152a724f45bd242c9592b34"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44132:review:4552235588:spec:github:Azure/azure-rest-api-specs#44132",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-23T10:23:26Z",
+      "observedAt": "2026-06-23T10:23:26Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44132",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "nikhgup"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44132",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44132#pullrequestreview-4552235588"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47617:commit:16af657e2db1:sdk:Python:azure-mgmt-mongodbatlas",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-23T13:54:22Z",
+      "observedAt": "2026-06-23T13:54:22Z",
+      "trackId": "sdk:Python:azure-mgmt-mongodbatlas",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47617",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/16af657e2db1e6fc9514023e2dc691e241422866"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47617:pr.created:sdk:Python:azure-mgmt-mongodbatlas",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-23T13:54:26Z",
+      "observedAt": "2026-06-23T13:54:26Z",
+      "trackId": "sdk:Python:azure-mgmt-mongodbatlas",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47617",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47617"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:35044:17:Custom.SDKPullRequestForPython",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-06-23T13:54:33.317Z",
+      "observedAt": "2026-06-23T13:54:33.317Z",
+      "trackId": "sdk:Python:azure-mgmt-mongodbatlas",
+      "value": "https://github.com/Azure/azure-sdk-for-python/pull/47617",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35044",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35044"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47617:review:4553987216:sdk:Python:azure-mgmt-mongodbatlas",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-23T13:58:26Z",
+      "observedAt": "2026-06-23T13:58:26Z",
+      "trackId": "sdk:Python:azure-mgmt-mongodbatlas",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47617",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47617#pullrequestreview-4553987216"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This is an auto-generated SDK release PR for `azure-mgmt-mongodbatlas`, regenerated from TypeSpec at spec commit `47583cad…` against API version `2026-03-01-preview`. It upgrades the package from the stable `1.0.0` ",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47617:pr.closed:sdk:Python:azure-mgmt-mongodbatlas",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-23T13:58:42Z",
+      "observedAt": "2026-06-23T13:58:42Z",
+      "trackId": "sdk:Python:azure-mgmt-mongodbatlas",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47617",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47617"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47585:commit:67187a2841b4:sdk:Python:azure-mgmt-mongodbatlas",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-23T14:12:34Z",
+      "observedAt": "2026-06-23T14:12:34Z",
+      "trackId": "sdk:Python:azure-mgmt-mongodbatlas",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47585",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/67187a2841b4487cc04d7f70d40e071394818f4c"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado:35044:18:Custom.SDKPullRequestForPython",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-06-23T14:12:45.233Z",
+      "observedAt": "2026-06-23T14:12:45.233Z",
+      "trackId": "sdk:Python:azure-mgmt-mongodbatlas",
+      "value": "https://github.com/Azure/azure-sdk-for-python/pull/47585",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35044",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35044"
+      },
+      "title": "SDK PR linked",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39021:comment:4785336089:sdk:JavaScript:@azure/arm-mongodbatlas",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-24T02:23:25Z",
+      "observedAt": "2026-06-24T02:23:25Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongodbatlas",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39021",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39021#issuecomment-4785336089"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@copilot resolve conflicts",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39021:commit:4f4feafc5434:sdk:JavaScript:@azure/arm-mongodbatlas",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-24T02:27:36Z",
+      "observedAt": "2026-06-24T02:27:36Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongodbatlas",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39021",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/4f4feafc5434280bd8647a77ed6f064641cdd045"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39021:comment:4785355480:sdk:JavaScript:@azure/arm-mongodbatlas",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-24T02:27:51Z",
+      "observedAt": "2026-06-24T02:27:51Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongodbatlas",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39021",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39021#issuecomment-4785355480"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> @copilot resolve conflicts Conflicts resolved — merged `origin/main` and fixed the single conflict in `samples/v1-beta/typescript/package.json` by updating `@types/node` to `^22.0.0` (matching the `>=22.0.0` engine requirement used across",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47585:commit:3359e3e1cc23:sdk:Python:azure-mgmt-mongodbatlas",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-24T02:54:03Z",
+      "observedAt": "2026-06-24T02:54:03Z",
+      "trackId": "sdk:Python:azure-mgmt-mongodbatlas",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47585",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/3359e3e1cc238da71e98856821715f3e4466cf77"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47585:commit:4774a74e2a18:sdk:Python:azure-mgmt-mongodbatlas",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-24T02:56:53Z",
+      "observedAt": "2026-06-24T02:56:53Z",
+      "trackId": "sdk:Python:azure-mgmt-mongodbatlas",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47585",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/4774a74e2a1892f8efad79c24e4d9382cc27c9fc"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47585:commit:33c0cf657701:sdk:Python:azure-mgmt-mongodbatlas",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-24T03:07:46Z",
+      "observedAt": "2026-06-24T03:07:46Z",
+      "trackId": "sdk:Python:azure-mgmt-mongodbatlas",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47585",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/33c0cf65770111ea919232f37d40af238dbfc755"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47585:commit:ea88f4b28cf6:sdk:Python:azure-mgmt-mongodbatlas",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-24T03:12:54Z",
+      "observedAt": "2026-06-24T03:12:54Z",
+      "trackId": "sdk:Python:azure-mgmt-mongodbatlas",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47585",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/ea88f4b28cf6f6f901538a8a5c0d3bd6bbdfb905"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47585:comment:4785561854:sdk:Python:azure-mgmt-mongodbatlas",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-24T03:18:04Z",
+      "observedAt": "2026-06-24T03:18:04Z",
+      "trackId": "sdk:Python:azure-mgmt-mongodbatlas",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47585",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47585#issuecomment-4785561854"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi, @sharmaanuj334, this pr is ready. If no special request about release date, we will release this package soon.",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47585:review:4558827455:sdk:Python:azure-mgmt-mongodbatlas",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-24T03:37:58Z",
+      "observedAt": "2026-06-24T03:37:58Z",
+      "trackId": "sdk:Python:azure-mgmt-mongodbatlas",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47585",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47585#pullrequestreview-4558827455"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39021:comment:4786385985:sdk:JavaScript:@azure/arm-mongodbatlas",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-24T06:09:17Z",
+      "observedAt": "2026-06-24T06:09:17Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongodbatlas",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39021",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39021#issuecomment-4786385985"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Next Steps to Merge No further action is required from the service team. The SDK PR reviewer will handle the review and merge of this PR.",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39021:review:4560398444:sdk:JavaScript:@azure/arm-mongodbatlas",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-24T08:22:04Z",
+      "observedAt": "2026-06-24T08:22:04Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongodbatlas",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "JialinHuang803"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39021",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39021#pullrequestreview-4560398444"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44132:pr.merged:spec:github:Azure/azure-rest-api-specs#44132",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-24T14:17:47Z",
+      "observedAt": "2026-06-24T14:17:47Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44132",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44132",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44132"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39021:pr.merged:sdk:JavaScript:@azure/arm-mongodbatlas",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-24T14:19:42Z",
+      "observedAt": "2026-06-24T14:19:42Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongodbatlas",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39021",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39021"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47585:comment:4790251235:sdk:Python:azure-mgmt-mongodbatlas",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-24T14:20:40Z",
+      "observedAt": "2026-06-24T14:20:40Z",
+      "trackId": "sdk:Python:azure-mgmt-mongodbatlas",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "sharmaanuj334"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47585",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47585#issuecomment-4790251235"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> Hi, @sharmaanuj334, this pr is ready. If no special request about release date, we will release this package soon. Please do so after 1st July 2026, that is our deadline for publishing to portal also",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47585:pr.merged:sdk:Python:azure-mgmt-mongodbatlas",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-24T14:20:49Z",
+      "observedAt": "2026-06-24T14:20:49Z",
+      "trackId": "sdk:Python:azure-mgmt-mongodbatlas",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47585",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47585"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49580:pr.merged:sdk:Java:azure-resourcemanager-mongodbatlas",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-24T14:21:01Z",
+      "observedAt": "2026-06-24T14:21:01Z",
+      "trackId": "sdk:Java:azure-resourcemanager-mongodbatlas",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49580",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49580"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27037:pr.merged:sdk:Go:sdk/resourcemanager/mongodbatlas/armmongodbatlas",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-24T14:21:05Z",
+      "observedAt": "2026-06-24T14:21:05Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/mongodbatlas/armmongodbatlas",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27037",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27037"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:35045:2:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-24T14:58:45.957Z",
+      "observedAt": "2026-06-24T14:58:45.957Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44132",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/44132",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35045",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35045"
+      },
+      "title": "Spec PR linked",
+      "stack": 1
+    },
+    {
+      "id": "ado:35044:19:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-24T14:58:46.723Z",
+      "observedAt": "2026-06-24T14:58:46.723Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35044",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35044"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35044:19:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-24T14:58:46.723Z",
+      "observedAt": "2026-06-24T14:58:46.723Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongodbatlas",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35044",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35044"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35044:19:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-24T14:58:46.723Z",
+      "observedAt": "2026-06-24T14:58:46.723Z",
+      "trackId": "sdk:Python:azure-mgmt-mongodbatlas",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35044",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35044"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:35044:19:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-24T14:58:46.723Z",
+      "observedAt": "2026-06-24T14:58:46.723Z",
+      "trackId": "sdk:Java:azure-resourcemanager-mongodbatlas",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35044",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35044"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35044:19:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-24T14:58:46.723Z",
+      "observedAt": "2026-06-24T14:58:46.723Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/mongodbatlas/armmongodbatlas",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35044",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35044"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6477194:generation.queued:sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-06-24T15:00:51.4984524Z",
+      "observedAt": "2026-06-24T15:11:55.5288459Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6477194",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6477194"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6477194:generation.started:sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-06-24T15:05:10.7507265Z",
+      "observedAt": "2026-06-24T15:11:55.5288459Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6477194",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6477194"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60084:commit:a1b1e2d3a8b9:sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-24T15:10:58Z",
+      "observedAt": "2026-06-24T15:10:58Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60084",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/a1b1e2d3a8b992e54fe68abeb99e26079cb80200"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado:35044:21:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-24T15:11:09.5Z",
+      "observedAt": "2026-06-24T15:11:09.5Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35044",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35044"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6477194:generation.completed:sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-06-24T15:11:55.5288459Z",
+      "observedAt": "2026-06-24T15:11:55.5288459Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "title": "Pipeline completed with issues",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6477194",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6477194"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60084:review:4563621937:sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-24T15:30:09Z",
+      "observedAt": "2026-06-24T15:30:09Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60084",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60084#pullrequestreview-4563621937"
+      },
+      "confidence": "authoritative",
+      "excerpt": "### Management SDK Review Summary - **Scope:** `Azure.ResourceManager.MongoDBAtlas` - **Versioning:** Pass — version `1.0.1` → `1.1.0-beta.1` is correct; `ApiCompatVersion` is present and unchanged; no new ApiCompat baselines - **API surfac",
+      "reviewState": "dismissed",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60084:comment:3468298092:sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-24T15:30:09Z",
+      "observedAt": "2026-06-24T15:30:09Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60084",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60084#discussion_r3468298092"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[ACRONYM001]** The static members `FREE` and `FLEX` use ALL_CAPS, which violates .NET naming conventions. Public static members of extensible-enum structs must use PascalCase. Rename: - `FREE` → `Free` - `FLEX` → `Flex` (`M10` and `M30` a",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60084:comment:3468298104:sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-24T15:30:09Z",
+      "observedAt": "2026-06-24T15:30:09Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60084",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60084#discussion_r3468298104"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[Contextual naming]** `TierLimitReachedResponse` is missing RP/domain-context prefix. In IntelliSense, `TierLimitReachedResponse` (or `TierLimitReachedResult` as already suggested by the existing review thread) still lacks RP context — it",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60084:comment:3468298111:sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-24T15:30:09Z",
+      "observedAt": "2026-06-24T15:30:09Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60084",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60084#discussion_r3468298111"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[Contextual naming]** `RegionsByTierResponse` is missing RP/domain-context prefix. Similar to `TierLimitReachedResponse`, the existing review thread suggests `RegionsByTierResult`, but that still lacks RP context — any service with tiers ",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60084:comment:3468298117:sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-24T15:30:09Z",
+      "observedAt": "2026-06-24T15:30:09Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60084",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60084#discussion_r3468298117"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[Contextual naming]** `TierRegions` is missing RP/domain-context prefix. Without it, `TierRegions` is ambiguous in IntelliSense — many Azure services (AKS, HDInsight, etc.) have cluster tiers and supported regions. Compare with the correc",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60084:comment:3468298123:sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-24T15:30:09Z",
+      "observedAt": "2026-06-24T15:30:09Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60084",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60084#discussion_r3468298123"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[Contextual naming]** `ProjectLimitStatus` is missing RP/domain-context prefix. The word \"Project\" here means \"MongoDB Atlas Project\" but in IntelliSense it is indistinguishable from Azure DevOps projects, Visual Studio projects, or any o",
+      "stack": 5
+    },
+    {
+      "id": "ado:35044:22:Custom.ReleaseStatusForPython",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-07-01T07:03:34.793Z",
+      "observedAt": "2026-07-01T07:03:34.793Z",
+      "trackId": "sdk:Python:azure-mgmt-mongodbatlas",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35044",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35044"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35044:22:Custom.ReleasedVersionForPython",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-07-01T07:03:34.793Z",
+      "observedAt": "2026-07-01T07:03:34.793Z",
+      "trackId": "sdk:Python:azure-mgmt-mongodbatlas",
+      "value": "1.1.0b1",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35044",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35044"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60084:commit:51fe4daf5b67:sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-06T08:26:04Z",
+      "observedAt": "2026-07-06T08:26:04Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "sharmaanuj334"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60084",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/51fe4daf5b678000b50f2f4e2781a4a5b97a1a57"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60084:comment:4891013365:sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-06T09:08:31Z",
+      "observedAt": "2026-07-06T09:08:31Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60084",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60084#issuecomment-4891013365"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## 🔍 CI Failure Analysis for PR #60084 ### Check Status Summary | Check | Status | |-------|--------| | `net - pullrequest` | ❌ Failed | | `net - pullrequest (Build Analyze PRBatch)` | ❌ Failed | | `net - pullrequest (Build Build PRBatch)`",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60084:commit:dc4f6ae99e4c:sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-06T10:14:43Z",
+      "observedAt": "2026-07-06T10:14:43Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "sharmaanuj334"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60084",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/dc4f6ae99e4c39923ad718633b4f8ad914b6ba0b"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60084:comment:4891926763:sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-06T10:49:59Z",
+      "observedAt": "2026-07-06T10:49:59Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60084",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60084#issuecomment-4891926763"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## 🔍 CI Failure Analysis for PR #60084 ### Check Status Summary | Check | Status | |-------|--------| | `net - pullrequest` | ❌ Failed | | `net - pullrequest (Build Analyze PRBatch)` | ❌ Failed | | `net - pullrequest (Build Build PRBatch)`",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60084:commit:8b7df48dcd77:sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-06T11:24:53Z",
+      "observedAt": "2026-07-06T11:24:53Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "sharmaanuj334"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60084",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/8b7df48dcd77ac4eccb723048e6d8cb81907ca77"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60084:review:4635397224:sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-06T11:31:01Z",
+      "observedAt": "2026-07-06T11:31:01Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60084",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60084#pullrequestreview-4635397224"
+      },
+      "confidence": "authoritative",
+      "excerpt": "### Management SDK Review Summary - **Scope:** `Azure.ResourceManager.MongoDBAtlas` - **Versioning:** Pass — version `1.0.1` → `1.1.0-beta.1` is a valid minor beta bump; `ApiCompatVersion: 1.0.1` is present and unchanged; no new ApiCompat b",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60084:review:4635630872:sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-06T12:05:45Z",
+      "observedAt": "2026-07-06T12:05:45Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "sharmaanuj334"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60084",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60084#pullrequestreview-4635630872"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60084:review:4651210700:sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-08T05:38:58Z",
+      "observedAt": "2026-07-08T05:38:58Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60084",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60084#pullrequestreview-4651210700"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60084:comment:3541465309:sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-08T05:38:58Z",
+      "observedAt": "2026-07-08T05:38:58Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60084",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60084#discussion_r3541465309"
+      },
+      "confidence": "authoritative",
+      "excerpt": "can you specify a release date (replacing `Unreleased`) and remove the empty sections?",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60084:review:4651228842:sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-08T05:42:59Z",
+      "observedAt": "2026-07-08T05:42:59Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "sharmaanuj334"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60084",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60084#pullrequestreview-4651228842"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60084:comment:3541480993:sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-08T05:42:59Z",
+      "observedAt": "2026-07-08T05:42:59Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "sharmaanuj334"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60084",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60084#discussion_r3541480993"
+      },
+      "confidence": "authoritative",
+      "excerpt": "12 July 2026 or after is fine by us considering portal's deployment is getting completed by that time",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60084:commit:2e1e90ebd510:sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-08T05:46:29Z",
+      "observedAt": "2026-07-08T05:46:29Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "sharmaanuj334"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60084",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/2e1e90ebd51079f1cda6017dbb5f74f9c64dd312"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60084:review:4651261204:sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-08T05:48:46Z",
+      "observedAt": "2026-07-08T05:48:46Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "sharmaanuj334"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60084",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60084#pullrequestreview-4651261204"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60084:comment:3541509112:sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-08T05:48:46Z",
+      "observedAt": "2026-07-08T05:48:46Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "sharmaanuj334"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60084",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60084#discussion_r3541509112"
+      },
+      "confidence": "authoritative",
+      "excerpt": "added the commit: https://github.com/Azure/azure-sdk-for-net/pull/60084/changes/2e1e90ebd51079f1cda6017dbb5f74f9c64dd312",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60084:review:4651271921:sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-08T05:50:57Z",
+      "observedAt": "2026-07-08T05:50:57Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60084",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60084#pullrequestreview-4651271921"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60084:review:4651457274:sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-08T06:26:58Z",
+      "observedAt": "2026-07-08T06:26:58Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60084",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60084#pullrequestreview-4651457274"
+      },
+      "confidence": "authoritative",
+      "excerpt": "### Management SDK Review Summary Same status as the previous management SDK review: all versioning, API surface, contextual-naming, and CI checks pass with no findings. No new management SDK review findings on this head commit. The only ch",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60084:pr.merged:sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-08T06:36:27Z",
+      "observedAt": "2026-07-08T06:36:27Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60084",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60084"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado:35044:23:Custom.ReleaseStatusForGo",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-07-09T02:17:13.653Z",
+      "observedAt": "2026-07-09T02:17:13.653Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/mongodbatlas/armmongodbatlas",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35044",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35044"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35044:23:Custom.ReleasedVersionForGo",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-07-09T02:17:13.653Z",
+      "observedAt": "2026-07-09T02:17:13.653Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/mongodbatlas/armmongodbatlas",
+      "value": "1.1.0-beta.1",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35044",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35044"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35044:24:Custom.ReleaseStatusForJava",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-07-09T12:44:01.827Z",
+      "observedAt": "2026-07-09T12:44:01.827Z",
+      "trackId": "sdk:Java:azure-resourcemanager-mongodbatlas",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35044",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35044"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35044:24:Custom.ReleasedVersionForJava",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-07-09T12:44:01.827Z",
+      "observedAt": "2026-07-09T12:44:01.827Z",
+      "trackId": "sdk:Java:azure-resourcemanager-mongodbatlas",
+      "value": "1.1.0-beta.1",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35044",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35044"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35044:25:Custom.ReleaseStatusForJavaScript",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-07-10T09:07:16.923Z",
+      "observedAt": "2026-07-10T09:07:16.923Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongodbatlas",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35044",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35044"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35044:25:Custom.ReleasedVersionForJavaScript",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-07-10T09:07:16.923Z",
+      "observedAt": "2026-07-10T09:07:16.923Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongodbatlas",
+      "value": "1.1.0-beta.1",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35044",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35044"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35044:26:Custom.ReleaseStatusForDotnet",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-07-12T07:09:52.79Z",
+      "observedAt": "2026-07-12T07:09:52.79Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35044",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35044"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35044:26:Custom.ReleasedVersionForDotnet",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-07-12T07:09:52.79Z",
+      "observedAt": "2026-07-12T07:09:52.79Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+      "value": "1.1.0-beta.1",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35044",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35044"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35044:27:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-07-12T07:09:53.15Z",
+      "observedAt": "2026-07-12T07:09:53.15Z",
+      "trackId": "plan",
+      "value": "Finished",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35044",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35044"
+      },
+      "title": "Plan state changed",
+      "stack": 0
+    }
+  ],
+  "quality": {
+    "warnings": [
+      "Multiple spec PRs are retained in link history",
+      "1 historical linked PR(s) closed without merge",
+      "1 superseded SDK PR link(s) retained"
+    ],
+    "unavailablePullRequests": 0,
+    "unavailablePipelineRuns": 0
+  },
+  "boundaryFacts": {
+    "id": "35044",
+    "state": "finished",
+    "specPrs": [
+      {
+        "id": "github:Azure/azure-rest-api-specs#44132",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#44132",
+        "createdAt": "2026-06-22T09:38:32Z",
+        "mergedAt": "2026-06-24T14:17:47Z",
+        "closedAt": "2026-06-24T14:17:47Z",
+        "available": true
+      },
+      {
+        "id": "github:Azure/azure-rest-api-specs#43780",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#43780",
+        "createdAt": "2026-06-05T11:56:50Z",
+        "mergedAt": "2026-06-08T09:20:27Z",
+        "closedAt": "2026-06-08T09:20:27Z",
+        "available": true
+      }
+    ],
+    "artifacts": [
+      {
+        "language": ".NET",
+        "package": "Azure.ResourceManager.MongoDBAtlas",
+        "trackId": "sdk:.NET:Azure.ResourceManager.MongoDBAtlas",
+        "prId": "github:Azure/azure-sdk-for-net#60084",
+        "prCreatedAt": "2026-06-20T14:24:17Z",
+        "prMergedAt": "2026-07-08T06:36:27Z",
+        "prClosedAt": "2026-07-08T06:36:27Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-net#60084",
+            "createdAt": "2026-06-20T14:24:17Z",
+            "mergedAt": "2026-07-08T06:36:27Z",
+            "closedAt": "2026-07-08T06:36:27Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6477194",
+        "generationStartAt": "2026-06-24T15:05:10.7507265Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-07-12T07:09:52.79Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.1.0-beta.1",
+        "releaseBoundaryAt": "2026-07-12T07:09:52.79Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "JavaScript",
+        "package": "@azure/arm-mongodbatlas",
+        "trackId": "sdk:JavaScript:@azure/arm-mongodbatlas",
+        "prId": "github:Azure/azure-sdk-for-js#39021",
+        "prCreatedAt": "2026-06-20T14:23:54Z",
+        "prMergedAt": "2026-06-24T14:19:42Z",
+        "prClosedAt": "2026-06-24T14:19:42Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-js#39021",
+            "createdAt": "2026-06-20T14:23:54Z",
+            "mergedAt": "2026-06-24T14:19:42Z",
+            "closedAt": "2026-06-24T14:19:42Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6461789",
+        "generationStartAt": "2026-06-20T14:18:03.225108Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-07-10T09:07:16.923Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.1.0-beta.1",
+        "releaseBoundaryAt": "2026-07-10T09:07:16.923Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Python",
+        "package": "azure-mgmt-mongodbatlas",
+        "trackId": "sdk:Python:azure-mgmt-mongodbatlas",
+        "prId": "github:Azure/azure-sdk-for-python#47585",
+        "prCreatedAt": "2026-06-20T14:24:49Z",
+        "prMergedAt": "2026-06-24T14:20:49Z",
+        "prClosedAt": "2026-06-24T14:20:49Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-python#47585",
+            "createdAt": "2026-06-20T14:24:49Z",
+            "mergedAt": "2026-06-24T14:20:49Z",
+            "closedAt": "2026-06-24T14:20:49Z",
+            "state": "merged"
+          },
+          {
+            "id": "github:Azure/azure-sdk-for-python#47617",
+            "createdAt": "2026-06-23T13:54:26Z",
+            "mergedAt": null,
+            "closedAt": "2026-06-23T13:58:42Z",
+            "state": "closed"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6461788",
+        "generationStartAt": "2026-06-20T14:18:35.8151698Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-07-01T07:03:34.793Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.1.0b1",
+        "releaseBoundaryAt": "2026-07-01T07:03:34.793Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Java",
+        "package": "azure-resourcemanager-mongodbatlas",
+        "trackId": "sdk:Java:azure-resourcemanager-mongodbatlas",
+        "prId": "github:Azure/azure-sdk-for-java#49580",
+        "prCreatedAt": "2026-06-20T14:26:29Z",
+        "prMergedAt": "2026-06-24T14:21:01Z",
+        "prClosedAt": "2026-06-24T14:21:01Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-java#49580",
+            "createdAt": "2026-06-20T14:26:29Z",
+            "mergedAt": "2026-06-24T14:21:01Z",
+            "closedAt": "2026-06-24T14:21:01Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6461791",
+        "generationStartAt": "2026-06-20T14:18:34.4181858Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-07-09T12:44:01.827Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.1.0-beta.1",
+        "releaseBoundaryAt": "2026-07-09T12:44:01.827Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Go",
+        "package": "sdk/resourcemanager/mongodbatlas/armmongodbatlas",
+        "trackId": "sdk:Go:sdk/resourcemanager/mongodbatlas/armmongodbatlas",
+        "prId": "github:Azure/azure-sdk-for-go#27037",
+        "prCreatedAt": "2026-06-20T14:23:21Z",
+        "prMergedAt": "2026-06-24T14:21:05Z",
+        "prClosedAt": "2026-06-24T14:21:05Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-go#27037",
+            "createdAt": "2026-06-20T14:23:21Z",
+            "mergedAt": "2026-06-24T14:21:05Z",
+            "closedAt": "2026-06-24T14:21:05Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6461787",
+        "generationStartAt": "2026-06-20T14:18:26.660998Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-07-09T02:17:13.653Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.1.0-beta.1",
+        "releaseBoundaryAt": "2026-07-09T02:17:13.653Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      }
+    ],
+    "cohortPlan": {
+      "id": "35044",
+      "releasePlanId": "35044",
+      "title": "Public Preview release plan for MongoDB.Atlas.Management",
+      "service": "MongoDB.Atlas.Management",
+      "state": "finished"
+    },
+    "quality": {
+      "warnings": [
+        "Multiple spec PRs are retained in link history",
+        "1 historical linked PR(s) closed without merge",
+        "1 superseded SDK PR link(s) retained"
+      ],
+      "unavailablePullRequests": 0,
+      "unavailablePipelineRuns": 0
+    }
+  },
+  "summary": {
+    "durationHours": 521,
+    "pullRequestCount": 8,
+    "humanReviewCount": 15,
+    "humanCommentCount": 10
+  }
+}

@@ -1,0 +1,5017 @@
+{
+  "schemaVersion": 2,
+  "id": "34310",
+  "correlation": {
+    "policyVersion": 1,
+    "preflight": "passed"
+  },
+  "releasePlanId": "2227",
+  "title": "Release Plan - 2227 - GA - Azure SQL Database",
+  "service": "Azure SQL Database",
+  "product": "Release",
+  "path": "specification/sql/resource-manager/Microsoft.Sql/SQL",
+  "state": "in-progress",
+  "plane": "management",
+  "releaseType": "APEX GA",
+  "intendedMonth": "June 2026",
+  "createdAt": "2026-05-10T17:55:16.61Z",
+  "completedAt": null,
+  "sourceUrl": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34310",
+  "range": {
+    "start": "2026-03-18T09:26:27.000Z",
+    "end": "2026-08-14T00:37:23.589Z"
+  },
+  "intendedArtifacts": [
+    {
+      "prId": null,
+      "language": ".NET",
+      "package": "Azure.ResourceManager.Sql",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6388552",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-js#38485",
+      "language": "JavaScript",
+      "package": "@azure/arm-sql",
+      "version": "11.0.0",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6276228",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-python#46813",
+      "language": "Python",
+      "package": "azure-mgmt-sql",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6276220",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-java#49142",
+      "language": "Java",
+      "package": "azure-resourcemanager-sql",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6276227",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-go#26747",
+      "language": "Go",
+      "package": "sdk/resourcemanager/sql/armsql",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6276229",
+      "releasePipelineUrl": null
+    }
+  ],
+  "links": [
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#41520",
+      "role": "spec-pr",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/41520",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-js#38485",
+      "role": "sdk-pr",
+      "language": "JavaScript",
+      "url": "https://github.com/Azure/azure-sdk-for-js/pull/38485",
+      "releasePlanIds": [
+        "2227"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-python#46813",
+      "role": "sdk-pr",
+      "language": "Python",
+      "url": "https://github.com/Azure/azure-sdk-for-python/pull/46813",
+      "releasePlanIds": [
+        "2227"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-java#49142",
+      "role": "sdk-pr",
+      "language": "Java",
+      "url": "https://github.com/Azure/azure-sdk-for-java/pull/49142",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-go#26747",
+      "role": "sdk-pr",
+      "language": "Go",
+      "url": "https://github.com/Azure/azure-sdk-for-go/pull/26747",
+      "releasePlanIds": [
+        "2227"
+      ]
+    }
+  ],
+  "tracks": [
+    {
+      "id": "plan",
+      "kind": "plan",
+      "label": "Release Plan",
+      "detail": "APEX GA"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#41520",
+      "kind": "spec",
+      "label": "Spec PR",
+      "detail": "azure-rest-api-specs #41520",
+      "artifactId": "github:Azure/azure-rest-api-specs#41520",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:.NET:Azure.ResourceManager.Sql",
+      "kind": "sdk",
+      "label": ".NET",
+      "detail": "Azure.ResourceManager.Sql",
+      "artifactId": null,
+      "state": "missing"
+    },
+    {
+      "id": "sdk:JavaScript:@azure/arm-sql",
+      "kind": "sdk",
+      "label": "JavaScript",
+      "detail": "@azure/arm-sql",
+      "artifactId": "github:Azure/azure-sdk-for-js#38485",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Python:azure-mgmt-sql",
+      "kind": "sdk",
+      "label": "Python",
+      "detail": "azure-mgmt-sql",
+      "artifactId": "github:Azure/azure-sdk-for-python#46813",
+      "state": "closed"
+    },
+    {
+      "id": "sdk:Java:azure-resourcemanager-sql",
+      "kind": "sdk",
+      "label": "Java",
+      "detail": "azure-resourcemanager-sql",
+      "artifactId": "github:Azure/azure-sdk-for-java#49142",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Go:sdk/resourcemanager/sql/armsql",
+      "kind": "sdk",
+      "label": "Go",
+      "detail": "sdk/resourcemanager/sql/armsql",
+      "artifactId": "github:Azure/azure-sdk-for-go#26747",
+      "state": "merged"
+    }
+  ],
+  "events": [
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:pr.created:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-18T09:26:27Z",
+      "observedAt": "2026-03-18T09:26:27Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "melina5656"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41520"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:comment:4081009905:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-18T09:27:03Z",
+      "observedAt": "2026-03-18T09:27:03Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41520#issuecomment-4081009905"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>Next steps that must be taken to merge this PR: <br/><ul><li>❌ This PR is <code>NotReadyForARMReview</code> because it has the <code>BreakingChangeReviewRequired</code> label.<br/></li><li>❌ This PR has at least ",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:4fbe99e79625:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-19T07:49:25Z",
+      "observedAt": "2026-03-19T07:49:25Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "melina5656"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/4fbe99e79625b32eead8971771e3ad4acdb75e6d"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:8133a6f2d5aa:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-20T02:27:45Z",
+      "observedAt": "2026-03-20T02:27:45Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "melina5656"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/8133a6f2d5aa1c0e5778e8d0b54c58722f8eaff6"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:b1815131cdbc:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-20T03:01:53Z",
+      "observedAt": "2026-03-20T03:01:53Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "melina5656"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/b1815131cdbc5ef89d4c67ec269a875c1bc03f1d"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:3177529effdb:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-20T07:04:28Z",
+      "observedAt": "2026-03-20T07:04:28Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "melina5656"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/3177529effdbd17ca3859a0de3559676a8b1661c"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:4711a7d5d5c4:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-20T08:56:17Z",
+      "observedAt": "2026-03-20T08:56:17Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "melina5656"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/4711a7d5d5c4a112c56c75a23f83075954d17c7c"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:e19f027caa82:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-20T09:10:01Z",
+      "observedAt": "2026-03-20T09:10:01Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "melina5656"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/e19f027caa82cee9fe864e65060c6093852cf674"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:94ae7e9ede37:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-23T02:27:34Z",
+      "observedAt": "2026-03-23T02:27:34Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "melina5656"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/94ae7e9ede37b883518112c9ae5b384e4e728989"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:5f10327bfe7b:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-23T02:29:10Z",
+      "observedAt": "2026-03-23T02:29:10Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "melina5656"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/5f10327bfe7bfe4290e2986c862be7ed1efcce7c"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:b359e0b38227:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-24T09:23:29Z",
+      "observedAt": "2026-03-24T09:23:29Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "melina5656"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/b359e0b3822749cb1995fae8a9c9a9a412b1c4c5"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:2afd1503de1d:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-24T09:35:53Z",
+      "observedAt": "2026-03-24T09:35:53Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "melina5656"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/2afd1503de1ddd9f8ceda8c2db1c638f554544d4"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:de0a1ab94d3e:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-24T09:42:14Z",
+      "observedAt": "2026-03-24T09:42:14Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "melina5656"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/de0a1ab94d3e0183e588c09081bcd36607027aa0"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:5969adf03588:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-24T09:59:04Z",
+      "observedAt": "2026-03-24T09:59:04Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "melina5656"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/5969adf0358844a239022db88412a5af90bb9638"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:c24b75573bad:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-27T08:50:07Z",
+      "observedAt": "2026-03-27T08:50:07Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "melina5656"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/c24b75573bad5725c5ba54c49e910d7e33e3d8b4"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:7ca2f7b279e7:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-27T08:56:50Z",
+      "observedAt": "2026-03-27T08:56:50Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "melina5656"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/7ca2f7b279e7d683806e78163e1cce2306b63674"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:7ffd092b7728:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-30T13:25:51Z",
+      "observedAt": "2026-03-30T13:25:51Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/7ffd092b772809c6a60bf21b2980cdfd43e77438"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:02fc1b3ab196:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-30T13:29:23Z",
+      "observedAt": "2026-03-30T13:29:23Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/02fc1b3ab196cfcb9761f17904341f1b7d4ab59c"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:7e37ea15c1eb:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-30T13:33:04Z",
+      "observedAt": "2026-03-30T13:33:04Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/7e37ea15c1eb162c7e7bdea035f5d829733f061d"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:04944f6a2bc0:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-30T13:41:26Z",
+      "observedAt": "2026-03-30T13:41:26Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/04944f6a2bc0ebafe42c453817286e827c69fdb2"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:01b9dd0a9309:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-30T13:54:42Z",
+      "observedAt": "2026-03-30T13:54:42Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/01b9dd0a93099a7470d63fffd40d9dbc2fa038dd"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:review:4030763281:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-30T13:55:40Z",
+      "observedAt": "2026-03-30T13:55:40Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41520#pullrequestreview-4030763281"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:comment:3009973414:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-30T13:55:40Z",
+      "observedAt": "2026-03-30T13:55:40Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41520#discussion_r3009973414"
+      },
+      "confidence": "authoritative",
+      "excerpt": "fix duplicate-client-name Other language may want to do similar. But probably not the name Java uses now.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:80828450aa75:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-30T14:12:16Z",
+      "observedAt": "2026-03-30T14:12:16Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/80828450aa75a96377e904c5e92486cdc50a4bd3"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:1f511fe61d3b:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-30T14:23:57Z",
+      "observedAt": "2026-03-30T14:23:57Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/1f511fe61d3bd4e46f4901e2f7d59ef31c877349"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:a2d065812b75:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-30T14:46:32Z",
+      "observedAt": "2026-03-30T14:46:32Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/a2d065812b7570fe90fa6553953df61a7934999b"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:comment:4155721044:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-30T14:58:27Z",
+      "observedAt": "2026-03-30T14:58:27Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41520#issuecomment-4155721044"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Fix all such cases @melina5656 ``` @format(\"uuid\") string ... ``` This blocks Java",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:64a4354995e5:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-31T06:06:51Z",
+      "observedAt": "2026-03-31T06:06:51Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "jliusan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/64a4354995e568b1c1b6fb00561c7d84eaa94d53"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:832c4dbf6bb2:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-31T06:11:08Z",
+      "observedAt": "2026-03-31T06:11:08Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "jliusan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/832c4dbf6bb27552888a591a0e11969bb1d15da3"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:5c24e79d7e7a:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-31T06:22:21Z",
+      "observedAt": "2026-03-31T06:22:21Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "jliusan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/5c24e79d7e7a68bc8a496016f199de05e00c7937"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:8cb52addc376:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-31T09:02:03Z",
+      "observedAt": "2026-03-31T09:02:03Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/8cb52addc37689f4f5c44bd835c3b6ea45cade72"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:5ef3fa7c9966:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-01T07:08:03Z",
+      "observedAt": "2026-04-01T07:08:03Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "melina5656"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/5ef3fa7c99661f3646af8a890cfff91765a5709a"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:549a93556f8b:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-01T07:08:44Z",
+      "observedAt": "2026-04-01T07:08:44Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "melina5656"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/549a93556f8bbec840eda31690e950674c4202ff"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:comment:4168020871:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-01T07:10:26Z",
+      "observedAt": "2026-04-01T07:10:26Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "melina5656"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41520#issuecomment-4168020871"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> Fix all such cases @melina5656 > > ``` > @format(\"uuid\") > string ... > ``` > > This blocks Java @weidongxu-microsoft fixed.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:3256c6764d5e:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-01T07:24:48Z",
+      "observedAt": "2026-04-01T07:24:48Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/3256c6764d5edc188ae06b8e20a180ac484bbfb7"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:review:4042255744:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-01T07:28:46Z",
+      "observedAt": "2026-04-01T07:28:46Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41520#pullrequestreview-4042255744"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:comment:3020314528:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-01T07:28:46Z",
+      "observedAt": "2026-04-01T07:28:46Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41520#discussion_r3020314528"
+      },
+      "confidence": "authoritative",
+      "excerpt": "FinalResult is wrong. LroHeaders would be overridden by Response, you need to write the FinalResult in Response",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:review:4042290782:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-01T07:36:08Z",
+      "observedAt": "2026-04-01T07:36:08Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41520#pullrequestreview-4042290782"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:comment:3020347001:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-01T07:36:08Z",
+      "observedAt": "2026-04-01T07:36:08Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41520#discussion_r3020347001"
+      },
+      "confidence": "authoritative",
+      "excerpt": "In Swagger, no FinalResult model? https://github.com/Azure/azure-rest-api-specs/blob/main/specification/sql/resource-manager/Microsoft.Sql/SQL/preview/2025-02-01-preview/SyncGroups.json#L645-L669",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:review:4042293636:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-01T07:36:46Z",
+      "observedAt": "2026-04-01T07:36:46Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41520#pullrequestreview-4042293636"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:comment:3020349740:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-01T07:36:46Z",
+      "observedAt": "2026-04-01T07:36:46Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41520#discussion_r3020349740"
+      },
+      "confidence": "authoritative",
+      "excerpt": "same, Swagger does not have FinalResult model? https://github.com/Azure/azure-rest-api-specs/blob/main/specification/sql/resource-manager/Microsoft.Sql/SQL/preview/2025-02-01-preview/SyncMembers.json#L432-L450",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:comment:4168279871:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-01T08:02:04Z",
+      "observedAt": "2026-04-01T08:02:04Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41520#issuecomment-4168279871"
+      },
+      "confidence": "authoritative",
+      "excerpt": "There is lots of other potential error on FinalResult. Please check. They do not block Java's validation though (except the 3 above). They may not be 100% correct. But generally createOrUpdate cannot have void as FinalResult. <img width=\"13",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:9ee5f31a5b1e:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-01T08:14:18Z",
+      "observedAt": "2026-04-01T08:14:18Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/9ee5f31a5b1e5321062aaea3bb35ccfe6c4aaa6d"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:27f2165ff7b0:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-01T08:14:49Z",
+      "observedAt": "2026-04-01T08:14:49Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/27f2165ff7b081930cb04bd93f8390b27b5b3243"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:aeca1e869339:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-01T08:35:55Z",
+      "observedAt": "2026-04-01T08:35:55Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/aeca1e86933901c0c337e3e9da0d5c0b89467e37"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:23007aec710b:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-02T02:35:08Z",
+      "observedAt": "2026-04-02T02:35:08Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "jliusan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/23007aec710b3925ce488905c6825b54a579322a"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:da1603c1ad47:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-02T02:51:38Z",
+      "observedAt": "2026-04-02T02:51:38Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/da1603c1ad47d14bcf815f26049e8bd182368fc6"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:01baea2d6999:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-02T03:18:53Z",
+      "observedAt": "2026-04-02T03:18:53Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "melina5656"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/01baea2d6999da6ae08ee0a992997fa94b3fb7a3"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:7763bbf96aa5:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-02T03:19:28Z",
+      "observedAt": "2026-04-02T03:19:28Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "melina5656"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/7763bbf96aa532ce56d247eabd96697b004651cd"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:review:4048147454:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-02T03:30:04Z",
+      "observedAt": "2026-04-02T03:30:04Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "melina5656"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41520#pullrequestreview-4048147454"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:comment:3025693282:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-02T03:30:04Z",
+      "observedAt": "2026-04-02T03:30:04Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "melina5656"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41520#discussion_r3025693282"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Fixed.",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:review:4048147915:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-02T03:30:17Z",
+      "observedAt": "2026-04-02T03:30:17Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "melina5656"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41520#pullrequestreview-4048147915"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:comment:3025693693:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-02T03:30:17Z",
+      "observedAt": "2026-04-02T03:30:17Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "melina5656"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41520#discussion_r3025693693"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Fixed.",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:review:4048148445:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-02T03:30:31Z",
+      "observedAt": "2026-04-02T03:30:31Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "melina5656"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41520#pullrequestreview-4048148445"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:comment:3025694217:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-02T03:30:31Z",
+      "observedAt": "2026-04-02T03:30:31Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "melina5656"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41520#discussion_r3025694217"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Fixed.",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:20f6fc572407:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-02T04:28:18Z",
+      "observedAt": "2026-04-02T04:28:18Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "jliusan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/20f6fc5724078f9d7d925da75b840056b906c037"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:1646ac0ecea9:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-02T04:30:50Z",
+      "observedAt": "2026-04-02T04:30:50Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "jliusan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/1646ac0ecea98756e63aac3f9a9b9a75d12d12cd"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:review:4048483003:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-02T05:43:16Z",
+      "observedAt": "2026-04-02T05:43:16Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "JialinHuang803"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41520#pullrequestreview-4048483003"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:comment:3026017901:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-02T05:43:17Z",
+      "observedAt": "2026-04-02T05:43:17Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "JialinHuang803"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41520#discussion_r3026017901"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Why do we define the Resource models ourselves instead of using ARM templates?",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:4b7607da4bc0:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-02T05:58:53Z",
+      "observedAt": "2026-04-02T05:58:53Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "jliusan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/4b7607da4bc01e53b12eba15ebd5899315627c90"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:87b6d1f4535a:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-02T07:53:03Z",
+      "observedAt": "2026-04-02T07:53:03Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "v-jiaodi"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/87b6d1f4535ab06581a6d0228ac08eda24f5b3b1"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:89c0fcccbbe5:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-02T08:46:21Z",
+      "observedAt": "2026-04-02T08:46:21Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "jliusan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/89c0fcccbbe513c88288dd5b4a68d67ecd138cd3"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:c024a170c5ac:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-02T08:46:34Z",
+      "observedAt": "2026-04-02T08:46:34Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "jliusan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/c024a170c5ac0f6ad8bd89a3b89a1899f1372ac3"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:06e3cfedc8aa:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-02T09:17:33Z",
+      "observedAt": "2026-04-02T09:17:33Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "jliusan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/06e3cfedc8aa1987f916f9285458218fcc0a5fe3"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:39c385f0597e:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-02T12:20:58Z",
+      "observedAt": "2026-04-02T12:20:58Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/39c385f0597e1b4e96fb8c4b75e7ee827a3e4e54"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:5d73c966ce6b:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-02T13:12:44Z",
+      "observedAt": "2026-04-02T13:12:44Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/5d73c966ce6b3f4e7cceae8c9b616f56371f86eb"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:7f53338a4fd5:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-03T06:18:53Z",
+      "observedAt": "2026-04-03T06:18:53Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "melina5656"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/7f53338a4fd593b15b55d696a47ba9981fe984e0"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:00e3a5fddd63:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-03T06:19:46Z",
+      "observedAt": "2026-04-03T06:19:46Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "melina5656"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/00e3a5fddd6387876c4cf8b2c3396e8932a8bc5e"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:f1d3702d766a:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-03T07:04:53Z",
+      "observedAt": "2026-04-03T07:04:53Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "v-jiaodi"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/f1d3702d766a7cd3eca7b2ca81bb66249e7eabc5"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:17a857f6fe9f:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-03T07:13:23Z",
+      "observedAt": "2026-04-03T07:13:23Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "melina5656"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/17a857f6fe9f72cfa031b7cb992431ce7459429e"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:6f18d37c4d7e:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-03T07:17:00Z",
+      "observedAt": "2026-04-03T07:17:00Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "melina5656"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/6f18d37c4d7ec60a851fb3b29e87a893688ed7c6"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:027259e7ad32:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-07T02:59:37Z",
+      "observedAt": "2026-04-07T02:59:37Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "v-jiaodi"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/027259e7ad326becdd4907e255cbde5270678b3b"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:3833fb01e20f:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-07T07:34:57Z",
+      "observedAt": "2026-04-07T07:34:57Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "v-jiaodi"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/3833fb01e20f04ec41024d5988826c87fb3c1408"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:f73dd3bf3506:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-07T09:15:01Z",
+      "observedAt": "2026-04-07T09:15:01Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "v-jiaodi"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/f73dd3bf3506f3f41a19e3763fac52221c048268"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:daa4b5503965:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-07T09:17:43Z",
+      "observedAt": "2026-04-07T09:17:43Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "v-jiaodi"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/daa4b5503965cd4a3f31e691c664f45ed9ccce05"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:6734293c2c50:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-08T07:10:08Z",
+      "observedAt": "2026-04-08T07:10:08Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "jliusan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/6734293c2c50aa1a1b66feeed658ab5f5cc6ea74"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:6227df441838:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-08T07:39:08Z",
+      "observedAt": "2026-04-08T07:39:08Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "jliusan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/6227df441838270ba9c54c4f192e6e2aef4f951a"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:36648bbc05ad:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-08T08:54:37Z",
+      "observedAt": "2026-04-08T08:54:37Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/36648bbc05ad09b113c8eb280b3dec0d59b4ead5"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:566ea89d6ac0:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-08T09:51:31Z",
+      "observedAt": "2026-04-08T09:51:31Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/566ea89d6ac0dd31a90e847cd71e11898147370c"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:1eb583f3f4bf:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-08T09:52:40Z",
+      "observedAt": "2026-04-08T09:52:40Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/1eb583f3f4bf30a2d1310c6b21630c9dcac68855"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:review:4075623464:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-08T13:54:49Z",
+      "observedAt": "2026-04-08T13:54:49Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41520#pullrequestreview-4075623464"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:comment:3051811657:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-08T13:54:50Z",
+      "observedAt": "2026-04-08T13:54:50Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41520#discussion_r3051811657"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Swagger is lowercase `default`? https://github.com/Azure/azure-rest-api-specs/blob/main/specification/sql/resource-manager/Microsoft.Sql/SQL/preview/2025-02-01-preview/DatabaseSecurityAlertPolicies.json#L100-L113 SDK cannot catch these erro",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:3581e8884f86:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-08T13:58:41Z",
+      "observedAt": "2026-04-08T13:58:41Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/3581e8884f862ed71f31657bdeb4127475a0c8da"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:review:4079942851:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-09T05:48:11Z",
+      "observedAt": "2026-04-09T05:48:11Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "pshao25"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41520#pullrequestreview-4079942851"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:comment:3055701121:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-09T05:48:11Z",
+      "observedAt": "2026-04-09T05:48:11Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "pshao25"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41520#discussion_r3055701121"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Synced offline. No issues here.",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:9b573a401965:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-09T06:35:32Z",
+      "observedAt": "2026-04-09T06:35:32Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "melina5656"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/9b573a40196591f0c9ee77cf64c6ffe6dbfdbc48"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:4a2e6715a86c:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-09T06:46:47Z",
+      "observedAt": "2026-04-09T06:46:47Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/4a2e6715a86cdc805e624f3bb967927b1cd27be0"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:5a94a9556145:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-09T06:58:13Z",
+      "observedAt": "2026-04-09T06:58:13Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "melina5656"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/5a94a955614592879e1c8a768b74624c96131ad7"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:ac8285e41b5a:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-09T06:58:27Z",
+      "observedAt": "2026-04-09T06:58:27Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "melina5656"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/ac8285e41b5ae485f973558bad15effbfd03a48d"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:e5e7aea05505:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-09T07:10:03Z",
+      "observedAt": "2026-04-09T07:10:03Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "melina5656"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/e5e7aea0550579dd773ea435f98aa009d6617631"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:2f96309f9b0f:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-09T07:26:02Z",
+      "observedAt": "2026-04-09T07:26:02Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "melina5656"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/2f96309f9b0f49539f1ff8fdc44b2320c35fe5c0"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:review:4080542496:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-09T07:40:27Z",
+      "observedAt": "2026-04-09T07:40:27Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "melina5656"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41520#pullrequestreview-4080542496"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:comment:3056226368:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-09T07:40:27Z",
+      "observedAt": "2026-04-09T07:40:27Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "melina5656"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41520#discussion_r3056226368"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The custom ProxyResource has been updated to use the CommonTypes ProxyResource.",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:6a8e2ff261f7:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-09T08:19:14Z",
+      "observedAt": "2026-04-09T08:19:14Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/6a8e2ff261f778c145bcf61ae3f1b800bd663bf2"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:d160ed626e0c:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T03:00:25Z",
+      "observedAt": "2026-04-10T03:00:25Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "v-jiaodi"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/d160ed626e0c1eba4a76b7ad1e10ccad3a18a27d"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:2cd85decaeb4:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T03:10:59Z",
+      "observedAt": "2026-04-10T03:10:59Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/2cd85decaeb4595e59680339c85d67a0cbaf8182"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:3dd315da90ba:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T05:48:41Z",
+      "observedAt": "2026-04-10T05:48:41Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "v-jiaodi"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/3dd315da90ba993b54ec2d5536b6713e95304897"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:80c2660c225e:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T08:22:22Z",
+      "observedAt": "2026-04-10T08:22:22Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "jliusan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/80c2660c225e2e94bc22ba411fae157b54c951c0"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:7451bd391079:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T08:59:20Z",
+      "observedAt": "2026-04-10T08:59:20Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "melina5656"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/7451bd391079a1a9a5cf1c1088bd8fa0ed612ba1"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:44bf5eaf8a70:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T09:00:03Z",
+      "observedAt": "2026-04-10T09:00:03Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "melina5656"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/44bf5eaf8a70daee0bffb7ea63a07b3ad40ea8be"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:551eaf251f90:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T09:06:57Z",
+      "observedAt": "2026-04-10T09:06:57Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "melina5656"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/551eaf251f908db1662634c25c8059bbc1a0a444"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:5e9b0e421f59:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T09:18:01Z",
+      "observedAt": "2026-04-10T09:18:01Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "melina5656"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/5e9b0e421f5912b8cdab5815c0c891f34447cc31"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:931585e48416:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T09:40:45Z",
+      "observedAt": "2026-04-10T09:40:45Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "melina5656"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/931585e484168d9ddb566a2a4b73d8f7c2c87d58"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:commit:c3eb73398e81:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T09:42:17Z",
+      "observedAt": "2026-04-10T09:42:17Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "melina5656"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/c3eb73398e81fb41faf9e1d477a770d639ba05f4"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:review:4089049731:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T10:42:52Z",
+      "observedAt": "2026-04-10T10:42:52Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "pshao25"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41520#pullrequestreview-4089049731"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:review:4089057012:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T10:44:31Z",
+      "observedAt": "2026-04-10T10:44:31Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41520#pullrequestreview-4089057012"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41520:pr.merged:spec:github:Azure/azure-rest-api-specs#41520",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T10:48:41Z",
+      "observedAt": "2026-04-10T10:48:41Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41520",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41520"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:34310:created",
+      "type": "plan.created",
+      "phase": "plan",
+      "occurredAt": "2026-05-10T17:55:16.61Z",
+      "observedAt": "2026-05-10T17:55:16.61Z",
+      "trackId": "plan",
+      "title": "Release Plan created",
+      "confidence": "authoritative",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34310",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34310"
+      },
+      "stack": 0
+    },
+    {
+      "id": "ado:34310:1:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-05-10T17:55:16.61Z",
+      "observedAt": "2026-05-10T17:55:16.61Z",
+      "trackId": "plan",
+      "value": "New",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34310",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34310"
+      },
+      "title": "Plan state changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34310:1:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-10T17:55:16.61Z",
+      "observedAt": "2026-05-10T17:55:16.61Z",
+      "trackId": "plan",
+      "value": "Not Available",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34310",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34310"
+      },
+      "title": "Spec approval changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:34310:1:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-10T17:55:16.61Z",
+      "observedAt": "2026-05-10T17:55:16.61Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Sql",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34310",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34310"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34310:1:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-10T17:55:16.61Z",
+      "observedAt": "2026-05-10T17:55:16.61Z",
+      "trackId": "sdk:JavaScript:@azure/arm-sql",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34310",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34310"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34310:1:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-10T17:55:16.61Z",
+      "observedAt": "2026-05-10T17:55:16.61Z",
+      "trackId": "sdk:Python:azure-mgmt-sql",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34310",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34310"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34310:1:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-10T17:55:16.61Z",
+      "observedAt": "2026-05-10T17:55:16.61Z",
+      "trackId": "sdk:Java:azure-resourcemanager-sql",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34310",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34310"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34310:1:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-10T17:55:16.61Z",
+      "observedAt": "2026-05-10T17:55:16.61Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/sql/armsql",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34310",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34310"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34310:7:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-05-10T17:56:16.943Z",
+      "observedAt": "2026-05-10T17:56:16.943Z",
+      "trackId": "plan",
+      "value": "In Progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34310",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34310"
+      },
+      "title": "Plan state changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:34311:2:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-10T17:58:03.557Z",
+      "observedAt": "2026-05-10T17:58:03.557Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/41520",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34311",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34311"
+      },
+      "title": "Spec PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado:34310:8:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-10T17:58:06.947Z",
+      "observedAt": "2026-05-10T17:58:06.947Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Sql",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34310",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34310"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34310:8:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-10T17:58:06.947Z",
+      "observedAt": "2026-05-10T17:58:06.947Z",
+      "trackId": "sdk:JavaScript:@azure/arm-sql",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34310",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34310"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34310:8:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-10T17:58:06.947Z",
+      "observedAt": "2026-05-10T17:58:06.947Z",
+      "trackId": "sdk:Python:azure-mgmt-sql",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34310",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34310"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34310:8:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-10T17:58:06.947Z",
+      "observedAt": "2026-05-10T17:58:06.947Z",
+      "trackId": "sdk:Java:azure-resourcemanager-sql",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34310",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34310"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34310:8:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-10T17:58:06.947Z",
+      "observedAt": "2026-05-10T17:58:06.947Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/sql/armsql",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34310",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34310"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34310:9:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-10T17:58:20.523Z",
+      "observedAt": "2026-05-10T17:58:20.523Z",
+      "trackId": "plan",
+      "value": "Approved",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34310",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34310"
+      },
+      "title": "Spec approval changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:34310:23:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-10T18:07:13.813Z",
+      "observedAt": "2026-05-10T18:07:13.813Z",
+      "trackId": "sdk:Python:azure-mgmt-sql",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34310",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34310"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:34310:24:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-10T18:07:26.003Z",
+      "observedAt": "2026-05-10T18:07:26.003Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Sql",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34310",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34310"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:34310:25:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-10T18:07:40.377Z",
+      "observedAt": "2026-05-10T18:07:40.377Z",
+      "trackId": "sdk:Java:azure-resourcemanager-sql",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34310",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34310"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:34310:26:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-10T18:07:51.767Z",
+      "observedAt": "2026-05-10T18:07:51.767Z",
+      "trackId": "sdk:JavaScript:@azure/arm-sql",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34310",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34310"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:34310:27:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-10T18:08:04.92Z",
+      "observedAt": "2026-05-10T18:08:04.92Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/sql/armsql",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34310",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34310"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:34310:28:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-10T18:12:40.883Z",
+      "observedAt": "2026-05-10T18:12:40.883Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Sql",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34310",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34310"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26747:commit:88f8759a3c87:sdk:Go:sdk/resourcemanager/sql/armsql",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-10T18:13:16Z",
+      "observedAt": "2026-05-10T18:13:16Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/sql/armsql",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26747",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/88f8759a3c87585b30744a65537f1444d5a9c433"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26747:pr.created:sdk:Go:sdk/resourcemanager/sql/armsql",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-10T18:13:20Z",
+      "observedAt": "2026-05-10T18:13:20Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/sql/armsql",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26747",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26747"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:34310:29:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-10T18:13:27.383Z",
+      "observedAt": "2026-05-10T18:13:27.383Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/sql/armsql",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34310",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34310"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:34310:29:Custom.SDKPullRequestForGo",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-05-10T18:13:27.383Z",
+      "observedAt": "2026-05-10T18:13:27.383Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/sql/armsql",
+      "value": "https://github.com/Azure/azure-sdk-for-go/pull/26747",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34310",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34310"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado:34310:31:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-10T18:15:55.98Z",
+      "observedAt": "2026-05-10T18:15:55.98Z",
+      "trackId": "sdk:Python:azure-mgmt-sql",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34310",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34310"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49142:commit:53a783378ce8:sdk:Java:azure-resourcemanager-sql",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-10T18:17:25Z",
+      "observedAt": "2026-05-10T18:17:25Z",
+      "trackId": "sdk:Java:azure-resourcemanager-sql",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49142",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/53a783378ce8ec1211ded7e3b784fdd8fe78657e"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49142:pr.created:sdk:Java:azure-resourcemanager-sql",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-10T18:17:29Z",
+      "observedAt": "2026-05-10T18:17:29Z",
+      "trackId": "sdk:Java:azure-resourcemanager-sql",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49142",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49142"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:34310:32:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-10T18:17:36.137Z",
+      "observedAt": "2026-05-10T18:17:36.137Z",
+      "trackId": "sdk:Java:azure-resourcemanager-sql",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34310",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34310"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:34310:32:Custom.SDKPullRequestForJava",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-05-10T18:17:36.137Z",
+      "observedAt": "2026-05-10T18:17:36.137Z",
+      "trackId": "sdk:Java:azure-resourcemanager-sql",
+      "value": "https://github.com/Azure/azure-sdk-for-java/pull/49142",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34310",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34310"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38485:commit:6260ec3bc7ae:sdk:JavaScript:@azure/arm-sql",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-10T18:33:06Z",
+      "observedAt": "2026-05-10T18:33:06Z",
+      "trackId": "sdk:JavaScript:@azure/arm-sql",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38485",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/6260ec3bc7ae1b49cf3b31c3b7b9a0bcf7321512"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38485:pr.created:sdk:JavaScript:@azure/arm-sql",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-10T18:33:11Z",
+      "observedAt": "2026-05-10T18:33:11Z",
+      "trackId": "sdk:JavaScript:@azure/arm-sql",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38485",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38485"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:34310:33:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-10T18:33:18.907Z",
+      "observedAt": "2026-05-10T18:33:18.907Z",
+      "trackId": "sdk:JavaScript:@azure/arm-sql",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34310",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34310"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:34310:33:Custom.SDKPullRequestForJavaScript",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-05-10T18:33:18.907Z",
+      "observedAt": "2026-05-10T18:33:18.907Z",
+      "trackId": "sdk:JavaScript:@azure/arm-sql",
+      "value": "https://github.com/Azure/azure-sdk-for-js/pull/38485",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34310",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34310"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6276220:generation.queued:sdk:Python:azure-mgmt-sql",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-05-10T18:45:16.6209656Z",
+      "observedAt": "2026-05-10T19:02:44.0379944Z",
+      "trackId": "sdk:Python:azure-mgmt-sql",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6276220",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6276220"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:34310:35:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-10T18:45:20.273Z",
+      "observedAt": "2026-05-10T18:45:20.273Z",
+      "trackId": "sdk:Python:azure-mgmt-sql",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34310",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34310"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:34310:36:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-10T18:45:31.99Z",
+      "observedAt": "2026-05-10T18:45:31.99Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Sql",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34310",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34310"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6276220:generation.started:sdk:Python:azure-mgmt-sql",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-05-10T18:45:33.4099061Z",
+      "observedAt": "2026-05-10T19:02:44.0379944Z",
+      "trackId": "sdk:Python:azure-mgmt-sql",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6276220",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6276220"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6276227:generation.queued:sdk:Java:azure-resourcemanager-sql",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-05-10T18:45:41.8785523Z",
+      "observedAt": "2026-05-10T19:04:42.7697235Z",
+      "trackId": "sdk:Java:azure-resourcemanager-sql",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6276227",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6276227"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:34310:37:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-10T18:45:45.543Z",
+      "observedAt": "2026-05-10T18:45:45.543Z",
+      "trackId": "sdk:Java:azure-resourcemanager-sql",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34310",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34310"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6276228:generation.queued:sdk:JavaScript:@azure/arm-sql",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-05-10T18:45:55.932664Z",
+      "observedAt": "2026-05-10T19:12:55.1174915Z",
+      "trackId": "sdk:JavaScript:@azure/arm-sql",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6276228",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6276228"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6276227:generation.started:sdk:Java:azure-resourcemanager-sql",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-05-10T18:45:56.4790905Z",
+      "observedAt": "2026-05-10T19:04:42.7697235Z",
+      "trackId": "sdk:Java:azure-resourcemanager-sql",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6276227",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6276227"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado:34310:38:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-10T18:45:57.883Z",
+      "observedAt": "2026-05-10T18:45:57.883Z",
+      "trackId": "sdk:JavaScript:@azure/arm-sql",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34310",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34310"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6276228:generation.started:sdk:JavaScript:@azure/arm-sql",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-05-10T18:46:07.3045285Z",
+      "observedAt": "2026-05-10T19:12:55.1174915Z",
+      "trackId": "sdk:JavaScript:@azure/arm-sql",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6276228",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6276228"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6276229:generation.queued:sdk:Go:sdk/resourcemanager/sql/armsql",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-05-10T18:46:07.4962818Z",
+      "observedAt": "2026-05-10T18:52:29.1594385Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/sql/armsql",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6276229",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6276229"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:34310:39:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-10T18:46:11.033Z",
+      "observedAt": "2026-05-10T18:46:11.033Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/sql/armsql",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34310",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34310"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6276229:generation.started:sdk:Go:sdk/resourcemanager/sql/armsql",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-05-10T18:46:20.97249Z",
+      "observedAt": "2026-05-10T18:52:29.1594385Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/sql/armsql",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6276229",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6276229"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado:34310:40:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-10T18:50:40.013Z",
+      "observedAt": "2026-05-10T18:50:40.013Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Sql",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34310",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34310"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26747:commit:77c34a83bee0:sdk:Go:sdk/resourcemanager/sql/armsql",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-10T18:51:25Z",
+      "observedAt": "2026-05-10T18:51:25Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/sql/armsql",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26747",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/77c34a83bee063eac518e0110bbfeb0478f69e54"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:34310:41:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-10T18:51:33.237Z",
+      "observedAt": "2026-05-10T18:51:33.237Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/sql/armsql",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34310",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34310"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6276229:generation.completed:sdk:Go:sdk/resourcemanager/sql/armsql",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-05-10T18:52:29.1594385Z",
+      "observedAt": "2026-05-10T18:52:29.1594385Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/sql/armsql",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6276229",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6276229"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49142:commit:9e352238b847:sdk:Java:azure-resourcemanager-sql",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-10T18:55:16Z",
+      "observedAt": "2026-05-10T18:55:16Z",
+      "trackId": "sdk:Java:azure-resourcemanager-sql",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49142",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/9e352238b847e6182706c796b9176407b55b62cc"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:34310:43:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-10T18:55:25.84Z",
+      "observedAt": "2026-05-10T18:55:25.84Z",
+      "trackId": "sdk:Java:azure-resourcemanager-sql",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34310",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34310"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46813:commit:bfdc4b54dd5c:sdk:Python:azure-mgmt-sql",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-10T19:01:11Z",
+      "observedAt": "2026-05-10T19:01:11Z",
+      "trackId": "sdk:Python:azure-mgmt-sql",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46813",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/bfdc4b54dd5c4422bc55ca5549d7e5c6b4a0150d"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46813:pr.created:sdk:Python:azure-mgmt-sql",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-10T19:01:15Z",
+      "observedAt": "2026-05-10T19:01:15Z",
+      "trackId": "sdk:Python:azure-mgmt-sql",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46813",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46813"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:34310:44:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-10T19:01:22.55Z",
+      "observedAt": "2026-05-10T19:01:22.55Z",
+      "trackId": "sdk:Python:azure-mgmt-sql",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34310",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34310"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:34310:44:Custom.SDKPullRequestForPython",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-05-10T19:01:22.55Z",
+      "observedAt": "2026-05-10T19:01:22.55Z",
+      "trackId": "sdk:Python:azure-mgmt-sql",
+      "value": "https://github.com/Azure/azure-sdk-for-python/pull/46813",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34310",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34310"
+      },
+      "title": "SDK PR linked",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6276220:generation.completed:sdk:Python:azure-mgmt-sql",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-05-10T19:02:44.0379944Z",
+      "observedAt": "2026-05-10T19:02:44.0379944Z",
+      "trackId": "sdk:Python:azure-mgmt-sql",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6276220",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6276220"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:6276227:generation.completed:sdk:Java:azure-resourcemanager-sql",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-05-10T19:04:42.7697235Z",
+      "observedAt": "2026-05-10T19:04:42.7697235Z",
+      "trackId": "sdk:Java:azure-resourcemanager-sql",
+      "title": "Pipeline completed with issues",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6276227",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6276227"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38485:commit:623128ab7db6:sdk:JavaScript:@azure/arm-sql",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-10T19:11:56Z",
+      "observedAt": "2026-05-10T19:11:56Z",
+      "trackId": "sdk:JavaScript:@azure/arm-sql",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38485",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/623128ab7db609a585c5df08eba98a24914fee56"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:34310:46:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-10T19:12:05.697Z",
+      "observedAt": "2026-05-10T19:12:05.697Z",
+      "trackId": "sdk:JavaScript:@azure/arm-sql",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34310",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34310"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6276228:generation.completed:sdk:JavaScript:@azure/arm-sql",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-05-10T19:12:55.1174915Z",
+      "observedAt": "2026-05-10T19:12:55.1174915Z",
+      "trackId": "sdk:JavaScript:@azure/arm-sql",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6276228",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6276228"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38485:review:4260404287:sdk:JavaScript:@azure/arm-sql",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-11T02:22:15Z",
+      "observedAt": "2026-05-11T02:22:15Z",
+      "trackId": "sdk:JavaScript:@azure/arm-sql",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38485",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38485#pullrequestreview-4260404287"
+      },
+      "confidence": "authoritative",
+      "excerpt": "No API design issues found. The `@azure/arm-sql` package (v`11.0.0-beta.5`) looks good: - Versions are consistent across `package.json`, `src/api/sqlManagementContext.ts`, and `CHANGELOG.md` - CHANGELOG compares against `10.0.0` (not an alp",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38485:comment:4417098709:sdk:JavaScript:@azure/arm-sql",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-11T02:22:15Z",
+      "observedAt": "2026-05-11T02:22:15Z",
+      "trackId": "sdk:JavaScript:@azure/arm-sql",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38485",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38485#issuecomment-4417098709"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Next Steps to Merge Only failed checks and required actions are listed below. - ⏳ This PR is currently in **Draft** state. ADO CI pipeline checks have not run yet. Please mark the PR as ready for review to trigger CI checks.",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26747:comment:4419306635:sdk:Go:sdk/resourcemanager/sql/armsql",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-11T09:33:21Z",
+      "observedAt": "2026-05-11T09:33:21Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/sql/armsql",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "tadelesh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26747",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26747#issuecomment-4419306635"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@jliusan please clean up the useless example files.",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26747:commit:1cbefcb2b046:sdk:Go:sdk/resourcemanager/sql/armsql",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-12T03:40:39Z",
+      "observedAt": "2026-05-12T03:40:39Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/sql/armsql",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "jliusan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26747",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/1cbefcb2b0465574b0384ea2b8aa7a28b19a9a23"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26747:commit:a56510096dba:sdk:Go:sdk/resourcemanager/sql/armsql",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-12T04:08:09Z",
+      "observedAt": "2026-05-12T04:08:09Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/sql/armsql",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "jliusan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26747",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/a56510096dba201018b60b4867c9e333cfe62ca7"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26747:commit:174e6e840130:sdk:Go:sdk/resourcemanager/sql/armsql",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-12T06:07:38Z",
+      "observedAt": "2026-05-12T06:07:38Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/sql/armsql",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "jliusan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26747",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/174e6e8401309dfd3ce86b3569d472b24dfbb943"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26747:review:4269769557:sdk:Go:sdk/resourcemanager/sql/armsql",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-12T06:46:31Z",
+      "observedAt": "2026-05-12T06:46:31Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/sql/armsql",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26747",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26747#pullrequestreview-4269769557"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot wasn't able to review this pull request because it exceeds the maximum number of files (300). Try reducing the number of changed files and requesting a review from Copilot again.",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26747:review:4269769839:sdk:Go:sdk/resourcemanager/sql/armsql",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-12T06:46:34Z",
+      "observedAt": "2026-05-12T06:46:34Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/sql/armsql",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "tadelesh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26747",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26747#pullrequestreview-4269769839"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26747:comment:4428444035:sdk:Go:sdk/resourcemanager/sql/armsql",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-12T07:54:58Z",
+      "observedAt": "2026-05-12T07:54:58Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/sql/armsql",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26747",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26747#issuecomment-4428444035"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## PR is ready to merge",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38485:review:4277841898:sdk:JavaScript:@azure/arm-sql",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-13T02:45:41Z",
+      "observedAt": "2026-05-13T02:45:41Z",
+      "trackId": "sdk:JavaScript:@azure/arm-sql",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38485",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38485#pullrequestreview-4277841898"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot wasn't able to review this pull request because it exceeds the maximum number of files (300). Try reducing the number of changed files and requesting a review from Copilot again.",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38485:comment:4438204776:sdk:JavaScript:@azure/arm-sql",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-13T06:58:42Z",
+      "observedAt": "2026-05-13T06:58:42Z",
+      "trackId": "sdk:JavaScript:@azure/arm-sql",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38485",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38485#issuecomment-4438204776"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Breaking Change Analysis: @azure/arm-sql (PR #38485) **Package**: `@azure/arm-sql` | **Old**: `11.0.0-beta.4` (main) | **New**: `11.0.0-beta.5` (PR branch) **Old swagger**: `package-composite-v5` @ commit `35c0c63` (2014-04-01, 2014-04-0",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38485:commit:378010a89b3f:sdk:JavaScript:@azure/arm-sql",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-18T07:23:33Z",
+      "observedAt": "2026-05-18T07:23:33Z",
+      "trackId": "sdk:JavaScript:@azure/arm-sql",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38485",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/378010a89b3fcdc0a337688af8f5aa349d8a4421"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38485:commit:22513a8b0988:sdk:JavaScript:@azure/arm-sql",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-18T08:28:33Z",
+      "observedAt": "2026-05-18T08:28:33Z",
+      "trackId": "sdk:JavaScript:@azure/arm-sql",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38485",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/22513a8b0988d2dc27e1f445981d2b74e45841ae"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38485:commit:a4c01f28329a:sdk:JavaScript:@azure/arm-sql",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-21T07:14:12Z",
+      "observedAt": "2026-05-21T07:14:12Z",
+      "trackId": "sdk:JavaScript:@azure/arm-sql",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38485",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/a4c01f28329acba2088ca4d4aa69c1c6b317007b"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38485:comment:4506356371:sdk:JavaScript:@azure/arm-sql",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-21T08:42:40Z",
+      "observedAt": "2026-05-21T08:42:40Z",
+      "trackId": "sdk:JavaScript:@azure/arm-sql",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38485",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38485#issuecomment-4506356371"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> [!NOTE] > **AI-Generated Breaking Change Analysis** — This analysis was produced automatically by the `mgmt-breaking-change-analysis` agent (GitHub Copilot). All findings should be reviewed and verified by the engineering team. ## Breakin",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26747:pr.merged:sdk:Go:sdk/resourcemanager/sql/armsql",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-27T03:02:09Z",
+      "observedAt": "2026-05-27T03:02:09Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/sql/armsql",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26747",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26747"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38485:commit:c14f6dd5a601:sdk:JavaScript:@azure/arm-sql",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-02T08:05:31Z",
+      "observedAt": "2026-06-02T08:05:31Z",
+      "trackId": "sdk:JavaScript:@azure/arm-sql",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38485",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/c14f6dd5a6010d425d0da5b0968c0068408663ee"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38485:commit:afc3cfa5b2a2:sdk:JavaScript:@azure/arm-sql",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-02T08:05:36Z",
+      "observedAt": "2026-06-02T08:05:36Z",
+      "trackId": "sdk:JavaScript:@azure/arm-sql",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38485",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/afc3cfa5b2a20e5cdce11b06cfe1cf51ac72a0a6"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38485:commit:1ac884208c35:sdk:JavaScript:@azure/arm-sql",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-02T08:15:02Z",
+      "observedAt": "2026-06-02T08:15:02Z",
+      "trackId": "sdk:JavaScript:@azure/arm-sql",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38485",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/1ac884208c351afa967bb7ab62325468f115aaf3"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38485:commit:a1cfb246b77c:sdk:JavaScript:@azure/arm-sql",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-02T08:34:38Z",
+      "observedAt": "2026-06-02T08:34:38Z",
+      "trackId": "sdk:JavaScript:@azure/arm-sql",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38485",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/a1cfb246b77cf9eb75e51f323acb6bf7bfe93431"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38485:commit:e6fbde398692:sdk:JavaScript:@azure/arm-sql",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-02T08:55:05Z",
+      "observedAt": "2026-06-02T08:55:05Z",
+      "trackId": "sdk:JavaScript:@azure/arm-sql",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38485",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/e6fbde3986928a695d024ca561696dfa3fe6ba63"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38485:comment:4601056893:sdk:JavaScript:@azure/arm-sql",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-02T09:33:37Z",
+      "observedAt": "2026-06-02T09:33:37Z",
+      "trackId": "sdk:JavaScript:@azure/arm-sql",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38485",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38485#issuecomment-4601056893"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Breaking Change Analysis: `@azure/arm-sql` 11.0.0 ### Summary | Item | Value | |------|-------| | Generator | `@azure-tools/typespec-ts` 0.54.0 | | API Version | `2025-01-01` | | Package Version | `11.0.0-beta.5` → `11.0.0` | | TypeSpec ",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38485:comment:4609994280:sdk:JavaScript:@azure/arm-sql",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-03T07:19:38Z",
+      "observedAt": "2026-06-03T07:19:38Z",
+      "trackId": "sdk:JavaScript:@azure/arm-sql",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38485",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38485#issuecomment-4609994280"
+      },
+      "confidence": "authoritative",
+      "excerpt": "# Breaking Change Analysis — `@azure/arm-sql` 11.0.0 (PR #38485) > Baseline in CHANGELOG: `10.0.0`. Last published on main: `11.0.0-beta.4`. Migration: AutoRest/Swagger → TypeSpec/Modular emitter. No Type 1 (REST regression) detected — all ",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6388552:generation.queued:sdk:.NET:Azure.ResourceManager.Sql",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-06-03T08:23:07.1349772Z",
+      "observedAt": "2026-06-03T08:33:36.0599391Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Sql",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6388552",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6388552"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:34310:49:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-03T08:23:10.347Z",
+      "observedAt": "2026-06-03T08:23:10.347Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Sql",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34310",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34310"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6388552:generation.started:sdk:.NET:Azure.ResourceManager.Sql",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-06-03T08:27:15.2792811Z",
+      "observedAt": "2026-06-03T08:33:36.0599391Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Sql",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6388552",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6388552"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6388552:00be4b52-4a63-5865-8e02-c61723ad0692:sdk:.NET:Azure.ResourceManager.Sql",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-06-03T08:32:17Z",
+      "observedAt": "2026-06-03T08:33:36.0599391Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Sql",
+      "title": "task failed: Generate SDK",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6388552",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6388552"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 3
+    },
+    {
+      "id": "ado:34310:50:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-03T08:33:03.133Z",
+      "observedAt": "2026-06-03T08:33:03.133Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Sql",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34310",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34310"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6388552:83516c17-6666-5250-abde-63983ce72a49:sdk:.NET:Azure.ResourceManager.Sql",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-06-03T08:33:23.46Z",
+      "observedAt": "2026-06-03T08:33:36.0599391Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Sql",
+      "title": "job failed: Job",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6388552",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6388552"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:6388552:6884a131-87da-5381-61f3-d7acc3b91d76:sdk:.NET:Azure.ResourceManager.Sql",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-06-03T08:33:34.6466667Z",
+      "observedAt": "2026-06-03T08:33:36.0599391Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Sql",
+      "title": "stage failed: SDK Generation",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6388552",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6388552"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6388552:generation.failed:sdk:.NET:Azure.ResourceManager.Sql",
+      "type": "generation.failed",
+      "phase": "generation",
+      "occurredAt": "2026-06-03T08:33:36.0599391Z",
+      "observedAt": "2026-06-03T08:33:36.0599391Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Sql",
+      "title": "Pipeline failed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6388552",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6388552"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38485:commit:98e511221950:sdk:JavaScript:@azure/arm-sql",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-05T06:36:31Z",
+      "observedAt": "2026-06-05T06:36:31Z",
+      "trackId": "sdk:JavaScript:@azure/arm-sql",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38485",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/98e5112219501e8ac08f0aad8d777c1834ff632f"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38485:commit:5898e4ca9452:sdk:JavaScript:@azure/arm-sql",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-05T06:56:04Z",
+      "observedAt": "2026-06-05T06:56:04Z",
+      "trackId": "sdk:JavaScript:@azure/arm-sql",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38485",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/5898e4ca94523828eb98b016d17be61f7a5a0467"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38485:commit:3190de759748:sdk:JavaScript:@azure/arm-sql",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-05T06:56:11Z",
+      "observedAt": "2026-06-05T06:56:11Z",
+      "trackId": "sdk:JavaScript:@azure/arm-sql",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38485",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/3190de759748c20fac4f461530f4f0dd09abd0ac"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38485:commit:dbada44270ef:sdk:JavaScript:@azure/arm-sql",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-05T07:08:28Z",
+      "observedAt": "2026-06-05T07:08:28Z",
+      "trackId": "sdk:JavaScript:@azure/arm-sql",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38485",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/dbada44270ef46f2bc71ba19d7513530bd6d13e8"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38485:commit:2058432bef3a:sdk:JavaScript:@azure/arm-sql",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-05T07:18:16Z",
+      "observedAt": "2026-06-05T07:18:16Z",
+      "trackId": "sdk:JavaScript:@azure/arm-sql",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38485",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/2058432bef3a0f313f9915c79a75aef617d975fc"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38485:commit:944f6e72beae:sdk:JavaScript:@azure/arm-sql",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-05T07:32:59Z",
+      "observedAt": "2026-06-05T07:32:59Z",
+      "trackId": "sdk:JavaScript:@azure/arm-sql",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38485",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/944f6e72beaed6483d0bf50f4d5f2fb148fe42ae"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38485:comment:4630083853:sdk:JavaScript:@azure/arm-sql",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-05T09:29:31Z",
+      "observedAt": "2026-06-05T09:29:31Z",
+      "trackId": "sdk:JavaScript:@azure/arm-sql",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38485",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38485#issuecomment-4630083853"
+      },
+      "confidence": "authoritative",
+      "excerpt": "LGTM cc @JialinHuang803",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38485:review:4435266505:sdk:JavaScript:@azure/arm-sql",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-05T09:47:09Z",
+      "observedAt": "2026-06-05T09:47:09Z",
+      "trackId": "sdk:JavaScript:@azure/arm-sql",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "JialinHuang803"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38485",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38485#pullrequestreview-4435266505"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38485:pr.merged:sdk:JavaScript:@azure/arm-sql",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-05T09:47:18Z",
+      "observedAt": "2026-06-05T09:47:18Z",
+      "trackId": "sdk:JavaScript:@azure/arm-sql",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38485",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38485"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46813:review:4452193895:sdk:Python:azure-mgmt-sql",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-08T18:10:22Z",
+      "observedAt": "2026-06-08T18:10:22Z",
+      "trackId": "sdk:Python:azure-mgmt-sql",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46813",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46813#pullrequestreview-4452193895"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot wasn't able to review this pull request because it exceeds the maximum number of files (300). Try reducing the number of changed files and requesting a review from Copilot again.",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49142:comment:3375398181:sdk:Java:azure-resourcemanager-sql",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-08T18:13:21Z",
+      "observedAt": "2026-06-08T18:13:21Z",
+      "trackId": "sdk:Java:azure-resourcemanager-sql",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49142",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49142#discussion_r3375398181"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`<revapi.skip>true</revapi.skip>` disables Revapi API/binary compatibility validation (default in `sdk/parents/azure-client-sdk-parent/pom.xml` is `false`). For a stable release, skipping Revapi can hide breaking public API changes; please ",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49142:comment:3375398215:sdk:Java:azure-resourcemanager-sql",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-08T18:13:21Z",
+      "observedAt": "2026-06-08T18:13:21Z",
+      "trackId": "sdk:Java:azure-resourcemanager-sql",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49142",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49142#discussion_r3375398215"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This changelog entry marks 2.54.0 as a stable release but lists extensive **Breaking Changes** (e.g., many public `models.*` types removed). If these breaks are relative to the last stable (2.53.8), the version should be a major bump per se",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49142:review:4452216319:sdk:Java:azure-resourcemanager-sql",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-08T18:13:22Z",
+      "observedAt": "2026-06-08T18:13:22Z",
+      "trackId": "sdk:Java:azure-resourcemanager-sql",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49142",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49142#pullrequestreview-4452216319"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This AutoPR updates `azure-resourcemanager-sql` to a new stable release generated from the SQL Resource Manager TypeSpec configuration (spec commit `41784c...`, API version `2025-01-01`), and aligns repo metadata (R",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49142:commit:8285b7feb92f:sdk:Java:azure-resourcemanager-sql",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-09T00:10:51Z",
+      "observedAt": "2026-06-09T00:10:51Z",
+      "trackId": "sdk:Java:azure-resourcemanager-sql",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49142",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/8285b7feb92f1451cb973c0f992481fca1e75f9d"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49142:commit:5245681084ef:sdk:Java:azure-resourcemanager-sql",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-09T02:16:12Z",
+      "observedAt": "2026-06-09T02:16:12Z",
+      "trackId": "sdk:Java:azure-resourcemanager-sql",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49142",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/5245681084ef5c96b62c008e37055e5581d2218e"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49142:comment:4655523525:sdk:Java:azure-resourcemanager-sql",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-09T02:44:09Z",
+      "observedAt": "2026-06-09T02:44:09Z",
+      "trackId": "sdk:Java:azure-resourcemanager-sql",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49142",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49142#issuecomment-4655523525"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@jeremyfrosti Which api-version of SQL are you releasing? If it is 2025-01-01, please pin it via `api-version: 2025-01-01` in java section of https://github.com/Azure/azure-rest-api-specs/blob/main/specification/sql/resource-manager/Microso",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46813:comment:4655617817:sdk:Python:azure-mgmt-sql",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-09T03:01:01Z",
+      "observedAt": "2026-06-09T03:01:01Z",
+      "trackId": "sdk:Python:azure-mgmt-sql",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46813",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46813#issuecomment-4655617817"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @jeremyfrosti, we have released the new version of azure-mgmt-sql, please see https://pypi.org/project/azure-mgmt-sql/4.0.0b25/",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46813:pr.closed:sdk:Python:azure-mgmt-sql",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-09T03:01:07Z",
+      "observedAt": "2026-06-09T03:01:07Z",
+      "trackId": "sdk:Python:azure-mgmt-sql",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46813",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46813"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:34310:53:Custom.ReleaseStatusForJavaScript",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-06-26T09:34:39.277Z",
+      "observedAt": "2026-06-26T09:34:39.277Z",
+      "trackId": "sdk:JavaScript:@azure/arm-sql",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34310",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34310"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34310:53:Custom.ReleasedVersionForJavaScript",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-06-26T09:34:39.277Z",
+      "observedAt": "2026-06-26T09:34:39.277Z",
+      "trackId": "sdk:JavaScript:@azure/arm-sql",
+      "value": "11.0.0",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34310",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34310"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49142:commit:f8af375e3fb2:sdk:Java:azure-resourcemanager-sql",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-03T06:52:11Z",
+      "observedAt": "2026-07-03T06:52:11Z",
+      "trackId": "sdk:Java:azure-resourcemanager-sql",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49142",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/f8af375e3fb2a194d787b839d62b49b801a733f4"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49142:commit:f631ca001dc6:sdk:Java:azure-resourcemanager-sql",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-03T07:03:04Z",
+      "observedAt": "2026-07-03T07:03:04Z",
+      "trackId": "sdk:Java:azure-resourcemanager-sql",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49142",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/f631ca001dc6e8f36aba2cb75400c67f788744b9"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49142:commit:fcbe0a94fd38:sdk:Java:azure-resourcemanager-sql",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-03T07:06:29Z",
+      "observedAt": "2026-07-03T07:06:29Z",
+      "trackId": "sdk:Java:azure-resourcemanager-sql",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49142",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/fcbe0a94fd38ae74f5b0252b04f839f3b6d3af9a"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49142:commit:d98b90889eb3:sdk:Java:azure-resourcemanager-sql",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-03T07:07:06Z",
+      "observedAt": "2026-07-03T07:07:06Z",
+      "trackId": "sdk:Java:azure-resourcemanager-sql",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49142",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/d98b90889eb38436aafe990612d202170bc45f44"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49142:commit:c6afc1ff10c4:sdk:Java:azure-resourcemanager-sql",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-06T02:42:22Z",
+      "observedAt": "2026-07-06T02:42:22Z",
+      "trackId": "sdk:Java:azure-resourcemanager-sql",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49142",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/c6afc1ff10c4f3da08cf2d7bed30b769e71432f5"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49142:commit:9ebe44501fb3:sdk:Java:azure-resourcemanager-sql",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-07T01:12:01Z",
+      "observedAt": "2026-07-07T01:12:01Z",
+      "trackId": "sdk:Java:azure-resourcemanager-sql",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49142",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/9ebe44501fb35f14416991325662f6cd1ad6c8e6"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49142:commit:bf32136f0005:sdk:Java:azure-resourcemanager-sql",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-08T02:45:03Z",
+      "observedAt": "2026-07-08T02:45:03Z",
+      "trackId": "sdk:Java:azure-resourcemanager-sql",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49142",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/bf32136f0005865d4c9708ce7f740a611da9e52b"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49142:commit:dbd5b4734d6d:sdk:Java:azure-resourcemanager-sql",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-09T03:07:24Z",
+      "observedAt": "2026-07-09T03:07:24Z",
+      "trackId": "sdk:Java:azure-resourcemanager-sql",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49142",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/dbd5b4734d6d9a79db0d1826bef3bafcc5f44812"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49142:commit:84787ba405aa:sdk:Java:azure-resourcemanager-sql",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-13T06:53:13Z",
+      "observedAt": "2026-07-13T06:53:13Z",
+      "trackId": "sdk:Java:azure-resourcemanager-sql",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49142",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/84787ba405aabb17b591773471f0151573348736"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49142:commit:a9b97cb6e601:sdk:Java:azure-resourcemanager-sql",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-13T08:42:06Z",
+      "observedAt": "2026-07-13T08:42:06Z",
+      "trackId": "sdk:Java:azure-resourcemanager-sql",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49142",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/a9b97cb6e60108d289a73e861bc417e2d1726a7f"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49142:commit:f80f5c405f21:sdk:Java:azure-resourcemanager-sql",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-16T01:40:44Z",
+      "observedAt": "2026-07-16T01:40:44Z",
+      "trackId": "sdk:Java:azure-resourcemanager-sql",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49142",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/f80f5c405f21a6ff495f053996ca9ee3796a3482"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49142:commit:bdbe5b41c246:sdk:Java:azure-resourcemanager-sql",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-16T01:46:34Z",
+      "observedAt": "2026-07-16T01:46:34Z",
+      "trackId": "sdk:Java:azure-resourcemanager-sql",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49142",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/bdbe5b41c246c1685d91b26ce739dd93167ae321"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49142:review:4709995019:sdk:Java:azure-resourcemanager-sql",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-16T02:34:58Z",
+      "observedAt": "2026-07-16T02:34:58Z",
+      "trackId": "sdk:Java:azure-resourcemanager-sql",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49142",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49142#pullrequestreview-4709995019"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49142:review:4709998587:sdk:Java:azure-resourcemanager-sql",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-16T02:36:10Z",
+      "observedAt": "2026-07-16T02:36:10Z",
+      "trackId": "sdk:Java:azure-resourcemanager-sql",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "XiaofeiCao"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49142",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49142#pullrequestreview-4709998587"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49142:pr.merged:sdk:Java:azure-resourcemanager-sql",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-16T03:01:34Z",
+      "observedAt": "2026-07-16T03:01:34Z",
+      "trackId": "sdk:Java:azure-resourcemanager-sql",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49142",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49142"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    }
+  ],
+  "quality": {
+    "warnings": [
+      "1 historical linked PR(s) closed without merge"
+    ],
+    "unavailablePullRequests": 0,
+    "unavailablePipelineRuns": 0
+  },
+  "boundaryFacts": {
+    "id": "34310",
+    "state": "in-progress",
+    "specPrs": [
+      {
+        "id": "github:Azure/azure-rest-api-specs#41520",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#41520",
+        "createdAt": "2026-03-18T09:26:27Z",
+        "mergedAt": "2026-04-10T10:48:41Z",
+        "closedAt": "2026-04-10T10:48:41Z",
+        "available": true
+      }
+    ],
+    "artifacts": [
+      {
+        "language": ".NET",
+        "package": "Azure.ResourceManager.Sql",
+        "trackId": "sdk:.NET:Azure.ResourceManager.Sql",
+        "prId": null,
+        "prCreatedAt": null,
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [],
+        "generationRunId": "ado-build:internal:6388552",
+        "generationStartAt": "2026-06-03T08:27:15.2792811Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "missing",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "JavaScript",
+        "package": "@azure/arm-sql",
+        "trackId": "sdk:JavaScript:@azure/arm-sql",
+        "prId": "github:Azure/azure-sdk-for-js#38485",
+        "prCreatedAt": "2026-05-10T18:33:11Z",
+        "prMergedAt": "2026-06-05T09:47:18Z",
+        "prClosedAt": "2026-06-05T09:47:18Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-js#38485",
+            "createdAt": "2026-05-10T18:33:11Z",
+            "mergedAt": "2026-06-05T09:47:18Z",
+            "closedAt": "2026-06-05T09:47:18Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6276228",
+        "generationStartAt": "2026-05-10T18:46:07.3045285Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-06-26T09:34:39.277Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "11.0.0",
+        "releaseBoundaryAt": "2026-06-26T09:34:39.277Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Python",
+        "package": "azure-mgmt-sql",
+        "trackId": "sdk:Python:azure-mgmt-sql",
+        "prId": "github:Azure/azure-sdk-for-python#46813",
+        "prCreatedAt": "2026-05-10T19:01:15Z",
+        "prMergedAt": null,
+        "prClosedAt": "2026-06-09T03:01:07Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-python#46813",
+            "createdAt": "2026-05-10T19:01:15Z",
+            "mergedAt": null,
+            "closedAt": "2026-06-09T03:01:07Z",
+            "state": "closed"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6276220",
+        "generationStartAt": "2026-05-10T18:45:33.4099061Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Java",
+        "package": "azure-resourcemanager-sql",
+        "trackId": "sdk:Java:azure-resourcemanager-sql",
+        "prId": "github:Azure/azure-sdk-for-java#49142",
+        "prCreatedAt": "2026-05-10T18:17:29Z",
+        "prMergedAt": "2026-07-16T03:01:34Z",
+        "prClosedAt": "2026-07-16T03:01:34Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-java#49142",
+            "createdAt": "2026-05-10T18:17:29Z",
+            "mergedAt": "2026-07-16T03:01:34Z",
+            "closedAt": "2026-07-16T03:01:34Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6276227",
+        "generationStartAt": "2026-05-10T18:45:56.4790905Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Go",
+        "package": "sdk/resourcemanager/sql/armsql",
+        "trackId": "sdk:Go:sdk/resourcemanager/sql/armsql",
+        "prId": "github:Azure/azure-sdk-for-go#26747",
+        "prCreatedAt": "2026-05-10T18:13:20Z",
+        "prMergedAt": "2026-05-27T03:02:09Z",
+        "prClosedAt": "2026-05-27T03:02:09Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-go#26747",
+            "createdAt": "2026-05-10T18:13:20Z",
+            "mergedAt": "2026-05-27T03:02:09Z",
+            "closedAt": "2026-05-27T03:02:09Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6276229",
+        "generationStartAt": "2026-05-10T18:46:20.97249Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      }
+    ],
+    "cohortPlan": {
+      "id": "34310",
+      "releasePlanId": "2227",
+      "title": "Release Plan - 2227 - GA - Azure SQL Database",
+      "service": "Azure SQL Database",
+      "state": "in-progress"
+    },
+    "quality": {
+      "warnings": [
+        "1 historical linked PR(s) closed without merge"
+      ],
+      "unavailablePullRequests": 0,
+      "unavailablePipelineRuns": 0
+    }
+  },
+  "summary": {
+    "durationHours": 2286.7,
+    "pullRequestCount": 5,
+    "humanReviewCount": 17,
+    "humanCommentCount": 22
+  }
+}

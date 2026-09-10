@@ -1,0 +1,3137 @@
+{
+  "schemaVersion": 2,
+  "id": "34186",
+  "correlation": {
+    "policyVersion": 1,
+    "preflight": "passed"
+  },
+  "releasePlanId": "2212",
+  "title": "Release Plan - 2212 - GA - Azure VM Image Builder",
+  "service": "Azure VM Image Builder",
+  "product": "Release",
+  "path": "specification/imagebuilder/resource-manager/Microsoft.VirtualMachineImages/ImageBuilder",
+  "state": "in-progress",
+  "plane": "management",
+  "releaseType": "APEX GA",
+  "intendedMonth": "May 2026",
+  "createdAt": "2026-05-04T18:40:05.557Z",
+  "completedAt": null,
+  "sourceUrl": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34186",
+  "range": {
+    "start": "2026-04-21T06:26:36.000Z",
+    "end": "2026-08-14T00:37:23.589Z"
+  },
+  "intendedArtifacts": [
+    {
+      "prId": "github:Azure/azure-sdk-for-net#59351",
+      "language": ".NET",
+      "package": "Azure.ResourceManager.ImageBuilder",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6324649",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-js#38603",
+      "language": "JavaScript",
+      "package": "@azure/arm-imagebuilder",
+      "version": "5.0.0",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6324647",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-python#47012",
+      "language": "Python",
+      "package": "azure-mgmt-imagebuilder",
+      "version": "2.0.0",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6324636",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-java#49224",
+      "language": "Java",
+      "package": "azure-resourcemanager-imagebuilder",
+      "version": "1.3.0",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6324648",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-go#26819",
+      "language": "Go",
+      "package": "sdk/resourcemanager/virtualmachineimagebuilder/armvirtualmachineimagebuilder",
+      "version": "3.0.0",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6324646",
+      "releasePipelineUrl": null
+    }
+  ],
+  "links": [
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#42538",
+      "role": "spec-pr",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/42538",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-net#59351",
+      "role": "sdk-pr",
+      "language": ".NET",
+      "url": "https://github.com/Azure/azure-sdk-for-net/pull/59351",
+      "releasePlanIds": [
+        "2212"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-js#38603",
+      "role": "sdk-pr",
+      "language": "JavaScript",
+      "url": "https://github.com/Azure/azure-sdk-for-js/pull/38603",
+      "releasePlanIds": [
+        "2212"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-python#47012",
+      "role": "sdk-pr",
+      "language": "Python",
+      "url": "https://github.com/Azure/azure-sdk-for-python/pull/47012",
+      "releasePlanIds": [
+        "2212"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-java#49224",
+      "role": "sdk-pr",
+      "language": "Java",
+      "url": "https://github.com/Azure/azure-sdk-for-java/pull/49224",
+      "releasePlanIds": [
+        "2212"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-go#26819",
+      "role": "sdk-pr",
+      "language": "Go",
+      "url": "https://github.com/Azure/azure-sdk-for-go/pull/26819",
+      "releasePlanIds": [
+        "2212"
+      ]
+    }
+  ],
+  "tracks": [
+    {
+      "id": "plan",
+      "kind": "plan",
+      "label": "Release Plan",
+      "detail": "APEX GA"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#42538",
+      "kind": "spec",
+      "label": "Spec PR",
+      "detail": "azure-rest-api-specs #42538",
+      "artifactId": "github:Azure/azure-rest-api-specs#42538",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:.NET:Azure.ResourceManager.ImageBuilder",
+      "kind": "sdk",
+      "label": ".NET",
+      "detail": "Azure.ResourceManager.ImageBuilder",
+      "artifactId": "github:Azure/azure-sdk-for-net#59351",
+      "state": "closed"
+    },
+    {
+      "id": "sdk:JavaScript:@azure/arm-imagebuilder",
+      "kind": "sdk",
+      "label": "JavaScript",
+      "detail": "@azure/arm-imagebuilder",
+      "artifactId": "github:Azure/azure-sdk-for-js#38603",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Python:azure-mgmt-imagebuilder",
+      "kind": "sdk",
+      "label": "Python",
+      "detail": "azure-mgmt-imagebuilder",
+      "artifactId": "github:Azure/azure-sdk-for-python#47012",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Java:azure-resourcemanager-imagebuilder",
+      "kind": "sdk",
+      "label": "Java",
+      "detail": "azure-resourcemanager-imagebuilder",
+      "artifactId": "github:Azure/azure-sdk-for-java#49224",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Go:sdk/resourcemanager/virtualmachineimagebuilder/armvirtualmachineimagebuilder",
+      "kind": "sdk",
+      "label": "Go",
+      "detail": "sdk/resourcemanager/virtualmachineimagebuilder/armvirtualmachineimagebuilder",
+      "artifactId": "github:Azure/azure-sdk-for-go#26819",
+      "state": "merged"
+    }
+  ],
+  "events": [
+    {
+      "id": "github:Azure/azure-rest-api-specs#42538:pr.created:spec:github:Azure/azure-rest-api-specs#42538",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-21T06:26:36Z",
+      "observedAt": "2026-04-21T06:26:36Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42538",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "melina5656"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42538",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42538"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42538:comment:4286363562:spec:github:Azure/azure-rest-api-specs#42538",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-21T06:27:09Z",
+      "observedAt": "2026-04-21T06:27:09Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42538",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42538",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42538#issuecomment-4286363562"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>✅ All automated merging requirements have been met! To get your PR merged, see <a href=\"https://aka.ms/azsdk/specreview/merge\">aka.ms/azsdk/specreview/merge</a>.<br /><br />Comment generated by <a href=\"https://g",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42538:comment:4286389014:spec:github:Azure/azure-rest-api-specs#42538",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-21T06:32:28Z",
+      "observedAt": "2026-04-21T06:32:28Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42538",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42538",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42538#issuecomment-4286389014"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews | Language | API Review for Package | |----------|---------| | Swagger | [Microsoft.VirtualMachineImages-ImageBuilder](https://apiview",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42538:commit:8209fe28b38f:spec:github:Azure/azure-rest-api-specs#42538",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-21T06:37:35Z",
+      "observedAt": "2026-04-21T06:37:35Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42538",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "melina5656"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42538",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/8209fe28b38f7d48392333e44dea68778e37245b"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42538:commit:01e255a4242c:spec:github:Azure/azure-rest-api-specs#42538",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-21T06:53:58Z",
+      "observedAt": "2026-04-21T06:53:58Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42538",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "melina5656"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42538",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/01e255a4242c2d2e8943f4bf8485793520466bc6"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42538:commit:70e0ce030d1f:spec:github:Azure/azure-rest-api-specs#42538",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-21T07:02:34Z",
+      "observedAt": "2026-04-21T07:02:34Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42538",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "melina5656"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42538",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/70e0ce030d1f694db65f0fd270c1a7a5fe0719a1"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42538:commit:8299e6a3df00:spec:github:Azure/azure-rest-api-specs#42538",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-22T09:08:14Z",
+      "observedAt": "2026-04-22T09:08:14Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42538",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "melina5656"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42538",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/8299e6a3df008f9374dfd124ccc833d82593a7bf"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42538:commit:5f20998e6e2b:spec:github:Azure/azure-rest-api-specs#42538",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-27T01:50:46Z",
+      "observedAt": "2026-04-27T01:50:46Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42538",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "v-huizhu2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42538",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/5f20998e6e2b75cd6e90cf347a782ae97e619e30"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42538:commit:f0e3f93e2e97:spec:github:Azure/azure-rest-api-specs#42538",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-27T02:47:13Z",
+      "observedAt": "2026-04-27T02:47:13Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42538",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "v-jiaodi"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42538",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/f0e3f93e2e9756cae491d7b7b5b5b9fe47806a00"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42538:commit:025d308302c7:spec:github:Azure/azure-rest-api-specs#42538",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-27T03:06:38Z",
+      "observedAt": "2026-04-27T03:06:38Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42538",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "v-jiaodi"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42538",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/025d308302c7184a696f8b73dbe4a66f9a77a2f2"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42538:commit:07391467cbb1:spec:github:Azure/azure-rest-api-specs#42538",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-27T03:54:48Z",
+      "observedAt": "2026-04-27T03:54:48Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42538",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42538",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/07391467cbb103748cc5ea9bed20caad3d92e760"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42538:commit:f750283a31ff:spec:github:Azure/azure-rest-api-specs#42538",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-27T12:23:37Z",
+      "observedAt": "2026-04-27T12:23:37Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42538",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "v-huizhu2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42538",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/f750283a31ff40376faa0149619b58839516d4e4"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42538:commit:a9496b26dabc:spec:github:Azure/azure-rest-api-specs#42538",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-28T09:36:54Z",
+      "observedAt": "2026-04-28T09:36:54Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42538",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "jliusan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42538",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/a9496b26dabceff0a3c6e29916184856e1646c23"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42538:commit:04c370f2a792:spec:github:Azure/azure-rest-api-specs#42538",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-29T02:06:09Z",
+      "observedAt": "2026-04-29T02:06:09Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42538",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "v-huizhu2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42538",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/04c370f2a792699808cbbeb18159e9fc029bf311"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42538:commit:36c55205a8a2:spec:github:Azure/azure-rest-api-specs#42538",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-29T03:20:02Z",
+      "observedAt": "2026-04-29T03:20:02Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42538",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "pshao25"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42538",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/36c55205a8a23955a0f1e552a63128cd16d9b8ab"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42538:review:4193845766:spec:github:Azure/azure-rest-api-specs#42538",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-29T03:20:25Z",
+      "observedAt": "2026-04-29T03:20:25Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42538",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "pshao25"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42538",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42538#pullrequestreview-4193845766"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42538:pr.merged:spec:github:Azure/azure-rest-api-specs#42538",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-29T03:34:43Z",
+      "observedAt": "2026-04-29T03:34:43Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42538",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42538",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42538"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:34186:created",
+      "type": "plan.created",
+      "phase": "plan",
+      "occurredAt": "2026-05-04T18:40:05.557Z",
+      "observedAt": "2026-05-04T18:40:05.557Z",
+      "trackId": "plan",
+      "title": "Release Plan created",
+      "confidence": "authoritative",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34186",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34186"
+      },
+      "stack": 0
+    },
+    {
+      "id": "ado:34186:1:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-05-04T18:40:05.557Z",
+      "observedAt": "2026-05-04T18:40:05.557Z",
+      "trackId": "plan",
+      "value": "New",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34186",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34186"
+      },
+      "title": "Plan state changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34186:1:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-04T18:40:05.557Z",
+      "observedAt": "2026-05-04T18:40:05.557Z",
+      "trackId": "plan",
+      "value": "Not Available",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34186",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34186"
+      },
+      "title": "Spec approval changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:34186:1:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-04T18:40:05.557Z",
+      "observedAt": "2026-05-04T18:40:05.557Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ImageBuilder",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34186",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34186"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34186:1:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-04T18:40:05.557Z",
+      "observedAt": "2026-05-04T18:40:05.557Z",
+      "trackId": "sdk:JavaScript:@azure/arm-imagebuilder",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34186",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34186"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34186:1:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-04T18:40:05.557Z",
+      "observedAt": "2026-05-04T18:40:05.557Z",
+      "trackId": "sdk:Python:azure-mgmt-imagebuilder",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34186",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34186"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34186:1:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-04T18:40:05.557Z",
+      "observedAt": "2026-05-04T18:40:05.557Z",
+      "trackId": "sdk:Java:azure-resourcemanager-imagebuilder",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34186",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34186"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34186:1:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-04T18:40:05.557Z",
+      "observedAt": "2026-05-04T18:40:05.557Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/virtualmachineimagebuilder/armvirtualmachineimagebuilder",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34186",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34186"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34186:7:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-05-04T18:41:17.25Z",
+      "observedAt": "2026-05-04T18:41:17.25Z",
+      "trackId": "plan",
+      "value": "In Progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34186",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34186"
+      },
+      "title": "Plan state changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:34187:2:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-04T18:42:14.787Z",
+      "observedAt": "2026-05-04T18:42:14.787Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42538",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/42538",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34187",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34187"
+      },
+      "title": "Spec PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado:34186:8:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-04T18:42:19.153Z",
+      "observedAt": "2026-05-04T18:42:19.153Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ImageBuilder",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34186",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34186"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34186:8:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-04T18:42:19.153Z",
+      "observedAt": "2026-05-04T18:42:19.153Z",
+      "trackId": "sdk:JavaScript:@azure/arm-imagebuilder",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34186",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34186"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34186:8:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-04T18:42:19.153Z",
+      "observedAt": "2026-05-04T18:42:19.153Z",
+      "trackId": "sdk:Python:azure-mgmt-imagebuilder",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34186",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34186"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34186:8:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-04T18:42:19.153Z",
+      "observedAt": "2026-05-04T18:42:19.153Z",
+      "trackId": "sdk:Java:azure-resourcemanager-imagebuilder",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34186",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34186"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34186:8:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-04T18:42:19.153Z",
+      "observedAt": "2026-05-04T18:42:19.153Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/virtualmachineimagebuilder/armvirtualmachineimagebuilder",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34186",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34186"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34186:9:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-20T01:23:14.23Z",
+      "observedAt": "2026-05-20T01:23:14.23Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ImageBuilder",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34186",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34186"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34186:9:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-20T01:23:14.23Z",
+      "observedAt": "2026-05-20T01:23:14.23Z",
+      "trackId": "sdk:JavaScript:@azure/arm-imagebuilder",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34186",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34186"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34186:9:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-20T01:23:14.23Z",
+      "observedAt": "2026-05-20T01:23:14.23Z",
+      "trackId": "sdk:Python:azure-mgmt-imagebuilder",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34186",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34186"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34186:9:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-20T01:23:14.23Z",
+      "observedAt": "2026-05-20T01:23:14.23Z",
+      "trackId": "sdk:Java:azure-resourcemanager-imagebuilder",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34186",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34186"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34186:9:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-20T01:23:14.23Z",
+      "observedAt": "2026-05-20T01:23:14.23Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/virtualmachineimagebuilder/armvirtualmachineimagebuilder",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34186",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34186"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6324636:generation.queued:sdk:Python:azure-mgmt-imagebuilder",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-05-20T02:34:57.596748Z",
+      "observedAt": "2026-05-20T02:44:51.5162618Z",
+      "trackId": "sdk:Python:azure-mgmt-imagebuilder",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6324636",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6324636"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6324646:generation.queued:sdk:Go:sdk/resourcemanager/virtualmachineimagebuilder/armvirtualmachineimagebuilder",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-05-20T02:35:21.4237295Z",
+      "observedAt": "2026-05-20T02:44:51.3884179Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/virtualmachineimagebuilder/armvirtualmachineimagebuilder",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6324646",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6324646"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6324647:generation.queued:sdk:JavaScript:@azure/arm-imagebuilder",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-05-20T02:35:33.4504046Z",
+      "observedAt": "2026-05-20T02:46:11.0962264Z",
+      "trackId": "sdk:JavaScript:@azure/arm-imagebuilder",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6324647",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6324647"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6324648:generation.queued:sdk:Java:azure-resourcemanager-imagebuilder",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-05-20T02:35:49.9240724Z",
+      "observedAt": "2026-05-20T02:57:00.4979417Z",
+      "trackId": "sdk:Java:azure-resourcemanager-imagebuilder",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6324648",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6324648"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6324649:generation.queued:sdk:.NET:Azure.ResourceManager.ImageBuilder",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-05-20T02:36:05.6596008Z",
+      "observedAt": "2026-05-20T02:45:54.3986843Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ImageBuilder",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6324649",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6324649"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6324636:generation.started:sdk:Python:azure-mgmt-imagebuilder",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-05-20T02:36:30.851848Z",
+      "observedAt": "2026-05-20T02:44:51.5162618Z",
+      "trackId": "sdk:Python:azure-mgmt-imagebuilder",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6324636",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6324636"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6324648:generation.started:sdk:Java:azure-resourcemanager-imagebuilder",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-05-20T02:38:40.6216941Z",
+      "observedAt": "2026-05-20T02:57:00.4979417Z",
+      "trackId": "sdk:Java:azure-resourcemanager-imagebuilder",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6324648",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6324648"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6324647:generation.started:sdk:JavaScript:@azure/arm-imagebuilder",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-05-20T02:38:41.3655662Z",
+      "observedAt": "2026-05-20T02:46:11.0962264Z",
+      "trackId": "sdk:JavaScript:@azure/arm-imagebuilder",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6324647",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6324647"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6324646:generation.started:sdk:Go:sdk/resourcemanager/virtualmachineimagebuilder/armvirtualmachineimagebuilder",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-05-20T02:38:41.4231922Z",
+      "observedAt": "2026-05-20T02:44:51.3884179Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/virtualmachineimagebuilder/armvirtualmachineimagebuilder",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6324646",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6324646"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6324649:generation.started:sdk:.NET:Azure.ResourceManager.ImageBuilder",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-05-20T02:38:42.2457081Z",
+      "observedAt": "2026-05-20T02:45:54.3986843Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ImageBuilder",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6324649",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6324649"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47012:commit:1c764e41d305:sdk:Python:azure-mgmt-imagebuilder",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T02:43:16Z",
+      "observedAt": "2026-05-20T02:43:16Z",
+      "trackId": "sdk:Python:azure-mgmt-imagebuilder",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47012",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/1c764e41d305666b5f664e6bac12439f476c364a"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47012:pr.created:sdk:Python:azure-mgmt-imagebuilder",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T02:43:21Z",
+      "observedAt": "2026-05-20T02:43:21Z",
+      "trackId": "sdk:Python:azure-mgmt-imagebuilder",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47012",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47012"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:34186:20:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-20T02:43:28.363Z",
+      "observedAt": "2026-05-20T02:43:28.363Z",
+      "trackId": "sdk:Python:azure-mgmt-imagebuilder",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34186",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34186"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:34186:20:Custom.SDKPullRequestForPython",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-05-20T02:43:28.363Z",
+      "observedAt": "2026-05-20T02:43:28.363Z",
+      "trackId": "sdk:Python:azure-mgmt-imagebuilder",
+      "value": "https://github.com/Azure/azure-sdk-for-python/pull/47012",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34186",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34186"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26819:commit:ac2c62759df9:sdk:Go:sdk/resourcemanager/virtualmachineimagebuilder/armvirtualmachineimagebuilder",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T02:43:39Z",
+      "observedAt": "2026-05-20T02:43:39Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/virtualmachineimagebuilder/armvirtualmachineimagebuilder",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26819",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/ac2c62759df92f2e5cca163f45fe0e12f4693764"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26819:pr.created:sdk:Go:sdk/resourcemanager/virtualmachineimagebuilder/armvirtualmachineimagebuilder",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T02:43:42Z",
+      "observedAt": "2026-05-20T02:43:42Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/virtualmachineimagebuilder/armvirtualmachineimagebuilder",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26819",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26819"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:34186:21:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-20T02:43:49.46Z",
+      "observedAt": "2026-05-20T02:43:49.46Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/virtualmachineimagebuilder/armvirtualmachineimagebuilder",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34186",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34186"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:34186:21:Custom.SDKPullRequestForGo",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-05-20T02:43:49.46Z",
+      "observedAt": "2026-05-20T02:43:49.46Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/virtualmachineimagebuilder/armvirtualmachineimagebuilder",
+      "value": "https://github.com/Azure/azure-sdk-for-go/pull/26819",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34186",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34186"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59351:commit:930b524c563e:sdk:.NET:Azure.ResourceManager.ImageBuilder",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T02:44:47Z",
+      "observedAt": "2026-05-20T02:44:47Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ImageBuilder",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59351",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/930b524c563e59dd4247d1ad4327dd942737fdd2"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59351:pr.created:sdk:.NET:Azure.ResourceManager.ImageBuilder",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T02:44:51Z",
+      "observedAt": "2026-05-20T02:44:51Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ImageBuilder",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59351",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59351"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6324646:generation.completed:sdk:Go:sdk/resourcemanager/virtualmachineimagebuilder/armvirtualmachineimagebuilder",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-05-20T02:44:51.3884179Z",
+      "observedAt": "2026-05-20T02:44:51.3884179Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/virtualmachineimagebuilder/armvirtualmachineimagebuilder",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6324646",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6324646"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6324636:generation.completed:sdk:Python:azure-mgmt-imagebuilder",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-05-20T02:44:51.5162618Z",
+      "observedAt": "2026-05-20T02:44:51.5162618Z",
+      "trackId": "sdk:Python:azure-mgmt-imagebuilder",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6324636",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6324636"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59351:review:4324822138:sdk:.NET:Azure.ResourceManager.ImageBuilder",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T02:44:58Z",
+      "observedAt": "2026-05-20T02:44:58Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ImageBuilder",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59351",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59351#pullrequestreview-4324822138"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot wasn't able to review this pull request because it exceeds the maximum number of lines (20,000). Try reducing the number of changed lines and requesting a review from Copilot again.",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "ado:34186:22:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-20T02:44:58.847Z",
+      "observedAt": "2026-05-20T02:44:58.847Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ImageBuilder",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34186",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34186"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34186:22:Custom.SDKPullRequestForDotnet",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-05-20T02:44:58.847Z",
+      "observedAt": "2026-05-20T02:44:58.847Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ImageBuilder",
+      "value": "https://github.com/Azure/azure-sdk-for-net/pull/59351",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34186",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34186"
+      },
+      "title": "SDK PR linked",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38603:commit:fb6bb98e5e10:sdk:JavaScript:@azure/arm-imagebuilder",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T02:45:03Z",
+      "observedAt": "2026-05-20T02:45:03Z",
+      "trackId": "sdk:JavaScript:@azure/arm-imagebuilder",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38603",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/fb6bb98e5e10d2f8b5a416c8529500c00d757c05"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38603:pr.created:sdk:JavaScript:@azure/arm-imagebuilder",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T02:45:07Z",
+      "observedAt": "2026-05-20T02:45:07Z",
+      "trackId": "sdk:JavaScript:@azure/arm-imagebuilder",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38603",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38603"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:34186:23:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-20T02:45:13.307Z",
+      "observedAt": "2026-05-20T02:45:13.307Z",
+      "trackId": "sdk:JavaScript:@azure/arm-imagebuilder",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34186",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34186"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:34186:23:Custom.SDKPullRequestForJavaScript",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-05-20T02:45:13.307Z",
+      "observedAt": "2026-05-20T02:45:13.307Z",
+      "trackId": "sdk:JavaScript:@azure/arm-imagebuilder",
+      "value": "https://github.com/Azure/azure-sdk-for-js/pull/38603",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34186",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34186"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6324649:generation.completed:sdk:.NET:Azure.ResourceManager.ImageBuilder",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-05-20T02:45:54.3986843Z",
+      "observedAt": "2026-05-20T02:45:54.3986843Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ImageBuilder",
+      "title": "Pipeline completed with issues",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6324649",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6324649"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6324647:generation.completed:sdk:JavaScript:@azure/arm-imagebuilder",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-05-20T02:46:11.0962264Z",
+      "observedAt": "2026-05-20T02:46:11.0962264Z",
+      "trackId": "sdk:JavaScript:@azure/arm-imagebuilder",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6324647",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6324647"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49224:commit:27d37201167b:sdk:Java:azure-resourcemanager-imagebuilder",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T02:47:01Z",
+      "observedAt": "2026-05-20T02:47:01Z",
+      "trackId": "sdk:Java:azure-resourcemanager-imagebuilder",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49224",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/27d37201167b0ee8b2f7283b6ad74225f27faf53"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49224:pr.created:sdk:Java:azure-resourcemanager-imagebuilder",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T02:47:06Z",
+      "observedAt": "2026-05-20T02:47:06Z",
+      "trackId": "sdk:Java:azure-resourcemanager-imagebuilder",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49224",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49224"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:34186:24:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-20T02:47:13.717Z",
+      "observedAt": "2026-05-20T02:47:13.717Z",
+      "trackId": "sdk:Java:azure-resourcemanager-imagebuilder",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34186",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34186"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:34186:24:Custom.SDKPullRequestForJava",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-05-20T02:47:13.717Z",
+      "observedAt": "2026-05-20T02:47:13.717Z",
+      "trackId": "sdk:Java:azure-resourcemanager-imagebuilder",
+      "value": "https://github.com/Azure/azure-sdk-for-java/pull/49224",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34186",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34186"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47012:comment:3270950531:sdk:Python:azure-mgmt-imagebuilder",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T02:51:34Z",
+      "observedAt": "2026-05-20T02:51:34Z",
+      "trackId": "sdk:Python:azure-mgmt-imagebuilder",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47012",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47012#discussion_r3270950531"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The changelog contains an entry `## 1.0.0b1 (1970-01-01)`, which looks like a placeholder epoch date and makes the release history inaccurate. Please replace it with the real historical date/version info (or remove the placeholder section) ",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47012:review:4324838824:sdk:Python:azure-mgmt-imagebuilder",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T02:51:35Z",
+      "observedAt": "2026-05-20T02:51:35Z",
+      "trackId": "sdk:Python:azure-mgmt-imagebuilder",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47012",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47012#pullrequestreview-4324838824"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This PR is an auto-generated update introducing the new `sdk/imagebuilder/azure-mgmt-imagebuilder` management-plane package generated from the ImageBuilder TypeSpec configuration (API version `2025-10-01`) and wirin",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47012:comment:3270950547:sdk:Python:azure-mgmt-imagebuilder",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T02:51:35Z",
+      "observedAt": "2026-05-20T02:51:35Z",
+      "trackId": "sdk:Python:azure-mgmt-imagebuilder",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47012",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47012#discussion_r3270950547"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`description` uses the product name `Imagebuilder`, which is inconsistent with the existing `azure-mgmt-imagebuilder` naming (`Image Builder`) and the client name `ImageBuilderClient`. Please update the casing/spacing so metadata and docs u",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47012:comment:3270950558:sdk:Python:azure-mgmt-imagebuilder",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T02:51:35Z",
+      "observedAt": "2026-05-20T02:51:35Z",
+      "trackId": "sdk:Python:azure-mgmt-imagebuilder",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47012",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47012#discussion_r3270950558"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The README refers to the service as `Imagebuilder` (e.g., “Imagebuilder Management Client Library” and “Search Imagebuilder Management”), but the established service name in this repo is `Image Builder`. Please fix the casing/spacing for co",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26819:review:4324842000:sdk:Go:sdk/resourcemanager/virtualmachineimagebuilder/armvirtualmachineimagebuilder",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T02:52:54Z",
+      "observedAt": "2026-05-20T02:52:54Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/virtualmachineimagebuilder/armvirtualmachineimagebuilder",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26819",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26819#pullrequestreview-4324842000"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This PR updates the `armvirtualmachineimagebuilder` resource manager SDK to the TypeSpec-generated (Go Code Generator) v3 module targeting API version **2025-10-01**, including model/serialization updates, refreshed",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26819:comment:3270953786:sdk:Go:sdk/resourcemanager/virtualmachineimagebuilder/armvirtualmachineimagebuilder",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T02:52:54Z",
+      "observedAt": "2026-05-20T02:52:54Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/virtualmachineimagebuilder/armvirtualmachineimagebuilder",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26819",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26819#discussion_r3270953786"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The fake transport treats http.StatusOK as a successful status for BeginDelete, but the real client method (VirtualMachineImageTemplatesClient.deleteOperation) only accepts 202 Accepted or 204 No Content. This mismatch can let fakes return ",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26819:comment:3270953802:sdk:Go:sdk/resourcemanager/virtualmachineimagebuilder/armvirtualmachineimagebuilder",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T02:52:54Z",
+      "observedAt": "2026-05-20T02:52:54Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/virtualmachineimagebuilder/armvirtualmachineimagebuilder",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26819",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26819#discussion_r3270953802"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The fake transport treats http.StatusOK as a successful status for BeginDelete, but TriggersClient.deleteOperation only considers 202 Accepted and 204 No Content as success. This inconsistency can lead to confusing failures if a fake return",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49224:comment:3270961904:sdk:Java:azure-resourcemanager-imagebuilder",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T02:55:57Z",
+      "observedAt": "2026-05-20T02:55:57Z",
+      "trackId": "sdk:Java:azure-resourcemanager-imagebuilder",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49224",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49224#discussion_r3270961904"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`OperationDisplay` is part of the public `com.azure.resourcemanager.imagebuilder.models` surface but is now `@Immutable` with a private constructor and no `with*` setters. This is a breaking change for existing consumers upgrading from 1.2.",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49224:comment:3270961933:sdk:Java:azure-resourcemanager-imagebuilder",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T02:55:58Z",
+      "observedAt": "2026-05-20T02:55:58Z",
+      "trackId": "sdk:Java:azure-resourcemanager-imagebuilder",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49224",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49224#discussion_r3270961933"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`ProvisioningError` was changed to `@Immutable` with a private constructor and removed fluent setters. As a public model type, this is an API-breaking change for a stable (non-major) release and is likely to fail RevAPI checks. Please confi",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49224:comment:3270961943:sdk:Java:azure-resourcemanager-imagebuilder",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T02:55:58Z",
+      "observedAt": "2026-05-20T02:55:58Z",
+      "trackId": "sdk:Java:azure-resourcemanager-imagebuilder",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49224",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49224#discussion_r3270961943"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`ImageTemplateLastRunStatus` is now `@Immutable` with a private constructor and no setters. Since this is a public model type, this is a binary/source breaking change versus 1.2.x and is risky for a stable release (RevAPI will likely report",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49224:comment:3270961950:sdk:Java:azure-resourcemanager-imagebuilder",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T02:55:58Z",
+      "observedAt": "2026-05-20T02:55:58Z",
+      "trackId": "sdk:Java:azure-resourcemanager-imagebuilder",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49224",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49224#discussion_r3270961950"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The sentence “Please change the `AzureCloud.AZURE_PUBLIC_CLOUD` variable if otherwise.” is grammatically unclear and can be misread. Consider rephrasing to something like “If you’re targeting a different cloud, use the appropriate `AzureClo",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49224:review:4324851344:sdk:Java:azure-resourcemanager-imagebuilder",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T02:55:59Z",
+      "observedAt": "2026-05-20T02:55:59Z",
+      "trackId": "sdk:Java:azure-resourcemanager-imagebuilder",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49224",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49224#pullrequestreview-4324851344"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This PR updates **azure-resourcemanager-imagebuilder** to a **TypeSpec-generated** SDK targeting **ARM Image Builder API version 2025-10-01**, and promotes the package from **1.3.0-beta.1** to **1.3.0 (stable)**. **",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38603:comment:3270962045:sdk:JavaScript:@azure/arm-imagebuilder",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T02:56:01Z",
+      "observedAt": "2026-05-20T02:56:01Z",
+      "trackId": "sdk:JavaScript:@azure/arm-imagebuilder",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38603",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38603#discussion_r3270962045"
+      },
+      "confidence": "authoritative",
+      "excerpt": "ESLint config no longer provides TypeScript parserOptions (project + projectService: false) and the package-local tsconfig.lint.json was deleted. This deviates from the established pattern used by other ARM packages and can break type-aware",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38603:review:4324851511:sdk:JavaScript:@azure/arm-imagebuilder",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T02:56:02Z",
+      "observedAt": "2026-05-20T02:56:02Z",
+      "trackId": "sdk:JavaScript:@azure/arm-imagebuilder",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38603",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38603#pullrequestreview-4324851511"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This AutoPR updates **@azure/arm-imagebuilder** based on the ImageBuilder TypeSpec configuration targeting **API version 2025-10-01**, including a major-version refresh of the generated client surface and associated",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38603:comment:3270962065:sdk:JavaScript:@azure/arm-imagebuilder",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T02:56:02Z",
+      "observedAt": "2026-05-20T02:56:02Z",
+      "trackId": "sdk:JavaScript:@azure/arm-imagebuilder",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38603",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38603#discussion_r3270962065"
+      },
+      "confidence": "authoritative",
+      "excerpt": "warp.base.config.yml is intended to be inherited via `extends: ../../../warp.base.config.yml`. Dropping `extends` here makes this package an outlier and risks missing future base config updates (exports/targets conventions). Consider re-add",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38603:comment:3270962089:sdk:JavaScript:@azure/arm-imagebuilder",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T02:56:02Z",
+      "observedAt": "2026-05-20T02:56:02Z",
+      "trackId": "sdk:JavaScript:@azure/arm-imagebuilder",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38603",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38603#discussion_r3270962089"
+      },
+      "confidence": "authoritative",
+      "excerpt": "pnpm-lock.yaml shows `@azure/core-rest-pipeline` with `specifier: link:../../core/core-rest-pipeline`, but this package’s package.json declares `@azure/core-rest-pipeline` as a `^` semver range. This mismatch suggests the lockfile is out of",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38603:comment:3270962106:sdk:JavaScript:@azure/arm-imagebuilder",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T02:56:02Z",
+      "observedAt": "2026-05-20T02:56:02Z",
+      "trackId": "sdk:JavaScript:@azure/arm-imagebuilder",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38603",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38603#discussion_r3270962106"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Sample function name `createImageSFromExistingImageTemplate` appears to have an accidental capital 'S' (\"ImageS\"), which reads like a typo and makes the sample harder to follow. Consider renaming it to a correctly-cased verb phrase (and the",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:6324648:generation.completed:sdk:Java:azure-resourcemanager-imagebuilder",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-05-20T02:57:00.4979417Z",
+      "observedAt": "2026-05-20T02:57:00.4979417Z",
+      "trackId": "sdk:Java:azure-resourcemanager-imagebuilder",
+      "title": "Pipeline completed with issues",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6324648",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6324648"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26819:review:4324868118:sdk:Go:sdk/resourcemanager/virtualmachineimagebuilder/armvirtualmachineimagebuilder",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T03:02:07Z",
+      "observedAt": "2026-05-20T03:02:07Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/virtualmachineimagebuilder/armvirtualmachineimagebuilder",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "tadelesh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26819",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26819#pullrequestreview-4324868118"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47012:commit:fe982dc47b8a:sdk:Python:azure-mgmt-imagebuilder",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T03:11:29Z",
+      "observedAt": "2026-05-20T03:11:29Z",
+      "trackId": "sdk:Python:azure-mgmt-imagebuilder",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47012",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/fe982dc47b8a0c20005855c19989ef2259d9f807"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49224:commit:9e7071e6fc33:sdk:Java:azure-resourcemanager-imagebuilder",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T03:31:53Z",
+      "observedAt": "2026-05-20T03:31:53Z",
+      "trackId": "sdk:Java:azure-resourcemanager-imagebuilder",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49224",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/9e7071e6fc33dbe928da94d9cc3e7fcdbfdd7e27"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49224:review:4324960955:sdk:Java:azure-resourcemanager-imagebuilder",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T03:32:42Z",
+      "observedAt": "2026-05-20T03:32:42Z",
+      "trackId": "sdk:Java:azure-resourcemanager-imagebuilder",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49224",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49224#pullrequestreview-4324960955"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@XiaofeiCao for review",
+      "reviewState": "approved",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49224:review:4325021089:sdk:Java:azure-resourcemanager-imagebuilder",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T03:49:28Z",
+      "observedAt": "2026-05-20T03:49:28Z",
+      "trackId": "sdk:Java:azure-resourcemanager-imagebuilder",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "XiaofeiCao"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49224",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49224#pullrequestreview-4325021089"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47012:commit:a635f1c2eb90:sdk:Python:azure-mgmt-imagebuilder",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T05:42:19Z",
+      "observedAt": "2026-05-20T05:42:19Z",
+      "trackId": "sdk:Python:azure-mgmt-imagebuilder",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47012",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/a635f1c2eb90d3c63dd45fa2eca67af20ffea7af"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47012:commit:767a472024ed:sdk:Python:azure-mgmt-imagebuilder",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T05:59:14Z",
+      "observedAt": "2026-05-20T05:59:14Z",
+      "trackId": "sdk:Python:azure-mgmt-imagebuilder",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47012",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/767a472024ed5c31ec674a2f29298581336e8d6b"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47012:commit:235d9d6d2674:sdk:Python:azure-mgmt-imagebuilder",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T05:59:50Z",
+      "observedAt": "2026-05-20T05:59:50Z",
+      "trackId": "sdk:Python:azure-mgmt-imagebuilder",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47012",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/235d9d6d26740b412a39d21220537e2d14f16a6f"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47012:commit:5bb1cf3d465a:sdk:Python:azure-mgmt-imagebuilder",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T06:00:25Z",
+      "observedAt": "2026-05-20T06:00:25Z",
+      "trackId": "sdk:Python:azure-mgmt-imagebuilder",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47012",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/5bb1cf3d465a872e1124cafeae215f703e0fd582"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47012:review:4325571080:sdk:Python:azure-mgmt-imagebuilder",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T06:00:38Z",
+      "observedAt": "2026-05-20T06:00:38Z",
+      "trackId": "sdk:Python:azure-mgmt-imagebuilder",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47012",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47012#pullrequestreview-4325571080"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47012:commit:b4a64e2c942d:sdk:Python:azure-mgmt-imagebuilder",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T06:25:06Z",
+      "observedAt": "2026-05-20T06:25:06Z",
+      "trackId": "sdk:Python:azure-mgmt-imagebuilder",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47012",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/b4a64e2c942d4182c9303ae883a75445f51ee941"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47012:commit:0830b4696bb9:sdk:Python:azure-mgmt-imagebuilder",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T06:48:54Z",
+      "observedAt": "2026-05-20T06:48:54Z",
+      "trackId": "sdk:Python:azure-mgmt-imagebuilder",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47012",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/0830b4696bb9a5656f722a8159b47747969eb699"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47012:commit:2866ba2dce13:sdk:Python:azure-mgmt-imagebuilder",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T06:55:41Z",
+      "observedAt": "2026-05-20T06:55:41Z",
+      "trackId": "sdk:Python:azure-mgmt-imagebuilder",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47012",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/2866ba2dce135241e8690dc46782a33da188e29c"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:34186:25:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-20T07:41:39.51Z",
+      "observedAt": "2026-05-20T07:41:39.51Z",
+      "trackId": "sdk:Python:azure-mgmt-imagebuilder",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34186",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34186"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34186:29:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-20T07:48:07.297Z",
+      "observedAt": "2026-05-20T07:48:07.297Z",
+      "trackId": "sdk:Python:azure-mgmt-imagebuilder",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34186",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34186"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:34186:31:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-20T07:58:15.847Z",
+      "observedAt": "2026-05-20T07:58:15.847Z",
+      "trackId": "sdk:Python:azure-mgmt-imagebuilder",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34186",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34186"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:34186:34:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-20T08:04:16.423Z",
+      "observedAt": "2026-05-20T08:04:16.423Z",
+      "trackId": "sdk:Python:azure-mgmt-imagebuilder",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34186",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34186"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:34186:37:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-20T08:09:05.42Z",
+      "observedAt": "2026-05-20T08:09:05.42Z",
+      "trackId": "sdk:Python:azure-mgmt-imagebuilder",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34186",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34186"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34186:47:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-20T08:16:17.793Z",
+      "observedAt": "2026-05-20T08:16:17.793Z",
+      "trackId": "sdk:Python:azure-mgmt-imagebuilder",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34186",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34186"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:34186:51:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-20T08:26:23.99Z",
+      "observedAt": "2026-05-20T08:26:23.99Z",
+      "trackId": "sdk:Python:azure-mgmt-imagebuilder",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34186",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34186"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49224:review:4329768853:sdk:Java:azure-resourcemanager-imagebuilder",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T15:10:39Z",
+      "observedAt": "2026-05-20T15:10:39Z",
+      "trackId": "sdk:Java:azure-resourcemanager-imagebuilder",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49224",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49224#pullrequestreview-4329768853"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Approved. All CI checks pass. Stable api-version 2025-10-01, standard regeneration.",
+      "reviewState": "approved",
+      "stack": 4
+    },
+    {
+      "id": "ado:34186:52:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-20T18:15:54.483Z",
+      "observedAt": "2026-05-20T18:15:54.483Z",
+      "trackId": "sdk:Python:azure-mgmt-imagebuilder",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34186",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34186"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38603:comment:4514631711:sdk:JavaScript:@azure/arm-imagebuilder",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-22T03:02:47Z",
+      "observedAt": "2026-05-22T03:02:47Z",
+      "trackId": "sdk:JavaScript:@azure/arm-imagebuilder",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38603",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38603#issuecomment-4514631711"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> [!NOTE] > This analysis was generated by AI. Please review the classifications and root causes for accuracy. ## Breaking Change Analysis: @azure/arm-imagebuilder 5.0.0 | | Old SDK (main) | New SDK (PR) | |---|---|---| | **Generator** | Sw",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38603:commit:03386f1d1eb5:sdk:JavaScript:@azure/arm-imagebuilder",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-22T06:54:56Z",
+      "observedAt": "2026-05-22T06:54:56Z",
+      "trackId": "sdk:JavaScript:@azure/arm-imagebuilder",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38603",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/03386f1d1eb51f6ba3185262cd581a3afcc446eb"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38603:comment:4516084210:sdk:JavaScript:@azure/arm-imagebuilder",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-22T07:01:00Z",
+      "observedAt": "2026-05-22T07:01:00Z",
+      "trackId": "sdk:JavaScript:@azure/arm-imagebuilder",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38603",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38603#issuecomment-4516084210"
+      },
+      "confidence": "authoritative",
+      "excerpt": "ci failures is becauce of testing, but testing is not a merge blocker for self-service release PRs. So feel free to re-record tests following the [test recording guide](https://github.com/Azure/azure-sdk-for-js/blob/main/documentation/Quick",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38603:commit:56d5b8998931:sdk:JavaScript:@azure/arm-imagebuilder",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-22T07:03:54Z",
+      "observedAt": "2026-05-22T07:03:54Z",
+      "trackId": "sdk:JavaScript:@azure/arm-imagebuilder",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38603",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/56d5b8998931a2dae9d42bd25a11d5d7bfd5c123"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38603:comment:4533330596:sdk:JavaScript:@azure/arm-imagebuilder",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-25T09:56:11Z",
+      "observedAt": "2026-05-25T09:56:11Z",
+      "trackId": "sdk:JavaScript:@azure/arm-imagebuilder",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38603",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38603#issuecomment-4533330596"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Next Steps to Merge Only failed checks and required actions are listed below. - 🔄 pnpm-lock conflict: merge conflict in `pnpm-lock.yaml` (`mergeable_state: dirty`). Follow the [conflict guide](https://github.com/Azure/azure-sdk-for-js/b",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38603:review:4355803056:sdk:JavaScript:@azure/arm-imagebuilder",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-25T09:56:13Z",
+      "observedAt": "2026-05-25T09:56:13Z",
+      "trackId": "sdk:JavaScript:@azure/arm-imagebuilder",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38603",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38603#pullrequestreview-4355803056"
+      },
+      "confidence": "authoritative",
+      "excerpt": "1 tool issue found: the `4.1.1 (2025-08-22)` historical entry was dropped from `CHANGELOG.md` during TypeSpec migration — the tool skipped directly from `5.0.0` to `4.1.0`. All other aspects of the public API surface (naming, type safety, v",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38603:comment:3297402922:sdk:JavaScript:@azure/arm-imagebuilder",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-25T09:56:13Z",
+      "observedAt": "2026-05-25T09:56:13Z",
+      "trackId": "sdk:JavaScript:@azure/arm-imagebuilder",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38603",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38603#discussion_r3297402922"
+      },
+      "confidence": "authoritative",
+      "excerpt": "🔴 **Tool Issue** — `CHANGELOG.md` (between 5.0.0 and 4.1.0 sections) The `4.1.1 (2025-08-22)` release entry was dropped from `CHANGELOG.md` during TypeSpec migration generation. The history jumped from `5.0.0` directly to `4.1.0`, skipping",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38603:comment:4542169117:sdk:JavaScript:@azure/arm-imagebuilder",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-26T08:33:11Z",
+      "observedAt": "2026-05-26T08:33:11Z",
+      "trackId": "sdk:JavaScript:@azure/arm-imagebuilder",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38603",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38603#issuecomment-4542169117"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> ## Next Steps to Merge > Only failed checks and required actions are listed below. > > * 🔄 pnpm-lock conflict: merge conflict in `pnpm-lock.yaml` (`mergeable_state: dirty`). Follow the [conflict guide](https://github.com/Azure/azure-sdk-",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47012:review:4369026327:sdk:Python:azure-mgmt-imagebuilder",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-27T02:51:26Z",
+      "observedAt": "2026-05-27T02:51:26Z",
+      "trackId": "sdk:Python:azure-mgmt-imagebuilder",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47012",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47012#pullrequestreview-4369026327"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26819:pr.merged:sdk:Go:sdk/resourcemanager/virtualmachineimagebuilder/armvirtualmachineimagebuilder",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-27T03:02:50Z",
+      "observedAt": "2026-05-27T03:02:50Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/virtualmachineimagebuilder/armvirtualmachineimagebuilder",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26819",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26819"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:34186:53:Custom.ReleaseStatusForGo",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-05-27T03:33:15.003Z",
+      "observedAt": "2026-05-27T03:33:15.003Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/virtualmachineimagebuilder/armvirtualmachineimagebuilder",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34186",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34186"
+      },
+      "title": "Release status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34186:53:Custom.ReleasedVersionForGo",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-05-27T03:33:15.003Z",
+      "observedAt": "2026-05-27T03:33:15.003Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/virtualmachineimagebuilder/armvirtualmachineimagebuilder",
+      "value": "3.0.0",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34186",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34186"
+      },
+      "title": "Package version observed",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47012:pr.merged:sdk:Python:azure-mgmt-imagebuilder",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-28T09:26:33Z",
+      "observedAt": "2026-05-28T09:26:33Z",
+      "trackId": "sdk:Python:azure-mgmt-imagebuilder",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47012",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47012"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38603:commit:a2419d26c60b:sdk:JavaScript:@azure/arm-imagebuilder",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-29T07:11:03Z",
+      "observedAt": "2026-05-29T07:11:03Z",
+      "trackId": "sdk:JavaScript:@azure/arm-imagebuilder",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38603",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/a2419d26c60bc7d8ce4be2431831ce1972b49fbb"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38603:commit:6e72ee298215:sdk:JavaScript:@azure/arm-imagebuilder",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-29T07:11:07Z",
+      "observedAt": "2026-05-29T07:11:07Z",
+      "trackId": "sdk:JavaScript:@azure/arm-imagebuilder",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38603",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/6e72ee298215a059f6e8f41ab25c08bea53668a6"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38603:commit:968c8c4aa7b7:sdk:JavaScript:@azure/arm-imagebuilder",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-29T07:13:07Z",
+      "observedAt": "2026-05-29T07:13:07Z",
+      "trackId": "sdk:JavaScript:@azure/arm-imagebuilder",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38603",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/968c8c4aa7b7292d4e229bdf99e9edbbd5dbbf0f"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38603:commit:c4e4894c0d05:sdk:JavaScript:@azure/arm-imagebuilder",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-29T08:45:10Z",
+      "observedAt": "2026-05-29T08:45:10Z",
+      "trackId": "sdk:JavaScript:@azure/arm-imagebuilder",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38603",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/c4e4894c0d05cc6f6662d7cab0acda9bcd6274e9"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38603:commit:3b3a30e150fb:sdk:JavaScript:@azure/arm-imagebuilder",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-01T05:45:25Z",
+      "observedAt": "2026-06-01T05:45:25Z",
+      "trackId": "sdk:JavaScript:@azure/arm-imagebuilder",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38603",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/3b3a30e150fb335552ca5c92faa7b4e96048cdcc"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38603:review:4398851779:sdk:JavaScript:@azure/arm-imagebuilder",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-01T06:22:26Z",
+      "observedAt": "2026-06-01T06:22:26Z",
+      "trackId": "sdk:JavaScript:@azure/arm-imagebuilder",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "JialinHuang803"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38603",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38603#pullrequestreview-4398851779"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38603:pr.merged:sdk:JavaScript:@azure/arm-imagebuilder",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-01T06:22:36Z",
+      "observedAt": "2026-06-01T06:22:36Z",
+      "trackId": "sdk:JavaScript:@azure/arm-imagebuilder",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38603",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38603"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49224:pr.merged:sdk:Java:azure-resourcemanager-imagebuilder",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-02T02:36:58Z",
+      "observedAt": "2026-06-02T02:36:58Z",
+      "trackId": "sdk:Java:azure-resourcemanager-imagebuilder",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49224",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49224"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:34186:54:Custom.ReleaseStatusForPython",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-06-02T08:14:16.45Z",
+      "observedAt": "2026-06-02T08:14:16.45Z",
+      "trackId": "sdk:Python:azure-mgmt-imagebuilder",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34186",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34186"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34186:54:Custom.ReleasedVersionForPython",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-06-02T08:14:16.45Z",
+      "observedAt": "2026-06-02T08:14:16.45Z",
+      "trackId": "sdk:Python:azure-mgmt-imagebuilder",
+      "value": "2.0.0",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34186",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34186"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34186:56:Custom.ReleaseStatusForJavaScript",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-06-12T08:47:34.8Z",
+      "observedAt": "2026-06-12T08:47:34.8Z",
+      "trackId": "sdk:JavaScript:@azure/arm-imagebuilder",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34186",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34186"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34186:56:Custom.ReleasedVersionForJavaScript",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-06-12T08:47:34.8Z",
+      "observedAt": "2026-06-12T08:47:34.8Z",
+      "trackId": "sdk:JavaScript:@azure/arm-imagebuilder",
+      "value": "5.0.0",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34186",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34186"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34186:57:Custom.ReleaseStatusForJava",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-06-17T08:00:22.263Z",
+      "observedAt": "2026-06-17T08:00:22.263Z",
+      "trackId": "sdk:Java:azure-resourcemanager-imagebuilder",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34186",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34186"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34186:57:Custom.ReleasedVersionForJava",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-06-17T08:00:22.263Z",
+      "observedAt": "2026-06-17T08:00:22.263Z",
+      "trackId": "sdk:Java:azure-resourcemanager-imagebuilder",
+      "value": "1.3.0",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34186",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34186"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59351:comment:5066638383:sdk:.NET:Azure.ResourceManager.ImageBuilder",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T05:59:23Z",
+      "observedAt": "2026-07-24T05:59:23Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ImageBuilder",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59351",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59351#issuecomment-5066638383"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @azure-sdk. Thank you for your interest in helping to improve the Azure SDK experience and for your contribution. We've noticed that there hasn't been recent engagement on this pull request. If this is still an active work stream, please",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59351:comment:5141385863:sdk:.NET:Azure.ResourceManager.ImageBuilder",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-31T09:25:53Z",
+      "observedAt": "2026-07-31T09:25:53Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ImageBuilder",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59351",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59351#issuecomment-5141385863"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @azure-sdk. Thank you for your contribution. Since there hasn't been recent engagement, we're going to close this out. Feel free to respond with a comment containing `/reopen` if you'd like to continue working on these changes. Please be",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59351:pr.closed:sdk:.NET:Azure.ResourceManager.ImageBuilder",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-31T09:26:08Z",
+      "observedAt": "2026-07-31T09:26:08Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ImageBuilder",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59351",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59351"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    }
+  ],
+  "quality": {
+    "warnings": [
+      "1 historical linked PR(s) closed without merge"
+    ],
+    "unavailablePullRequests": 0,
+    "unavailablePipelineRuns": 0
+  },
+  "boundaryFacts": {
+    "id": "34186",
+    "state": "in-progress",
+    "specPrs": [
+      {
+        "id": "github:Azure/azure-rest-api-specs#42538",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#42538",
+        "createdAt": "2026-04-21T06:26:36Z",
+        "mergedAt": "2026-04-29T03:34:43Z",
+        "closedAt": "2026-04-29T03:34:43Z",
+        "available": true
+      }
+    ],
+    "artifacts": [
+      {
+        "language": ".NET",
+        "package": "Azure.ResourceManager.ImageBuilder",
+        "trackId": "sdk:.NET:Azure.ResourceManager.ImageBuilder",
+        "prId": "github:Azure/azure-sdk-for-net#59351",
+        "prCreatedAt": "2026-05-20T02:44:51Z",
+        "prMergedAt": null,
+        "prClosedAt": "2026-07-31T09:26:08Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-net#59351",
+            "createdAt": "2026-05-20T02:44:51Z",
+            "mergedAt": null,
+            "closedAt": "2026-07-31T09:26:08Z",
+            "state": "closed"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6324649",
+        "generationStartAt": "2026-05-20T02:38:42.2457081Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "JavaScript",
+        "package": "@azure/arm-imagebuilder",
+        "trackId": "sdk:JavaScript:@azure/arm-imagebuilder",
+        "prId": "github:Azure/azure-sdk-for-js#38603",
+        "prCreatedAt": "2026-05-20T02:45:07Z",
+        "prMergedAt": "2026-06-01T06:22:36Z",
+        "prClosedAt": "2026-06-01T06:22:36Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-js#38603",
+            "createdAt": "2026-05-20T02:45:07Z",
+            "mergedAt": "2026-06-01T06:22:36Z",
+            "closedAt": "2026-06-01T06:22:36Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6324647",
+        "generationStartAt": "2026-05-20T02:38:41.3655662Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-06-12T08:47:34.8Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "5.0.0",
+        "releaseBoundaryAt": "2026-06-12T08:47:34.8Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Python",
+        "package": "azure-mgmt-imagebuilder",
+        "trackId": "sdk:Python:azure-mgmt-imagebuilder",
+        "prId": "github:Azure/azure-sdk-for-python#47012",
+        "prCreatedAt": "2026-05-20T02:43:21Z",
+        "prMergedAt": "2026-05-28T09:26:33Z",
+        "prClosedAt": "2026-05-28T09:26:33Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-python#47012",
+            "createdAt": "2026-05-20T02:43:21Z",
+            "mergedAt": "2026-05-28T09:26:33Z",
+            "closedAt": "2026-05-28T09:26:33Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6324636",
+        "generationStartAt": "2026-05-20T02:36:30.851848Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-06-02T08:14:16.45Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "2.0.0",
+        "releaseBoundaryAt": "2026-06-02T08:14:16.45Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Java",
+        "package": "azure-resourcemanager-imagebuilder",
+        "trackId": "sdk:Java:azure-resourcemanager-imagebuilder",
+        "prId": "github:Azure/azure-sdk-for-java#49224",
+        "prCreatedAt": "2026-05-20T02:47:06Z",
+        "prMergedAt": "2026-06-02T02:36:58Z",
+        "prClosedAt": "2026-06-02T02:36:58Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-java#49224",
+            "createdAt": "2026-05-20T02:47:06Z",
+            "mergedAt": "2026-06-02T02:36:58Z",
+            "closedAt": "2026-06-02T02:36:58Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6324648",
+        "generationStartAt": "2026-05-20T02:38:40.6216941Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-06-17T08:00:22.263Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.3.0",
+        "releaseBoundaryAt": "2026-06-17T08:00:22.263Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Go",
+        "package": "sdk/resourcemanager/virtualmachineimagebuilder/armvirtualmachineimagebuilder",
+        "trackId": "sdk:Go:sdk/resourcemanager/virtualmachineimagebuilder/armvirtualmachineimagebuilder",
+        "prId": "github:Azure/azure-sdk-for-go#26819",
+        "prCreatedAt": "2026-05-20T02:43:42Z",
+        "prMergedAt": "2026-05-27T03:02:50Z",
+        "prClosedAt": "2026-05-27T03:02:50Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-go#26819",
+            "createdAt": "2026-05-20T02:43:42Z",
+            "mergedAt": "2026-05-27T03:02:50Z",
+            "closedAt": "2026-05-27T03:02:50Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6324646",
+        "generationStartAt": "2026-05-20T02:38:41.4231922Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-05-27T03:33:15.003Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "3.0.0",
+        "releaseBoundaryAt": "2026-05-27T03:33:15.003Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      }
+    ],
+    "cohortPlan": {
+      "id": "34186",
+      "releasePlanId": "2212",
+      "title": "Release Plan - 2212 - GA - Azure VM Image Builder",
+      "service": "Azure VM Image Builder",
+      "state": "in-progress"
+    },
+    "quality": {
+      "warnings": [
+        "1 historical linked PR(s) closed without merge"
+      ],
+      "unavailablePullRequests": 0,
+      "unavailablePipelineRuns": 0
+    }
+  },
+  "summary": {
+    "durationHours": 2430,
+    "pullRequestCount": 6,
+    "humanReviewCount": 8,
+    "humanCommentCount": 3
+  }
+}

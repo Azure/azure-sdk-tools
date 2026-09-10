@@ -1,0 +1,4381 @@
+{
+  "schemaVersion": 2,
+  "id": "32964",
+  "correlation": {
+    "policyVersion": 1,
+    "preflight": "passed"
+  },
+  "releasePlanId": "2110",
+  "title": "Release Plan - 2110 - Public Preview - Azure NetApp Files",
+  "service": "Net App",
+  "product": "Release",
+  "path": "specification/netapp/resource-manager/Microsoft.NetApp/NetApp",
+  "state": "finished",
+  "plane": "management",
+  "releaseType": "APEX Public Preview",
+  "intendedMonth": "March 2026",
+  "createdAt": "2026-03-03T09:18:52.67Z",
+  "completedAt": "2026-03-25T10:15:12.46Z",
+  "sourceUrl": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32964",
+  "range": {
+    "start": "2026-02-25T17:03:29.000Z",
+    "end": "2026-03-25T10:15:12.460Z"
+  },
+  "intendedArtifacts": [
+    {
+      "prId": "github:Azure/azure-sdk-for-net#57182",
+      "language": ".NET",
+      "package": "Azure.ResourceManager.NetApp",
+      "version": null,
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6007648",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-js#37638",
+      "language": "JavaScript",
+      "package": "@azure/arm-netapp",
+      "version": null,
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6007649",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-python#45613",
+      "language": "Python",
+      "package": "azure-mgmt-netapp",
+      "version": null,
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6007647",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-java#48350",
+      "language": "Java",
+      "package": "azure-resourcemanager-netapp",
+      "version": null,
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6007650",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-go#26201",
+      "language": "Go",
+      "package": "sdk/resourcemanager/netapp/armnetapp",
+      "version": null,
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6007651",
+      "releasePipelineUrl": null
+    }
+  ],
+  "links": [
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#41312",
+      "role": "spec-pr-history",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/41312",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#41041",
+      "role": "spec-pr-history",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/41041",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#40744",
+      "role": "spec-pr",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/40744",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-net#57182",
+      "role": "sdk-pr",
+      "language": ".NET",
+      "url": "https://github.com/Azure/azure-sdk-for-net/pull/57182",
+      "releasePlanIds": [
+        "32964"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-js#37567",
+      "role": "sdk-pr-history",
+      "language": "JavaScript",
+      "url": "https://github.com/Azure/azure-sdk-for-js/pull/37567",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-js#37638",
+      "role": "sdk-pr",
+      "language": "JavaScript",
+      "url": "https://github.com/Azure/azure-sdk-for-js/pull/37638",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-python#45613",
+      "role": "sdk-pr",
+      "language": "Python",
+      "url": "https://github.com/Azure/azure-sdk-for-python/pull/45613",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-java#48350",
+      "role": "sdk-pr",
+      "language": "Java",
+      "url": "https://github.com/Azure/azure-sdk-for-java/pull/48350",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-go#26201",
+      "role": "sdk-pr",
+      "language": "Go",
+      "url": "https://github.com/Azure/azure-sdk-for-go/pull/26201",
+      "releasePlanIds": []
+    }
+  ],
+  "tracks": [
+    {
+      "id": "plan",
+      "kind": "plan",
+      "label": "Release Plan",
+      "detail": "APEX Public Preview"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#41312",
+      "kind": "spec",
+      "label": "Spec PR 1",
+      "detail": "azure-rest-api-specs #41312",
+      "artifactId": "github:Azure/azure-rest-api-specs#41312",
+      "state": "merged"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#41041",
+      "kind": "spec",
+      "label": "Spec PR 2",
+      "detail": "azure-rest-api-specs #41041",
+      "artifactId": "github:Azure/azure-rest-api-specs#41041",
+      "state": "merged"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#40744",
+      "kind": "spec",
+      "label": "Spec PR 3",
+      "detail": "azure-rest-api-specs #40744",
+      "artifactId": "github:Azure/azure-rest-api-specs#40744",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:.NET:Azure.ResourceManager.NetApp",
+      "kind": "sdk",
+      "label": ".NET",
+      "detail": "Azure.ResourceManager.NetApp",
+      "artifactId": "github:Azure/azure-sdk-for-net#57182",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:JavaScript:@azure/arm-netapp",
+      "kind": "sdk",
+      "label": "JavaScript",
+      "detail": "@azure/arm-netapp",
+      "artifactId": "github:Azure/azure-sdk-for-js#37638",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Python:azure-mgmt-netapp",
+      "kind": "sdk",
+      "label": "Python",
+      "detail": "azure-mgmt-netapp",
+      "artifactId": "github:Azure/azure-sdk-for-python#45613",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Java:azure-resourcemanager-netapp",
+      "kind": "sdk",
+      "label": "Java",
+      "detail": "azure-resourcemanager-netapp",
+      "artifactId": "github:Azure/azure-sdk-for-java#48350",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Go:sdk/resourcemanager/netapp/armnetapp",
+      "kind": "sdk",
+      "label": "Go",
+      "detail": "sdk/resourcemanager/netapp/armnetapp",
+      "artifactId": "github:Azure/azure-sdk-for-go#26201",
+      "state": "merged"
+    }
+  ],
+  "events": [
+    {
+      "id": "github:Azure/azure-rest-api-specs#40744:pr.created:spec:github:Azure/azure-rest-api-specs#40744",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-25T17:03:29Z",
+      "observedAt": "2026-02-25T17:03:29Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40744",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "audunn"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40744",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40744"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40744:comment:3960679062:spec:github:Azure/azure-rest-api-specs#40744",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-25T17:04:12Z",
+      "observedAt": "2026-02-25T17:04:12Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40744",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40744",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40744#issuecomment-3960679062"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>✅ All automated merging requirements have been met! To get your PR merged, see <a href=\"https://aka.ms/azsdk/specreview/merge\">aka.ms/azsdk/specreview/merge</a>.<br /><br />Comment generated by <a href=\"https://g",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40744:review:3859711435:spec:github:Azure/azure-rest-api-specs#40744",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-26T09:40:52Z",
+      "observedAt": "2026-02-26T09:40:52Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40744",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "einarnetapp"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40744",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40744#pullrequestreview-3859711435"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40744:pr.merged:spec:github:Azure/azure-rest-api-specs#40744",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-26T13:15:24Z",
+      "observedAt": "2026-02-26T13:15:24Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40744",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40744",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40744"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:32964:created",
+      "type": "plan.created",
+      "phase": "plan",
+      "occurredAt": "2026-03-03T09:18:52.67Z",
+      "observedAt": "2026-03-03T09:18:52.67Z",
+      "trackId": "plan",
+      "title": "Release Plan created",
+      "confidence": "authoritative",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32964",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32964"
+      },
+      "stack": 0
+    },
+    {
+      "id": "ado:32964:1:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-03-03T09:18:52.67Z",
+      "observedAt": "2026-03-03T09:18:52.67Z",
+      "trackId": "plan",
+      "value": "New",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32964",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32964"
+      },
+      "title": "Plan state changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:32964:1:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-03T09:18:52.67Z",
+      "observedAt": "2026-03-03T09:18:52.67Z",
+      "trackId": "plan",
+      "value": "Not Available",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32964",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32964"
+      },
+      "title": "Spec approval changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:32964:1:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-03T09:18:52.67Z",
+      "observedAt": "2026-03-03T09:18:52.67Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NetApp",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32964",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32964"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32964:1:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-03T09:18:52.67Z",
+      "observedAt": "2026-03-03T09:18:52.67Z",
+      "trackId": "sdk:JavaScript:@azure/arm-netapp",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32964",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32964"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32964:1:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-03T09:18:52.67Z",
+      "observedAt": "2026-03-03T09:18:52.67Z",
+      "trackId": "sdk:Python:azure-mgmt-netapp",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32964",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32964"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32964:1:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-03T09:18:52.67Z",
+      "observedAt": "2026-03-03T09:18:52.67Z",
+      "trackId": "sdk:Java:azure-resourcemanager-netapp",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32964",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32964"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32964:1:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-03T09:18:52.67Z",
+      "observedAt": "2026-03-03T09:18:52.67Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/netapp/armnetapp",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32964",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32964"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32964:5:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-03-03T09:20:05.687Z",
+      "observedAt": "2026-03-03T09:20:05.687Z",
+      "trackId": "plan",
+      "value": "In Progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32964",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32964"
+      },
+      "title": "Plan state changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:32965:2:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-03T09:20:46.307Z",
+      "observedAt": "2026-03-03T09:20:46.307Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40744",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/40744",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32965",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32965"
+      },
+      "title": "Spec PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado:32964:6:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-03T09:20:49.347Z",
+      "observedAt": "2026-03-03T09:20:49.347Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NetApp",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32964",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32964"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:32964:6:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-03T09:20:49.347Z",
+      "observedAt": "2026-03-03T09:20:49.347Z",
+      "trackId": "sdk:JavaScript:@azure/arm-netapp",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32964",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32964"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:32964:6:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-03T09:20:49.347Z",
+      "observedAt": "2026-03-03T09:20:49.347Z",
+      "trackId": "sdk:Python:azure-mgmt-netapp",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32964",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32964"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:32964:6:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-03T09:20:49.347Z",
+      "observedAt": "2026-03-03T09:20:49.347Z",
+      "trackId": "sdk:Java:azure-resourcemanager-netapp",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32964",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32964"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:32964:6:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-03T09:20:49.347Z",
+      "observedAt": "2026-03-03T09:20:49.347Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/netapp/armnetapp",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32964",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32964"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:32964:7:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-03T09:21:18.68Z",
+      "observedAt": "2026-03-03T09:21:18.68Z",
+      "trackId": "plan",
+      "value": "Approved",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32964",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32964"
+      },
+      "title": "Spec approval changed",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41041:commit:9aa3c4bab350:spec:github:Azure/azure-rest-api-specs#41041",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-05T10:31:47Z",
+      "observedAt": "2026-03-05T10:31:47Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41041",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "audunn"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41041",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/9aa3c4bab350a25fda9b82b27756a9fc111fe03a"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41041:pr.created:spec:github:Azure/azure-rest-api-specs#41041",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-05T10:32:46Z",
+      "observedAt": "2026-03-05T10:32:46Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41041",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "audunn"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41041",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41041"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41041:comment:4004070494:spec:github:Azure/azure-rest-api-specs#41041",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-05T10:33:18Z",
+      "observedAt": "2026-03-05T10:33:18Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41041",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41041",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41041#issuecomment-4004070494"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>✅ All automated merging requirements have been met! To get your PR merged, see <a href=\"https://aka.ms/azsdk/specreview/merge\">aka.ms/azsdk/specreview/merge</a>.<br /><br />Comment generated by <a href=\"https://g",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41041:review:3914144852:spec:github:Azure/azure-rest-api-specs#41041",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-09T09:41:59Z",
+      "observedAt": "2026-03-09T09:41:59Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41041",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "tommim9bdash"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41041",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41041#pullrequestreview-3914144852"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41041:commit:154be912f0a0:spec:github:Azure/azure-rest-api-specs#41041",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-10T01:43:45Z",
+      "observedAt": "2026-03-10T01:43:45Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41041",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41041",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/154be912f0a0e07c56957a2d6b07327cdb76748f"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41041:pr.merged:spec:github:Azure/azure-rest-api-specs#41041",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-10T02:59:33Z",
+      "observedAt": "2026-03-10T02:59:33Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41041",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41041",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41041"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:32965:4:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-10T09:41:25.01Z",
+      "observedAt": "2026-03-10T09:41:25.01Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41041",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/41041",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32965",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32965"
+      },
+      "title": "Spec PR linked",
+      "stack": 2
+    },
+    {
+      "id": "ado:32964:19:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-10T09:50:20.57Z",
+      "observedAt": "2026-03-10T09:50:20.57Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NetApp",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32964",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32964"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32964:20:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-10T09:50:34.94Z",
+      "observedAt": "2026-03-10T09:50:34.94Z",
+      "trackId": "sdk:JavaScript:@azure/arm-netapp",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32964",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32964"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32964:21:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-10T09:50:50.473Z",
+      "observedAt": "2026-03-10T09:50:50.473Z",
+      "trackId": "sdk:Java:azure-resourcemanager-netapp",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32964",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32964"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32964:23:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-10T09:53:08.02Z",
+      "observedAt": "2026-03-10T09:53:08.02Z",
+      "trackId": "sdk:Python:azure-mgmt-netapp",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32964",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32964"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32964:24:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-10T09:53:19.35Z",
+      "observedAt": "2026-03-10T09:53:19.35Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/netapp/armnetapp",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32964",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32964"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32964:25:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-10T09:57:18.517Z",
+      "observedAt": "2026-03-10T09:57:18.517Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NetApp",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32964",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32964"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26201:commit:9a318af23e0b:sdk:Go:sdk/resourcemanager/netapp/armnetapp",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-10T09:59:57Z",
+      "observedAt": "2026-03-10T09:59:57Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/netapp/armnetapp",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26201",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/9a318af23e0bbc5752ee16c4e4145a22ead242c2"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26201:pr.created:sdk:Go:sdk/resourcemanager/netapp/armnetapp",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-10T10:00:00Z",
+      "observedAt": "2026-03-10T10:00:00Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/netapp/armnetapp",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26201",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26201"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:32964:26:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-10T10:00:07.33Z",
+      "observedAt": "2026-03-10T10:00:07.33Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/netapp/armnetapp",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32964",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32964"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:32964:26:Custom.SDKPullRequestForGo",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-03-10T10:00:07.33Z",
+      "observedAt": "2026-03-10T10:00:07.33Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/netapp/armnetapp",
+      "value": "https://github.com/Azure/azure-sdk-for-go/pull/26201",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32964",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32964"
+      },
+      "title": "SDK PR linked",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48350:commit:601d7fec16e9:sdk:Java:azure-resourcemanager-netapp",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-10T10:01:17Z",
+      "observedAt": "2026-03-10T10:01:17Z",
+      "trackId": "sdk:Java:azure-resourcemanager-netapp",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48350",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/601d7fec16e967ecb0474bb8036a672ae6a4bbfc"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48350:pr.created:sdk:Java:azure-resourcemanager-netapp",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-10T10:01:21Z",
+      "observedAt": "2026-03-10T10:01:21Z",
+      "trackId": "sdk:Java:azure-resourcemanager-netapp",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48350",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48350"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:32964:27:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-10T10:01:28.02Z",
+      "observedAt": "2026-03-10T10:01:28.02Z",
+      "trackId": "sdk:Java:azure-resourcemanager-netapp",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32964",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32964"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:32964:27:Custom.SDKPullRequestForJava",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-03-10T10:01:28.02Z",
+      "observedAt": "2026-03-10T10:01:28.02Z",
+      "trackId": "sdk:Java:azure-resourcemanager-netapp",
+      "value": "https://github.com/Azure/azure-sdk-for-java/pull/48350",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32964",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32964"
+      },
+      "title": "SDK PR linked",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37567:commit:c999fcd1f48b:sdk:JavaScript:@azure/arm-netapp",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-10T10:02:00Z",
+      "observedAt": "2026-03-10T10:02:00Z",
+      "trackId": "sdk:JavaScript:@azure/arm-netapp",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37567",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/c999fcd1f48b0ba63dcb4e93f5b7f73468ea30d2"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37567:pr.created:sdk:JavaScript:@azure/arm-netapp",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-10T10:02:04Z",
+      "observedAt": "2026-03-10T10:02:04Z",
+      "trackId": "sdk:JavaScript:@azure/arm-netapp",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37567",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37567"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:32964:28:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-10T10:02:11.43Z",
+      "observedAt": "2026-03-10T10:02:11.43Z",
+      "trackId": "sdk:JavaScript:@azure/arm-netapp",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32964",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32964"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:32964:28:Custom.SDKPullRequestForJavaScript",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-03-10T10:02:11.43Z",
+      "observedAt": "2026-03-10T10:02:11.43Z",
+      "trackId": "sdk:JavaScript:@azure/arm-netapp",
+      "value": "https://github.com/Azure/azure-sdk-for-js/pull/37567",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32964",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32964"
+      },
+      "title": "SDK PR linked",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45613:commit:d9d46f415e88:sdk:Python:azure-mgmt-netapp",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-10T10:08:04Z",
+      "observedAt": "2026-03-10T10:08:04Z",
+      "trackId": "sdk:Python:azure-mgmt-netapp",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45613",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/d9d46f415e88d96cf5f79424c7b143d42b385e5a"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45613:pr.created:sdk:Python:azure-mgmt-netapp",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-10T10:08:07Z",
+      "observedAt": "2026-03-10T10:08:07Z",
+      "trackId": "sdk:Python:azure-mgmt-netapp",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45613",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45613"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:32964:29:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-10T10:08:14.693Z",
+      "observedAt": "2026-03-10T10:08:14.693Z",
+      "trackId": "sdk:Python:azure-mgmt-netapp",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32964",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32964"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:32964:29:Custom.SDKPullRequestForPython",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-03-10T10:08:14.693Z",
+      "observedAt": "2026-03-10T10:08:14.693Z",
+      "trackId": "sdk:Python:azure-mgmt-netapp",
+      "value": "https://github.com/Azure/azure-sdk-for-python/pull/45613",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32964",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32964"
+      },
+      "title": "SDK PR linked",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26201:comment:2912325432:sdk:Go:sdk/resourcemanager/netapp/armnetapp",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-10T14:48:35Z",
+      "observedAt": "2026-03-10T14:48:35Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/netapp/armnetapp",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26201",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26201#discussion_r2912325432"
+      },
+      "confidence": "authoritative",
+      "excerpt": "ElasticSnapshotsClient delete currently treats HTTP 200 OK as an error, but the generated fake transport for BeginDelete explicitly allows http.StatusOK as a success code. This mismatch will cause unexpected failures when the service return",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26201:review:3923049524:sdk:Go:sdk/resourcemanager/netapp/armnetapp",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-10T14:48:36Z",
+      "observedAt": "2026-03-10T14:48:36Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/netapp/armnetapp",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26201",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26201#pullrequestreview-3923049524"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Updates the `armnetapp` module to a new major version generated from the `2025-12-15-preview` NetApp RP spec, adding new Elastic* and related clients plus corresponding fake server transports and examples. **Changes",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26201:comment:2912325536:sdk:Go:sdk/resourcemanager/netapp/armnetapp",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-10T14:48:36Z",
+      "observedAt": "2026-03-10T14:48:36Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/netapp/armnetapp",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26201",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26201#discussion_r2912325536"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Typo in log message: 'pull' should be 'poll' (PollUntilDone).",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48350:review:3929687849:sdk:Java:azure-resourcemanager-netapp",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-11T13:40:30Z",
+      "observedAt": "2026-03-11T13:40:30Z",
+      "trackId": "sdk:Java:azure-resourcemanager-netapp",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48350",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48350#pullrequestreview-3929687849"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot encountered an error and was unable to review this pull request. You can try again by re-requesting a review.",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48350:review:3929704960:sdk:Java:azure-resourcemanager-netapp",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-11T13:43:02Z",
+      "observedAt": "2026-03-11T13:43:02Z",
+      "trackId": "sdk:Java:azure-resourcemanager-netapp",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48350",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48350#pullrequestreview-3929704960"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48350:comment:2918460129:sdk:Java:azure-resourcemanager-netapp",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-11T13:43:02Z",
+      "observedAt": "2026-03-11T13:43:02Z",
+      "trackId": "sdk:Java:azure-resourcemanager-netapp",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48350",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48350#discussion_r2918460129"
+      },
+      "confidence": "authoritative",
+      "excerpt": "I don't know what happened to the patch model. You can see that another `nfsV4IDDomain` is added to it. ``` #### `models.NetAppAccountPatch` was modified * `nfsV4IDDomain()` was added * `withNfsV4IDDomain(java.lang.String)` was added ``` cl",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48350:review:3929857128:sdk:Java:azure-resourcemanager-netapp",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-11T14:06:06Z",
+      "observedAt": "2026-03-11T14:06:06Z",
+      "trackId": "sdk:Java:azure-resourcemanager-netapp",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "audunn"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48350",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48350#pullrequestreview-3929857128"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48350:comment:2918596510:sdk:Java:azure-resourcemanager-netapp",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-11T14:06:06Z",
+      "observedAt": "2026-03-11T14:06:06Z",
+      "trackId": "sdk:Java:azure-resourcemanager-netapp",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "audunn"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48350",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48350#discussion_r2918596510"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Possibly due to `AccountPropertiesPatch` was added this verison. Will try to fix with https://github.com/Azure/azure-rest-api-specs/pull/41250: ``` // Fix property name case changes @@clientName(Microsoft.NetApp.AccountPropertiesPatch.nfsV4",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37567:commit:ba712774c246:sdk:JavaScript:@azure/arm-netapp",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-11T17:08:01Z",
+      "observedAt": "2026-03-11T17:08:01Z",
+      "trackId": "sdk:JavaScript:@azure/arm-netapp",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "nandakus2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37567",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/ba712774c24684197e1daab0cac91e77d9cb61f2"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37567:comment:2919896129:sdk:JavaScript:@azure/arm-netapp",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-11T17:32:43Z",
+      "observedAt": "2026-03-11T17:32:43Z",
+      "trackId": "sdk:JavaScript:@azure/arm-netapp",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37567",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37567#discussion_r2919896129"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The sample hard-codes a non-placeholder subscription ID. Samples should avoid including real-looking subscription IDs (even if not secret) and keep a consistent placeholder (e.g., all zeros) or read from an environment variable to prevent a",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37567:comment:2919896173:sdk:JavaScript:@azure/arm-netapp",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-11T17:32:43Z",
+      "observedAt": "2026-03-11T17:32:43Z",
+      "trackId": "sdk:JavaScript:@azure/arm-netapp",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37567",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37567#discussion_r2919896173"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This TypeScript sample also hard-codes a non-placeholder subscription ID. Please switch to a placeholder value (consistent with other samples in this PR) or read from `process.env.AZURE_SUBSCRIPTION_ID` to avoid shipping a concrete subscrip",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37567:comment:2919896203:sdk:JavaScript:@azure/arm-netapp",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-11T17:32:44Z",
+      "observedAt": "2026-03-11T17:32:44Z",
+      "trackId": "sdk:JavaScript:@azure/arm-netapp",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37567",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37567#discussion_r2919896203"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This adds a second list sample (`volumesExtralargeVolumeList`) that (based on the code shown) calls the same `client.volumes.list(...)` API as `volumesList`, and also introduces a hard-coded non-placeholder subscription ID. Consider (mandat",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37567:comment:2919896231:sdk:JavaScript:@azure/arm-netapp",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-11T17:32:44Z",
+      "observedAt": "2026-03-11T17:32:44Z",
+      "trackId": "sdk:JavaScript:@azure/arm-netapp",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37567",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37567#discussion_r2919896231"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Same issue as `volumesListSample.ts`: the extra-large variant uses a non-placeholder subscription ID and appears to perform the same `client.volumes.get(...)` call as the standard `volumesGet`. Please update the subscription ID (mandatory) ",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37567:comment:2919896251:sdk:JavaScript:@azure/arm-netapp",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-11T17:32:44Z",
+      "observedAt": "2026-03-11T17:32:44Z",
+      "trackId": "sdk:JavaScript:@azure/arm-netapp",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37567",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37567#discussion_r2919896251"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The property name `filepath` is likely incorrect casing for the generated model (commonly `filePath`). As written, this may be silently ignored or fail validation/serialization. Please align the property name with the generated `Cache` prop",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37567:review:3931307123:sdk:JavaScript:@azure/arm-netapp",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-11T17:32:45Z",
+      "observedAt": "2026-03-11T17:32:45Z",
+      "trackId": "sdk:JavaScript:@azure/arm-netapp",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37567",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37567#pullrequestreview-3931307123"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Regenerates `@azure/arm-netapp` (v23 beta) samples and metadata from the `2025-12-15-preview` swagger, adding new preview feature samples (Elastic*, Caches, Buckets) and updating existing sample headers/links accord",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37567:comment:2919896275:sdk:JavaScript:@azure/arm-netapp",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-11T17:32:45Z",
+      "observedAt": "2026-03-11T17:32:45Z",
+      "trackId": "sdk:JavaScript:@azure/arm-netapp",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37567",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37567#discussion_r2919896275"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The sentence is grammatically incorrect ('how to this operation will'). Please reword to something like 'This sample demonstrates how this operation will fetch...' (or 'This sample demonstrates how to fetch...'). This phrasing appears in mu",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37567:review:3931486631:sdk:JavaScript:@azure/arm-netapp",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-11T18:04:49Z",
+      "observedAt": "2026-03-11T18:04:49Z",
+      "trackId": "sdk:JavaScript:@azure/arm-netapp",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "nandakus2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37567",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37567#pullrequestreview-3931486631"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37567:comment:2920064641:sdk:JavaScript:@azure/arm-netapp",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-11T18:04:49Z",
+      "observedAt": "2026-03-11T18:04:49Z",
+      "trackId": "sdk:JavaScript:@azure/arm-netapp",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "nandakus2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37567",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37567#discussion_r2920064641"
+      },
+      "confidence": "authoritative",
+      "excerpt": "It is matching with the actual model field but not matching with RP code. This needs to be fixed.",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37567:comment:2920245768:sdk:JavaScript:@azure/arm-netapp",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-11T18:38:11Z",
+      "observedAt": "2026-03-11T18:38:11Z",
+      "trackId": "sdk:JavaScript:@azure/arm-netapp",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37567",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37567#discussion_r2920245768"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The newly added extra-large volumes sample uses a non-placeholder subscription ID. Please switch this to the standard all-zero GUID placeholder to keep samples consistent and avoid shipping any real-looking identifiers. ```suggestion const ",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37567:comment:2920245794:sdk:JavaScript:@azure/arm-netapp",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-11T18:38:11Z",
+      "observedAt": "2026-03-11T18:38:11Z",
+      "trackId": "sdk:JavaScript:@azure/arm-netapp",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37567",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37567#discussion_r2920245794"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The newly added extra-large volumes get sample uses a non-placeholder subscription ID. Please replace it with the standard \\\"00000000-0000-0000-0000-000000000000\\\" placeholder used across the samples. ```suggestion const subscriptionId = \"0",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37567:comment:2920245809:sdk:JavaScript:@azure/arm-netapp",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-11T18:38:11Z",
+      "observedAt": "2026-03-11T18:38:11Z",
+      "trackId": "sdk:JavaScript:@azure/arm-netapp",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37567",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37567#discussion_r2920245809"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This request body uses `filepath`, but other file-path related operations in these samples use `filePath` (camelCase). If the generated client models expect `filePath`, this sample will either send the wrong JSON or fail validation/typing (",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37567:review:3931674614:sdk:JavaScript:@azure/arm-netapp",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-11T18:38:12Z",
+      "observedAt": "2026-03-11T18:38:12Z",
+      "trackId": "sdk:JavaScript:@azure/arm-netapp",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37567",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37567#pullrequestreview-3931674614"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Copilot reviewed 299 out of 650 changed files in this pull request and generated 4 comments. --- You can also share your feedback on Copilot code review. [Take the survey](https://www.surveymonkey.com/r/XP6L3XJ).",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37567:comment:2920245827:sdk:JavaScript:@azure/arm-netapp",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-11T18:38:12Z",
+      "observedAt": "2026-03-11T18:38:12Z",
+      "trackId": "sdk:JavaScript:@azure/arm-netapp",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37567",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37567#discussion_r2920245827"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This sample now performs two independent list operations in a single run, which changes the sample behavior (extra requests, extra time, and potentially extra permissions) compared to the typical one-scenario-per-file pattern. Consider spli",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41312:commit:d63ca0236331:spec:github:Azure/azure-rest-api-specs#41312",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-12T10:19:15Z",
+      "observedAt": "2026-03-12T10:19:15Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41312",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "audunn"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41312",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/d63ca0236331b1206015a7ae134d834ab11a4227"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41312:pr.created:spec:github:Azure/azure-rest-api-specs#41312",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-12T10:20:55Z",
+      "observedAt": "2026-03-12T10:20:55Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41312",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "audunn"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41312",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41312"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41312:comment:4045574973:spec:github:Azure/azure-rest-api-specs#41312",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-12T10:21:27Z",
+      "observedAt": "2026-03-12T10:21:27Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41312",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41312",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41312#issuecomment-4045574973"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>✅ All automated merging requirements have been met! To get your PR merged, see <a href=\"https://aka.ms/azsdk/specreview/merge\">aka.ms/azsdk/specreview/merge</a>.<br /><br />Comment generated by <a href=\"https://g",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41312:commit:531fce642be1:spec:github:Azure/azure-rest-api-specs#41312",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-12T10:38:05Z",
+      "observedAt": "2026-03-12T10:38:05Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41312",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "audunn"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41312",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/531fce642be19ce62386fa4e41950edad7973082"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41312:review:3936720400:spec:github:Azure/azure-rest-api-specs#41312",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-12T13:44:44Z",
+      "observedAt": "2026-03-12T13:44:44Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41312",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "einarnetapp"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41312",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41312#pullrequestreview-3936720400"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41312:commit:cce617888713:spec:github:Azure/azure-rest-api-specs#41312",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-12T14:23:18Z",
+      "observedAt": "2026-03-12T14:23:18Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41312",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "audunn"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41312",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/cce6178887137792ea45854f832af9941116be5c"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41312:comment:4047194401:spec:github:Azure/azure-rest-api-specs#41312",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-12T14:26:38Z",
+      "observedAt": "2026-03-12T14:26:38Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41312",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "audunn"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41312",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41312#issuecomment-4047194401"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Fix: Removing `custom` enum value from `volumeGroup` properties `ApplicationType`, not yet suppored by service. Will be in future version.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41312:review:3937548828:spec:github:Azure/azure-rest-api-specs#41312",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-12T15:23:39Z",
+      "observedAt": "2026-03-12T15:23:39Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41312",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "nandakus2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41312",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41312#pullrequestreview-3937548828"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41312:pr.merged:spec:github:Azure/azure-rest-api-specs#41312",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-12T15:23:43Z",
+      "observedAt": "2026-03-12T15:23:43Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41312",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41312",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41312"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:32965:5:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-12T18:21:45.567Z",
+      "observedAt": "2026-03-12T18:21:45.567Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41312",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/41312",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32965",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32965"
+      },
+      "title": "Spec PR linked",
+      "stack": 3
+    },
+    {
+      "id": "ado:32964:33:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-12T18:21:49.407Z",
+      "observedAt": "2026-03-12T18:21:49.407Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NetApp",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32964",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32964"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32964:33:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-12T18:21:49.407Z",
+      "observedAt": "2026-03-12T18:21:49.407Z",
+      "trackId": "sdk:JavaScript:@azure/arm-netapp",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32964",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32964"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32964:33:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-12T18:21:49.407Z",
+      "observedAt": "2026-03-12T18:21:49.407Z",
+      "trackId": "sdk:Python:azure-mgmt-netapp",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32964",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32964"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32964:33:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-12T18:21:49.407Z",
+      "observedAt": "2026-03-12T18:21:49.407Z",
+      "trackId": "sdk:Java:azure-resourcemanager-netapp",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32964",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32964"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32964:33:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-12T18:21:49.407Z",
+      "observedAt": "2026-03-12T18:21:49.407Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/netapp/armnetapp",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32964",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32964"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37567:comment:4051883998:sdk:JavaScript:@azure/arm-netapp",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-13T02:21:25Z",
+      "observedAt": "2026-03-13T02:21:25Z",
+      "trackId": "sdk:JavaScript:@azure/arm-netapp",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37567",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37567#issuecomment-4051883998"
+      },
+      "confidence": "authoritative",
+      "excerpt": "LGTM cc @qiaozha",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37567:review:3941242965:sdk:JavaScript:@azure/arm-netapp",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-13T02:44:04Z",
+      "observedAt": "2026-03-13T02:44:04Z",
+      "trackId": "sdk:JavaScript:@azure/arm-netapp",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "qiaozha"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37567",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37567#pullrequestreview-3941242965"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37567:review:3941251294:sdk:JavaScript:@azure/arm-netapp",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-13T02:45:52Z",
+      "observedAt": "2026-03-13T02:45:52Z",
+      "trackId": "sdk:JavaScript:@azure/arm-netapp",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "qiaozha"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37567",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37567#pullrequestreview-3941251294"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37567:comment:2928686175:sdk:JavaScript:@azure/arm-netapp",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-13T02:45:52Z",
+      "observedAt": "2026-03-13T02:45:52Z",
+      "trackId": "sdk:JavaScript:@azure/arm-netapp",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "qiaozha"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37567",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37567#discussion_r2928686175"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@nandakus2 you can ignore the generated code comments from Copilot.",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37567:pr.merged:sdk:JavaScript:@azure/arm-netapp",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-13T02:46:22Z",
+      "observedAt": "2026-03-13T02:46:22Z",
+      "trackId": "sdk:JavaScript:@azure/arm-netapp",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37567",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37567"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:32964:38:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-13T09:55:16.913Z",
+      "observedAt": "2026-03-13T09:55:16.913Z",
+      "trackId": "sdk:Python:azure-mgmt-netapp",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32964",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32964"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32964:39:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-13T09:55:28.5Z",
+      "observedAt": "2026-03-13T09:55:28.5Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NetApp",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32964",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32964"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32964:40:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-13T09:55:39.777Z",
+      "observedAt": "2026-03-13T09:55:39.777Z",
+      "trackId": "sdk:JavaScript:@azure/arm-netapp",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32964",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32964"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:32964:41:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-13T09:55:50.57Z",
+      "observedAt": "2026-03-13T09:55:50.57Z",
+      "trackId": "sdk:Java:azure-resourcemanager-netapp",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32964",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32964"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32964:42:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-13T09:56:03.35Z",
+      "observedAt": "2026-03-13T09:56:03.35Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/netapp/armnetapp",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32964",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32964"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32964:43:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-13T10:01:16.74Z",
+      "observedAt": "2026-03-13T10:01:16.74Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NetApp",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32964",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32964"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26201:commit:823a9246f3e1:sdk:Go:sdk/resourcemanager/netapp/armnetapp",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-13T10:02:39Z",
+      "observedAt": "2026-03-13T10:02:39Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/netapp/armnetapp",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26201",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/823a9246f3e1ba89e3ec354f9ab15a94132b5b2d"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:32964:44:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-13T10:02:48.92Z",
+      "observedAt": "2026-03-13T10:02:48.92Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/netapp/armnetapp",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32964",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32964"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48350:commit:0e4f89ee11e3:sdk:Java:azure-resourcemanager-netapp",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-13T10:06:02Z",
+      "observedAt": "2026-03-13T10:06:02Z",
+      "trackId": "sdk:Java:azure-resourcemanager-netapp",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48350",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/0e4f89ee11e3e69db0150a8a56ba89d597b8989f"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:32964:45:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-13T10:06:09.847Z",
+      "observedAt": "2026-03-13T10:06:09.847Z",
+      "trackId": "sdk:Java:azure-resourcemanager-netapp",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32964",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32964"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37638:commit:826dcfd85052:sdk:JavaScript:@azure/arm-netapp",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-13T10:06:17Z",
+      "observedAt": "2026-03-13T10:06:17Z",
+      "trackId": "sdk:JavaScript:@azure/arm-netapp",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37638",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/826dcfd850526c9fb0535533a31f6c738250dc10"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37638:pr.created:sdk:JavaScript:@azure/arm-netapp",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-13T10:06:20Z",
+      "observedAt": "2026-03-13T10:06:20Z",
+      "trackId": "sdk:JavaScript:@azure/arm-netapp",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37638",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37638"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:32964:46:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-13T10:06:27.37Z",
+      "observedAt": "2026-03-13T10:06:27.37Z",
+      "trackId": "sdk:JavaScript:@azure/arm-netapp",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32964",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32964"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:32964:46:Custom.SDKPullRequestForJavaScript",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-03-13T10:06:27.37Z",
+      "observedAt": "2026-03-13T10:06:27.37Z",
+      "trackId": "sdk:JavaScript:@azure/arm-netapp",
+      "value": "https://github.com/Azure/azure-sdk-for-js/pull/37638",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32964",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32964"
+      },
+      "title": "SDK PR linked",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45613:commit:0a378d7c979e:sdk:Python:azure-mgmt-netapp",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-13T10:09:51Z",
+      "observedAt": "2026-03-13T10:09:51Z",
+      "trackId": "sdk:Python:azure-mgmt-netapp",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45613",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/0a378d7c979e36f8f084cead3449e1565f42473b"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:32964:47:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-13T10:09:58.503Z",
+      "observedAt": "2026-03-13T10:09:58.503Z",
+      "trackId": "sdk:Python:azure-mgmt-netapp",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32964",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32964"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6007647:generation.queued:sdk:Python:azure-mgmt-netapp",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-03-13T10:17:58.4954231Z",
+      "observedAt": "2026-03-13T10:35:21.4478967Z",
+      "trackId": "sdk:Python:azure-mgmt-netapp",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6007647",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6007647"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado:32964:48:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-13T10:18:01.483Z",
+      "observedAt": "2026-03-13T10:18:01.483Z",
+      "trackId": "sdk:Python:azure-mgmt-netapp",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32964",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32964"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6007648:generation.queued:sdk:.NET:Azure.ResourceManager.NetApp",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-03-13T10:18:09.1704194Z",
+      "observedAt": "2026-03-13T10:25:53.6408225Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NetApp",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6007648",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6007648"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:32964:49:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-13T10:18:11.447Z",
+      "observedAt": "2026-03-13T10:18:11.447Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NetApp",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32964",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32964"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6007649:generation.queued:sdk:JavaScript:@azure/arm-netapp",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-03-13T10:18:20.3518332Z",
+      "observedAt": "2026-03-13T10:33:31.5201825Z",
+      "trackId": "sdk:JavaScript:@azure/arm-netapp",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6007649",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6007649"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:32964:50:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-13T10:18:23.02Z",
+      "observedAt": "2026-03-13T10:18:23.02Z",
+      "trackId": "sdk:JavaScript:@azure/arm-netapp",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32964",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32964"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:6007650:generation.queued:sdk:Java:azure-resourcemanager-netapp",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-03-13T10:18:34.9845349Z",
+      "observedAt": "2026-03-13T10:42:03.5988321Z",
+      "trackId": "sdk:Java:azure-resourcemanager-netapp",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6007650",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6007650"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado:32964:51:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-13T10:18:38.06Z",
+      "observedAt": "2026-03-13T10:18:38.06Z",
+      "trackId": "sdk:Java:azure-resourcemanager-netapp",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32964",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32964"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6007651:generation.queued:sdk:Go:sdk/resourcemanager/netapp/armnetapp",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-03-13T10:18:46.5668897Z",
+      "observedAt": "2026-03-13T10:29:07.5593741Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/netapp/armnetapp",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6007651",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6007651"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado:32964:52:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-13T10:18:49.877Z",
+      "observedAt": "2026-03-13T10:18:49.877Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/netapp/armnetapp",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32964",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32964"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6007648:generation.started:sdk:.NET:Azure.ResourceManager.NetApp",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-03-13T10:20:01.4669109Z",
+      "observedAt": "2026-03-13T10:25:53.6408225Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NetApp",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6007648",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6007648"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6007647:generation.started:sdk:Python:azure-mgmt-netapp",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-03-13T10:20:05.7282712Z",
+      "observedAt": "2026-03-13T10:35:21.4478967Z",
+      "trackId": "sdk:Python:azure-mgmt-netapp",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6007647",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6007647"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:6007649:generation.started:sdk:JavaScript:@azure/arm-netapp",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-03-13T10:21:36.3021396Z",
+      "observedAt": "2026-03-13T10:33:31.5201825Z",
+      "trackId": "sdk:JavaScript:@azure/arm-netapp",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6007649",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6007649"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6007650:generation.started:sdk:Java:azure-resourcemanager-netapp",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-03-13T10:21:39.5805312Z",
+      "observedAt": "2026-03-13T10:42:03.5988321Z",
+      "trackId": "sdk:Java:azure-resourcemanager-netapp",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6007650",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6007650"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:6007651:generation.started:sdk:Go:sdk/resourcemanager/netapp/armnetapp",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-03-13T10:21:54.8584581Z",
+      "observedAt": "2026-03-13T10:29:07.5593741Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/netapp/armnetapp",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6007651",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6007651"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:32964:53:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-13T10:25:02.63Z",
+      "observedAt": "2026-03-13T10:25:02.63Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NetApp",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32964",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32964"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:6007648:generation.completed:sdk:.NET:Azure.ResourceManager.NetApp",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-03-13T10:25:53.6408225Z",
+      "observedAt": "2026-03-13T10:25:53.6408225Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NetApp",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6007648",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6007648"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:32964:54:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-13T10:27:54.007Z",
+      "observedAt": "2026-03-13T10:27:54.007Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/netapp/armnetapp",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32964",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32964"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6007651:generation.completed:sdk:Go:sdk/resourcemanager/netapp/armnetapp",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-03-13T10:29:07.5593741Z",
+      "observedAt": "2026-03-13T10:29:07.5593741Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/netapp/armnetapp",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6007651",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6007651"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48350:commit:a287c6cb8ae4:sdk:Java:azure-resourcemanager-netapp",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-13T10:31:24Z",
+      "observedAt": "2026-03-13T10:31:24Z",
+      "trackId": "sdk:Java:azure-resourcemanager-netapp",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48350",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/a287c6cb8ae4836b17c7b1562e75e4698c59d961"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:32964:55:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-13T10:31:32.423Z",
+      "observedAt": "2026-03-13T10:31:32.423Z",
+      "trackId": "sdk:Java:azure-resourcemanager-netapp",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32964",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32964"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37638:commit:2e7c7b6cc61d:sdk:JavaScript:@azure/arm-netapp",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-13T10:32:22Z",
+      "observedAt": "2026-03-13T10:32:22Z",
+      "trackId": "sdk:JavaScript:@azure/arm-netapp",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37638",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/2e7c7b6cc61dec9507d4b4db94f3cce09b8f0d32"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:32964:56:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-13T10:32:32.463Z",
+      "observedAt": "2026-03-13T10:32:32.463Z",
+      "trackId": "sdk:JavaScript:@azure/arm-netapp",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32964",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32964"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6007649:generation.completed:sdk:JavaScript:@azure/arm-netapp",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-03-13T10:33:31.5201825Z",
+      "observedAt": "2026-03-13T10:33:31.5201825Z",
+      "trackId": "sdk:JavaScript:@azure/arm-netapp",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6007649",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6007649"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado:32964:57:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-13T10:33:55.05Z",
+      "observedAt": "2026-03-13T10:33:55.05Z",
+      "trackId": "sdk:Python:azure-mgmt-netapp",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32964",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32964"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6007647:generation.completed:sdk:Python:azure-mgmt-netapp",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-03-13T10:35:21.4478967Z",
+      "observedAt": "2026-03-13T10:35:21.4478967Z",
+      "trackId": "sdk:Python:azure-mgmt-netapp",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6007647",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6007647"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6007650:generation.completed:sdk:Java:azure-resourcemanager-netapp",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-03-13T10:42:03.5988321Z",
+      "observedAt": "2026-03-13T10:42:03.5988321Z",
+      "trackId": "sdk:Java:azure-resourcemanager-netapp",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6007650",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6007650"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48350:review:3944781862:sdk:Java:azure-resourcemanager-netapp",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-13T15:13:50Z",
+      "observedAt": "2026-03-13T15:13:50Z",
+      "trackId": "sdk:Java:azure-resourcemanager-netapp",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48350",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48350#pullrequestreview-3944781862"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37638:commit:2c3ea9d82627:sdk:JavaScript:@azure/arm-netapp",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-13T18:09:45Z",
+      "observedAt": "2026-03-13T18:09:45Z",
+      "trackId": "sdk:JavaScript:@azure/arm-netapp",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "nandakus2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37638",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/2c3ea9d8262762a4349fe72ac4d03328d7040d42"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37638:comment:2933114993:sdk:JavaScript:@azure/arm-netapp",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-13T18:37:09Z",
+      "observedAt": "2026-03-13T18:37:09Z",
+      "trackId": "sdk:JavaScript:@azure/arm-netapp",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37638",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37638#discussion_r2933114993"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`userAgentInfo` is set to `azsdk-js-arm-netapp/1.0.0-beta.1`, but the package version is `23.1.0-beta.1` (see package.json). This will produce incorrect telemetry and will also break the repo’s automated version bumping (package.json //meta",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37638:comment:2933115027:sdk:JavaScript:@azure/arm-netapp",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-13T18:37:09Z",
+      "observedAt": "2026-03-13T18:37:09Z",
+      "trackId": "sdk:JavaScript:@azure/arm-netapp",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37638",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37638#discussion_r2933115027"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This CHANGELOG update appears to have replaced the entire previous release history with only the new `23.1.0-beta.1` entry. The repo typically keeps prior versions’ entries in the changelog; please restore the earlier sections and prepend t",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37638:review:3946223383:sdk:JavaScript:@azure/arm-netapp",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-13T18:37:10Z",
+      "observedAt": "2026-03-13T18:37:10Z",
+      "trackId": "sdk:JavaScript:@azure/arm-netapp",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37638",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37638#pullrequestreview-3946223383"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Auto-generated update for `@azure/arm-netapp` based on the NetApp RP TypeSpec configuration for API version `2025-12-15-preview` (spec commit `117cc9c7...`), updating generated models/samples and API review artifact",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37638:comment:2933115053:sdk:JavaScript:@azure/arm-netapp",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-13T18:37:10Z",
+      "observedAt": "2026-03-13T18:37:10Z",
+      "trackId": "sdk:JavaScript:@azure/arm-netapp",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37638",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37638#discussion_r2933115053"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`CacheProperties` renames the public field from `filepath` to `filePath` and updates (de)serialization accordingly. This is a breaking change for existing TypeScript consumers; please add an explicit “Breaking Changes” note in the changelog",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37638:comment:2933115065:sdk:JavaScript:@azure/arm-netapp",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-13T18:37:10Z",
+      "observedAt": "2026-03-13T18:37:10Z",
+      "trackId": "sdk:JavaScript:@azure/arm-netapp",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37638",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37638#discussion_r2933115065"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`KnownApplicationType.Custom` has been removed. Even though `ApplicationType` is `string`, many users rely on the `Known*` enums for constants; removing a member is a breaking change. If the service no longer supports `CUSTOM`, consider kee",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45613:commit:fd0326f6c8b7:sdk:Python:azure-mgmt-netapp",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-13T22:52:44Z",
+      "observedAt": "2026-03-13T22:52:44Z",
+      "trackId": "sdk:Python:azure-mgmt-netapp",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "audunn"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45613",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/fd0326f6c8b734d998139be3910bb35adca43026"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45613:commit:50e4f9a2edc9:sdk:Python:azure-mgmt-netapp",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-14T10:44:38Z",
+      "observedAt": "2026-03-14T10:44:38Z",
+      "trackId": "sdk:Python:azure-mgmt-netapp",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "audunn"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45613",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/50e4f9a2edc945cf5a13e92ef030696d4ebcda1d"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45613:review:3948669065:sdk:Python:azure-mgmt-netapp",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-14T11:11:58Z",
+      "observedAt": "2026-03-14T11:11:58Z",
+      "trackId": "sdk:Python:azure-mgmt-netapp",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45613",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45613#pullrequestreview-3948669065"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Updates `azure-mgmt-netapp` to the `2025-12-15-preview` API surface (beta release), including newly generated operations plus refreshed samples/tests and supporting client/runtime changes. **Changes:** - Bump packag",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45613:comment:2935131055:sdk:Python:azure-mgmt-netapp",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-14T11:11:58Z",
+      "observedAt": "2026-03-14T11:11:58Z",
+      "trackId": "sdk:Python:azure-mgmt-netapp",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45613",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45613#discussion_r2935131055"
+      },
+      "confidence": "authoritative",
+      "excerpt": "PR description lists SpecRepo CommitSHA as ffdc765830f1ece01d260e4b026f7e4f9389a038, but this generated update points to commit 117cc9c72862af27d56430fac305b61e00341b3d (also reflected in _metadata.json). Please reconcile the PR description",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45613:commit:3477c5734bdc:sdk:Python:azure-mgmt-netapp",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-16T05:54:20Z",
+      "observedAt": "2026-03-16T05:54:20Z",
+      "trackId": "sdk:Python:azure-mgmt-netapp",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45613",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/3477c5734bdcdb33bb6ede6b1477fa900abd98d2"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45613:commit:d7dfd53e1322:sdk:Python:azure-mgmt-netapp",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-16T05:54:43Z",
+      "observedAt": "2026-03-16T05:54:43Z",
+      "trackId": "sdk:Python:azure-mgmt-netapp",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45613",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/d7dfd53e132233508105e8fafb0c43140bdd3ebc"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45613:review:3951713806:sdk:Python:azure-mgmt-netapp",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-16T06:32:02Z",
+      "observedAt": "2026-03-16T06:32:02Z",
+      "trackId": "sdk:Python:azure-mgmt-netapp",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45613",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45613#pullrequestreview-3951713806"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37638:commit:f83dcfee69f6:sdk:JavaScript:@azure/arm-netapp",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-16T07:10:11Z",
+      "observedAt": "2026-03-16T07:10:11Z",
+      "trackId": "sdk:JavaScript:@azure/arm-netapp",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37638",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/f83dcfee69f6f9c5143a891020796d1383bc53df"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37638:comment:4065579896:sdk:JavaScript:@azure/arm-netapp",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-16T07:12:41Z",
+      "observedAt": "2026-03-16T07:12:41Z",
+      "trackId": "sdk:JavaScript:@azure/arm-netapp",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37638",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37638#issuecomment-4065579896"
+      },
+      "confidence": "authoritative",
+      "excerpt": "LGTM cc @JialinHuang803",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45613:review:3952001103:sdk:Python:azure-mgmt-netapp",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-16T07:52:53Z",
+      "observedAt": "2026-03-16T07:52:53Z",
+      "trackId": "sdk:Python:azure-mgmt-netapp",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45613",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45613#pullrequestreview-3952001103"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45613:comment:4065766658:sdk:Python:azure-mgmt-netapp",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-16T07:57:10Z",
+      "observedAt": "2026-03-16T07:57:10Z",
+      "trackId": "sdk:Python:azure-mgmt-netapp",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45613",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45613#issuecomment-4065766658"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@audunn pr ready, feel free to merge and release",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45613:pr.merged:sdk:Python:azure-mgmt-netapp",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-16T09:20:10Z",
+      "observedAt": "2026-03-16T09:20:10Z",
+      "trackId": "sdk:Python:azure-mgmt-netapp",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45613",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45613"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48350:pr.merged:sdk:Java:azure-resourcemanager-netapp",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-16T09:21:32Z",
+      "observedAt": "2026-03-16T09:21:32Z",
+      "trackId": "sdk:Java:azure-resourcemanager-netapp",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48350",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48350"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37638:review:3956610571:sdk:JavaScript:@azure/arm-netapp",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-16T20:54:29Z",
+      "observedAt": "2026-03-16T20:54:29Z",
+      "trackId": "sdk:JavaScript:@azure/arm-netapp",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "audunn"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37638",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37638#pullrequestreview-3956610571"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37638:comment:2942924984:sdk:JavaScript:@azure/arm-netapp",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-16T20:54:29Z",
+      "observedAt": "2026-03-16T20:54:29Z",
+      "trackId": "sdk:JavaScript:@azure/arm-netapp",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "audunn"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37638",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37638#discussion_r2942924984"
+      },
+      "confidence": "authoritative",
+      "excerpt": "KnownApplicationType.Custom was merged few days ago in but was since removed from TypeSpec for a correctness bugfix. Previous merged version SDK containg `Custom ` was never released to customers.",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37638:review:3956617212:sdk:JavaScript:@azure/arm-netapp",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-16T20:56:00Z",
+      "observedAt": "2026-03-16T20:56:00Z",
+      "trackId": "sdk:JavaScript:@azure/arm-netapp",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "audunn"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37638",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37638#pullrequestreview-3956617212"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37638:comment:2942931138:sdk:JavaScript:@azure/arm-netapp",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-16T20:56:00Z",
+      "observedAt": "2026-03-16T20:56:00Z",
+      "trackId": "sdk:JavaScript:@azure/arm-netapp",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "audunn"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37638",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37638#discussion_r2942931138"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Bugfix. While `filepath` change was merged few days ago in but was since removed from TypeSpec for a correctness bugfix. Previous merged version SDK containg `filepath` was never released to customers.",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37638:review:3956621622:sdk:JavaScript:@azure/arm-netapp",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-16T20:57:03Z",
+      "observedAt": "2026-03-16T20:57:03Z",
+      "trackId": "sdk:JavaScript:@azure/arm-netapp",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "audunn"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37638",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37638#pullrequestreview-3956621622"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37638:comment:2942935874:sdk:JavaScript:@azure/arm-netapp",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-16T20:57:03Z",
+      "observedAt": "2026-03-16T20:57:03Z",
+      "trackId": "sdk:JavaScript:@azure/arm-netapp",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "audunn"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37638",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37638#discussion_r2942935874"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Previous merged version SDK containg correctness issue since fixed in TypeSpec was never released to customers.",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37638:review:3957653724:sdk:JavaScript:@azure/arm-netapp",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T01:11:53Z",
+      "observedAt": "2026-03-17T01:11:53Z",
+      "trackId": "sdk:JavaScript:@azure/arm-netapp",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "JialinHuang803"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37638",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37638#pullrequestreview-3957653724"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26201:review:3959595201:sdk:Go:sdk/resourcemanager/netapp/armnetapp",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T10:12:51Z",
+      "observedAt": "2026-03-17T10:12:51Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/netapp/armnetapp",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "tadelesh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26201",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26201#pullrequestreview-3959595201"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26201:pr.merged:sdk:Go:sdk/resourcemanager/netapp/armnetapp",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T16:05:02Z",
+      "observedAt": "2026-03-17T16:05:02Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/netapp/armnetapp",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26201",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26201"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37638:pr.merged:sdk:JavaScript:@azure/arm-netapp",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T16:07:15Z",
+      "observedAt": "2026-03-17T16:07:15Z",
+      "trackId": "sdk:JavaScript:@azure/arm-netapp",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37638",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37638"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57182:commit:6a59280531b0:sdk:.NET:Azure.ResourceManager.NetApp",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T18:21:44Z",
+      "observedAt": "2026-03-17T18:21:44Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NetApp",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "hnsunil"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57182",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/6a59280531b0c2574dc88c40e4b1d08a7c22f42e"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57182:pr.created:sdk:.NET:Azure.ResourceManager.NetApp",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T18:23:59Z",
+      "observedAt": "2026-03-17T18:23:59Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NetApp",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "hnsunil"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57182",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57182"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57182:commit:7562b92b9e73:sdk:.NET:Azure.ResourceManager.NetApp",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-18T15:44:36Z",
+      "observedAt": "2026-03-18T15:44:36Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NetApp",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "hnsunil"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57182",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/7562b92b9e73faf6cfd894fcb0f65b96d3e31d63"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57182:comment:2960696756:sdk:.NET:Azure.ResourceManager.NetApp",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-19T15:06:04Z",
+      "observedAt": "2026-03-19T15:06:04Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NetApp",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57182",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57182#discussion_r2960696756"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Both new factory overloads recurse into themselves (`return NetAppAccountPatch(...)`) and will stack overflow at runtime. These should instead construct the model (e.g., via `new NetAppAccountPatch(...)` targeting the intended ctor) or dele",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57182:review:3975816763:sdk:.NET:Azure.ResourceManager.NetApp",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-19T15:06:05Z",
+      "observedAt": "2026-03-19T15:06:05Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NetApp",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57182",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57182#pullrequestreview-3975816763"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Regenerates the Azure Resource Manager NetApp SDK to align with the `2025-12-15-preview` API tag and updates related project artifacts. **Changes:** - Added a `NetAppAccountPatch` custom model type. - Added hidden `",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57182:comment:2960696824:sdk:.NET:Azure.ResourceManager.NetApp",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-19T15:06:05Z",
+      "observedAt": "2026-03-19T15:06:05Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NetApp",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57182",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57182#discussion_r2960696824"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The XML summary appears incorrect for this type: `NetAppAccountPatch` is a model (patch) type, not a model factory. Please update the `<summary>` to describe the patch model’s purpose (e.g., 'Patch model for NetApp accounts').",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57182:comment:2960696854:sdk:.NET:Azure.ResourceManager.NetApp",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-19T15:06:05Z",
+      "observedAt": "2026-03-19T15:06:05Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NetApp",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57182",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57182#discussion_r2960696854"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The solution header was bumped to VS 'Version 18' and `VisualStudioVersion` now includes a nonstandard suffix ('stable'). `.sln` headers are typically numeric-only and keeping them aligned with the repository’s baseline Visual Studio versio",
+      "stack": 3
+    },
+    {
+      "id": "ado:32964:66:Custom.SDKPullRequestForDotnet",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-03-20T09:12:35.237Z",
+      "observedAt": "2026-03-20T09:12:35.237Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NetApp",
+      "value": "https://github.com/Azure/azure-sdk-for-net/pull/57182",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32964",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32964"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57182:review:3980417289:sdk:.NET:Azure.ResourceManager.NetApp",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-20T09:26:39Z",
+      "observedAt": "2026-03-20T09:26:39Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NetApp",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "audunn"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57182",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57182#pullrequestreview-3980417289"
+      },
+      "confidence": "authoritative",
+      "excerpt": "LGTM",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57182:commit:becd7673cc13:sdk:.NET:Azure.ResourceManager.NetApp",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-20T10:06:16Z",
+      "observedAt": "2026-03-20T10:06:16Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NetApp",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "hnsunil"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57182",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/becd7673cc132c03ce2d52afcf290b6d64325743"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57182:comment:2964968428:sdk:.NET:Azure.ResourceManager.NetApp",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-20T10:18:00Z",
+      "observedAt": "2026-03-20T10:18:00Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NetApp",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "hnsunil"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57182",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57182#discussion_r2964968428"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Done",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57182:review:3980646011:sdk:.NET:Azure.ResourceManager.NetApp",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-20T10:18:01Z",
+      "observedAt": "2026-03-20T10:18:01Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NetApp",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "hnsunil"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57182",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57182#pullrequestreview-3980646011"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57182:comment:2964970109:sdk:.NET:Azure.ResourceManager.NetApp",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-20T10:18:25Z",
+      "observedAt": "2026-03-20T10:18:25Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NetApp",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "hnsunil"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57182",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57182#discussion_r2964970109"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Done",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57182:review:3980647888:sdk:.NET:Azure.ResourceManager.NetApp",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-20T10:18:26Z",
+      "observedAt": "2026-03-20T10:18:26Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NetApp",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "hnsunil"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57182",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57182#pullrequestreview-3980647888"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57182:commit:aefd35693aba:sdk:.NET:Azure.ResourceManager.NetApp",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-20T20:30:03Z",
+      "observedAt": "2026-03-20T20:30:03Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NetApp",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "hnsunil"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57182",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/aefd35693abaaea1079e50463c9eeb774d4e17db"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57182:commit:85608e142fb6:sdk:.NET:Azure.ResourceManager.NetApp",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-20T20:38:21Z",
+      "observedAt": "2026-03-20T20:38:21Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NetApp",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "hnsunil"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57182",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/85608e142fb68f1779fcd8a9273167d095680eca"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57182:review:3984114548:sdk:.NET:Azure.ResourceManager.NetApp",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-20T21:13:06Z",
+      "observedAt": "2026-03-20T21:13:06Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NetApp",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "audunn"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57182",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57182#pullrequestreview-3984114548"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57182:pr.merged:sdk:.NET:Azure.ResourceManager.NetApp",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-20T21:13:24Z",
+      "observedAt": "2026-03-20T21:13:24Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NetApp",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57182",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57182"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github-release:32964:JavaScript:@azure/arm-netapp_23.1.0-beta.1",
+      "type": "package.github_release_published",
+      "phase": "release",
+      "occurredAt": "2026-03-22T11:32:58Z",
+      "observedAt": "2026-03-22T11:32:58Z",
+      "trackId": "sdk:JavaScript:@azure/arm-netapp",
+      "title": "GitHub Release published",
+      "value": "@azure/arm-netapp_23.1.0-beta.1",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "azure-sdk-for-js release @azure/arm-netapp_23.1.0-beta.1",
+        "url": "https://github.com/Azure/azure-sdk-for-js/releases/tag/%40azure/arm-netapp_23.1.0-beta.1"
+      },
+      "confidence": "inferred",
+      "stack": 0
+    },
+    {
+      "id": "ado:32964:69:Custom.ReleaseStatusForJavaScript",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-03-22T11:46:54.58Z",
+      "observedAt": "2026-03-22T11:46:54.58Z",
+      "trackId": "sdk:JavaScript:@azure/arm-netapp",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32964",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32964"
+      },
+      "title": "Release status changed",
+      "stack": 1
+    },
+    {
+      "id": "github-release:32964:Python:azure-mgmt-netapp_15.1.0b1",
+      "type": "package.github_release_published",
+      "phase": "release",
+      "occurredAt": "2026-03-22T11:55:11Z",
+      "observedAt": "2026-03-22T11:55:11Z",
+      "trackId": "sdk:Python:azure-mgmt-netapp",
+      "title": "GitHub Release published",
+      "value": "azure-mgmt-netapp_15.1.0b1",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "azure-sdk-for-python release azure-mgmt-netapp_15.1.0b1",
+        "url": "https://github.com/Azure/azure-sdk-for-python/releases/tag/azure-mgmt-netapp_15.1.0b1"
+      },
+      "confidence": "inferred",
+      "stack": 0
+    },
+    {
+      "id": "github-release:32964:Java:com.azure.resourcemanager+azure-resourcemanager-netapp_2.2.0-beta.1",
+      "type": "package.github_release_published",
+      "phase": "release",
+      "occurredAt": "2026-03-22T11:56:54Z",
+      "observedAt": "2026-03-22T11:56:54Z",
+      "trackId": "sdk:Java:azure-resourcemanager-netapp",
+      "title": "GitHub Release published",
+      "value": "com.azure.resourcemanager+azure-resourcemanager-netapp_2.2.0-beta.1",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "azure-sdk-for-java release com.azure.resourcemanager+azure-resourcemanager-netapp_2.2.0-beta.1",
+        "url": "https://github.com/Azure/azure-sdk-for-java/releases/tag/com.azure.resourcemanager%2Bazure-resourcemanager-netapp_2.2.0-beta.1"
+      },
+      "confidence": "inferred",
+      "stack": 0
+    },
+    {
+      "id": "ado:32964:70:Custom.ReleaseStatusForPython",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-03-22T12:04:49.123Z",
+      "observedAt": "2026-03-22T12:04:49.123Z",
+      "trackId": "sdk:Python:azure-mgmt-netapp",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32964",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32964"
+      },
+      "title": "Release status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:32964:71:Custom.ReleaseStatusForJava",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-03-22T12:15:16.14Z",
+      "observedAt": "2026-03-22T12:15:16.14Z",
+      "trackId": "sdk:Java:azure-resourcemanager-netapp",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32964",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32964"
+      },
+      "title": "Release status changed",
+      "stack": 1
+    },
+    {
+      "id": "github-release:32964:.NET:Azure.ResourceManager.NetApp_1.16.0-beta.1",
+      "type": "package.github_release_published",
+      "phase": "release",
+      "occurredAt": "2026-03-22T18:05:06Z",
+      "observedAt": "2026-03-22T18:05:06Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NetApp",
+      "title": "GitHub Release published",
+      "value": "Azure.ResourceManager.NetApp_1.16.0-beta.1",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "azure-sdk-for-net release Azure.ResourceManager.NetApp_1.16.0-beta.1",
+        "url": "https://github.com/Azure/azure-sdk-for-net/releases/tag/Azure.ResourceManager.NetApp_1.16.0-beta.1"
+      },
+      "confidence": "observed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32964:72:Custom.ReleaseStatusForDotnet",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-03-22T18:16:23.117Z",
+      "observedAt": "2026-03-22T18:16:23.117Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NetApp",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32964",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32964"
+      },
+      "title": "Release status changed",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57182:review:3989671922:sdk:.NET:Azure.ResourceManager.NetApp",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-23T06:46:57Z",
+      "observedAt": "2026-03-23T06:46:57Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NetApp",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57182",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57182#pullrequestreview-3989671922"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Azure SDK Management Plane PR Review — Azure.ResourceManager.NetApp v1.16.0-beta.1 ### Phase 1: Versioning Review ✅ PASS - **Version**: `1.16.0-beta.1` — no major version bump ✅ - **ApiCompatVersion**: `1.15.0` — present and not removed ",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57182:comment:2973182882:sdk:.NET:Azure.ResourceManager.NetApp",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-23T06:46:57Z",
+      "observedAt": "2026-03-23T06:46:57Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NetApp",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57182",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57182#discussion_r2973182882"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**Naming: Forbidden `Response` suffix** $([char]10)$([char]10)`CheckElasticResourceAvailabilityResponseResult` contains the word \"Response\" which is a forbidden suffix per mgmt API guidelines. The current autorest.md rename-mapping maps `Ch",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57182:comment:2973182885:sdk:.NET:Azure.ResourceManager.NetApp",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-23T06:46:58Z",
+      "observedAt": "2026-03-23T06:46:58Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NetApp",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57182",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57182#discussion_r2973182885"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**Naming: Resource types missing `NetApp` prefix** $([char]10)$([char]10)`CacheResource`, `CacheData`, `CacheCollection` (and similarly `BucketResource`, `BucketData`, `BucketCollection`, `ActiveDirectoryConfigResource`, etc.) are missing t",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57182:comment:2973182889:sdk:.NET:Azure.ResourceManager.NetApp",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-23T06:46:58Z",
+      "observedAt": "2026-03-23T06:46:58Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NetApp",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57182",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57182#discussion_r2973182889"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**Naming: `DayOfWeek` conflicts with `System.DayOfWeek`** $([char]10)$([char]10)Defining a custom `DayOfWeek` extensible enum in the NetApp namespace shadows `System.DayOfWeek` and will cause confusion for SDK consumers who use both types. ",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57182:comment:2973182893:sdk:.NET:Azure.ResourceManager.NetApp",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-23T06:46:58Z",
+      "observedAt": "2026-03-23T06:46:58Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NetApp",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57182",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57182#discussion_r2973182893"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**Naming: Generic enums without service context** $([char]10)$([char]10)Multiple new extensible enums have names too generic to identify which service they belong to: - `PolicyStatus` (line 5019) - `ProtocolType` (line 5035) - `EncryptionSt",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57182:comment:2973182895:sdk:.NET:Azure.ResourceManager.NetApp",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-23T06:46:58Z",
+      "observedAt": "2026-03-23T06:46:58Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NetApp",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57182",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57182#discussion_r2973182895"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**Naming: Generic model names without service context** $([char]10)$([char]10)Several new model types have names that lack service/resource context: - `FileSystemUser` — should be `NetAppFileSystemUser` - `NfsUser` (line 4939) — should be `",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57182:comment:2973182897:sdk:.NET:Azure.ResourceManager.NetApp",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-23T06:46:58Z",
+      "observedAt": "2026-03-23T06:46:58Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NetApp",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57182",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57182#discussion_r2973182897"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**Naming: DateTimeOffset property should end with `On`** $([char]10)$([char]10)`KeyPairExpiry` is a `DateTimeOffset?` property. Per mgmt API guidelines, DateTimeOffset properties should end with `On` (e.g., `KeyPairExpiresOn` or `KeyPairExp",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57182:comment:2973182902:sdk:.NET:Azure.ResourceManager.NetApp",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-23T06:46:58Z",
+      "observedAt": "2026-03-23T06:46:58Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NetApp",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57182",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57182#discussion_r2973182902"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**Naming: `Akv` acronym** $([char]10)$([char]10)Types like `AzureKeyVaultDetails`, `CertificateAkvDetails`, `CredentialsAkvDetails`, `EntraIdAkvConfig`, `EntraIdAkvConfigPatch` use the abbreviation \"Akv\" inconsistently. Some use \"AzureKeyVa",
+      "stack": 1
+    },
+    {
+      "id": "github-release:32964:Go:sdk/resourcemanager/netapp/armnetapp/v10.0.0-beta.1",
+      "type": "package.github_release_published",
+      "phase": "release",
+      "occurredAt": "2026-03-25T10:13:52Z",
+      "observedAt": "2026-03-25T10:13:52Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/netapp/armnetapp",
+      "title": "GitHub Release published",
+      "value": "sdk/resourcemanager/netapp/armnetapp/v10.0.0-beta.1",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "azure-sdk-for-go release sdk/resourcemanager/netapp/armnetapp/v10.0.0-beta.1",
+        "url": "https://github.com/Azure/azure-sdk-for-go/releases/tag/sdk/resourcemanager/netapp/armnetapp/v10.0.0-beta.1"
+      },
+      "confidence": "inferred",
+      "stack": 0
+    },
+    {
+      "id": "ado:32964:73:Custom.ReleaseStatusForGo",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-03-25T10:14:10.187Z",
+      "observedAt": "2026-03-25T10:14:10.187Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/netapp/armnetapp",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32964",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32964"
+      },
+      "title": "Release status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:32964:74:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-03-25T10:15:12.46Z",
+      "observedAt": "2026-03-25T10:15:12.46Z",
+      "trackId": "plan",
+      "value": "Finished",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32964",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32964"
+      },
+      "title": "Plan state changed",
+      "stack": 0
+    }
+  ],
+  "quality": {
+    "warnings": [
+      "Multiple spec PRs are retained in link history",
+      "1 superseded SDK PR link(s) retained"
+    ],
+    "unavailablePullRequests": 0,
+    "unavailablePipelineRuns": 0
+  },
+  "boundaryFacts": {
+    "id": "32964",
+    "state": "finished",
+    "specPrs": [
+      {
+        "id": "github:Azure/azure-rest-api-specs#41312",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#41312",
+        "createdAt": "2026-03-12T10:20:55Z",
+        "mergedAt": "2026-03-12T15:23:43Z",
+        "closedAt": "2026-03-12T15:23:43Z",
+        "available": true
+      },
+      {
+        "id": "github:Azure/azure-rest-api-specs#41041",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#41041",
+        "createdAt": "2026-03-05T10:32:46Z",
+        "mergedAt": "2026-03-10T02:59:33Z",
+        "closedAt": "2026-03-10T02:59:33Z",
+        "available": true
+      },
+      {
+        "id": "github:Azure/azure-rest-api-specs#40744",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#40744",
+        "createdAt": "2026-02-25T17:03:29Z",
+        "mergedAt": "2026-02-26T13:15:24Z",
+        "closedAt": "2026-02-26T13:15:24Z",
+        "available": true
+      }
+    ],
+    "artifacts": [
+      {
+        "language": ".NET",
+        "package": "Azure.ResourceManager.NetApp",
+        "trackId": "sdk:.NET:Azure.ResourceManager.NetApp",
+        "prId": "github:Azure/azure-sdk-for-net#57182",
+        "prCreatedAt": "2026-03-17T18:23:59Z",
+        "prMergedAt": "2026-03-20T21:13:24Z",
+        "prClosedAt": "2026-03-20T21:13:24Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-net#57182",
+            "createdAt": "2026-03-17T18:23:59Z",
+            "mergedAt": "2026-03-20T21:13:24Z",
+            "closedAt": "2026-03-20T21:13:24Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6007648",
+        "generationStartAt": "2026-03-13T10:20:01.4669109Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-03-22T18:16:23.117Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": null,
+        "releaseBoundaryAt": "2026-03-22T18:05:06Z",
+        "releaseBoundarySource": "github-release",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": "https://github.com/Azure/azure-sdk-for-net/releases/tag/Azure.ResourceManager.NetApp_1.16.0-beta.1",
+        "releaseTag": "Azure.ResourceManager.NetApp_1.16.0-beta.1",
+        "releaseMatchMethod": "release-index-version",
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "github-release"
+        }
+      },
+      {
+        "language": "JavaScript",
+        "package": "@azure/arm-netapp",
+        "trackId": "sdk:JavaScript:@azure/arm-netapp",
+        "prId": "github:Azure/azure-sdk-for-js#37638",
+        "prCreatedAt": "2026-03-13T10:06:20Z",
+        "prMergedAt": "2026-03-17T16:07:15Z",
+        "prClosedAt": "2026-03-17T16:07:15Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-js#37567",
+            "createdAt": "2026-03-10T10:02:04Z",
+            "mergedAt": "2026-03-13T02:46:22Z",
+            "closedAt": "2026-03-13T02:46:22Z",
+            "state": "merged"
+          },
+          {
+            "id": "github:Azure/azure-sdk-for-js#37638",
+            "createdAt": "2026-03-13T10:06:20Z",
+            "mergedAt": "2026-03-17T16:07:15Z",
+            "closedAt": "2026-03-17T16:07:15Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6007649",
+        "generationStartAt": "2026-03-13T10:21:36.3021396Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-03-22T11:46:54.58Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": null,
+        "releaseBoundaryAt": "2026-03-22T11:32:58Z",
+        "releaseBoundarySource": "github-release",
+        "releaseBoundaryConfidence": "inferred",
+        "releaseBoundaryUrl": "https://github.com/Azure/azure-sdk-for-js/releases/tag/%40azure/arm-netapp_23.1.0-beta.1",
+        "releaseTag": "@azure/arm-netapp_23.1.0-beta.1",
+        "releaseMatchMethod": "unique-nearby-release",
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "github-release"
+        }
+      },
+      {
+        "language": "Python",
+        "package": "azure-mgmt-netapp",
+        "trackId": "sdk:Python:azure-mgmt-netapp",
+        "prId": "github:Azure/azure-sdk-for-python#45613",
+        "prCreatedAt": "2026-03-10T10:08:07Z",
+        "prMergedAt": "2026-03-16T09:20:10Z",
+        "prClosedAt": "2026-03-16T09:20:10Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-python#45613",
+            "createdAt": "2026-03-10T10:08:07Z",
+            "mergedAt": "2026-03-16T09:20:10Z",
+            "closedAt": "2026-03-16T09:20:10Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6007647",
+        "generationStartAt": "2026-03-13T10:20:05.7282712Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-03-22T12:04:49.123Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": null,
+        "releaseBoundaryAt": "2026-03-22T11:55:11Z",
+        "releaseBoundarySource": "github-release",
+        "releaseBoundaryConfidence": "inferred",
+        "releaseBoundaryUrl": "https://github.com/Azure/azure-sdk-for-python/releases/tag/azure-mgmt-netapp_15.1.0b1",
+        "releaseTag": "azure-mgmt-netapp_15.1.0b1",
+        "releaseMatchMethod": "unique-nearby-release",
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "github-release"
+        }
+      },
+      {
+        "language": "Java",
+        "package": "azure-resourcemanager-netapp",
+        "trackId": "sdk:Java:azure-resourcemanager-netapp",
+        "prId": "github:Azure/azure-sdk-for-java#48350",
+        "prCreatedAt": "2026-03-10T10:01:21Z",
+        "prMergedAt": "2026-03-16T09:21:32Z",
+        "prClosedAt": "2026-03-16T09:21:32Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-java#48350",
+            "createdAt": "2026-03-10T10:01:21Z",
+            "mergedAt": "2026-03-16T09:21:32Z",
+            "closedAt": "2026-03-16T09:21:32Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6007650",
+        "generationStartAt": "2026-03-13T10:21:39.5805312Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-03-22T12:15:16.14Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": null,
+        "releaseBoundaryAt": "2026-03-22T11:56:54Z",
+        "releaseBoundarySource": "github-release",
+        "releaseBoundaryConfidence": "inferred",
+        "releaseBoundaryUrl": "https://github.com/Azure/azure-sdk-for-java/releases/tag/com.azure.resourcemanager%2Bazure-resourcemanager-netapp_2.2.0-beta.1",
+        "releaseTag": "com.azure.resourcemanager+azure-resourcemanager-netapp_2.2.0-beta.1",
+        "releaseMatchMethod": "release-index-version",
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "github-release"
+        }
+      },
+      {
+        "language": "Go",
+        "package": "sdk/resourcemanager/netapp/armnetapp",
+        "trackId": "sdk:Go:sdk/resourcemanager/netapp/armnetapp",
+        "prId": "github:Azure/azure-sdk-for-go#26201",
+        "prCreatedAt": "2026-03-10T10:00:00Z",
+        "prMergedAt": "2026-03-17T16:05:02Z",
+        "prClosedAt": "2026-03-17T16:05:02Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-go#26201",
+            "createdAt": "2026-03-10T10:00:00Z",
+            "mergedAt": "2026-03-17T16:05:02Z",
+            "closedAt": "2026-03-17T16:05:02Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6007651",
+        "generationStartAt": "2026-03-13T10:21:54.8584581Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-03-25T10:14:10.187Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": null,
+        "releaseBoundaryAt": "2026-03-25T10:13:52Z",
+        "releaseBoundarySource": "github-release",
+        "releaseBoundaryConfidence": "inferred",
+        "releaseBoundaryUrl": "https://github.com/Azure/azure-sdk-for-go/releases/tag/sdk/resourcemanager/netapp/armnetapp/v10.0.0-beta.1",
+        "releaseTag": "sdk/resourcemanager/netapp/armnetapp/v10.0.0-beta.1",
+        "releaseMatchMethod": "unique-nearby-release",
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "github-release"
+        }
+      }
+    ],
+    "cohortPlan": {
+      "id": "32964",
+      "releasePlanId": "2110",
+      "title": "Release Plan - 2110 - Public Preview - Azure NetApp Files",
+      "service": "Net App",
+      "state": "finished"
+    },
+    "quality": {
+      "warnings": [
+        "Multiple spec PRs are retained in link history",
+        "1 superseded SDK PR link(s) retained"
+      ],
+      "unavailablePullRequests": 0,
+      "unavailablePipelineRuns": 0
+    }
+  },
+  "summary": {
+    "durationHours": 528.9,
+    "pullRequestCount": 9,
+    "humanReviewCount": 22,
+    "humanCommentCount": 20
+  }
+}

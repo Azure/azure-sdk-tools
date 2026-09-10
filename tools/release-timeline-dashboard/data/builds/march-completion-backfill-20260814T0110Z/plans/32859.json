@@ -1,0 +1,1297 @@
+{
+  "schemaVersion": 2,
+  "id": "32859",
+  "correlation": {
+    "policyVersion": 1,
+    "preflight": "passed"
+  },
+  "releasePlanId": "2100",
+  "title": "Release Plan - 2100 - GA - Azure Storage Cache",
+  "service": "Azure Storage Cache",
+  "product": "Release",
+  "path": "specification/storagecache/resource-manager/Microsoft.StorageCache/",
+  "state": "abandoned",
+  "plane": "management",
+  "releaseType": "APEX GA",
+  "intendedMonth": "March 2026",
+  "createdAt": "2026-02-22T15:45:55.917Z",
+  "completedAt": "2026-04-28T06:29:56.12Z",
+  "sourceUrl": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32859",
+  "range": {
+    "start": "2025-11-26T00:39:08.000Z",
+    "end": "2026-04-28T06:29:56.120Z"
+  },
+  "intendedArtifacts": [
+    {
+      "prId": null,
+      "language": ".NET",
+      "package": "Azure.ResourceManager.StorageCache",
+      "version": null,
+      "outcome": "released",
+      "generationPipelineUrl": null,
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": null,
+      "language": "JavaScript",
+      "package": "@azure/arm-storagecache",
+      "version": null,
+      "outcome": "released",
+      "generationPipelineUrl": null,
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": null,
+      "language": "Python",
+      "package": "azure-mgmt-storagecache",
+      "version": null,
+      "outcome": "not-released",
+      "generationPipelineUrl": null,
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": null,
+      "language": "Java",
+      "package": "azure-resourcemanager-storagecache",
+      "version": null,
+      "outcome": "not-released",
+      "generationPipelineUrl": null,
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": null,
+      "language": "Go",
+      "package": "sdk/resourcemanager/storagecache/armstoragecache",
+      "version": null,
+      "outcome": "released",
+      "generationPipelineUrl": null,
+      "releasePipelineUrl": null
+    }
+  ],
+  "links": [
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#38978",
+      "role": "spec-pr",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/38978",
+      "releasePlanIds": []
+    }
+  ],
+  "tracks": [
+    {
+      "id": "plan",
+      "kind": "plan",
+      "label": "Release Plan",
+      "detail": "APEX GA"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#38978",
+      "kind": "spec",
+      "label": "Spec PR",
+      "detail": "azure-rest-api-specs #38978",
+      "artifactId": "github:Azure/azure-rest-api-specs#38978",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:.NET:Azure.ResourceManager.StorageCache",
+      "kind": "sdk",
+      "label": ".NET",
+      "detail": "Azure.ResourceManager.StorageCache",
+      "artifactId": null,
+      "state": "missing"
+    },
+    {
+      "id": "sdk:JavaScript:@azure/arm-storagecache",
+      "kind": "sdk",
+      "label": "JavaScript",
+      "detail": "@azure/arm-storagecache",
+      "artifactId": null,
+      "state": "missing"
+    },
+    {
+      "id": "sdk:Python:azure-mgmt-storagecache",
+      "kind": "sdk",
+      "label": "Python",
+      "detail": "azure-mgmt-storagecache",
+      "artifactId": null,
+      "state": "missing"
+    },
+    {
+      "id": "sdk:Java:azure-resourcemanager-storagecache",
+      "kind": "sdk",
+      "label": "Java",
+      "detail": "azure-resourcemanager-storagecache",
+      "artifactId": null,
+      "state": "missing"
+    },
+    {
+      "id": "sdk:Go:sdk/resourcemanager/storagecache/armstoragecache",
+      "kind": "sdk",
+      "label": "Go",
+      "detail": "sdk/resourcemanager/storagecache/armstoragecache",
+      "artifactId": null,
+      "state": "missing"
+    }
+  ],
+  "events": [
+    {
+      "id": "github:Azure/azure-rest-api-specs#38978:pr.created:spec:github:Azure/azure-rest-api-specs#38978",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-11-26T00:39:08Z",
+      "observedAt": "2025-11-26T00:39:08Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38978",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "Aman-Jain-14"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38978",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/38978"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38978:comment:3578226848:spec:github:Azure/azure-rest-api-specs#38978",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-11-26T00:39:27Z",
+      "observedAt": "2025-11-26T00:39:27Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38978",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38978",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/38978#issuecomment-3578226848"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>✅ All automated merging requirements have been met! To get your PR merged, see <a href=\"https://aka.ms/azsdk/specreview/merge\">aka.ms/azsdk/specreview/merge</a>.<br /><br />Comment generated by <a href=\"https://g",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38978:commit:1f48d2a1add8:spec:github:Azure/azure-rest-api-specs#38978",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2025-11-26T00:41:08Z",
+      "observedAt": "2025-11-26T00:41:08Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38978",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38978",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/1f48d2a1add8f72925236382767a4fb81dea5e03"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38978:comment:3578231439:spec:github:Azure/azure-rest-api-specs#38978",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-11-26T00:41:12Z",
+      "observedAt": "2025-11-26T00:41:12Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38978",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38978",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/38978#issuecomment-3578231439"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews | Language | API Review for Package | |----------|---------| | Swagger | [Microsoft.StorageCache-StorageCache](https://apiview.dev/Ass",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38978:comment:3578464049:spec:github:Azure/azure-rest-api-specs#38978",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-11-26T01:51:31Z",
+      "observedAt": "2025-11-26T01:51:31Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38978",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "mentat9"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38978",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/38978#issuecomment-3578464049"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> \"$ref\": \"../../../../../../common-types/resource-management/v3/types.json#/parameters/ResourceGroupNameParameter\" Can you use a newer common types, e.g. v6? #Resolved --- Refers to: specification/storagecache/resource-manager/Microsoft.St",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38978:comment:3578466847:spec:github:Azure/azure-rest-api-specs#38978",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-11-26T01:52:17Z",
+      "observedAt": "2025-11-26T01:52:17Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38978",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "mentat9"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38978",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/38978#issuecomment-3578466847"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> \"$ref\": \"../../../../../../common-types/resource-management/v5/types.json#/definitions/ErrorResponse\" Any reason your request and response use a different version of common types? Recommend using the same version, and as new as possible (",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38978:comment:3578467101:spec:github:Azure/azure-rest-api-specs#38978",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-11-26T01:52:25Z",
+      "observedAt": "2025-11-26T01:52:25Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38978",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "mentat9"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38978",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/38978#issuecomment-3578467101"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> \"$ref\": \"storagecache.json#/definitions/CloudError\" @Aman-Jain-14 - Use common types (v5 or newer). --- Refers to: specification/storagecache/resource-manager/Microsoft.StorageCache/StorageCache/stable/2026-01-01/amlfilesystem.json:1665 i",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38978:comment:3578467500:spec:github:Azure/azure-rest-api-specs#38978",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-11-26T01:52:32Z",
+      "observedAt": "2025-11-26T01:52:32Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38978",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "mentat9"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38978",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/38978#issuecomment-3578467500"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> \"type\": \"string\", Add format: uuid --- Refers to: specification/storagecache/resource-manager/Microsoft.StorageCache/StorageCache/stable/2026-01-01/amlfilesystem.json:1870 in 1f48d2a. [](commit_id = 1f48d2a1add8f72925236382767a4fb81dea5e0",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38978:comment:3578471785:spec:github:Azure/azure-rest-api-specs#38978",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-11-26T01:53:29Z",
+      "observedAt": "2025-11-26T01:53:29Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38978",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "mentat9"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38978",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/38978#issuecomment-3578471785"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> \"type\": \"string\", Can this be enum (or integer if there are too many values)? #Resolved --- Refers to: specification/storagecache/resource-manager/Microsoft.StorageCache/StorageCache/stable/2026-01-01/amlfilesystem.json:3306 in 1f48d2a. [",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38978:comment:3578471937:spec:github:Azure/azure-rest-api-specs#38978",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-11-26T01:53:31Z",
+      "observedAt": "2025-11-26T01:53:31Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38978",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "mentat9"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38978",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/38978#issuecomment-3578471937"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> \"startTimeUTC\": { Recommend startTimeUtc (debatable, I know. I prefer camelCase for acronyms of more than two letters). #Resolved --- Refers to: specification/storagecache/resource-manager/Microsoft.StorageCache/StorageCache/stable/2026-0",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38978:comment:3578472045:spec:github:Azure/azure-rest-api-specs#38978",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-11-26T01:53:33Z",
+      "observedAt": "2025-11-26T01:53:33Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38978",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "mentat9"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38978",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/38978#issuecomment-3578472045"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> \"completionTimeUTC\": { Recommend completionTimeUtc. #Resolved --- Refers to: specification/storagecache/resource-manager/Microsoft.StorageCache/StorageCache/stable/2026-01-01/amlfilesystem.json:3320 in 1f48d2a. [](commit_id = 1f48d2a1add8",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38978:commit:0842da2ebf6e:spec:github:Azure/azure-rest-api-specs#38978",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2025-11-26T18:42:29Z",
+      "observedAt": "2025-11-26T18:42:29Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38978",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38978",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/0842da2ebf6e3c532791dfa54802a39e118cb1bf"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38978:comment:3582775013:spec:github:Azure/azure-rest-api-specs#38978",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-11-26T18:52:42Z",
+      "observedAt": "2025-11-26T18:52:42Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38978",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "Aman-Jain-14"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38978",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/38978#issuecomment-3582775013"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@mentat9 Thank you so much for your review. I have pushed the changes to update the spec to use v5/types.json for the new sub-resource (ExpansionJob), and couple other changes as you requested. Please find my responses to your comments: ```",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38978:comment:3582781956:spec:github:Azure/azure-rest-api-specs#38978",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-11-26T18:55:09Z",
+      "observedAt": "2025-11-26T18:55:09Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38978",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "Aman-Jain-14"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38978",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/38978#issuecomment-3582781956"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@mentat9 I have to revert the changes for adding GUID format as that is making the Linter check to fail: <img width=\"1326\" height=\"574\" alt=\"image\" src=\"https://github.com/user-attachments/assets/7bc04e99-fd2e-4838-bd45-bad42195e9a4\" />",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38978:commit:e529c4b08742:spec:github:Azure/azure-rest-api-specs#38978",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2025-11-26T18:56:03Z",
+      "observedAt": "2025-11-26T18:56:03Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38978",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38978",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/e529c4b08742afa8a907e47c9f79c443a757a75b"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38978:comment:3583557270:spec:github:Azure/azure-rest-api-specs#38978",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-11-26T23:41:47Z",
+      "observedAt": "2025-11-26T23:41:47Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38978",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "mentat9"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38978",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/38978#issuecomment-3583557270"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> @mentat9 > > I have to revert the changes for adding GUID format as that is making the Linter check to fail: <img alt=\"image\" width=\"1326\" height=\"574\" src=\"https://private-user-images.githubusercontent.com/11866201/519354159-7bc04e99-fd2",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38978:comment:3583593238:spec:github:Azure/azure-rest-api-specs#38978",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-11-27T00:02:38Z",
+      "observedAt": "2025-11-27T00:02:38Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38978",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "mentat9"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38978",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/38978#issuecomment-3583593238"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> @mentat9 > > Thank you so much for your review. I have pushed the changes to update the spec to use v5/types.json for the new sub-resource (ExpansionJob), and couple other changes as you requested. > > Please find my responses to your com",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38978:commit:9837512e399e:spec:github:Azure/azure-rest-api-specs#38978",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2025-11-27T00:27:00Z",
+      "observedAt": "2025-11-27T00:27:00Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38978",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38978",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/9837512e399ef8518e44d84cb096271e3326a378"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38978:comment:3583637837:spec:github:Azure/azure-rest-api-specs#38978",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-11-27T00:28:36Z",
+      "observedAt": "2025-11-27T00:28:36Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38978",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "Aman-Jain-14"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38978",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/38978#issuecomment-3583637837"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@mentat9 `Final point: looks like you missed one comment (line 1665 of amlfilesystem.json) where you are using a different definition (CloudError) for the default response branch. That looks like a mistake that should be fixed.` Using Cloud",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38978:comment:3584121903:spec:github:Azure/azure-rest-api-specs#38978",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-11-27T04:08:46Z",
+      "observedAt": "2025-11-27T04:08:46Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38978",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "Aman-Jain-14"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38978",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/38978#issuecomment-3584121903"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Following the guidelines to request a temporary suppression until this issue is fixed: <img width=\"1232\" height=\"103\" alt=\"image\" src=\"https://github.com/user-attachments/assets/14b1ee94-7d5f-41ff-939b-5e6089036b02\" /> The new ClusterUuid f",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38978:comment:3609198655:spec:github:Azure/azure-rest-api-specs#38978",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-12-03T23:01:36Z",
+      "observedAt": "2025-12-03T23:01:36Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38978",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "psah434"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38978",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/38978#issuecomment-3609198655"
+      },
+      "confidence": "authoritative",
+      "excerpt": "has the lintdiff suppression been added?",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38978:comment:3609256038:spec:github:Azure/azure-rest-api-specs#38978",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-12-03T23:26:33Z",
+      "observedAt": "2025-12-03T23:26:33Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38978",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "Aman-Jain-14"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38978",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/38978#issuecomment-3609256038"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@psah434 No, the documentation says that we have to give the justification and ask the PR assignee to apply it for us.",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38978:review:3563901197:spec:github:Azure/azure-rest-api-specs#38978",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2025-12-10T18:14:35Z",
+      "observedAt": "2025-12-10T18:14:35Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38978",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "brpanask"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38978",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/38978#pullrequestreview-3563901197"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38978:commit:00ff3b55deb7:spec:github:Azure/azure-rest-api-specs#38978",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2025-12-11T02:07:03Z",
+      "observedAt": "2025-12-11T02:07:03Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38978",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38978",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/00ff3b55deb7059aa29db9560678fd7d8715d537"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38978:commit:21f7289d19d8:spec:github:Azure/azure-rest-api-specs#38978",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2025-12-15T18:15:56Z",
+      "observedAt": "2025-12-15T18:15:56Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38978",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38978",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/21f7289d19d84d5f8dbbaec200ffc62ecdee2f82"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38978:review:3583632731:spec:github:Azure/azure-rest-api-specs#38978",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2025-12-16T15:15:59Z",
+      "observedAt": "2025-12-16T15:15:59Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38978",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "brpanask"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38978",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/38978#pullrequestreview-3583632731"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38978:review:3589280099:spec:github:Azure/azure-rest-api-specs#38978",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2025-12-17T19:15:14Z",
+      "observedAt": "2025-12-17T19:15:14Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38978",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "brpanask"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38978",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/38978#pullrequestreview-3589280099"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38978:comment:3722549052:spec:github:Azure/azure-rest-api-specs#38978",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-01-08T07:53:08Z",
+      "observedAt": "2026-01-08T07:53:08Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38978",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "josefree"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38978",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/38978#issuecomment-3722549052"
+      },
+      "confidence": "authoritative",
+      "excerpt": "All active Azure services must convert to TypeSpec by March 31, 2026. Starting July 1, 2026, SDK generation from the autorest toolchain will be blocked. Please reach out [[email redacted]](mailto:[email redacted]",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38978:commit:16ac9f9b2c60:spec:github:Azure/azure-rest-api-specs#38978",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-19T12:43:03Z",
+      "observedAt": "2026-02-19T12:43:03Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38978",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38978",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/16ac9f9b2c60e59a1c62cb67af7db856a01c18d7"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38978:review:3826919486:spec:github:Azure/azure-rest-api-specs#38978",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-19T16:16:01Z",
+      "observedAt": "2026-02-19T16:16:01Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38978",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "brpanask"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38978",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/38978#pullrequestreview-3826919486"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38978:pr.merged:spec:github:Azure/azure-rest-api-specs#38978",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-19T16:17:33Z",
+      "observedAt": "2026-02-19T16:17:33Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38978",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38978",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/38978"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:32859:created",
+      "type": "plan.created",
+      "phase": "plan",
+      "occurredAt": "2026-02-22T15:45:55.917Z",
+      "observedAt": "2026-02-22T15:45:55.917Z",
+      "trackId": "plan",
+      "title": "Release Plan created",
+      "confidence": "authoritative",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32859"
+      },
+      "stack": 0
+    },
+    {
+      "id": "ado:32859:1:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-02-22T15:45:55.917Z",
+      "observedAt": "2026-02-22T15:45:55.917Z",
+      "trackId": "plan",
+      "value": "New",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32859"
+      },
+      "title": "Plan state changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:32859:1:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-22T15:45:55.917Z",
+      "observedAt": "2026-02-22T15:45:55.917Z",
+      "trackId": "plan",
+      "value": "Not Available",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32859"
+      },
+      "title": "Spec approval changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:32859:1:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-22T15:45:55.917Z",
+      "observedAt": "2026-02-22T15:45:55.917Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.StorageCache",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32859"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32859:1:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-22T15:45:55.917Z",
+      "observedAt": "2026-02-22T15:45:55.917Z",
+      "trackId": "sdk:JavaScript:@azure/arm-storagecache",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32859"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32859:1:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-22T15:45:55.917Z",
+      "observedAt": "2026-02-22T15:45:55.917Z",
+      "trackId": "sdk:Python:azure-mgmt-storagecache",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32859"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32859:1:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-22T15:45:55.917Z",
+      "observedAt": "2026-02-22T15:45:55.917Z",
+      "trackId": "sdk:Java:azure-resourcemanager-storagecache",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32859"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32859:1:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-22T15:45:55.917Z",
+      "observedAt": "2026-02-22T15:45:55.917Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/storagecache/armstoragecache",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32859"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32859:4:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-02-22T15:47:43.83Z",
+      "observedAt": "2026-02-22T15:47:43.83Z",
+      "trackId": "plan",
+      "value": "In Progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32859"
+      },
+      "title": "Plan state changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:32860:2:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-22T15:49:25.523Z",
+      "observedAt": "2026-02-22T15:49:25.523Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38978",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/38978",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32860",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32860"
+      },
+      "title": "Spec PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado:32859:6:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-22T15:49:29.07Z",
+      "observedAt": "2026-02-22T15:49:29.07Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.StorageCache",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32859"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:32859:6:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-22T15:49:29.07Z",
+      "observedAt": "2026-02-22T15:49:29.07Z",
+      "trackId": "sdk:JavaScript:@azure/arm-storagecache",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32859"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:32859:6:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-22T15:49:29.07Z",
+      "observedAt": "2026-02-22T15:49:29.07Z",
+      "trackId": "sdk:Python:azure-mgmt-storagecache",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32859"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:32859:6:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-22T15:49:29.07Z",
+      "observedAt": "2026-02-22T15:49:29.07Z",
+      "trackId": "sdk:Java:azure-resourcemanager-storagecache",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32859"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:32859:6:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-22T15:49:29.07Z",
+      "observedAt": "2026-02-22T15:49:29.07Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/storagecache/armstoragecache",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32859"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:32859:7:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-22T15:49:44.43Z",
+      "observedAt": "2026-02-22T15:49:44.43Z",
+      "trackId": "plan",
+      "value": "Approved",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32859"
+      },
+      "title": "Spec approval changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:32859:21:Custom.ReleaseStatusForGo",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-03-18T03:07:14.693Z",
+      "observedAt": "2026-03-18T03:07:14.693Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/storagecache/armstoragecache",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32859"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32859:22:Custom.ReleaseStatusForJavaScript",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-03-19T06:00:26.033Z",
+      "observedAt": "2026-03-19T06:00:26.033Z",
+      "trackId": "sdk:JavaScript:@azure/arm-storagecache",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32859"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32859:23:Custom.ReleaseStatusForDotnet",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-03-30T09:44:25.93Z",
+      "observedAt": "2026-03-30T09:44:25.93Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.StorageCache",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32859"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32859:24:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-04-28T06:29:56.12Z",
+      "observedAt": "2026-04-28T06:29:56.12Z",
+      "trackId": "plan",
+      "value": "Abandoned",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32859"
+      },
+      "title": "Plan state changed",
+      "stack": 0
+    }
+  ],
+  "quality": {
+    "warnings": [],
+    "unavailablePullRequests": 0,
+    "unavailablePipelineRuns": 0
+  },
+  "boundaryFacts": {
+    "id": "32859",
+    "state": "abandoned",
+    "specPrs": [
+      {
+        "id": "github:Azure/azure-rest-api-specs#38978",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#38978",
+        "createdAt": "2025-11-26T00:39:08Z",
+        "mergedAt": "2026-02-19T16:17:33Z",
+        "closedAt": "2026-02-19T16:17:33Z",
+        "available": true
+      }
+    ],
+    "artifacts": [
+      {
+        "language": ".NET",
+        "package": "Azure.ResourceManager.StorageCache",
+        "trackId": "sdk:.NET:Azure.ResourceManager.StorageCache",
+        "prId": null,
+        "prCreatedAt": null,
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [],
+        "generationRunId": null,
+        "generationStartAt": null,
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-03-30T09:44:25.93Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "missing",
+          "generation": "missing",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "JavaScript",
+        "package": "@azure/arm-storagecache",
+        "trackId": "sdk:JavaScript:@azure/arm-storagecache",
+        "prId": null,
+        "prCreatedAt": null,
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [],
+        "generationRunId": null,
+        "generationStartAt": null,
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-03-19T06:00:26.033Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "missing",
+          "generation": "missing",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Python",
+        "package": "azure-mgmt-storagecache",
+        "trackId": "sdk:Python:azure-mgmt-storagecache",
+        "prId": null,
+        "prCreatedAt": null,
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [],
+        "generationRunId": null,
+        "generationStartAt": null,
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "missing",
+          "generation": "missing",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Java",
+        "package": "azure-resourcemanager-storagecache",
+        "trackId": "sdk:Java:azure-resourcemanager-storagecache",
+        "prId": null,
+        "prCreatedAt": null,
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [],
+        "generationRunId": null,
+        "generationStartAt": null,
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "missing",
+          "generation": "missing",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Go",
+        "package": "sdk/resourcemanager/storagecache/armstoragecache",
+        "trackId": "sdk:Go:sdk/resourcemanager/storagecache/armstoragecache",
+        "prId": null,
+        "prCreatedAt": null,
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [],
+        "generationRunId": null,
+        "generationStartAt": null,
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-03-18T03:07:14.693Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "missing",
+          "generation": "missing",
+          "release": "missing"
+        }
+      }
+    ],
+    "cohortPlan": {
+      "id": "32859",
+      "releasePlanId": "2100",
+      "title": "Release Plan - 2100 - GA - Azure Storage Cache",
+      "service": "Azure Storage Cache",
+      "state": "abandoned"
+    },
+    "quality": {
+      "warnings": [],
+      "unavailablePullRequests": 0,
+      "unavailablePipelineRuns": 0
+    }
+  },
+  "summary": {
+    "durationHours": 1550.7,
+    "pullRequestCount": 1,
+    "humanReviewCount": 4,
+    "humanCommentCount": 16
+  }
+}

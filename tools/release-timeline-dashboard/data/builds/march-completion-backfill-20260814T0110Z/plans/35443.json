@@ -1,0 +1,2815 @@
+{
+  "schemaVersion": 2,
+  "id": "35443",
+  "correlation": {
+    "policyVersion": 1,
+    "preflight": "passed"
+  },
+  "releasePlanId": "35443",
+  "title": "GA release plan for StorageMover",
+  "service": "StorageMover",
+  "product": "Release",
+  "path": "specification/storagemover/resource-manager/Microsoft.StorageMover/StorageMover",
+  "state": "in-progress",
+  "plane": "management",
+  "releaseType": "GA",
+  "intendedMonth": "August 2026",
+  "createdAt": "2026-07-23T16:24:24.147Z",
+  "completedAt": null,
+  "sourceUrl": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35443",
+  "range": {
+    "start": "2026-07-20T10:24:12.000Z",
+    "end": "2026-08-14T00:37:23.589Z"
+  },
+  "intendedArtifacts": [
+    {
+      "prId": "github:Azure/azure-sdk-for-net#61273",
+      "language": ".NET",
+      "package": "Azure.ResourceManager.StorageMover",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6608670",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-js#39381",
+      "language": "JavaScript",
+      "package": "@azure/arm-storagemover",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6608674",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-python#48233",
+      "language": "Python",
+      "package": "azure-mgmt-storagemover",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6608675",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-java#49916",
+      "language": "Java",
+      "package": "azure-resourcemanager-storagemover",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6608672",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-go#27243",
+      "language": "Go",
+      "package": "sdk/resourcemanager/storagemover/armstoragemover",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6608676",
+      "releasePipelineUrl": null
+    }
+  ],
+  "links": [
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#44795",
+      "role": "spec-pr",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/44795",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-net#61273",
+      "role": "sdk-pr",
+      "language": ".NET",
+      "url": "https://github.com/Azure/azure-sdk-for-net/pull/61273",
+      "releasePlanIds": [
+        "35443"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-js#39381",
+      "role": "sdk-pr",
+      "language": "JavaScript",
+      "url": "https://github.com/Azure/azure-sdk-for-js/pull/39381",
+      "releasePlanIds": [
+        "35443"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-python#48233",
+      "role": "sdk-pr",
+      "language": "Python",
+      "url": "https://github.com/Azure/azure-sdk-for-python/pull/48233",
+      "releasePlanIds": [
+        "35443"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-java#49916",
+      "role": "sdk-pr",
+      "language": "Java",
+      "url": "https://github.com/Azure/azure-sdk-for-java/pull/49916",
+      "releasePlanIds": [
+        "35443"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-go#27243",
+      "role": "sdk-pr",
+      "language": "Go",
+      "url": "https://github.com/Azure/azure-sdk-for-go/pull/27243",
+      "releasePlanIds": [
+        "35443"
+      ]
+    }
+  ],
+  "tracks": [
+    {
+      "id": "plan",
+      "kind": "plan",
+      "label": "Release Plan",
+      "detail": "GA"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#44795",
+      "kind": "spec",
+      "label": "Spec PR",
+      "detail": "azure-rest-api-specs #44795",
+      "artifactId": "github:Azure/azure-rest-api-specs#44795",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:.NET:Azure.ResourceManager.StorageMover",
+      "kind": "sdk",
+      "label": ".NET",
+      "detail": "Azure.ResourceManager.StorageMover",
+      "artifactId": "github:Azure/azure-sdk-for-net#61273",
+      "state": "open"
+    },
+    {
+      "id": "sdk:JavaScript:@azure/arm-storagemover",
+      "kind": "sdk",
+      "label": "JavaScript",
+      "detail": "@azure/arm-storagemover",
+      "artifactId": "github:Azure/azure-sdk-for-js#39381",
+      "state": "open"
+    },
+    {
+      "id": "sdk:Python:azure-mgmt-storagemover",
+      "kind": "sdk",
+      "label": "Python",
+      "detail": "azure-mgmt-storagemover",
+      "artifactId": "github:Azure/azure-sdk-for-python#48233",
+      "state": "open"
+    },
+    {
+      "id": "sdk:Java:azure-resourcemanager-storagemover",
+      "kind": "sdk",
+      "label": "Java",
+      "detail": "azure-resourcemanager-storagemover",
+      "artifactId": "github:Azure/azure-sdk-for-java#49916",
+      "state": "open"
+    },
+    {
+      "id": "sdk:Go:sdk/resourcemanager/storagemover/armstoragemover",
+      "kind": "sdk",
+      "label": "Go",
+      "detail": "sdk/resourcemanager/storagemover/armstoragemover",
+      "artifactId": "github:Azure/azure-sdk-for-go#27243",
+      "state": "open"
+    }
+  ],
+  "events": [
+    {
+      "id": "github:Azure/azure-rest-api-specs#44795:pr.created:spec:github:Azure/azure-rest-api-specs#44795",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-20T10:24:12Z",
+      "observedAt": "2026-07-20T10:24:12Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44795",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "cptolookfor"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44795",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44795"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44795:comment:5021213832:spec:github:Azure/azure-rest-api-specs#44795",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-20T10:24:49Z",
+      "observedAt": "2026-07-20T10:24:49Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44795",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "microsoft-github-policy-service[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44795",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44795#issuecomment-5021213832"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Thank you for your contribution @cptolookfor! We will review the pull request and get back to you soon.",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44795:comment:5021214174:spec:github:Azure/azure-rest-api-specs#44795",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-20T10:24:51Z",
+      "observedAt": "2026-07-20T10:24:51Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44795",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44795",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44795#issuecomment-5021214174"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 10 pipeline(s).<br> 5 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44795:comment:5021218046:spec:github:Azure/azure-rest-api-specs#44795",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-20T10:25:20Z",
+      "observedAt": "2026-07-20T10:25:20Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44795",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44795",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44795#issuecomment-5021218046"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>✅ All automated merging requirements have been met! To get your PR merged, see <a href=\"https://aka.ms/azsdk/specreview/merge\">aka.ms/azsdk/specreview/merge</a>.<br /><br />Comment generated by <a href=\"https://g",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44795:comment:5021257633:spec:github:Azure/azure-rest-api-specs#44795",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-20T10:30:20Z",
+      "observedAt": "2026-07-20T10:30:20Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44795",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44795",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44795#issuecomment-5021257633"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews | Language | API Review for Package | |----------|---------| | Swagger | [Microsoft.StorageMover-StorageMover](https://apiview.dev/Ass",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44795:commit:84a91c610d1b:spec:github:Azure/azure-rest-api-specs#44795",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-20T10:58:18Z",
+      "observedAt": "2026-07-20T10:58:18Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44795",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "cptolookfor"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44795",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/84a91c610d1b78aa66b066d1be38e53071597960"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44795:commit:1cc15879eea4:spec:github:Azure/azure-rest-api-specs#44795",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-20T11:36:56Z",
+      "observedAt": "2026-07-20T11:36:56Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44795",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "cptolookfor"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44795",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/1cc15879eea477f75ff685d90b3d46cc5aa0f5ee"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44795:commit:1ae795477843:spec:github:Azure/azure-rest-api-specs#44795",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-20T12:03:17Z",
+      "observedAt": "2026-07-20T12:03:17Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44795",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "cptolookfor"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44795",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/1ae7954778439fd4842eea7cf22af5aab4a017ec"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44795:commit:7408b48ce817:spec:github:Azure/azure-rest-api-specs#44795",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-20T12:05:56Z",
+      "observedAt": "2026-07-20T12:05:56Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44795",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "cptolookfor"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44795",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/7408b48ce81742c51d0906aed7382951aeb63b60"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44795:commit:27a55eb1ab28:spec:github:Azure/azure-rest-api-specs#44795",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-20T12:14:01Z",
+      "observedAt": "2026-07-20T12:14:01Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44795",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "cptolookfor"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44795",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/27a55eb1ab288c49275a6dec051267a36d1b0f5d"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44795:commit:ad62b2c35b79:spec:github:Azure/azure-rest-api-specs#44795",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-23T09:29:42Z",
+      "observedAt": "2026-07-23T09:29:42Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44795",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "cptolookfor"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44795",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/ad62b2c35b79bc608e8cf86ad4d119184b7084fd"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44795:commit:e536e8b78336:spec:github:Azure/azure-rest-api-specs#44795",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-23T10:28:25Z",
+      "observedAt": "2026-07-23T10:28:25Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44795",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "cptolookfor"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44795",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/e536e8b783366f2e15a14e4b2c749a1638641883"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44795:commit:985efabff28c:spec:github:Azure/azure-rest-api-specs#44795",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-23T10:35:26Z",
+      "observedAt": "2026-07-23T10:35:26Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44795",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "cptolookfor"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44795",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/985efabff28cd0c722f3587312fc5a254e640d86"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44795:commit:f9ce6040678b:spec:github:Azure/azure-rest-api-specs#44795",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-23T10:56:52Z",
+      "observedAt": "2026-07-23T10:56:52Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44795",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "cptolookfor"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44795",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/f9ce6040678b36458c6244cef9e6382563cd3712"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44795:commit:5c78380bbedf:spec:github:Azure/azure-rest-api-specs#44795",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-23T11:52:54Z",
+      "observedAt": "2026-07-23T11:52:54Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44795",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "cptolookfor"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44795",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/5c78380bbedf8342b7b226eca01ffaa694516e03"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44795:commit:e93e1e36b9f1:spec:github:Azure/azure-rest-api-specs#44795",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-23T11:53:20Z",
+      "observedAt": "2026-07-23T11:53:20Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44795",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "cptolookfor"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44795",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/e93e1e36b9f13c7c2bc1c3004dd0449c0c2badf8"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44795:commit:0324e3ce37f8:spec:github:Azure/azure-rest-api-specs#44795",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-23T12:03:22Z",
+      "observedAt": "2026-07-23T12:03:22Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44795",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "cptolookfor"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44795",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/0324e3ce37f8a5033224788ab0f345229be51ee1"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44795:review:4764268180:spec:github:Azure/azure-rest-api-specs#44795",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-23T13:01:40Z",
+      "observedAt": "2026-07-23T13:01:40Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44795",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "samskan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44795",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44795#pullrequestreview-4764268180"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44795:pr.merged:spec:github:Azure/azure-rest-api-specs#44795",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-23T16:16:44Z",
+      "observedAt": "2026-07-23T16:16:44Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44795",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44795",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44795"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:35443:created",
+      "type": "plan.created",
+      "phase": "plan",
+      "occurredAt": "2026-07-23T16:24:24.147Z",
+      "observedAt": "2026-07-23T16:24:24.147Z",
+      "trackId": "plan",
+      "title": "Release Plan created",
+      "confidence": "authoritative",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35443",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35443"
+      },
+      "stack": 0
+    },
+    {
+      "id": "ado:35443:1:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-07-23T16:24:24.147Z",
+      "observedAt": "2026-07-23T16:24:24.147Z",
+      "trackId": "plan",
+      "value": "New",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35443",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35443"
+      },
+      "title": "Plan state changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35443:1:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-23T16:24:24.147Z",
+      "observedAt": "2026-07-23T16:24:24.147Z",
+      "trackId": "plan",
+      "value": "Not Available",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35443",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35443"
+      },
+      "title": "Spec approval changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:35443:1:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-23T16:24:24.147Z",
+      "observedAt": "2026-07-23T16:24:24.147Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.StorageMover",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35443",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35443"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35443:1:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-23T16:24:24.147Z",
+      "observedAt": "2026-07-23T16:24:24.147Z",
+      "trackId": "sdk:JavaScript:@azure/arm-storagemover",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35443",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35443"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35443:1:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-23T16:24:24.147Z",
+      "observedAt": "2026-07-23T16:24:24.147Z",
+      "trackId": "sdk:Python:azure-mgmt-storagemover",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35443",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35443"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35443:1:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-23T16:24:24.147Z",
+      "observedAt": "2026-07-23T16:24:24.147Z",
+      "trackId": "sdk:Java:azure-resourcemanager-storagemover",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35443",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35443"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35443:1:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-23T16:24:24.147Z",
+      "observedAt": "2026-07-23T16:24:24.147Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/storagemover/armstoragemover",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35443",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35443"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35444:1:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-23T16:24:24.707Z",
+      "observedAt": "2026-07-23T16:24:24.707Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44795",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/44795",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35444",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35444"
+      },
+      "title": "Spec PR linked",
+      "stack": 3
+    },
+    {
+      "id": "ado:35443:2:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-07-23T16:24:25.38Z",
+      "observedAt": "2026-07-23T16:24:25.38Z",
+      "trackId": "plan",
+      "value": "In Progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35443",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35443"
+      },
+      "title": "Plan state changed",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44795:comment:5060823764:spec:github:Azure/azure-rest-api-specs#44795",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-23T16:24:30Z",
+      "observedAt": "2026-07-23T16:24:30Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44795",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44795",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44795#issuecomment-5060823764"
+      },
+      "confidence": "authoritative",
+      "excerpt": "### ✅ Release Plan Created | Field | Value | |-------|-------| | **Release Plan** | [View Release Plan](https://azsdk-releaseplan-dashboard-hveph5aqhhcfhtgu.westus-01.azurewebsites.net/?releaseplan=35443) | | **API Version** | `2026-05-01` ",
+      "stack": 4
+    },
+    {
+      "id": "ado:35443:4:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-23T16:24:40.6Z",
+      "observedAt": "2026-07-23T16:24:40.6Z",
+      "trackId": "plan",
+      "value": "Approved",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35443",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35443"
+      },
+      "title": "Spec approval changed",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6608670:generation.queued:sdk:.NET:Azure.ResourceManager.StorageMover",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-07-23T16:34:54.5909122Z",
+      "observedAt": "2026-07-23T16:45:40.015583Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.StorageMover",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6608670",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6608670"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:35443:5:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-23T16:35:00.9Z",
+      "observedAt": "2026-07-23T16:35:00.9Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.StorageMover",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35443",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35443"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6608672:generation.queued:sdk:Java:azure-resourcemanager-storagemover",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-07-23T16:35:04.9255447Z",
+      "observedAt": "2026-07-23T16:58:52.0152504Z",
+      "trackId": "sdk:Java:azure-resourcemanager-storagemover",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6608672",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6608672"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:35443:6:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-23T16:35:09.48Z",
+      "observedAt": "2026-07-23T16:35:09.48Z",
+      "trackId": "sdk:Java:azure-resourcemanager-storagemover",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35443",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35443"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6608674:generation.queued:sdk:JavaScript:@azure/arm-storagemover",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-07-23T16:35:13.4441769Z",
+      "observedAt": "2026-07-23T16:45:23.9915162Z",
+      "trackId": "sdk:JavaScript:@azure/arm-storagemover",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6608674",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6608674"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:35443:7:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-23T16:35:16.397Z",
+      "observedAt": "2026-07-23T16:35:16.397Z",
+      "trackId": "sdk:JavaScript:@azure/arm-storagemover",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35443",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35443"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6608675:generation.queued:sdk:Python:azure-mgmt-storagemover",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-07-23T16:35:20.8001829Z",
+      "observedAt": "2026-07-23T16:45:42.3398766Z",
+      "trackId": "sdk:Python:azure-mgmt-storagemover",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6608675",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6608675"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:35443:8:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-23T16:35:24.517Z",
+      "observedAt": "2026-07-23T16:35:24.517Z",
+      "trackId": "sdk:Python:azure-mgmt-storagemover",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35443",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35443"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6608676:generation.queued:sdk:Go:sdk/resourcemanager/storagemover/armstoragemover",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-07-23T16:35:28.6684064Z",
+      "observedAt": "2026-07-23T16:43:05.8672288Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/storagemover/armstoragemover",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6608676",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6608676"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:35443:9:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-23T16:35:32.513Z",
+      "observedAt": "2026-07-23T16:35:32.513Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/storagemover/armstoragemover",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35443",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35443"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6608670:generation.started:sdk:.NET:Azure.ResourceManager.StorageMover",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-07-23T16:36:32.8324011Z",
+      "observedAt": "2026-07-23T16:45:40.015583Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.StorageMover",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6608670",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6608670"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6608672:generation.started:sdk:Java:azure-resourcemanager-storagemover",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-07-23T16:36:40.0052328Z",
+      "observedAt": "2026-07-23T16:58:52.0152504Z",
+      "trackId": "sdk:Java:azure-resourcemanager-storagemover",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6608672",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6608672"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6608674:generation.started:sdk:JavaScript:@azure/arm-storagemover",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-07-23T16:36:40.9790224Z",
+      "observedAt": "2026-07-23T16:45:23.9915162Z",
+      "trackId": "sdk:JavaScript:@azure/arm-storagemover",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6608674",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6608674"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6608675:generation.started:sdk:Python:azure-mgmt-storagemover",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-07-23T16:36:41.0087462Z",
+      "observedAt": "2026-07-23T16:45:42.3398766Z",
+      "trackId": "sdk:Python:azure-mgmt-storagemover",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6608675",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6608675"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6608676:generation.started:sdk:Go:sdk/resourcemanager/storagemover/armstoragemover",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-07-23T16:36:42.0214809Z",
+      "observedAt": "2026-07-23T16:43:05.8672288Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/storagemover/armstoragemover",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6608676",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6608676"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27243:commit:8b8f04a25c97:sdk:Go:sdk/resourcemanager/storagemover/armstoragemover",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T16:41:42Z",
+      "observedAt": "2026-07-23T16:41:42Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/storagemover/armstoragemover",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27243",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/8b8f04a25c972b97b155b8a5ffad919141c501c5"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27243:pr.created:sdk:Go:sdk/resourcemanager/storagemover/armstoragemover",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T16:41:46Z",
+      "observedAt": "2026-07-23T16:41:46Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/storagemover/armstoragemover",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27243",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27243"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:35443:10:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-23T16:41:54.877Z",
+      "observedAt": "2026-07-23T16:41:54.877Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/storagemover/armstoragemover",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35443",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35443"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35443:10:Custom.SDKPullRequestForGo",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-23T16:41:54.877Z",
+      "observedAt": "2026-07-23T16:41:54.877Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/storagemover/armstoragemover",
+      "value": "https://github.com/Azure/azure-sdk-for-go/pull/27243",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35443",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35443"
+      },
+      "title": "SDK PR linked",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27243:comment:5060988838:sdk:Go:sdk/resourcemanager/storagemover/armstoragemover",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T16:42:16Z",
+      "observedAt": "2026-07-23T16:42:16Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/storagemover/armstoragemover",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27243",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27243#issuecomment-5060988838"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 5 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27243:comment:3639825748:sdk:Go:sdk/resourcemanager/storagemover/armstoragemover",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T16:42:40Z",
+      "observedAt": "2026-07-23T16:42:40Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/storagemover/armstoragemover",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27243",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27243#discussion_r3639825748"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The changelog entry is dated (2026-07-23). In Azure SDK release workflows, the top entry is typically kept as \\\"(Unreleased)\\\" until the package is actually released, at which point the date is stamped during release automation. Consider ch",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27243:review:4766252511:sdk:Go:sdk/resourcemanager/storagemover/armstoragemover",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T16:42:41Z",
+      "observedAt": "2026-07-23T16:42:41Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/storagemover/armstoragemover",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27243",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27243#pullrequestreview-4766252511"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview > [!NOTE] > Copilot could not run the full agentic suite for this review because it was automatically requested on a bot-authored pull request. Request a review from Copilot under Reviewers to retry with the full ag",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6608676:generation.completed:sdk:Go:sdk/resourcemanager/storagemover/armstoragemover",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-07-23T16:43:05.8672288Z",
+      "observedAt": "2026-07-23T16:43:05.8672288Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/storagemover/armstoragemover",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6608676",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6608676"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48233:commit:9c96be364ac0:sdk:Python:azure-mgmt-storagemover",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T16:43:18Z",
+      "observedAt": "2026-07-23T16:43:18Z",
+      "trackId": "sdk:Python:azure-mgmt-storagemover",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48233",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/9c96be364ac005c9ea2402bb38deeeb4352770be"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48233:pr.created:sdk:Python:azure-mgmt-storagemover",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T16:43:23Z",
+      "observedAt": "2026-07-23T16:43:23Z",
+      "trackId": "sdk:Python:azure-mgmt-storagemover",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48233",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48233"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:35443:11:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-23T16:43:31.563Z",
+      "observedAt": "2026-07-23T16:43:31.563Z",
+      "trackId": "sdk:Python:azure-mgmt-storagemover",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35443",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35443"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35443:11:Custom.SDKPullRequestForPython",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-23T16:43:31.563Z",
+      "observedAt": "2026-07-23T16:43:31.563Z",
+      "trackId": "sdk:Python:azure-mgmt-storagemover",
+      "value": "https://github.com/Azure/azure-sdk-for-python/pull/48233",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35443",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35443"
+      },
+      "title": "SDK PR linked",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39381:commit:9e02267f61a8:sdk:JavaScript:@azure/arm-storagemover",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T16:43:55Z",
+      "observedAt": "2026-07-23T16:43:55Z",
+      "trackId": "sdk:JavaScript:@azure/arm-storagemover",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39381",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/9e02267f61a8b39574455f2330c97d143688101b"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48233:comment:5061003650:sdk:Python:azure-mgmt-storagemover",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T16:43:58Z",
+      "observedAt": "2026-07-23T16:43:58Z",
+      "trackId": "sdk:Python:azure-mgmt-storagemover",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48233",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48233#issuecomment-5061003650"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 9 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39381:pr.created:sdk:JavaScript:@azure/arm-storagemover",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T16:43:59Z",
+      "observedAt": "2026-07-23T16:43:59Z",
+      "trackId": "sdk:JavaScript:@azure/arm-storagemover",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39381",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39381"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:35443:12:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-23T16:44:07.487Z",
+      "observedAt": "2026-07-23T16:44:07.487Z",
+      "trackId": "sdk:JavaScript:@azure/arm-storagemover",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35443",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35443"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35443:12:Custom.SDKPullRequestForJavaScript",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-23T16:44:07.487Z",
+      "observedAt": "2026-07-23T16:44:07.487Z",
+      "trackId": "sdk:JavaScript:@azure/arm-storagemover",
+      "value": "https://github.com/Azure/azure-sdk-for-js/pull/39381",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35443",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35443"
+      },
+      "title": "SDK PR linked",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61273:commit:1edc3e519975:sdk:.NET:Azure.ResourceManager.StorageMover",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T16:44:16Z",
+      "observedAt": "2026-07-23T16:44:16Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.StorageMover",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61273",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/1edc3e519975b947a6cba21a3cfff05a87dabf8c"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61273:pr.created:sdk:.NET:Azure.ResourceManager.StorageMover",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T16:44:21Z",
+      "observedAt": "2026-07-23T16:44:21Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.StorageMover",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61273",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61273"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:35443:13:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-23T16:44:29.403Z",
+      "observedAt": "2026-07-23T16:44:29.403Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.StorageMover",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35443",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35443"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35443:13:Custom.SDKPullRequestForDotnet",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-23T16:44:29.403Z",
+      "observedAt": "2026-07-23T16:44:29.403Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.StorageMover",
+      "value": "https://github.com/Azure/azure-sdk-for-net/pull/61273",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35443",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35443"
+      },
+      "title": "SDK PR linked",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39381:comment:5061009671:sdk:JavaScript:@azure/arm-storagemover",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T16:44:38Z",
+      "observedAt": "2026-07-23T16:44:38Z",
+      "trackId": "sdk:JavaScript:@azure/arm-storagemover",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39381",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39381#issuecomment-5061009671"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 2 pipeline(s).<br> 8 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61273:comment:5061011859:sdk:.NET:Azure.ResourceManager.StorageMover",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T16:44:54Z",
+      "observedAt": "2026-07-23T16:44:54Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.StorageMover",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61273",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61273#issuecomment-5061011859"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 10 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6608674:generation.completed:sdk:JavaScript:@azure/arm-storagemover",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-07-23T16:45:23.9915162Z",
+      "observedAt": "2026-07-23T16:45:23.9915162Z",
+      "trackId": "sdk:JavaScript:@azure/arm-storagemover",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6608674",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6608674"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6608670:generation.completed:sdk:.NET:Azure.ResourceManager.StorageMover",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-07-23T16:45:40.015583Z",
+      "observedAt": "2026-07-23T16:45:40.015583Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.StorageMover",
+      "title": "Pipeline completed with issues",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6608670",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6608670"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6608675:generation.completed:sdk:Python:azure-mgmt-storagemover",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-07-23T16:45:42.3398766Z",
+      "observedAt": "2026-07-23T16:45:42.3398766Z",
+      "trackId": "sdk:Python:azure-mgmt-storagemover",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6608675",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6608675"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48233:comment:3639844313:sdk:Python:azure-mgmt-storagemover",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T16:45:43Z",
+      "observedAt": "2026-07-23T16:45:43Z",
+      "trackId": "sdk:Python:azure-mgmt-storagemover",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48233",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48233#discussion_r3639844313"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The docstring states the default `api_version` is `None`, but the implementation defaults it to `\\\"2026-05-01\\\"`. Please make these consistent (either update the docstring to reflect the actual default, or change the default behavior to `No",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48233:comment:3639844359:sdk:Python:azure-mgmt-storagemover",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T16:45:44Z",
+      "observedAt": "2026-07-23T16:45:44Z",
+      "trackId": "sdk:Python:azure-mgmt-storagemover",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48233",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48233#discussion_r3639844359"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The docstring states the default `api_version` is `None`, but the implementation defaults it to `\\\"2026-05-01\\\"`. Please make these consistent (either update the docstring to reflect the actual default, or change the default behavior to `No",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48233:comment:3639844413:sdk:Python:azure-mgmt-storagemover",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T16:45:44Z",
+      "observedAt": "2026-07-23T16:45:44Z",
+      "trackId": "sdk:Python:azure-mgmt-storagemover",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48233",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48233#discussion_r3639844413"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Same issue as the sync configuration: the docstring says the default `api_version` is `None`, but the code defaults to `\\\"2026-05-01\\\"`. Align documentation and implementation to avoid confusing SDK consumers.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48233:comment:3639844440:sdk:Python:azure-mgmt-storagemover",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T16:45:44Z",
+      "observedAt": "2026-07-23T16:45:44Z",
+      "trackId": "sdk:Python:azure-mgmt-storagemover",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48233",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48233#discussion_r3639844440"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Same issue as the sync configuration: the docstring says the default `api_version` is `None`, but the code defaults to `\\\"2026-05-01\\\"`. Align documentation and implementation to avoid confusing SDK consumers.",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48233:review:4766275515:sdk:Python:azure-mgmt-storagemover",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T16:45:45Z",
+      "observedAt": "2026-07-23T16:45:45Z",
+      "trackId": "sdk:Python:azure-mgmt-storagemover",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48233",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48233#pullrequestreview-4766275515"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview > [!NOTE] > Copilot could not run the full agentic suite for this review because it was automatically requested on a bot-authored pull request. Request a review from Copilot under Reviewers to retry with the full ag",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48233:comment:3639844484:sdk:Python:azure-mgmt-storagemover",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T16:45:45Z",
+      "observedAt": "2026-07-23T16:45:45Z",
+      "trackId": "sdk:Python:azure-mgmt-storagemover",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48233",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48233#discussion_r3639844484"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This release drops Python 3.9 support (`requires-python` is now `>=3.10` in `pyproject.toml`). That’s a user-visible breaking change and should be called out explicitly under a `### Breaking Changes` section (or equivalent) in the 3.2.0 cha",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39381:review:4766281736:sdk:JavaScript:@azure/arm-storagemover",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T16:46:30Z",
+      "observedAt": "2026-07-23T16:46:30Z",
+      "trackId": "sdk:JavaScript:@azure/arm-storagemover",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39381",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39381#pullrequestreview-4766281736"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview > [!NOTE] > Copilot could not run the full agentic suite for this review because it was automatically requested on a bot-authored pull request. Request a review from Copilot under Reviewers to retry with the full ag",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39381:comment:3639849198:sdk:JavaScript:@azure/arm-storagemover",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T16:46:30Z",
+      "observedAt": "2026-07-23T16:46:30Z",
+      "trackId": "sdk:JavaScript:@azure/arm-storagemover",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39381",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39381#discussion_r3639849198"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This changes the historical release date for `3.1.0` (previously `2026-06-12` in this diff). If that earlier date was correct, this update would be misleading for consumers reading the changelog. Please confirm the correct release date and ",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61273:comment:3639855594:sdk:.NET:Azure.ResourceManager.StorageMover",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T16:47:29Z",
+      "observedAt": "2026-07-23T16:47:29Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.StorageMover",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61273",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61273#discussion_r3639855594"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The docs for `sourceType` say it differentiates NFSMount and **FSX-SMB** endpoints, but the new `NfsMountSourceType` model indicates this is for NFSMount vs **FSX-EFS**. Update the constructor parameter and property XML docs to reference FS",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61273:comment:3639855622:sdk:.NET:Azure.ResourceManager.StorageMover",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T16:47:29Z",
+      "observedAt": "2026-07-23T16:47:29Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.StorageMover",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61273",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61273#discussion_r3639855622"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The docs for `sourceType` say it differentiates NFSMount and **FSX-SMB** endpoints, but the new `NfsMountSourceType` model indicates this is for NFSMount vs **FSX-EFS**. Update the constructor parameter and property XML docs to reference FS",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61273:review:4766289061:sdk:.NET:Azure.ResourceManager.StorageMover",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T16:47:30Z",
+      "observedAt": "2026-07-23T16:47:30Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.StorageMover",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61273",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61273#pullrequestreview-4766289061"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview > [!NOTE] > Copilot could not run the full agentic suite for this review because it was automatically requested on a bot-authored pull request. Request a review from Copilot under Reviewers to retry with the full ag",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49916:commit:b4cc77b04390:sdk:Java:azure-resourcemanager-storagemover",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T16:48:05Z",
+      "observedAt": "2026-07-23T16:48:05Z",
+      "trackId": "sdk:Java:azure-resourcemanager-storagemover",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49916",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/b4cc77b04390e5ac3fd343596ef97ee1411bf8ff"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49916:pr.created:sdk:Java:azure-resourcemanager-storagemover",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T16:48:10Z",
+      "observedAt": "2026-07-23T16:48:10Z",
+      "trackId": "sdk:Java:azure-resourcemanager-storagemover",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49916",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49916"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:35443:14:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-23T16:48:18.813Z",
+      "observedAt": "2026-07-23T16:48:18.813Z",
+      "trackId": "sdk:Java:azure-resourcemanager-storagemover",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35443",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35443"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35443:14:Custom.SDKPullRequestForJava",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-23T16:48:18.813Z",
+      "observedAt": "2026-07-23T16:48:18.813Z",
+      "trackId": "sdk:Java:azure-resourcemanager-storagemover",
+      "value": "https://github.com/Azure/azure-sdk-for-java/pull/49916",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35443",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35443"
+      },
+      "title": "SDK PR linked",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49916:comment:5061047417:sdk:Java:azure-resourcemanager-storagemover",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T16:48:55Z",
+      "observedAt": "2026-07-23T16:48:55Z",
+      "trackId": "sdk:Java:azure-resourcemanager-storagemover",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49916",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49916#issuecomment-5061047417"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 34 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49916:comment:3639874132:sdk:Java:azure-resourcemanager-storagemover",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T16:50:40Z",
+      "observedAt": "2026-07-23T16:50:40Z",
+      "trackId": "sdk:Java:azure-resourcemanager-storagemover",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49916",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49916#discussion_r3639874132"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The comment says 'FSX-SMB' but the corresponding source type enum introduced is `FSX-EFS` (see `NfsMountSourceType`). Update the wording to 'FSX-EFS' to match the actual model and avoid confusion.",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49916:review:4766311612:sdk:Java:azure-resourcemanager-storagemover",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T16:50:41Z",
+      "observedAt": "2026-07-23T16:50:41Z",
+      "trackId": "sdk:Java:azure-resourcemanager-storagemover",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49916",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49916#pullrequestreview-4766311612"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview > [!NOTE] > Copilot could not run the full agentic suite for this review because it was automatically requested on a bot-authored pull request. Request a review from Copilot under Reviewers to retry with the full ag",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49916:comment:3639874179:sdk:Java:azure-resourcemanager-storagemover",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T16:50:41Z",
+      "observedAt": "2026-07-23T16:50:41Z",
+      "trackId": "sdk:Java:azure-resourcemanager-storagemover",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49916",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49916#discussion_r3639874179"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The constant name `FSXSMB` is inconsistent with other newly added constants that use underscores to preserve token boundaries (e.g., `NFSV4_1`, `ON_PREM_TO_CLOUD_AGENT_LESS`). Consider renaming to `FSX_SMB` (and similarly `FSXEFS` -> `FSX_E",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:6608672:generation.completed:sdk:Java:azure-resourcemanager-storagemover",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-07-23T16:58:52.0152504Z",
+      "observedAt": "2026-07-23T16:58:52.0152504Z",
+      "trackId": "sdk:Java:azure-resourcemanager-storagemover",
+      "title": "Pipeline completed with issues",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6608672",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6608672"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39381:comment:5061215539:sdk:JavaScript:@azure/arm-storagemover",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T17:07:42Z",
+      "observedAt": "2026-07-23T17:07:42Z",
+      "trackId": "sdk:JavaScript:@azure/arm-storagemover",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39381",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39381#issuecomment-5061215539"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Next Steps to Merge Only failed checks and required actions are listed below. - ❌ **UnitTest** (ubuntu/windows/macos): Stale recordings — `@azure/arm-storagemover` tests fail with `RecorderError: Unable to find a record for the request P",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48233:comment:5061269182:sdk:Python:azure-mgmt-storagemover",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T17:13:34Z",
+      "observedAt": "2026-07-23T17:13:34Z",
+      "trackId": "sdk:Python:azure-mgmt-storagemover",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48233",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48233#issuecomment-5061269182"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<details> <summary><strong>[Pilot] PR Pipeline Failure Analysis</strong></summary> A CI pipeline failed on this pull request. Here is an automated analysis of what went wrong and how to get the build green. ### What failed The `azure-mgmt-s",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61273:comment:5061361377:sdk:.NET:Azure.ResourceManager.StorageMover",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T17:23:47Z",
+      "observedAt": "2026-07-23T17:23:47Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.StorageMover",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61273",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61273#issuecomment-5061361377"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## 🔍 CI Failure Analysis for PR #61273 **Package:** `Azure.ResourceManager.StorageMover` **PR:** SDK generation from TypeSpec for API version `2026-05-01`, releasing `1.5.0` stable. --- ### CI Check Summary | Check | Status | |---|---| | `",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27243:comment:5065111641:sdk:Go:sdk/resourcemanager/storagemover/armstoragemover",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T01:12:28Z",
+      "observedAt": "2026-07-24T01:12:28Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/storagemover/armstoragemover",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27243",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27243#issuecomment-5065111641"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## PR is ready to merge",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49916:review:4769467618:sdk:Java:azure-resourcemanager-storagemover",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T01:34:38Z",
+      "observedAt": "2026-07-24T01:34:38Z",
+      "trackId": "sdk:Java:azure-resourcemanager-storagemover",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49916",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49916#pullrequestreview-4769467618"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48233:comment:5065664782:sdk:Python:azure-mgmt-storagemover",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T02:50:39Z",
+      "observedAt": "2026-07-24T02:50:39Z",
+      "trackId": "sdk:Python:azure-mgmt-storagemover",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48233",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48233#issuecomment-5065664782"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi, the new api version `2026-05-01` seems not deployed on portal yet, we recommend making sure the api version to be deployed before releasing the SDK, though we won't block the release in self-serve release flow.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48233:commit:1a6461f57849:sdk:Python:azure-mgmt-storagemover",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T02:50:59Z",
+      "observedAt": "2026-07-24T02:50:59Z",
+      "trackId": "sdk:Python:azure-mgmt-storagemover",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48233",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/1a6461f57849784e7aaf9ad5667eb4b731cb7fa8"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48233:comment:5065667850:sdk:Python:azure-mgmt-storagemover",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T02:51:18Z",
+      "observedAt": "2026-07-24T02:51:18Z",
+      "trackId": "sdk:Python:azure-mgmt-storagemover",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48233",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48233#issuecomment-5065667850"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @cptolookfor, we have approved the PR and we will hold the PR merge and release until you explicitly ping us to merge then release.",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48233:review:4769798602:sdk:Python:azure-mgmt-storagemover",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T02:57:25Z",
+      "observedAt": "2026-07-24T02:57:25Z",
+      "trackId": "sdk:Python:azure-mgmt-storagemover",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48233",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48233#pullrequestreview-4769798602"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Copilot reviewed 105 out of 106 changed files in this pull request and generated no new comments. <details> <summary>Comments suppressed due to low confidence (1)</summary> **sdk/storagemover/azure-mgmt-storagemover",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27243:review:4769844977:sdk:Go:sdk/resourcemanager/storagemover/armstoragemover",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T03:11:33Z",
+      "observedAt": "2026-07-24T03:11:33Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/storagemover/armstoragemover",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "tadelesh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27243",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27243#pullrequestreview-4769844977"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48233:commit:1c13efff805b:sdk:Python:azure-mgmt-storagemover",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T03:16:44Z",
+      "observedAt": "2026-07-24T03:16:44Z",
+      "trackId": "sdk:Python:azure-mgmt-storagemover",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48233",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/1c13efff805b432beb28cf50ccb426fac8687aba"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48233:comment:5065804510:sdk:Python:azure-mgmt-storagemover",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T03:18:32Z",
+      "observedAt": "2026-07-24T03:18:32Z",
+      "trackId": "sdk:Python:azure-mgmt-storagemover",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48233",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48233#issuecomment-5065804510"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<details> <summary><strong>[Pilot] PR Pipeline Failure Analysis</strong></summary> A CI pipeline failed on this pull request. Here is an automated analysis of what went wrong and how to get the build green. ### What failed The `azure-mgmt-s",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48233:comment:3642722618:sdk:Python:azure-mgmt-storagemover",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T03:21:40Z",
+      "observedAt": "2026-07-24T03:21:40Z",
+      "trackId": "sdk:Python:azure-mgmt-storagemover",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48233",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48233#discussion_r3642722618"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This now runs as a successful live test without issuing any request or assertion because the body is only `pass`. That falsely reports agent coverage; retain the explicit skip until the test can exercise a registered agent.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48233:review:4769879095:sdk:Python:azure-mgmt-storagemover",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T03:21:41Z",
+      "observedAt": "2026-07-24T03:21:41Z",
+      "trackId": "sdk:Python:azure-mgmt-storagemover",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48233",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48233#pullrequestreview-4769879095"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Copilot reviewed 108 out of 109 changed files in this pull request and generated 4 comments.",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48233:comment:3642722628:sdk:Python:azure-mgmt-storagemover",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T03:21:41Z",
+      "observedAt": "2026-07-24T03:21:41Z",
+      "trackId": "sdk:Python:azure-mgmt-storagemover",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48233",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48233#discussion_r3642722628"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This now runs as a successful live test without issuing any request or assertion because the body is only `pass`. That falsely reports agent coverage; retain the explicit skip until the test can exercise a registered agent.",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48233:comment:3642722635:sdk:Python:azure-mgmt-storagemover",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T03:21:41Z",
+      "observedAt": "2026-07-24T03:21:41Z",
+      "trackId": "sdk:Python:azure-mgmt-storagemover",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48233",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48233#discussion_r3642722635"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The documented default contradicts the client configuration: omitting `api_version` selects `\"2026-05-01\"`, not `None`. Document the actual default so callers can predict which service version is used.",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48233:comment:3642722644:sdk:Python:azure-mgmt-storagemover",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T03:21:41Z",
+      "observedAt": "2026-07-24T03:21:41Z",
+      "trackId": "sdk:Python:azure-mgmt-storagemover",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48233",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48233#discussion_r3642722644"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The documented default contradicts the async client configuration: omitting `api_version` selects `\"2026-05-01\"`, not `None`. Document the actual default so callers can predict which service version is used.",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48233:commit:c093b214beed:sdk:Python:azure-mgmt-storagemover",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T03:23:57Z",
+      "observedAt": "2026-07-24T03:23:57Z",
+      "trackId": "sdk:Python:azure-mgmt-storagemover",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48233",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/c093b214beedd94ee21d421f110f6316740ac5d8"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48233:review:4769899725:sdk:Python:azure-mgmt-storagemover",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T03:28:48Z",
+      "observedAt": "2026-07-24T03:28:48Z",
+      "trackId": "sdk:Python:azure-mgmt-storagemover",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48233",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48233#pullrequestreview-4769899725"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Copilot reviewed 108 out of 109 changed files in this pull request and generated no new comments. <details> <summary>Comments suppressed due to low confidence (3)</summary> **sdk/storagemover/azure-mgmt-storagemover",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48233:review:4783455593:sdk:Python:azure-mgmt-storagemover",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-27T03:44:33Z",
+      "observedAt": "2026-07-27T03:44:33Z",
+      "trackId": "sdk:Python:azure-mgmt-storagemover",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48233",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48233#pullrequestreview-4783455593"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39381:review:4785785890:sdk:JavaScript:@azure/arm-storagemover",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-27T09:59:35Z",
+      "observedAt": "2026-07-27T09:59:35Z",
+      "trackId": "sdk:JavaScript:@azure/arm-storagemover",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39381",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39381#pullrequestreview-4785785890"
+      },
+      "confidence": "authoritative",
+      "excerpt": "No API design issues found. The `@azure/arm-storagemover` package (v3.2.0) follows all tooling and public API surface guidelines: - **CHANGELOG**: No alpha baseline comparison; increments from `3.1.0` (the previous stable release). ✅ - **AP",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39381:review:4879574455:sdk:JavaScript:@azure/arm-storagemover",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-07T03:04:54Z",
+      "observedAt": "2026-08-07T03:04:54Z",
+      "trackId": "sdk:JavaScript:@azure/arm-storagemover",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39381",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39381#pullrequestreview-4879574455"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39381:comment:3733142900:sdk:JavaScript:@azure/arm-storagemover",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-07T03:04:54Z",
+      "observedAt": "2026-08-07T03:04:54Z",
+      "trackId": "sdk:JavaScript:@azure/arm-storagemover",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39381",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39381#discussion_r3733142900"
+      },
+      "confidence": "authoritative",
+      "excerpt": "```suggestion ## 3.1.0 (2026-06-12) ```",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39381:commit:1b8bc3d75b2c:sdk:JavaScript:@azure/arm-storagemover",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-07T03:04:58Z",
+      "observedAt": "2026-08-07T03:04:58Z",
+      "trackId": "sdk:JavaScript:@azure/arm-storagemover",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39381",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/1b8bc3d75b2cc0b1b1efae0ba844b60ef55da1b0"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39381:review:4879617831:sdk:JavaScript:@azure/arm-storagemover",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-07T03:12:33Z",
+      "observedAt": "2026-08-07T03:12:33Z",
+      "trackId": "sdk:JavaScript:@azure/arm-storagemover",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39381",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39381#pullrequestreview-4879617831"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Copilot reviewed 150 out of 150 changed files in this pull request and generated no new comments. <details> <summary>Suppressed comments (2)</summary> **sdk/storagemover/arm-storagemover/review/arm-storagemover-node",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39381:comment:5211921784:sdk:JavaScript:@azure/arm-storagemover",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-07T03:28:50Z",
+      "observedAt": "2026-08-07T03:28:50Z",
+      "trackId": "sdk:JavaScript:@azure/arm-storagemover",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39381",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39381#issuecomment-5211921784"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Next Steps to Merge Only failed checks and required actions are listed below. - ❌ UnitTest (windows_22x_node, ubuntu_24x_node, macoslatest_26x_node): Recorded test requests use stale `api-version=2025-12-01` but the generated client now ",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49916:commit:49935b20586e:sdk:Java:azure-resourcemanager-storagemover",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-10T08:55:05Z",
+      "observedAt": "2026-08-10T08:55:05Z",
+      "trackId": "sdk:Java:azure-resourcemanager-storagemover",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49916",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/49935b20586e85091b4c3c44aaba740143cc89bf"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49916:comment:5238064128:sdk:Java:azure-resourcemanager-storagemover",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-10T09:01:20Z",
+      "observedAt": "2026-08-10T09:01:20Z",
+      "trackId": "sdk:Java:azure-resourcemanager-storagemover",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49916",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49916#issuecomment-5238064128"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Automated management AutoPR review - Head SHA: `49935b20586e85091b4c3c44aaba740143cc89bf` - Package: `azure-resourcemanager-storagemover` `1.6.0` - Release type: `stable` - API version: `2026-05-01` - CHANGELOG: `1.6.0 (2026-07-23)` - Ja",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49916:comment:5284131708:sdk:Java:azure-resourcemanager-storagemover",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T17:28:02Z",
+      "observedAt": "2026-08-13T17:28:02Z",
+      "trackId": "sdk:Java:azure-resourcemanager-storagemover",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49916",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49916#issuecomment-5284131708"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> No pipelines are associated with this pull request.<br> </samp>",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49916:review:4929810936:sdk:Java:azure-resourcemanager-storagemover",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T17:28:32Z",
+      "observedAt": "2026-08-13T17:28:32Z",
+      "trackId": "sdk:Java:azure-resourcemanager-storagemover",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49916",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49916#pullrequestreview-4929810936"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    }
+  ],
+  "quality": {
+    "warnings": [
+      "5 historical linked PR(s) closed without merge"
+    ],
+    "unavailablePullRequests": 0,
+    "unavailablePipelineRuns": 0
+  },
+  "boundaryFacts": {
+    "id": "35443",
+    "state": "in-progress",
+    "specPrs": [
+      {
+        "id": "github:Azure/azure-rest-api-specs#44795",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#44795",
+        "createdAt": "2026-07-20T10:24:12Z",
+        "mergedAt": "2026-07-23T16:16:44Z",
+        "closedAt": "2026-07-23T16:16:45Z",
+        "available": true
+      }
+    ],
+    "artifacts": [
+      {
+        "language": ".NET",
+        "package": "Azure.ResourceManager.StorageMover",
+        "trackId": "sdk:.NET:Azure.ResourceManager.StorageMover",
+        "prId": "github:Azure/azure-sdk-for-net#61273",
+        "prCreatedAt": "2026-07-23T16:44:21Z",
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-net#61273",
+            "createdAt": "2026-07-23T16:44:21Z",
+            "mergedAt": null,
+            "closedAt": null,
+            "state": "open"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6608670",
+        "generationStartAt": "2026-07-23T16:36:32.8324011Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "JavaScript",
+        "package": "@azure/arm-storagemover",
+        "trackId": "sdk:JavaScript:@azure/arm-storagemover",
+        "prId": "github:Azure/azure-sdk-for-js#39381",
+        "prCreatedAt": "2026-07-23T16:43:59Z",
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-js#39381",
+            "createdAt": "2026-07-23T16:43:59Z",
+            "mergedAt": null,
+            "closedAt": null,
+            "state": "open"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6608674",
+        "generationStartAt": "2026-07-23T16:36:40.9790224Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Python",
+        "package": "azure-mgmt-storagemover",
+        "trackId": "sdk:Python:azure-mgmt-storagemover",
+        "prId": "github:Azure/azure-sdk-for-python#48233",
+        "prCreatedAt": "2026-07-23T16:43:23Z",
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-python#48233",
+            "createdAt": "2026-07-23T16:43:23Z",
+            "mergedAt": null,
+            "closedAt": null,
+            "state": "open"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6608675",
+        "generationStartAt": "2026-07-23T16:36:41.0087462Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Java",
+        "package": "azure-resourcemanager-storagemover",
+        "trackId": "sdk:Java:azure-resourcemanager-storagemover",
+        "prId": "github:Azure/azure-sdk-for-java#49916",
+        "prCreatedAt": "2026-07-23T16:48:10Z",
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-java#49916",
+            "createdAt": "2026-07-23T16:48:10Z",
+            "mergedAt": null,
+            "closedAt": null,
+            "state": "open"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6608672",
+        "generationStartAt": "2026-07-23T16:36:40.0052328Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Go",
+        "package": "sdk/resourcemanager/storagemover/armstoragemover",
+        "trackId": "sdk:Go:sdk/resourcemanager/storagemover/armstoragemover",
+        "prId": "github:Azure/azure-sdk-for-go#27243",
+        "prCreatedAt": "2026-07-23T16:41:46Z",
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-go#27243",
+            "createdAt": "2026-07-23T16:41:46Z",
+            "mergedAt": null,
+            "closedAt": null,
+            "state": "open"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6608676",
+        "generationStartAt": "2026-07-23T16:36:42.0214809Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      }
+    ],
+    "cohortPlan": {
+      "id": "35443",
+      "releasePlanId": "35443",
+      "title": "GA release plan for StorageMover",
+      "service": "StorageMover",
+      "state": "in-progress"
+    },
+    "quality": {
+      "warnings": [
+        "5 historical linked PR(s) closed without merge"
+      ],
+      "unavailablePullRequests": 0,
+      "unavailablePipelineRuns": 0
+    }
+  },
+  "summary": {
+    "durationHours": 512.2,
+    "pullRequestCount": 6,
+    "humanReviewCount": 6,
+    "humanCommentCount": 3
+  }
+}

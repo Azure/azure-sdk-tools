@@ -1,0 +1,1831 @@
+{
+  "schemaVersion": 2,
+  "id": "33903",
+  "correlation": {
+    "policyVersion": 1,
+    "preflight": "passed"
+  },
+  "releasePlanId": "2191",
+  "title": "Release Plan - 2191 - Public Preview - Shared Compute Limit",
+  "service": "Compute Limit",
+  "product": "Release",
+  "path": "specification/computelimit/resource-manager/Microsoft.ComputeLimit/ComputeLimit",
+  "state": "abandoned",
+  "plane": "management",
+  "releaseType": "APEX Public Preview",
+  "intendedMonth": "April 2026",
+  "createdAt": "2026-04-17T19:19:58.567Z",
+  "completedAt": "2026-04-27T05:44:48.737Z",
+  "sourceUrl": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33903",
+  "range": {
+    "start": "2025-10-29T15:54:26.000Z",
+    "end": "2026-04-27T06:19:09.000Z"
+  },
+  "intendedArtifacts": [
+    {
+      "prId": "github:Azure/azure-sdk-for-net#58311",
+      "language": ".NET",
+      "package": "Azure.ResourceManager.ComputeLimit",
+      "version": null,
+      "outcome": "not-released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6173858",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-js#38195",
+      "language": "JavaScript",
+      "package": "@azure/arm-computelimit",
+      "version": null,
+      "outcome": "not-released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6173861",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-python#46379",
+      "language": "Python",
+      "package": "azure-mgmt-computelimit",
+      "version": null,
+      "outcome": "not-released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6173857",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-java#48856",
+      "language": "Java",
+      "package": "azure-resourcemanager-computelimit",
+      "version": null,
+      "outcome": "not-released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6173860",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-go#26620",
+      "language": "Go",
+      "package": "sdk/resourcemanager/computelimit/armcomputelimit",
+      "version": null,
+      "outcome": "not-released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6173863",
+      "releasePipelineUrl": null
+    }
+  ],
+  "links": [
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#38491",
+      "role": "spec-pr",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/38491",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-net#58311",
+      "role": "sdk-pr",
+      "language": ".NET",
+      "url": "https://github.com/Azure/azure-sdk-for-net/pull/58311",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-js#38195",
+      "role": "sdk-pr",
+      "language": "JavaScript",
+      "url": "https://github.com/Azure/azure-sdk-for-js/pull/38195",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-python#46379",
+      "role": "sdk-pr",
+      "language": "Python",
+      "url": "https://github.com/Azure/azure-sdk-for-python/pull/46379",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-java#48856",
+      "role": "sdk-pr",
+      "language": "Java",
+      "url": "https://github.com/Azure/azure-sdk-for-java/pull/48856",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-go#26620",
+      "role": "sdk-pr",
+      "language": "Go",
+      "url": "https://github.com/Azure/azure-sdk-for-go/pull/26620",
+      "releasePlanIds": []
+    }
+  ],
+  "tracks": [
+    {
+      "id": "plan",
+      "kind": "plan",
+      "label": "Release Plan",
+      "detail": "APEX Public Preview"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#38491",
+      "kind": "spec",
+      "label": "Spec PR",
+      "detail": "azure-rest-api-specs #38491",
+      "artifactId": "github:Azure/azure-rest-api-specs#38491",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:.NET:Azure.ResourceManager.ComputeLimit",
+      "kind": "sdk",
+      "label": ".NET",
+      "detail": "Azure.ResourceManager.ComputeLimit",
+      "artifactId": "github:Azure/azure-sdk-for-net#58311",
+      "state": "closed"
+    },
+    {
+      "id": "sdk:JavaScript:@azure/arm-computelimit",
+      "kind": "sdk",
+      "label": "JavaScript",
+      "detail": "@azure/arm-computelimit",
+      "artifactId": "github:Azure/azure-sdk-for-js#38195",
+      "state": "closed"
+    },
+    {
+      "id": "sdk:Python:azure-mgmt-computelimit",
+      "kind": "sdk",
+      "label": "Python",
+      "detail": "azure-mgmt-computelimit",
+      "artifactId": "github:Azure/azure-sdk-for-python#46379",
+      "state": "closed"
+    },
+    {
+      "id": "sdk:Java:azure-resourcemanager-computelimit",
+      "kind": "sdk",
+      "label": "Java",
+      "detail": "azure-resourcemanager-computelimit",
+      "artifactId": "github:Azure/azure-sdk-for-java#48856",
+      "state": "closed"
+    },
+    {
+      "id": "sdk:Go:sdk/resourcemanager/computelimit/armcomputelimit",
+      "kind": "sdk",
+      "label": "Go",
+      "detail": "sdk/resourcemanager/computelimit/armcomputelimit",
+      "artifactId": "github:Azure/azure-sdk-for-go#26620",
+      "state": "closed"
+    }
+  ],
+  "events": [
+    {
+      "id": "github:Azure/azure-rest-api-specs#38491:pr.created:spec:github:Azure/azure-rest-api-specs#38491",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-29T15:54:26Z",
+      "observedAt": "2025-10-29T15:54:26Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38491",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "parthshah2305"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38491",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/38491"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38491:comment:3462419633:spec:github:Azure/azure-rest-api-specs#38491",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-29T15:54:44Z",
+      "observedAt": "2025-10-29T15:54:44Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38491",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38491",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/38491#issuecomment-3462419633"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>✅ All automated merging requirements have been met! To get your PR merged, see <a href=\"https://aka.ms/azsdk/specreview/merge\">aka.ms/azsdk/specreview/merge</a>.<br /><br />Comment generated by <a href=\"https://g",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38491:comment:3462425367:spec:github:Azure/azure-rest-api-specs#38491",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-29T15:55:50Z",
+      "observedAt": "2025-10-29T15:55:50Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38491",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "parthshah2305"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38491",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/38491#issuecomment-3462425367"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Previous related PRs in the private repo - https://github.com/Azure/azure-rest-api-specs-pr/pull/25109/files https://github.com/Azure/azure-rest-api-specs-pr/pull/24115",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38491:commit:3576847f332f:spec:github:Azure/azure-rest-api-specs#38491",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-29T17:15:53Z",
+      "observedAt": "2025-10-29T17:15:53Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38491",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38491",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/3576847f332f4fc64e51df8b8d459c2c4cb3cb69"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38491:comment:3463867976:spec:github:Azure/azure-rest-api-specs#38491",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-29T20:36:49Z",
+      "observedAt": "2025-10-29T20:36:49Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38491",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38491",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/38491#issuecomment-3463867976"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews | Language | API Review for Package | |----------|---------| | TypeSpec | [Microsoft.ComputeLimit](https://spa.apiview.dev/review/0d7a",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38491:review:3400284119:spec:github:Azure/azure-rest-api-specs#38491",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-30T15:34:48Z",
+      "observedAt": "2025-10-30T15:34:48Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38491",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "BArthur1972"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38491",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/38491#pullrequestreview-3400284119"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38491:pr.merged:spec:github:Azure/azure-rest-api-specs#38491",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-30T15:41:22Z",
+      "observedAt": "2025-10-30T15:41:22Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38491",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38491",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/38491"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:33903:created",
+      "type": "plan.created",
+      "phase": "plan",
+      "occurredAt": "2026-04-17T19:19:58.567Z",
+      "observedAt": "2026-04-17T19:19:58.567Z",
+      "trackId": "plan",
+      "title": "Release Plan created",
+      "confidence": "authoritative",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33903",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33903"
+      },
+      "stack": 0
+    },
+    {
+      "id": "ado:33903:1:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-04-17T19:19:58.567Z",
+      "observedAt": "2026-04-17T19:19:58.567Z",
+      "trackId": "plan",
+      "value": "New",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33903",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33903"
+      },
+      "title": "Plan state changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33903:1:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-17T19:19:58.567Z",
+      "observedAt": "2026-04-17T19:19:58.567Z",
+      "trackId": "plan",
+      "value": "Not Available",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33903",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33903"
+      },
+      "title": "Spec approval changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:33903:1:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-17T19:19:58.567Z",
+      "observedAt": "2026-04-17T19:19:58.567Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ComputeLimit",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33903",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33903"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33903:1:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-17T19:19:58.567Z",
+      "observedAt": "2026-04-17T19:19:58.567Z",
+      "trackId": "sdk:JavaScript:@azure/arm-computelimit",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33903",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33903"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33903:1:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-17T19:19:58.567Z",
+      "observedAt": "2026-04-17T19:19:58.567Z",
+      "trackId": "sdk:Python:azure-mgmt-computelimit",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33903",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33903"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33903:1:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-17T19:19:58.567Z",
+      "observedAt": "2026-04-17T19:19:58.567Z",
+      "trackId": "sdk:Java:azure-resourcemanager-computelimit",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33903",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33903"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33903:1:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-17T19:19:58.567Z",
+      "observedAt": "2026-04-17T19:19:58.567Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/computelimit/armcomputelimit",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33903",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33903"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33903:6:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-04-17T19:20:19.69Z",
+      "observedAt": "2026-04-17T19:20:19.69Z",
+      "trackId": "plan",
+      "value": "In Progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33903",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33903"
+      },
+      "title": "Plan state changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:33903:8:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-17T19:20:58.783Z",
+      "observedAt": "2026-04-17T19:20:58.783Z",
+      "trackId": "plan",
+      "value": "Approved",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33903",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33903"
+      },
+      "title": "Spec approval changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:33903:22:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-17T19:23:05.56Z",
+      "observedAt": "2026-04-17T19:23:05.56Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ComputeLimit",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33903",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33903"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33903:22:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-17T19:23:05.56Z",
+      "observedAt": "2026-04-17T19:23:05.56Z",
+      "trackId": "sdk:JavaScript:@azure/arm-computelimit",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33903",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33903"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33903:22:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-17T19:23:05.56Z",
+      "observedAt": "2026-04-17T19:23:05.56Z",
+      "trackId": "sdk:Python:azure-mgmt-computelimit",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33903",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33903"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33903:22:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-17T19:23:05.56Z",
+      "observedAt": "2026-04-17T19:23:05.56Z",
+      "trackId": "sdk:Java:azure-resourcemanager-computelimit",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33903",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33903"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33903:22:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-17T19:23:05.56Z",
+      "observedAt": "2026-04-17T19:23:05.56Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/computelimit/armcomputelimit",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33903",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33903"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33904:3:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-17T19:27:36.273Z",
+      "observedAt": "2026-04-17T19:27:36.273Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38491",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/38491",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33904",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33904"
+      },
+      "title": "Spec PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado:33903:23:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-17T19:27:36.46Z",
+      "observedAt": "2026-04-17T19:27:36.46Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ComputeLimit",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33903",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33903"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:33903:23:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-17T19:27:36.46Z",
+      "observedAt": "2026-04-17T19:27:36.46Z",
+      "trackId": "sdk:JavaScript:@azure/arm-computelimit",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33903",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33903"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:33903:23:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-17T19:27:36.46Z",
+      "observedAt": "2026-04-17T19:27:36.46Z",
+      "trackId": "sdk:Python:azure-mgmt-computelimit",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33903",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33903"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:33903:23:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-17T19:27:36.46Z",
+      "observedAt": "2026-04-17T19:27:36.46Z",
+      "trackId": "sdk:Java:azure-resourcemanager-computelimit",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33903",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33903"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:33903:23:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-17T19:27:36.46Z",
+      "observedAt": "2026-04-17T19:27:36.46Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/computelimit/armcomputelimit",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33903",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33903"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6173857:generation.queued:sdk:Python:azure-mgmt-computelimit",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-04-17T19:27:51.93261Z",
+      "observedAt": "2026-04-17T19:34:53.7679701Z",
+      "trackId": "sdk:Python:azure-mgmt-computelimit",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6173857",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6173857"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6173858:generation.queued:sdk:.NET:Azure.ResourceManager.ComputeLimit",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-04-17T19:28:03.3003214Z",
+      "observedAt": "2026-04-17T19:34:51.7403947Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ComputeLimit",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6173858",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6173858"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6173857:generation.started:sdk:Python:azure-mgmt-computelimit",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-04-17T19:28:10.8675523Z",
+      "observedAt": "2026-04-17T19:34:53.7679701Z",
+      "trackId": "sdk:Python:azure-mgmt-computelimit",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6173857",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6173857"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6173860:generation.queued:sdk:Java:azure-resourcemanager-computelimit",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-04-17T19:28:13.9591251Z",
+      "observedAt": "2026-04-17T19:49:14.4955774Z",
+      "trackId": "sdk:Java:azure-resourcemanager-computelimit",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6173860",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6173860"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6173858:generation.started:sdk:.NET:Azure.ResourceManager.ComputeLimit",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-04-17T19:28:19.4127036Z",
+      "observedAt": "2026-04-17T19:34:51.7403947Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ComputeLimit",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6173858",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6173858"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6173861:generation.queued:sdk:JavaScript:@azure/arm-computelimit",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-04-17T19:28:29.1266028Z",
+      "observedAt": "2026-04-17T19:36:57.3263814Z",
+      "trackId": "sdk:JavaScript:@azure/arm-computelimit",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6173861",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6173861"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6173860:generation.started:sdk:Java:azure-resourcemanager-computelimit",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-04-17T19:28:35.194098Z",
+      "observedAt": "2026-04-17T19:49:14.4955774Z",
+      "trackId": "sdk:Java:azure-resourcemanager-computelimit",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6173860",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6173860"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6173863:generation.queued:sdk:Go:sdk/resourcemanager/computelimit/armcomputelimit",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-04-17T19:28:39.7610969Z",
+      "observedAt": "2026-04-17T19:34:45.582457Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/computelimit/armcomputelimit",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6173863",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6173863"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6173861:generation.started:sdk:JavaScript:@azure/arm-computelimit",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-04-17T19:28:45.7227707Z",
+      "observedAt": "2026-04-17T19:36:57.3263814Z",
+      "trackId": "sdk:JavaScript:@azure/arm-computelimit",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6173861",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6173861"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6173863:generation.started:sdk:Go:sdk/resourcemanager/computelimit/armcomputelimit",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-04-17T19:28:54.9608132Z",
+      "observedAt": "2026-04-17T19:34:45.582457Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/computelimit/armcomputelimit",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6173863",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6173863"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46379:commit:97ffe06b86de:sdk:Python:azure-mgmt-computelimit",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-17T19:33:35Z",
+      "observedAt": "2026-04-17T19:33:35Z",
+      "trackId": "sdk:Python:azure-mgmt-computelimit",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46379",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/97ffe06b86de4bf62afa553971cc5a5a4e94991c"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26620:commit:3613edb0193f:sdk:Go:sdk/resourcemanager/computelimit/armcomputelimit",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-17T19:33:37Z",
+      "observedAt": "2026-04-17T19:33:37Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/computelimit/armcomputelimit",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26620",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/3613edb0193fce919506d874dc4ccc96a35ae8c6"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46379:pr.created:sdk:Python:azure-mgmt-computelimit",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-17T19:33:38Z",
+      "observedAt": "2026-04-17T19:33:38Z",
+      "trackId": "sdk:Python:azure-mgmt-computelimit",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46379",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46379"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26620:pr.created:sdk:Go:sdk/resourcemanager/computelimit/armcomputelimit",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-17T19:33:40Z",
+      "observedAt": "2026-04-17T19:33:40Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/computelimit/armcomputelimit",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26620",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26620"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58311:commit:e44e44b538cd:sdk:.NET:Azure.ResourceManager.ComputeLimit",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-17T19:33:42Z",
+      "observedAt": "2026-04-17T19:33:42Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ComputeLimit",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58311",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/e44e44b538cdf0377a3d26f1e81de25fd7dea74a"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:33903:31:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-17T19:33:44.933Z",
+      "observedAt": "2026-04-17T19:33:44.933Z",
+      "trackId": "sdk:Python:azure-mgmt-computelimit",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33903",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33903"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33903:31:Custom.SDKPullRequestForPython",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-04-17T19:33:44.933Z",
+      "observedAt": "2026-04-17T19:33:44.933Z",
+      "trackId": "sdk:Python:azure-mgmt-computelimit",
+      "value": "https://github.com/Azure/azure-sdk-for-python/pull/46379",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33903",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33903"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58311:pr.created:sdk:.NET:Azure.ResourceManager.ComputeLimit",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-17T19:33:46Z",
+      "observedAt": "2026-04-17T19:33:46Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ComputeLimit",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58311",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58311"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:33903:32:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-17T19:33:47.34Z",
+      "observedAt": "2026-04-17T19:33:47.34Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/computelimit/armcomputelimit",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33903",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33903"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33903:32:Custom.SDKPullRequestForGo",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-04-17T19:33:47.34Z",
+      "observedAt": "2026-04-17T19:33:47.34Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/computelimit/armcomputelimit",
+      "value": "https://github.com/Azure/azure-sdk-for-go/pull/26620",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33903",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33903"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "ado:33903:33:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-17T19:33:52.587Z",
+      "observedAt": "2026-04-17T19:33:52.587Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ComputeLimit",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33903",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33903"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33903:33:Custom.SDKPullRequestForDotnet",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-04-17T19:33:52.587Z",
+      "observedAt": "2026-04-17T19:33:52.587Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ComputeLimit",
+      "value": "https://github.com/Azure/azure-sdk-for-net/pull/58311",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33903",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33903"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6173863:generation.completed:sdk:Go:sdk/resourcemanager/computelimit/armcomputelimit",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-04-17T19:34:45.582457Z",
+      "observedAt": "2026-04-17T19:34:45.582457Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/computelimit/armcomputelimit",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6173863",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6173863"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6173858:generation.completed:sdk:.NET:Azure.ResourceManager.ComputeLimit",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-04-17T19:34:51.7403947Z",
+      "observedAt": "2026-04-17T19:34:51.7403947Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ComputeLimit",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6173858",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6173858"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6173857:generation.completed:sdk:Python:azure-mgmt-computelimit",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-04-17T19:34:53.7679701Z",
+      "observedAt": "2026-04-17T19:34:53.7679701Z",
+      "trackId": "sdk:Python:azure-mgmt-computelimit",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6173857",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6173857"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38195:commit:fdfc43c70b68:sdk:JavaScript:@azure/arm-computelimit",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-17T19:35:58Z",
+      "observedAt": "2026-04-17T19:35:58Z",
+      "trackId": "sdk:JavaScript:@azure/arm-computelimit",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38195",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/fdfc43c70b681f5d0c8205e10fe8db502d7f0477"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38195:pr.created:sdk:JavaScript:@azure/arm-computelimit",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-17T19:36:02Z",
+      "observedAt": "2026-04-17T19:36:02Z",
+      "trackId": "sdk:JavaScript:@azure/arm-computelimit",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38195",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38195"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:33903:36:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-17T19:36:08.93Z",
+      "observedAt": "2026-04-17T19:36:08.93Z",
+      "trackId": "sdk:JavaScript:@azure/arm-computelimit",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33903",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33903"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33903:36:Custom.SDKPullRequestForJavaScript",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-04-17T19:36:08.93Z",
+      "observedAt": "2026-04-17T19:36:08.93Z",
+      "trackId": "sdk:JavaScript:@azure/arm-computelimit",
+      "value": "https://github.com/Azure/azure-sdk-for-js/pull/38195",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33903",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33903"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6173861:generation.completed:sdk:JavaScript:@azure/arm-computelimit",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-04-17T19:36:57.3263814Z",
+      "observedAt": "2026-04-17T19:36:57.3263814Z",
+      "trackId": "sdk:JavaScript:@azure/arm-computelimit",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6173861",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6173861"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48856:commit:5afb7c9d692f:sdk:Java:azure-resourcemanager-computelimit",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-17T19:37:43Z",
+      "observedAt": "2026-04-17T19:37:43Z",
+      "trackId": "sdk:Java:azure-resourcemanager-computelimit",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48856",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/5afb7c9d692fe678d1f67e3096dd6810168d04e8"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48856:pr.created:sdk:Java:azure-resourcemanager-computelimit",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-17T19:37:46Z",
+      "observedAt": "2026-04-17T19:37:46Z",
+      "trackId": "sdk:Java:azure-resourcemanager-computelimit",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48856",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48856"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:33903:37:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-17T19:37:53.97Z",
+      "observedAt": "2026-04-17T19:37:53.97Z",
+      "trackId": "sdk:Java:azure-resourcemanager-computelimit",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33903",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33903"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33903:37:Custom.SDKPullRequestForJava",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-04-17T19:37:53.97Z",
+      "observedAt": "2026-04-17T19:37:53.97Z",
+      "trackId": "sdk:Java:azure-resourcemanager-computelimit",
+      "value": "https://github.com/Azure/azure-sdk-for-java/pull/48856",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33903",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33903"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6173860:generation.completed:sdk:Java:azure-resourcemanager-computelimit",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-04-17T19:49:14.4955774Z",
+      "observedAt": "2026-04-17T19:49:14.4955774Z",
+      "trackId": "sdk:Java:azure-resourcemanager-computelimit",
+      "title": "Pipeline completed with issues",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6173860",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6173860"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26620:comment:4271174401:sdk:Go:sdk/resourcemanager/computelimit/armcomputelimit",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-17T20:52:59Z",
+      "observedAt": "2026-04-17T20:52:59Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/computelimit/armcomputelimit",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "hbh101"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26620",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26620#issuecomment-4271174401"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@copilot resolve the merge conflicts in this pull request",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26620:commit:6f1b0c66c3e4:sdk:Go:sdk/resourcemanager/computelimit/armcomputelimit",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-17T20:57:30Z",
+      "observedAt": "2026-04-17T20:57:30Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/computelimit/armcomputelimit",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26620",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/6f1b0c66c3e43732f19a15409550c7cac244cc9c"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26620:comment:4271201695:sdk:Go:sdk/resourcemanager/computelimit/armcomputelimit",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-17T20:57:39Z",
+      "observedAt": "2026-04-17T20:57:39Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/computelimit/armcomputelimit",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26620",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26620#issuecomment-4271201695"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> @copilot resolve the merge conflicts in this pull request Resolved the merge conflicts in commit `6f1b0c66`. The three conflicting files were resolved as follows: - **CHANGELOG.md**: Kept the 2026-04-17 date and incorporated the features ",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26620:commit:7be3e6f2d923:sdk:Go:sdk/resourcemanager/computelimit/armcomputelimit",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-17T21:01:05Z",
+      "observedAt": "2026-04-17T21:01:05Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/computelimit/armcomputelimit",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "hbh101"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26620",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/7be3e6f2d92376d12b2f4b571c3b35094d3d8896"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26620:pr.closed:sdk:Go:sdk/resourcemanager/computelimit/armcomputelimit",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-22T03:37:57Z",
+      "observedAt": "2026-04-22T03:37:57Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/computelimit/armcomputelimit",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26620",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26620"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38195:pr.closed:sdk:JavaScript:@azure/arm-computelimit",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-23T13:53:22Z",
+      "observedAt": "2026-04-23T13:53:22Z",
+      "trackId": "sdk:JavaScript:@azure/arm-computelimit",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38195",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38195"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58311:pr.closed:sdk:.NET:Azure.ResourceManager.ComputeLimit",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-23T21:57:08Z",
+      "observedAt": "2026-04-23T21:57:08Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ComputeLimit",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58311",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58311"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:33903:40:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-04-27T05:44:48.737Z",
+      "observedAt": "2026-04-27T05:44:48.737Z",
+      "trackId": "plan",
+      "value": "Abandoned",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33903",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33903"
+      },
+      "title": "Plan state changed",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58311:comment:4324583695:sdk:.NET:Azure.ResourceManager.ComputeLimit",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-27T06:17:47Z",
+      "observedAt": "2026-04-27T06:17:47Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ComputeLimit",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "josefree"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58311",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58311#issuecomment-4324583695"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The release plan is abandoned",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38195:comment:4324584578:sdk:JavaScript:@azure/arm-computelimit",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-27T06:17:57Z",
+      "observedAt": "2026-04-27T06:17:57Z",
+      "trackId": "sdk:JavaScript:@azure/arm-computelimit",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "josefree"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38195",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38195#issuecomment-4324584578"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The release plan is abandoned",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46379:comment:4324585181:sdk:Python:azure-mgmt-computelimit",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-27T06:18:05Z",
+      "observedAt": "2026-04-27T06:18:05Z",
+      "trackId": "sdk:Python:azure-mgmt-computelimit",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "josefree"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46379",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46379#issuecomment-4324585181"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The release plan is abandoned",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48856:comment:4324586223:sdk:Java:azure-resourcemanager-computelimit",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-27T06:18:14Z",
+      "observedAt": "2026-04-27T06:18:14Z",
+      "trackId": "sdk:Java:azure-resourcemanager-computelimit",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "josefree"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48856",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48856#issuecomment-4324586223"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The release plan is abandoned",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26620:comment:4324587265:sdk:Go:sdk/resourcemanager/computelimit/armcomputelimit",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-27T06:18:25Z",
+      "observedAt": "2026-04-27T06:18:25Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/computelimit/armcomputelimit",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "josefree"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26620",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26620#issuecomment-4324587265"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The release plan is abandoned",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46379:pr.closed:sdk:Python:azure-mgmt-computelimit",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-27T06:19:01Z",
+      "observedAt": "2026-04-27T06:19:01Z",
+      "trackId": "sdk:Python:azure-mgmt-computelimit",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46379",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46379"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48856:pr.closed:sdk:Java:azure-resourcemanager-computelimit",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-27T06:19:09Z",
+      "observedAt": "2026-04-27T06:19:09Z",
+      "trackId": "sdk:Java:azure-resourcemanager-computelimit",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48856",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48856"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    }
+  ],
+  "quality": {
+    "warnings": [
+      "5 historical linked PR(s) closed without merge"
+    ],
+    "unavailablePullRequests": 0,
+    "unavailablePipelineRuns": 0
+  },
+  "boundaryFacts": {
+    "id": "33903",
+    "state": "abandoned",
+    "specPrs": [
+      {
+        "id": "github:Azure/azure-rest-api-specs#38491",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#38491",
+        "createdAt": "2025-10-29T15:54:26Z",
+        "mergedAt": "2025-10-30T15:41:22Z",
+        "closedAt": "2025-10-30T15:41:22Z",
+        "available": true
+      }
+    ],
+    "artifacts": [
+      {
+        "language": ".NET",
+        "package": "Azure.ResourceManager.ComputeLimit",
+        "trackId": "sdk:.NET:Azure.ResourceManager.ComputeLimit",
+        "prId": "github:Azure/azure-sdk-for-net#58311",
+        "prCreatedAt": "2026-04-17T19:33:46Z",
+        "prMergedAt": null,
+        "prClosedAt": "2026-04-23T21:57:08Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-net#58311",
+            "createdAt": "2026-04-17T19:33:46Z",
+            "mergedAt": null,
+            "closedAt": "2026-04-23T21:57:08Z",
+            "state": "closed"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6173858",
+        "generationStartAt": "2026-04-17T19:28:19.4127036Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "JavaScript",
+        "package": "@azure/arm-computelimit",
+        "trackId": "sdk:JavaScript:@azure/arm-computelimit",
+        "prId": "github:Azure/azure-sdk-for-js#38195",
+        "prCreatedAt": "2026-04-17T19:36:02Z",
+        "prMergedAt": null,
+        "prClosedAt": "2026-04-23T13:53:22Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-js#38195",
+            "createdAt": "2026-04-17T19:36:02Z",
+            "mergedAt": null,
+            "closedAt": "2026-04-23T13:53:22Z",
+            "state": "closed"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6173861",
+        "generationStartAt": "2026-04-17T19:28:45.7227707Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Python",
+        "package": "azure-mgmt-computelimit",
+        "trackId": "sdk:Python:azure-mgmt-computelimit",
+        "prId": "github:Azure/azure-sdk-for-python#46379",
+        "prCreatedAt": "2026-04-17T19:33:38Z",
+        "prMergedAt": null,
+        "prClosedAt": "2026-04-27T06:19:01Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-python#46379",
+            "createdAt": "2026-04-17T19:33:38Z",
+            "mergedAt": null,
+            "closedAt": "2026-04-27T06:19:01Z",
+            "state": "closed"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6173857",
+        "generationStartAt": "2026-04-17T19:28:10.8675523Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Java",
+        "package": "azure-resourcemanager-computelimit",
+        "trackId": "sdk:Java:azure-resourcemanager-computelimit",
+        "prId": "github:Azure/azure-sdk-for-java#48856",
+        "prCreatedAt": "2026-04-17T19:37:46Z",
+        "prMergedAt": null,
+        "prClosedAt": "2026-04-27T06:19:09Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-java#48856",
+            "createdAt": "2026-04-17T19:37:46Z",
+            "mergedAt": null,
+            "closedAt": "2026-04-27T06:19:09Z",
+            "state": "closed"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6173860",
+        "generationStartAt": "2026-04-17T19:28:35.194098Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Go",
+        "package": "sdk/resourcemanager/computelimit/armcomputelimit",
+        "trackId": "sdk:Go:sdk/resourcemanager/computelimit/armcomputelimit",
+        "prId": "github:Azure/azure-sdk-for-go#26620",
+        "prCreatedAt": "2026-04-17T19:33:40Z",
+        "prMergedAt": null,
+        "prClosedAt": "2026-04-22T03:37:57Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-go#26620",
+            "createdAt": "2026-04-17T19:33:40Z",
+            "mergedAt": null,
+            "closedAt": "2026-04-22T03:37:57Z",
+            "state": "closed"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6173863",
+        "generationStartAt": "2026-04-17T19:28:54.9608132Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      }
+    ],
+    "cohortPlan": {
+      "id": "33903",
+      "releasePlanId": "2191",
+      "title": "Release Plan - 2191 - Public Preview - Shared Compute Limit",
+      "service": "Compute Limit",
+      "state": "abandoned"
+    },
+    "quality": {
+      "warnings": [
+        "5 historical linked PR(s) closed without merge"
+      ],
+      "unavailablePullRequests": 0,
+      "unavailablePipelineRuns": 0
+    }
+  },
+  "summary": {
+    "durationHours": 226.4,
+    "pullRequestCount": 6,
+    "humanReviewCount": 1,
+    "humanCommentCount": 7
+  }
+}

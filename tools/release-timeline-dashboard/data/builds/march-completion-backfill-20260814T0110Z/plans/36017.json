@@ -1,0 +1,4026 @@
+{
+  "schemaVersion": 2,
+  "id": "36017",
+  "correlation": {
+    "policyVersion": 1,
+    "preflight": "passed"
+  },
+  "releasePlanId": "36017",
+  "title": "Public Preview release plan for Relationships",
+  "service": "Relationships",
+  "product": "Release",
+  "path": "specification/relationships/resource-manager/Microsoft.Relationships/Relationships",
+  "state": "in-progress",
+  "plane": "management",
+  "releaseType": "APEX Public Preview",
+  "intendedMonth": "September 2026",
+  "createdAt": "2026-08-12T19:15:38.55Z",
+  "completedAt": null,
+  "sourceUrl": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/36017",
+  "range": {
+    "start": "2026-07-23T23:01:39.000Z",
+    "end": "2026-08-14T00:37:23.589Z"
+  },
+  "intendedArtifacts": [
+    {
+      "prId": "github:Azure/azure-sdk-for-net#61993",
+      "language": ".NET",
+      "package": "Azure.ResourceManager.Relationships",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6696805",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-js#39577",
+      "language": "JavaScript",
+      "package": "@azure/arm-relationships",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6696813",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-python#48552",
+      "language": "Python",
+      "package": "azure-mgmt-relationships",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6696817",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-java#50118",
+      "language": "Java",
+      "package": "azure-resourcemanager-relationships",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6696809",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-go#27376",
+      "language": "Go",
+      "package": "sdk/resourcemanager/relationships/armrelationships",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6696818",
+      "releasePipelineUrl": null
+    }
+  ],
+  "links": [
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#44941",
+      "role": "spec-pr",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/44941",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-net#61993",
+      "role": "sdk-pr",
+      "language": ".NET",
+      "url": "https://github.com/Azure/azure-sdk-for-net/pull/61993",
+      "releasePlanIds": [
+        "36017"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-js#39577",
+      "role": "sdk-pr",
+      "language": "JavaScript",
+      "url": "https://github.com/Azure/azure-sdk-for-js/pull/39577",
+      "releasePlanIds": [
+        "36017"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-python#48552",
+      "role": "sdk-pr",
+      "language": "Python",
+      "url": "https://github.com/Azure/azure-sdk-for-python/pull/48552",
+      "releasePlanIds": [
+        "36017"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-java#50118",
+      "role": "sdk-pr",
+      "language": "Java",
+      "url": "https://github.com/Azure/azure-sdk-for-java/pull/50118",
+      "releasePlanIds": [
+        "36017"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-go#27376",
+      "role": "sdk-pr",
+      "language": "Go",
+      "url": "https://github.com/Azure/azure-sdk-for-go/pull/27376",
+      "releasePlanIds": [
+        "36017"
+      ]
+    }
+  ],
+  "tracks": [
+    {
+      "id": "plan",
+      "kind": "plan",
+      "label": "Release Plan",
+      "detail": "APEX Public Preview"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#44941",
+      "kind": "spec",
+      "label": "Spec PR",
+      "detail": "azure-rest-api-specs #44941",
+      "artifactId": "github:Azure/azure-rest-api-specs#44941",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:.NET:Azure.ResourceManager.Relationships",
+      "kind": "sdk",
+      "label": ".NET",
+      "detail": "Azure.ResourceManager.Relationships",
+      "artifactId": "github:Azure/azure-sdk-for-net#61993",
+      "state": "open"
+    },
+    {
+      "id": "sdk:JavaScript:@azure/arm-relationships",
+      "kind": "sdk",
+      "label": "JavaScript",
+      "detail": "@azure/arm-relationships",
+      "artifactId": "github:Azure/azure-sdk-for-js#39577",
+      "state": "open"
+    },
+    {
+      "id": "sdk:Python:azure-mgmt-relationships",
+      "kind": "sdk",
+      "label": "Python",
+      "detail": "azure-mgmt-relationships",
+      "artifactId": "github:Azure/azure-sdk-for-python#48552",
+      "state": "open"
+    },
+    {
+      "id": "sdk:Java:azure-resourcemanager-relationships",
+      "kind": "sdk",
+      "label": "Java",
+      "detail": "azure-resourcemanager-relationships",
+      "artifactId": "github:Azure/azure-sdk-for-java#50118",
+      "state": "open"
+    },
+    {
+      "id": "sdk:Go:sdk/resourcemanager/relationships/armrelationships",
+      "kind": "sdk",
+      "label": "Go",
+      "detail": "sdk/resourcemanager/relationships/armrelationships",
+      "artifactId": "github:Azure/azure-sdk-for-go#27376",
+      "state": "open"
+    }
+  ],
+  "events": [
+    {
+      "id": "github:Azure/azure-rest-api-specs#44941:pr.created:spec:github:Azure/azure-rest-api-specs#44941",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-23T23:01:39Z",
+      "observedAt": "2026-07-23T23:01:39Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44941",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "ningyixue-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44941",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44941"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44941:comment:5064383251:spec:github:Azure/azure-rest-api-specs#44941",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-23T23:03:58Z",
+      "observedAt": "2026-07-23T23:03:58Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44941",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44941",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44941#issuecomment-5064383251"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>✅ All automated merging requirements have been met! To get your PR merged, see <a href=\"https://aka.ms/azsdk/specreview/merge\">aka.ms/azsdk/specreview/merge</a>.<br /><br />Comment generated by <a href=\"https://g",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44941:comment:5064451130:spec:github:Azure/azure-rest-api-specs#44941",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-23T23:15:25Z",
+      "observedAt": "2026-07-23T23:15:25Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44941",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44941",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44941#issuecomment-5064451130"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews | Language | API Review for Package | |----------|---------| | TypeSpec | [Microsoft.Relationships](https://spa.apiview.dev/review/064",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44941:commit:5a3d47e294d1:spec:github:Azure/azure-rest-api-specs#44941",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-24T16:30:27Z",
+      "observedAt": "2026-07-24T16:30:27Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44941",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ningyixue-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44941",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/5a3d47e294d14b6e289425abcb7008527faa4d63"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44941:commit:afa48d1ca89a:spec:github:Azure/azure-rest-api-specs#44941",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-24T16:32:15Z",
+      "observedAt": "2026-07-24T16:32:15Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44941",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ningyixue-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44941",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/afa48d1ca89a61284bba216ce083d4f365e94b08"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44941:review:4776323552:spec:github:Azure/azure-rest-api-specs#44941",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-24T20:07:07Z",
+      "observedAt": "2026-07-24T20:07:07Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44941",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "sandipsh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44941",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44941#pullrequestreview-4776323552"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44941:comment:3647833902:spec:github:Azure/azure-rest-api-specs#44941",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-24T20:07:07Z",
+      "observedAt": "2026-07-24T20:07:07Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44941",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "sandipsh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44941",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44941#discussion_r3647833902"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[NEW] 🔴 Blocking** **[[RPC-Get-V1-15](https://github.com/Azure/azure-rest-api-specs/blob/main/.github/instructions/arm-api-review.instructions.md#22-tracked-resource-requirements)]** specification/relationships/resource-manager/Microsoft",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44941:review:4776323684:spec:github:Azure/azure-rest-api-specs#44941",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-24T20:07:08Z",
+      "observedAt": "2026-07-24T20:07:08Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44941",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "sandipsh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44941",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44941#pullrequestreview-4776323684"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44941:comment:3647834008:spec:github:Azure/azure-rest-api-specs#44941",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-24T20:07:09Z",
+      "observedAt": "2026-07-24T20:07:09Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44941",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "sandipsh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44941",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44941#discussion_r3647834008"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[NEW] 🔴 Blocking** **[[RPC-Get-V1-15](https://github.com/Azure/azure-rest-api-specs/blob/main/.github/instructions/arm-api-review.instructions.md#22-tracked-resource-requirements)]** specification/relationships/resource-manager/Microsoft",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44941:review:4790814197:spec:github:Azure/azure-rest-api-specs#44941",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-27T19:35:43Z",
+      "observedAt": "2026-07-27T19:35:43Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44941",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ravimeda"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44941",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44941#pullrequestreview-4790814197"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## ARM API Review Posting findings from the [ARM API Reviewer agent](https://github.com/Azure/azure-rest-api-specs/blob/main/documentation/api-reviewer-agent.md) (critic-verified, 1 iteration, converged) against commit [`afa48d1`](https://g",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44941:comment:3660346037:spec:github:Azure/azure-rest-api-specs#44941",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-27T19:35:43Z",
+      "observedAt": "2026-07-27T19:35:43Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44941",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ravimeda"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44941",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44941#discussion_r3660346037"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[NEW] 🟠 Warning** **[[Section 2.7](https://github.com/Azure/azure-rest-api-specs/blob/main/.github/instructions/arm-api-review.instructions.md#27-every-resource-must-have-a-point-get)]** `specification/relationships/resource-manager/Micr",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44941:comment:3660346050:spec:github:Azure/azure-rest-api-specs#44941",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-27T19:35:43Z",
+      "observedAt": "2026-07-27T19:35:43Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44941",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ravimeda"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44941",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44941#discussion_r3660346050"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[NEW] 🔵 Suggestion** **[[Section 22](https://github.com/Azure/azure-rest-api-specs/blob/main/.github/instructions/openapi-review.instructions.md#22-example-file-validation-ex-)]** `specification/relationships/resource-manager/Microsoft.R",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44941:review:4790825563:spec:github:Azure/azure-rest-api-specs#44941",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-27T19:37:08Z",
+      "observedAt": "2026-07-27T19:37:08Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44941",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ravimeda"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44941",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44941#pullrequestreview-4790825563"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44941:comment:3660355042:spec:github:Azure/azure-rest-api-specs#44941",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-27T19:37:08Z",
+      "observedAt": "2026-07-27T19:37:08Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44941",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ravimeda"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44941",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44941#discussion_r3660355042"
+      },
+      "confidence": "authoritative",
+      "excerpt": "👋 **Clarification from the ARM API Reviewer agent (AI-assisted).** Apologies for the confusion — this comment was posted by the **ARM API Reviewer agent** during a review session, and its text got garbled while posting (the parameter name ",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44941:review:4790825857:spec:github:Azure/azure-rest-api-specs#44941",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-27T19:37:10Z",
+      "observedAt": "2026-07-27T19:37:10Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44941",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ravimeda"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44941",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44941#pullrequestreview-4790825857"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44941:comment:3660355214:spec:github:Azure/azure-rest-api-specs#44941",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-27T19:37:10Z",
+      "observedAt": "2026-07-27T19:37:10Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44941",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ravimeda"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44941",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44941#discussion_r3660355214"
+      },
+      "confidence": "authoritative",
+      "excerpt": "👋 **Clarification from the ARM API Reviewer agent (AI-assisted).** Apologies for the confusion — this comment was posted by the **ARM API Reviewer agent** during a review session, and its text got garbled while posting (the parameter name ",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44941:commit:cca4b89e381b:spec:github:Azure/azure-rest-api-specs#44941",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-27T21:15:29Z",
+      "observedAt": "2026-07-27T21:15:29Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44941",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44941",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/cca4b89e381ba0571a5cd7166c18f0c98d2e2f1a"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44941:review:4791660222:spec:github:Azure/azure-rest-api-specs#44941",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-27T21:28:43Z",
+      "observedAt": "2026-07-27T21:28:43Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44941",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "kanikasp113"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44941",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44941#pullrequestreview-4791660222"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44941:comment:3661032839:spec:github:Azure/azure-rest-api-specs#44941",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-27T21:28:43Z",
+      "observedAt": "2026-07-27T21:28:43Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44941",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kanikasp113"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44941",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44941#discussion_r3661032839"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Thanks for clarifying Ravi. I have removed $top from both ContainsRelationships_ListBySubscription and ListByResourceGroup in main.tsp and regenerated the swagger.",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44941:review:4791660443:spec:github:Azure/azure-rest-api-specs#44941",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-27T21:28:45Z",
+      "observedAt": "2026-07-27T21:28:45Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44941",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "kanikasp113"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44941",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44941#pullrequestreview-4791660443"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44941:comment:3661033022:spec:github:Azure/azure-rest-api-specs#44941",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-27T21:28:45Z",
+      "observedAt": "2026-07-27T21:28:45Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44941",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kanikasp113"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44941",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44941#discussion_r3661033022"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Thanks for clarifying Ravi. I have removed $top from both ContainsRelationships_ListBySubscription and ListByResourceGroup in main.tsp and regenerated the swagger.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44941:commit:866cad70d5cc:spec:github:Azure/azure-rest-api-specs#44941",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-27T21:45:31Z",
+      "observedAt": "2026-07-27T21:45:31Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44941",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44941",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/866cad70d5cc44594fa952fbeaecad8c13178ce1"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44941:review:4791767517:spec:github:Azure/azure-rest-api-specs#44941",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-27T21:45:52Z",
+      "observedAt": "2026-07-27T21:45:52Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44941",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "kanikasp113"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44941",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44941#pullrequestreview-4791767517"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44941:comment:3661127652:spec:github:Azure/azure-rest-api-specs#44941",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-27T21:45:52Z",
+      "observedAt": "2026-07-27T21:45:52Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44941",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kanikasp113"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44941",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44941#discussion_r3661127652"
+      },
+      "confidence": "authoritative",
+      "excerpt": "FYI @ningyixue-ms - I have fixed this",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44941:review:4791817986:spec:github:Azure/azure-rest-api-specs#44941",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-27T21:54:20Z",
+      "observedAt": "2026-07-27T21:54:20Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44941",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "kanikasp113"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44941",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44941#pullrequestreview-4791817986"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44941:comment:3661172985:spec:github:Azure/azure-rest-api-specs#44941",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-27T21:54:20Z",
+      "observedAt": "2026-07-27T21:54:20Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44941",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kanikasp113"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44941",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44941#discussion_r3661172985"
+      },
+      "confidence": "authoritative",
+      "excerpt": "contains is meant to be read-only and I have marked targetId and targetTenant as read-only too so the schema matches.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44941:commit:140caf19966c:spec:github:Azure/azure-rest-api-specs#44941",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-27T22:01:31Z",
+      "observedAt": "2026-07-27T22:01:31Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44941",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ningyixue-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44941",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/140caf19966cc4835df932e32b605fc77f25fd8a"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44941:commit:57b3c240fcf3:spec:github:Azure/azure-rest-api-specs#44941",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-27T22:34:31Z",
+      "observedAt": "2026-07-27T22:34:31Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44941",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ningyixue-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44941",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/57b3c240fcf32fa791e47ff53211ae68c3dd2f85"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44941:comment:5097667639:spec:github:Azure/azure-rest-api-specs#44941",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-27T22:50:13Z",
+      "observedAt": "2026-07-27T22:50:13Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44941",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ningyixue-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44941",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44941#issuecomment-5097667639"
+      },
+      "confidence": "authoritative",
+      "excerpt": "/azp run SDK Validation - Go",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44941:comment:5097668543:spec:github:Azure/azure-rest-api-specs#44941",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-27T22:50:21Z",
+      "observedAt": "2026-07-27T22:50:21Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44941",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44941",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44941#issuecomment-5097668543"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> </samp>",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44941:comment:5097718716:spec:github:Azure/azure-rest-api-specs#44941",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-27T22:57:37Z",
+      "observedAt": "2026-07-27T22:57:37Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44941",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ningyixue-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44941",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44941#issuecomment-5097718716"
+      },
+      "confidence": "authoritative",
+      "excerpt": "/azp run SDK Validation - Go",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44941:comment:5097720006:spec:github:Azure/azure-rest-api-specs#44941",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-27T22:57:47Z",
+      "observedAt": "2026-07-27T22:57:47Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44941",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44941",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44941#issuecomment-5097720006"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> </samp>",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44941:commit:65115aa843ff:spec:github:Azure/azure-rest-api-specs#44941",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-27T23:38:00Z",
+      "observedAt": "2026-07-27T23:38:00Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44941",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ningyixue-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44941",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/65115aa843ff47861eee6f75be27a720c3e012b8"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44941:commit:ec3db1f87459:spec:github:Azure/azure-rest-api-specs#44941",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-28T05:25:18Z",
+      "observedAt": "2026-07-28T05:25:18Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44941",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ningyixue-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44941",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/ec3db1f8745921dfedff0c6d1f791ad4ff0175dc"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44941:comment:5106847452:spec:github:Azure/azure-rest-api-specs#44941",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-28T16:23:31Z",
+      "observedAt": "2026-07-28T16:23:31Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44941",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ningyixue-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44941",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44941#issuecomment-5106847452"
+      },
+      "confidence": "authoritative",
+      "excerpt": "/azp run SDK Validation - Go",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44941:comment:5106849449:spec:github:Azure/azure-rest-api-specs#44941",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-28T16:23:43Z",
+      "observedAt": "2026-07-28T16:23:43Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44941",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44941",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44941#issuecomment-5106849449"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> </samp>",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44941:commit:494615f5d906:spec:github:Azure/azure-rest-api-specs#44941",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-29T16:20:52Z",
+      "observedAt": "2026-07-29T16:20:52Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44941",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ningyixue-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44941",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/494615f5d906889e2de4f204bc516af721c6a37d"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44941:commit:eb2e362bcc6f:spec:github:Azure/azure-rest-api-specs#44941",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-30T21:14:50Z",
+      "observedAt": "2026-07-30T21:14:50Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44941",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ningyixue-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44941",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/eb2e362bcc6f040eb84d0aca80b73ea20bcf8942"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44941:commit:a38ef94ff0be:spec:github:Azure/azure-rest-api-specs#44941",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-30T21:38:36Z",
+      "observedAt": "2026-07-30T21:38:36Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44941",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ningyixue-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44941",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/a38ef94ff0be1580df86351e9add6d6efb61fede"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44941:comment:5136718650:spec:github:Azure/azure-rest-api-specs#44941",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-30T22:02:03Z",
+      "observedAt": "2026-07-30T22:02:03Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44941",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ningyixue-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44941",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44941#issuecomment-5136718650"
+      },
+      "confidence": "authoritative",
+      "excerpt": "/azp run SDK Validation - Java",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44941:comment:5136719787:spec:github:Azure/azure-rest-api-specs#44941",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-30T22:02:12Z",
+      "observedAt": "2026-07-30T22:02:12Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44941",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44941",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44941#issuecomment-5136719787"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> </samp>",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44941:commit:9c4c441f6f7f:spec:github:Azure/azure-rest-api-specs#44941",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-31T17:35:15Z",
+      "observedAt": "2026-07-31T17:35:15Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44941",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ningyixue-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44941",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/9c4c441f6f7f79e4e27e9fa22e06473796c6b063"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44941:commit:199cb842b0eb:spec:github:Azure/azure-rest-api-specs#44941",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-31T18:49:52Z",
+      "observedAt": "2026-07-31T18:49:52Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44941",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ningyixue-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44941",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/199cb842b0eb29ab0803c12e5b09fe4413a835c4"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44941:comment:5146418003:spec:github:Azure/azure-rest-api-specs#44941",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-31T18:53:08Z",
+      "observedAt": "2026-07-31T18:53:08Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44941",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44941",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44941#issuecomment-5146418003"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## TypeSpec suppressions requiring review (testing, non-blocking) **Status:** ❌ Approval required (currently under testing, review NOT enforced) — 3 suppressions ⚠️ <strong>This check is currently in testing mode and is non-blocking</strong",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44941:review:4919291234:spec:github:Azure/azure-rest-api-specs#44941",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-12T17:26:30Z",
+      "observedAt": "2026-08-12T17:26:30Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44941",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "alexchro93"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44941",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44941#pullrequestreview-4919291234"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44941:commit:95b6e3f7e959:spec:github:Azure/azure-rest-api-specs#44941",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-12T18:18:25Z",
+      "observedAt": "2026-08-12T18:18:25Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44941",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ningyixue-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44941",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/95b6e3f7e959f6949f048af100a89411826c1cc5"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44941:commit:ca08a239a490:spec:github:Azure/azure-rest-api-specs#44941",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-12T18:46:58Z",
+      "observedAt": "2026-08-12T18:46:58Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44941",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ningyixue-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44941",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/ca08a239a4909762f389becd4aee19be0794f7e9"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44941:commit:534669f05c9d:spec:github:Azure/azure-rest-api-specs#44941",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-12T18:48:26Z",
+      "observedAt": "2026-08-12T18:48:26Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44941",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ningyixue-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44941",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/534669f05c9de373282a271bdfb6b6e9af5f9fd3"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44941:review:4920192021:spec:github:Azure/azure-rest-api-specs#44941",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-12T19:06:07Z",
+      "observedAt": "2026-08-12T19:06:07Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44941",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "alexchro93"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44941",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44941#pullrequestreview-4920192021"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44941:pr.merged:spec:github:Azure/azure-rest-api-specs#44941",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-12T19:06:34Z",
+      "observedAt": "2026-08-12T19:06:34Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44941",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44941",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44941"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:36017:created",
+      "type": "plan.created",
+      "phase": "plan",
+      "occurredAt": "2026-08-12T19:15:38.55Z",
+      "observedAt": "2026-08-12T19:15:38.55Z",
+      "trackId": "plan",
+      "title": "Release Plan created",
+      "confidence": "authoritative",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:36017",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/36017"
+      },
+      "stack": 0
+    },
+    {
+      "id": "ado:36017:1:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-08-12T19:15:38.55Z",
+      "observedAt": "2026-08-12T19:15:38.55Z",
+      "trackId": "plan",
+      "value": "New",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:36017",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/36017"
+      },
+      "title": "Plan state changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:36017:1:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-12T19:15:38.55Z",
+      "observedAt": "2026-08-12T19:15:38.55Z",
+      "trackId": "plan",
+      "value": "Not Available",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:36017",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/36017"
+      },
+      "title": "Spec approval changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:36017:1:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-12T19:15:38.55Z",
+      "observedAt": "2026-08-12T19:15:38.55Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Relationships",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:36017",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/36017"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:36017:1:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-12T19:15:38.55Z",
+      "observedAt": "2026-08-12T19:15:38.55Z",
+      "trackId": "sdk:JavaScript:@azure/arm-relationships",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:36017",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/36017"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:36017:1:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-12T19:15:38.55Z",
+      "observedAt": "2026-08-12T19:15:38.55Z",
+      "trackId": "sdk:Python:azure-mgmt-relationships",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:36017",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/36017"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:36017:1:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-12T19:15:38.55Z",
+      "observedAt": "2026-08-12T19:15:38.55Z",
+      "trackId": "sdk:Java:azure-resourcemanager-relationships",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:36017",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/36017"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:36017:1:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-12T19:15:38.55Z",
+      "observedAt": "2026-08-12T19:15:38.55Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/relationships/armrelationships",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:36017",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/36017"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:36018:1:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-12T19:15:38.93Z",
+      "observedAt": "2026-08-12T19:15:38.93Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44941",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/44941",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:36018",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/36018"
+      },
+      "title": "Spec PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado:36017:2:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-08-12T19:15:39.93Z",
+      "observedAt": "2026-08-12T19:15:39.93Z",
+      "trackId": "plan",
+      "value": "In Progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:36017",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/36017"
+      },
+      "title": "Plan state changed",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44941:comment:5271635979:spec:github:Azure/azure-rest-api-specs#44941",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-12T19:15:45Z",
+      "observedAt": "2026-08-12T19:15:45Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44941",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44941",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44941#issuecomment-5271635979"
+      },
+      "confidence": "authoritative",
+      "excerpt": "### ✅ Release Plan Created | Field | Value | |-------|-------| | **Release Plan** | [View Release Plan](https://azsdk-releaseplan-dashboard-hveph5aqhhcfhtgu.westus-01.azurewebsites.net/?releaseplan=36017) | | **API Version** | `2026-03-01-p",
+      "stack": 1
+    },
+    {
+      "id": "ado:36017:4:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-12T19:15:54.797Z",
+      "observedAt": "2026-08-12T19:15:54.797Z",
+      "trackId": "plan",
+      "value": "Approved",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:36017",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/36017"
+      },
+      "title": "Spec approval changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:36017:5:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-12T19:24:47.43Z",
+      "observedAt": "2026-08-12T19:24:47.43Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Relationships",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:36017",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/36017"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:36017:6:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-12T19:24:56.41Z",
+      "observedAt": "2026-08-12T19:24:56.41Z",
+      "trackId": "sdk:Java:azure-resourcemanager-relationships",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:36017",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/36017"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:36017:7:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-12T19:25:04.32Z",
+      "observedAt": "2026-08-12T19:25:04.32Z",
+      "trackId": "sdk:JavaScript:@azure/arm-relationships",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:36017",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/36017"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:36017:8:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-12T19:25:12.51Z",
+      "observedAt": "2026-08-12T19:25:12.51Z",
+      "trackId": "sdk:Python:azure-mgmt-relationships",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:36017",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/36017"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:36017:9:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-12T19:25:20.453Z",
+      "observedAt": "2026-08-12T19:25:20.453Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/relationships/armrelationships",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:36017",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/36017"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27376:commit:b469b19223be:sdk:Go:sdk/resourcemanager/relationships/armrelationships",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T19:35:35Z",
+      "observedAt": "2026-08-12T19:35:35Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/relationships/armrelationships",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27376",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/b469b19223be3c8325bfb41e5f4a0b2d7be23741"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27376:pr.created:sdk:Go:sdk/resourcemanager/relationships/armrelationships",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T19:35:39Z",
+      "observedAt": "2026-08-12T19:35:39Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/relationships/armrelationships",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27376",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27376"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado:36017:10:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-12T19:35:47.19Z",
+      "observedAt": "2026-08-12T19:35:47.19Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/relationships/armrelationships",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:36017",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/36017"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:36017:10:Custom.SDKPullRequestForGo",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-08-12T19:35:47.19Z",
+      "observedAt": "2026-08-12T19:35:47.19Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/relationships/armrelationships",
+      "value": "https://github.com/Azure/azure-sdk-for-go/pull/27376",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:36017",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/36017"
+      },
+      "title": "SDK PR linked",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61993:commit:7c99c873428b:sdk:.NET:Azure.ResourceManager.Relationships",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T19:36:06Z",
+      "observedAt": "2026-08-12T19:36:06Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Relationships",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61993",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/7c99c873428bae9d43c0984cc8160dd16487f8e3"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27376:comment:5271912115:sdk:Go:sdk/resourcemanager/relationships/armrelationships",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T19:36:09Z",
+      "observedAt": "2026-08-12T19:36:09Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/relationships/armrelationships",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27376",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27376#issuecomment-5271912115"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 6 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61993:pr.created:sdk:.NET:Azure.ResourceManager.Relationships",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T19:36:11Z",
+      "observedAt": "2026-08-12T19:36:11Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Relationships",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61993",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61993"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado:36017:11:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-12T19:36:19.4Z",
+      "observedAt": "2026-08-12T19:36:19.4Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Relationships",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:36017",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/36017"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:36017:11:Custom.SDKPullRequestForDotnet",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-08-12T19:36:19.4Z",
+      "observedAt": "2026-08-12T19:36:19.4Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Relationships",
+      "value": "https://github.com/Azure/azure-sdk-for-net/pull/61993",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:36017",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/36017"
+      },
+      "title": "SDK PR linked",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48552:commit:43fb6ac137f3:sdk:Python:azure-mgmt-relationships",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T19:36:40Z",
+      "observedAt": "2026-08-12T19:36:40Z",
+      "trackId": "sdk:Python:azure-mgmt-relationships",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48552",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/43fb6ac137f39f2f1dd9928bb478978753a12f8b"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48552:pr.created:sdk:Python:azure-mgmt-relationships",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T19:36:45Z",
+      "observedAt": "2026-08-12T19:36:45Z",
+      "trackId": "sdk:Python:azure-mgmt-relationships",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48552",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48552"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61993:comment:5271919533:sdk:.NET:Azure.ResourceManager.Relationships",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T19:36:47Z",
+      "observedAt": "2026-08-12T19:36:47Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Relationships",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61993",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61993#issuecomment-5271919533"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 11 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 0
+    },
+    {
+      "id": "ado:36017:12:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-12T19:36:53.893Z",
+      "observedAt": "2026-08-12T19:36:53.893Z",
+      "trackId": "sdk:Python:azure-mgmt-relationships",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:36017",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/36017"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:36017:12:Custom.SDKPullRequestForPython",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-08-12T19:36:53.893Z",
+      "observedAt": "2026-08-12T19:36:53.893Z",
+      "trackId": "sdk:Python:azure-mgmt-relationships",
+      "value": "https://github.com/Azure/azure-sdk-for-python/pull/48552",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:36017",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/36017"
+      },
+      "title": "SDK PR linked",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39577:commit:fc1bf5d0d906:sdk:JavaScript:@azure/arm-relationships",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T19:36:56Z",
+      "observedAt": "2026-08-12T19:36:56Z",
+      "trackId": "sdk:JavaScript:@azure/arm-relationships",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39577",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/fc1bf5d0d9063d852e3f855204a2fa9393d392c0"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39577:pr.created:sdk:JavaScript:@azure/arm-relationships",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T19:37:00Z",
+      "observedAt": "2026-08-12T19:37:00Z",
+      "trackId": "sdk:JavaScript:@azure/arm-relationships",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39577",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39577"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado:36017:13:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-12T19:37:08.777Z",
+      "observedAt": "2026-08-12T19:37:08.777Z",
+      "trackId": "sdk:JavaScript:@azure/arm-relationships",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:36017",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/36017"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:36017:13:Custom.SDKPullRequestForJavaScript",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-08-12T19:37:08.777Z",
+      "observedAt": "2026-08-12T19:37:08.777Z",
+      "trackId": "sdk:JavaScript:@azure/arm-relationships",
+      "value": "https://github.com/Azure/azure-sdk-for-js/pull/39577",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:36017",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/36017"
+      },
+      "title": "SDK PR linked",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48552:comment:5271926020:sdk:Python:azure-mgmt-relationships",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T19:37:22Z",
+      "observedAt": "2026-08-12T19:37:22Z",
+      "trackId": "sdk:Python:azure-mgmt-relationships",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48552",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48552#issuecomment-5271926020"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 9 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39577:comment:5271928482:sdk:JavaScript:@azure/arm-relationships",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T19:37:35Z",
+      "observedAt": "2026-08-12T19:37:35Z",
+      "trackId": "sdk:JavaScript:@azure/arm-relationships",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39577",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39577#issuecomment-5271928482"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 10 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39577:review:4920476424:sdk:JavaScript:@azure/arm-relationships",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T19:39:05Z",
+      "observedAt": "2026-08-12T19:39:05Z",
+      "trackId": "sdk:JavaScript:@azure/arm-relationships",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39577",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39577#pullrequestreview-4920476424"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview > [!NOTE] > Copilot could not run the full agentic suite for this review because it was automatically requested on a bot-authored pull request. Request a review from Copilot under Reviewers to retry with the full ag",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48552:comment:3769749065:sdk:Python:azure-mgmt-relationships",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T19:39:11Z",
+      "observedAt": "2026-08-12T19:39:11Z",
+      "trackId": "sdk:Python:azure-mgmt-relationships",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48552",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48552#discussion_r3769749065"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The changelog entry for 1.0.0b2 contains a placeholder line. This should be replaced with actual release notes (e.g., API version bump to 2026-03-01-preview, new ContainsRelationships operations, new list_by_parent methods, and Python versi",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48552:comment:3769749105:sdk:Python:azure-mgmt-relationships",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T19:39:11Z",
+      "observedAt": "2026-08-12T19:39:11Z",
+      "trackId": "sdk:Python:azure-mgmt-relationships",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48552",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48552#discussion_r3769749105"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The docstring states `api_version` defaults to None and that None is allowed, but the implementation always defaults to the string \\\"2026-03-01-preview\\\" (and downstream request builders pass `self._config.api_version` into serialization). ",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48552:review:4920477106:sdk:Python:azure-mgmt-relationships",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T19:39:12Z",
+      "observedAt": "2026-08-12T19:39:12Z",
+      "trackId": "sdk:Python:azure-mgmt-relationships",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48552",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48552#pullrequestreview-4920477106"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview > [!NOTE] > Copilot could not run the full agentic suite for this review because it was automatically requested on a bot-authored pull request. Request a review from Copilot under Reviewers to retry with the full ag",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48552:comment:3769749125:sdk:Python:azure-mgmt-relationships",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T19:39:12Z",
+      "observedAt": "2026-08-12T19:39:12Z",
+      "trackId": "sdk:Python:azure-mgmt-relationships",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48552",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48552#discussion_r3769749125"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The docstring states `api_version` defaults to None and that None is allowed, but the implementation always defaults to the string \\\"2026-03-01-preview\\\" (and downstream request builders pass `self._config.api_version` into serialization). ",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48552:comment:3769749161:sdk:Python:azure-mgmt-relationships",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T19:39:12Z",
+      "observedAt": "2026-08-12T19:39:12Z",
+      "trackId": "sdk:Python:azure-mgmt-relationships",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48552",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48552#discussion_r3769749161"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Boolean deserialization for `format == \\\"str\\\"` is too narrow: it treats only case-insensitive \\\"true\\\" as True, but does not handle common wire values like \\\"1\\\"/\\\"0\\\". This is inconsistent with the header fast-path in `Deserializer.__call",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50118:commit:2fa2dfe286d2:sdk:Java:azure-resourcemanager-relationships",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T19:39:28Z",
+      "observedAt": "2026-08-12T19:39:28Z",
+      "trackId": "sdk:Java:azure-resourcemanager-relationships",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50118",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/2fa2dfe286d2fc71a90a990a163ed8a7045dab42"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50118:pr.created:sdk:Java:azure-resourcemanager-relationships",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T19:39:34Z",
+      "observedAt": "2026-08-12T19:39:34Z",
+      "trackId": "sdk:Java:azure-resourcemanager-relationships",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50118",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/50118"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado:36017:14:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-12T19:39:42.407Z",
+      "observedAt": "2026-08-12T19:39:42.407Z",
+      "trackId": "sdk:Java:azure-resourcemanager-relationships",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:36017",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/36017"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:36017:14:Custom.SDKPullRequestForJava",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-08-12T19:39:42.407Z",
+      "observedAt": "2026-08-12T19:39:42.407Z",
+      "trackId": "sdk:Java:azure-resourcemanager-relationships",
+      "value": "https://github.com/Azure/azure-sdk-for-java/pull/50118",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:36017",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/36017"
+      },
+      "title": "SDK PR linked",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50118:comment:5271957251:sdk:Java:azure-resourcemanager-relationships",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T19:40:21Z",
+      "observedAt": "2026-08-12T19:40:21Z",
+      "trackId": "sdk:Java:azure-resourcemanager-relationships",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50118",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/50118#issuecomment-5271957251"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 35 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50118:comment:3769768150:sdk:Java:azure-resourcemanager-relationships",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T19:42:12Z",
+      "observedAt": "2026-08-12T19:42:12Z",
+      "trackId": "sdk:Java:azure-resourcemanager-relationships",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50118",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/50118#discussion_r3769768150"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`ContainsRelationshipProperties` deserializes fields in `fromJson`, but `toJson` always serializes to `{}`. This breaks round-tripping and also means `ContainsRelationshipInner.toJson()` will emit empty `properties`. If this type is meant t",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50118:comment:3769768178:sdk:Java:azure-resourcemanager-relationships",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T19:42:12Z",
+      "observedAt": "2026-08-12T19:42:12Z",
+      "trackId": "sdk:Java:azure-resourcemanager-relationships",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50118",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/50118#discussion_r3769768178"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`subscriptionId` is required for the new `ContainsRelationships` endpoints (it is used in request paths), but the builder allows it to be unset. This can lead to malformed URLs at runtime. Add a build-time validation (e.g., in `buildClient(",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50118:comment:3769768202:sdk:Java:azure-resourcemanager-relationships",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T19:42:12Z",
+      "observedAt": "2026-08-12T19:42:12Z",
+      "trackId": "sdk:Java:azure-resourcemanager-relationships",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50118",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/50118#discussion_r3769768202"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`subscriptionId` is required for the new `ContainsRelationships` endpoints (it is used in request paths), but the builder allows it to be unset. This can lead to malformed URLs at runtime. Add a build-time validation (e.g., in `buildClient(",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50118:review:4920499915:sdk:Java:azure-resourcemanager-relationships",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T19:42:13Z",
+      "observedAt": "2026-08-12T19:42:13Z",
+      "trackId": "sdk:Java:azure-resourcemanager-relationships",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50118",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/50118#pullrequestreview-4920499915"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview > [!NOTE] > Copilot could not run the full agentic suite for this review because it was automatically requested on a bot-authored pull request. Request a review from Copilot under Reviewers to retry with the full ag",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50118:comment:3769768221:sdk:Java:azure-resourcemanager-relationships",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T19:42:13Z",
+      "observedAt": "2026-08-12T19:42:13Z",
+      "trackId": "sdk:Java:azure-resourcemanager-relationships",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50118",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/50118#discussion_r3769768221"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The `LOGGER` field is declared but not used anywhere in this class. Remove it to avoid unused-field warnings, or use it for parameter validation/error logging if needed.",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27376:review:4920703148:sdk:Go:sdk/resourcemanager/relationships/armrelationships",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T20:09:00Z",
+      "observedAt": "2026-08-12T20:09:00Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/relationships/armrelationships",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27376",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27376#pullrequestreview-4920703148"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot encountered an error and was unable to review this pull request. You can try again by re-requesting a review. > [!NOTE] > This error may be related to your runner configuration. You can now configure runners for Copilot code review ",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61993:review:4920703476:sdk:.NET:Azure.ResourceManager.Relationships",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T20:09:03Z",
+      "observedAt": "2026-08-12T20:09:03Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Relationships",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61993",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61993#pullrequestreview-4920703476"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot encountered an error and was unable to review this pull request. You can try again by re-requesting a review. > [!NOTE] > This error may be related to your runner configuration. You can now configure runners for Copilot code review ",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61993:comment:5272304798:sdk:.NET:Azure.ResourceManager.Relationships",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T20:15:32Z",
+      "observedAt": "2026-08-12T20:15:32Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Relationships",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61993",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61993#issuecomment-5272304798"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## 🔍 CI Failure Analysis for PR #61993 ### Summary | Check | Status | |---|---| | net - pullrequest | ❌ Failed | | Build Test (all platforms/frameworks) | ❌ Failed | | Build Analyze PRBatch | ❌ Failed | | Build snippets | ❌ Failed | | Buil",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48552:comment:5272317344:sdk:Python:azure-mgmt-relationships",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T20:16:46Z",
+      "observedAt": "2026-08-12T20:16:46Z",
+      "trackId": "sdk:Python:azure-mgmt-relationships",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48552",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48552#issuecomment-5272317344"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<details> <summary><strong>[Pilot] PR Pipeline Failure Analysis</strong></summary> A CI pipeline failed on this pull request. Here is an automated analysis of what went wrong and how to get the build green. ### What failed The **python - pu",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27376:comment:5274668406:sdk:Go:sdk/resourcemanager/relationships/armrelationships",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T01:04:46Z",
+      "observedAt": "2026-08-13T01:04:46Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/relationships/armrelationships",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27376",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27376#issuecomment-5274668406"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## PR is ready to merge",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50118:comment:5274753051:sdk:Java:azure-resourcemanager-relationships",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T01:18:47Z",
+      "observedAt": "2026-08-13T01:18:47Z",
+      "trackId": "sdk:Java:azure-resourcemanager-relationships",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50118",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/50118#issuecomment-5274753051"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Automated management AutoPR review - Head SHA: `2fa2dfe286d2fc71a90a990a163ed8a7045dab42` - Package: `azure-resourcemanager-relationships` 1.0.0-beta.2 - Release type: `beta` - API version: `2026-03-01-preview` - CHANGELOG: `1.0.0-beta.2",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50118:review:4922573816:sdk:Java:azure-resourcemanager-relationships",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T01:20:56Z",
+      "observedAt": "2026-08-13T01:20:56Z",
+      "trackId": "sdk:Java:azure-resourcemanager-relationships",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50118",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/50118#pullrequestreview-4922573816"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50118:comment:3771629198:sdk:Java:azure-resourcemanager-relationships",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T01:20:56Z",
+      "observedAt": "2026-08-13T01:20:56Z",
+      "trackId": "sdk:Java:azure-resourcemanager-relationships",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50118",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/50118#discussion_r3771629198"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Please fix this breaking change in client.tsp",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50118:review:4922663467:sdk:Java:azure-resourcemanager-relationships",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T01:40:08Z",
+      "observedAt": "2026-08-13T01:40:08Z",
+      "trackId": "sdk:Java:azure-resourcemanager-relationships",
+      "title": "Changes requested",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50118",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/50118#pullrequestreview-4922663467"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Rename `ServiceGroupMemberRelationshipPropertiesV2` back to `ServiceGroupMemberRelationshipProperties`. We don't want to see V2 V3 V4 in SDK. You can rename the now unused `ServiceGroupMemberRelationshipProperties` to anything you like.",
+      "reviewState": "changes_requested",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27376:review:4922751075:sdk:Go:sdk/resourcemanager/relationships/armrelationships",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T02:01:33Z",
+      "observedAt": "2026-08-13T02:01:33Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/relationships/armrelationships",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "JiaqiZhang-Dev"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27376",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27376#pullrequestreview-4922751075"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27376:comment:3771805165:sdk:Go:sdk/resourcemanager/relationships/armrelationships",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T02:01:33Z",
+      "observedAt": "2026-08-13T02:01:33Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/relationships/armrelationships",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "JiaqiZhang-Dev"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27376",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27376#discussion_r3771805165"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@kazrael2119 could you help add `factory-gather-all-params: false` into tspconfig.yaml to mitigate this breaking change?",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27376:review:4922755583:sdk:Go:sdk/resourcemanager/relationships/armrelationships",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T02:02:15Z",
+      "observedAt": "2026-08-13T02:02:15Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/relationships/armrelationships",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "JiaqiZhang-Dev"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27376",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27376#pullrequestreview-4922755583"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27376:comment:3771816735:sdk:Go:sdk/resourcemanager/relationships/armrelationships",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T02:02:15Z",
+      "observedAt": "2026-08-13T02:02:15Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/relationships/armrelationships",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "JiaqiZhang-Dev"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27376",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27376#discussion_r3771816735"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@kazrael2119 could you help check if we can mitigate this breaking change?",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48552:comment:5275247675:sdk:Python:azure-mgmt-relationships",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T02:32:41Z",
+      "observedAt": "2026-08-13T02:32:41Z",
+      "trackId": "sdk:Python:azure-mgmt-relationships",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48552",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48552#issuecomment-5275247675"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi, the new api version `2026-03-01-preview` seems not deployed on portal yet, we recommend making sure the api version to be deployed before releasing the SDK, though we won't block the release in self-serve release flow.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48552:commit:97040fdd5441:sdk:Python:azure-mgmt-relationships",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T02:32:50Z",
+      "observedAt": "2026-08-13T02:32:50Z",
+      "trackId": "sdk:Python:azure-mgmt-relationships",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48552",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/97040fdd5441b05389ddd8abb785d67482df1266"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48552:review:4922898483:sdk:Python:azure-mgmt-relationships",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T02:33:19Z",
+      "observedAt": "2026-08-13T02:33:19Z",
+      "trackId": "sdk:Python:azure-mgmt-relationships",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48552",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48552#pullrequestreview-4922898483"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @ningyixue-ms, we have approved the PR. You can move on to merge and release though the action suggestion in Release Plan.",
+      "reviewState": "approved",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48552:review:4922913200:sdk:Python:azure-mgmt-relationships",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T02:37:18Z",
+      "observedAt": "2026-08-13T02:37:18Z",
+      "trackId": "sdk:Python:azure-mgmt-relationships",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48552",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48552#pullrequestreview-4922913200"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Copilot reviewed 40 out of 40 changed files in this pull request and generated no new comments. <details> <summary>Suppressed comments (4)</summary> **sdk/relationships/azure-mgmt-relationships/azure/mgmt/relationsh",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48552:comment:5275295830:sdk:Python:azure-mgmt-relationships",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T02:40:23Z",
+      "observedAt": "2026-08-13T02:40:23Z",
+      "trackId": "sdk:Python:azure-mgmt-relationships",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48552",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48552#issuecomment-5275295830"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Management SDK PR review | Severity | Finding | Location | Evidence | Rule | Remediation | | --- | --- | --- | --- | --- | --- | | `Blocking` | README client example omits required `subscription_id` argument | `sdk/relationships/azure-mg",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48552:commit:28ab53d8eb63:sdk:Python:azure-mgmt-relationships",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T03:34:39Z",
+      "observedAt": "2026-08-13T03:34:39Z",
+      "trackId": "sdk:Python:azure-mgmt-relationships",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48552",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/28ab53d8eb637ce71b5a1cde12d2844e90d45c41"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48552:review:4923167249:sdk:Python:azure-mgmt-relationships",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T03:38:30Z",
+      "observedAt": "2026-08-13T03:38:30Z",
+      "trackId": "sdk:Python:azure-mgmt-relationships",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48552",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48552#pullrequestreview-4923167249"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Copilot reviewed 40 out of 40 changed files in this pull request and generated no new comments. <details> <summary>Suppressed comments (2)</summary> **sdk/relationships/azure-mgmt-relationships/azure/mgmt/relationsh",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48552:commit:7e91812b3cef:sdk:Python:azure-mgmt-relationships",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T03:44:56Z",
+      "observedAt": "2026-08-13T03:44:56Z",
+      "trackId": "sdk:Python:azure-mgmt-relationships",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48552",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/7e91812b3cefbd70f94bea037ec6d827fe5c1e5d"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48552:comment:3772243839:sdk:Python:azure-mgmt-relationships",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T03:47:21Z",
+      "observedAt": "2026-08-13T03:47:21Z",
+      "trackId": "sdk:Python:azure-mgmt-relationships",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48552",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48552#discussion_r3772243839"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Returning the field default when the key is absent changes semantics in a way that breaks the existing 'clear this field' behavior. In particular, `_RestField.__set__` deletes the key when a user sets the attribute to `None`, but `__get__` ",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48552:comment:3772243866:sdk:Python:azure-mgmt-relationships",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T03:47:21Z",
+      "observedAt": "2026-08-13T03:47:21Z",
+      "trackId": "sdk:Python:azure-mgmt-relationships",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48552",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48552#discussion_r3772243866"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The decorator assumes `client._config.api_version` is always a string found in `api_versions_list`. However the generated client docstrings/config comment indicate `api_version` can be `None`; if a caller passes `None`, `_index_with_default",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48552:comment:3772243875:sdk:Python:azure-mgmt-relationships",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T03:47:21Z",
+      "observedAt": "2026-08-13T03:47:21Z",
+      "trackId": "sdk:Python:azure-mgmt-relationships",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48552",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48552#discussion_r3772243875"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The decorator assumes `client._config.api_version` is always a string found in `api_versions_list`. However the generated client docstrings/config comment indicate `api_version` can be `None`; if a caller passes `None`, `_index_with_default",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48552:review:4923203039:sdk:Python:azure-mgmt-relationships",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T03:47:22Z",
+      "observedAt": "2026-08-13T03:47:22Z",
+      "trackId": "sdk:Python:azure-mgmt-relationships",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48552",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48552#pullrequestreview-4923203039"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Copilot reviewed 40 out of 40 changed files in this pull request and generated 3 comments. <details> <summary>Suppressed comments (4)</summary> **sdk/relationships/azure-mgmt-relationships/generated_tests/test_relat",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48552:commit:8098d7447274:sdk:Python:azure-mgmt-relationships",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T03:49:37Z",
+      "observedAt": "2026-08-13T03:49:37Z",
+      "trackId": "sdk:Python:azure-mgmt-relationships",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48552",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/8098d74472741fe147fe046f388e1f3ab55d14ae"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48552:review:4923229561:sdk:Python:azure-mgmt-relationships",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T03:53:12Z",
+      "observedAt": "2026-08-13T03:53:12Z",
+      "trackId": "sdk:Python:azure-mgmt-relationships",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48552",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48552#pullrequestreview-4923229561"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Copilot reviewed 40 out of 40 changed files in this pull request and generated no new comments. <details> <summary>Suppressed comments (1)</summary> **sdk/relationships/azure-mgmt-relationships/CHANGELOG.md:7** * Th",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27376:review:4923831629:sdk:Go:sdk/resourcemanager/relationships/armrelationships",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T05:55:58Z",
+      "observedAt": "2026-08-13T05:55:58Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/relationships/armrelationships",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27376",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27376#pullrequestreview-4923831629"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27376:comment:3772774679:sdk:Go:sdk/resourcemanager/relationships/armrelationships",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T05:55:58Z",
+      "observedAt": "2026-08-13T05:55:58Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/relationships/armrelationships",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27376",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27376#discussion_r3772774679"
+      },
+      "confidence": "authoritative",
+      "excerpt": "https://github.com/Azure/azure-rest-api-specs/pull/45460",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39577:review:4923881607:sdk:JavaScript:@azure/arm-relationships",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T06:05:10Z",
+      "observedAt": "2026-08-13T06:05:10Z",
+      "trackId": "sdk:JavaScript:@azure/arm-relationships",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39577",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39577#pullrequestreview-4923881607"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Reviewed `@azure/arm-relationships` PR (1.0.0-beta.1 → 1.0.0-beta.2) against the tooling and public API surface guidelines. No violations found: package version (`1.0.0-beta.2`) is consistent across `package.json`, `src/api/relationshipsCon",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27376:commit:2b2d26b6a67a:sdk:Go:sdk/resourcemanager/relationships/armrelationships",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T06:19:24Z",
+      "observedAt": "2026-08-13T06:19:24Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/relationships/armrelationships",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27376",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/2b2d26b6a67a7631f3a39ced8d516f052210eb0e"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27376:review:4923977813:sdk:Go:sdk/resourcemanager/relationships/armrelationships",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T06:20:31Z",
+      "observedAt": "2026-08-13T06:20:31Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/relationships/armrelationships",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27376",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27376#pullrequestreview-4923977813"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Copilot reviewed 4 out of 25 changed files in this pull request and generated no new comments. <details> <summary>Files not reviewed (20)</summary> * **sdk/resourcemanager/relationships/armrelationships/client_facto",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27376:review:4923986574:sdk:Go:sdk/resourcemanager/relationships/armrelationships",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T06:21:19Z",
+      "observedAt": "2026-08-13T06:21:19Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/relationships/armrelationships",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27376",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27376#pullrequestreview-4923986574"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Copilot reviewed 4 out of 25 changed files in this pull request and generated no new comments. <details> <summary>Files not reviewed (20)</summary> * **sdk/resourcemanager/relationships/armrelationships/client_facto",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39577:review:4924012178:sdk:JavaScript:@azure/arm-relationships",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T06:23:38Z",
+      "observedAt": "2026-08-13T06:23:38Z",
+      "trackId": "sdk:JavaScript:@azure/arm-relationships",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39577",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39577#pullrequestreview-4924012178"
+      },
+      "confidence": "authoritative",
+      "excerpt": "No API design or tooling issues found. Package `@azure/arm-relationships` is progressing from `1.0.0-beta.1` to `1.0.0-beta.2`; the API version (context file, CHANGELOG, package.json) and public API surface are consistent, new symbols (`Con",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6696805:generation.queued:sdk:.NET:Azure.ResourceManager.Relationships",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-08-13T06:25:42.3889319Z",
+      "observedAt": "2026-08-13T06:37:04.9580852Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Relationships",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6696805",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6696805"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:36017:15:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-13T06:25:45.02Z",
+      "observedAt": "2026-08-13T06:25:45.02Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Relationships",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:36017",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/36017"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6696809:generation.queued:sdk:Java:azure-resourcemanager-relationships",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-08-13T06:25:52.6634239Z",
+      "observedAt": "2026-08-13T06:49:32.5231201Z",
+      "trackId": "sdk:Java:azure-resourcemanager-relationships",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6696809",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6696809"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:36017:16:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-13T06:25:56.44Z",
+      "observedAt": "2026-08-13T06:25:56.44Z",
+      "trackId": "sdk:Java:azure-resourcemanager-relationships",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:36017",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/36017"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:6696813:generation.queued:sdk:JavaScript:@azure/arm-relationships",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-08-13T06:26:01.9188891Z",
+      "observedAt": "2026-08-13T06:37:54.7071344Z",
+      "trackId": "sdk:JavaScript:@azure/arm-relationships",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6696813",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6696813"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:36017:17:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-13T06:26:04.503Z",
+      "observedAt": "2026-08-13T06:26:04.503Z",
+      "trackId": "sdk:JavaScript:@azure/arm-relationships",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:36017",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/36017"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6696817:generation.queued:sdk:Python:azure-mgmt-relationships",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-08-13T06:26:10.5106012Z",
+      "observedAt": "2026-08-13T06:37:32.4820535Z",
+      "trackId": "sdk:Python:azure-mgmt-relationships",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6696817",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6696817"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:36017:18:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-13T06:26:12.66Z",
+      "observedAt": "2026-08-13T06:26:12.66Z",
+      "trackId": "sdk:Python:azure-mgmt-relationships",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:36017",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/36017"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6696818:generation.queued:sdk:Go:sdk/resourcemanager/relationships/armrelationships",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-08-13T06:26:18.5127605Z",
+      "observedAt": "2026-08-13T06:37:33.1128854Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/relationships/armrelationships",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6696818",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6696818"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:36017:19:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-13T06:26:20.697Z",
+      "observedAt": "2026-08-13T06:26:20.697Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/relationships/armrelationships",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:36017",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/36017"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6696805:generation.started:sdk:.NET:Azure.ResourceManager.Relationships",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-08-13T06:29:38.2980519Z",
+      "observedAt": "2026-08-13T06:37:04.9580852Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Relationships",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6696805",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6696805"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6696809:generation.started:sdk:Java:azure-resourcemanager-relationships",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-08-13T06:29:43.2873678Z",
+      "observedAt": "2026-08-13T06:49:32.5231201Z",
+      "trackId": "sdk:Java:azure-resourcemanager-relationships",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6696809",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6696809"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6696813:generation.started:sdk:JavaScript:@azure/arm-relationships",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-08-13T06:29:49.0037294Z",
+      "observedAt": "2026-08-13T06:37:54.7071344Z",
+      "trackId": "sdk:JavaScript:@azure/arm-relationships",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6696813",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6696813"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6696817:generation.started:sdk:Python:azure-mgmt-relationships",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-08-13T06:29:50.1888901Z",
+      "observedAt": "2026-08-13T06:37:32.4820535Z",
+      "trackId": "sdk:Python:azure-mgmt-relationships",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6696817",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6696817"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6696818:generation.started:sdk:Go:sdk/resourcemanager/relationships/armrelationships",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-08-13T06:30:10.9499757Z",
+      "observedAt": "2026-08-13T06:37:33.1128854Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/relationships/armrelationships",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6696818",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6696818"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27376:review:4924108803:sdk:Go:sdk/resourcemanager/relationships/armrelationships",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T06:35:32Z",
+      "observedAt": "2026-08-13T06:35:32Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/relationships/armrelationships",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "JiaqiZhang-Dev"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27376",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27376#pullrequestreview-4924108803"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61993:commit:d6c0a1cef2e8:sdk:.NET:Azure.ResourceManager.Relationships",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T06:36:00Z",
+      "observedAt": "2026-08-13T06:36:00Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Relationships",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61993",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/d6c0a1cef2e890665b165716d020aeced1800a4a"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado:36017:20:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-13T06:36:12.85Z",
+      "observedAt": "2026-08-13T06:36:12.85Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Relationships",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:36017",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/36017"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48552:commit:a3e368e7bb64:sdk:Python:azure-mgmt-relationships",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T06:36:19Z",
+      "observedAt": "2026-08-13T06:36:19Z",
+      "trackId": "sdk:Python:azure-mgmt-relationships",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48552",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/a3e368e7bb649b80128c84c6288b3dab43c0dfdb"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:36017:21:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-13T06:36:23.563Z",
+      "observedAt": "2026-08-13T06:36:23.563Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/relationships/armrelationships",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:36017",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/36017"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39577:commit:963dc4cc6d12:sdk:JavaScript:@azure/arm-relationships",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T06:36:29Z",
+      "observedAt": "2026-08-13T06:36:29Z",
+      "trackId": "sdk:JavaScript:@azure/arm-relationships",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39577",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/963dc4cc6d12737f02538ec1797b1f9ac439b4b4"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:36017:22:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-13T06:36:30.357Z",
+      "observedAt": "2026-08-13T06:36:30.357Z",
+      "trackId": "sdk:Python:azure-mgmt-relationships",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:36017",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/36017"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:36017:23:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-13T06:36:39.78Z",
+      "observedAt": "2026-08-13T06:36:39.78Z",
+      "trackId": "sdk:JavaScript:@azure/arm-relationships",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:36017",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/36017"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6696805:generation.completed:sdk:.NET:Azure.ResourceManager.Relationships",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-08-13T06:37:04.9580852Z",
+      "observedAt": "2026-08-13T06:37:04.9580852Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Relationships",
+      "title": "Pipeline completed with issues",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6696805",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6696805"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:6696817:generation.completed:sdk:Python:azure-mgmt-relationships",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-08-13T06:37:32.4820535Z",
+      "observedAt": "2026-08-13T06:37:32.4820535Z",
+      "trackId": "sdk:Python:azure-mgmt-relationships",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6696817",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6696817"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6696818:generation.completed:sdk:Go:sdk/resourcemanager/relationships/armrelationships",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-08-13T06:37:33.1128854Z",
+      "observedAt": "2026-08-13T06:37:33.1128854Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/relationships/armrelationships",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6696818",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6696818"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6696813:generation.completed:sdk:JavaScript:@azure/arm-relationships",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-08-13T06:37:54.7071344Z",
+      "observedAt": "2026-08-13T06:37:54.7071344Z",
+      "trackId": "sdk:JavaScript:@azure/arm-relationships",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6696813",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6696813"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50118:commit:586cff4171d9:sdk:Java:azure-resourcemanager-relationships",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T06:38:48Z",
+      "observedAt": "2026-08-13T06:38:48Z",
+      "trackId": "sdk:Java:azure-resourcemanager-relationships",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50118",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/586cff4171d94791e54c02b44a2ded0ac1974387"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39577:review:4924129207:sdk:JavaScript:@azure/arm-relationships",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T06:38:51Z",
+      "observedAt": "2026-08-13T06:38:51Z",
+      "trackId": "sdk:JavaScript:@azure/arm-relationships",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39577",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39577#pullrequestreview-4924129207"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Copilot reviewed 69 out of 69 changed files in this pull request and generated no new comments. <details> <summary>Suppressed comments (4)</summary> **sdk/relationships/arm-relationships/src/api/relationshipsContext",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48552:review:4924129222:sdk:Python:azure-mgmt-relationships",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T06:38:51Z",
+      "observedAt": "2026-08-13T06:38:51Z",
+      "trackId": "sdk:Python:azure-mgmt-relationships",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48552",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48552#pullrequestreview-4924129222"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Copilot reviewed 40 out of 40 changed files in this pull request and generated no new comments. <details> <summary>Suppressed comments (10)</summary> **sdk/relationships/azure-mgmt-relationships/generated_tests/test",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "ado:36017:24:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-13T06:38:59.757Z",
+      "observedAt": "2026-08-13T06:38:59.757Z",
+      "trackId": "sdk:Java:azure-resourcemanager-relationships",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:36017",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/36017"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48552:comment:3773019435:sdk:Python:azure-mgmt-relationships",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T06:41:17Z",
+      "observedAt": "2026-08-13T06:41:17Z",
+      "trackId": "sdk:Python:azure-mgmt-relationships",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48552",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48552#discussion_r3773019435"
+      },
+      "confidence": "authoritative",
+      "excerpt": "If a caller sets the client/config `api_version` to `None` (which the current docstrings imply is supported), the request builder will pass `None` to `_SERIALIZER.query(...)`, which raises due to `serialize_data` rejecting `None`. Either di",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48552:comment:3773019469:sdk:Python:azure-mgmt-relationships",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T06:41:17Z",
+      "observedAt": "2026-08-13T06:41:17Z",
+      "trackId": "sdk:Python:azure-mgmt-relationships",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48552",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48552#discussion_r3773019469"
+      },
+      "confidence": "authoritative",
+      "excerpt": "If a caller sets the client/config `api_version` to `None` (which the current docstrings imply is supported), the request builder will pass `None` to `_SERIALIZER.query(...)`, which raises due to `serialize_data` rejecting `None`. Either di",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48552:review:4924143434:sdk:Python:azure-mgmt-relationships",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T06:41:18Z",
+      "observedAt": "2026-08-13T06:41:18Z",
+      "trackId": "sdk:Python:azure-mgmt-relationships",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48552",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48552#pullrequestreview-4924143434"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Copilot reviewed 40 out of 40 changed files in this pull request and generated 2 comments. <details> <summary>Suppressed comments (10)</summary> **sdk/relationships/azure-mgmt-relationships/pyproject.toml:1** * The ",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:6696809:generation.completed:sdk:Java:azure-resourcemanager-relationships",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-08-13T06:49:32.5231201Z",
+      "observedAt": "2026-08-13T06:49:32.5231201Z",
+      "trackId": "sdk:Java:azure-resourcemanager-relationships",
+      "title": "Pipeline completed with issues",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6696809",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6696809"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48552:commit:6cfdb56a78b6:sdk:Python:azure-mgmt-relationships",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T06:51:06Z",
+      "observedAt": "2026-08-13T06:51:06Z",
+      "trackId": "sdk:Python:azure-mgmt-relationships",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48552",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/6cfdb56a78b626abd2bf324df37681a5a22fbc2e"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48552:review:4924241744:sdk:Python:azure-mgmt-relationships",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T06:55:11Z",
+      "observedAt": "2026-08-13T06:55:11Z",
+      "trackId": "sdk:Python:azure-mgmt-relationships",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48552",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48552#pullrequestreview-4924241744"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Copilot reviewed 40 out of 40 changed files in this pull request and generated no new comments. <details> <summary>Suppressed comments (1)</summary> **sdk/relationships/azure-mgmt-relationships/CHANGELOG.md:5** * Re",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48552:commit:1d7f68e61312:sdk:Python:azure-mgmt-relationships",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T07:01:51Z",
+      "observedAt": "2026-08-13T07:01:51Z",
+      "trackId": "sdk:Python:azure-mgmt-relationships",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48552",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/1d7f68e61312212e7e711badeac54c8aeb5caf78"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39577:comment:5277128534:sdk:JavaScript:@azure/arm-relationships",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T07:02:05Z",
+      "observedAt": "2026-08-13T07:02:05Z",
+      "trackId": "sdk:JavaScript:@azure/arm-relationships",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39577",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39577#issuecomment-5277128534"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Next Steps to Merge ✅ All CI checks have passed — this PR is ready for review! The SDK engineer will review this PR shortly. Once it's approved, you can go ahead and merge it. To make things easier, feel free to [enable auto-merge](https",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48552:review:4924308064:sdk:Python:azure-mgmt-relationships",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T07:03:53Z",
+      "observedAt": "2026-08-13T07:03:53Z",
+      "trackId": "sdk:Python:azure-mgmt-relationships",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48552",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48552#pullrequestreview-4924308064"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Copilot reviewed 40 out of 40 changed files in this pull request and generated no new comments. <details> <summary>Suppressed comments (6)</summary> **sdk/relationships/azure-mgmt-relationships/pyproject.toml:1** * ",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48552:review:4924318783:sdk:Python:azure-mgmt-relationships",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T07:05:39Z",
+      "observedAt": "2026-08-13T07:05:39Z",
+      "trackId": "sdk:Python:azure-mgmt-relationships",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48552",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48552#pullrequestreview-4924318783"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Copilot reviewed 40 out of 40 changed files in this pull request and generated no new comments. <details> <summary>Suppressed comments (5)</summary> **sdk/relationships/azure-mgmt-relationships/pyproject.toml:1** * ",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39577:comment:5277219667:sdk:JavaScript:@azure/arm-relationships",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T07:12:49Z",
+      "observedAt": "2026-08-13T07:12:49Z",
+      "trackId": "sdk:JavaScript:@azure/arm-relationships",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39577",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39577#issuecomment-5277219667"
+      },
+      "confidence": "authoritative",
+      "excerpt": "LGTM cc @JialinHuang803",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48552:comment:5278289867:sdk:Python:azure-mgmt-relationships",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T09:06:07Z",
+      "observedAt": "2026-08-13T09:06:07Z",
+      "trackId": "sdk:Python:azure-mgmt-relationships",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48552",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48552#issuecomment-5278289867"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> ## Management SDK PR review > Severity Finding Location Evidence Rule Remediation > `Blocking` README client example omits required `subscription_id` argument `sdk/relationships/azure-mgmt-relationships/README.md` (Authentication section)",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48552:review:4925299284:sdk:Python:azure-mgmt-relationships",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T09:07:14Z",
+      "observedAt": "2026-08-13T09:07:14Z",
+      "trackId": "sdk:Python:azure-mgmt-relationships",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48552",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48552#pullrequestreview-4925299284"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    }
+  ],
+  "quality": {
+    "warnings": [
+      "5 historical linked PR(s) closed without merge"
+    ],
+    "unavailablePullRequests": 0,
+    "unavailablePipelineRuns": 0
+  },
+  "boundaryFacts": {
+    "id": "36017",
+    "state": "in-progress",
+    "specPrs": [
+      {
+        "id": "github:Azure/azure-rest-api-specs#44941",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#44941",
+        "createdAt": "2026-07-23T23:01:39Z",
+        "mergedAt": "2026-08-12T19:06:34Z",
+        "closedAt": "2026-08-12T19:06:34Z",
+        "available": true
+      }
+    ],
+    "artifacts": [
+      {
+        "language": ".NET",
+        "package": "Azure.ResourceManager.Relationships",
+        "trackId": "sdk:.NET:Azure.ResourceManager.Relationships",
+        "prId": "github:Azure/azure-sdk-for-net#61993",
+        "prCreatedAt": "2026-08-12T19:36:11Z",
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-net#61993",
+            "createdAt": "2026-08-12T19:36:11Z",
+            "mergedAt": null,
+            "closedAt": null,
+            "state": "open"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6696805",
+        "generationStartAt": "2026-08-13T06:29:38.2980519Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "JavaScript",
+        "package": "@azure/arm-relationships",
+        "trackId": "sdk:JavaScript:@azure/arm-relationships",
+        "prId": "github:Azure/azure-sdk-for-js#39577",
+        "prCreatedAt": "2026-08-12T19:37:00Z",
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-js#39577",
+            "createdAt": "2026-08-12T19:37:00Z",
+            "mergedAt": null,
+            "closedAt": null,
+            "state": "open"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6696813",
+        "generationStartAt": "2026-08-13T06:29:49.0037294Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Python",
+        "package": "azure-mgmt-relationships",
+        "trackId": "sdk:Python:azure-mgmt-relationships",
+        "prId": "github:Azure/azure-sdk-for-python#48552",
+        "prCreatedAt": "2026-08-12T19:36:45Z",
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-python#48552",
+            "createdAt": "2026-08-12T19:36:45Z",
+            "mergedAt": null,
+            "closedAt": null,
+            "state": "open"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6696817",
+        "generationStartAt": "2026-08-13T06:29:50.1888901Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Java",
+        "package": "azure-resourcemanager-relationships",
+        "trackId": "sdk:Java:azure-resourcemanager-relationships",
+        "prId": "github:Azure/azure-sdk-for-java#50118",
+        "prCreatedAt": "2026-08-12T19:39:34Z",
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-java#50118",
+            "createdAt": "2026-08-12T19:39:34Z",
+            "mergedAt": null,
+            "closedAt": null,
+            "state": "open"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6696809",
+        "generationStartAt": "2026-08-13T06:29:43.2873678Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Go",
+        "package": "sdk/resourcemanager/relationships/armrelationships",
+        "trackId": "sdk:Go:sdk/resourcemanager/relationships/armrelationships",
+        "prId": "github:Azure/azure-sdk-for-go#27376",
+        "prCreatedAt": "2026-08-12T19:35:39Z",
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-go#27376",
+            "createdAt": "2026-08-12T19:35:39Z",
+            "mergedAt": null,
+            "closedAt": null,
+            "state": "open"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6696818",
+        "generationStartAt": "2026-08-13T06:30:10.9499757Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      }
+    ],
+    "cohortPlan": {
+      "id": "36017",
+      "releasePlanId": "36017",
+      "title": "Public Preview release plan for Relationships",
+      "service": "Relationships",
+      "state": "in-progress"
+    },
+    "quality": {
+      "warnings": [
+        "5 historical linked PR(s) closed without merge"
+      ],
+      "unavailablePullRequests": 0,
+      "unavailablePipelineRuns": 0
+    }
+  },
+  "summary": {
+    "durationHours": 29.4,
+    "pullRequestCount": 6,
+    "humanReviewCount": 19,
+    "humanCommentCount": 21
+  }
+}

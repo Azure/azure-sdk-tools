@@ -1,0 +1,2411 @@
+{
+  "schemaVersion": 2,
+  "id": "34802",
+  "correlation": {
+    "policyVersion": 1,
+    "preflight": "passed"
+  },
+  "releasePlanId": "1570",
+  "title": "Release plan - 1570 - Public Preview - Release Planner Test Product",
+  "service": "Program Enrollment",
+  "product": "Release",
+  "path": "specification/programenrollment/resource-manager/Microsoft.ProgramEnrollment/ProgramEnrollment",
+  "state": "new",
+  "plane": "management",
+  "releaseType": "APEX Public Preview",
+  "intendedMonth": "June 2026",
+  "createdAt": "2026-06-02T19:17:55.553Z",
+  "completedAt": null,
+  "sourceUrl": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34802",
+  "range": {
+    "start": "2026-05-14T21:10:29.000Z",
+    "end": "2026-08-14T00:37:23.589Z"
+  },
+  "intendedArtifacts": [
+    {
+      "prId": null,
+      "language": ".NET",
+      "package": null,
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": null,
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": null,
+      "language": "JavaScript",
+      "package": "@azure/arm-programenrollment",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6373828",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": null,
+      "language": "Python",
+      "package": "azure-mgmt-programenrollment",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6373830",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": null,
+      "language": "Java",
+      "package": "azure-resourcemanager-programenrollment",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6373831",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": null,
+      "language": "Go",
+      "package": "sdk/resourcemanager/programenrollment/armprogramenrollment",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6373829",
+      "releasePipelineUrl": null
+    }
+  ],
+  "links": [
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs-pr#28537",
+      "role": "spec-pr",
+      "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537",
+      "releasePlanIds": []
+    }
+  ],
+  "tracks": [
+    {
+      "id": "plan",
+      "kind": "plan",
+      "label": "Release Plan",
+      "detail": "APEX Public Preview"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "kind": "spec",
+      "label": "Spec PR",
+      "detail": "azure-rest-api-specs-pr #28537",
+      "artifactId": "github:Azure/azure-rest-api-specs-pr#28537",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:.NET:.NET",
+      "kind": "sdk",
+      "label": ".NET",
+      "detail": "Package not recorded",
+      "artifactId": null,
+      "state": "missing"
+    },
+    {
+      "id": "sdk:JavaScript:@azure/arm-programenrollment",
+      "kind": "sdk",
+      "label": "JavaScript",
+      "detail": "@azure/arm-programenrollment",
+      "artifactId": null,
+      "state": "missing"
+    },
+    {
+      "id": "sdk:Python:azure-mgmt-programenrollment",
+      "kind": "sdk",
+      "label": "Python",
+      "detail": "azure-mgmt-programenrollment",
+      "artifactId": null,
+      "state": "missing"
+    },
+    {
+      "id": "sdk:Java:azure-resourcemanager-programenrollment",
+      "kind": "sdk",
+      "label": "Java",
+      "detail": "azure-resourcemanager-programenrollment",
+      "artifactId": null,
+      "state": "missing"
+    },
+    {
+      "id": "sdk:Go:sdk/resourcemanager/programenrollment/armprogramenrollment",
+      "kind": "sdk",
+      "label": "Go",
+      "detail": "sdk/resourcemanager/programenrollment/armprogramenrollment",
+      "artifactId": null,
+      "state": "missing"
+    }
+  ],
+  "events": [
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:pr.created:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-14T21:10:29Z",
+      "observedAt": "2026-05-14T21:10:29Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "wanlei123188-gm"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:comment:4454802270:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-14T21:15:34Z",
+      "observedAt": "2026-05-14T21:15:34Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537#issuecomment-4454802270"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>✅ All automated merging requirements have been met! To get your PR merged, see <a href=\"https://aka.ms/azsdk/specreview/merge\">aka.ms/azsdk/specreview/merge</a>.<br /><br />Comment generated by <a href=\"https://g",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:comment:4454827459:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-14T21:19:28Z",
+      "observedAt": "2026-05-14T21:19:28Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537#issuecomment-4454827459"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews | Language | API Review for Package | |----------|---------| | TypeSpec | [Microsoft.ProgramEnrollment](https://spa.apiview.dev/review",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:review:4321820071:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-19T18:15:20Z",
+      "observedAt": "2026-05-19T18:15:20Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "wilcobmsft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537#pullrequestreview-4321820071"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:comment:4491502103:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-19T19:54:48Z",
+      "observedAt": "2026-05-19T19:54:48Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "wanlei123188-gm"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537#issuecomment-4491502103"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@microsoft-github-policy-service agree company=\"Microsoft\"",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:comment:4493326243:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-20T00:18:21Z",
+      "observedAt": "2026-05-20T00:18:21Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "wanlei123188-gm"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537#issuecomment-4493326243"
+      },
+      "confidence": "authoritative",
+      "excerpt": "/azp run",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:comment:4493327023:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-20T00:18:28Z",
+      "observedAt": "2026-05-20T00:18:28Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537#issuecomment-4493327023"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> You have several pipelines (over 10) configured to build pull requests in this repository. Specify which pipelines you would like to run by using /azp run [pipelines] command. You can specify multiple pipelines using a comma separate",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:comment:4493395982:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-20T00:33:03Z",
+      "observedAt": "2026-05-20T00:33:03Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "wanlei123188-gm"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537#issuecomment-4493395982"
+      },
+      "confidence": "authoritative",
+      "excerpt": "/azp run TypeSpec Validation",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:comment:4493396600:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-20T00:33:11Z",
+      "observedAt": "2026-05-20T00:33:11Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537#issuecomment-4493396600"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines could not run because the pipeline triggers exclude this branch/path.<br> </samp>",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:comment:4493906613:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-20T02:13:55Z",
+      "observedAt": "2026-05-20T02:13:55Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "wanlei123188-gm"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537#issuecomment-4493906613"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Can I get a lease file status ? this is a blocker for our team right now and creating risk to our GA deadline. appreciate your help!",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:review:4333041852:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-21T00:10:53Z",
+      "observedAt": "2026-05-21T00:10:53Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "mentat9"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537#pullrequestreview-4333041852"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:comment:3277874305:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-21T00:10:53Z",
+      "observedAt": "2026-05-21T00:10:53Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "mentat9"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537#discussion_r3277874305"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Why do you need these? There aren't any invalid characters in your key or segment. Please remove.",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:review:4333042078:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-21T00:10:58Z",
+      "observedAt": "2026-05-21T00:10:58Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "mentat9"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537#pullrequestreview-4333042078"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:comment:3277874550:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-21T00:10:58Z",
+      "observedAt": "2026-05-21T00:10:58Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "mentat9"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537#discussion_r3277874550"
+      },
+      "confidence": "authoritative",
+      "excerpt": ">string [](http://example.com/codeflow?start=13&length=6) Recommend uuid for this. Note: it will require adding a suppression, but ARM reviewers will approve it.",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:commit:a44882f6011b:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-21T16:51:02Z",
+      "observedAt": "2026-05-21T16:51:02Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/commit/a44882f6011b2f6ec911c6d1948d546febe082c2"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:commit:06856533e8fb:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-27T00:58:59Z",
+      "observedAt": "2026-05-27T00:58:59Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/commit/06856533e8fb2aff474459d21fd14d61ec007c2c"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:review:4377325536:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-28T01:54:00Z",
+      "observedAt": "2026-05-28T01:54:00Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ravimeda"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537#pullrequestreview-4377325536"
+      },
+      "confidence": "authoritative",
+      "excerpt": "ARM API review (automated, human-gated). New RP, first preview version. 0 blocking, 5 warnings, 2 suggestions. All [NEW] in this PR.",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:comment:3314867473:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-28T01:54:00Z",
+      "observedAt": "2026-05-28T01:54:00Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ravimeda"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537#discussion_r3314867473"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[NEW] 🟡 Warning** **[Tracked-resource DELETE: sync vs async inconsistency]** **Issue:** `EduEnrollment` is a tracked resource with **async** PUT (`ArmResourceCreateOrReplaceAsync` → 200/201 + `Azure-AsyncOperation` header, `x-ms-long-run",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:comment:3314867475:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-28T01:54:00Z",
+      "observedAt": "2026-05-28T01:54:00Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ravimeda"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537#discussion_r3314867475"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[NEW] 🟡 Warning** **[`Accepted` is an HTTP status, not a persisted `provisioningState`]** **Issue:** `ProvisioningState` (line 49) includes `Accepted: \"Accepted\"`. The HTTP 202 Accepted semantics belong on the **response** (the `Azure-As",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:comment:3314867476:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-28T01:54:00Z",
+      "observedAt": "2026-05-28T01:54:00Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ravimeda"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537#discussion_r3314867476"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[NEW] 🟡 Warning** **[Enum wire-value casing inconsistency between sibling enums]** **Issue:** `DomainGroupState` (lines 53-67) uses **lowercase** wire values: `pending`, `actionRequired`, `failed`, `succeeded`. The sibling `ProvisioningS",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:comment:3314867478:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-28T01:54:00Z",
+      "observedAt": "2026-05-28T01:54:00Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ravimeda"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537#discussion_r3314867478"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[NEW] 🟡 Warning** **[`EnrollmentError` reinvents common-types `ErrorDetail`]** **Issue:** `EnrollmentError { code: string, message: string }` (lines 70-76, used at line 95 `DomainGroup.error` and line 112 `EduEnrollmentProperties.error`)",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:comment:3314867481:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-28T01:54:00Z",
+      "observedAt": "2026-05-28T01:54:00Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ravimeda"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537#discussion_r3314867481"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[NEW] 🟡 Warning** **[Field named `error` inside 200 OK body conflates with HTTP error envelope]** **Issue:** Both `DomainGroup.error` (line 95) and `EduEnrollmentProperties.error` (line 112) appear inside a successful 200 OK body. Generi",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:comment:3314867486:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-28T01:54:00Z",
+      "observedAt": "2026-05-28T01:54:00Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ravimeda"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537#discussion_r3314867486"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[NEW] 💡 Suggestion** **[`@identifiers(#[])` on `domains` loses SDK collection ergonomics]** **Issue:** `EduEnrollmentProperties.domains` (line 107-108) declares `@identifiers(#[])`, telling SDK generators the array has no per-item key. T",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:comment:3314867488:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-28T01:54:00Z",
+      "observedAt": "2026-05-28T01:54:00Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ravimeda"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537#discussion_r3314867488"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[NEW] 💡 Suggestion** **[Doc string is a copy-paste from a different RP]** **Issue:** `@doc(\"A ProgramProviderHub resource\")` (line 24) on `model EduEnrollment`. The model is an \"edu enrollment\", not a \"ProgramProviderHub\" — this looks li",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:commit:ab06feb10c7b:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-29T00:11:04Z",
+      "observedAt": "2026-05-29T00:11:04Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/commit/ab06feb10c7ba3a43be51a7568fd6eca6042e715"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:comment:3321349689:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-29T00:15:19Z",
+      "observedAt": "2026-05-29T00:15:19Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "wanlei123188-gm"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537#discussion_r3321349689"
+      },
+      "confidence": "authoritative",
+      "excerpt": "fixed.",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:review:4385619809:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-29T00:15:20Z",
+      "observedAt": "2026-05-29T00:15:20Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "wanlei123188-gm"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537#pullrequestreview-4385619809"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:review:4385620007:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-29T00:15:24Z",
+      "observedAt": "2026-05-29T00:15:24Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "wanlei123188-gm"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537#pullrequestreview-4385620007"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:comment:3321349863:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-29T00:15:24Z",
+      "observedAt": "2026-05-29T00:15:24Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "wanlei123188-gm"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537#discussion_r3321349863"
+      },
+      "confidence": "authoritative",
+      "excerpt": "fixed.",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:comment:3321351381:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-29T00:15:58Z",
+      "observedAt": "2026-05-29T00:15:58Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "wanlei123188-gm"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537#discussion_r3321351381"
+      },
+      "confidence": "authoritative",
+      "excerpt": "fixed.",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:review:4385621486:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-29T00:15:59Z",
+      "observedAt": "2026-05-29T00:15:59Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "wanlei123188-gm"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537#pullrequestreview-4385621486"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:comment:3321351628:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-29T00:16:05Z",
+      "observedAt": "2026-05-29T00:16:05Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "wanlei123188-gm"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537#discussion_r3321351628"
+      },
+      "confidence": "authoritative",
+      "excerpt": "fixed.",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:review:4385621761:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-29T00:16:06Z",
+      "observedAt": "2026-05-29T00:16:06Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "wanlei123188-gm"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537#pullrequestreview-4385621761"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:review:4385622092:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-29T00:16:13Z",
+      "observedAt": "2026-05-29T00:16:13Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "wanlei123188-gm"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537#pullrequestreview-4385622092"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:comment:3321351957:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-29T00:16:13Z",
+      "observedAt": "2026-05-29T00:16:13Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "wanlei123188-gm"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537#discussion_r3321351957"
+      },
+      "confidence": "authoritative",
+      "excerpt": "fixed.",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:review:4385622395:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-29T00:16:20Z",
+      "observedAt": "2026-05-29T00:16:20Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "wanlei123188-gm"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537#pullrequestreview-4385622395"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:comment:3321352207:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-29T00:16:20Z",
+      "observedAt": "2026-05-29T00:16:20Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "wanlei123188-gm"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537#discussion_r3321352207"
+      },
+      "confidence": "authoritative",
+      "excerpt": "fixed.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:review:4385622655:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-29T00:16:26Z",
+      "observedAt": "2026-05-29T00:16:26Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "wanlei123188-gm"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537#pullrequestreview-4385622655"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:comment:3321352477:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-29T00:16:26Z",
+      "observedAt": "2026-05-29T00:16:26Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "wanlei123188-gm"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537#discussion_r3321352477"
+      },
+      "confidence": "authoritative",
+      "excerpt": "fixed.",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:review:4385622989:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-29T00:16:34Z",
+      "observedAt": "2026-05-29T00:16:34Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "wanlei123188-gm"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537#pullrequestreview-4385622989"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:comment:3321352842:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-29T00:16:34Z",
+      "observedAt": "2026-05-29T00:16:34Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "wanlei123188-gm"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537#discussion_r3321352842"
+      },
+      "confidence": "authoritative",
+      "excerpt": "fixed.",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:review:4385623681:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-29T00:16:42Z",
+      "observedAt": "2026-05-29T00:16:42Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "wanlei123188-gm"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537#pullrequestreview-4385623681"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:comment:3321353246:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-29T00:16:42Z",
+      "observedAt": "2026-05-29T00:16:42Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "wanlei123188-gm"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537#discussion_r3321353246"
+      },
+      "confidence": "authoritative",
+      "excerpt": "fixed.",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:review:4385683429:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-29T00:37:23Z",
+      "observedAt": "2026-05-29T00:37:23Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ravimeda"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537#pullrequestreview-4385683429"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:comment:3321405846:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-29T00:37:23Z",
+      "observedAt": "2026-05-29T00:37:23Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ravimeda"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537#discussion_r3321405846"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Thanks for addressing this! Verified at L113 — `delete is ArmResourceDeleteWithoutOkAsync<EduEnrollment>` now emits 202/204 (async). Resolving this thread.",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:review:4385683517:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-29T00:37:26Z",
+      "observedAt": "2026-05-29T00:37:26Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ravimeda"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537#pullrequestreview-4385683517"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:comment:3321405937:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-29T00:37:26Z",
+      "observedAt": "2026-05-29T00:37:26Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ravimeda"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537#discussion_r3321405937"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Thanks for addressing this! Verified at L36-46 — `Accepted` removed from `ProvisioningState`. Resolving this thread.",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:review:4385683600:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-29T00:37:28Z",
+      "observedAt": "2026-05-29T00:37:28Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ravimeda"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537#pullrequestreview-4385683600"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:comment:3321406035:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-29T00:37:28Z",
+      "observedAt": "2026-05-29T00:37:28Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ravimeda"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537#discussion_r3321406035"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Thanks for addressing this! Verified at L49-62 — `DomainGroupState` wire values are now PascalCase (`Pending` / `ActionRequired` / `Failed` / `Succeeded`). Resolving this thread.",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:review:4385683683:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-29T00:37:30Z",
+      "observedAt": "2026-05-29T00:37:30Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ravimeda"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537#pullrequestreview-4385683683"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:comment:3321406120:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-29T00:37:30Z",
+      "observedAt": "2026-05-29T00:37:30Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ravimeda"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537#discussion_r3321406120"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Thanks for addressing this! Verified at L83 and L101 — `EnrollmentError` replaced with `Azure.ResourceManager.CommonTypes.ErrorDetail`. Resolving this thread.",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:review:4385683755:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-29T00:37:32Z",
+      "observedAt": "2026-05-29T00:37:32Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ravimeda"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537#pullrequestreview-4385683755"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:comment:3321406177:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-29T00:37:32Z",
+      "observedAt": "2026-05-29T00:37:32Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ravimeda"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537#discussion_r3321406177"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Thanks for addressing this! Verified at L83 and L101 — field renamed to `failureReason` in both `DomainGroup` and `EduEnrollmentProperties`. Resolving this thread.",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:review:4385683831:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-29T00:37:34Z",
+      "observedAt": "2026-05-29T00:37:34Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ravimeda"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537#pullrequestreview-4385683831"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:comment:3321406252:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-29T00:37:34Z",
+      "observedAt": "2026-05-29T00:37:34Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ravimeda"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537#discussion_r3321406252"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Thanks for addressing this! Verified at L24 — `@doc(\"An education program enrollment that groups Entra domains under a single sovereign/edu program scope.\")`. Resolving this thread.",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:review:4385683910:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-29T00:37:36Z",
+      "observedAt": "2026-05-29T00:37:36Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ravimeda"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537#pullrequestreview-4385683910"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:comment:3321406332:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-29T00:37:36Z",
+      "observedAt": "2026-05-29T00:37:36Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ravimeda"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537#discussion_r3321406332"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Thanks for addressing this! Verified at L113 — `delete is ArmResourceDeleteWithoutOkAsync<EduEnrollment>` now emits 202/204 (async). Resolving this thread.",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:review:4385683982:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-29T00:37:38Z",
+      "observedAt": "2026-05-29T00:37:38Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ravimeda"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537#pullrequestreview-4385683982"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:comment:3321406396:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-29T00:37:38Z",
+      "observedAt": "2026-05-29T00:37:38Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ravimeda"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537#discussion_r3321406396"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Thanks for addressing this! Verified at L36-46 — `Accepted` removed from `ProvisioningState`. Resolving this thread.",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:review:4385684056:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-29T00:37:40Z",
+      "observedAt": "2026-05-29T00:37:40Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ravimeda"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537#pullrequestreview-4385684056"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:comment:3321406467:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-29T00:37:40Z",
+      "observedAt": "2026-05-29T00:37:40Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ravimeda"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537#discussion_r3321406467"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Thanks for addressing this! Verified at L49-62 — `DomainGroupState` wire values are now PascalCase (`Pending` / `ActionRequired` / `Failed` / `Succeeded`). Resolving this thread.",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:review:4385684109:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-29T00:37:42Z",
+      "observedAt": "2026-05-29T00:37:42Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ravimeda"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537#pullrequestreview-4385684109"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:comment:3321406523:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-29T00:37:42Z",
+      "observedAt": "2026-05-29T00:37:42Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ravimeda"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537#discussion_r3321406523"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Thanks for addressing this! Verified at L83 and L101 — `EnrollmentError` replaced with `Azure.ResourceManager.CommonTypes.ErrorDetail`. Resolving this thread.",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:review:4385684188:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-29T00:37:44Z",
+      "observedAt": "2026-05-29T00:37:44Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ravimeda"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537#pullrequestreview-4385684188"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:comment:3321406591:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-29T00:37:44Z",
+      "observedAt": "2026-05-29T00:37:44Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ravimeda"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537#discussion_r3321406591"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Thanks for addressing this! Verified at L83 and L101 — field renamed to `failureReason` in both `DomainGroup` and `EduEnrollmentProperties`. Resolving this thread.",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:review:4385684268:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-29T00:37:46Z",
+      "observedAt": "2026-05-29T00:37:46Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ravimeda"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537#pullrequestreview-4385684268"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:comment:3321406672:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-29T00:37:46Z",
+      "observedAt": "2026-05-29T00:37:46Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ravimeda"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537#discussion_r3321406672"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Thanks for addressing this! Verified at L24 — `@doc(\"An education program enrollment that groups Entra domains under a single sovereign/edu program scope.\")`. Resolving this thread.",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:review:4385692642:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-29T00:40:50Z",
+      "observedAt": "2026-05-29T00:40:50Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "ravimeda"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537#pullrequestreview-4385692642"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs-pr#28537:pr.merged:spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-29T00:42:37Z",
+      "observedAt": "2026-05-29T00:42:37Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs-pr#28537",
+        "url": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6373828:generation.queued:sdk:JavaScript:@azure/arm-programenrollment",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-05-30T03:13:12.1109169Z",
+      "observedAt": "2026-05-30T03:17:45.2956501Z",
+      "trackId": "sdk:JavaScript:@azure/arm-programenrollment",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6373828",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6373828"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6373830:generation.queued:sdk:Python:azure-mgmt-programenrollment",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-05-30T03:13:12.1116967Z",
+      "observedAt": "2026-05-30T03:17:52.2336224Z",
+      "trackId": "sdk:Python:azure-mgmt-programenrollment",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6373830",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6373830"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6373829:generation.queued:sdk:Go:sdk/resourcemanager/programenrollment/armprogramenrollment",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-05-30T03:13:12.1771312Z",
+      "observedAt": "2026-05-30T03:17:44.3224792Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/programenrollment/armprogramenrollment",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6373829",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6373829"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6373831:generation.queued:sdk:Java:azure-resourcemanager-programenrollment",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-05-30T03:13:12.2081Z",
+      "observedAt": "2026-05-30T03:18:35.9206176Z",
+      "trackId": "sdk:Java:azure-resourcemanager-programenrollment",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6373831",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6373831"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6373828:generation.started:sdk:JavaScript:@azure/arm-programenrollment",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-05-30T03:13:26.0044453Z",
+      "observedAt": "2026-05-30T03:17:45.2956501Z",
+      "trackId": "sdk:JavaScript:@azure/arm-programenrollment",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6373828",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6373828"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6373829:generation.started:sdk:Go:sdk/resourcemanager/programenrollment/armprogramenrollment",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-05-30T03:13:34.0060705Z",
+      "observedAt": "2026-05-30T03:17:44.3224792Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/programenrollment/armprogramenrollment",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6373829",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6373829"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6373830:generation.started:sdk:Python:azure-mgmt-programenrollment",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-05-30T03:13:34.8554015Z",
+      "observedAt": "2026-05-30T03:17:52.2336224Z",
+      "trackId": "sdk:Python:azure-mgmt-programenrollment",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6373830",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6373830"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6373831:generation.started:sdk:Java:azure-resourcemanager-programenrollment",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-05-30T03:13:34.9033935Z",
+      "observedAt": "2026-05-30T03:18:35.9206176Z",
+      "trackId": "sdk:Java:azure-resourcemanager-programenrollment",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6373831",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6373831"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6373829:00be4b52-4a63-5865-8e02-c61723ad0692:sdk:Go:sdk/resourcemanager/programenrollment/armprogramenrollment",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-05-30T03:17:05.2666667Z",
+      "observedAt": "2026-05-30T03:17:44.3224792Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/programenrollment/armprogramenrollment",
+      "title": "task failed: Generate SDK",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6373829",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6373829"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6373828:00be4b52-4a63-5865-8e02-c61723ad0692:sdk:JavaScript:@azure/arm-programenrollment",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-05-30T03:17:08.6533333Z",
+      "observedAt": "2026-05-30T03:17:45.2956501Z",
+      "trackId": "sdk:JavaScript:@azure/arm-programenrollment",
+      "title": "task failed: Generate SDK",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6373828",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6373828"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6373830:00be4b52-4a63-5865-8e02-c61723ad0692:sdk:Python:azure-mgmt-programenrollment",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-05-30T03:17:11.8633333Z",
+      "observedAt": "2026-05-30T03:17:52.2336224Z",
+      "trackId": "sdk:Python:azure-mgmt-programenrollment",
+      "title": "task failed: Generate SDK",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6373830",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6373830"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6373830:83516c17-6666-5250-abde-63983ce72a49:sdk:Python:azure-mgmt-programenrollment",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-05-30T03:17:37.1533333Z",
+      "observedAt": "2026-05-30T03:17:52.2336224Z",
+      "trackId": "sdk:Python:azure-mgmt-programenrollment",
+      "title": "job failed: Job",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6373830",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6373830"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6373829:83516c17-6666-5250-abde-63983ce72a49:sdk:Go:sdk/resourcemanager/programenrollment/armprogramenrollment",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-05-30T03:17:40.6166667Z",
+      "observedAt": "2026-05-30T03:17:44.3224792Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/programenrollment/armprogramenrollment",
+      "title": "job failed: Job",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6373829",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6373829"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6373828:83516c17-6666-5250-abde-63983ce72a49:sdk:JavaScript:@azure/arm-programenrollment",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-05-30T03:17:41.2033333Z",
+      "observedAt": "2026-05-30T03:17:45.2956501Z",
+      "trackId": "sdk:JavaScript:@azure/arm-programenrollment",
+      "title": "job failed: Job",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6373828",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6373828"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6373829:6884a131-87da-5381-61f3-d7acc3b91d76:sdk:Go:sdk/resourcemanager/programenrollment/armprogramenrollment",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-05-30T03:17:43.9633333Z",
+      "observedAt": "2026-05-30T03:17:44.3224792Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/programenrollment/armprogramenrollment",
+      "title": "stage failed: SDK Generation",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6373829",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6373829"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6373829:generation.failed:sdk:Go:sdk/resourcemanager/programenrollment/armprogramenrollment",
+      "type": "generation.failed",
+      "phase": "generation",
+      "occurredAt": "2026-05-30T03:17:44.3224792Z",
+      "observedAt": "2026-05-30T03:17:44.3224792Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/programenrollment/armprogramenrollment",
+      "title": "Pipeline failed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6373829",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6373829"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:6373828:6884a131-87da-5381-61f3-d7acc3b91d76:sdk:JavaScript:@azure/arm-programenrollment",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-05-30T03:17:44.9166667Z",
+      "observedAt": "2026-05-30T03:17:45.2956501Z",
+      "trackId": "sdk:JavaScript:@azure/arm-programenrollment",
+      "title": "stage failed: SDK Generation",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6373828",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6373828"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6373828:generation.failed:sdk:JavaScript:@azure/arm-programenrollment",
+      "type": "generation.failed",
+      "phase": "generation",
+      "occurredAt": "2026-05-30T03:17:45.2956501Z",
+      "observedAt": "2026-05-30T03:17:45.2956501Z",
+      "trackId": "sdk:JavaScript:@azure/arm-programenrollment",
+      "title": "Pipeline failed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6373828",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6373828"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:6373831:00be4b52-4a63-5865-8e02-c61723ad0692:sdk:Java:azure-resourcemanager-programenrollment",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-05-30T03:17:48.26Z",
+      "observedAt": "2026-05-30T03:18:35.9206176Z",
+      "trackId": "sdk:Java:azure-resourcemanager-programenrollment",
+      "title": "task failed: Generate SDK",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6373831",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6373831"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6373830:6884a131-87da-5381-61f3-d7acc3b91d76:sdk:Python:azure-mgmt-programenrollment",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-05-30T03:17:51.6733333Z",
+      "observedAt": "2026-05-30T03:17:52.2336224Z",
+      "trackId": "sdk:Python:azure-mgmt-programenrollment",
+      "title": "stage failed: SDK Generation",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6373830",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6373830"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6373830:generation.failed:sdk:Python:azure-mgmt-programenrollment",
+      "type": "generation.failed",
+      "phase": "generation",
+      "occurredAt": "2026-05-30T03:17:52.2336224Z",
+      "observedAt": "2026-05-30T03:17:52.2336224Z",
+      "trackId": "sdk:Python:azure-mgmt-programenrollment",
+      "title": "Pipeline failed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6373830",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6373830"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:6373831:83516c17-6666-5250-abde-63983ce72a49:sdk:Java:azure-resourcemanager-programenrollment",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-05-30T03:18:28.58Z",
+      "observedAt": "2026-05-30T03:18:35.9206176Z",
+      "trackId": "sdk:Java:azure-resourcemanager-programenrollment",
+      "title": "job failed: Job",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6373831",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6373831"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6373831:6884a131-87da-5381-61f3-d7acc3b91d76:sdk:Java:azure-resourcemanager-programenrollment",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-05-30T03:18:33.9066667Z",
+      "observedAt": "2026-05-30T03:18:35.9206176Z",
+      "trackId": "sdk:Java:azure-resourcemanager-programenrollment",
+      "title": "stage failed: SDK Generation",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6373831",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6373831"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6373831:generation.failed:sdk:Java:azure-resourcemanager-programenrollment",
+      "type": "generation.failed",
+      "phase": "generation",
+      "occurredAt": "2026-05-30T03:18:35.9206176Z",
+      "observedAt": "2026-05-30T03:18:35.9206176Z",
+      "trackId": "sdk:Java:azure-resourcemanager-programenrollment",
+      "title": "Pipeline failed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6373831",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6373831"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:34801:1:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-02T19:17:54.197Z",
+      "observedAt": "2026-06-02T19:17:54.197Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+      "value": "https://github.com/Azure/azure-rest-api-specs-pr/pull/28537",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34801",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34801"
+      },
+      "title": "Spec PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado:34802:created",
+      "type": "plan.created",
+      "phase": "plan",
+      "occurredAt": "2026-06-02T19:17:55.553Z",
+      "observedAt": "2026-06-02T19:17:55.553Z",
+      "trackId": "plan",
+      "title": "Release Plan created",
+      "confidence": "authoritative",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34802",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34802"
+      },
+      "stack": 0
+    },
+    {
+      "id": "ado:34802:1:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-06-02T19:17:55.553Z",
+      "observedAt": "2026-06-02T19:17:55.553Z",
+      "trackId": "plan",
+      "value": "New",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34802",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34802"
+      },
+      "title": "Plan state changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34802:1:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-02T19:17:55.553Z",
+      "observedAt": "2026-06-02T19:17:55.553Z",
+      "trackId": "plan",
+      "value": "Not Available",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34802",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34802"
+      },
+      "title": "Spec approval changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:34802:1:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-02T19:17:55.553Z",
+      "observedAt": "2026-06-02T19:17:55.553Z",
+      "trackId": "sdk:.NET:.NET",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34802",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34802"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34802:1:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-02T19:17:55.553Z",
+      "observedAt": "2026-06-02T19:17:55.553Z",
+      "trackId": "sdk:JavaScript:@azure/arm-programenrollment",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34802",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34802"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34802:1:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-02T19:17:55.553Z",
+      "observedAt": "2026-06-02T19:17:55.553Z",
+      "trackId": "sdk:Python:azure-mgmt-programenrollment",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34802",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34802"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34802:1:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-02T19:17:55.553Z",
+      "observedAt": "2026-06-02T19:17:55.553Z",
+      "trackId": "sdk:Java:azure-resourcemanager-programenrollment",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34802",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34802"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34802:1:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-02T19:17:55.553Z",
+      "observedAt": "2026-06-02T19:17:55.553Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/programenrollment/armprogramenrollment",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34802",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34802"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    }
+  ],
+  "quality": {
+    "warnings": [],
+    "unavailablePullRequests": 0,
+    "unavailablePipelineRuns": 0
+  },
+  "boundaryFacts": {
+    "id": "34802",
+    "state": "new",
+    "specPrs": [
+      {
+        "id": "github:Azure/azure-rest-api-specs-pr#28537",
+        "trackId": "spec:github:Azure/azure-rest-api-specs-pr#28537",
+        "createdAt": "2026-05-14T21:10:29Z",
+        "mergedAt": "2026-05-29T00:42:37Z",
+        "closedAt": "2026-05-29T00:42:37Z",
+        "available": true
+      }
+    ],
+    "artifacts": [
+      {
+        "language": ".NET",
+        "package": null,
+        "trackId": "sdk:.NET:.NET",
+        "prId": null,
+        "prCreatedAt": null,
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [],
+        "generationRunId": null,
+        "generationStartAt": null,
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "missing",
+          "generation": "missing",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "JavaScript",
+        "package": "@azure/arm-programenrollment",
+        "trackId": "sdk:JavaScript:@azure/arm-programenrollment",
+        "prId": null,
+        "prCreatedAt": null,
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [],
+        "generationRunId": "ado-build:internal:6373828",
+        "generationStartAt": "2026-05-30T03:13:26.0044453Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "missing",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Python",
+        "package": "azure-mgmt-programenrollment",
+        "trackId": "sdk:Python:azure-mgmt-programenrollment",
+        "prId": null,
+        "prCreatedAt": null,
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [],
+        "generationRunId": "ado-build:internal:6373830",
+        "generationStartAt": "2026-05-30T03:13:34.8554015Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "missing",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Java",
+        "package": "azure-resourcemanager-programenrollment",
+        "trackId": "sdk:Java:azure-resourcemanager-programenrollment",
+        "prId": null,
+        "prCreatedAt": null,
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [],
+        "generationRunId": "ado-build:internal:6373831",
+        "generationStartAt": "2026-05-30T03:13:34.9033935Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "missing",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Go",
+        "package": "sdk/resourcemanager/programenrollment/armprogramenrollment",
+        "trackId": "sdk:Go:sdk/resourcemanager/programenrollment/armprogramenrollment",
+        "prId": null,
+        "prCreatedAt": null,
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [],
+        "generationRunId": "ado-build:internal:6373829",
+        "generationStartAt": "2026-05-30T03:13:34.0060705Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "missing",
+          "generation": "exact",
+          "release": "missing"
+        }
+      }
+    ],
+    "cohortPlan": {
+      "id": "34802",
+      "releasePlanId": "1570",
+      "title": "Release plan - 1570 - Public Preview - Release Planner Test Product",
+      "service": "Program Enrollment",
+      "state": "new"
+    },
+    "quality": {
+      "warnings": [],
+      "unavailablePullRequests": 0,
+      "unavailablePipelineRuns": 0
+    }
+  },
+  "summary": {
+    "durationHours": 1733.3,
+    "pullRequestCount": 1,
+    "humanReviewCount": 26,
+    "humanCommentCount": 34
+  }
+}

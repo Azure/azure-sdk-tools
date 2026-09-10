@@ -1,0 +1,2124 @@
+{
+  "schemaVersion": 2,
+  "id": "32967",
+  "correlation": {
+    "policyVersion": 1,
+    "preflight": "passed"
+  },
+  "releasePlanId": "2111",
+  "title": "Release Plan - 2111 - Public Preview - Microsoft Foundry",
+  "service": "Release Plan - 2111 - Public Preview - Microsoft Foundry",
+  "product": "Release",
+  "path": null,
+  "state": "abandoned",
+  "plane": "management",
+  "releaseType": "APEX Public Preview",
+  "intendedMonth": "April 2026",
+  "createdAt": "2026-03-03T16:56:38.503Z",
+  "completedAt": "2026-05-29T20:37:15.33Z",
+  "sourceUrl": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32967",
+  "range": {
+    "start": "2025-09-29T16:23:05.000Z",
+    "end": "2026-05-29T20:37:15.330Z"
+  },
+  "intendedArtifacts": [
+    {
+      "prId": null,
+      "language": ".NET",
+      "package": "Azure.ResourceManager.CognitiveServices",
+      "version": null,
+      "outcome": "released",
+      "generationPipelineUrl": null,
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": null,
+      "language": "JavaScript",
+      "package": "@azure/arm-cognitiveservices",
+      "version": null,
+      "outcome": "not-released",
+      "generationPipelineUrl": null,
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": null,
+      "language": "Python",
+      "package": "azure-mgmt-cognitiveservices",
+      "version": "15.0.0b2",
+      "outcome": "released",
+      "generationPipelineUrl": null,
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": null,
+      "language": "Java",
+      "package": "azure-resourcemanager-cognitiveservices",
+      "version": "1.5.0-beta.1",
+      "outcome": "released",
+      "generationPipelineUrl": null,
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": null,
+      "language": "Go",
+      "package": null,
+      "version": null,
+      "outcome": "not-released",
+      "generationPipelineUrl": null,
+      "releasePipelineUrl": null
+    }
+  ],
+  "links": [
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#37813",
+      "role": "spec-pr",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/37813",
+      "releasePlanIds": []
+    }
+  ],
+  "tracks": [
+    {
+      "id": "plan",
+      "kind": "plan",
+      "label": "Release Plan",
+      "detail": "APEX Public Preview"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#37813",
+      "kind": "spec",
+      "label": "Spec PR",
+      "detail": "azure-rest-api-specs #37813",
+      "artifactId": "github:Azure/azure-rest-api-specs#37813",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:.NET:Azure.ResourceManager.CognitiveServices",
+      "kind": "sdk",
+      "label": ".NET",
+      "detail": "Azure.ResourceManager.CognitiveServices",
+      "artifactId": null,
+      "state": "missing"
+    },
+    {
+      "id": "sdk:JavaScript:@azure/arm-cognitiveservices",
+      "kind": "sdk",
+      "label": "JavaScript",
+      "detail": "@azure/arm-cognitiveservices",
+      "artifactId": null,
+      "state": "missing"
+    },
+    {
+      "id": "sdk:Python:azure-mgmt-cognitiveservices",
+      "kind": "sdk",
+      "label": "Python",
+      "detail": "azure-mgmt-cognitiveservices",
+      "artifactId": null,
+      "state": "missing"
+    },
+    {
+      "id": "sdk:Java:azure-resourcemanager-cognitiveservices",
+      "kind": "sdk",
+      "label": "Java",
+      "detail": "azure-resourcemanager-cognitiveservices",
+      "artifactId": null,
+      "state": "missing"
+    },
+    {
+      "id": "sdk:Go:Go",
+      "kind": "sdk",
+      "label": "Go",
+      "detail": "Package not recorded",
+      "artifactId": null,
+      "state": "missing"
+    }
+  ],
+  "events": [
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:pr.created:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-09-29T16:23:05Z",
+      "observedAt": "2025-09-29T16:23:05Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "CarlOchs"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/37813"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:comment:3347941107:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-09-29T16:23:22Z",
+      "observedAt": "2025-09-29T16:23:22Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/37813#issuecomment-3347941107"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>✅ All automated merging requirements have been met! To get your PR merged, see <a href=\"https://aka.ms/azsdk/specreview/merge\">aka.ms/azsdk/specreview/merge</a>.<br /><br />Comment generated by <a href=\"https://g",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:comment:3347947836:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-09-29T16:25:28Z",
+      "observedAt": "2025-09-29T16:25:28Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/37813#issuecomment-3347947836"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews | Language | API Review for Package | |----------|---------| | Swagger | [Microsoft.CognitiveServices](https://apiview.dev/Assemblies/",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:commit:55b27de8fcaf:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2025-09-30T01:12:04Z",
+      "observedAt": "2025-09-30T01:12:04Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "fmabroukmsft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/55b27de8fcaf8646fe090496ae74565173e6c10d"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:commit:56370bdab618:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2025-09-30T10:45:02Z",
+      "observedAt": "2025-09-30T10:45:02Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "fmabroukmsft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/56370bdab618da995891fd64a0ce1617eaec7e40"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:comment:3352486443:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-09-30T14:28:49Z",
+      "observedAt": "2025-09-30T14:28:49Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ravimeda"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/37813#issuecomment-3352486443"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> \"202\": { Though some RPs use 202, the recommendation is to 201 for long-running PUTs. --- Refers to: specification/cognitiveservices/resource-manager/Microsoft.CognitiveServices/preview/2025-10-01-preview/cognitiveservices.json:81 in 719a",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:comment:3352497023:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-09-30T14:31:07Z",
+      "observedAt": "2025-09-30T14:31:07Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ravimeda"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/37813#issuecomment-3352497023"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> \"delete\": { Curious if you support synchronous delete? If so, include a 200 (OK) response. #Closed --- Refers to: specification/cognitiveservices/resource-manager/Microsoft.CognitiveServices/preview/2025-10-01-preview/cognitiveservices.js",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:comment:3352516263:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-09-30T14:35:35Z",
+      "observedAt": "2025-09-30T14:35:35Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ravimeda"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/37813#issuecomment-3352516263"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> \"delete\": { Similar to the other comment - do you want to support sync delete? #Closed --- Refers to: specification/cognitiveservices/resource-manager/Microsoft.CognitiveServices/preview/2025-10-01-preview/cognitiveservices.json:5302 in 7",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:comment:3352517534:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-09-30T14:35:52Z",
+      "observedAt": "2025-09-30T14:35:52Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ravimeda"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/37813#issuecomment-3352517534"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> \"summary\": \"The GET API for retrieveing a single outbound rule of the managed network associated with the cognitive services account.\", Typo #Closed --- Refers to: specification/cognitiveservices/resource-manager/Microsoft.CognitiveServic",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:comment:3352532658:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-09-30T14:39:26Z",
+      "observedAt": "2025-09-30T14:39:26Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ravimeda"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/37813#issuecomment-3352532658"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> \"$ref\": \"./examples/ManagedNetwork/deleteRuleV2.json\" I do not see this folder yet. Please push the changes. #Closed --- Refers to: specification/cognitiveservices/resource-manager/Microsoft.CognitiveServices/preview/2025-10-01-preview/co",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:comment:3352563316:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-09-30T14:46:25Z",
+      "observedAt": "2025-09-30T14:46:25Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ravimeda"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/37813#issuecomment-3352563316"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> \"x-ms-long-running-operation\": true, Long-running PUT must support 201 (Created). #Closed --- Refers to: specification/cognitiveservices/resource-manager/Microsoft.CognitiveServices/preview/2025-10-01-preview/cognitiveservices.json:5815 i",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:review:3285374974:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2025-09-30T14:46:31Z",
+      "observedAt": "2025-09-30T14:46:31Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Changes requested",
+      "actor": {
+        "kind": "human",
+        "publicId": "ravimeda"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/37813#pullrequestreview-3285374974"
+      },
+      "confidence": "authoritative",
+      "excerpt": ":clock1:",
+      "reviewState": "changes_requested",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:review:3285824531:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2025-09-30T16:26:52Z",
+      "observedAt": "2025-09-30T16:26:52Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "ravimeda"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/37813#pullrequestreview-3285824531"
+      },
+      "confidence": "authoritative",
+      "excerpt": ":shipit:",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:commit:a4a78994291e:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-07T14:35:19Z",
+      "observedAt": "2025-10-07T14:35:19Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "aditya30394"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/a4a78994291ea12a2293fd8ef419c80bd2ca9982"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:commit:443514c0048e:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-10T21:15:20Z",
+      "observedAt": "2025-10-10T21:15:20Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "vermaanjali4"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/443514c0048eecbcbe00bee5f7fe91f020a7656c"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:commit:ef145dcea3c9:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-13T13:47:14Z",
+      "observedAt": "2025-10-13T13:47:14Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "samnamdeo1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/ef145dcea3c921363d9d2a81697db1366a7f77fe"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:comment:3399053361:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-13T20:57:33Z",
+      "observedAt": "2025-10-13T20:57:33Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "psah434"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/37813#issuecomment-3399053361"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The breaking changes need to be approved first.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:comment:3403165504:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-14T18:48:28Z",
+      "observedAt": "2025-10-14T18:48:28Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "psah434"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/37813#issuecomment-3403165504"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> \"200\": { is this post a synchronus api? --- Refers to: specification/cognitiveservices/resource-manager/Microsoft.CognitiveServices/preview/2025-10-01-preview/cognitiveservices.json:1698 in 912f691. [](commit_id = 912f6911b4ef5b6e639599c1",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:comment:3403166423:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-14T18:48:48Z",
+      "observedAt": "2025-10-14T18:48:48Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "psah434"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/37813#issuecomment-3403166423"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> \"200\": { same as above --- Refers to: specification/cognitiveservices/resource-manager/Microsoft.CognitiveServices/preview/2025-10-01-preview/cognitiveservices.json:1744 in 912f691. [](commit_id = 912f6911b4ef5b6e639599c17b26e4b58ba94519,",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:comment:3403168072:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-14T18:49:22Z",
+      "observedAt": "2025-10-14T18:49:22Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "psah434"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/37813#issuecomment-3403168072"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> \"201\": { is this synchronus? --- Refers to: specification/cognitiveservices/resource-manager/Microsoft.CognitiveServices/preview/2025-10-01-preview/cognitiveservices.json:2520 in 1cc24c4. [](commit_id = 1cc24c4492bfb4ad0847ea4e3a6385ba0da",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:comment:3403178506:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-14T18:52:49Z",
+      "observedAt": "2025-10-14T18:52:49Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "psah434"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/37813#issuecomment-3403178506"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This pr is very confusing to look at. Even after this was signed off before, there are a bunch of commits made and it is unclear what changes need to be made here. It would be helpful if the first commit is a simple copy of an existing api ",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:comment:3403389832:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-14T19:53:26Z",
+      "observedAt": "2025-10-14T19:53:26Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "fareedmabrouk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/37813#issuecomment-3403389832"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> This pr is very confusing to look at. Even after this was signed off before, there are a bunch of commits made and it is unclear what changes need to be made here. It would be helpful if the first commit is a simple copy of an existing ap",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:comment:3403420090:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-14T20:03:08Z",
+      "observedAt": "2025-10-14T20:03:08Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "CarlOchs"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/37813#issuecomment-3403420090"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @psah434! I appreciate the feedback as I'm trying to improve the API update process (this is the 4th-ish iteration). My initial commit is always a direct copy of the previously published API (2025-09-01 stable in this case). The 2nd comm",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:comment:3403487619:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-14T20:22:21Z",
+      "observedAt": "2025-10-14T20:22:21Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "psah434"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/37813#issuecomment-3403487619"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> \"x-ms-pageable\": { this is for a post? --- Refers to: specification/cognitiveservices/resource-manager/Microsoft.CognitiveServices/preview/2025-10-01-preview/cognitiveservices.json:5614 in 60b370f. [](commit_id = 60b370fdb6f53b7627af618ea",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:comment:3403508195:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-14T20:28:35Z",
+      "observedAt": "2025-10-14T20:28:35Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "psah434"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/37813#issuecomment-3403508195"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> \"200\": { is this a synchronus delete? --- Refers to: specification/cognitiveservices/resource-manager/Microsoft.CognitiveServices/preview/2025-10-01-preview/cognitiveservices.json:5332 in 5290c6c. [](commit_id = 5290c6c43411627272160fc0d8",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:comment:3403514793:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-14T20:30:50Z",
+      "observedAt": "2025-10-14T20:30:50Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "psah434"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/37813#issuecomment-3403514793"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> \"200\": { synchronus delete? --- Refers to: specification/cognitiveservices/resource-manager/Microsoft.CognitiveServices/preview/2025-10-01-preview/cognitiveservices.json:6075 in 5290c6c. [](commit_id = 5290c6c43411627272160fc0d85adad11132",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:comment:3403519882:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-14T20:32:37Z",
+      "observedAt": "2025-10-14T20:32:37Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "psah434"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/37813#issuecomment-3403519882"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> \"x-ms-pageable\": { this for a post? --- Refers to: specification/cognitiveservices/resource-manager/Microsoft.CognitiveServices/preview/2025-10-01-preview/cognitiveservices.json:6285 in 5290c6c. [](commit_id = 5290c6c43411627272160fc0d85a",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:comment:3403520774:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-14T20:32:55Z",
+      "observedAt": "2025-10-14T20:32:55Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "psah434"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/37813#issuecomment-3403520774"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> \"200\": { is this not long running --- Refers to: specification/cognitiveservices/resource-manager/Microsoft.CognitiveServices/preview/2025-10-01-preview/cognitiveservices.json:6325 in 5290c6c. [](commit_id = 5290c6c43411627272160fc0d85ada",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:comment:3403523582:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-14T20:33:37Z",
+      "observedAt": "2025-10-14T20:33:37Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "psah434"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/37813#issuecomment-3403523582"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> \"200\": { is this not long running? --- Refers to: specification/cognitiveservices/resource-manager/Microsoft.CognitiveServices/preview/2025-10-01-preview/cognitiveservices.json:6377 in 5290c6c. [](commit_id = 5290c6c43411627272160fc0d85ad",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:comment:3403525861:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-14T20:34:10Z",
+      "observedAt": "2025-10-14T20:34:10Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "psah434"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/37813#issuecomment-3403525861"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> \"description\": \"OK\" is this a sync delete --- Refers to: specification/cognitiveservices/resource-manager/Microsoft.CognitiveServices/preview/2025-10-01-preview/cognitiveservices.json:6520 in 5290c6c. [](commit_id = 5290c6c43411627272160f",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:comment:3403535491:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-14T20:36:57Z",
+      "observedAt": "2025-10-14T20:36:57Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "psah434"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/37813#issuecomment-3403535491"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> \"200\": { sync post? --- Refers to: specification/cognitiveservices/resource-manager/Microsoft.CognitiveServices/preview/2025-10-01-preview/cognitiveservices.json:6707 in 5290c6c. [](commit_id = 5290c6c43411627272160fc0d85adad111328353, de",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:comment:3403537362:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-14T20:37:33Z",
+      "observedAt": "2025-10-14T20:37:33Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "psah434"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/37813#issuecomment-3403537362"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> \"200\": { sync post? --- Refers to: specification/cognitiveservices/resource-manager/Microsoft.CognitiveServices/preview/2025-10-01-preview/cognitiveservices.json:6758 in 5290c6c. [](commit_id = 5290c6c43411627272160fc0d85adad111328353, de",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:commit:c6426ebd4391:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-14T21:08:40Z",
+      "observedAt": "2025-10-14T21:08:40Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "fmabroukmsft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/c6426ebd439148c486c4c08744a648f99078fd54"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:comment:3403625663:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-14T21:09:32Z",
+      "observedAt": "2025-10-14T21:09:32Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "aditya30394"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/37813#issuecomment-3403625663"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> > ``` > > \"200\": { > > ``` > > is this post a synchronus api? > > Refers to: specification/cognitiveservices/resource-manager/Microsoft.CognitiveServices/preview/2025-10-01-preview/cognitiveservices.json:1698 in [912f691](https://github.c",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:comment:3403627301:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-14T21:10:07Z",
+      "observedAt": "2025-10-14T21:10:07Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "aditya30394"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/37813#issuecomment-3403627301"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> > ``` > > \"200\": { > > ``` > > same as above > > Refers to: specification/cognitiveservices/resource-manager/Microsoft.CognitiveServices/preview/2025-10-01-preview/cognitiveservices.json:1744 in [912f691](https://github.com/Azure/azure-re",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:comment:3403677596:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-14T21:26:52Z",
+      "observedAt": "2025-10-14T21:26:52Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "fareedmabrouk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/37813#issuecomment-3403677596"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> > ``` > > \"200\": { > > ``` > > is this a synchronus delete? > > Refers to: specification/cognitiveservices/resource-manager/Microsoft.CognitiveServices/preview/2025-10-01-preview/cognitiveservices.json:5332 in [5290c6c](https://github.com",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:comment:3403679564:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-14T21:27:36Z",
+      "observedAt": "2025-10-14T21:27:36Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "fareedmabrouk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/37813#issuecomment-3403679564"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> > ``` > > \"x-ms-pageable\": { > > ``` > > this for a post? > > Refers to: specification/cognitiveservices/resource-manager/Microsoft.CognitiveServices/preview/2025-10-01-preview/cognitiveservices.json:6285 in [5290c6c](https://github.com/A",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:comment:3403713350:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-14T21:41:02Z",
+      "observedAt": "2025-10-14T21:41:02Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "fareedmabrouk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/37813#issuecomment-3403713350"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> > ``` > > \"200\": { > > ``` > > is this a synchronus delete? > > Refers to: specification/cognitiveservices/resource-manager/Microsoft.CognitiveServices/preview/2025-10-01-preview/cognitiveservices.json:5332 in [5290c6c](https://github.com",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:comment:3403715710:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-14T21:42:07Z",
+      "observedAt": "2025-10-14T21:42:07Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "fareedmabrouk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/37813#issuecomment-3403715710"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> > ``` > > \"x-ms-pageable\": { > > ``` > > this for a post? > > Refers to: specification/cognitiveservices/resource-manager/Microsoft.CognitiveServices/preview/2025-10-01-preview/cognitiveservices.json:6285 in [5290c6c](https://github.com/A",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:comment:3403716821:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-14T21:42:39Z",
+      "observedAt": "2025-10-14T21:42:39Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "fareedmabrouk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/37813#issuecomment-3403716821"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> > ``` > > \"description\": \"OK\" > > ``` > > is this a sync delete > > Refers to: specification/cognitiveservices/resource-manager/Microsoft.CognitiveServices/preview/2025-10-01-preview/cognitiveservices.json:6520 in [5290c6c](https://github",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:review:3341612527:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-15T17:44:51Z",
+      "observedAt": "2025-10-15T17:44:51Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "psah434"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/37813#pullrequestreview-3341612527"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:comment:2433464159:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-15T17:44:51Z",
+      "observedAt": "2025-10-15T17:44:51Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "psah434"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/37813#discussion_r2433464159"
+      },
+      "confidence": "authoritative",
+      "excerpt": "are you sure you need these? I dont see this in any other RT?",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:review:3341612874:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-15T17:44:59Z",
+      "observedAt": "2025-10-15T17:44:59Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "psah434"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/37813#pullrequestreview-3341612874"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:comment:2433464452:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-15T17:44:59Z",
+      "observedAt": "2025-10-15T17:44:59Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "psah434"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/37813#discussion_r2433464452"
+      },
+      "confidence": "authoritative",
+      "excerpt": "same as above",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:review:3341615228:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-15T17:45:48Z",
+      "observedAt": "2025-10-15T17:45:48Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "psah434"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/37813#pullrequestreview-3341615228"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:comment:2433466357:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-15T17:45:48Z",
+      "observedAt": "2025-10-15T17:45:48Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "psah434"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/37813#discussion_r2433466357"
+      },
+      "confidence": "authoritative",
+      "excerpt": "can you elaborate?",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:review:3341619273:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-15T17:47:09Z",
+      "observedAt": "2025-10-15T17:47:09Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "psah434"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/37813#pullrequestreview-3341619273"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:comment:2433469512:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-15T17:47:09Z",
+      "observedAt": "2025-10-15T17:47:09Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "psah434"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/37813#discussion_r2433469512"
+      },
+      "confidence": "authoritative",
+      "excerpt": "in a previous api version, this is there for a different RT. is this a similar pattern?",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:review:3341643069:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-15T17:55:01Z",
+      "observedAt": "2025-10-15T17:55:01Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "fmabroukmsft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/37813#pullrequestreview-3341643069"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:comment:2433488414:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-15T17:55:01Z",
+      "observedAt": "2025-10-15T17:55:01Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "fmabroukmsft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/37813#discussion_r2433488414"
+      },
+      "confidence": "authoritative",
+      "excerpt": "this one is necessary, it's for the new applications routes that trigger the lintdiff check for provisioningstate must be readonly despite already having it set.",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:comment:2433489487:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-15T17:55:25Z",
+      "observedAt": "2025-10-15T17:55:25Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "fmabroukmsft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/37813#discussion_r2433489487"
+      },
+      "confidence": "authoritative",
+      "excerpt": "also necessary for the new project applications routes, lintdiff trips otherwise",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:review:3341645072:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-15T17:55:26Z",
+      "observedAt": "2025-10-15T17:55:26Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "fmabroukmsft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/37813#pullrequestreview-3341645072"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:review:3341667066:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-15T18:01:28Z",
+      "observedAt": "2025-10-15T18:01:28Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "fmabroukmsft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/37813#pullrequestreview-3341667066"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:comment:2433503545:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-15T18:01:28Z",
+      "observedAt": "2025-10-15T18:01:28Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "fmabroukmsft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/37813#discussion_r2433503545"
+      },
+      "confidence": "authoritative",
+      "excerpt": "the managednetworksettings is unique to the 2025-10-01-preview api version, so it's a new pattern",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:review:3341682280:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-15T18:06:52Z",
+      "observedAt": "2025-10-15T18:06:52Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "fmabroukmsft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/37813#pullrequestreview-3341682280"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:comment:2433515247:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-15T18:06:52Z",
+      "observedAt": "2025-10-15T18:06:52Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "fmabroukmsft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/37813#discussion_r2433515247"
+      },
+      "confidence": "authoritative",
+      "excerpt": "machinelearningservices manifest has the same definition since the managed workspace is essentially being \"copied\" over: https://github.com/Azure/azure-rest-api-specs/blob/d7e4f9f6c9ebd1c33b8ae6cd8e2ec9234466e23c/specification/machinelearni",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:review:3342244537:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-15T20:56:11Z",
+      "observedAt": "2025-10-15T20:56:11Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "psah434"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/37813#pullrequestreview-3342244537"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:comment:2433922599:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-15T20:56:11Z",
+      "observedAt": "2025-10-15T20:56:11Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "psah434"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/37813#discussion_r2433922599"
+      },
+      "confidence": "authoritative",
+      "excerpt": "can this be specific to the routes",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:review:3342245379:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-15T20:56:26Z",
+      "observedAt": "2025-10-15T20:56:26Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "psah434"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/37813#pullrequestreview-3342245379"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:comment:2433923281:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-15T20:56:26Z",
+      "observedAt": "2025-10-15T20:56:26Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "psah434"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/37813#discussion_r2433923281"
+      },
+      "confidence": "authoritative",
+      "excerpt": "can this be more specific",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:review:3342254993:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-15T20:59:53Z",
+      "observedAt": "2025-10-15T20:59:53Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "fmabroukmsft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/37813#pullrequestreview-3342254993"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:comment:2433930545:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-15T20:59:53Z",
+      "observedAt": "2025-10-15T20:59:53Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "fmabroukmsft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/37813#discussion_r2433930545"
+      },
+      "confidence": "authoritative",
+      "excerpt": "it is specific to the routes with each path, did you have a different path in mind?",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:review:3342258141:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-15T21:01:11Z",
+      "observedAt": "2025-10-15T21:01:11Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "fmabroukmsft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/37813#pullrequestreview-3342258141"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:comment:2433933295:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-15T21:01:11Z",
+      "observedAt": "2025-10-15T21:01:11Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "fmabroukmsft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/37813#discussion_r2433933295"
+      },
+      "confidence": "authoritative",
+      "excerpt": "same as above, did you have a different path in mind? it's already applied to each route individually where necessary",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:commit:3fca7cc3fad8:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-17T19:14:54Z",
+      "observedAt": "2025-10-17T19:14:54Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "fmabroukmsft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/3fca7cc3fad830b1b6876ece433c82fd405f44d1"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:review:3351664495:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-17T19:17:11Z",
+      "observedAt": "2025-10-17T19:17:11Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "rkuthala"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/37813#pullrequestreview-3351664495"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:review:3357142286:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-20T16:26:13Z",
+      "observedAt": "2025-10-20T16:26:13Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "rkuthala"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/37813#pullrequestreview-3357142286"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#37813:pr.merged:spec:github:Azure/azure-rest-api-specs#37813",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-20T16:41:03Z",
+      "observedAt": "2025-10-20T16:41:03Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#37813",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/37813"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado:32967:created",
+      "type": "plan.created",
+      "phase": "plan",
+      "occurredAt": "2026-03-03T16:56:38.503Z",
+      "observedAt": "2026-03-03T16:56:38.503Z",
+      "trackId": "plan",
+      "title": "Release Plan created",
+      "confidence": "authoritative",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32967",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32967"
+      },
+      "stack": 0
+    },
+    {
+      "id": "ado:32967:1:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-03-03T16:56:38.503Z",
+      "observedAt": "2026-03-03T16:56:38.503Z",
+      "trackId": "plan",
+      "value": "New",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32967",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32967"
+      },
+      "title": "Plan state changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:32967:1:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-03T16:56:38.503Z",
+      "observedAt": "2026-03-03T16:56:38.503Z",
+      "trackId": "plan",
+      "value": "Not Available",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32967",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32967"
+      },
+      "title": "Spec approval changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:32967:1:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-03T16:56:38.503Z",
+      "observedAt": "2026-03-03T16:56:38.503Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CognitiveServices",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32967",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32967"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32967:1:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-03T16:56:38.503Z",
+      "observedAt": "2026-03-03T16:56:38.503Z",
+      "trackId": "sdk:JavaScript:@azure/arm-cognitiveservices",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32967",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32967"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32967:1:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-03T16:56:38.503Z",
+      "observedAt": "2026-03-03T16:56:38.503Z",
+      "trackId": "sdk:Python:azure-mgmt-cognitiveservices",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32967",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32967"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32967:1:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-03T16:56:38.503Z",
+      "observedAt": "2026-03-03T16:56:38.503Z",
+      "trackId": "sdk:Java:azure-resourcemanager-cognitiveservices",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32967",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32967"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32967:1:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-03T16:56:38.503Z",
+      "observedAt": "2026-03-03T16:56:38.503Z",
+      "trackId": "sdk:Go:Go",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32967",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32967"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32967:3:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-03-03T16:57:10Z",
+      "observedAt": "2026-03-03T16:57:10Z",
+      "trackId": "plan",
+      "value": "In Progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32967",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32967"
+      },
+      "title": "Plan state changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:32968:2:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-03T16:58:22.39Z",
+      "observedAt": "2026-03-03T16:58:22.39Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/37813",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32968",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32968"
+      },
+      "title": "Spec PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado:32967:8:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-03T16:58:26.01Z",
+      "observedAt": "2026-03-03T16:58:26.01Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CognitiveServices",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32967",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32967"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:32967:8:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-03T16:58:26.01Z",
+      "observedAt": "2026-03-03T16:58:26.01Z",
+      "trackId": "sdk:JavaScript:@azure/arm-cognitiveservices",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32967",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32967"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:32967:8:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-03T16:58:26.01Z",
+      "observedAt": "2026-03-03T16:58:26.01Z",
+      "trackId": "sdk:Python:azure-mgmt-cognitiveservices",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32967",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32967"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:32967:8:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-03T16:58:26.01Z",
+      "observedAt": "2026-03-03T16:58:26.01Z",
+      "trackId": "sdk:Java:azure-resourcemanager-cognitiveservices",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32967",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32967"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:32967:8:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-03T16:58:26.01Z",
+      "observedAt": "2026-03-03T16:58:26.01Z",
+      "trackId": "sdk:Go:Go",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32967",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32967"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:32967:9:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-03T16:58:33.677Z",
+      "observedAt": "2026-03-03T16:58:33.677Z",
+      "trackId": "plan",
+      "value": "Approved",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32967",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32967"
+      },
+      "title": "Spec approval changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:32967:22:Custom.ReleaseStatusForDotnet",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-04-17T15:45:16.553Z",
+      "observedAt": "2026-04-17T15:45:16.553Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CognitiveServices",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32967",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32967"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32967:23:Custom.ReleaseStatusForJava",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-05-01T17:32:10.557Z",
+      "observedAt": "2026-05-01T17:32:10.557Z",
+      "trackId": "sdk:Java:azure-resourcemanager-cognitiveservices",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32967",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32967"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32967:23:Custom.ReleasedVersionForJava",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-05-01T17:32:10.557Z",
+      "observedAt": "2026-05-01T17:32:10.557Z",
+      "trackId": "sdk:Java:azure-resourcemanager-cognitiveservices",
+      "value": "1.5.0-beta.1",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32967",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32967"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "ado:32967:25:Custom.ReleaseStatusForPython",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-05-26T19:39:22.41Z",
+      "observedAt": "2026-05-26T19:39:22.41Z",
+      "trackId": "sdk:Python:azure-mgmt-cognitiveservices",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32967",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32967"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32967:25:Custom.ReleasedVersionForPython",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-05-26T19:39:22.41Z",
+      "observedAt": "2026-05-26T19:39:22.41Z",
+      "trackId": "sdk:Python:azure-mgmt-cognitiveservices",
+      "value": "15.0.0b2",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32967",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32967"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "ado:32967:26:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-05-29T20:37:15.33Z",
+      "observedAt": "2026-05-29T20:37:15.33Z",
+      "trackId": "plan",
+      "value": "Abandoned",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32967",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32967"
+      },
+      "title": "Plan state changed",
+      "stack": 0
+    }
+  ],
+  "quality": {
+    "warnings": [
+      "API specification path is missing"
+    ],
+    "unavailablePullRequests": 0,
+    "unavailablePipelineRuns": 0
+  },
+  "boundaryFacts": {
+    "id": "32967",
+    "state": "abandoned",
+    "specPrs": [
+      {
+        "id": "github:Azure/azure-rest-api-specs#37813",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#37813",
+        "createdAt": "2025-09-29T16:23:05Z",
+        "mergedAt": "2025-10-20T16:41:03Z",
+        "closedAt": "2025-10-20T16:41:03Z",
+        "available": true
+      }
+    ],
+    "artifacts": [
+      {
+        "language": ".NET",
+        "package": "Azure.ResourceManager.CognitiveServices",
+        "trackId": "sdk:.NET:Azure.ResourceManager.CognitiveServices",
+        "prId": null,
+        "prCreatedAt": null,
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [],
+        "generationRunId": null,
+        "generationStartAt": null,
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-04-17T15:45:16.553Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "missing",
+          "generation": "missing",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "JavaScript",
+        "package": "@azure/arm-cognitiveservices",
+        "trackId": "sdk:JavaScript:@azure/arm-cognitiveservices",
+        "prId": null,
+        "prCreatedAt": null,
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [],
+        "generationRunId": null,
+        "generationStartAt": null,
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "missing",
+          "generation": "missing",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Python",
+        "package": "azure-mgmt-cognitiveservices",
+        "trackId": "sdk:Python:azure-mgmt-cognitiveservices",
+        "prId": null,
+        "prCreatedAt": null,
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [],
+        "generationRunId": null,
+        "generationStartAt": null,
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-05-26T19:39:22.41Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "15.0.0b2",
+        "releaseBoundaryAt": "2026-05-26T19:39:22.41Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "missing",
+          "generation": "missing",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Java",
+        "package": "azure-resourcemanager-cognitiveservices",
+        "trackId": "sdk:Java:azure-resourcemanager-cognitiveservices",
+        "prId": null,
+        "prCreatedAt": null,
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [],
+        "generationRunId": null,
+        "generationStartAt": null,
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-05-01T17:32:10.557Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.5.0-beta.1",
+        "releaseBoundaryAt": "2026-05-01T17:32:10.557Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "missing",
+          "generation": "missing",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Go",
+        "package": null,
+        "trackId": "sdk:Go:Go",
+        "prId": null,
+        "prCreatedAt": null,
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [],
+        "generationRunId": null,
+        "generationStartAt": null,
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "missing",
+          "generation": "missing",
+          "release": "missing"
+        }
+      }
+    ],
+    "cohortPlan": {
+      "id": "32967",
+      "releasePlanId": "2111",
+      "title": "Release Plan - 2111 - Public Preview - Microsoft Foundry",
+      "service": "Release Plan - 2111 - Public Preview - Microsoft Foundry",
+      "state": "abandoned"
+    },
+    "quality": {
+      "warnings": [
+        "API specification path is missing"
+      ],
+      "unavailablePullRequests": 0,
+      "unavailablePipelineRuns": 0
+    }
+  },
+  "summary": {
+    "durationHours": 2091.7,
+    "pullRequestCount": 1,
+    "humanReviewCount": 16,
+    "humanCommentCount": 41
+  }
+}

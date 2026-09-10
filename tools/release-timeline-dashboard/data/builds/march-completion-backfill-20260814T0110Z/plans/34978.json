@@ -1,0 +1,4125 @@
+{
+  "schemaVersion": 2,
+  "id": "34978",
+  "correlation": {
+    "policyVersion": 1,
+    "preflight": "passed"
+  },
+  "releasePlanId": "34978",
+  "title": "Public Preview release plan for Authorization",
+  "service": "Authorization",
+  "product": "Release",
+  "path": "specification/authorization/resource-manager/Microsoft.Authorization/Authorization",
+  "state": "in-progress",
+  "plane": "management",
+  "releaseType": "APEX Public Preview",
+  "intendedMonth": "July 2026",
+  "createdAt": "2026-06-15T13:26:10.323Z",
+  "completedAt": null,
+  "sourceUrl": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34978",
+  "range": {
+    "start": "2026-04-09T13:41:49.000Z",
+    "end": "2026-08-14T00:37:23.589Z"
+  },
+  "intendedArtifacts": [
+    {
+      "prId": "github:Azure/azure-sdk-for-net#60195",
+      "language": ".NET",
+      "package": "Azure.ResourceManager.Authorization",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6435839",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-js#38607",
+      "language": "JavaScript",
+      "package": "@azure/arm-authorization",
+      "version": "10.0.0-beta.3",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6435879",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-python#46223",
+      "language": "Python",
+      "package": "azure-mgmt-authorization",
+      "version": "5.0.0b2",
+      "outcome": "released",
+      "generationPipelineUrl": null,
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-java#48751",
+      "language": "Java",
+      "package": "azure-resourcemanager-authorization",
+      "version": "2.54.0-beta.1",
+      "outcome": "released",
+      "generationPipelineUrl": null,
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-go#26544",
+      "language": "Go",
+      "package": "sdk/resourcemanager/authorization/armauthorization",
+      "version": "3.0.0-beta.3",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6435878",
+      "releasePipelineUrl": null
+    }
+  ],
+  "links": [
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#42261",
+      "role": "spec-pr",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/42261",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-net#59931",
+      "role": "sdk-pr-history",
+      "language": ".NET",
+      "url": "https://github.com/Azure/azure-sdk-for-net/pull/59931",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-net#60195",
+      "role": "sdk-pr",
+      "language": ".NET",
+      "url": "https://github.com/Azure/azure-sdk-for-net/pull/60195",
+      "releasePlanIds": [
+        "34978"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-js#38959",
+      "role": "sdk-pr-history",
+      "language": "JavaScript",
+      "url": "https://github.com/Azure/azure-sdk-for-js/pull/38959",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-js#38607",
+      "role": "sdk-pr",
+      "language": "JavaScript",
+      "url": "https://github.com/Azure/azure-sdk-for-js/pull/38607",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-python#46223",
+      "role": "sdk-pr",
+      "language": "Python",
+      "url": "https://github.com/Azure/azure-sdk-for-python/pull/46223",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-java#48751",
+      "role": "sdk-pr",
+      "language": "Java",
+      "url": "https://github.com/Azure/azure-sdk-for-java/pull/48751",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-go#27007",
+      "role": "sdk-pr-history",
+      "language": "Go",
+      "url": "https://github.com/Azure/azure-sdk-for-go/pull/27007",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-go#26544",
+      "role": "sdk-pr",
+      "language": "Go",
+      "url": "https://github.com/Azure/azure-sdk-for-go/pull/26544",
+      "releasePlanIds": [
+        "34978"
+      ]
+    }
+  ],
+  "tracks": [
+    {
+      "id": "plan",
+      "kind": "plan",
+      "label": "Release Plan",
+      "detail": "APEX Public Preview"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#42261",
+      "kind": "spec",
+      "label": "Spec PR",
+      "detail": "azure-rest-api-specs #42261",
+      "artifactId": "github:Azure/azure-rest-api-specs#42261",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:.NET:Azure.ResourceManager.Authorization",
+      "kind": "sdk",
+      "label": ".NET",
+      "detail": "Azure.ResourceManager.Authorization",
+      "artifactId": "github:Azure/azure-sdk-for-net#60195",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:JavaScript:@azure/arm-authorization",
+      "kind": "sdk",
+      "label": "JavaScript",
+      "detail": "@azure/arm-authorization",
+      "artifactId": "github:Azure/azure-sdk-for-js#38607",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Python:azure-mgmt-authorization",
+      "kind": "sdk",
+      "label": "Python",
+      "detail": "azure-mgmt-authorization",
+      "artifactId": "github:Azure/azure-sdk-for-python#46223",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Java:azure-resourcemanager-authorization",
+      "kind": "sdk",
+      "label": "Java",
+      "detail": "azure-resourcemanager-authorization",
+      "artifactId": "github:Azure/azure-sdk-for-java#48751",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "kind": "sdk",
+      "label": "Go",
+      "detail": "sdk/resourcemanager/authorization/armauthorization",
+      "artifactId": "github:Azure/azure-sdk-for-go#26544",
+      "state": "merged"
+    }
+  ],
+  "events": [
+    {
+      "id": "github:Azure/azure-sdk-for-go#26544:pr.created:sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-09T13:41:49Z",
+      "observedAt": "2026-04-09T13:41:49Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26544",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26544"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46223:commit:7141e96c6b9f:sdk:Python:azure-mgmt-authorization",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-09T13:43:28Z",
+      "observedAt": "2026-04-09T13:43:28Z",
+      "trackId": "sdk:Python:azure-mgmt-authorization",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46223",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/7141e96c6b9f69e05e6d00e5bffff1b3869a7109"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46223:pr.created:sdk:Python:azure-mgmt-authorization",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-09T13:43:31Z",
+      "observedAt": "2026-04-09T13:43:31Z",
+      "trackId": "sdk:Python:azure-mgmt-authorization",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46223",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46223"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26544:comment:4214755389:sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-09T13:49:21Z",
+      "observedAt": "2026-04-09T13:49:21Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26544",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26544#issuecomment-4214755389"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews [sdk/resourcemanager/authorization/armauthorization](https://spa.apiview.dev/review/d7737a674db34a798e742e03bd0ba80a?activeApiRevision",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48751:commit:c1b9ac170fde:sdk:Java:azure-resourcemanager-authorization",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-09T16:20:44Z",
+      "observedAt": "2026-04-09T16:20:44Z",
+      "trackId": "sdk:Java:azure-resourcemanager-authorization",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48751",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/c1b9ac170fde3ca17fc42fae9b677129298b9b62"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48751:pr.created:sdk:Java:azure-resourcemanager-authorization",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-09T16:20:48Z",
+      "observedAt": "2026-04-09T16:20:48Z",
+      "trackId": "sdk:Java:azure-resourcemanager-authorization",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48751",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48751"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48751:comment:4215836397:sdk:Java:azure-resourcemanager-authorization",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-09T16:32:40Z",
+      "observedAt": "2026-04-09T16:32:40Z",
+      "trackId": "sdk:Java:azure-resourcemanager-authorization",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48751",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48751#issuecomment-4215836397"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews [com.azure.resourcemanager:azure-resourcemanager-authorization](https://spa.apiview.dev/review/73154bdedfa541a990a44bee2b712026?active",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42261:commit:0496192aa965:spec:github:Azure/azure-rest-api-specs#42261",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T13:46:51Z",
+      "observedAt": "2026-04-10T13:46:51Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42261",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42261",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/0496192aa965ba0e83606342bd9ad078f928aee5"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42261:pr.created:spec:github:Azure/azure-rest-api-specs#42261",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T14:03:19Z",
+      "observedAt": "2026-04-10T14:03:19Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42261",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "jruttle"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42261",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42261"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42261:comment:4224299284:spec:github:Azure/azure-rest-api-specs#42261",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T14:04:16Z",
+      "observedAt": "2026-04-10T14:04:16Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42261",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42261",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42261#issuecomment-4224299284"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>✅ All automated merging requirements have been met! To get your PR merged, see <a href=\"https://aka.ms/azsdk/specreview/merge\">aka.ms/azsdk/specreview/merge</a>.<br /><br />Comment generated by <a href=\"https://g",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42261:comment:4224431454:spec:github:Azure/azure-rest-api-specs#42261",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T14:23:23Z",
+      "observedAt": "2026-04-10T14:23:23Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42261",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jruttle"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42261",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42261#issuecomment-4224431454"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## ARM Review Request — Config-only change This PR makes a **minimal config-only change** — it adds 3 lines to `tspconfig.yaml` to include the .NET management emitter (`@azure-typespec/http-client-csharp-mgmt`). There are **no API spec chan",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42261:comment:4224667498:spec:github:Azure/azure-rest-api-specs#42261",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-10T14:57:37Z",
+      "observedAt": "2026-04-10T14:57:37Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42261",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jruttle"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42261",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42261#issuecomment-4224667498"
+      },
+      "confidence": "authoritative",
+      "excerpt": "/merge",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46223:comment:4236235559:sdk:Python:azure-mgmt-authorization",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-13T12:06:32Z",
+      "observedAt": "2026-04-13T12:06:32Z",
+      "trackId": "sdk:Python:azure-mgmt-authorization",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jruttle"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46223",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46223#issuecomment-4236235559"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @msyyc @ChenxiJiang333 — could you take a look at this AutoPR when you get a chance? It adds the new deny assignment create/delete operations to `azure-mgmt-authorization` (generated from the merged TypeSpec PR [azure-rest-api-specs#4161",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26544:comment:4236236488:sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-13T12:06:42Z",
+      "observedAt": "2026-04-13T12:06:42Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jruttle"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26544",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26544#issuecomment-4236236488"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @tadelesh @JiaqiZhang-Dev — could you take a look at this AutoPR when you get a chance? It adds deny assignment create/delete support to `armauthorization` (generated from the merged TypeSpec PR [azure-rest-api-specs#41617](https://githu",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48751:comment:4236238078:sdk:Java:azure-resourcemanager-authorization",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-13T12:06:59Z",
+      "observedAt": "2026-04-13T12:06:59Z",
+      "trackId": "sdk:Java:azure-resourcemanager-authorization",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jruttle"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48751",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48751#issuecomment-4236238078"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @weidongxu-microsoft @XiaofeiCao — could you take a look at this AutoPR when you get a chance? It adds deny assignment create/delete support to `azure-resourcemanager-authorization` (generated from the merged TypeSpec PR [azure-rest-api-",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42261:comment:4236239044:spec:github:Azure/azure-rest-api-specs#42261",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-13T12:07:10Z",
+      "observedAt": "2026-04-13T12:07:10Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42261",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jruttle"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42261",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42261#issuecomment-4236239044"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @ArthurMa1978 @darshanhs90 — this is a 3-line config-only change adding the .NET management emitter to the Authorization tspconfig.yaml (the only missing language emitter). All checks are passing and the `ARMSignedOff` label is already a",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48751:review:4102959871:sdk:Java:azure-resourcemanager-authorization",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-14T02:14:03Z",
+      "observedAt": "2026-04-14T02:14:03Z",
+      "trackId": "sdk:Java:azure-resourcemanager-authorization",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48751",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48751#pullrequestreview-4102959871"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48751:commit:656111f5ffbf:sdk:Java:azure-resourcemanager-authorization",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-14T02:17:27Z",
+      "observedAt": "2026-04-14T02:17:27Z",
+      "trackId": "sdk:Java:azure-resourcemanager-authorization",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48751",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/656111f5ffbfb953a4181d1ed5c0f0608bccb973"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48751:review:4102968550:sdk:Java:azure-resourcemanager-authorization",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-14T02:17:50Z",
+      "observedAt": "2026-04-14T02:17:50Z",
+      "trackId": "sdk:Java:azure-resourcemanager-authorization",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48751",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48751#pullrequestreview-4102968550"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@XiaofeiCao for review as well",
+      "reviewState": "approved",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48751:review:4103062071:sdk:Java:azure-resourcemanager-authorization",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-14T02:52:17Z",
+      "observedAt": "2026-04-14T02:52:17Z",
+      "trackId": "sdk:Java:azure-resourcemanager-authorization",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "XiaofeiCao"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48751",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48751#pullrequestreview-4103062071"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26544:comment:4241194756:sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-14T03:51:00Z",
+      "observedAt": "2026-04-14T03:51:00Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "JiaqiZhang-Dev"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26544",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26544#issuecomment-4241194756"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@jliusan please help find the breaking change source and paste in this PR, thanks!",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26544:review:4103277998:sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-14T04:02:34Z",
+      "observedAt": "2026-04-14T04:02:34Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26544",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26544#pullrequestreview-4103277998"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview > [!NOTE] > Copilot was unable to run its full agentic suite in this review. This PR updates the `armauthorization` Go SDK package to the latest generated output (Go Code Generator) for `Microsoft.Authorization`, bu",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26544:review:4104455132:sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-14T08:29:55Z",
+      "observedAt": "2026-04-14T08:29:55Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "jliusan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26544",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26544#pullrequestreview-4104455132"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26544:comment:3078113184:sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-14T08:29:55Z",
+      "observedAt": "2026-04-14T08:29:55Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jliusan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26544",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26544#discussion_r3078113184"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Breaking changes came from :https://github.com/Azure/azure-rest-api-specs/pull/41617",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26544:review:4104456663:sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-14T08:30:11Z",
+      "observedAt": "2026-04-14T08:30:11Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "jliusan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26544",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26544#pullrequestreview-4104456663"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26544:comment:3078114665:sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-14T08:30:11Z",
+      "observedAt": "2026-04-14T08:30:11Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jliusan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26544",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26544#discussion_r3078114665"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Breaking changes came from :https://github.com/Azure/azure-rest-api-specs/pull/41617",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46223:comment:3078149821:sdk:Python:azure-mgmt-authorization",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-14T08:36:50Z",
+      "observedAt": "2026-04-14T08:36:50Z",
+      "trackId": "sdk:Python:azure-mgmt-authorization",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46223",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46223#discussion_r3078149821"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`Deserializer.deserialize_basic` no longer supports `data_type == \"bool\"`, which will raise `TypeError` for boolean model fields. Add an explicit `\"bool\"` branch (to preserve previous behavior that effectively did `bool(attr)` when `eval(\"b",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46223:comment:3078149884:sdk:Python:azure-mgmt-authorization",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-14T08:36:51Z",
+      "observedAt": "2026-04-14T08:36:51Z",
+      "trackId": "sdk:Python:azure-mgmt-authorization",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46223",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46223#discussion_r3078149884"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The package version was bumped (`5.0.0b1` → `5.0.0b2`), but no changelog entry is included in the provided diff. Add/update the package changelog to reflect the generated-surface changes and any breaking changes so release notes remain accu",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46223:comment:3078149911:sdk:Python:azure-mgmt-authorization",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-14T08:36:51Z",
+      "observedAt": "2026-04-14T08:36:51Z",
+      "trackId": "sdk:Python:azure-mgmt-authorization",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46223",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46223#discussion_r3078149911"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Add unit coverage for the updated basic-type (de)serialization paths (at minimum `deserialize_basic(..., \"bool\")`, and ideally `\"int\"`, `\"float\"`, `\"str\"`), since behavior changed from `eval(...)` to explicit branches and a missing `\"bool\"`",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46223:review:4104494314:sdk:Python:azure-mgmt-authorization",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-14T08:36:52Z",
+      "observedAt": "2026-04-14T08:36:52Z",
+      "trackId": "sdk:Python:azure-mgmt-authorization",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46223",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46223#pullrequestreview-4104494314"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview > [!NOTE] > Copilot was unable to run its full agentic suite in this review. This PR updates **azure-mgmt-authorization** to a newer generated surface (moving from AutoRest-style generation to the newer Python code ",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46223:comment:3078149941:sdk:Python:azure-mgmt-authorization",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-14T08:36:52Z",
+      "observedAt": "2026-04-14T08:36:52Z",
+      "trackId": "sdk:Python:azure-mgmt-authorization",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46223",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46223#discussion_r3078149941"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The docstring uses the grammatically incorrect article “an UUID”. Update to “a UUID”. ```suggestion :param subscription_id: The ID of the target subscription. The value must be a UUID. Required. ```",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46223:commit:32b9ee5b9be7:sdk:Python:azure-mgmt-authorization",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-14T08:50:28Z",
+      "observedAt": "2026-04-14T08:50:28Z",
+      "trackId": "sdk:Python:azure-mgmt-authorization",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46223",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/32b9ee5b9be70b101b54cb6680c2bfe5c01b63bd"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46223:commit:659a9d53c1cb:sdk:Python:azure-mgmt-authorization",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-14T08:50:48Z",
+      "observedAt": "2026-04-14T08:50:48Z",
+      "trackId": "sdk:Python:azure-mgmt-authorization",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46223",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/659a9d53c1cb43236572530ceb281ef28e7d63eb"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26544:review:4104674851:sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-14T09:06:42Z",
+      "observedAt": "2026-04-14T09:06:42Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "jliusan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26544",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26544#pullrequestreview-4104674851"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26544:comment:3078321083:sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-14T09:06:42Z",
+      "observedAt": "2026-04-14T09:06:42Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jliusan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26544",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26544#discussion_r3078321083"
+      },
+      "confidence": "authoritative",
+      "excerpt": "breaking changes came from :https://github.com/Azure/azure-rest-api-specs/pull/41104/changes/c6d1a96c0974f606470ecd450204369e7b91b70b..f30c4893d74491036ae96b3b6dda5da5da25facb#diff-d22515d0c1efa48bb822660c91e2402cf74d2db9bf68143f52003423642",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46223:comment:4266473231:sdk:Python:azure-mgmt-authorization",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-17T08:23:49Z",
+      "observedAt": "2026-04-17T08:23:49Z",
+      "trackId": "sdk:Python:azure-mgmt-authorization",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jruttle"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46223",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46223#issuecomment-4266473231"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @msyyc @ChenxiJiang333 — friendly follow-up on this PR (it's been open since April 9). This AutoPR adds deny assignment create/delete operations to `azure-mgmt-authorization`, generated from the merged TypeSpec PR [#41617](https://github",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48751:comment:4266473204:sdk:Java:azure-resourcemanager-authorization",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-17T08:23:49Z",
+      "observedAt": "2026-04-17T08:23:49Z",
+      "trackId": "sdk:Java:azure-resourcemanager-authorization",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jruttle"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48751",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48751#issuecomment-4266473204"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @weidongxu-microsoft @XiaofeiCao — thank you both for approving this PR! 🎉 It's still marked as **draft** though, which I believe is preventing it from being merged. Could one of you **undraft it and complete the merge**? All checks are",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42261:comment:4266473267:spec:github:Azure/azure-rest-api-specs#42261",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-17T08:23:50Z",
+      "observedAt": "2026-04-17T08:23:50Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42261",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jruttle"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42261",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42261#issuecomment-4266473267"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @ArthurMa1978 @darshanhs90 — following up on this PR. It's a **3-line config-only change** adding the .NET management emitter to the Authorization `tspconfig.yaml` — no API spec changes at all. The `ARMSignedOff` label is already applied",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26544:comment:4266473255:sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-17T08:23:50Z",
+      "observedAt": "2026-04-17T08:23:50Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jruttle"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26544",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26544#issuecomment-4266473255"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Thanks @jliusan for documenting the breaking change sources — those look correct. The breaking changes come from the deny assignment CRUD operations added in [#41617](https://github.com/Azure/azure-rest-api-specs/pull/41617) and [#41104](ht",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48751:pr.merged:sdk:Java:azure-resourcemanager-authorization",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-17T08:28:01Z",
+      "observedAt": "2026-04-17T08:28:01Z",
+      "trackId": "sdk:Java:azure-resourcemanager-authorization",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48751",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48751"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48751:comment:4266499446:sdk:Java:azure-resourcemanager-authorization",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-17T08:28:25Z",
+      "observedAt": "2026-04-17T08:28:25Z",
+      "trackId": "sdk:Java:azure-resourcemanager-authorization",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48751",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48751#issuecomment-4266499446"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@jruttle It is really service task to undraft the PR. Otherwise SDK dev would think the PR not ready to process.",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48751:comment:3098888811:sdk:Java:azure-resourcemanager-authorization",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-17T08:33:40Z",
+      "observedAt": "2026-04-17T08:33:40Z",
+      "trackId": "sdk:Java:azure-resourcemanager-authorization",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48751",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48751#discussion_r3098888811"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`apiVersion` is being sent as the literal string \"undefined\" (e.g., in the `api-version` query param). This will cause every request using this client to fail server-side (invalid/missing api-version). Please ensure the generator emits the ",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48751:comment:3098888847:sdk:Java:azure-resourcemanager-authorization",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-17T08:33:41Z",
+      "observedAt": "2026-04-17T08:33:41Z",
+      "trackId": "sdk:Java:azure-resourcemanager-authorization",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48751",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48751#discussion_r3098888847"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This change replaces the public model type `CommonUserType` with `UsersOrServicePrincipalSetUserType` in the `UsersOrServicePrincipalSet` API surface. That is a breaking change for any consumers compiling against the previous beta; consider",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48751:comment:3098888869:sdk:Java:azure-resourcemanager-authorization",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-17T08:33:41Z",
+      "observedAt": "2026-04-17T08:33:41Z",
+      "trackId": "sdk:Java:azure-resourcemanager-authorization",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48751",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48751#discussion_r3098888869"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The CHANGELOG entry says the `api-version` was updated to `2024-09-01-preview`, but the PR metadata indicates generation from `2024-07-01-preview`, and the generated clients currently use `\"undefined\"` for `apiVersion`. Please align the CHA",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48751:comment:3098888880:sdk:Java:azure-resourcemanager-authorization",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-17T08:33:41Z",
+      "observedAt": "2026-04-17T08:33:41Z",
+      "trackId": "sdk:Java:azure-resourcemanager-authorization",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48751",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48751#discussion_r3098888880"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The top CHANGELOG section was converted from “(Unreleased)” to a dated release. Unless this PR is intended to finalize a release, the repo convention is to keep a single “(Unreleased)” section at the top and only date it when the version is",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48751:review:4127252757:sdk:Java:azure-resourcemanager-authorization",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-17T08:33:42Z",
+      "observedAt": "2026-04-17T08:33:42Z",
+      "trackId": "sdk:Java:azure-resourcemanager-authorization",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48751",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48751#pullrequestreview-4127252757"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Updates the `azure-resourcemanager-authorization` generated SDK from the Authorization TypeSpec configuration, aligning generated models/clients and metadata with the referenced `azure-rest-api-specs` commit. **Chan",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42261:comment:4269959093:spec:github:Azure/azure-rest-api-specs#42261",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-17T17:18:55Z",
+      "observedAt": "2026-04-17T17:18:55Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42261",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "iliu816"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42261",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42261#issuecomment-4269959093"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@jruttle I'm not a code owner for Authorization. It seems like this request should go to @darshanhs90 according to https://github.com/Azure/azure-rest-api-specs/blob/fecd9f0cc1b1589c66295932e97f18226f51a28b/.github/CODEOWNERS#L45",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46223:review:4136980106:sdk:Python:azure-mgmt-authorization",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-20T02:28:29Z",
+      "observedAt": "2026-04-20T02:28:29Z",
+      "trackId": "sdk:Python:azure-mgmt-authorization",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46223",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46223#pullrequestreview-4136980106"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46223:review:4136983135:sdk:Python:azure-mgmt-authorization",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-20T02:30:07Z",
+      "observedAt": "2026-04-20T02:30:07Z",
+      "trackId": "sdk:Python:azure-mgmt-authorization",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "tadelesh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46223",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46223#pullrequestreview-4136983135"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46223:comment:4277496345:sdk:Python:azure-mgmt-authorization",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-20T02:30:53Z",
+      "observedAt": "2026-04-20T02:30:53Z",
+      "trackId": "sdk:Python:azure-mgmt-authorization",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46223",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46223#issuecomment-4277496345"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @jruttle, approved, feel free to merge and release",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26544:comment:4277497995:sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-20T02:31:27Z",
+      "observedAt": "2026-04-20T02:31:27Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "JiaqiZhang-Dev"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26544",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26544#issuecomment-4277497995"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @jruttle, according to the SDK release process, the request needs to include the release planner link. Do you have this link so we can proceed and approve the SDK PR?",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46223:pr.merged:sdk:Python:azure-mgmt-authorization",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-20T08:42:52Z",
+      "observedAt": "2026-04-20T08:42:52Z",
+      "trackId": "sdk:Python:azure-mgmt-authorization",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46223",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46223"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26544:comment:4279193906:sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-20T08:54:29Z",
+      "observedAt": "2026-04-20T08:54:29Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jruttle"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26544",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26544#issuecomment-4279193906"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @JiaqiZhang-Dev — here's the release planner link: https://aka.ms/sdk-release-planner?release-plan-id=72ce017f-7719-f111-8341-000d3a5c46b0 Let me know if you need anything else to proceed. Thanks!",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42261:comment:4279253101:spec:github:Azure/azure-rest-api-specs#42261",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-20T09:03:50Z",
+      "observedAt": "2026-04-20T09:03:50Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42261",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jruttle"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42261",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42261#issuecomment-4279253101"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Thanks @iliu816 for pointing that out — really appreciate the help! 🙏 @darshanhs90 — could you take a look at this PR when you get a chance? It's a **3-line config-only change** adding the .NET management emitter to the Authorization `tspc",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26544:review:4177848798:sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-27T01:58:29Z",
+      "observedAt": "2026-04-27T01:58:29Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "JiaqiZhang-Dev"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26544",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26544#pullrequestreview-4177848798"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26544:comment:4323701186:sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-27T01:58:46Z",
+      "observedAt": "2026-04-27T01:58:46Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "JiaqiZhang-Dev"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26544",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26544#issuecomment-4323701186"
+      },
+      "confidence": "authoritative",
+      "excerpt": "/check-enforcer override",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26544:comment:4326706447:sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-27T11:49:29Z",
+      "observedAt": "2026-04-27T11:49:29Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jruttle"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26544",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26544#issuecomment-4326706447"
+      },
+      "confidence": "authoritative",
+      "excerpt": "/check-enforcer evaluate",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26544:comment:4326709907:sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-27T11:50:06Z",
+      "observedAt": "2026-04-27T11:50:06Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jruttle"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26544",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26544#issuecomment-4326709907"
+      },
+      "confidence": "authoritative",
+      "excerpt": "/check-enforcer override",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26544:comment:4326763294:sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-27T11:58:55Z",
+      "observedAt": "2026-04-27T11:58:55Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jruttle"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26544",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26544#issuecomment-4326763294"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @JiaqiZhang-Dev — thanks for the approval and the `/check-enforcer override` on Apr 27! It looks like the bot didn't pick it up — the `aka.ms/azsdk/checkenforcer` status is still `pending` (last updated Apr 14) and `mergeStateStatus` is ",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26544:pr.merged:sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-27T12:00:10Z",
+      "observedAt": "2026-04-27T12:00:10Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26544",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26544"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42261:comment:4352960771:spec:github:Azure/azure-rest-api-specs#42261",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-30T13:43:04Z",
+      "observedAt": "2026-04-30T13:43:04Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42261",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jruttle"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42261",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42261#issuecomment-4352960771"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @pshao25, since you approved #41617 (the TypeSpec migration for authorization-12-01), would you mind taking a look at this small follow-up PR to add the .NET management emitter to the Authorization tspconfig.yaml? It's been waiting for r",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42261:comment:4395974456:spec:github:Azure/azure-rest-api-specs#42261",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-07T09:40:12Z",
+      "observedAt": "2026-05-07T09:40:12Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42261",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jruttle"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42261",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42261#issuecomment-4395974456"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @mcgallan @gary-x-li — looping you in directly because this PR has been waiting for a single human review for a few weeks despite having every required label (`ARMSignedOff`, `ARMAutoSignedOff-Trivial`, `Approved-Avocado`, `PublishToCust",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38607:commit:eb176aa26dd2:sdk:JavaScript:@azure/arm-authorization",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T03:32:49Z",
+      "observedAt": "2026-05-20T03:32:49Z",
+      "trackId": "sdk:JavaScript:@azure/arm-authorization",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38607",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/eb176aa26dd27ec6b2966ec0530ebfd5f297d172"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38607:pr.created:sdk:JavaScript:@azure/arm-authorization",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T03:32:53Z",
+      "observedAt": "2026-05-20T03:32:53Z",
+      "trackId": "sdk:JavaScript:@azure/arm-authorization",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38607",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38607"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38607:review:4325917964:sdk:JavaScript:@azure/arm-authorization",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T06:59:06Z",
+      "observedAt": "2026-05-20T06:59:06Z",
+      "trackId": "sdk:JavaScript:@azure/arm-authorization",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38607",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38607#pullrequestreview-4325917964"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot wasn't able to review this pull request because it exceeds the maximum number of files (300). Try reducing the number of changed files and requesting a review from Copilot again.",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38607:commit:d9fe89f7cfa0:sdk:JavaScript:@azure/arm-authorization",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T07:15:04Z",
+      "observedAt": "2026-05-20T07:15:04Z",
+      "trackId": "sdk:JavaScript:@azure/arm-authorization",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "v-jiaodi"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38607",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/d9fe89f7cfa07086006bc0263a4ec9ae98c2807e"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38607:commit:f7d737fa9ac4:sdk:JavaScript:@azure/arm-authorization",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T07:28:57Z",
+      "observedAt": "2026-05-20T07:28:57Z",
+      "trackId": "sdk:JavaScript:@azure/arm-authorization",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "v-jiaodi"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38607",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/f7d737fa9ac45cb342d3efad0f0d99b153473358"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38607:comment:4495885660:sdk:JavaScript:@azure/arm-authorization",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T07:49:06Z",
+      "observedAt": "2026-05-20T07:49:06Z",
+      "trackId": "sdk:JavaScript:@azure/arm-authorization",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "v-jiaodi"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38607",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38607#issuecomment-4495885660"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> [!NOTE] > This analysis was generated by AI. Please review the classifications and root causes for accuracy. ## Breaking Change Analysis: @azure/arm-authorization 10.0.0-beta.3 | | Old SDK (main) | New SDK (PR) | |---|---|---| | **Generat",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38607:review:4333263573:sdk:JavaScript:@azure/arm-authorization",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-21T01:31:03Z",
+      "observedAt": "2026-05-21T01:31:03Z",
+      "trackId": "sdk:JavaScript:@azure/arm-authorization",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "JialinHuang803"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38607",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38607#pullrequestreview-4333263573"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38607:pr.merged:sdk:JavaScript:@azure/arm-authorization",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-21T01:31:15Z",
+      "observedAt": "2026-05-21T01:31:15Z",
+      "trackId": "sdk:JavaScript:@azure/arm-authorization",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38607",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38607"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42261:review:4497542994:spec:github:Azure/azure-rest-api-specs#42261",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-15T12:56:26Z",
+      "observedAt": "2026-06-15T12:56:26Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42261",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "abaccin"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42261",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42261#pullrequestreview-4497542994"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42261:pr.merged:spec:github:Azure/azure-rest-api-specs#42261",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-15T12:59:12Z",
+      "observedAt": "2026-06-15T12:59:12Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42261",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42261",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42261"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42261:comment:4708167129:spec:github:Azure/azure-rest-api-specs#42261",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-15T12:59:47Z",
+      "observedAt": "2026-06-15T12:59:47Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42261",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jruttle"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42261",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42261#issuecomment-4708167129"
+      },
+      "confidence": "authoritative",
+      "excerpt": "/merge",
+      "stack": 2
+    },
+    {
+      "id": "ado:34978:created",
+      "type": "plan.created",
+      "phase": "plan",
+      "occurredAt": "2026-06-15T13:26:10.323Z",
+      "observedAt": "2026-06-15T13:26:10.323Z",
+      "trackId": "plan",
+      "title": "Release Plan created",
+      "confidence": "authoritative",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34978",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34978"
+      },
+      "stack": 0
+    },
+    {
+      "id": "ado:34978:1:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-06-15T13:26:10.323Z",
+      "observedAt": "2026-06-15T13:26:10.323Z",
+      "trackId": "plan",
+      "value": "New",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34978",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34978"
+      },
+      "title": "Plan state changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34978:1:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-15T13:26:10.323Z",
+      "observedAt": "2026-06-15T13:26:10.323Z",
+      "trackId": "plan",
+      "value": "Not Available",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34978",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34978"
+      },
+      "title": "Spec approval changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:34978:1:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-15T13:26:10.323Z",
+      "observedAt": "2026-06-15T13:26:10.323Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Authorization",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34978",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34978"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34978:1:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-15T13:26:10.323Z",
+      "observedAt": "2026-06-15T13:26:10.323Z",
+      "trackId": "sdk:JavaScript:@azure/arm-authorization",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34978",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34978"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34978:1:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-15T13:26:10.323Z",
+      "observedAt": "2026-06-15T13:26:10.323Z",
+      "trackId": "sdk:Python:azure-mgmt-authorization",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34978",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34978"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34978:1:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-15T13:26:10.323Z",
+      "observedAt": "2026-06-15T13:26:10.323Z",
+      "trackId": "sdk:Java:azure-resourcemanager-authorization",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34978",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34978"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34978:1:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-15T13:26:10.323Z",
+      "observedAt": "2026-06-15T13:26:10.323Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34978",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34978"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34979:1:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-15T13:26:10.85Z",
+      "observedAt": "2026-06-15T13:26:10.85Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42261",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/42261",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34979",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34979"
+      },
+      "title": "Spec PR linked",
+      "stack": 3
+    },
+    {
+      "id": "ado:34978:2:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-06-15T13:26:11.693Z",
+      "observedAt": "2026-06-15T13:26:11.693Z",
+      "trackId": "plan",
+      "value": "In Progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34978",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34978"
+      },
+      "title": "Plan state changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:34978:3:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-15T13:40:02.387Z",
+      "observedAt": "2026-06-15T13:40:02.387Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Authorization",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34978",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34978"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6435839:generation.queued:sdk:.NET:Azure.ResourceManager.Authorization",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-06-15T14:30:26.7654951Z",
+      "observedAt": "2026-06-15T14:42:40.1665798Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Authorization",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6435839",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6435839"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:34978:5:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-15T14:30:30.347Z",
+      "observedAt": "2026-06-15T14:30:30.347Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Authorization",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34978",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34978"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6435839:generation.started:sdk:.NET:Azure.ResourceManager.Authorization",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-06-15T14:34:24.5372054Z",
+      "observedAt": "2026-06-15T14:42:40.1665798Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Authorization",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6435839",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6435839"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:34978:8:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-15T14:39:07.393Z",
+      "observedAt": "2026-06-15T14:39:07.393Z",
+      "trackId": "sdk:JavaScript:@azure/arm-authorization",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34978",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34978"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34978:8:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-15T14:39:07.393Z",
+      "observedAt": "2026-06-15T14:39:07.393Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34978",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34978"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6435878:generation.queued:sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-06-15T14:39:27.625929Z",
+      "observedAt": "2026-06-15T14:48:59.83828Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6435878",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6435878"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:34978:9:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-15T14:39:31.1Z",
+      "observedAt": "2026-06-15T14:39:31.1Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34978",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34978"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6435879:generation.queued:sdk:JavaScript:@azure/arm-authorization",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-06-15T14:39:42.3028998Z",
+      "observedAt": "2026-06-15T14:51:52.2782868Z",
+      "trackId": "sdk:JavaScript:@azure/arm-authorization",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6435879",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6435879"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:34978:10:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-15T14:39:45.093Z",
+      "observedAt": "2026-06-15T14:39:45.093Z",
+      "trackId": "sdk:JavaScript:@azure/arm-authorization",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34978",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34978"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59931:commit:09a987ec209f:sdk:.NET:Azure.ResourceManager.Authorization",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-15T14:41:32Z",
+      "observedAt": "2026-06-15T14:41:32Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Authorization",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59931",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/09a987ec209f94cbcddaff28ad3e580d4ecace93"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59931:pr.created:sdk:.NET:Azure.ResourceManager.Authorization",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-15T14:41:39Z",
+      "observedAt": "2026-06-15T14:41:39Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Authorization",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59931",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59931"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:34978:11:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-15T14:41:46.717Z",
+      "observedAt": "2026-06-15T14:41:46.717Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Authorization",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34978",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34978"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34978:11:Custom.SDKPullRequestForDotnet",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-06-15T14:41:46.717Z",
+      "observedAt": "2026-06-15T14:41:46.717Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Authorization",
+      "value": "https://github.com/Azure/azure-sdk-for-net/pull/59931",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34978",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34978"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59931:review:4498409713:sdk:.NET:Azure.ResourceManager.Authorization",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-15T14:41:49Z",
+      "observedAt": "2026-06-15T14:41:49Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Authorization",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59931",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59931#pullrequestreview-4498409713"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot wasn't able to review this pull request because it exceeds the maximum number of files (300). Try reducing the number of changed files and requesting a review from Copilot again.",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6435878:generation.started:sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-06-15T14:42:38.8196758Z",
+      "observedAt": "2026-06-15T14:48:59.83828Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6435878",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6435878"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6435839:generation.completed:sdk:.NET:Azure.ResourceManager.Authorization",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-06-15T14:42:40.1665798Z",
+      "observedAt": "2026-06-15T14:42:40.1665798Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Authorization",
+      "title": "Pipeline completed with issues",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6435839",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6435839"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6435879:generation.started:sdk:JavaScript:@azure/arm-authorization",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-06-15T14:44:08.859318Z",
+      "observedAt": "2026-06-15T14:51:52.2782868Z",
+      "trackId": "sdk:JavaScript:@azure/arm-authorization",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6435879",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6435879"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27007:commit:a566b4b3299c:sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-15T14:47:39Z",
+      "observedAt": "2026-06-15T14:47:39Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27007",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/a566b4b3299c6c7ef9af38b5f225df58b2c79f72"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27007:pr.created:sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-15T14:47:43Z",
+      "observedAt": "2026-06-15T14:47:43Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27007",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27007"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:34978:12:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-15T14:47:50.907Z",
+      "observedAt": "2026-06-15T14:47:50.907Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34978",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34978"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34978:12:Custom.SDKPullRequestForGo",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-06-15T14:47:50.907Z",
+      "observedAt": "2026-06-15T14:47:50.907Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "value": "https://github.com/Azure/azure-sdk-for-go/pull/27007",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34978",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34978"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6435878:generation.completed:sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-06-15T14:48:59.83828Z",
+      "observedAt": "2026-06-15T14:48:59.83828Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6435878",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6435878"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38959:commit:df38348eaeac:sdk:JavaScript:@azure/arm-authorization",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-15T14:50:37Z",
+      "observedAt": "2026-06-15T14:50:37Z",
+      "trackId": "sdk:JavaScript:@azure/arm-authorization",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38959",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/df38348eaeaca0469ef8ce1c5663083afb39ece0"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38959:pr.created:sdk:JavaScript:@azure/arm-authorization",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-15T14:50:42Z",
+      "observedAt": "2026-06-15T14:50:42Z",
+      "trackId": "sdk:JavaScript:@azure/arm-authorization",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38959",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38959"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:34978:13:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-15T14:50:49.443Z",
+      "observedAt": "2026-06-15T14:50:49.443Z",
+      "trackId": "sdk:JavaScript:@azure/arm-authorization",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34978",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34978"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34978:13:Custom.SDKPullRequestForJavaScript",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-06-15T14:50:49.443Z",
+      "observedAt": "2026-06-15T14:50:49.443Z",
+      "trackId": "sdk:JavaScript:@azure/arm-authorization",
+      "value": "https://github.com/Azure/azure-sdk-for-js/pull/38959",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34978",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34978"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27007:comment:3414393606:sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-15T14:51:10Z",
+      "observedAt": "2026-06-15T14:51:10Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27007",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27007#discussion_r3414393606"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The new 3.0.0-beta.4 section is empty (no bullets under \"### Other Changes\"), which leaves the changelog entry uninformative. Please add at least one bullet summarizing the changes in this release (e.g. dependency updates) or remove the emp",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27007:review:4498492480:sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-15T14:51:11Z",
+      "observedAt": "2026-06-15T14:51:11Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27007",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27007#pullrequestreview-4498492480"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This AutoPR updates the `armauthorization` resource manager SDK module based on the latest TypeSpec configuration/spec commit, preparing a new beta release. **Changes:** - Bumped module version to `v3.0.0-beta.4` an",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:6435879:generation.completed:sdk:JavaScript:@azure/arm-authorization",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-06-15T14:51:52.2782868Z",
+      "observedAt": "2026-06-15T14:51:52.2782868Z",
+      "trackId": "sdk:JavaScript:@azure/arm-authorization",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6435879",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6435879"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38959:review:4498531001:sdk:JavaScript:@azure/arm-authorization",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-15T14:55:27Z",
+      "observedAt": "2026-06-15T14:55:27Z",
+      "trackId": "sdk:JavaScript:@azure/arm-authorization",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38959",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38959#pullrequestreview-4498531001"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This is an auto-generated SDK regeneration for `@azure/arm-authorization`, bumping from `10.0.0-beta.3` to `10.0.0-beta.4`. It updates the spec commit to `8a3262d0e5c399e19b4e489368643a0e5b7f16e3` and upgrades the e",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "ado:34978:14:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-15T15:01:24.12Z",
+      "observedAt": "2026-06-15T15:01:24.12Z",
+      "trackId": "sdk:Python:azure-mgmt-authorization",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34978",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34978"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34978:14:Custom.SDKPullRequestForPython",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-06-15T15:01:24.12Z",
+      "observedAt": "2026-06-15T15:01:24.12Z",
+      "trackId": "sdk:Python:azure-mgmt-authorization",
+      "value": "https://github.com/Azure/azure-sdk-for-python/pull/46223",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34978",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34978"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "ado:34978:15:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-15T15:01:29.65Z",
+      "observedAt": "2026-06-15T15:01:29.65Z",
+      "trackId": "sdk:Java:azure-resourcemanager-authorization",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34978",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34978"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34978:15:Custom.SDKPullRequestForJava",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-06-15T15:01:29.65Z",
+      "observedAt": "2026-06-15T15:01:29.65Z",
+      "trackId": "sdk:Java:azure-resourcemanager-authorization",
+      "value": "https://github.com/Azure/azure-sdk-for-java/pull/48751",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34978",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34978"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59931:review:4498614578:sdk:.NET:Azure.ResourceManager.Authorization",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-15T15:05:30Z",
+      "observedAt": "2026-06-15T15:05:30Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Authorization",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59931",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59931#pullrequestreview-4498614578"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59931:comment:3414496161:sdk:.NET:Azure.ResourceManager.Authorization",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-15T15:05:31Z",
+      "observedAt": "2026-06-15T15:05:31Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Authorization",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59931",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59931#discussion_r3414496161"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[Phase 3 / Phase 6 – Breaking rename, blocking]** This class was `AuthorizationProviderOperationsMetadataResource` in the shipped 1.1.7 API. The TypeSpec migration dropped the `Authorization` prefix, renaming it to `ProviderOperationsMeta",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59931:comment:3414496174:sdk:.NET:Azure.ResourceManager.Authorization",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-15T15:05:31Z",
+      "observedAt": "2026-06-15T15:05:31Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Authorization",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59931",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59931#discussion_r3414496174"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[Phase 3 / Phase 6 – Breaking rename, blocking]** This class was `AuthorizationRoleDefinitionCollection` in the shipped 1.1.7 API. The TypeSpec migration dropped the `Authorization` prefix, renaming it to `RoleDefinitionCollection`. All t",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27007:commit:c0224fbe4ca7:sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-15T15:09:22Z",
+      "observedAt": "2026-06-15T15:09:22Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27007",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/c0224fbe4ca7329bb7924b4fb54a3772f8bf5ff6"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27007:comment:4714283123:sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-16T02:28:01Z",
+      "observedAt": "2026-06-16T02:28:01Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "JiaqiZhang-Dev"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27007",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27007#issuecomment-4714283123"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @jruttle, since there is no code change for the Go SDK, it's not necessary to release it. Feel free close this PR.",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38959:comment:4716779407:sdk:JavaScript:@azure/arm-authorization",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-16T09:04:08Z",
+      "observedAt": "2026-06-16T09:04:08Z",
+      "trackId": "sdk:JavaScript:@azure/arm-authorization",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jruttle"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38959",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38959#issuecomment-4716779407"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Closing — @JialinHuang803 confirmed that \\@azure/arm-authorization@10.0.0-beta.3\\ was already released in May via #38607 (TypeSpec migration). Verified it includes \\DenyAssignmentsCreateOrUpdate\\ and \\DenyAssignmentsDelete\\ operations for \\",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38959:pr.closed:sdk:JavaScript:@azure/arm-authorization",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-16T09:04:09Z",
+      "observedAt": "2026-06-16T09:04:09Z",
+      "trackId": "sdk:JavaScript:@azure/arm-authorization",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38959",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38959"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27007:comment:4716819211:sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-16T09:08:37Z",
+      "observedAt": "2026-06-16T09:08:37Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jruttle"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27007",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27007#issuecomment-4716819211"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Closing — \\\u0007rmauthorization v3.0.0-beta.3\\ is already released on pkg.go.dev (tagged from PR #26544). This PR was generating an unnecessary v3.0.0-beta.4. No action needed.",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27007:pr.closed:sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-16T09:08:38Z",
+      "observedAt": "2026-06-16T09:08:38Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27007",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27007"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado:34978:18:Custom.SDKPullRequestForJavaScript",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-06-16T14:56:44.933Z",
+      "observedAt": "2026-06-16T14:56:44.933Z",
+      "trackId": "sdk:JavaScript:@azure/arm-authorization",
+      "value": "https://github.com/Azure/azure-sdk-for-js/pull/38607",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34978",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34978"
+      },
+      "title": "SDK PR linked",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59931:comment:4779772140:sdk:.NET:Azure.ResourceManager.Authorization",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-23T13:34:39Z",
+      "observedAt": "2026-06-23T13:34:39Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Authorization",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jruttle"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59931",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59931#issuecomment-4779772140"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Closing - this PR was a full TypeSpec migration of the package (618 files, replacing the existing AutoRest-generated 1.1.7 stable). It wasn't intended as a deny-assignment-only addition. The root cause: spec PR azure-rest-api-specs#42261 en",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59931:pr.closed:sdk:.NET:Azure.ResourceManager.Authorization",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-23T13:34:40Z",
+      "observedAt": "2026-06-23T13:34:40Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Authorization",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59931",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59931"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60195:commit:099ed627be48:sdk:.NET:Azure.ResourceManager.Authorization",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-23T15:15:00Z",
+      "observedAt": "2026-06-23T15:15:00Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Authorization",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60195",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/099ed627be4893e3b1b98e62de4cbd9d39bbdf1b"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60195:commit:394e70adf923:sdk:.NET:Azure.ResourceManager.Authorization",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-24T14:34:46Z",
+      "observedAt": "2026-06-24T14:34:46Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Authorization",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60195",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/394e70adf9236e1e3e76bac9afd635516ebaabac"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60195:pr.created:sdk:.NET:Azure.ResourceManager.Authorization",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-24T15:34:48Z",
+      "observedAt": "2026-06-24T15:34:48Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Authorization",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "jruttle"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60195",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60195"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60195:commit:cd03b06b329a:sdk:.NET:Azure.ResourceManager.Authorization",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-25T12:52:25Z",
+      "observedAt": "2026-06-25T12:52:25Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Authorization",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60195",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/cd03b06b329a5837bd7da1d71ea6054707e83f38"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60195:comment:4799904804:sdk:.NET:Azure.ResourceManager.Authorization",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-25T13:36:06Z",
+      "observedAt": "2026-06-25T13:36:06Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Authorization",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jruttle"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60195",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60195#issuecomment-4799904804"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This is now ready for review. ✅ **CI is fully green** — the previously-failing `net - pullrequest` \"Verify Generated Code\" check passes on the latest commit (build [6482528](https://dev.azure.com/azure-sdk/public/_build/results?buildId=6482",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60195:comment:3474842914:sdk:.NET:Azure.ResourceManager.Authorization",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-25T13:43:09Z",
+      "observedAt": "2026-06-25T13:43:09Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Authorization",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60195",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60195#discussion_r3474842914"
+      },
+      "confidence": "authoritative",
+      "excerpt": "ApiCompat baselines suppress breaking-change detection and should not be introduced for new breakages in this repo. Please remove this baseline file and instead preserve compatibility (e.g., keep the removed model-factory helpers/previous m",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60195:comment:3474842987:sdk:.NET:Azure.ResourceManager.Authorization",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-25T13:43:09Z",
+      "observedAt": "2026-06-25T13:43:09Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Authorization",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60195",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60195#discussion_r3474842987"
+      },
+      "confidence": "authoritative",
+      "excerpt": "CHANGELOG claims `Condition`/`ConditionVersion` were added as read-only properties, but the generated model makes them settable. Please update the entry to match the actual public API (or adjust the model generation if these are intended to",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60195:review:4571486147:sdk:.NET:Azure.ResourceManager.Authorization",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-25T13:43:10Z",
+      "observedAt": "2026-06-25T13:43:10Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Authorization",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60195",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60195#pullrequestreview-4571486147"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This PR updates **Azure.ResourceManager.Authorization** to add **deny assignment create/update/delete** support generated from the `2024-07-01-preview` API, along with the corresponding model updates, samples, and A",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "ado:34978:21:Custom.SDKPullRequestForDotnet",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-06-25T13:43:23.17Z",
+      "observedAt": "2026-06-25T13:43:23.17Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Authorization",
+      "value": "https://github.com/Azure/azure-sdk-for-net/pull/60195",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34978",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34978"
+      },
+      "title": "SDK PR linked",
+      "stack": 4
+    },
+    {
+      "id": "ado:34978:22:Custom.SDKPullRequestForGo",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-06-25T14:07:00.293Z",
+      "observedAt": "2026-06-25T14:07:00.293Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "value": "https://github.com/Azure/azure-sdk-for-go/pull/26544",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34978",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34978"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado:34978:23:Custom.ReleaseStatusForJavaScript",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-06-25T14:14:36.297Z",
+      "observedAt": "2026-06-25T14:14:36.297Z",
+      "trackId": "sdk:JavaScript:@azure/arm-authorization",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34978",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34978"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34978:23:Custom.ReleasedVersionForJavaScript",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-06-25T14:14:36.297Z",
+      "observedAt": "2026-06-25T14:14:36.297Z",
+      "trackId": "sdk:JavaScript:@azure/arm-authorization",
+      "value": "10.0.0-beta.3",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34978",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34978"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34978:24:Custom.ReleaseStatusForPython",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-06-25T14:14:51.043Z",
+      "observedAt": "2026-06-25T14:14:51.043Z",
+      "trackId": "sdk:Python:azure-mgmt-authorization",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34978",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34978"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34978:24:Custom.ReleasedVersionForPython",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-06-25T14:14:51.043Z",
+      "observedAt": "2026-06-25T14:14:51.043Z",
+      "trackId": "sdk:Python:azure-mgmt-authorization",
+      "value": "5.0.0b2",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34978",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34978"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34978:25:Custom.ReleaseStatusForJava",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-06-25T14:14:55.92Z",
+      "observedAt": "2026-06-25T14:14:55.92Z",
+      "trackId": "sdk:Java:azure-resourcemanager-authorization",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34978",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34978"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34978:25:Custom.ReleasedVersionForJava",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-06-25T14:14:55.92Z",
+      "observedAt": "2026-06-25T14:14:55.92Z",
+      "trackId": "sdk:Java:azure-resourcemanager-authorization",
+      "value": "2.54.0-beta.1",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34978",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34978"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34978:26:Custom.ReleaseStatusForGo",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-06-25T14:15:00.76Z",
+      "observedAt": "2026-06-25T14:15:00.76Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34978",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34978"
+      },
+      "title": "Release status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34978:26:Custom.ReleasedVersionForGo",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-06-25T14:15:00.76Z",
+      "observedAt": "2026-06-25T14:15:00.76Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+      "value": "3.0.0-beta.3",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34978",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34978"
+      },
+      "title": "Package version observed",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60195:comment:4800954067:sdk:.NET:Azure.ResourceManager.Authorization",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-25T15:16:53Z",
+      "observedAt": "2026-06-25T15:16:53Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Authorization",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jruttle"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60195",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60195#issuecomment-4800954067"
+      },
+      "confidence": "authoritative",
+      "excerpt": "For reviewers — the **APIView** for this PR is already generated and current (refreshed by build [6482528](https://dev.azure.com/azure-sdk/public/_build/results?buildId=6482528)'s \"Create APIView if API has changes\" task): 📋 **APIView:** h",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60195:commit:f72bc221830d:sdk:.NET:Azure.ResourceManager.Authorization",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-26T08:02:18Z",
+      "observedAt": "2026-06-26T08:02:18Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Authorization",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60195",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/f72bc221830da7d0b8cc5fad549fda8ef7f20e00"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60195:review:4577778639:sdk:.NET:Azure.ResourceManager.Authorization",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-26T08:03:27Z",
+      "observedAt": "2026-06-26T08:03:27Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Authorization",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "jruttle"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60195",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60195#pullrequestreview-4577778639"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60195:comment:3479995037:sdk:.NET:Azure.ResourceManager.Authorization",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-26T08:03:27Z",
+      "observedAt": "2026-06-26T08:03:27Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Authorization",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jruttle"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60195",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60195#discussion_r3479995037"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This baseline is intentional. The breaking changes here are required to support the new PUT (create/update) operations for deny assignments in this **preview** (1.2.0-beta.1): making `DenyAssignmentData` and its nested models writable neces",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60195:review:4577778787:sdk:.NET:Azure.ResourceManager.Authorization",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-26T08:03:28Z",
+      "observedAt": "2026-06-26T08:03:28Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Authorization",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "jruttle"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60195",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60195#pullrequestreview-4577778787"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60195:comment:3479995175:sdk:.NET:Azure.ResourceManager.Authorization",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-26T08:03:28Z",
+      "observedAt": "2026-06-26T08:03:28Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Authorization",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jruttle"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60195",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60195#discussion_r3479995175"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Good catch - fixed in `f72bc221`. `Condition` and `ConditionVersion` are settable, so they're now listed as writable alongside `DenyAssignmentEffect`; only `CreatedOn`/`UpdatedOn`/`CreatedBy`/`UpdatedBy` remain described as read-only.",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60195:review:4577882462:sdk:.NET:Azure.ResourceManager.Authorization",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-26T08:18:43Z",
+      "observedAt": "2026-06-26T08:18:43Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Authorization",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60195",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60195#pullrequestreview-4577882462"
+      },
+      "confidence": "authoritative",
+      "excerpt": "### Management SDK Review Summary - **Scope**: `Azure.ResourceManager.Authorization` (1 package, version `1.2.0-beta.1`, baseline `ApiCompatVersion` = `1.1.7`) - **Versioning**: ❌ FAIL — new `eng/apicompatbaselines/Azure.ResourceManager.Aut",
+      "reviewState": "dismissed",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60195:comment:3480076271:sdk:.NET:Azure.ResourceManager.Authorization",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-26T08:18:43Z",
+      "observedAt": "2026-06-26T08:18:43Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Authorization",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60195",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60195#discussion_r3480076271"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[Phase 1 / Phase 3]** You correctly added `[EditorBrowsable(EditorBrowsableState.Never)]` compat shims here for `DenyAssignmentData` and `AuthorizationRoleDefinitionData` to preserve backward compatibility. The same shim pattern is needed",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60195:commit:65135ea40502:sdk:.NET:Azure.ResourceManager.Authorization",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-26T10:52:21Z",
+      "observedAt": "2026-06-26T10:52:21Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Authorization",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60195",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/65135ea40502e6d3100c02095836cc947267201b"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60195:review:4578860606:sdk:.NET:Azure.ResourceManager.Authorization",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-26T10:53:54Z",
+      "observedAt": "2026-06-26T10:53:54Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Authorization",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "jruttle"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60195",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60195#pullrequestreview-4578860606"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60195:comment:3480885156:sdk:.NET:Azure.ResourceManager.Authorization",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-26T10:53:54Z",
+      "observedAt": "2026-06-26T10:53:54Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Authorization",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jruttle"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60195",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60195#discussion_r3480885156"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Done in 65135ea — added both compat shims (DenyAssignmentPermission(...) and RoleManagementPrincipal(...)) as [EditorBrowsable(Never)] methods in a new src/Customizations/ArmAuthorizationModelFactory.Custom.cs partial, and removed the two c",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60195:review:4578862193:sdk:.NET:Azure.ResourceManager.Authorization",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-26T10:54:05Z",
+      "observedAt": "2026-06-26T10:54:05Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Authorization",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "jruttle"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60195",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60195#pullrequestreview-4578862193"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60195:comment:3480886458:sdk:.NET:Azure.ResourceManager.Authorization",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-26T10:54:05Z",
+      "observedAt": "2026-06-26T10:54:05Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Authorization",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jruttle"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60195",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60195#discussion_r3480886458"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Reduced the baseline in 65135ea: the two removed model-factory helpers are now restored as [EditorBrowsable(Never)] compat shims (src/Customizations/ArmAuthorizationModelFactory.Custom.cs), so those 2 suppressions are gone. The remaining 7 ",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60195:comment:4808865539:sdk:.NET:Azure.ResourceManager.Authorization",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-26T10:54:30Z",
+      "observedAt": "2026-06-26T10:54:30Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Authorization",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jruttle"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60195",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60195#issuecomment-4808865539"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Addressed the automated reviewer feedback in 65135ea: - **Restored the two removed model-factory helpers** (\\ArmAuthorizationModelFactory.DenyAssignmentPermission(...)\\ and \\RoleManagementPrincipal(...)\\) as \\[EditorBrowsable(Never)]\\ compa",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60195:review:4579044481:sdk:.NET:Azure.ResourceManager.Authorization",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-26T11:19:53Z",
+      "observedAt": "2026-06-26T11:19:53Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Authorization",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60195",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60195#pullrequestreview-4579044481"
+      },
+      "confidence": "authoritative",
+      "excerpt": "### Management SDK Review Summary - **Scope**: `Azure.ResourceManager.Authorization` (1 package, version `1.2.0-beta.1`, `ApiCompatVersion` = `1.1.7`) - **Versioning**: ❌ FAIL — 7 new ApiCompat baseline entries for `IReadOnlyList<T>` → `ILi",
+      "reviewState": "dismissed",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60195:comment:3481037603:sdk:.NET:Azure.ResourceManager.Authorization",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-26T11:19:53Z",
+      "observedAt": "2026-06-26T11:19:53Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Authorization",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60195",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60195#discussion_r3481037603"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[Phase 1 / Phase 3 — still blocking]** The two Category A suppressions (factory helper removals) were correctly resolved by the new `[EditorBrowsable(Never)]` shims in `src/Customizations/ArmAuthorizationModelFactory.Custom.cs`. Thank you",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60195:review:4580132248:sdk:.NET:Azure.ResourceManager.Authorization",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-26T14:16:00Z",
+      "observedAt": "2026-06-26T14:16:00Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Authorization",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "jruttle"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60195",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60195#pullrequestreview-4580132248"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60195:comment:3481954767:sdk:.NET:Azure.ResourceManager.Authorization",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-26T14:16:00Z",
+      "observedAt": "2026-06-26T14:16:00Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Authorization",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jruttle"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60195",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60195#discussion_r3481954767"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Thanks for confirming the two shims resolved Category A. On the remaining 7 IReadOnlyList<T> -> IList<T> retypes, I'd like to request the explicit preview-break exception rather than the mitigation, for these reasons: 1. **Intended writable",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60195:comment:4978542633:sdk:.NET:Azure.ResourceManager.Authorization",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-15T08:31:13Z",
+      "observedAt": "2026-07-15T08:31:13Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Authorization",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jruttle"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60195",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60195#issuecomment-4978542633"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@ArcturusZhang @ArthurMa1978 - reviving this one. It's been CI-green (latest build 6486978) and mergeable for about three weeks, blocked only on review. Requesting a decision on the single open item. The automated reviewer's first two point",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60195:review:4703038267:sdk:.NET:Azure.ResourceManager.Authorization",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-15T10:04:53Z",
+      "observedAt": "2026-07-15T10:04:53Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Authorization",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60195",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60195#pullrequestreview-4703038267"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60195:comment:3586302842:sdk:.NET:Azure.ResourceManager.Authorization",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-15T10:04:53Z",
+      "observedAt": "2026-07-15T10:04:53Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Authorization",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60195",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60195#discussion_r3586302842"
+      },
+      "confidence": "authoritative",
+      "excerpt": "yeah this is not a way we would allow to do.",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60195:commit:77faf20fbd97:sdk:.NET:Azure.ResourceManager.Authorization",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-27T02:49:08Z",
+      "observedAt": "2026-07-27T02:49:08Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Authorization",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60195",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/77faf20fbd971f8fc3fe79c3f017165c7645c7fd"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60195:commit:fe132395adca:sdk:.NET:Azure.ResourceManager.Authorization",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-27T02:55:13Z",
+      "observedAt": "2026-07-27T02:55:13Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Authorization",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60195",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/fe132395adca097731f7dc3c80e0e18d65bc3976"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60195:commit:843a0c730515:sdk:.NET:Azure.ResourceManager.Authorization",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-27T02:57:21Z",
+      "observedAt": "2026-07-27T02:57:21Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Authorization",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60195",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/843a0c730515ac32e4502e671e3ce302762833c6"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60195:commit:1b0e4254c577:sdk:.NET:Azure.ResourceManager.Authorization",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-27T03:01:21Z",
+      "observedAt": "2026-07-27T03:01:21Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Authorization",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60195",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/1b0e4254c57737fd9426d0abb54ca00480fe423a"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60195:commit:276194ddd644:sdk:.NET:Azure.ResourceManager.Authorization",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-27T03:04:49Z",
+      "observedAt": "2026-07-27T03:04:49Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Authorization",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60195",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/276194ddd6442e6761c426128aeea5519634538f"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60195:comment:5087031952:sdk:.NET:Azure.ResourceManager.Authorization",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-27T03:41:53Z",
+      "observedAt": "2026-07-27T03:41:53Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Authorization",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60195",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60195#issuecomment-5087031952"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## 🔍 CI Failure Analysis for PR #60195 **Head commit:** `276194ddd6442e6761c426128aeea5519634538f` **Build:** [6618126]((dev.azure.com/redacted) ### Check Status Summary | Check | Status | |---|---| | net - pullrequest | ❌ FAIL | | net - p",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60195:commit:2ecb23a50aa0:sdk:.NET:Azure.ResourceManager.Authorization",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-27T06:05:34Z",
+      "observedAt": "2026-07-27T06:05:34Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Authorization",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60195",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/2ecb23a50aa0ef6e84acf0964205b7c1a8363552"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60195:commit:d49daaf7989c:sdk:.NET:Azure.ResourceManager.Authorization",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-27T06:13:28Z",
+      "observedAt": "2026-07-27T06:13:28Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Authorization",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60195",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/d49daaf7989cffff2f37230724a9831dcd8cf5df"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60195:commit:02e57331e05b:sdk:.NET:Azure.ResourceManager.Authorization",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-27T06:25:09Z",
+      "observedAt": "2026-07-27T06:25:09Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Authorization",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60195",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/02e57331e05b6b308b364527ed8175ee5b1716b7"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60195:review:4784431278:sdk:.NET:Azure.ResourceManager.Authorization",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-27T07:02:16Z",
+      "observedAt": "2026-07-27T07:02:16Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Authorization",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60195",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60195#pullrequestreview-4784431278"
+      },
+      "confidence": "authoritative",
+      "excerpt": "### Management SDK Review Summary - **Scope**: `Azure.ResourceManager.Authorization` (1 package, version `1.2.0-beta.1`, `ApiCompatVersion` = `1.1.7`) - **Versioning**: ✅ PASS — `ApiCompatVersion` present; no new `MembersMustExist` suppress",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60195:commit:c83090efc5dd:sdk:.NET:Azure.ResourceManager.Authorization",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-27T07:11:48Z",
+      "observedAt": "2026-07-27T07:11:48Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Authorization",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60195",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/c83090efc5dda29263739f3f6b8cb0bcc54b9b4e"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60195:review:4784823233:sdk:.NET:Azure.ResourceManager.Authorization",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-27T07:54:20Z",
+      "observedAt": "2026-07-27T07:54:20Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Authorization",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60195",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60195#pullrequestreview-4784823233"
+      },
+      "confidence": "authoritative",
+      "excerpt": "### Management SDK Review Summary Same status as the previous management SDK review: all phases pass with no blocking findings. No new management SDK review findings on this head commit. - **Scope**: `Azure.ResourceManager.Authorization` (1",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60195:commit:f28c9a66aa69:sdk:.NET:Azure.ResourceManager.Authorization",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-27T09:21:54Z",
+      "observedAt": "2026-07-27T09:21:54Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Authorization",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60195",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/f28c9a66aa69bc9031fbed835fcc2612ab7fb4a3"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60195:review:4785854291:sdk:.NET:Azure.ResourceManager.Authorization",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-27T10:08:11Z",
+      "observedAt": "2026-07-27T10:08:11Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Authorization",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60195",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60195#pullrequestreview-4785854291"
+      },
+      "confidence": "authoritative",
+      "excerpt": "### Management SDK Review Summary Same status as the previous management SDK review: all phases pass with no blocking findings. No new management SDK review findings on this head commit. - **Scope**: `Azure.ResourceManager.Authorization` (1",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60195:review:4793248994:sdk:.NET:Azure.ResourceManager.Authorization",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-28T02:46:48Z",
+      "observedAt": "2026-07-28T02:46:48Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Authorization",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60195",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60195#pullrequestreview-4793248994"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60195:pr.merged:sdk:.NET:Azure.ResourceManager.Authorization",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-28T02:47:12Z",
+      "observedAt": "2026-07-28T02:47:12Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Authorization",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60195",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60195"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    }
+  ],
+  "quality": {
+    "warnings": [
+      "3 historical linked PR(s) closed without merge",
+      "3 superseded SDK PR link(s) retained"
+    ],
+    "unavailablePullRequests": 0,
+    "unavailablePipelineRuns": 0
+  },
+  "boundaryFacts": {
+    "id": "34978",
+    "state": "in-progress",
+    "specPrs": [
+      {
+        "id": "github:Azure/azure-rest-api-specs#42261",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#42261",
+        "createdAt": "2026-04-10T14:03:19Z",
+        "mergedAt": "2026-06-15T12:59:12Z",
+        "closedAt": "2026-06-15T12:59:12Z",
+        "available": true
+      }
+    ],
+    "artifacts": [
+      {
+        "language": ".NET",
+        "package": "Azure.ResourceManager.Authorization",
+        "trackId": "sdk:.NET:Azure.ResourceManager.Authorization",
+        "prId": "github:Azure/azure-sdk-for-net#60195",
+        "prCreatedAt": "2026-06-24T15:34:48Z",
+        "prMergedAt": "2026-07-28T02:47:12Z",
+        "prClosedAt": "2026-07-28T02:47:12Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-net#59931",
+            "createdAt": "2026-06-15T14:41:39Z",
+            "mergedAt": null,
+            "closedAt": "2026-06-23T13:34:40Z",
+            "state": "closed"
+          },
+          {
+            "id": "github:Azure/azure-sdk-for-net#60195",
+            "createdAt": "2026-06-24T15:34:48Z",
+            "mergedAt": "2026-07-28T02:47:12Z",
+            "closedAt": "2026-07-28T02:47:12Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6435839",
+        "generationStartAt": "2026-06-15T14:34:24.5372054Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "JavaScript",
+        "package": "@azure/arm-authorization",
+        "trackId": "sdk:JavaScript:@azure/arm-authorization",
+        "prId": "github:Azure/azure-sdk-for-js#38607",
+        "prCreatedAt": "2026-05-20T03:32:53Z",
+        "prMergedAt": "2026-05-21T01:31:15Z",
+        "prClosedAt": "2026-05-21T01:31:15Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-js#38959",
+            "createdAt": "2026-06-15T14:50:42Z",
+            "mergedAt": null,
+            "closedAt": "2026-06-16T09:04:09Z",
+            "state": "closed"
+          },
+          {
+            "id": "github:Azure/azure-sdk-for-js#38607",
+            "createdAt": "2026-05-20T03:32:53Z",
+            "mergedAt": "2026-05-21T01:31:15Z",
+            "closedAt": "2026-05-21T01:31:15Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6435879",
+        "generationStartAt": "2026-06-15T14:44:08.859318Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-06-25T14:14:36.297Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "10.0.0-beta.3",
+        "releaseBoundaryAt": "2026-06-25T14:14:36.297Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Python",
+        "package": "azure-mgmt-authorization",
+        "trackId": "sdk:Python:azure-mgmt-authorization",
+        "prId": "github:Azure/azure-sdk-for-python#46223",
+        "prCreatedAt": "2026-04-09T13:43:31Z",
+        "prMergedAt": "2026-04-20T08:42:52Z",
+        "prClosedAt": "2026-04-20T08:42:52Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-python#46223",
+            "createdAt": "2026-04-09T13:43:31Z",
+            "mergedAt": "2026-04-20T08:42:52Z",
+            "closedAt": "2026-04-20T08:42:52Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": null,
+        "generationStartAt": null,
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-06-25T14:14:51.043Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "5.0.0b2",
+        "releaseBoundaryAt": "2026-06-25T14:14:51.043Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "missing",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Java",
+        "package": "azure-resourcemanager-authorization",
+        "trackId": "sdk:Java:azure-resourcemanager-authorization",
+        "prId": "github:Azure/azure-sdk-for-java#48751",
+        "prCreatedAt": "2026-04-09T16:20:48Z",
+        "prMergedAt": "2026-04-17T08:28:01Z",
+        "prClosedAt": "2026-04-17T08:28:01Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-java#48751",
+            "createdAt": "2026-04-09T16:20:48Z",
+            "mergedAt": "2026-04-17T08:28:01Z",
+            "closedAt": "2026-04-17T08:28:01Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": null,
+        "generationStartAt": null,
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-06-25T14:14:55.92Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "2.54.0-beta.1",
+        "releaseBoundaryAt": "2026-06-25T14:14:55.92Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "missing",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Go",
+        "package": "sdk/resourcemanager/authorization/armauthorization",
+        "trackId": "sdk:Go:sdk/resourcemanager/authorization/armauthorization",
+        "prId": "github:Azure/azure-sdk-for-go#26544",
+        "prCreatedAt": "2026-04-09T13:41:49Z",
+        "prMergedAt": "2026-04-27T12:00:10Z",
+        "prClosedAt": "2026-04-27T12:00:10Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-go#27007",
+            "createdAt": "2026-06-15T14:47:43Z",
+            "mergedAt": null,
+            "closedAt": "2026-06-16T09:08:38Z",
+            "state": "closed"
+          },
+          {
+            "id": "github:Azure/azure-sdk-for-go#26544",
+            "createdAt": "2026-04-09T13:41:49Z",
+            "mergedAt": "2026-04-27T12:00:10Z",
+            "closedAt": "2026-04-27T12:00:10Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6435878",
+        "generationStartAt": "2026-06-15T14:42:38.8196758Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-06-25T14:15:00.76Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "3.0.0-beta.3",
+        "releaseBoundaryAt": "2026-06-25T14:15:00.76Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      }
+    ],
+    "cohortPlan": {
+      "id": "34978",
+      "releasePlanId": "34978",
+      "title": "Public Preview release plan for Authorization",
+      "service": "Authorization",
+      "state": "in-progress"
+    },
+    "quality": {
+      "warnings": [
+        "3 historical linked PR(s) closed without merge",
+        "3 superseded SDK PR link(s) retained"
+      ],
+      "unavailablePullRequests": 0,
+      "unavailablePipelineRuns": 0
+    }
+  },
+  "summary": {
+    "durationHours": 1427.2,
+    "pullRequestCount": 9,
+    "humanReviewCount": 18,
+    "humanCommentCount": 42
+  }
+}

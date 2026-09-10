@@ -1,0 +1,1081 @@
+{
+  "schemaVersion": 2,
+  "id": "33863",
+  "correlation": {
+    "policyVersion": 1,
+    "preflight": "passed"
+  },
+  "releasePlanId": "2182",
+  "title": "Release Plan - 2182 - GA - Azure Red Hat OpenShift (ARO)",
+  "service": "Azure Red Hat OpenShift (ARO)",
+  "product": "Release",
+  "path": "specification/redhatopenshift/resource-manager/Microsoft.RedHatOpenShift",
+  "state": "in-progress",
+  "plane": "management",
+  "releaseType": "APEX GA",
+  "intendedMonth": "May 2026",
+  "createdAt": "2026-04-14T14:18:39.08Z",
+  "completedAt": null,
+  "sourceUrl": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33863",
+  "range": {
+    "start": "2025-05-30T15:06:03.000Z",
+    "end": "2026-08-14T00:37:23.589Z"
+  },
+  "intendedArtifacts": [
+    {
+      "prId": null,
+      "language": ".NET",
+      "package": "Azure.ResourceManager.RedHatOpenShift",
+      "version": "1.0.0-beta.1",
+      "outcome": "released",
+      "generationPipelineUrl": null,
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": null,
+      "language": "JavaScript",
+      "package": "@azure/arm-redhatopenshift",
+      "version": "1.0.0",
+      "outcome": "released",
+      "generationPipelineUrl": null,
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": null,
+      "language": "Python",
+      "package": "azure-mgmt-redhatopenshift",
+      "version": "4.0.0",
+      "outcome": "released",
+      "generationPipelineUrl": null,
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": null,
+      "language": "Java",
+      "package": "azure-resourcemanager-redhatopenshift",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": null,
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": null,
+      "language": "Go",
+      "package": "sdk/resourcemanager/redhatopenshift/armredhatopenshift",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": null,
+      "releasePipelineUrl": null
+    }
+  ],
+  "links": [
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#35013",
+      "role": "spec-pr",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/35013",
+      "releasePlanIds": []
+    }
+  ],
+  "tracks": [
+    {
+      "id": "plan",
+      "kind": "plan",
+      "label": "Release Plan",
+      "detail": "APEX GA"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#35013",
+      "kind": "spec",
+      "label": "Spec PR",
+      "detail": "azure-rest-api-specs #35013",
+      "artifactId": "github:Azure/azure-rest-api-specs#35013",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:.NET:Azure.ResourceManager.RedHatOpenShift",
+      "kind": "sdk",
+      "label": ".NET",
+      "detail": "Azure.ResourceManager.RedHatOpenShift",
+      "artifactId": null,
+      "state": "missing"
+    },
+    {
+      "id": "sdk:JavaScript:@azure/arm-redhatopenshift",
+      "kind": "sdk",
+      "label": "JavaScript",
+      "detail": "@azure/arm-redhatopenshift",
+      "artifactId": null,
+      "state": "missing"
+    },
+    {
+      "id": "sdk:Python:azure-mgmt-redhatopenshift",
+      "kind": "sdk",
+      "label": "Python",
+      "detail": "azure-mgmt-redhatopenshift",
+      "artifactId": null,
+      "state": "missing"
+    },
+    {
+      "id": "sdk:Java:azure-resourcemanager-redhatopenshift",
+      "kind": "sdk",
+      "label": "Java",
+      "detail": "azure-resourcemanager-redhatopenshift",
+      "artifactId": null,
+      "state": "missing"
+    },
+    {
+      "id": "sdk:Go:sdk/resourcemanager/redhatopenshift/armredhatopenshift",
+      "kind": "sdk",
+      "label": "Go",
+      "detail": "sdk/resourcemanager/redhatopenshift/armredhatopenshift",
+      "artifactId": null,
+      "state": "missing"
+    }
+  ],
+  "events": [
+    {
+      "id": "github:Azure/azure-rest-api-specs#35013:pr.created:spec:github:Azure/azure-rest-api-specs#35013",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-05-30T15:06:03Z",
+      "observedAt": "2025-05-30T15:06:03Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#35013",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "rajdeepc2792"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#35013",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/35013"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#35013:comment:2922648998:spec:github:Azure/azure-rest-api-specs#35013",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-05-30T15:06:07Z",
+      "observedAt": "2025-05-30T15:06:07Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#35013",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "openapi-pipeline-app[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#35013",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/35013#issuecomment-2922648998"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>Next steps that must be taken to merge this PR: <br/><ul><li>❌ This PR targets either the <code>main</code> branch of the public specs repo or the <code>RPSaaSMaster</code> branch of the private specs repo. These",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#35013:comment:2922649023:spec:github:Azure/azure-rest-api-specs#35013",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-05-30T15:06:08Z",
+      "observedAt": "2025-05-30T15:06:08Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#35013",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "openapi-pipeline-app[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#35013",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/35013#issuecomment-2922649023"
+      },
+      "confidence": "authoritative",
+      "excerpt": "PR validation pipeline restarted successfully. If there is ApiView generated, it will be updated in this comment.",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#35013:comment:2922656283:spec:github:Azure/azure-rest-api-specs#35013",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-05-30T15:09:00Z",
+      "observedAt": "2025-05-30T15:09:00Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#35013",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#35013",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/35013#issuecomment-2922656283"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews | Language | API Review for Package | |----------|---------| | Go | [sdk/resourcemanager/redhatopenshift/armredhatopenshift](https://s",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#35013:comment:2922660304:spec:github:Azure/azure-rest-api-specs#35013",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-05-30T15:10:44Z",
+      "observedAt": "2025-05-30T15:10:44Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#35013",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "rajdeepc2792"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#35013",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/35013#issuecomment-2922660304"
+      },
+      "confidence": "authoritative",
+      "excerpt": "/azp run",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#35013:comment:2922660558:spec:github:Azure/azure-rest-api-specs#35013",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-05-30T15:10:50Z",
+      "observedAt": "2025-05-30T15:10:50Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#35013",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#35013",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/35013#issuecomment-2922660558"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Commenter does not have sufficient privileges for PR 35013 in repo Azure/azure-rest-api-specs<br> </samp>",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#35013:comment:2959322490:spec:github:Azure/azure-rest-api-specs#35013",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-06-10T13:44:28Z",
+      "observedAt": "2025-06-10T13:44:28Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#35013",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "cadenmarchese"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#35013",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/35013#issuecomment-2959322490"
+      },
+      "confidence": "authoritative",
+      "excerpt": "To ARM team - the Swagger Avocado checks fail due to the known issues: https://github.com/Azure/azure-rest-api-specs/wiki/Swagger-Avocado#known-issues I believe you can disregard them an apply Approved-Avocado label here.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#35013:comment:2961008677:spec:github:Azure/azure-rest-api-specs#35013",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-06-11T02:04:27Z",
+      "observedAt": "2025-06-11T02:04:27Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#35013",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "mentat9"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#35013",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/35013#issuecomment-2961008677"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@rajdeepc2792 - Please recreate your PR following the guidance for new API version PRs. Your PR must have a base commit containing the current API version spec files copied unchanged to the new API version folder. Then apply changes for the",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#35013:comment:3353079947:spec:github:Azure/azure-rest-api-specs#35013",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-09-30T17:06:32Z",
+      "observedAt": "2025-09-30T17:06:32Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#35013",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#35013",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/35013#issuecomment-3353079947"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>✅ All automated merging requirements have been met! To get your PR merged, see <a href=\"https://aka.ms/azsdk/specreview/merge\">aka.ms/azsdk/specreview/merge</a>.<br /><br />Comment generated by <a href=\"https://g",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#35013:commit:188643ec5f0d:spec:github:Azure/azure-rest-api-specs#35013",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-30T19:37:57Z",
+      "observedAt": "2025-10-30T19:37:57Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#35013",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "rajdeepc2792"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#35013",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/188643ec5f0dddc339993db9b3572fb406d6f4bb"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#35013:commit:f4dcaa7e13a9:spec:github:Azure/azure-rest-api-specs#35013",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-30T19:39:22Z",
+      "observedAt": "2025-10-30T19:39:22Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#35013",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "rajdeepc2792"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#35013",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/f4dcaa7e13a934d2aaf3959b102b01a5566fe898"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#35013:comment:3469943665:spec:github:Azure/azure-rest-api-specs#35013",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-30T20:20:12Z",
+      "observedAt": "2025-10-30T20:20:12Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#35013",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "cadenmarchese"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#35013",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/35013#issuecomment-3469943665"
+      },
+      "confidence": "authoritative",
+      "excerpt": "/azp run",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#35013:comment:3469944178:spec:github:Azure/azure-rest-api-specs#35013",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-30T20:20:19Z",
+      "observedAt": "2025-10-30T20:20:19Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#35013",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#35013",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/35013#issuecomment-3469944178"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Commenter does not have sufficient privileges for PR 35013 in repo Azure/azure-rest-api-specs<br> </samp>",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#35013:comment:3469973138:spec:github:Azure/azure-rest-api-specs#35013",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-30T20:27:09Z",
+      "observedAt": "2025-10-30T20:27:09Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#35013",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "bennerv"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#35013",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/35013#issuecomment-3469973138"
+      },
+      "confidence": "authoritative",
+      "excerpt": "/azp run",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#35013:comment:3469973459:spec:github:Azure/azure-rest-api-specs#35013",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-30T20:27:17Z",
+      "observedAt": "2025-10-30T20:27:17Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#35013",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#35013",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/35013#issuecomment-3469973459"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> You have several pipelines (over 10) configured to build pull requests in this repository. Specify which pipelines you would like to run by using /azp run [pipelines] command. You can specify multiple pipelines using a comma separate",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#35013:comment:3470053955:spec:github:Azure/azure-rest-api-specs#35013",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-30T20:40:05Z",
+      "observedAt": "2025-10-30T20:40:05Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#35013",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "cadenmarchese"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#35013",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/35013#issuecomment-3470053955"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Note to ARM reviewer - the Swagger Avocado appears to fail due to removed resource types. Issue appears to be the same as https://github.com/Azure/avocado/issues/150. These resource types are deprecated and the breaking changes were already",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#35013:comment:3483615514:spec:github:Azure/azure-rest-api-specs#35013",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-11-04T03:28:08Z",
+      "observedAt": "2025-11-04T03:28:08Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#35013",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "tadelesh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#35013",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/35013#issuecomment-3483615514"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Go SDK breaking changes are not introduced in this PR.",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#35013:review:3623323908:spec:github:Azure/azure-rest-api-specs#35013",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-01-02T15:13:46Z",
+      "observedAt": "2026-01-02T15:13:46Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#35013",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "cadenmarchese"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#35013",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/35013#pullrequestreview-3623323908"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#35013:pr.merged:spec:github:Azure/azure-rest-api-specs#35013",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2026-01-02T15:18:58Z",
+      "observedAt": "2026-01-02T15:18:58Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#35013",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#35013",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/35013"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:33863:created",
+      "type": "plan.created",
+      "phase": "plan",
+      "occurredAt": "2026-04-14T14:18:39.08Z",
+      "observedAt": "2026-04-14T14:18:39.08Z",
+      "trackId": "plan",
+      "title": "Release Plan created",
+      "confidence": "authoritative",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33863",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33863"
+      },
+      "stack": 0
+    },
+    {
+      "id": "ado:33863:1:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-04-14T14:18:39.08Z",
+      "observedAt": "2026-04-14T14:18:39.08Z",
+      "trackId": "plan",
+      "value": "New",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33863",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33863"
+      },
+      "title": "Plan state changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33863:1:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-14T14:18:39.08Z",
+      "observedAt": "2026-04-14T14:18:39.08Z",
+      "trackId": "plan",
+      "value": "Not Available",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33863",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33863"
+      },
+      "title": "Spec approval changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:33863:1:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-14T14:18:39.08Z",
+      "observedAt": "2026-04-14T14:18:39.08Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.RedHatOpenShift",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33863",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33863"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33863:1:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-14T14:18:39.08Z",
+      "observedAt": "2026-04-14T14:18:39.08Z",
+      "trackId": "sdk:JavaScript:@azure/arm-redhatopenshift",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33863",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33863"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33863:1:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-14T14:18:39.08Z",
+      "observedAt": "2026-04-14T14:18:39.08Z",
+      "trackId": "sdk:Python:azure-mgmt-redhatopenshift",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33863",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33863"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33863:1:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-14T14:18:39.08Z",
+      "observedAt": "2026-04-14T14:18:39.08Z",
+      "trackId": "sdk:Java:azure-resourcemanager-redhatopenshift",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33863",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33863"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33863:1:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-14T14:18:39.08Z",
+      "observedAt": "2026-04-14T14:18:39.08Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/redhatopenshift/armredhatopenshift",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33863",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33863"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33863:4:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-04-27T17:27:16.197Z",
+      "observedAt": "2026-04-27T17:27:16.197Z",
+      "trackId": "plan",
+      "value": "In Progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33863",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33863"
+      },
+      "title": "Plan state changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33864:2:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-27T17:28:46.413Z",
+      "observedAt": "2026-04-27T17:28:46.413Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#35013",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/35013",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33864",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33864"
+      },
+      "title": "Spec PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado:33863:6:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-27T17:28:51.91Z",
+      "observedAt": "2026-04-27T17:28:51.91Z",
+      "trackId": "plan",
+      "value": "Approved",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33863",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33863"
+      },
+      "title": "Spec approval changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33863:7:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-27T17:28:53.39Z",
+      "observedAt": "2026-04-27T17:28:53.39Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.RedHatOpenShift",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33863",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33863"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33863:7:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-27T17:28:53.39Z",
+      "observedAt": "2026-04-27T17:28:53.39Z",
+      "trackId": "sdk:JavaScript:@azure/arm-redhatopenshift",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33863",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33863"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33863:7:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-27T17:28:53.39Z",
+      "observedAt": "2026-04-27T17:28:53.39Z",
+      "trackId": "sdk:Python:azure-mgmt-redhatopenshift",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33863",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33863"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33863:7:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-27T17:28:53.39Z",
+      "observedAt": "2026-04-27T17:28:53.39Z",
+      "trackId": "sdk:Java:azure-resourcemanager-redhatopenshift",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33863",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33863"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33863:7:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-27T17:28:53.39Z",
+      "observedAt": "2026-04-27T17:28:53.39Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/redhatopenshift/armredhatopenshift",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33863",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33863"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33863:22:Custom.ReleaseStatusForDotnet",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-05-11T23:14:31.91Z",
+      "observedAt": "2026-05-11T23:14:31.91Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.RedHatOpenShift",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33863",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33863"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33863:22:Custom.ReleasedVersionForDotnet",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-05-11T23:14:31.91Z",
+      "observedAt": "2026-05-11T23:14:31.91Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.RedHatOpenShift",
+      "value": "1.0.0-beta.1",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33863",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33863"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33863:23:Custom.ReleaseStatusForPython",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-07-14T05:44:55.823Z",
+      "observedAt": "2026-07-14T05:44:55.823Z",
+      "trackId": "sdk:Python:azure-mgmt-redhatopenshift",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33863",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33863"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33863:23:Custom.ReleasedVersionForPython",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-07-14T05:44:55.823Z",
+      "observedAt": "2026-07-14T05:44:55.823Z",
+      "trackId": "sdk:Python:azure-mgmt-redhatopenshift",
+      "value": "4.0.0",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33863",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33863"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33863:24:Custom.ReleaseStatusForJavaScript",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-07-17T01:59:14.733Z",
+      "observedAt": "2026-07-17T01:59:14.733Z",
+      "trackId": "sdk:JavaScript:@azure/arm-redhatopenshift",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33863",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33863"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33863:24:Custom.ReleasedVersionForJavaScript",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-07-17T01:59:14.733Z",
+      "observedAt": "2026-07-17T01:59:14.733Z",
+      "trackId": "sdk:JavaScript:@azure/arm-redhatopenshift",
+      "value": "1.0.0",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33863",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33863"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    }
+  ],
+  "quality": {
+    "warnings": [],
+    "unavailablePullRequests": 0,
+    "unavailablePipelineRuns": 0
+  },
+  "boundaryFacts": {
+    "id": "33863",
+    "state": "in-progress",
+    "specPrs": [
+      {
+        "id": "github:Azure/azure-rest-api-specs#35013",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#35013",
+        "createdAt": "2025-05-30T15:06:03Z",
+        "mergedAt": "2026-01-02T15:18:58Z",
+        "closedAt": "2026-01-02T15:18:58Z",
+        "available": true
+      }
+    ],
+    "artifacts": [
+      {
+        "language": ".NET",
+        "package": "Azure.ResourceManager.RedHatOpenShift",
+        "trackId": "sdk:.NET:Azure.ResourceManager.RedHatOpenShift",
+        "prId": null,
+        "prCreatedAt": null,
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [],
+        "generationRunId": null,
+        "generationStartAt": null,
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-05-11T23:14:31.91Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.0.0-beta.1",
+        "releaseBoundaryAt": "2026-05-11T23:14:31.91Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "missing",
+          "generation": "missing",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "JavaScript",
+        "package": "@azure/arm-redhatopenshift",
+        "trackId": "sdk:JavaScript:@azure/arm-redhatopenshift",
+        "prId": null,
+        "prCreatedAt": null,
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [],
+        "generationRunId": null,
+        "generationStartAt": null,
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-07-17T01:59:14.733Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.0.0",
+        "releaseBoundaryAt": "2026-07-17T01:59:14.733Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "missing",
+          "generation": "missing",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Python",
+        "package": "azure-mgmt-redhatopenshift",
+        "trackId": "sdk:Python:azure-mgmt-redhatopenshift",
+        "prId": null,
+        "prCreatedAt": null,
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [],
+        "generationRunId": null,
+        "generationStartAt": null,
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-07-14T05:44:55.823Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "4.0.0",
+        "releaseBoundaryAt": "2026-07-14T05:44:55.823Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "missing",
+          "generation": "missing",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Java",
+        "package": "azure-resourcemanager-redhatopenshift",
+        "trackId": "sdk:Java:azure-resourcemanager-redhatopenshift",
+        "prId": null,
+        "prCreatedAt": null,
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [],
+        "generationRunId": null,
+        "generationStartAt": null,
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "missing",
+          "generation": "missing",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Go",
+        "package": "sdk/resourcemanager/redhatopenshift/armredhatopenshift",
+        "trackId": "sdk:Go:sdk/resourcemanager/redhatopenshift/armredhatopenshift",
+        "prId": null,
+        "prCreatedAt": null,
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [],
+        "generationRunId": null,
+        "generationStartAt": null,
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "missing",
+          "generation": "missing",
+          "release": "missing"
+        }
+      }
+    ],
+    "cohortPlan": {
+      "id": "33863",
+      "releasePlanId": "2182",
+      "title": "Release Plan - 2182 - GA - Azure Red Hat OpenShift (ARO)",
+      "service": "Azure Red Hat OpenShift (ARO)",
+      "state": "in-progress"
+    },
+    "quality": {
+      "warnings": [],
+      "unavailablePullRequests": 0,
+      "unavailablePipelineRuns": 0
+    }
+  },
+  "summary": {
+    "durationHours": 2914.3,
+    "pullRequestCount": 1,
+    "humanReviewCount": 1,
+    "humanCommentCount": 7
+  }
+}

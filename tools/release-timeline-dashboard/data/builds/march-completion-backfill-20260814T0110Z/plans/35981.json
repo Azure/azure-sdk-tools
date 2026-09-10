@@ -1,0 +1,2894 @@
+{
+  "schemaVersion": 2,
+  "id": "35981",
+  "correlation": {
+    "policyVersion": 1,
+    "preflight": "passed"
+  },
+  "releasePlanId": "35981",
+  "title": "GA release plan for NewRelicObservability.Management",
+  "service": "NewRelicObservability.Management",
+  "product": "Release",
+  "path": "specification/newrelic/NewRelicObservability.Management",
+  "state": "in-progress",
+  "plane": "management",
+  "releaseType": "GA",
+  "intendedMonth": "September 2026",
+  "createdAt": "2026-08-11T09:04:53.23Z",
+  "completedAt": null,
+  "sourceUrl": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35981",
+  "range": {
+    "start": "2026-07-22T09:00:52.000Z",
+    "end": "2026-08-14T00:37:23.589Z"
+  },
+  "intendedArtifacts": [
+    {
+      "prId": "github:Azure/azure-sdk-for-net#61921",
+      "language": ".NET",
+      "package": "Azure.ResourceManager.NewRelicObservability",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6685270",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-js#39558",
+      "language": "JavaScript",
+      "package": "@azure/arm-newrelicobservability",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6685272",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-python#48531",
+      "language": "Python",
+      "package": "azure-mgmt-newrelicobservability",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6685273",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-java#50093",
+      "language": "Java",
+      "package": "azure-resourcemanager-newrelicobservability",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6685271",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-go#27365",
+      "language": "Go",
+      "package": "sdk/resourcemanager/newrelic/armnewrelicobservability",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6685274",
+      "releasePipelineUrl": null
+    }
+  ],
+  "links": [
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#44882",
+      "role": "spec-pr",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/44882",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-net#61921",
+      "role": "sdk-pr",
+      "language": ".NET",
+      "url": "https://github.com/Azure/azure-sdk-for-net/pull/61921",
+      "releasePlanIds": [
+        "35981"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-js#39558",
+      "role": "sdk-pr",
+      "language": "JavaScript",
+      "url": "https://github.com/Azure/azure-sdk-for-js/pull/39558",
+      "releasePlanIds": [
+        "35981"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-python#48531",
+      "role": "sdk-pr",
+      "language": "Python",
+      "url": "https://github.com/Azure/azure-sdk-for-python/pull/48531",
+      "releasePlanIds": [
+        "35981"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-java#50093",
+      "role": "sdk-pr",
+      "language": "Java",
+      "url": "https://github.com/Azure/azure-sdk-for-java/pull/50093",
+      "releasePlanIds": [
+        "35981"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-go#27365",
+      "role": "sdk-pr",
+      "language": "Go",
+      "url": "https://github.com/Azure/azure-sdk-for-go/pull/27365",
+      "releasePlanIds": [
+        "35981"
+      ]
+    }
+  ],
+  "tracks": [
+    {
+      "id": "plan",
+      "kind": "plan",
+      "label": "Release Plan",
+      "detail": "GA"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#44882",
+      "kind": "spec",
+      "label": "Spec PR",
+      "detail": "azure-rest-api-specs #44882",
+      "artifactId": "github:Azure/azure-rest-api-specs#44882",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:.NET:Azure.ResourceManager.NewRelicObservability",
+      "kind": "sdk",
+      "label": ".NET",
+      "detail": "Azure.ResourceManager.NewRelicObservability",
+      "artifactId": "github:Azure/azure-sdk-for-net#61921",
+      "state": "open"
+    },
+    {
+      "id": "sdk:JavaScript:@azure/arm-newrelicobservability",
+      "kind": "sdk",
+      "label": "JavaScript",
+      "detail": "@azure/arm-newrelicobservability",
+      "artifactId": "github:Azure/azure-sdk-for-js#39558",
+      "state": "open"
+    },
+    {
+      "id": "sdk:Python:azure-mgmt-newrelicobservability",
+      "kind": "sdk",
+      "label": "Python",
+      "detail": "azure-mgmt-newrelicobservability",
+      "artifactId": "github:Azure/azure-sdk-for-python#48531",
+      "state": "open"
+    },
+    {
+      "id": "sdk:Java:azure-resourcemanager-newrelicobservability",
+      "kind": "sdk",
+      "label": "Java",
+      "detail": "azure-resourcemanager-newrelicobservability",
+      "artifactId": "github:Azure/azure-sdk-for-java#50093",
+      "state": "open"
+    },
+    {
+      "id": "sdk:Go:sdk/resourcemanager/newrelic/armnewrelicobservability",
+      "kind": "sdk",
+      "label": "Go",
+      "detail": "sdk/resourcemanager/newrelic/armnewrelicobservability",
+      "artifactId": "github:Azure/azure-sdk-for-go#27365",
+      "state": "open"
+    }
+  ],
+  "events": [
+    {
+      "id": "github:Azure/azure-rest-api-specs#44882:pr.created:spec:github:Azure/azure-rest-api-specs#44882",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-22T09:00:52Z",
+      "observedAt": "2026-07-22T09:00:52Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44882",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "apoorvasingh130"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44882",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44882"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44882:commit:e370f0425b08:spec:github:Azure/azure-rest-api-specs#44882",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-22T09:01:22Z",
+      "observedAt": "2026-07-22T09:01:22Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44882",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "apoorvasingh130"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44882",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/e370f0425b08ae35600604340802288eeef9fc75"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44882:comment:5043923269:spec:github:Azure/azure-rest-api-specs#44882",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-22T09:01:32Z",
+      "observedAt": "2026-07-22T09:01:32Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44882",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44882",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44882#issuecomment-5043923269"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>✅ All automated merging requirements have been met! To get your PR merged, see <a href=\"https://aka.ms/azsdk/specreview/merge\">aka.ms/azsdk/specreview/merge</a>.<br /><br />Comment generated by <a href=\"https://g",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44882:comment:5043988199:spec:github:Azure/azure-rest-api-specs#44882",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-22T09:08:36Z",
+      "observedAt": "2026-07-22T09:08:36Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44882",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44882",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44882#issuecomment-5043988199"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews | Language | API Review for Package | |----------|---------| | Swagger | [NewRelic.Observability](https://apiview.dev/Assemblies/Revie",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44882:commit:917458c44e73:spec:github:Azure/azure-rest-api-specs#44882",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-22T11:16:03Z",
+      "observedAt": "2026-07-22T11:16:03Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44882",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "apoorvasingh130"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44882",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/917458c44e738a2a258645d9e8c5da6dbc01d221"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44882:commit:a1c5815c9a42:spec:github:Azure/azure-rest-api-specs#44882",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-22T13:41:32Z",
+      "observedAt": "2026-07-22T13:41:32Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44882",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "apoorvasingh130"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44882",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/a1c5815c9a4245941cf4ec4e18013289e16115fc"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44882:commit:ecf2fa553ba2:spec:github:Azure/azure-rest-api-specs#44882",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-22T17:18:19Z",
+      "observedAt": "2026-07-22T17:18:19Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44882",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "apoorvasingh130"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44882",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/ecf2fa553ba213eb5f3a3c05b900bcf8e8c231b8"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44882:commit:15be7afb705a:spec:github:Azure/azure-rest-api-specs#44882",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-27T16:00:29Z",
+      "observedAt": "2026-07-27T16:00:29Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44882",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "apoorvasingh130"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44882",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/15be7afb705a74b35e0babea4e98778410752f2a"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44882:commit:cf4a2a475bd8:spec:github:Azure/azure-rest-api-specs#44882",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-31T06:33:40Z",
+      "observedAt": "2026-07-31T06:33:40Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44882",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "apoorvasingh130"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44882",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/cf4a2a475bd89eb959edb8f4f19450865d9782bc"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44882:commit:f8d9fa8936d5:spec:github:Azure/azure-rest-api-specs#44882",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-31T09:07:54Z",
+      "observedAt": "2026-07-31T09:07:54Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44882",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "apoorvasingh130"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44882",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/f8d9fa8936d5c4440bad13917f9464ebc7bb804b"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44882:commit:62d058d667bf:spec:github:Azure/azure-rest-api-specs#44882",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-31T10:45:47Z",
+      "observedAt": "2026-07-31T10:45:47Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44882",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "apoorvasingh130"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44882",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/62d058d667bf7b2fe066a70c4f71b8dd644e4f00"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44882:commit:39a36c69daf4:spec:github:Azure/azure-rest-api-specs#44882",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-02T17:50:39Z",
+      "observedAt": "2026-08-02T17:50:39Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44882",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "apoorvasingh130"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44882",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/39a36c69daf4364be0bad5b81a386b10c4baea49"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44882:commit:cab2725a7c50:spec:github:Azure/azure-rest-api-specs#44882",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-03T03:32:45Z",
+      "observedAt": "2026-08-03T03:32:45Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44882",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44882",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/cab2725a7c502c8646b1a79d270c622b530ec037"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44882:comment:5162021687:spec:github:Azure/azure-rest-api-specs#44882",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-03T03:35:15Z",
+      "observedAt": "2026-08-03T03:35:15Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44882",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44882",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44882#issuecomment-5162021687"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## TypeSpec suppressions requiring review (testing, non-blocking) **Status:** ❌ Approval required (currently under testing, review NOT enforced) — 1 suppression ⚠️ <strong>This check is currently in testing mode and is non-blocking</strong>",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44882:commit:6adf5ae45bf3:spec:github:Azure/azure-rest-api-specs#44882",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-03T06:57:27Z",
+      "observedAt": "2026-08-03T06:57:27Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44882",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "apoorvasingh130"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44882",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/6adf5ae45bf394574c442ad36e1d2084228886b5"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44882:commit:63e4535e111f:spec:github:Azure/azure-rest-api-specs#44882",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-04T07:02:18Z",
+      "observedAt": "2026-08-04T07:02:18Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44882",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "apoorvasingh130"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44882",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/63e4535e111fceb0d83014d2a341fcd457f4eb4a"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44882:commit:32ef596b453e:spec:github:Azure/azure-rest-api-specs#44882",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-10T09:40:14Z",
+      "observedAt": "2026-08-10T09:40:14Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44882",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "apoorvasingh130"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44882",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/32ef596b453ef0692a6bb1c38ce04f1b5af24c4e"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44882:commit:5a87c31e5cf6:spec:github:Azure/azure-rest-api-specs#44882",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-10T10:41:45Z",
+      "observedAt": "2026-08-10T10:41:45Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44882",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "apoorvasingh130"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44882",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/5a87c31e5cf64e4385d8061adea210b7053d810b"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44882:comment:5239106639:spec:github:Azure/azure-rest-api-specs#44882",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-10T10:44:26Z",
+      "observedAt": "2026-08-10T10:44:26Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44882",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "nikhgup"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44882",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44882#issuecomment-5239106639"
+      },
+      "confidence": "authoritative",
+      "excerpt": "known issue for rpaas exception https://github.com/Azure/azure-rest-api-specs/issues/36717",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44882:commit:31ff7bccdf4b:spec:github:Azure/azure-rest-api-specs#44882",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-10T12:46:24Z",
+      "observedAt": "2026-08-10T12:46:24Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44882",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "apoorvasingh130"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44882",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/31ff7bccdf4bf965979d0424b211fa906138158a"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44882:commit:48c548355476:spec:github:Azure/azure-rest-api-specs#44882",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-10T13:04:54Z",
+      "observedAt": "2026-08-10T13:04:54Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44882",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "apoorvasingh130"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44882",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/48c5483554761c15779bf9e439705b14b1bd453f"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44882:commit:630c5f53e592:spec:github:Azure/azure-rest-api-specs#44882",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-10T13:09:24Z",
+      "observedAt": "2026-08-10T13:09:24Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44882",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "apoorvasingh130"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44882",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/630c5f53e592b4c4125b9eed6c0fce3c638e47b4"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44882:commit:65dcedcfbe28:spec:github:Azure/azure-rest-api-specs#44882",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-10T13:23:08Z",
+      "observedAt": "2026-08-10T13:23:08Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44882",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "apoorvasingh130"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44882",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/65dcedcfbe288c5d5569571de4eda49d2c0fb298"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44882:commit:88664cdfae93:spec:github:Azure/azure-rest-api-specs#44882",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-10T13:31:22Z",
+      "observedAt": "2026-08-10T13:31:22Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44882",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "apoorvasingh130"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44882",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/88664cdfae9310b8abcc567f917e3d24837f1c4e"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44882:commit:a5a2f59c4a84:spec:github:Azure/azure-rest-api-specs#44882",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-11T00:54:25Z",
+      "observedAt": "2026-08-11T00:54:25Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44882",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "poshett"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44882",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/a5a2f59c4a84c586d41330463d5b806c2a6f923d"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44882:commit:22bc88578fb1:spec:github:Azure/azure-rest-api-specs#44882",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-11T05:14:29Z",
+      "observedAt": "2026-08-11T05:14:29Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44882",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "poshett"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44882",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/22bc88578fb1f253688e8a5bf127ef3a4502745a"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44882:review:4904316551:spec:github:Azure/azure-rest-api-specs#44882",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-11T08:30:17Z",
+      "observedAt": "2026-08-11T08:30:17Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44882",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "nikhgup"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44882",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44882#pullrequestreview-4904316551"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44882:pr.merged:spec:github:Azure/azure-rest-api-specs#44882",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-11T08:56:32Z",
+      "observedAt": "2026-08-11T08:56:32Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44882",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44882",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44882"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:35981:created",
+      "type": "plan.created",
+      "phase": "plan",
+      "occurredAt": "2026-08-11T09:04:53.23Z",
+      "observedAt": "2026-08-11T09:04:53.23Z",
+      "trackId": "plan",
+      "title": "Release Plan created",
+      "confidence": "authoritative",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35981",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35981"
+      },
+      "stack": 0
+    },
+    {
+      "id": "ado:35981:1:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-08-11T09:04:53.23Z",
+      "observedAt": "2026-08-11T09:04:53.23Z",
+      "trackId": "plan",
+      "value": "New",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35981",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35981"
+      },
+      "title": "Plan state changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35981:1:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-11T09:04:53.23Z",
+      "observedAt": "2026-08-11T09:04:53.23Z",
+      "trackId": "plan",
+      "value": "Not Available",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35981",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35981"
+      },
+      "title": "Spec approval changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:35981:1:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-11T09:04:53.23Z",
+      "observedAt": "2026-08-11T09:04:53.23Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NewRelicObservability",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35981",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35981"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35981:1:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-11T09:04:53.23Z",
+      "observedAt": "2026-08-11T09:04:53.23Z",
+      "trackId": "sdk:JavaScript:@azure/arm-newrelicobservability",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35981",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35981"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35981:1:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-11T09:04:53.23Z",
+      "observedAt": "2026-08-11T09:04:53.23Z",
+      "trackId": "sdk:Python:azure-mgmt-newrelicobservability",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35981",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35981"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35981:1:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-11T09:04:53.23Z",
+      "observedAt": "2026-08-11T09:04:53.23Z",
+      "trackId": "sdk:Java:azure-resourcemanager-newrelicobservability",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35981",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35981"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35981:1:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-11T09:04:53.23Z",
+      "observedAt": "2026-08-11T09:04:53.23Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/newrelic/armnewrelicobservability",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35981",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35981"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35982:1:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-11T09:04:53.69Z",
+      "observedAt": "2026-08-11T09:04:53.69Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44882",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/44882",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35982",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35982"
+      },
+      "title": "Spec PR linked",
+      "stack": 3
+    },
+    {
+      "id": "ado:35981:2:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-08-11T09:04:54.413Z",
+      "observedAt": "2026-08-11T09:04:54.413Z",
+      "trackId": "plan",
+      "value": "In Progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35981",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35981"
+      },
+      "title": "Plan state changed",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44882:comment:5251145116:spec:github:Azure/azure-rest-api-specs#44882",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-11T09:05:01Z",
+      "observedAt": "2026-08-11T09:05:01Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44882",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44882",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44882#issuecomment-5251145116"
+      },
+      "confidence": "authoritative",
+      "excerpt": "### ✅ Release Plan Created | Field | Value | |-------|-------| | **Release Plan** | [View Release Plan](https://azsdk-releaseplan-dashboard-hveph5aqhhcfhtgu.westus-01.azurewebsites.net/?releaseplan=35981) | | **API Version** | `2026-06-01` ",
+      "stack": 4
+    },
+    {
+      "id": "ado:35981:4:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-11T09:05:10.42Z",
+      "observedAt": "2026-08-11T09:05:10.42Z",
+      "trackId": "plan",
+      "value": "Approved",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35981",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35981"
+      },
+      "title": "Spec approval changed",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6685270:generation.queued:sdk:.NET:Azure.ResourceManager.NewRelicObservability",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-08-11T09:14:13.5810418Z",
+      "observedAt": "2026-08-11T09:25:46.7008755Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NewRelicObservability",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6685270",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6685270"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:35981:5:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-11T09:14:18.223Z",
+      "observedAt": "2026-08-11T09:14:18.223Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NewRelicObservability",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35981",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35981"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6685271:generation.queued:sdk:Java:azure-resourcemanager-newrelicobservability",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-08-11T09:14:22.5098059Z",
+      "observedAt": "2026-08-11T09:38:12.9818416Z",
+      "trackId": "sdk:Java:azure-resourcemanager-newrelicobservability",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6685271",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6685271"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:35981:6:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-11T09:14:27.08Z",
+      "observedAt": "2026-08-11T09:14:27.08Z",
+      "trackId": "sdk:Java:azure-resourcemanager-newrelicobservability",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35981",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35981"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6685272:generation.queued:sdk:JavaScript:@azure/arm-newrelicobservability",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-08-11T09:14:31.5278462Z",
+      "observedAt": "2026-08-11T09:26:21.6076895Z",
+      "trackId": "sdk:JavaScript:@azure/arm-newrelicobservability",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6685272",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6685272"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:35981:7:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-11T09:14:34.64Z",
+      "observedAt": "2026-08-11T09:14:34.64Z",
+      "trackId": "sdk:JavaScript:@azure/arm-newrelicobservability",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35981",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35981"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6685273:generation.queued:sdk:Python:azure-mgmt-newrelicobservability",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-08-11T09:14:39.1675387Z",
+      "observedAt": "2026-08-11T09:25:52.0590836Z",
+      "trackId": "sdk:Python:azure-mgmt-newrelicobservability",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6685273",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6685273"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:35981:8:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-11T09:14:41.71Z",
+      "observedAt": "2026-08-11T09:14:41.71Z",
+      "trackId": "sdk:Python:azure-mgmt-newrelicobservability",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35981",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35981"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6685274:generation.queued:sdk:Go:sdk/resourcemanager/newrelic/armnewrelicobservability",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-08-11T09:14:46.640168Z",
+      "observedAt": "2026-08-11T09:24:41.3070042Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/newrelic/armnewrelicobservability",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6685274",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6685274"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:35981:9:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-11T09:14:49.06Z",
+      "observedAt": "2026-08-11T09:14:49.06Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/newrelic/armnewrelicobservability",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35981",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35981"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6685270:generation.started:sdk:.NET:Azure.ResourceManager.NewRelicObservability",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-08-11T09:17:22.5049574Z",
+      "observedAt": "2026-08-11T09:25:46.7008755Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NewRelicObservability",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6685270",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6685270"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6685272:generation.started:sdk:JavaScript:@azure/arm-newrelicobservability",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-08-11T09:18:19.6972739Z",
+      "observedAt": "2026-08-11T09:26:21.6076895Z",
+      "trackId": "sdk:JavaScript:@azure/arm-newrelicobservability",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6685272",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6685272"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6685271:generation.started:sdk:Java:azure-resourcemanager-newrelicobservability",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-08-11T09:18:24.8018004Z",
+      "observedAt": "2026-08-11T09:38:12.9818416Z",
+      "trackId": "sdk:Java:azure-resourcemanager-newrelicobservability",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6685271",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6685271"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6685273:generation.started:sdk:Python:azure-mgmt-newrelicobservability",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-08-11T09:18:27.0079114Z",
+      "observedAt": "2026-08-11T09:25:52.0590836Z",
+      "trackId": "sdk:Python:azure-mgmt-newrelicobservability",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6685273",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6685273"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6685274:generation.started:sdk:Go:sdk/resourcemanager/newrelic/armnewrelicobservability",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-08-11T09:18:27.9845132Z",
+      "observedAt": "2026-08-11T09:24:41.3070042Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/newrelic/armnewrelicobservability",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6685274",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6685274"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27365:commit:1febdaae503b:sdk:Go:sdk/resourcemanager/newrelic/armnewrelicobservability",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T09:23:33Z",
+      "observedAt": "2026-08-11T09:23:33Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/newrelic/armnewrelicobservability",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27365",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/1febdaae503b3e5cef469935a730c5abebc94f55"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27365:pr.created:sdk:Go:sdk/resourcemanager/newrelic/armnewrelicobservability",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T09:23:37Z",
+      "observedAt": "2026-08-11T09:23:37Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/newrelic/armnewrelicobservability",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27365",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27365"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:35981:10:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-11T09:23:45.573Z",
+      "observedAt": "2026-08-11T09:23:45.573Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/newrelic/armnewrelicobservability",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35981",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35981"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35981:10:Custom.SDKPullRequestForGo",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-08-11T09:23:45.573Z",
+      "observedAt": "2026-08-11T09:23:45.573Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/newrelic/armnewrelicobservability",
+      "value": "https://github.com/Azure/azure-sdk-for-go/pull/27365",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35981",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35981"
+      },
+      "title": "SDK PR linked",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27365:comment:5251330562:sdk:Go:sdk/resourcemanager/newrelic/armnewrelicobservability",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T09:24:06Z",
+      "observedAt": "2026-08-11T09:24:06Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/newrelic/armnewrelicobservability",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27365",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27365#issuecomment-5251330562"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 6 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27365:review:4904724197:sdk:Go:sdk/resourcemanager/newrelic/armnewrelicobservability",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T09:24:18Z",
+      "observedAt": "2026-08-11T09:24:18Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/newrelic/armnewrelicobservability",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27365",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27365#pullrequestreview-4904724197"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview > [!NOTE] > Copilot could not run the full agentic suite for this review because it was automatically requested on a bot-authored pull request. Request a review from Copilot under Reviewers to retry with the full ag",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48531:commit:7b62a0a2131c:sdk:Python:azure-mgmt-newrelicobservability",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T09:24:34Z",
+      "observedAt": "2026-08-11T09:24:34Z",
+      "trackId": "sdk:Python:azure-mgmt-newrelicobservability",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48531",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/7b62a0a2131c23c300d099c8b74631d8fc27c36d"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48531:pr.created:sdk:Python:azure-mgmt-newrelicobservability",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T09:24:38Z",
+      "observedAt": "2026-08-11T09:24:38Z",
+      "trackId": "sdk:Python:azure-mgmt-newrelicobservability",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48531",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48531"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61921:commit:7ebb006f9ace:sdk:.NET:Azure.ResourceManager.NewRelicObservability",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T09:24:41Z",
+      "observedAt": "2026-08-11T09:24:41Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NewRelicObservability",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61921",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/7ebb006f9ace3b8c16161d770a722aa992ff8efe"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6685274:generation.completed:sdk:Go:sdk/resourcemanager/newrelic/armnewrelicobservability",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-08-11T09:24:41.3070042Z",
+      "observedAt": "2026-08-11T09:24:41.3070042Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/newrelic/armnewrelicobservability",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6685274",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6685274"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61921:pr.created:sdk:.NET:Azure.ResourceManager.NewRelicObservability",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T09:24:45Z",
+      "observedAt": "2026-08-11T09:24:45Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NewRelicObservability",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61921",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61921"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:35981:11:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-11T09:24:46.453Z",
+      "observedAt": "2026-08-11T09:24:46.453Z",
+      "trackId": "sdk:Python:azure-mgmt-newrelicobservability",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35981",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35981"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35981:11:Custom.SDKPullRequestForPython",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-08-11T09:24:46.453Z",
+      "observedAt": "2026-08-11T09:24:46.453Z",
+      "trackId": "sdk:Python:azure-mgmt-newrelicobservability",
+      "value": "https://github.com/Azure/azure-sdk-for-python/pull/48531",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35981",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35981"
+      },
+      "title": "SDK PR linked",
+      "stack": 1
+    },
+    {
+      "id": "ado:35981:12:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-11T09:24:54.1Z",
+      "observedAt": "2026-08-11T09:24:54.1Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NewRelicObservability",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35981",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35981"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35981:12:Custom.SDKPullRequestForDotnet",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-08-11T09:24:54.1Z",
+      "observedAt": "2026-08-11T09:24:54.1Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NewRelicObservability",
+      "value": "https://github.com/Azure/azure-sdk-for-net/pull/61921",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35981",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35981"
+      },
+      "title": "SDK PR linked",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39558:commit:ba9321b0fdaa:sdk:JavaScript:@azure/arm-newrelicobservability",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T09:24:58Z",
+      "observedAt": "2026-08-11T09:24:58Z",
+      "trackId": "sdk:JavaScript:@azure/arm-newrelicobservability",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39558",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/ba9321b0fdaaafc7db6d984e1bb1e0cc0774d3cc"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39558:pr.created:sdk:JavaScript:@azure/arm-newrelicobservability",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T09:25:03Z",
+      "observedAt": "2026-08-11T09:25:03Z",
+      "trackId": "sdk:JavaScript:@azure/arm-newrelicobservability",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39558",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39558"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:35981:13:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-11T09:25:11.077Z",
+      "observedAt": "2026-08-11T09:25:11.077Z",
+      "trackId": "sdk:JavaScript:@azure/arm-newrelicobservability",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35981",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35981"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35981:13:Custom.SDKPullRequestForJavaScript",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-08-11T09:25:11.077Z",
+      "observedAt": "2026-08-11T09:25:11.077Z",
+      "trackId": "sdk:JavaScript:@azure/arm-newrelicobservability",
+      "value": "https://github.com/Azure/azure-sdk-for-js/pull/39558",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35981",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35981"
+      },
+      "title": "SDK PR linked",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48531:comment:5251341797:sdk:Python:azure-mgmt-newrelicobservability",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T09:25:14Z",
+      "observedAt": "2026-08-11T09:25:14Z",
+      "trackId": "sdk:Python:azure-mgmt-newrelicobservability",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48531",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48531#issuecomment-5251341797"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 9 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61921:comment:5251344406:sdk:.NET:Azure.ResourceManager.NewRelicObservability",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T09:25:29Z",
+      "observedAt": "2026-08-11T09:25:29Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NewRelicObservability",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61921",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61921#issuecomment-5251344406"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 11 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61921:comment:3756725752:sdk:.NET:Azure.ResourceManager.NewRelicObservability",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T09:25:33Z",
+      "observedAt": "2026-08-11T09:25:33Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NewRelicObservability",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61921",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61921#discussion_r3756725752"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`additionalDirectories:` is currently declared with no value (null). If the generator expects an array/list here, this can break YAML parsing/consumption or lead to inconsistent behavior. Prefer removing the key if unused, or set it explici",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61921:review:4904735284:sdk:.NET:Azure.ResourceManager.NewRelicObservability",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T09:25:34Z",
+      "observedAt": "2026-08-11T09:25:34Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NewRelicObservability",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61921",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61921#pullrequestreview-4904735284"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview > [!NOTE] > Copilot could not run the full agentic suite for this review because it was automatically requested on a bot-authored pull request. Request a review from Copilot under Reviewers to retry with the full ag",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61921:comment:3756725783:sdk:.NET:Azure.ResourceManager.NewRelicObservability",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T09:25:34Z",
+      "observedAt": "2026-08-11T09:25:34Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NewRelicObservability",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61921",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61921#discussion_r3756725783"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This summary was changed from a concrete description to a generic one. Since this is a public SDK surface, the summary should describe what the operation actually does (e.g., resubscribe behavior / billing implications) so it remains discov",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61921:comment:3756725808:sdk:.NET:Azure.ResourceManager.NewRelicObservability",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T09:25:34Z",
+      "observedAt": "2026-08-11T09:25:34Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NewRelicObservability",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61921",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61921#discussion_r3756725808"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Same issue as above: this generic summary weakens the public API docs. Please restore a specific description of the operation’s purpose and expected effect.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39558:comment:5251346033:sdk:JavaScript:@azure/arm-newrelicobservability",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T09:25:38Z",
+      "observedAt": "2026-08-11T09:25:38Z",
+      "trackId": "sdk:JavaScript:@azure/arm-newrelicobservability",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39558",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39558#issuecomment-5251346033"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 10 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6685270:generation.completed:sdk:.NET:Azure.ResourceManager.NewRelicObservability",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-08-11T09:25:46.7008755Z",
+      "observedAt": "2026-08-11T09:25:46.7008755Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NewRelicObservability",
+      "title": "Pipeline completed with issues",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6685270",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6685270"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6685273:generation.completed:sdk:Python:azure-mgmt-newrelicobservability",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-08-11T09:25:52.0590836Z",
+      "observedAt": "2026-08-11T09:25:52.0590836Z",
+      "trackId": "sdk:Python:azure-mgmt-newrelicobservability",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6685273",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6685273"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48531:review:4904740357:sdk:Python:azure-mgmt-newrelicobservability",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T09:26:17Z",
+      "observedAt": "2026-08-11T09:26:17Z",
+      "trackId": "sdk:Python:azure-mgmt-newrelicobservability",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48531",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48531#pullrequestreview-4904740357"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview > [!NOTE] > Copilot could not run the full agentic suite for this review because it was automatically requested on a bot-authored pull request. Request a review from Copilot under Reviewers to retry with the full ag",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48531:comment:3756730137:sdk:Python:azure-mgmt-newrelicobservability",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T09:26:17Z",
+      "observedAt": "2026-08-11T09:26:17Z",
+      "trackId": "sdk:Python:azure-mgmt-newrelicobservability",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48531",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48531#discussion_r3756730137"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`_deserialize_bool_as_str` will raise an `AttributeError` if `attr` is not a string (e.g., `None`, numeric values) and will silently coerce any non-`\\\"true\\\"` string to `False` (including invalid values like `\\\"yes\\\"`). Make this deserializ",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:6685272:generation.completed:sdk:JavaScript:@azure/arm-newrelicobservability",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-08-11T09:26:21.6076895Z",
+      "observedAt": "2026-08-11T09:26:21.6076895Z",
+      "trackId": "sdk:JavaScript:@azure/arm-newrelicobservability",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6685272",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6685272"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39558:review:4904747862:sdk:JavaScript:@azure/arm-newrelicobservability",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T09:27:19Z",
+      "observedAt": "2026-08-11T09:27:19Z",
+      "trackId": "sdk:JavaScript:@azure/arm-newrelicobservability",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39558",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39558#pullrequestreview-4904747862"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview > [!NOTE] > Copilot could not run the full agentic suite for this review because it was automatically requested on a bot-authored pull request. Request a review from Copilot under Reviewers to retry with the full ag",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50093:commit:2f7d217ba31e:sdk:Java:azure-resourcemanager-newrelicobservability",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T09:27:24Z",
+      "observedAt": "2026-08-11T09:27:24Z",
+      "trackId": "sdk:Java:azure-resourcemanager-newrelicobservability",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50093",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/2f7d217ba31e7f538d8d78f4034a5e501e66af50"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50093:pr.created:sdk:Java:azure-resourcemanager-newrelicobservability",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T09:27:30Z",
+      "observedAt": "2026-08-11T09:27:30Z",
+      "trackId": "sdk:Java:azure-resourcemanager-newrelicobservability",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50093",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/50093"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:35981:14:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-11T09:27:38.507Z",
+      "observedAt": "2026-08-11T09:27:38.507Z",
+      "trackId": "sdk:Java:azure-resourcemanager-newrelicobservability",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35981",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35981"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35981:14:Custom.SDKPullRequestForJava",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-08-11T09:27:38.507Z",
+      "observedAt": "2026-08-11T09:27:38.507Z",
+      "trackId": "sdk:Java:azure-resourcemanager-newrelicobservability",
+      "value": "https://github.com/Azure/azure-sdk-for-java/pull/50093",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35981",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35981"
+      },
+      "title": "SDK PR linked",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50093:comment:5251371305:sdk:Java:azure-resourcemanager-newrelicobservability",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T09:28:19Z",
+      "observedAt": "2026-08-11T09:28:19Z",
+      "trackId": "sdk:Java:azure-resourcemanager-newrelicobservability",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50093",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/50093#issuecomment-5251371305"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 35 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50093:comment:3756747834:sdk:Java:azure-resourcemanager-newrelicobservability",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T09:29:07Z",
+      "observedAt": "2026-08-11T09:29:07Z",
+      "trackId": "sdk:Java:azure-resourcemanager-newrelicobservability",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50093",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/50093#discussion_r3756747834"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Typo in Javadoc: 'underline' should be 'underlying' (this appears in multiple updated Javadocs for `resubscribe`). Please correct the word to avoid propagating into generated docs.",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50093:comment:3756747884:sdk:Java:azure-resourcemanager-newrelicobservability",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T09:29:08Z",
+      "observedAt": "2026-08-11T09:29:08Z",
+      "trackId": "sdk:Java:azure-resourcemanager-newrelicobservability",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50093",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/50093#discussion_r3756747884"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The first sentence in this Javadoc is missing a trailing period, and the blank line contains trailing whitespace (`* `). For consistent Javadoc rendering and to avoid whitespace/style checks, end the summary sentence with a period and make ",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50093:comment:3756747916:sdk:Java:azure-resourcemanager-newrelicobservability",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T09:29:08Z",
+      "observedAt": "2026-08-11T09:29:08Z",
+      "trackId": "sdk:Java:azure-resourcemanager-newrelicobservability",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50093",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/50093#discussion_r3756747916"
+      },
+      "confidence": "authoritative",
+      "excerpt": "These breaking-change entries reference types under `models.*`, but the removed types shown elsewhere in the repo metadata appear to be `com.azure.resourcemanager.newrelicobservability.implementation.models.*` (not public `models`). Please ",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50093:comment:3756747942:sdk:Java:azure-resourcemanager-newrelicobservability",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T09:29:08Z",
+      "observedAt": "2026-08-11T09:29:08Z",
+      "trackId": "sdk:Java:azure-resourcemanager-newrelicobservability",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50093",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/50093#discussion_r3756747942"
+      },
+      "confidence": "authoritative",
+      "excerpt": "These breaking-change entries reference types under `models.*`, but the removed types shown elsewhere in the repo metadata appear to be `com.azure.resourcemanager.newrelicobservability.implementation.models.*` (not public `models`). Please ",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50093:review:4904761140:sdk:Java:azure-resourcemanager-newrelicobservability",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T09:29:09Z",
+      "observedAt": "2026-08-11T09:29:09Z",
+      "trackId": "sdk:Java:azure-resourcemanager-newrelicobservability",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50093",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/50093#pullrequestreview-4904761140"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview > [!NOTE] > Copilot could not run the full agentic suite for this review because it was automatically requested on a bot-authored pull request. Request a review from Copilot under Reviewers to retry with the full ag",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50093:comment:3756747965:sdk:Java:azure-resourcemanager-newrelicobservability",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T09:29:09Z",
+      "observedAt": "2026-08-11T09:29:09Z",
+      "trackId": "sdk:Java:azure-resourcemanager-newrelicobservability",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50093",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/50093#discussion_r3756747965"
+      },
+      "confidence": "authoritative",
+      "excerpt": "These breaking-change entries reference types under `models.*`, but the removed types shown elsewhere in the repo metadata appear to be `com.azure.resourcemanager.newrelicobservability.implementation.models.*` (not public `models`). Please ",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50093:comment:5251429773:sdk:Java:azure-resourcemanager-newrelicobservability",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T09:34:31Z",
+      "observedAt": "2026-08-11T09:34:31Z",
+      "trackId": "sdk:Java:azure-resourcemanager-newrelicobservability",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50093",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/50093#issuecomment-5251429773"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Automated management AutoPR review - Head SHA: `2f7d217ba31e7f538d8d78f4034a5e501e66af50` - Package: `azure-resourcemanager-newrelicobservability` `1.3.0` - Release type: stable - API version: `2026-06-01` - CHANGELOG: `1.3.0 (2026-08-11",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6685271:generation.completed:sdk:Java:azure-resourcemanager-newrelicobservability",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-08-11T09:38:12.9818416Z",
+      "observedAt": "2026-08-11T09:38:12.9818416Z",
+      "trackId": "sdk:Java:azure-resourcemanager-newrelicobservability",
+      "title": "Pipeline completed with issues",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6685271",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6685271"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39558:comment:5251613358:sdk:JavaScript:@azure/arm-newrelicobservability",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T09:53:29Z",
+      "observedAt": "2026-08-11T09:53:29Z",
+      "trackId": "sdk:JavaScript:@azure/arm-newrelicobservability",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39558",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39558#issuecomment-5251613358"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Next Steps to Merge Only failed checks and required actions are listed below. - ❌ UnitTest (all environments: ubuntu_24x_node, ubuntu_22x_browser, windows_22x_node, macoslatest_26x_node): Stale recordings. `operations list test` fails wi",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61921:comment:5251656667:sdk:.NET:Azure.ResourceManager.NewRelicObservability",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T09:58:07Z",
+      "observedAt": "2026-08-11T09:58:07Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.NewRelicObservability",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61921",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61921#issuecomment-5251656667"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## 🔍 CI Failure Analysis for PR #61921 ### Summary | Check | Status | |---|---| | net - pullrequest | ❌ Failed | | Build Build PRBatch | ❌ Failed | | All other Build/Test jobs | ✅ Passed | --- ### ❌ Build PRBatch — Changelog Verification F",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50093:commit:0fe855ef1526:sdk:Java:azure-resourcemanager-newrelicobservability",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T12:48:11Z",
+      "observedAt": "2026-08-11T12:48:11Z",
+      "trackId": "sdk:Java:azure-resourcemanager-newrelicobservability",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50093",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/0fe855ef15265ac38f614acb08c77d199fe2334f"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50093:review:4906414847:sdk:Java:azure-resourcemanager-newrelicobservability",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T12:53:54Z",
+      "observedAt": "2026-08-11T12:53:54Z",
+      "trackId": "sdk:Java:azure-resourcemanager-newrelicobservability",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50093",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/50093#pullrequestreview-4906414847"
+      },
+      "confidence": "authoritative",
+      "excerpt": "expected break due to typespec migration",
+      "reviewState": "approved",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27365:comment:5260870064:sdk:Go:sdk/resourcemanager/newrelic/armnewrelicobservability",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T01:05:31Z",
+      "observedAt": "2026-08-12T01:05:31Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/newrelic/armnewrelicobservability",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27365",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27365#issuecomment-5260870064"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Next Steps to Merge Only failed checks and required actions are listed below. - ❌ `go - pullrequest (Build Build/Test on windows_go_1261)`: build/test failed on Windows with Go 1.26.1. [ADO logs]((dev.azure.com/redacted) - Fix: Confirm w",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48531:comment:5261271235:sdk:Python:azure-mgmt-newrelicobservability",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T02:10:50Z",
+      "observedAt": "2026-08-12T02:10:50Z",
+      "trackId": "sdk:Python:azure-mgmt-newrelicobservability",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48531",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48531#issuecomment-5261271235"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi, the new api version `2026-06-01` seems not deployed on portal yet, we recommend making sure the api version to be deployed before releasing the SDK, though we won't block the release in self-serve release flow.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48531:commit:5d67f1112124:sdk:Python:azure-mgmt-newrelicobservability",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T02:15:07Z",
+      "observedAt": "2026-08-12T02:15:07Z",
+      "trackId": "sdk:Python:azure-mgmt-newrelicobservability",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48531",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/5d67f111212484e18a5c0d8c3182ccc6d5035933"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48531:review:4912380562:sdk:Python:azure-mgmt-newrelicobservability",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T02:15:36Z",
+      "observedAt": "2026-08-12T02:15:36Z",
+      "trackId": "sdk:Python:azure-mgmt-newrelicobservability",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48531",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48531#pullrequestreview-4912380562"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @apoorvasingh130, we have approved the PR. You can move on to merge and release though the action suggestion in Release Plan.",
+      "reviewState": "approved",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48531:review:4912395589:sdk:Python:azure-mgmt-newrelicobservability",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T02:19:50Z",
+      "observedAt": "2026-08-12T02:19:50Z",
+      "trackId": "sdk:Python:azure-mgmt-newrelicobservability",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48531",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48531#pullrequestreview-4912395589"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Copilot reviewed 71 out of 71 changed files in this pull request and generated no new comments. <details> <summary>Suppressed comments (1)</summary> **sdk/newrelicobservability/azure-mgmt-newrelicobservability/CHANG",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48531:comment:5261349331:sdk:Python:azure-mgmt-newrelicobservability",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T02:22:46Z",
+      "observedAt": "2026-08-12T02:22:46Z",
+      "trackId": "sdk:Python:azure-mgmt-newrelicobservability",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48531",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48531#issuecomment-5261349331"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Management SDK PR review **Findings:** None. ### Unverified checks **Unverified checks:** None. ### Review summary **Package reviewed:** `sdk/newrelicobservability/azure-mgmt-newrelicobservability` Checks completed: - API version drift: ",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27365:review:4912606623:sdk:Go:sdk/resourcemanager/newrelic/armnewrelicobservability",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T02:56:49Z",
+      "observedAt": "2026-08-12T02:56:49Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/newrelic/armnewrelicobservability",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27365",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27365#pullrequestreview-4912606623"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27365:comment:3763269145:sdk:Go:sdk/resourcemanager/newrelic/armnewrelicobservability",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T02:56:49Z",
+      "observedAt": "2026-08-12T02:56:49Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/newrelic/armnewrelicobservability",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27365",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27365#discussion_r3763269145"
+      },
+      "confidence": "authoritative",
+      "excerpt": "```suggestion ## 2.0.0 (2026-08-12) ```",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27365:commit:2ddc9a55dd40:sdk:Go:sdk/resourcemanager/newrelic/armnewrelicobservability",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T02:56:55Z",
+      "observedAt": "2026-08-12T02:56:55Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/newrelic/armnewrelicobservability",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27365",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/2ddc9a55dd404a291997c545fb601bb84b9d26ab"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27365:review:4912627880:sdk:Go:sdk/resourcemanager/newrelic/armnewrelicobservability",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T03:00:30Z",
+      "observedAt": "2026-08-12T03:00:30Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/newrelic/armnewrelicobservability",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27365",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27365#pullrequestreview-4912627880"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Copilot reviewed 3 out of 27 changed files in this pull request and generated no new comments. <details> <summary>Files not reviewed (24)</summary> * **sdk/resourcemanager/newrelic/armnewrelicobservability/accounts_",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39558:review:4912687126:sdk:JavaScript:@azure/arm-newrelicobservability",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T03:10:10Z",
+      "observedAt": "2026-08-12T03:10:10Z",
+      "trackId": "sdk:JavaScript:@azure/arm-newrelicobservability",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39558",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39558#pullrequestreview-4912687126"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> [!WARNING] > **Threat Detection Engine Failure** — The analysis engine could not complete. This is a tooling failure, not a security finding. > > > <details> > <summary>What happened</summary> > > The threat detection results could not be",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48531:review:4912728716:sdk:Python:azure-mgmt-newrelicobservability",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T03:16:50Z",
+      "observedAt": "2026-08-12T03:16:50Z",
+      "trackId": "sdk:Python:azure-mgmt-newrelicobservability",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48531",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48531#pullrequestreview-4912728716"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39558:review:4912767583:sdk:JavaScript:@azure/arm-newrelicobservability",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T03:24:35Z",
+      "observedAt": "2026-08-12T03:24:35Z",
+      "trackId": "sdk:JavaScript:@azure/arm-newrelicobservability",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39558",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39558#pullrequestreview-4912767583"
+      },
+      "confidence": "authoritative",
+      "excerpt": "No API design or tooling issues found for `@azure/arm-newrelicobservability` 2.0.0 (stable GA release). Checked: package version/API-version alignment across `package.json`, `newRelicObservabilityContext.ts`, and `CHANGELOG.md` (2.0.0 every",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39558:review:4913609759:sdk:JavaScript:@azure/arm-newrelicobservability",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T06:29:19Z",
+      "observedAt": "2026-08-12T06:29:19Z",
+      "trackId": "sdk:JavaScript:@azure/arm-newrelicobservability",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39558",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39558#pullrequestreview-4913609759"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Reviewed the `@azure/arm-newrelicobservability` 2.0.0 GA release PR. Found 1 tool issue: the new `2.0.0 (2026-08-11)` CHANGELOG entry is missing its `Compared with version X.Y.Z` baseline line, unlike all other entries. No public API design",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39558:comment:3764091666:sdk:JavaScript:@azure/arm-newrelicobservability",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T06:29:20Z",
+      "observedAt": "2026-08-12T06:29:20Z",
+      "trackId": "sdk:JavaScript:@azure/arm-newrelicobservability",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39558",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39558#discussion_r3764091666"
+      },
+      "confidence": "authoritative",
+      "excerpt": "🔴 **Tool Issue** — `CHANGELOG.md:3` The new `## 2.0.0 (2026-08-11)` entry is missing a `Compared with version X.Y.Z` line entirely (every other non-first entry in this file, e.g. `2.0.0-beta.2`, has one comparing to `1.1.0`). **Fix:** The ",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50093:review:4913956652:sdk:Java:azure-resourcemanager-newrelicobservability",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T07:21:39Z",
+      "observedAt": "2026-08-12T07:21:39Z",
+      "trackId": "sdk:Java:azure-resourcemanager-newrelicobservability",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "XiaofeiCao"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50093",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/50093#pullrequestreview-4913956652"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39558:commit:61419988c289:sdk:JavaScript:@azure/arm-newrelicobservability",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T08:10:53Z",
+      "observedAt": "2026-08-12T08:10:53Z",
+      "trackId": "sdk:JavaScript:@azure/arm-newrelicobservability",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39558",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/61419988c2899a2e8e5c54683f305d849accd4e0"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39558:review:4914397395:sdk:JavaScript:@azure/arm-newrelicobservability",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T08:15:46Z",
+      "observedAt": "2026-08-12T08:15:46Z",
+      "trackId": "sdk:JavaScript:@azure/arm-newrelicobservability",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39558",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39558#pullrequestreview-4914397395"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Copilot reviewed 145 out of 148 changed files in this pull request and generated no new comments. <details> <summary>Suppressed comments (1)</summary> **sdk/newrelicobservability/arm-newrelicobservability/test/newre",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39558:comment:5264371633:sdk:JavaScript:@azure/arm-newrelicobservability",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T08:37:35Z",
+      "observedAt": "2026-08-12T08:37:35Z",
+      "trackId": "sdk:JavaScript:@azure/arm-newrelicobservability",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39558",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39558#issuecomment-5264371633"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> [!WARNING] > **Threat Detection Engine Failure** — The analysis engine could not complete. This is a tooling failure, not a security finding. > > > <details> > <summary>What happened</summary> > > The threat detection results could not be",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39558:comment:5264420326:sdk:JavaScript:@azure/arm-newrelicobservability",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T08:42:00Z",
+      "observedAt": "2026-08-12T08:42:00Z",
+      "trackId": "sdk:JavaScript:@azure/arm-newrelicobservability",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39558",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39558#issuecomment-5264420326"
+      },
+      "confidence": "authoritative",
+      "excerpt": "LGTM cc @JialinHuang803",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27365:review:4922795532:sdk:Go:sdk/resourcemanager/newrelic/armnewrelicobservability",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T02:09:19Z",
+      "observedAt": "2026-08-13T02:09:19Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/newrelic/armnewrelicobservability",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "JiaqiZhang-Dev"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27365",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27365#pullrequestreview-4922795532"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39558:review:4922842064:sdk:JavaScript:@azure/arm-newrelicobservability",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-13T02:18:50Z",
+      "observedAt": "2026-08-13T02:18:50Z",
+      "trackId": "sdk:JavaScript:@azure/arm-newrelicobservability",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "JialinHuang803"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39558",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39558#pullrequestreview-4922842064"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    }
+  ],
+  "quality": {
+    "warnings": [
+      "5 historical linked PR(s) closed without merge"
+    ],
+    "unavailablePullRequests": 0,
+    "unavailablePipelineRuns": 0
+  },
+  "boundaryFacts": {
+    "id": "35981",
+    "state": "in-progress",
+    "specPrs": [
+      {
+        "id": "github:Azure/azure-rest-api-specs#44882",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#44882",
+        "createdAt": "2026-07-22T09:00:52Z",
+        "mergedAt": "2026-08-11T08:56:32Z",
+        "closedAt": "2026-08-11T08:56:32Z",
+        "available": true
+      }
+    ],
+    "artifacts": [
+      {
+        "language": ".NET",
+        "package": "Azure.ResourceManager.NewRelicObservability",
+        "trackId": "sdk:.NET:Azure.ResourceManager.NewRelicObservability",
+        "prId": "github:Azure/azure-sdk-for-net#61921",
+        "prCreatedAt": "2026-08-11T09:24:45Z",
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-net#61921",
+            "createdAt": "2026-08-11T09:24:45Z",
+            "mergedAt": null,
+            "closedAt": null,
+            "state": "open"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6685270",
+        "generationStartAt": "2026-08-11T09:17:22.5049574Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "JavaScript",
+        "package": "@azure/arm-newrelicobservability",
+        "trackId": "sdk:JavaScript:@azure/arm-newrelicobservability",
+        "prId": "github:Azure/azure-sdk-for-js#39558",
+        "prCreatedAt": "2026-08-11T09:25:03Z",
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-js#39558",
+            "createdAt": "2026-08-11T09:25:03Z",
+            "mergedAt": null,
+            "closedAt": null,
+            "state": "open"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6685272",
+        "generationStartAt": "2026-08-11T09:18:19.6972739Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Python",
+        "package": "azure-mgmt-newrelicobservability",
+        "trackId": "sdk:Python:azure-mgmt-newrelicobservability",
+        "prId": "github:Azure/azure-sdk-for-python#48531",
+        "prCreatedAt": "2026-08-11T09:24:38Z",
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-python#48531",
+            "createdAt": "2026-08-11T09:24:38Z",
+            "mergedAt": null,
+            "closedAt": null,
+            "state": "open"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6685273",
+        "generationStartAt": "2026-08-11T09:18:27.0079114Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Java",
+        "package": "azure-resourcemanager-newrelicobservability",
+        "trackId": "sdk:Java:azure-resourcemanager-newrelicobservability",
+        "prId": "github:Azure/azure-sdk-for-java#50093",
+        "prCreatedAt": "2026-08-11T09:27:30Z",
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-java#50093",
+            "createdAt": "2026-08-11T09:27:30Z",
+            "mergedAt": null,
+            "closedAt": null,
+            "state": "open"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6685271",
+        "generationStartAt": "2026-08-11T09:18:24.8018004Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Go",
+        "package": "sdk/resourcemanager/newrelic/armnewrelicobservability",
+        "trackId": "sdk:Go:sdk/resourcemanager/newrelic/armnewrelicobservability",
+        "prId": "github:Azure/azure-sdk-for-go#27365",
+        "prCreatedAt": "2026-08-11T09:23:37Z",
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-go#27365",
+            "createdAt": "2026-08-11T09:23:37Z",
+            "mergedAt": null,
+            "closedAt": null,
+            "state": "open"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6685274",
+        "generationStartAt": "2026-08-11T09:18:27.9845132Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      }
+    ],
+    "cohortPlan": {
+      "id": "35981",
+      "releasePlanId": "35981",
+      "title": "GA release plan for NewRelicObservability.Management",
+      "service": "NewRelicObservability.Management",
+      "state": "in-progress"
+    },
+    "quality": {
+      "warnings": [
+        "5 historical linked PR(s) closed without merge"
+      ],
+      "unavailablePullRequests": 0,
+      "unavailablePipelineRuns": 0
+    }
+  },
+  "summary": {
+    "durationHours": 63.5,
+    "pullRequestCount": 6,
+    "humanReviewCount": 8,
+    "humanCommentCount": 4
+  }
+}

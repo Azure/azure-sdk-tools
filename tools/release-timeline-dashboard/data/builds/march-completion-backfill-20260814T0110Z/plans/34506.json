@@ -1,0 +1,2668 @@
+{
+  "schemaVersion": 2,
+  "id": "34506",
+  "correlation": {
+    "policyVersion": 1,
+    "preflight": "passed"
+  },
+  "releasePlanId": "2251",
+  "title": "Release Plan - 2251 - GA - Traffic Manager",
+  "service": "Traffic Manager",
+  "product": "Release",
+  "path": "specification/trafficmanager/resource-manager/Microsoft.Network/TrafficManager",
+  "state": "abandoned",
+  "plane": "management",
+  "releaseType": "APEX GA",
+  "intendedMonth": "June 2026",
+  "createdAt": "2026-05-26T18:54:34.9Z",
+  "completedAt": "2026-06-04T19:43:15.037Z",
+  "sourceUrl": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34506",
+  "range": {
+    "start": "2026-05-20T19:30:06.000Z",
+    "end": "2026-08-04T09:20:50.000Z"
+  },
+  "intendedArtifacts": [
+    {
+      "prId": "github:Azure/azure-sdk-for-net#59451",
+      "language": ".NET",
+      "package": "Azure.ResourceManager.TrafficManager",
+      "version": null,
+      "outcome": "not-released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6353134",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-js#38672",
+      "language": "JavaScript",
+      "package": "@azure/arm-trafficmanager",
+      "version": null,
+      "outcome": "not-released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6353195",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-python#47140",
+      "language": "Python",
+      "package": "azure-mgmt-trafficmanager",
+      "version": null,
+      "outcome": "not-released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6353191",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-java#49266",
+      "language": "Java",
+      "package": "com.azure.resourcemanager:azure-resourcemanager-trafficmanager",
+      "version": null,
+      "outcome": "not-released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6353196",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-go#26888",
+      "language": "Go",
+      "package": "sdk/resourcemanager/trafficmanager/armtrafficmanager",
+      "version": null,
+      "outcome": "not-released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6353197",
+      "releasePipelineUrl": null
+    }
+  ],
+  "links": [
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#43389",
+      "role": "spec-pr",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/43389",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-net#59451",
+      "role": "sdk-pr",
+      "language": ".NET",
+      "url": "https://github.com/Azure/azure-sdk-for-net/pull/59451",
+      "releasePlanIds": [
+        "2251",
+        "2223",
+        "34281"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-js#38672",
+      "role": "sdk-pr",
+      "language": "JavaScript",
+      "url": "https://github.com/Azure/azure-sdk-for-js/pull/38672",
+      "releasePlanIds": [
+        "2251"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-python#47140",
+      "role": "sdk-pr",
+      "language": "Python",
+      "url": "https://github.com/Azure/azure-sdk-for-python/pull/47140",
+      "releasePlanIds": [
+        "2251"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-java#49266",
+      "role": "sdk-pr",
+      "language": "Java",
+      "url": "https://github.com/Azure/azure-sdk-for-java/pull/49266",
+      "releasePlanIds": [
+        "2251"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-go#26888",
+      "role": "sdk-pr",
+      "language": "Go",
+      "url": "https://github.com/Azure/azure-sdk-for-go/pull/26888",
+      "releasePlanIds": [
+        "2251"
+      ]
+    }
+  ],
+  "tracks": [
+    {
+      "id": "plan",
+      "kind": "plan",
+      "label": "Release Plan",
+      "detail": "APEX GA"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#43389",
+      "kind": "spec",
+      "label": "Spec PR",
+      "detail": "azure-rest-api-specs #43389",
+      "artifactId": "github:Azure/azure-rest-api-specs#43389",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "kind": "sdk",
+      "label": ".NET",
+      "detail": "Azure.ResourceManager.TrafficManager",
+      "artifactId": "github:Azure/azure-sdk-for-net#59451",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:JavaScript:@azure/arm-trafficmanager",
+      "kind": "sdk",
+      "label": "JavaScript",
+      "detail": "@azure/arm-trafficmanager",
+      "artifactId": "github:Azure/azure-sdk-for-js#38672",
+      "state": "closed"
+    },
+    {
+      "id": "sdk:Python:azure-mgmt-trafficmanager",
+      "kind": "sdk",
+      "label": "Python",
+      "detail": "azure-mgmt-trafficmanager",
+      "artifactId": "github:Azure/azure-sdk-for-python#47140",
+      "state": "closed"
+    },
+    {
+      "id": "sdk:Java:com.azure.resourcemanager:azure-resourcemanager-trafficmanager",
+      "kind": "sdk",
+      "label": "Java",
+      "detail": "com.azure.resourcemanager:azure-resourcemanager-trafficmanager",
+      "artifactId": "github:Azure/azure-sdk-for-java#49266",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Go:sdk/resourcemanager/trafficmanager/armtrafficmanager",
+      "kind": "sdk",
+      "label": "Go",
+      "detail": "sdk/resourcemanager/trafficmanager/armtrafficmanager",
+      "artifactId": "github:Azure/azure-sdk-for-go#26888",
+      "state": "merged"
+    }
+  ],
+  "events": [
+    {
+      "id": "github:Azure/azure-rest-api-specs#43389:pr.created:spec:github:Azure/azure-rest-api-specs#43389",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-20T19:30:06Z",
+      "observedAt": "2026-05-20T19:30:06Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43389",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "ransinha1989"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43389",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43389"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43389:comment:4501919934:spec:github:Azure/azure-rest-api-specs#43389",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-20T19:32:07Z",
+      "observedAt": "2026-05-20T19:32:07Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43389",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43389",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43389#issuecomment-4501919934"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>✅ All automated merging requirements have been met! To get your PR merged, see <a href=\"https://aka.ms/azsdk/specreview/merge\">aka.ms/azsdk/specreview/merge</a>.<br /><br />Comment generated by <a href=\"https://g",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43389:comment:4501969487:spec:github:Azure/azure-rest-api-specs#43389",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-20T19:37:47Z",
+      "observedAt": "2026-05-20T19:37:47Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43389",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43389",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43389#issuecomment-4501969487"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews | Language | API Review for Package | |----------|---------| | TypeSpec | [Microsoft.Network](https://spa.apiview.dev/review/61f151c72",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43389:review:4332060821:spec:github:Azure/azure-rest-api-specs#43389",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-20T20:36:04Z",
+      "observedAt": "2026-05-20T20:36:04Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43389",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "tundwed"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43389",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43389#pullrequestreview-4332060821"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43389:commit:59135928727b:spec:github:Azure/azure-rest-api-specs#43389",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-20T20:37:26Z",
+      "observedAt": "2026-05-20T20:37:26Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43389",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ransinha1989"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43389",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/59135928727b584a19ee936311886488e4edc194"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43389:review:4334857338:spec:github:Azure/azure-rest-api-specs#43389",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-21T07:30:38Z",
+      "observedAt": "2026-05-21T07:30:38Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43389",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43389",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43389#pullrequestreview-4334857338"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43389:pr.merged:spec:github:Azure/azure-rest-api-specs#43389",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-26T17:10:43Z",
+      "observedAt": "2026-05-26T17:10:43Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43389",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43389",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43389"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:34506:created",
+      "type": "plan.created",
+      "phase": "plan",
+      "occurredAt": "2026-05-26T18:54:34.9Z",
+      "observedAt": "2026-05-26T18:54:34.9Z",
+      "trackId": "plan",
+      "title": "Release Plan created",
+      "confidence": "authoritative",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34506",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34506"
+      },
+      "stack": 0
+    },
+    {
+      "id": "ado:34506:1:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-05-26T18:54:34.9Z",
+      "observedAt": "2026-05-26T18:54:34.9Z",
+      "trackId": "plan",
+      "value": "New",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34506",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34506"
+      },
+      "title": "Plan state changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34506:1:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-26T18:54:34.9Z",
+      "observedAt": "2026-05-26T18:54:34.9Z",
+      "trackId": "plan",
+      "value": "Not Available",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34506",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34506"
+      },
+      "title": "Spec approval changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:34506:1:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-26T18:54:34.9Z",
+      "observedAt": "2026-05-26T18:54:34.9Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34506",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34506"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34506:1:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-26T18:54:34.9Z",
+      "observedAt": "2026-05-26T18:54:34.9Z",
+      "trackId": "sdk:JavaScript:@azure/arm-trafficmanager",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34506",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34506"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34506:1:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-26T18:54:34.9Z",
+      "observedAt": "2026-05-26T18:54:34.9Z",
+      "trackId": "sdk:Python:azure-mgmt-trafficmanager",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34506",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34506"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34506:1:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-26T18:54:34.9Z",
+      "observedAt": "2026-05-26T18:54:34.9Z",
+      "trackId": "sdk:Java:com.azure.resourcemanager:azure-resourcemanager-trafficmanager",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34506",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34506"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34506:1:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-26T18:54:34.9Z",
+      "observedAt": "2026-05-26T18:54:34.9Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/trafficmanager/armtrafficmanager",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34506",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34506"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34506:15:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-05-26T18:56:30.857Z",
+      "observedAt": "2026-05-26T18:56:30.857Z",
+      "trackId": "plan",
+      "value": "In Progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34506",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34506"
+      },
+      "title": "Plan state changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:34507:2:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-26T18:57:20.8Z",
+      "observedAt": "2026-05-26T18:57:20.8Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43389",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/43389",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34507",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34507"
+      },
+      "title": "Spec PR linked",
+      "stack": 1
+    },
+    {
+      "id": "ado:34506:19:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-26T18:57:25.36Z",
+      "observedAt": "2026-05-26T18:57:25.36Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34506",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34506"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34506:19:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-26T18:57:25.36Z",
+      "observedAt": "2026-05-26T18:57:25.36Z",
+      "trackId": "sdk:JavaScript:@azure/arm-trafficmanager",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34506",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34506"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34506:19:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-26T18:57:25.36Z",
+      "observedAt": "2026-05-26T18:57:25.36Z",
+      "trackId": "sdk:Python:azure-mgmt-trafficmanager",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34506",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34506"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34506:19:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-26T18:57:25.36Z",
+      "observedAt": "2026-05-26T18:57:25.36Z",
+      "trackId": "sdk:Java:com.azure.resourcemanager:azure-resourcemanager-trafficmanager",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34506",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34506"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34506:19:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-26T18:57:25.36Z",
+      "observedAt": "2026-05-26T18:57:25.36Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/trafficmanager/armtrafficmanager",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34506",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34506"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34506:20:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-26T18:57:37.73Z",
+      "observedAt": "2026-05-26T18:57:37.73Z",
+      "trackId": "plan",
+      "value": "Approved",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34506",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34506"
+      },
+      "title": "Spec approval changed",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6353134:generation.queued:sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-05-26T19:10:30.8107478Z",
+      "observedAt": "2026-05-26T19:18:09.2270035Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6353134",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6353134"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:34506:36:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-26T19:10:35.9Z",
+      "observedAt": "2026-05-26T19:10:35.9Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34506",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34506"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6353134:generation.started:sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-05-26T19:10:53.5556748Z",
+      "observedAt": "2026-05-26T19:18:09.2270035Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6353134",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6353134"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6353191:generation.queued:sdk:Python:azure-mgmt-trafficmanager",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-05-26T19:16:25.5543938Z",
+      "observedAt": "2026-05-26T19:23:51.3890643Z",
+      "trackId": "sdk:Python:azure-mgmt-trafficmanager",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6353191",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6353191"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:34506:38:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-26T19:16:28.43Z",
+      "observedAt": "2026-05-26T19:16:28.43Z",
+      "trackId": "sdk:Python:azure-mgmt-trafficmanager",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34506",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34506"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6353195:generation.queued:sdk:JavaScript:@azure/arm-trafficmanager",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-05-26T19:16:38.3940063Z",
+      "observedAt": "2026-05-26T19:24:03.3347473Z",
+      "trackId": "sdk:JavaScript:@azure/arm-trafficmanager",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6353195",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6353195"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:34506:39:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-26T19:16:41.797Z",
+      "observedAt": "2026-05-26T19:16:41.797Z",
+      "trackId": "sdk:JavaScript:@azure/arm-trafficmanager",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34506",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34506"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6353191:generation.started:sdk:Python:azure-mgmt-trafficmanager",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-05-26T19:16:45.9206059Z",
+      "observedAt": "2026-05-26T19:23:51.3890643Z",
+      "trackId": "sdk:Python:azure-mgmt-trafficmanager",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6353191",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6353191"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6353196:generation.queued:sdk:Java:com.azure.resourcemanager:azure-resourcemanager-trafficmanager",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-05-26T19:16:52.2489234Z",
+      "observedAt": "2026-05-26T19:37:15.2026395Z",
+      "trackId": "sdk:Java:com.azure.resourcemanager:azure-resourcemanager-trafficmanager",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6353196",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6353196"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6353195:generation.started:sdk:JavaScript:@azure/arm-trafficmanager",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-05-26T19:16:57.8052952Z",
+      "observedAt": "2026-05-26T19:24:03.3347473Z",
+      "trackId": "sdk:JavaScript:@azure/arm-trafficmanager",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6353195",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6353195"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:34506:40:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-26T19:16:57.85Z",
+      "observedAt": "2026-05-26T19:16:57.85Z",
+      "trackId": "sdk:Java:com.azure.resourcemanager:azure-resourcemanager-trafficmanager",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34506",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34506"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59451:commit:5ea14f5278b0:sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-26T19:17:04Z",
+      "observedAt": "2026-05-26T19:17:04Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59451",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/5ea14f5278b020053a6fbca817d14a019e833d0c"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59451:pr.created:sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-26T19:17:08Z",
+      "observedAt": "2026-05-26T19:17:08Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59451",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59451"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6353197:generation.queued:sdk:Go:sdk/resourcemanager/trafficmanager/armtrafficmanager",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-05-26T19:17:09.0859974Z",
+      "observedAt": "2026-05-26T19:23:40.3261099Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/trafficmanager/armtrafficmanager",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6353197",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6353197"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:34506:41:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-26T19:17:12.24Z",
+      "observedAt": "2026-05-26T19:17:12.24Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/trafficmanager/armtrafficmanager",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34506",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34506"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:34506:42:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-26T19:17:16.463Z",
+      "observedAt": "2026-05-26T19:17:16.463Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34506",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34506"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34506:42:Custom.SDKPullRequestForDotnet",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-05-26T19:17:16.463Z",
+      "observedAt": "2026-05-26T19:17:16.463Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "value": "https://github.com/Azure/azure-sdk-for-net/pull/59451",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34506",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34506"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6353196:generation.started:sdk:Java:com.azure.resourcemanager:azure-resourcemanager-trafficmanager",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-05-26T19:17:17.1319825Z",
+      "observedAt": "2026-05-26T19:37:15.2026395Z",
+      "trackId": "sdk:Java:com.azure.resourcemanager:azure-resourcemanager-trafficmanager",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6353196",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6353196"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6353197:generation.started:sdk:Go:sdk/resourcemanager/trafficmanager/armtrafficmanager",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-05-26T19:17:33.7380947Z",
+      "observedAt": "2026-05-26T19:23:40.3261099Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/trafficmanager/armtrafficmanager",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6353197",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6353197"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6353134:generation.completed:sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-05-26T19:18:09.2270035Z",
+      "observedAt": "2026-05-26T19:18:09.2270035Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "title": "Pipeline completed with issues",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6353134",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6353134"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26888:commit:dcf9935643d3:sdk:Go:sdk/resourcemanager/trafficmanager/armtrafficmanager",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-26T19:22:34Z",
+      "observedAt": "2026-05-26T19:22:34Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/trafficmanager/armtrafficmanager",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26888",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/dcf9935643d3945da97ad8e3ee29ebe0db34c5e3"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47140:commit:abfab3bd5970:sdk:Python:azure-mgmt-trafficmanager",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-26T19:22:35Z",
+      "observedAt": "2026-05-26T19:22:35Z",
+      "trackId": "sdk:Python:azure-mgmt-trafficmanager",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47140",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/abfab3bd597067d7cc214365445ce66c628111ad"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26888:pr.created:sdk:Go:sdk/resourcemanager/trafficmanager/armtrafficmanager",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-26T19:22:38Z",
+      "observedAt": "2026-05-26T19:22:38Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/trafficmanager/armtrafficmanager",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26888",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26888"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47140:pr.created:sdk:Python:azure-mgmt-trafficmanager",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-26T19:22:39Z",
+      "observedAt": "2026-05-26T19:22:39Z",
+      "trackId": "sdk:Python:azure-mgmt-trafficmanager",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47140",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47140"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:34506:44:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-26T19:22:46.057Z",
+      "observedAt": "2026-05-26T19:22:46.057Z",
+      "trackId": "sdk:Python:azure-mgmt-trafficmanager",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34506",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34506"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34506:44:Custom.SDKPullRequestForPython",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-05-26T19:22:46.057Z",
+      "observedAt": "2026-05-26T19:22:46.057Z",
+      "trackId": "sdk:Python:azure-mgmt-trafficmanager",
+      "value": "https://github.com/Azure/azure-sdk-for-python/pull/47140",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34506",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34506"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38672:commit:871e3e2aa9d2:sdk:JavaScript:@azure/arm-trafficmanager",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-26T19:22:56Z",
+      "observedAt": "2026-05-26T19:22:56Z",
+      "trackId": "sdk:JavaScript:@azure/arm-trafficmanager",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38672",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/871e3e2aa9d2685af9202aeaa5a77580ea9c6d0c"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38672:pr.created:sdk:JavaScript:@azure/arm-trafficmanager",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-26T19:23:00Z",
+      "observedAt": "2026-05-26T19:23:00Z",
+      "trackId": "sdk:JavaScript:@azure/arm-trafficmanager",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38672",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38672"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:34506:45:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-26T19:23:07.283Z",
+      "observedAt": "2026-05-26T19:23:07.283Z",
+      "trackId": "sdk:JavaScript:@azure/arm-trafficmanager",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34506",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34506"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34506:45:Custom.SDKPullRequestForJavaScript",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-05-26T19:23:07.283Z",
+      "observedAt": "2026-05-26T19:23:07.283Z",
+      "trackId": "sdk:JavaScript:@azure/arm-trafficmanager",
+      "value": "https://github.com/Azure/azure-sdk-for-js/pull/38672",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34506",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34506"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6353197:generation.completed:sdk:Go:sdk/resourcemanager/trafficmanager/armtrafficmanager",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-05-26T19:23:40.3261099Z",
+      "observedAt": "2026-05-26T19:23:40.3261099Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/trafficmanager/armtrafficmanager",
+      "title": "Pipeline completed with issues",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6353197",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6353197"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6353191:generation.completed:sdk:Python:azure-mgmt-trafficmanager",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-05-26T19:23:51.3890643Z",
+      "observedAt": "2026-05-26T19:23:51.3890643Z",
+      "trackId": "sdk:Python:azure-mgmt-trafficmanager",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6353191",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6353191"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6353195:generation.completed:sdk:JavaScript:@azure/arm-trafficmanager",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-05-26T19:24:03.3347473Z",
+      "observedAt": "2026-05-26T19:24:03.3347473Z",
+      "trackId": "sdk:JavaScript:@azure/arm-trafficmanager",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6353195",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6353195"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59451:comment:3306319659:sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-26T19:25:14Z",
+      "observedAt": "2026-05-26T19:25:14Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59451",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59451#discussion_r3306319659"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The REST client methods now take `Guid subscriptionId`, but there are still call sites in `src/Customization/TrafficManagerProfileResource.cs` that pass `Id.SubscriptionId` (string) into `CreateDeleteRequest(...)`. This will fail to compile",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59451:comment:3306319705:sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-26T19:25:15Z",
+      "observedAt": "2026-05-26T19:25:15Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59451",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59451#discussion_r3306319705"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The `Endpoints` REST client methods now require `Guid subscriptionId`, but `src/Customization/TrafficManagerEndpointCollection.cs` and `src/Customization/TrafficManagerEndpointResource.cs` still call `Create*Request(...)` with `Id.Subscript",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59451:comment:3306319736:sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-26T19:25:15Z",
+      "observedAt": "2026-05-26T19:25:15Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59451",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59451#discussion_r3306319736"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The `TrafficManagerUserMetricsKeys` REST client methods now require `Guid subscriptionId`, but `src/Customization/TrafficManagerUserMetricsResource.cs` still calls `CreateCreateOrUpdateRequest(...)` / `CreateDeleteRequest(...)` with `Id.Sub",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59451:review:4366832722:sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-26T19:25:16Z",
+      "observedAt": "2026-05-26T19:25:16Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59451",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59451#pullrequestreview-4366832722"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This PR is an auto-generated update for **Azure.ResourceManager.TrafficManager** from the `azure-rest-api-specs` TypeSpec config, moving the library to **API version `2024-04-01-preview`** and refreshing generated m",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59451:comment:3306319753:sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-26T19:25:16Z",
+      "observedAt": "2026-05-26T19:25:16Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59451",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59451#discussion_r3306319753"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This adds new public surface area (`TrafficManagerRecordType` and the `recordType` parameter on `ArmTrafficManagerModelFactory.TrafficManagerProfileData`). The package's public API baseline files under `api/*.cs` don't appear to have been r",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26888:comment:3306322322:sdk:Go:sdk/resourcemanager/trafficmanager/armtrafficmanager",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-26T19:25:45Z",
+      "observedAt": "2026-05-26T19:25:45Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/trafficmanager/armtrafficmanager",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26888",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26888#discussion_r3306322322"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The new 2.0.0-beta.2 section is empty. Please add at least a short note describing what changed in this release (e.g., regeneration from a newer spec commit/emitter) so consumers can understand why the version was bumped.",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26888:review:4366835970:sdk:Go:sdk/resourcemanager/trafficmanager/armtrafficmanager",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-26T19:25:46Z",
+      "observedAt": "2026-05-26T19:25:46Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/trafficmanager/armtrafficmanager",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26888",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26888#pullrequestreview-4366835970"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This PR is an auto-generated update to the `armtrafficmanager` Resource Manager (Traffic Manager) Go module, regenerating the client from the `azure-rest-api-specs` TypeSpec source at a newer commit and bumping the ",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47140:comment:3306324501:sdk:Python:azure-mgmt-trafficmanager",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-26T19:26:11Z",
+      "observedAt": "2026-05-26T19:26:11Z",
+      "trackId": "sdk:Python:azure-mgmt-trafficmanager",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47140",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47140#discussion_r3306324501"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The package description uses \"Trafficmanager\" (missing space/canonical product name). This is user-facing metadata on PyPI and should remain \"Traffic Manager\" (as used in README and package_pprint_name).",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47140:comment:3306324542:sdk:Python:azure-mgmt-trafficmanager",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-26T19:26:11Z",
+      "observedAt": "2026-05-26T19:26:11Z",
+      "trackId": "sdk:Python:azure-mgmt-trafficmanager",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47140",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47140#discussion_r3306324542"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The new changelog entry introduces a version regression (1.2.0b1 comes after 2.0.0b1) and contains a placeholder message. Changelog entries should be monotonic and must describe the actual changes shipped in this version.",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47140:comment:3306324575:sdk:Python:azure-mgmt-trafficmanager",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-26T19:26:11Z",
+      "observedAt": "2026-05-26T19:26:11Z",
+      "trackId": "sdk:Python:azure-mgmt-trafficmanager",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47140",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47140#discussion_r3306324575"
+      },
+      "confidence": "authoritative",
+      "excerpt": "VERSION was changed from 2.0.0b1 to 1.2.0b1, which is a backwards version change. This will cause packaging/release issues and does not match the existing release history ordering (CHANGELOG already contains 2.0.0b1).",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47140:review:4366838527:sdk:Python:azure-mgmt-trafficmanager",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-26T19:26:12Z",
+      "observedAt": "2026-05-26T19:26:12Z",
+      "trackId": "sdk:Python:azure-mgmt-trafficmanager",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47140",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47140#pullrequestreview-4366838527"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This PR is an auto-generated refresh of `azure-mgmt-trafficmanager` from the TypeSpec configuration for `Microsoft.Network/TrafficManager` (API version `2024-04-01-preview`), updating the tracked swagger/spec commit",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49266:commit:30a522c95ff2:sdk:Java:com.azure.resourcemanager:azure-resourcemanager-trafficmanager",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-26T19:26:32Z",
+      "observedAt": "2026-05-26T19:26:32Z",
+      "trackId": "sdk:Java:com.azure.resourcemanager:azure-resourcemanager-trafficmanager",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49266",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/30a522c95ff28eb7a9a3b13a19972b71f4627537"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49266:pr.created:sdk:Java:com.azure.resourcemanager:azure-resourcemanager-trafficmanager",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-26T19:26:37Z",
+      "observedAt": "2026-05-26T19:26:37Z",
+      "trackId": "sdk:Java:com.azure.resourcemanager:azure-resourcemanager-trafficmanager",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49266",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49266"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:34506:46:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-26T19:26:43.677Z",
+      "observedAt": "2026-05-26T19:26:43.677Z",
+      "trackId": "sdk:Java:com.azure.resourcemanager:azure-resourcemanager-trafficmanager",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34506",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34506"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34506:46:Custom.SDKPullRequestForJava",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-05-26T19:26:43.677Z",
+      "observedAt": "2026-05-26T19:26:43.677Z",
+      "trackId": "sdk:Java:com.azure.resourcemanager:azure-resourcemanager-trafficmanager",
+      "value": "https://github.com/Azure/azure-sdk-for-java/pull/49266",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34506",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34506"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49266:review:4366866110:sdk:Java:com.azure.resourcemanager:azure-resourcemanager-trafficmanager",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-26T19:30:27Z",
+      "observedAt": "2026-05-26T19:30:27Z",
+      "trackId": "sdk:Java:com.azure.resourcemanager:azure-resourcemanager-trafficmanager",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49266",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49266#pullrequestreview-4366866110"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Updates the Traffic Manager resource manager SDK generation tracking to a newer `azure-rest-api-specs` commit and refreshes generated metadata/changelog to reflect the current beta surface area for API version `2024",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38672:comment:3306366789:sdk:JavaScript:@azure/arm-trafficmanager",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-26T19:34:34Z",
+      "observedAt": "2026-05-26T19:34:34Z",
+      "trackId": "sdk:JavaScript:@azure/arm-trafficmanager",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38672",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38672#discussion_r3306366789"
+      },
+      "confidence": "authoritative",
+      "excerpt": "createTrafficManagerManagement() sets the default AAD scope to a hard-coded public-cloud ARM resource (\"https://management.azure.com/.default\"). When cloudSetting is used (China/Gov) or a custom endpoint is provided, this will request token",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38672:comment:3306366834:sdk:JavaScript:@azure/arm-trafficmanager",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-26T19:34:34Z",
+      "observedAt": "2026-05-26T19:34:34Z",
+      "trackId": "sdk:JavaScript:@azure/arm-trafficmanager",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38672",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38672#discussion_r3306366834"
+      },
+      "confidence": "authoritative",
+      "excerpt": "In crossLanguageDefinitions, the key \"ProfilesOperations#CheckTrafficManagerRelativeDnsNameAvailability:member\" has a different casing than the actual exported member name (checkTrafficManagerRelativeDnsNameAvailability). These keys are cas",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38672:review:4366892689:sdk:JavaScript:@azure/arm-trafficmanager",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-26T19:34:35Z",
+      "observedAt": "2026-05-26T19:34:35Z",
+      "trackId": "sdk:JavaScript:@azure/arm-trafficmanager",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38672",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38672#pullrequestreview-4366892689"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This AutoPR updates `@azure/arm-trafficmanager` to a new **7.0.0-beta.1** generated SDK targeting **2024-04-01-preview**, including a Track2 RLC-style API surface reorganization (new `src/api` + `src/classic` struct",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38672:comment:3306366851:sdk:JavaScript:@azure/arm-trafficmanager",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-26T19:34:35Z",
+      "observedAt": "2026-05-26T19:34:35Z",
+      "trackId": "sdk:JavaScript:@azure/arm-trafficmanager",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38672",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38672#discussion_r3306366851"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The CHANGELOG rewrite drops previously existing entries (e.g., 6.1.1 and the prior unreleased 6.1.2 section) and sets the top entry to a dated release. Changelogs should preserve historical release entries, and the top entry should generall",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38672:comment:3306366872:sdk:JavaScript:@azure/arm-trafficmanager",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-26T19:34:35Z",
+      "observedAt": "2026-05-26T19:34:35Z",
+      "trackId": "sdk:JavaScript:@azure/arm-trafficmanager",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38672",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38672#discussion_r3306366872"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This package's warp.config.yml no longer extends warp.base.config.yml and instead inlines the base exports. Since warp supports merging exports via extends (and most packages keep the extends), consider restoring `extends: ../../../warp.bas",
+      "stack": 2
+    },
+    {
+      "id": "ado:34506:47:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-26T19:35:21.12Z",
+      "observedAt": "2026-05-26T19:35:21.12Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/trafficmanager/armtrafficmanager",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34506",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34506"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:34506:47:Custom.SDKPullRequestForGo",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-05-26T19:35:21.12Z",
+      "observedAt": "2026-05-26T19:35:21.12Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/trafficmanager/armtrafficmanager",
+      "value": "https://github.com/Azure/azure-sdk-for-go/pull/26888",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34506",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34506"
+      },
+      "title": "SDK PR linked",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:6353196:generation.completed:sdk:Java:com.azure.resourcemanager:azure-resourcemanager-trafficmanager",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-05-26T19:37:15.2026395Z",
+      "observedAt": "2026-05-26T19:37:15.2026395Z",
+      "trackId": "sdk:Java:com.azure.resourcemanager:azure-resourcemanager-trafficmanager",
+      "title": "Pipeline completed with issues",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6353196",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6353196"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59451:commit:a59a2e24cbef:sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-26T22:02:29Z",
+      "observedAt": "2026-05-26T22:02:29Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ransinha1989"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59451",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/a59a2e24cbef3c18ebcc9b6b37474d1dceb87032"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59451:commit:a2c1855f17db:sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-26T22:29:20Z",
+      "observedAt": "2026-05-26T22:29:20Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ransinha1989"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59451",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/a2c1855f17db8f938a3ea7f4d2777f3b031165cb"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26888:commit:991637e5641a:sdk:Go:sdk/resourcemanager/trafficmanager/armtrafficmanager",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-27T01:59:08Z",
+      "observedAt": "2026-05-27T01:59:08Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/trafficmanager/armtrafficmanager",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "tadelesh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26888",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/991637e5641ae4b42e5d7704432a990bbcb973c2"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26888:commit:80e4c687ef68:sdk:Go:sdk/resourcemanager/trafficmanager/armtrafficmanager",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-27T01:59:27Z",
+      "observedAt": "2026-05-27T01:59:27Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/trafficmanager/armtrafficmanager",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "tadelesh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26888",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/80e4c687ef68c7871f97abf2f4747baad125d37c"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26888:comment:4550595533:sdk:Go:sdk/resourcemanager/trafficmanager/armtrafficmanager",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-27T02:00:36Z",
+      "observedAt": "2026-05-27T02:00:36Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/trafficmanager/armtrafficmanager",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "tadelesh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26888",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26888#issuecomment-4550595533"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@ransinha1989 We have already released a beta version for your service latest preview after migration to TypeSpec. This PR just contains some code refinement. We could directly merge it and no need to trigger another release.",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26888:review:4368862942:sdk:Go:sdk/resourcemanager/trafficmanager/armtrafficmanager",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-27T02:00:46Z",
+      "observedAt": "2026-05-27T02:00:46Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/trafficmanager/armtrafficmanager",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "tadelesh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26888",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26888#pullrequestreview-4368862942"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26888:review:4369234698:sdk:Go:sdk/resourcemanager/trafficmanager/armtrafficmanager",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-27T03:46:10Z",
+      "observedAt": "2026-05-27T03:46:10Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/trafficmanager/armtrafficmanager",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "JiaqiZhang-Dev"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26888",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26888#pullrequestreview-4369234698"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38672:pr.closed:sdk:JavaScript:@azure/arm-trafficmanager",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-29T06:11:17Z",
+      "observedAt": "2026-05-29T06:11:17Z",
+      "trackId": "sdk:JavaScript:@azure/arm-trafficmanager",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38672",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38672"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38672:comment:4571357565:sdk:JavaScript:@azure/arm-trafficmanager",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-29T06:11:17Z",
+      "observedAt": "2026-05-29T06:11:17Z",
+      "trackId": "sdk:JavaScript:@azure/arm-trafficmanager",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38672",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38672#issuecomment-4571357565"
+      },
+      "confidence": "authoritative",
+      "excerpt": "close as duplicate with https://github.com/Azure/azure-sdk-for-js/pull/38464",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38672:comment:4575434054:sdk:JavaScript:@azure/arm-trafficmanager",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-29T13:09:53Z",
+      "observedAt": "2026-05-29T13:09:53Z",
+      "trackId": "sdk:JavaScript:@azure/arm-trafficmanager",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ransinha1989"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38672",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38672#issuecomment-4575434054"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Abandoning PR.",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59451:commit:a0510d507f24:sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-29T13:16:29Z",
+      "observedAt": "2026-05-29T13:16:29Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ransinha1989"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59451",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/a0510d507f2445b27a8cce1223a072188cf81ba0"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59451:review:4389935151:sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-29T13:32:43Z",
+      "observedAt": "2026-05-29T13:32:43Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59451",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59451#pullrequestreview-4389935151"
+      },
+      "confidence": "authoritative",
+      "excerpt": "### Management SDK Review Summary - **Scope**: `Azure.ResourceManager.TrafficManager` (1.2.0-beta.2) - **Versioning**: ✅ Pass — version is `1.2.0-beta.2`, `ApiCompatVersion` is `1.1.3` (present and unchanged), no major version bump - **API ",
+      "reviewState": "dismissed",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59451:commit:fc317b99c03d:sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-29T17:27:21Z",
+      "observedAt": "2026-05-29T17:27:21Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ransinha1989"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59451",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/fc317b99c03d0889a9741afad89124156cf3dd8d"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59451:review:4391675263:sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-29T17:45:35Z",
+      "observedAt": "2026-05-29T17:45:35Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59451",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59451#pullrequestreview-4391675263"
+      },
+      "confidence": "authoritative",
+      "excerpt": "### Management SDK Review Summary - **Scope:** `Azure.ResourceManager.TrafficManager` (1.2.0-beta.2) - **Versioning:** ✅ Pass — `ApiCompatVersion: 1.1.3` present; version bump is a valid beta increment; no `ApiCompatBaseline.txt` changes - ",
+      "reviewState": "dismissed",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59451:comment:3326014038:sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-29T17:45:35Z",
+      "observedAt": "2026-05-29T17:45:35Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59451",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59451#discussion_r3326014038"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[Phase 2 – Method Renaming / API Duplication]** This PR introduces a new `GetTrafficManagerUserMetric` (singular) extension method on `SubscriptionResource` alongside the previously shipped `GetTrafficManagerUserMetrics` (plural), which w",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59451:commit:8c210696777b:sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-29T20:07:50Z",
+      "observedAt": "2026-05-29T20:07:50Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ransinha1989"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59451",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/8c210696777b41ce7c7c272a74bd79155531676d"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59451:review:4392607338:sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-29T20:19:20Z",
+      "observedAt": "2026-05-29T20:19:20Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59451",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59451#pullrequestreview-4392607338"
+      },
+      "confidence": "authoritative",
+      "excerpt": "### Management SDK Review Summary - **Scope:** `Azure.ResourceManager.TrafficManager` (1.2.0-beta.2, API version 2024-04-01-preview) - **Versioning:** Pass — `ApiCompatVersion` present (1.1.3), no major bump, no new ApiCompatBaseline entrie",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59451:comment:3326719487:sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-29T20:19:20Z",
+      "observedAt": "2026-05-29T20:19:20Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59451",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59451#discussion_r3326719487"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[Phase 2 – Tech Debt / Incorrect Customization Pattern]** This file contains two TODO comments acknowledging that the customizations introduced here are incorrect: 1. `[CodeGenType(\"TrafficManagerUserMetricResource\")]` — the comment says ",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59451:review:4398244407:sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-01T03:33:56Z",
+      "observedAt": "2026-06-01T03:33:56Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59451",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59451#pullrequestreview-4398244407"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Please update CHANGELOG.md: - Update the Unreleased section in with your expected release date. Use the date format yyyy-mm-dd (for example, 2026-06-01). Add one line under the Features Added section: \"- Updated the api-version to 2024-04-0",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26888:pr.merged:sdk:Go:sdk/resourcemanager/trafficmanager/armtrafficmanager",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-01T07:22:27Z",
+      "observedAt": "2026-06-01T07:22:27Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/trafficmanager/armtrafficmanager",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26888",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26888"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59451:commit:e41b7c836303:sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-02T14:45:46Z",
+      "observedAt": "2026-06-02T14:45:46Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ransinha1989"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59451",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/e41b7c8363036aafd4edbea560de58511aba5ffa"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59451:review:4410943018:sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-02T14:58:15Z",
+      "observedAt": "2026-06-02T14:58:15Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59451",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59451#pullrequestreview-4410943018"
+      },
+      "confidence": "authoritative",
+      "excerpt": "### Management SDK Review Summary - **Scope:** `Azure.ResourceManager.TrafficManager` (1.2.0-beta.2, TypeSpec-generated) - **Versioning:** ✅ Pass — version is beta, `ApiCompatVersion` is present (1.1.3), no major version bump, no `ApiCompat",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59451:commit:8cc6601fa520:sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-03T12:58:07Z",
+      "observedAt": "2026-06-03T12:58:07Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ransinha1989"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59451",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/8cc6601fa5204978c23df302b29abed2c77e106e"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59451:review:4418803620:sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-03T13:09:36Z",
+      "observedAt": "2026-06-03T13:09:36Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59451",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59451#pullrequestreview-4418803620"
+      },
+      "confidence": "authoritative",
+      "excerpt": "### Management SDK Review Summary - **Scope:** `Azure.ResourceManager.TrafficManager` (v1.2.0-beta.2, api-version 2024-04-01-preview) - **Versioning:** ✅ Pass — version is `1.2.0-beta.2` (no major version bump), `ApiCompatVersion` is presen",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59451:commit:184213bf7e8c:sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-03T15:50:16Z",
+      "observedAt": "2026-06-03T15:50:16Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ransinha1989"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59451",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/184213bf7e8c00f50c83e0f8d39211e5b19468dc"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59451:review:4420388682:sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-03T16:02:11Z",
+      "observedAt": "2026-06-03T16:02:11Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59451",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59451#pullrequestreview-4420388682"
+      },
+      "confidence": "authoritative",
+      "excerpt": "### Management SDK Review Summary - **Scope:** `Azure.ResourceManager.TrafficManager` (v1.2.0-beta.2, API version 2024-04-01-preview) - **Versioning:** ✅ Pass — no major version bump; `ApiCompatVersion=1.1.3` present and unchanged. - **API ",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59451:commit:fccdc836cb49:sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-04T02:09:57Z",
+      "observedAt": "2026-06-04T02:09:57Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59451",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/fccdc836cb49825b8a8426d1e91f1139f5e87041"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59451:commit:996572166344:sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-04T02:50:15Z",
+      "observedAt": "2026-06-04T02:50:15Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59451",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/996572166344d15b186e0f980cd834be80d84c50"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59451:commit:bafb0408055c:sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-04T02:58:26Z",
+      "observedAt": "2026-06-04T02:58:26Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59451",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/bafb0408055ce6433ff095078bee903cdf5d3c41"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59451:review:4425285533:sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-04T06:07:40Z",
+      "observedAt": "2026-06-04T06:07:40Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59451",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59451#pullrequestreview-4425285533"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59451:pr.merged:sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-04T06:47:52Z",
+      "observedAt": "2026-06-04T06:47:52Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.TrafficManager",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59451",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59451"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:34506:48:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-06-04T19:43:15.037Z",
+      "observedAt": "2026-06-04T19:43:15.037Z",
+      "trackId": "plan",
+      "value": "Abandoned",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34506",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34506"
+      },
+      "title": "Plan state changed",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49266:review:4511573358:sdk:Java:com.azure.resourcemanager:azure-resourcemanager-trafficmanager",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-17T01:37:43Z",
+      "observedAt": "2026-06-17T01:37:43Z",
+      "trackId": "sdk:Java:com.azure.resourcemanager:azure-resourcemanager-trafficmanager",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49266",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49266#pullrequestreview-4511573358"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49266:pr.merged:sdk:Java:com.azure.resourcemanager:azure-resourcemanager-trafficmanager",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-17T01:37:55Z",
+      "observedAt": "2026-06-17T01:37:55Z",
+      "trackId": "sdk:Java:com.azure.resourcemanager:azure-resourcemanager-trafficmanager",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49266",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49266"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47140:comment:5139814878:sdk:Python:azure-mgmt-trafficmanager",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-31T05:59:23Z",
+      "observedAt": "2026-07-31T05:59:23Z",
+      "trackId": "sdk:Python:azure-mgmt-trafficmanager",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47140",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47140#issuecomment-5139814878"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @azure-sdk. Thank you for your interest in helping to improve the Azure SDK experience and for your contribution. We've noticed that there hasn't been recent engagement on this pull request. If this is still an active work stream, please",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47140:pr.closed:sdk:Python:azure-mgmt-trafficmanager",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-04T09:20:50Z",
+      "observedAt": "2026-08-04T09:20:50Z",
+      "trackId": "sdk:Python:azure-mgmt-trafficmanager",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47140",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47140"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47140:comment:5177049664:sdk:Python:azure-mgmt-trafficmanager",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-04T09:20:50Z",
+      "observedAt": "2026-08-04T09:20:50Z",
+      "trackId": "sdk:Python:azure-mgmt-trafficmanager",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47140",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47140#issuecomment-5177049664"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Close the old PR which has no update for a long time.",
+      "stack": 1
+    }
+  ],
+  "quality": {
+    "warnings": [
+      "2 historical linked PR(s) closed without merge"
+    ],
+    "unavailablePullRequests": 0,
+    "unavailablePipelineRuns": 0
+  },
+  "boundaryFacts": {
+    "id": "34506",
+    "state": "abandoned",
+    "specPrs": [
+      {
+        "id": "github:Azure/azure-rest-api-specs#43389",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#43389",
+        "createdAt": "2026-05-20T19:30:06Z",
+        "mergedAt": "2026-05-26T17:10:43Z",
+        "closedAt": "2026-05-26T17:10:43Z",
+        "available": true
+      }
+    ],
+    "artifacts": [
+      {
+        "language": ".NET",
+        "package": "Azure.ResourceManager.TrafficManager",
+        "trackId": "sdk:.NET:Azure.ResourceManager.TrafficManager",
+        "prId": "github:Azure/azure-sdk-for-net#59451",
+        "prCreatedAt": "2026-05-26T19:17:08Z",
+        "prMergedAt": "2026-06-04T06:47:52Z",
+        "prClosedAt": "2026-06-04T06:47:52Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-net#59451",
+            "createdAt": "2026-05-26T19:17:08Z",
+            "mergedAt": "2026-06-04T06:47:52Z",
+            "closedAt": "2026-06-04T06:47:52Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6353134",
+        "generationStartAt": "2026-05-26T19:10:53.5556748Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "JavaScript",
+        "package": "@azure/arm-trafficmanager",
+        "trackId": "sdk:JavaScript:@azure/arm-trafficmanager",
+        "prId": "github:Azure/azure-sdk-for-js#38672",
+        "prCreatedAt": "2026-05-26T19:23:00Z",
+        "prMergedAt": null,
+        "prClosedAt": "2026-05-29T06:11:17Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-js#38672",
+            "createdAt": "2026-05-26T19:23:00Z",
+            "mergedAt": null,
+            "closedAt": "2026-05-29T06:11:17Z",
+            "state": "closed"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6353195",
+        "generationStartAt": "2026-05-26T19:16:57.8052952Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Python",
+        "package": "azure-mgmt-trafficmanager",
+        "trackId": "sdk:Python:azure-mgmt-trafficmanager",
+        "prId": "github:Azure/azure-sdk-for-python#47140",
+        "prCreatedAt": "2026-05-26T19:22:39Z",
+        "prMergedAt": null,
+        "prClosedAt": "2026-08-04T09:20:50Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-python#47140",
+            "createdAt": "2026-05-26T19:22:39Z",
+            "mergedAt": null,
+            "closedAt": "2026-08-04T09:20:50Z",
+            "state": "closed"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6353191",
+        "generationStartAt": "2026-05-26T19:16:45.9206059Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Java",
+        "package": "com.azure.resourcemanager:azure-resourcemanager-trafficmanager",
+        "trackId": "sdk:Java:com.azure.resourcemanager:azure-resourcemanager-trafficmanager",
+        "prId": "github:Azure/azure-sdk-for-java#49266",
+        "prCreatedAt": "2026-05-26T19:26:37Z",
+        "prMergedAt": "2026-06-17T01:37:55Z",
+        "prClosedAt": "2026-06-17T01:37:55Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-java#49266",
+            "createdAt": "2026-05-26T19:26:37Z",
+            "mergedAt": "2026-06-17T01:37:55Z",
+            "closedAt": "2026-06-17T01:37:55Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6353196",
+        "generationStartAt": "2026-05-26T19:17:17.1319825Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Go",
+        "package": "sdk/resourcemanager/trafficmanager/armtrafficmanager",
+        "trackId": "sdk:Go:sdk/resourcemanager/trafficmanager/armtrafficmanager",
+        "prId": "github:Azure/azure-sdk-for-go#26888",
+        "prCreatedAt": "2026-05-26T19:22:38Z",
+        "prMergedAt": "2026-06-01T07:22:27Z",
+        "prClosedAt": "2026-06-01T07:22:27Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-go#26888",
+            "createdAt": "2026-05-26T19:22:38Z",
+            "mergedAt": "2026-06-01T07:22:27Z",
+            "closedAt": "2026-06-01T07:22:27Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6353197",
+        "generationStartAt": "2026-05-26T19:17:33.7380947Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      }
+    ],
+    "cohortPlan": {
+      "id": "34506",
+      "releasePlanId": "2251",
+      "title": "Release Plan - 2251 - GA - Traffic Manager",
+      "service": "Traffic Manager",
+      "state": "abandoned"
+    },
+    "quality": {
+      "warnings": [
+        "2 historical linked PR(s) closed without merge"
+      ],
+      "unavailablePullRequests": 0,
+      "unavailablePipelineRuns": 0
+    }
+  },
+  "summary": {
+    "durationHours": 216.8,
+    "pullRequestCount": 6,
+    "humanReviewCount": 7,
+    "humanCommentCount": 4
+  }
+}

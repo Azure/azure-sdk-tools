@@ -1,0 +1,1046 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Azure SDK generation and release timeline explorer"
+    />
+    <title>Azure SDK Flow</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="css/site.css" />
+    <script type="module" src="js/app.js"></script>
+  </head>
+  <body x-data="timelineApp" x-cloak>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+      <a
+        class="brand"
+        :href="routeUrl({ view: 'portfolio' })"
+        @click="navigateLink($event, { view: 'portfolio' })"
+      >
+        <span class="brand-mark">AZ</span>
+        <span>
+          <strong>SDK Flow</strong>
+          <small>Generation and release intelligence</small>
+        </span>
+      </a>
+      <div class="freshness" x-show="snapshot">
+        <span class="status-dot"></span>
+        Daily snapshot
+        <time x-text="formatDate(snapshot?.generatedAt)"></time>
+      </div>
+    </header>
+
+    <main id="main">
+      <div class="state-panel" x-show="loading">
+        <div class="loader"></div>
+        <p>Loading release flow data...</p>
+      </div>
+      <div class="state-panel error" x-show="error">
+        <strong>Data could not be loaded</strong>
+        <p x-text="error"></p>
+      </div>
+
+      <section x-show="!loading && !error && view === 'portfolio'">
+        <div class="shell portfolio-content">
+          <div class="kpi-grid" aria-label="Portfolio metrics">
+            <article class="kpi">
+              <span>Total plans</span>
+              <strong x-text="portfolio?.kpis?.total"></strong>
+              <small x-text="portfolioCohortLabel"></small>
+            </article>
+            <article class="kpi accent">
+              <span>Active</span>
+              <strong x-text="portfolio?.kpis?.active"></strong>
+              <small>New and in-progress plans</small>
+            </article>
+            <article class="kpi">
+              <span>Finished</span>
+              <strong x-text="portfolio?.kpis?.finished"></strong>
+              <small>Terminal successful plans</small>
+            </article>
+            <article class="kpi">
+              <span>Abandoned</span>
+              <strong x-text="portfolio?.kpis?.abandoned"></strong>
+              <small>Includes duplicate outcomes</small>
+            </article>
+          </div>
+
+          <section class="panel scorecard">
+            <div
+              class="section-heading scorecard-toggle"
+            >
+              <div>
+                <p class="eyebrow">Finished release scorecard</p>
+                <div class="scorecard-title">
+                  <h2>Stage duration</h2>
+                  <span>Each period vs prior 3mo P50</span>
+                </div>
+              </div>
+              <button
+                type="button"
+                class="trend-toggle"
+                :class="{ expanded: trendsExpanded }"
+                aria-controls="scorecard-trends"
+                :aria-expanded="trendsExpanded"
+                :aria-label="trendsExpanded ? 'Collapse scorecard trends' : 'Expand scorecard trends'"
+                @click="trendsExpanded = !trendsExpanded"
+              >
+                <span x-text="trendsExpanded ? 'Collapse trend charts' : 'Expand trend charts'"></span>
+                <i :class="{ open: trendsExpanded }">⌄</i>
+              </button>
+              <button
+                class="cohort-evidence-button"
+                type="button"
+                @click.stop="cohortEvidenceOpen = true"
+              >
+                Cohort coverage
+              </button>
+            </div>
+            <div class="metric-strip">
+              <template
+                x-for="(metric, metricIndex) in scorecardMetrics"
+                :key="metric.metricId"
+              >
+                <article>
+                  <div class="metric-heading">
+                    <strong x-text="metric.name"></strong>
+                    <span
+                      class="readiness"
+                      :class="[metric.readiness, tooltipEdgeClass(metricIndex, scorecardMetrics.length)]"
+                      :data-tooltip="readinessTooltip(metric.readiness)"
+                      :aria-label="`${metric.readiness}: ${readinessTooltip(metric.readiness)}`"
+                      tabindex="0"
+                      x-text="metric.readiness"
+                    ></span>
+                  </div>
+                  <div class="period-summary-list">
+                    <template
+                      x-for="period in scorecardPeriods(metric)"
+                      :key="`${metric.metricId}:${period.id}`"
+                    >
+                      <section
+                        class="period-summary-row"
+                        :class="{ primary: period.id === 'full-month' }"
+                      >
+                        <div>
+                          <strong x-text="period.label"></strong>
+                          <small
+                            x-text="compactPeriodRangeLabel(period.statistics)"
+                          ></small>
+                          <small
+                            class="period-count"
+                            :title="observationLabel(period.statistics.count)"
+                            x-text="`n=${period.statistics.count}`"
+                          ></small>
+                        </div>
+                        <span class="period-stat p50" x-show="period.showP50">
+                          <small>P50</small>
+                          <b
+                            x-text="formatCompactDuration(period.statistics.p50)"
+                          ></b>
+                          <b
+                            class="period-change"
+                            :class="period.statistics.change.direction"
+                            :title="trendComparisonTitle(period.statistics.change)"
+                            x-text="formatTrendChange(period.statistics.change)"
+                          ></b>
+                        </span>
+                        <span
+                          class="period-stat p90"
+                          :class="{ 'p50-column': !period.showP50 }"
+                          x-show="period.showP90"
+                        >
+                          <small>P90</small>
+                          <b
+                            x-text="formatCompactDuration(period.statistics.p90)"
+                          ></b>
+                          <b
+                            class="period-change"
+                            :class="period.statistics.p90Change.direction"
+                            :title="trendComparisonTitle(period.statistics.p90Change)"
+                            x-text="formatTrendChange(period.statistics.p90Change)"
+                            x-show="period.showP90Change !== false"
+                          ></b>
+                        </span>
+                      </section>
+                    </template>
+                  </div>
+                  <div class="compact-trends">
+                    <div
+                      :class="{ placeholder: metric.metricId === 'L1' }"
+                      :aria-hidden="metric.metricId === 'L1'"
+                    >
+                      <span>WoW</span>
+                      <div
+                        class="mini-column-chart"
+                        role="group"
+                        :aria-label="trendAriaLabel(metric, 'weekly')"
+                      >
+                        <template
+                          x-for="(bucket, index) in completeTrendSeries(metric.trends.weekly)"
+                          :key="`mini-week:${metric.metricId}:${bucket.key}`"
+                        >
+                          <button
+                            type="button"
+                            class="mini-column"
+                            :class="`${bucket.p50 === null ? 'empty' : ''} ${tooltipEdgeClass(index, completeTrendSeries(metric.trends.weekly).length)}`"
+                            :style="miniColumnStyle(bucket.p50, completeTrendSeries(metric.trends.weekly))"
+                            :data-tooltip="columnTooltip(bucket, 'p50')"
+                            :aria-label="columnTooltip(bucket, 'p50')"
+                            :disabled="bucket.p50 === null"
+                            @click="selectTrendCohort(metric, 'weekly', bucket)"
+                          ></button>
+                        </template>
+                      </div>
+                    </div>
+                    <div>
+                      <span>MoM</span>
+                      <div
+                        class="mini-column-chart"
+                        role="group"
+                        :aria-label="trendAriaLabel(metric, 'monthly')"
+                      >
+                        <template
+                          x-for="(bucket, index) in completeTrendSeries(metric.trends.monthly)"
+                          :key="`mini-month:${metric.metricId}:${bucket.key}`"
+                        >
+                          <button
+                            type="button"
+                            class="mini-column"
+                            :class="`${bucket.p50 === null ? 'empty' : ''} ${tooltipEdgeClass(index, completeTrendSeries(metric.trends.monthly).length)}`"
+                            :style="miniColumnStyle(bucket.p50, completeTrendSeries(metric.trends.monthly))"
+                            :data-tooltip="columnTooltip(bucket, 'p50')"
+                            :aria-label="columnTooltip(bucket, 'p50')"
+                            :disabled="bucket.p50 === null"
+                            @click="selectTrendCohort(metric, 'monthly', bucket)"
+                          ></button>
+                        </template>
+                      </div>
+                    </div>
+                  </div>
+                </article>
+              </template>
+            </div>
+            <div
+              id="scorecard-trends"
+              class="trend-expansion"
+              x-show="trendsExpanded"
+              x-transition.opacity
+            >
+              <template
+                x-for="metric in scorecardMetrics"
+                :key="`trend:${metric.metricId}`"
+              >
+                <article class="trend-detail">
+                  <header>
+                    <div>
+                      <span x-text="metric.metricId"></span>
+                      <strong x-text="metric.name"></strong>
+                    </div>
+                    <p>
+                      Full-cohort benchmark
+                      <b x-text="`P50 ${formatDuration(historicalStatistic(metric, 'p50'))}`"></b>
+                    </p>
+                  </header>
+                  <div class="chart-legend" aria-label="Chart legend">
+                    <span><i class="legend-column p50"></i>P50 duration</span>
+                    <span x-show="metric.metricId !== 'L1'"><i class="legend-column p90"></i>P90 duration</span>
+                    <span><i class="legend-line"></i>Full-cohort P50 benchmark</span>
+                    <span class="scale-note">Square-root Y scale</span>
+                  </div>
+                  <div class="trend-graphs">
+                    <section x-show="metric.metricId !== 'L1'">
+                      <div>
+                        <strong>Week over week</strong>
+                      </div>
+                      <div
+                        class="column-chart-scroll"
+                        role="group"
+                        :aria-label="`${metric.name} week-over-week P50 and P90 duration trend; final column is the live partial week`"
+                      >
+                        <div class="column-chart">
+                          <div class="y-axis">
+                            <span class="axis-title">Duration</span>
+                            <template
+                              x-for="tick in chartTicks(metric, metric.trends.weekly)"
+                              :key="`week-tick:${metric.metricId}:${tick.position}`"
+                            >
+                              <i :style="`top:${tick.pixel}px`">
+                                <span x-text="formatDuration(tick.value)"></span>
+                              </i>
+                            </template>
+                          </div>
+                          <div class="column-plot">
+                            <template
+                              x-for="tick in chartTicks(metric, metric.trends.weekly)"
+                              :key="`week-grid:${metric.metricId}:${tick.position}`"
+                            >
+                              <i
+                                class="grid-line"
+                                :style="`top:${tick.pixel}px`"
+                              ></i>
+                            </template>
+                            <i
+                              class="benchmark-line"
+                              :style="benchmarkStyle(metric, metric.trends.weekly)"
+                            ></i>
+                            <div
+                              class="column-buckets"
+                              :style="`grid-template-columns:repeat(${metric.trends.weekly.series.length}, minmax(24px, 1fr))`"
+                            >
+                              <template
+                                x-for="(bucket, index) in metric.trends.weekly.series"
+                                :key="`week-bar:${metric.metricId}:${bucket.key}`"
+                              >
+                                <div
+                                  class="column-bucket"
+                                  :class="{ partial: bucket.partial }"
+                                >
+                                  <div class="column-pair">
+                                    <button
+                                      type="button"
+                                      class="chart-column p50"
+                                      x-show="bucket.p50 !== null"
+                                      :style="columnStyle(bucket.p50, metric, metric.trends.weekly)"
+                                      :class="tooltipEdgeClass(index, metric.trends.weekly.series.length)"
+                                      :data-tooltip="columnTooltip(bucket, 'p50')"
+                                      :aria-label="columnTooltip(bucket, 'p50')"
+                                      @click="selectTrendCohort(metric, 'weekly', bucket)"
+                                    ></button>
+                                    <button
+                                      type="button"
+                                      class="chart-column p90"
+                                      x-show="metric.metricId !== 'L1' && bucket.p90 !== null"
+                                      :style="columnStyle(bucket.p90, metric, metric.trends.weekly)"
+                                      :class="tooltipEdgeClass(index, metric.trends.weekly.series.length)"
+                                      :data-tooltip="columnTooltip(bucket, 'p90')"
+                                      :aria-label="columnTooltip(bucket, 'p90')"
+                                      @click="selectTrendCohort(metric, 'weekly', bucket)"
+                                    ></button>
+                                  </div>
+                                  <span
+                                    x-text="bucketAxisLabel(bucket, index, metric.trends.weekly.series.length, 'week')"
+                                  ></span>
+                                </div>
+                              </template>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <small>Final column is the live partial week · select a column to inspect its release plans</small>
+                    </section>
+                    <section>
+                      <div>
+                        <strong>Month over month</strong>
+                      </div>
+                      <div
+                        class="column-chart-scroll"
+                        role="group"
+                        :aria-label="`${metric.name} month-over-month P50 and P90 duration trend; final column is the live partial month`"
+                      >
+                        <div class="column-chart">
+                          <div class="y-axis">
+                            <span class="axis-title">Duration</span>
+                            <template
+                              x-for="tick in chartTicks(metric, metric.trends.monthly)"
+                              :key="`month-tick:${metric.metricId}:${tick.position}`"
+                            >
+                              <i :style="`top:${tick.pixel}px`">
+                                <span x-text="formatDuration(tick.value)"></span>
+                              </i>
+                            </template>
+                          </div>
+                          <div class="column-plot">
+                            <template
+                              x-for="tick in chartTicks(metric, metric.trends.monthly)"
+                              :key="`month-grid:${metric.metricId}:${tick.position}`"
+                            >
+                              <i
+                                class="grid-line"
+                                :style="`top:${tick.pixel}px`"
+                              ></i>
+                            </template>
+                            <i
+                              class="benchmark-line"
+                              :style="benchmarkStyle(metric, metric.trends.monthly)"
+                            ></i>
+                            <div
+                              class="column-buckets"
+                              :style="`grid-template-columns:repeat(${metric.trends.monthly.series.length}, minmax(56px, 1fr))`"
+                            >
+                              <template
+                                x-for="(bucket, index) in metric.trends.monthly.series"
+                                :key="`month-bar:${metric.metricId}:${bucket.key}`"
+                              >
+                                <div
+                                  class="column-bucket"
+                                  :class="{ partial: bucket.partial }"
+                                >
+                                  <div class="column-pair">
+                                    <button
+                                      type="button"
+                                      class="chart-column p50"
+                                      x-show="bucket.p50 !== null"
+                                      :style="columnStyle(bucket.p50, metric, metric.trends.monthly)"
+                                      :class="tooltipEdgeClass(index, metric.trends.monthly.series.length)"
+                                      :data-tooltip="columnTooltip(bucket, 'p50')"
+                                      :aria-label="columnTooltip(bucket, 'p50')"
+                                      @click="selectTrendCohort(metric, 'monthly', bucket)"
+                                    ></button>
+                                    <button
+                                      type="button"
+                                      class="chart-column p90"
+                                      x-show="metric.metricId !== 'L1' && bucket.p90 !== null"
+                                      :style="columnStyle(bucket.p90, metric, metric.trends.monthly)"
+                                      :class="tooltipEdgeClass(index, metric.trends.monthly.series.length)"
+                                      :data-tooltip="columnTooltip(bucket, 'p90')"
+                                      :aria-label="columnTooltip(bucket, 'p90')"
+                                      @click="selectTrendCohort(metric, 'monthly', bucket)"
+                                    ></button>
+                                  </div>
+                                  <span
+                                    x-text="bucketAxisLabel(bucket, index, metric.trends.monthly.series.length, 'month')"
+                                  ></span>
+                                </div>
+                              </template>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <small>Final column is the live partial month · select a column to inspect its release plans</small>
+                    </section>
+                  </div>
+                </article>
+              </template>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="section-heading plans-heading">
+              <div>
+                <p class="eyebrow releases-title">
+                  Releases
+                  <span x-text="filteredPlans.length"></span>
+                </p>
+              </div>
+              <label class="search">
+                <span class="sr-only">Search plans</span>
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="m21 21-4.35-4.35m2.35-5.15A7.5 7.5 0 1 1 4 11.5a7.5 7.5 0 0 1 15 0Z" />
+                </svg>
+                <input
+                  type="search"
+                  placeholder="Search service, package, plan ID..."
+                  x-model.debounce.150ms="search"
+                />
+              </label>
+            </div>
+            <div class="filter-row">
+              <button
+                type="button"
+                :class="{ active: stateFilter === 'all' }"
+                @click="selectStateFilter('all')"
+              >
+                All
+              </button>
+              <button
+                type="button"
+                :class="{ active: stateFilter === 'active' }"
+                @click="selectStateFilter('active')"
+              >
+                Active
+              </button>
+              <button
+                type="button"
+                :class="{ active: stateFilter === 'finished' }"
+                @click="selectStateFilter('finished')"
+              >
+                Finished
+              </button>
+              <button
+                type="button"
+                :class="{ active: stateFilter === 'abandoned' }"
+                @click="selectStateFilter('abandoned')"
+              >
+                Abandoned
+              </button>
+              <span class="filter-divider" aria-hidden="true"></span>
+              <span class="filter-label">Active delays</span>
+              <template x-for="metricId in ['S1', 'S4', 'S5']" :key="metricId">
+                <button
+                  type="button"
+                  :class="{ active: delayedMetricFilters.includes(metricId) }"
+                  :disabled="p90Threshold(metricId) === null"
+                  :title="delayedFilterTitle(metricId)"
+                  :aria-pressed="delayedMetricFilters.includes(metricId)"
+                  @click="toggleDelayedMetric(metricId)"
+                  x-text="`${definition(metricId).name} P90+`"
+                ></button>
+              </template>
+            </div>
+            <div class="plan-list">
+              <template
+                x-for="releasePlan in filteredPlans"
+                :key="releasePlan.id"
+              >
+                <article class="plan-row">
+                  <a
+                    class="plan-main"
+                    :href="routeUrl({ view: 'plan', plan: releasePlan.id })"
+                    @click="navigateLink($event, { view: 'plan', plan: releasePlan.id })"
+                  >
+                    <span
+                      class="plan-state"
+                      :class="releasePlan.state"
+                      x-text="formatState(releasePlan.state)"
+                    ></span>
+                    <span class="plan-identity">
+                      <strong x-text="releasePlan.service"></strong>
+                      <small
+                        x-text="`${releasePlan.releaseType} · Plan ${releasePlan.releasePlanId}`"
+                      ></small>
+                    </span>
+                    <span class="language-progress">
+                      <span>
+                        <i
+                          :style="`width: ${releasePlan.languageCount ? (releasePlan.releasedCount / releasePlan.languageCount) * 100 : 0}%`"
+                        ></i>
+                      </span>
+                      <small
+                        x-text="`${releasePlan.releasedCount}/${releasePlan.languageCount} languages`"
+                      ></small>
+                    </span>
+                    <span class="plan-stat">
+                      <strong
+                        x-text="formatDuration(releasePlan.durationHours)"
+                      ></strong>
+                      <small>Total plan age</small>
+                    </span>
+                    <span class="plan-stat">
+                      <strong x-text="releasePlan.reviewCount"></strong>
+                      <small>Human reviews</small>
+                    </span>
+                    <span
+                      class="quality-pill"
+                      :class="releasePlan.quality"
+                      x-text="releasePlan.warnings ? `${releasePlan.warnings} note${releasePlan.warnings > 1 ? 's' : ''}` : 'Complete'"
+                    ></span>
+                    <span class="arrow" aria-hidden="true">→</span>
+                  </a>
+                </article>
+              </template>
+              <p class="empty" x-show="filteredPlans.length === 0">
+                No releases match these filters.
+              </p>
+            </div>
+          </section>
+
+          <aside class="quality-note">
+            <strong>Evidence boundary</strong>
+            <p x-text="portfolio?.dataQuality?.releaseTimestamps"></p>
+            <p x-text="portfolio?.dataQuality?.pipelineRuns"></p>
+            <p x-text="portfolio?.dataQuality?.collectionSkips"></p>
+          </aside>
+        </div>
+      </section>
+
+      <section x-show="!loading && !error && view === 'plan' && plan">
+        <div class="shell plan-page">
+          <nav class="breadcrumbs" aria-label="Breadcrumb">
+            <a
+              :href="routeUrl({ view: 'portfolio' })"
+              @click="navigateLink($event, { view: 'portfolio' })"
+            >
+              Portfolio
+            </a>
+            <span>/</span>
+            <span x-text="plan?.service"></span>
+            <span>/</span>
+            <strong x-text="`Plan ${plan?.releasePlanId}`"></strong>
+          </nav>
+
+          <header class="plan-header">
+            <div>
+              <div class="tag-row">
+                <span
+                  class="plan-state"
+                  :class="plan?.state"
+                  x-text="formatState(plan?.state)"
+                ></span>
+                <span class="tag" x-text="plan?.plane"></span>
+                <span class="tag" x-text="plan?.releaseType"></span>
+              </div>
+              <h1 x-text="plan?.service"></h1>
+              <p x-text="plan?.title"></p>
+            </div>
+            <a
+              class="source-link"
+              :href="plan?.sourceUrl"
+              target="_blank"
+              rel="noreferrer"
+              >Open Release Plan ↗</a
+            >
+          </header>
+
+          <div class="workflow" aria-label="Release workflow">
+            <template x-for="(stage, index) in workflowStages" :key="stage.name">
+              <div>
+                <span x-text="index + 1"></span>
+                <p>
+                  <strong x-text="stage.name"></strong>
+                  <small x-text="stage.detail"></small>
+                </p>
+              </div>
+            </template>
+          </div>
+
+          <div class="plan-kpis">
+            <article>
+              <span>End-to-end</span>
+              <strong x-text="planMetric('L1')"></strong>
+            </article>
+            <article>
+              <span>PRs correlated</span>
+              <strong x-text="plan?.summary?.pullRequestCount"></strong>
+            </article>
+            <article>
+              <span>Human reviews</span>
+              <strong x-text="plan?.summary?.humanReviewCount"></strong>
+            </article>
+            <article>
+              <span>Human comments</span>
+              <strong x-text="plan?.summary?.humanCommentCount"></strong>
+            </article>
+          </div>
+
+          <aside
+            class="warning-banner"
+            x-show="plan?.quality?.warnings?.length"
+          >
+            <strong>Qualified evidence</strong>
+            <span x-text="plan?.quality?.warnings?.join(' · ')"></span>
+          </aside>
+
+          <section class="panel timeline-panel">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Evidence timeline</p>
+                <h2>Specification to release</h2>
+              </div>
+              <div class="timeline-controls">
+                <label>
+                  <span>Event detail</span>
+                  <select x-model="eventFilter">
+                    <option value="milestones">Milestones</option>
+                    <option value="human">Human activity</option>
+                    <option value="all">All evidence</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+            <div class="timeline-legend">
+              <span><i class="bar spec-review"></i>Spec review</span>
+              <span><i class="bar generation"></i>Generation</span>
+              <span><i class="bar sdk-review"></i>SDK review</span>
+              <span><i class="bar release"></i>Release</span>
+              <span><i class="marker"></i>Event</span>
+            </div>
+            <div class="timeline-scroll">
+              <div class="timeline">
+                <div class="axis-row">
+                  <span></span>
+                  <div class="axis">
+                    <template x-for="tick in timelineTicks" :key="tick.position">
+                      <div :style="`left:${tick.position}%`">
+                        <i></i>
+                        <span x-text="tick.label"></span>
+                      </div>
+                    </template>
+                  </div>
+                </div>
+                <template x-for="track in plan?.tracks || []" :key="track.id">
+                  <div class="timeline-row">
+                    <div class="track-label">
+                      <strong x-text="track.label"></strong>
+                      <small x-text="track.detail"></small>
+                    </div>
+                    <div class="track">
+                      <template
+                        x-for="interval in intervalsFor(track.id)"
+                        :key="interval.id"
+                      >
+                        <button
+                          type="button"
+                          class="interval"
+                          :class="interval.phase"
+                          :style="intervalStyle(interval)"
+                          :title="intervalTitle(interval)"
+                        >
+                          <span
+                            x-show="interval.status === 'complete' && intervalWidth(interval) > 12"
+                            x-text="formatDuration(interval.durationHours)"
+                          ></span>
+                        </button>
+                      </template>
+                      <template
+                        x-for="event in eventsFor(track.id)"
+                        :key="event.id"
+                      >
+                        <a
+                          class="event-marker"
+                          :class="eventClass(event)"
+                          :style="eventStyle(event)"
+                          :href="routeUrl({ view: 'plan', plan: plan.id, event: event.id })"
+                          :aria-label="`${event.title} at ${formatDateTime(event.occurredAt)}`"
+                          @click="selectEventLink($event, event)"
+                        ></a>
+                      </template>
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </div>
+            <details class="event-feed" x-show="eventFilter !== 'milestones'">
+              <summary>
+                Browse
+                <span x-text="filteredEventFeed.length"></span>
+                individual events
+              </summary>
+              <div>
+                <template x-for="event in filteredEventFeed" :key="`feed:${event.id}`">
+                  <a
+                    :href="routeUrl({ view: 'plan', plan: plan.id, event: event.id })"
+                    @click="selectEventLink($event, event)"
+                  >
+                    <time x-text="formatDateTime(event.occurredAt)"></time>
+                    <strong x-text="event.title"></strong>
+                    <span x-text="event.actor?.publicId || event.source?.system"></span>
+                    <i x-text="event.confidence"></i>
+                  </a>
+                </template>
+              </div>
+            </details>
+          </section>
+
+          <div class="detail-grid">
+            <section class="panel">
+              <div class="section-heading">
+                <div>
+                  <p class="eyebrow">Metric evidence</p>
+                  <h2>Plan measurements</h2>
+                </div>
+              </div>
+              <div class="metric-table">
+                <template
+                  x-for="metric in groupedPlanMetrics"
+                  :key="metric.metricId"
+                >
+                  <article>
+                    <div>
+                      <strong x-text="metric.name"></strong>
+                      <span
+                        class="readiness tooltip-left"
+                        :class="metric.readiness"
+                        :data-tooltip="readinessTooltip(metric.readiness)"
+                        :aria-label="`${metric.readiness}: ${readinessTooltip(metric.readiness)}`"
+                        tabindex="0"
+                        x-text="metric.readiness"
+                      ></span>
+                      <span
+                        class="confidence-badge"
+                        :class="metric.confidence"
+                        x-text="metric.confidence"
+                      ></span>
+                    </div>
+                    <strong x-text="formatDuration(metric.median)"></strong>
+                    <small
+                      x-text="`${metric.complete}/${metric.total} complete result${metric.total === 1 ? '' : 's'}`"
+                    ></small>
+                  </article>
+                </template>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="section-heading">
+                <div>
+                  <p class="eyebrow">Intended vs actual</p>
+                  <h2>Language releases</h2>
+                </div>
+              </div>
+              <div class="artifact-table">
+                <template
+                  x-for="artifact in plan?.intendedArtifacts || []"
+                  :key="artifact.language"
+                >
+                  <article>
+                    <span class="language-icon" x-text="languageAbbreviation(artifact.language)"></span>
+                    <p>
+                      <strong x-text="artifact.language"></strong>
+                      <small x-text="artifact.package || 'Package not recorded'"></small>
+                    </p>
+                    <p>
+                      <strong x-text="artifact.version || 'Version unavailable'"></strong>
+                      <small>Released version</small>
+                    </p>
+                    <span
+                      class="release-outcome"
+                      :class="artifact.outcome"
+                      x-text="formatState(artifact.outcome)"
+                    ></span>
+                    <a
+                      x-show="artifact.prId"
+                      :href="artifactUrl(artifact.prId)"
+                      target="_blank"
+                      rel="noreferrer"
+                      >PR ↗</a
+                    >
+                  </article>
+                </template>
+              </div>
+            </section>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div
+      class="drawer-backdrop"
+      x-show="selectedEvent || selectedCohort || cohortEvidenceOpen"
+      x-transition.opacity
+      @click="closeDrawers()"
+    ></div>
+    <aside
+      class="event-drawer"
+      :class="{ open: selectedEvent }"
+      aria-label="Event detail"
+      :aria-hidden="!selectedEvent"
+    >
+      <button class="drawer-close" type="button" @click="closeEvent()">
+        <span class="sr-only">Close event details</span>×
+      </button>
+      <template x-if="selectedEvent">
+        <div>
+          <p class="eyebrow" x-text="selectedEvent.phase"></p>
+          <h2 x-text="selectedEvent.title"></h2>
+          <time x-text="formatDateTime(selectedEvent.occurredAt)"></time>
+          <div class="drawer-badges">
+            <span
+              class="confidence-badge"
+              :class="selectedEvent.confidence"
+              x-text="selectedEvent.confidence"
+            ></span>
+            <span class="tag" x-text="selectedEvent.type"></span>
+          </div>
+          <dl>
+            <template x-if="selectedEvent.actor?.publicId">
+              <div>
+                <dt>Public actor</dt>
+                <dd
+                  x-text="`${selectedEvent.actor.publicId} · ${selectedEvent.actor.kind}`"
+                ></dd>
+              </div>
+            </template>
+            <template x-if="selectedEvent.value">
+              <div>
+                <dt>Observed value</dt>
+                <dd x-text="selectedEvent.value"></dd>
+              </div>
+            </template>
+            <div>
+              <dt>Source</dt>
+              <dd x-text="selectedEvent.source?.entity"></dd>
+            </div>
+            <div>
+              <dt>Track</dt>
+              <dd x-text="selectedEvent.trackId"></dd>
+            </div>
+          </dl>
+          <blockquote
+            x-show="selectedEvent.excerpt"
+            x-text="selectedEvent.excerpt"
+          ></blockquote>
+          <a
+            class="source-link full"
+            :href="selectedEvent.source?.url"
+            target="_blank"
+            rel="noreferrer"
+            >Open source evidence ↗</a
+          >
+        </div>
+      </template>
+    </aside>
+    <aside
+      class="event-drawer cohort-drawer"
+      :class="{ open: selectedCohort }"
+      aria-label="Trend cohort release plans"
+      :aria-hidden="!selectedCohort"
+    >
+      <button class="drawer-close" type="button" @click="closeCohort()">
+        <span class="sr-only">Close trend cohort</span>×
+      </button>
+      <template x-if="selectedCohort">
+        <div>
+          <p
+            class="eyebrow"
+            x-text="cohortCadenceLabel(selectedCohort.cadence)"
+          ></p>
+          <h2 x-text="selectedCohort.metricName"></h2>
+          <time x-text="periodRangeLabel(selectedCohort.displayPeriod)"></time>
+          <div class="drawer-badges">
+            <span
+              class="tag"
+              x-show="selectedCohort.bucket.partial"
+            >Partial period</span>
+            <span
+              class="tag"
+              x-text="`${selectedCohort.bucket.count} completed stage observations`"
+            ></span>
+            <span
+              class="tag"
+              x-text="`P50 ${formatDuration(selectedCohort.bucket.p50)}`"
+            ></span>
+            <span
+              class="tag"
+              x-text="`P90 ${formatDuration(selectedCohort.bucket.p90)}`"
+            ></span>
+          </div>
+          <div class="cohort-plan-heading">
+            <strong>Release plans</strong>
+            <span
+              x-text="`${selectedCohort.bucket.plans.length} unique`"
+            ></span>
+          </div>
+          <div class="cohort-plan-list">
+            <template
+              x-for="releasePlan in selectedCohort.bucket.plans"
+              :key="releasePlan.id"
+            >
+              <a
+                :href="routeUrl({ view: 'plan', plan: releasePlan.id })"
+                @click="navigateLink($event, { view: 'plan', plan: releasePlan.id })"
+              >
+                <span>
+                  <strong x-text="releasePlan.service"></strong>
+                  <small
+                    x-text="`Plan ${releasePlan.releasePlanId} · ${formatState(releasePlan.state)}`"
+                  ></small>
+                </span>
+                <span>
+                  <b x-text="formatDuration(releasePlan.p50)"></b>
+                  <small x-text="cohortPlanSummary(releasePlan)"></small>
+                </span>
+              </a>
+            </template>
+          </div>
+        </div>
+      </template>
+    </aside>
+    <aside
+      class="event-drawer cohort-drawer evidence-drawer"
+      :class="{ open: cohortEvidenceOpen }"
+      aria-label="Cohort coverage and exclusions"
+      :aria-hidden="!cohortEvidenceOpen"
+    >
+      <button class="drawer-close" type="button" @click="cohortEvidenceOpen = false">
+        <span class="sr-only">Close cohort coverage</span>×
+      </button>
+      <template x-if="cohortEvidenceOpen && snapshot?.cohortAccounting">
+        <div>
+          <p class="eyebrow">Measurement population</p>
+          <h2>Cohort coverage</h2>
+          <p class="evidence-summary">
+            This tracked cohort is bounded by the collection horizon. Missing
+            evidence and reporting-period exclusions remain visible rather than being
+            treated as successful observations.
+          </p>
+          <dl>
+            <div>
+              <dt>Management plane</dt>
+              <dd x-text="snapshot.cohortAccounting.inventory.managementPlane"></dd>
+            </div>
+            <div>
+              <dt>Core correlated</dt>
+              <dd x-text="snapshot.cohortAccounting.inventory.coreCorrelated"></dd>
+            </div>
+            <div>
+              <dt>Published flows</dt>
+              <dd x-text="snapshot.cohortAccounting.inventory.published"></dd>
+            </div>
+            <div>
+              <dt>Excluded plans</dt>
+              <dd x-text="snapshot.cohortAccounting.inventory.excluded"></dd>
+            </div>
+          </dl>
+          <div class="coverage-grid">
+            <article>
+              <strong x-text="snapshot.cohortAccounting.metricCoverage.L1.complete"></strong>
+              <span>Complete L1</span>
+            </article>
+            <article>
+              <strong x-text="snapshot.cohortAccounting.metricCoverage.L1.incomplete"></strong>
+              <span>Incomplete L1</span>
+            </article>
+            <article>
+              <strong x-text="snapshot.cohortAccounting.metricCoverage.L1.ineligible"></strong>
+              <span>Ineligible L1</span>
+            </article>
+          </div>
+          <div class="cohort-plan-heading">
+            <strong>Release boundary sources</strong>
+          </div>
+          <div class="boundary-source-list">
+            <template
+              x-for="[sourceName, count] in Object.entries(snapshot.cohortAccounting.boundarySources)"
+              :key="sourceName"
+            >
+              <span>
+                <b x-text="sourceName"></b>
+                <strong x-text="count"></strong>
+              </span>
+            </template>
+          </div>
+          <div class="cohort-plan-heading">
+            <strong>Incomplete L1 evidence</strong>
+            <span x-text="snapshot.cohortAccounting.metricCoverage.L1.incompletePlans.length"></span>
+          </div>
+          <div class="cohort-plan-list evidence-plan-list">
+            <template
+              x-for="releasePlan in snapshot.cohortAccounting.metricCoverage.L1.incompletePlans"
+              :key="`incomplete:${releasePlan.id}`"
+            >
+              <a :href="releasePlan.sourceUrl" target="_blank" rel="noreferrer">
+                <span>
+                  <strong x-text="releasePlan.service"></strong>
+                  <small x-text="releasePlan.reason"></small>
+                </span>
+                <b>Evidence ↗</b>
+              </a>
+            </template>
+          </div>
+          <div class="cohort-plan-heading">
+            <strong>Excluded plans</strong>
+            <span x-text="snapshot.cohortAccounting.exclusions.length"></span>
+          </div>
+          <div class="cohort-plan-list evidence-plan-list">
+            <template
+              x-for="releasePlan in snapshot.cohortAccounting.exclusions"
+              :key="`excluded:${releasePlan.stage}:${releasePlan.id}`"
+            >
+              <a :href="releasePlan.sourceUrl" target="_blank" rel="noreferrer">
+                <span>
+                  <strong x-text="releasePlan.title"></strong>
+                  <small x-text="`${releasePlan.stage} · ${releasePlan.reason}`"></small>
+                </span>
+                <b>Plan ↗</b>
+              </a>
+            </template>
+          </div>
+        </div>
+      </template>
+    </aside>
+  </body>
+</html>

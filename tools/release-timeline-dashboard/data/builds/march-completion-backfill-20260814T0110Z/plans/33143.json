@@ -1,0 +1,3620 @@
+{
+  "schemaVersion": 2,
+  "id": "33143",
+  "correlation": {
+    "policyVersion": 1,
+    "preflight": "passed"
+  },
+  "releasePlanId": "2120",
+  "title": "Release Plan - 2120 - GA - Durable Task Scheduler",
+  "service": "Durable Task Scheduler",
+  "product": "Release",
+  "path": "specification/durabletask/DurableTask.Management",
+  "state": "finished",
+  "plane": "management",
+  "releaseType": "APEX GA",
+  "intendedMonth": "March 2026",
+  "createdAt": "2026-03-09T19:20:03.343Z",
+  "completedAt": "2026-05-07T21:43:43.313Z",
+  "sourceUrl": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33143",
+  "range": {
+    "start": "2026-02-10T01:17:34.000Z",
+    "end": "2026-05-07T21:43:43.313Z"
+  },
+  "intendedArtifacts": [
+    {
+      "prId": "github:Azure/azure-sdk-for-net#56886",
+      "language": ".NET",
+      "package": "Azure.ResourceManager.DurableTask",
+      "version": null,
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5982513",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-js#37544",
+      "language": "JavaScript",
+      "package": "@azure/arm-durabletask",
+      "version": "1.1.0",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5982514",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-python#45588",
+      "language": "Python",
+      "package": "azure-mgmt-durabletask",
+      "version": "1.1.0",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5982515",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-java#48340",
+      "language": "Java",
+      "package": "azure-resourcemanager-durabletask",
+      "version": null,
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5982516",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-go#26182",
+      "language": "Go",
+      "package": "sdk/resourcemanager/durabletask/armdurabletask",
+      "version": null,
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5982517",
+      "releasePipelineUrl": null
+    }
+  ],
+  "links": [
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#40272",
+      "role": "spec-pr",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/40272",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-net#56886",
+      "role": "sdk-pr",
+      "language": ".NET",
+      "url": "https://github.com/Azure/azure-sdk-for-net/pull/56886",
+      "releasePlanIds": [
+        "33143"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-js#37544",
+      "role": "sdk-pr",
+      "language": "JavaScript",
+      "url": "https://github.com/Azure/azure-sdk-for-js/pull/37544",
+      "releasePlanIds": [
+        "33143"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-python#45588",
+      "role": "sdk-pr",
+      "language": "Python",
+      "url": "https://github.com/Azure/azure-sdk-for-python/pull/45588",
+      "releasePlanIds": [
+        "33143"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-java#48340",
+      "role": "sdk-pr",
+      "language": "Java",
+      "url": "https://github.com/Azure/azure-sdk-for-java/pull/48340",
+      "releasePlanIds": [
+        "33143"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-go#26182",
+      "role": "sdk-pr",
+      "language": "Go",
+      "url": "https://github.com/Azure/azure-sdk-for-go/pull/26182",
+      "releasePlanIds": [
+        "33143"
+      ]
+    }
+  ],
+  "tracks": [
+    {
+      "id": "plan",
+      "kind": "plan",
+      "label": "Release Plan",
+      "detail": "APEX GA"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#40272",
+      "kind": "spec",
+      "label": "Spec PR",
+      "detail": "azure-rest-api-specs #40272",
+      "artifactId": "github:Azure/azure-rest-api-specs#40272",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:.NET:Azure.ResourceManager.DurableTask",
+      "kind": "sdk",
+      "label": ".NET",
+      "detail": "Azure.ResourceManager.DurableTask",
+      "artifactId": "github:Azure/azure-sdk-for-net#56886",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:JavaScript:@azure/arm-durabletask",
+      "kind": "sdk",
+      "label": "JavaScript",
+      "detail": "@azure/arm-durabletask",
+      "artifactId": "github:Azure/azure-sdk-for-js#37544",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Python:azure-mgmt-durabletask",
+      "kind": "sdk",
+      "label": "Python",
+      "detail": "azure-mgmt-durabletask",
+      "artifactId": "github:Azure/azure-sdk-for-python#45588",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Java:azure-resourcemanager-durabletask",
+      "kind": "sdk",
+      "label": "Java",
+      "detail": "azure-resourcemanager-durabletask",
+      "artifactId": "github:Azure/azure-sdk-for-java#48340",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Go:sdk/resourcemanager/durabletask/armdurabletask",
+      "kind": "sdk",
+      "label": "Go",
+      "detail": "sdk/resourcemanager/durabletask/armdurabletask",
+      "artifactId": "github:Azure/azure-sdk-for-go#26182",
+      "state": "merged"
+    }
+  ],
+  "events": [
+    {
+      "id": "github:Azure/azure-rest-api-specs#40272:pr.created:spec:github:Azure/azure-rest-api-specs#40272",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-10T01:17:34Z",
+      "observedAt": "2026-02-10T01:17:34Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40272",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "berndverst"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40272",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40272"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40272:comment:3874774420:spec:github:Azure/azure-rest-api-specs#40272",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-10T01:17:59Z",
+      "observedAt": "2026-02-10T01:17:59Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40272",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40272",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40272#issuecomment-3874774420"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>✅ All automated merging requirements have been met! To get your PR merged, see <a href=\"https://aka.ms/azsdk/specreview/merge\">aka.ms/azsdk/specreview/merge</a>.<br /><br />Comment generated by <a href=\"https://g",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40272:comment:3874795207:spec:github:Azure/azure-rest-api-specs#40272",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-10T01:24:07Z",
+      "observedAt": "2026-02-10T01:24:07Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40272",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40272",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40272#issuecomment-3874795207"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews | Language | API Review for Package | |----------|---------| | Swagger | [Microsoft.DurableTask](https://apiview.dev/Assemblies/Review",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40272:review:3816571978:spec:github:Azure/azure-rest-api-specs#40272",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-17T22:14:59Z",
+      "observedAt": "2026-02-17T22:14:59Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40272",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "psah434"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40272",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40272#pullrequestreview-3816571978"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40272:comment:2819333213:spec:github:Azure/azure-rest-api-specs#40272",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-17T22:14:59Z",
+      "observedAt": "2026-02-17T22:14:59Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40272",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "psah434"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40272",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40272#discussion_r2819333213"
+      },
+      "confidence": "authoritative",
+      "excerpt": "shouldnt this suppression have been present for another api version",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40272:review:3816574114:spec:github:Azure/azure-rest-api-specs#40272",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-17T22:15:42Z",
+      "observedAt": "2026-02-17T22:15:42Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40272",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "psah434"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40272",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40272#pullrequestreview-3816574114"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40272:comment:2819335363:spec:github:Azure/azure-rest-api-specs#40272",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-17T22:15:42Z",
+      "observedAt": "2026-02-17T22:15:42Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40272",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "psah434"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40272",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40272#discussion_r2819335363"
+      },
+      "confidence": "authoritative",
+      "excerpt": "can the name be changed so it doesnt get flagged",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40272:comment:2819336988:spec:github:Azure/azure-rest-api-specs#40272",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-17T22:16:13Z",
+      "observedAt": "2026-02-17T22:16:13Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40272",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40272",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40272#discussion_r2819336988"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This PATCH operation is modeled as a long-running operation (`x-ms-long-running-operation: true` with a `202` response). Azure REST API guidelines advise against implementing PATCH as an LRO; if the update is async, prefer a POST action, or",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40272:comment:2819337016:spec:github:Azure/azure-rest-api-specs#40272",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-17T22:16:14Z",
+      "observedAt": "2026-02-17T22:16:14Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40272",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40272",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40272#discussion_r2819337016"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This PATCH operation for private endpoint connections is modeled as a long-running operation (`x-ms-long-running-operation: true` with a `202` response). Azure REST API guidelines advise against implementing PATCH as an LRO; if the update i",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40272:comment:2819337029:spec:github:Azure/azure-rest-api-specs#40272",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-17T22:16:14Z",
+      "observedAt": "2026-02-17T22:16:14Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40272",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40272",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40272#discussion_r2819337029"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This PATCH operation is modeled as a long-running operation (`x-ms-long-running-operation: true` with a `202` response). Azure REST API guidelines advise against implementing PATCH as an LRO; if the update is async, prefer a POST action, or",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40272:comment:2819337040:spec:github:Azure/azure-rest-api-specs#40272",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-17T22:16:14Z",
+      "observedAt": "2026-02-17T22:16:14Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40272",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40272",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40272#discussion_r2819337040"
+      },
+      "confidence": "authoritative",
+      "excerpt": "In the `ArmResourcePropertiesBag` suppression list, the JSONPath `$.definition.SchedulerUpdate...` looks like a typo (missing the trailing `s`). This will prevent the suppression from matching and may cause the rule violation to reappear in",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40272:review:3816575809:spec:github:Azure/azure-rest-api-specs#40272",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-17T22:16:15Z",
+      "observedAt": "2026-02-17T22:16:15Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40272",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40272",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40272#pullrequestreview-3816575809"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Adds a new **stable** ARM API version (`2026-02-01`) for the **Microsoft.DurableTask** resource provider, generated from the existing TypeSpec project and wired up in the AutoRest `readme.md`. **Changes:** - Updates",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40272:comment:2819337054:spec:github:Azure/azure-rest-api-specs#40272",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-17T22:16:15Z",
+      "observedAt": "2026-02-17T22:16:15Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40272",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40272",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40272#discussion_r2819337054"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`MyPrivateLinkResource` reads like a placeholder name and it flows into generated OpenAPI artifacts (e.g., `MyPrivateLinkResourceListResult` and related descriptions). Rename this model to something service-specific (e.g., `SchedulerPrivate",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40272:comment:3917363062:spec:github:Azure/azure-rest-api-specs#40272",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-17T22:18:16Z",
+      "observedAt": "2026-02-17T22:18:16Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40272",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "psah434"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40272",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40272#issuecomment-3917363062"
+      },
+      "confidence": "authoritative",
+      "excerpt": "New api version needs three commits - first should be a direct copy of a stable version, second should be just the api version change and third should be the actual changes. Could you please add these details on which commits these are?",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40272:review:3828516298:spec:github:Azure/azure-rest-api-specs#40272",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-19T21:02:49Z",
+      "observedAt": "2026-02-19T21:02:49Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40272",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "berndverst"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40272",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40272#pullrequestreview-3828516298"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40272:comment:2830152745:spec:github:Azure/azure-rest-api-specs#40272",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-19T21:02:49Z",
+      "observedAt": "2026-02-19T21:02:49Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40272",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "berndverst"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40272",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40272#discussion_r2830152745"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Changing this would be a breaking change. We will not do this. The Patch operation dispatches an async provisioning / configuration step in our data plane. We prefer merge patch functionality for configuring our policies. Regardless - this ",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40272:review:3828529608:spec:github:Azure/azure-rest-api-specs#40272",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-19T21:05:36Z",
+      "observedAt": "2026-02-19T21:05:36Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40272",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "berndverst"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40272",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40272#pullrequestreview-3828529608"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40272:comment:2830164193:spec:github:Azure/azure-rest-api-specs#40272",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-19T21:05:36Z",
+      "observedAt": "2026-02-19T21:05:36Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40272",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "berndverst"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40272",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40272#discussion_r2830164193"
+      },
+      "confidence": "authoritative",
+      "excerpt": "It cannot and should not. This is the standard name that must be used. Please see the Private Endpoint integration of other RPs. It is very obvious that this rule is a false positive, too.",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40272:review:3828535411:spec:github:Azure/azure-rest-api-specs#40272",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-19T21:06:50Z",
+      "observedAt": "2026-02-19T21:06:50Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40272",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "berndverst"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40272",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40272#pullrequestreview-3828535411"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40272:comment:2830169585:spec:github:Azure/azure-rest-api-specs#40272",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-19T21:06:50Z",
+      "observedAt": "2026-02-19T21:06:50Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40272",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "berndverst"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40272",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40272#discussion_r2830169585"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Yes - this is not anything new. But it seems the old APIs are grandfathered into previous rules somehow. I did not add the suppressions for the old API versions because the automation did not require it. Surely this is not a blocking commen",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40272:review:3828543294:spec:github:Azure/azure-rest-api-specs#40272",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-19T21:08:41Z",
+      "observedAt": "2026-02-19T21:08:41Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40272",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "berndverst"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40272",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40272#pullrequestreview-3828543294"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40272:comment:2830176355:spec:github:Azure/azure-rest-api-specs#40272",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-19T21:08:41Z",
+      "observedAt": "2026-02-19T21:08:41Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40272",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "berndverst"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40272",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40272#discussion_r2830176355"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This is bad advice. Our Patch (merge Patch) operation allows SKU changes which require async provisioning changes. Also, changing this operation now would be a breaking change.",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40272:review:3828588774:spec:github:Azure/azure-rest-api-specs#40272",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-19T21:17:42Z",
+      "observedAt": "2026-02-19T21:17:42Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40272",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "berndverst"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40272",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40272#pullrequestreview-3828588774"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40272:comment:2830213447:spec:github:Azure/azure-rest-api-specs#40272",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-19T21:17:42Z",
+      "observedAt": "2026-02-19T21:17:42Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40272",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "berndverst"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40272",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40272#discussion_r2830213447"
+      },
+      "confidence": "authoritative",
+      "excerpt": "No - this is bad advice. The PATCH operation for Private Endpoint Connections is defined by the Network RP team and the RP Platform (RPaaS) managed integration of Private Endpoints. This is not up to us to change. At the same time, this end",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40272:comment:3930147720:spec:github:Azure/azure-rest-api-specs#40272",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-19T21:22:36Z",
+      "observedAt": "2026-02-19T21:22:36Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40272",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "berndverst"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40272",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40272#issuecomment-3930147720"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> New api version needs three commits - first should be a direct copy of a stable version, second should be just the api version change and third should be the actual changes. Could you please add these details on which commits these are? I",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40272:commit:50ccb8b49705:spec:github:Azure/azure-rest-api-specs#40272",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-19T21:49:20Z",
+      "observedAt": "2026-02-19T21:49:20Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40272",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "berndverst"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40272",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/50ccb8b49705c1c7edb762dab1e4b408f6639d07"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40272:comment:2830627370:spec:github:Azure/azure-rest-api-specs#40272",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-19T23:23:54Z",
+      "observedAt": "2026-02-19T23:23:54Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40272",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "raosuhas"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40272",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40272#discussion_r2830627370"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@copilot can you share where the REST api guidelines advice implementing PATCH as an LRO ? This is incorrect advise",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40272:review:3829034974:spec:github:Azure/azure-rest-api-specs#40272",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-19T23:23:55Z",
+      "observedAt": "2026-02-19T23:23:55Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40272",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "raosuhas"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40272",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40272#pullrequestreview-3829034974"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40272:comment:3930700981:spec:github:Azure/azure-rest-api-specs#40272",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-19T23:24:05Z",
+      "observedAt": "2026-02-19T23:24:05Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40272",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40272",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40272#issuecomment-3930700981"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@raosuhas I've opened a new pull request, #40564, to work on those changes. Once the pull request is ready, I'll request review from you.",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40272:review:3829059891:spec:github:Azure/azure-rest-api-specs#40272",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-19T23:33:46Z",
+      "observedAt": "2026-02-19T23:33:46Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40272",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "raosuhas"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40272",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40272#pullrequestreview-3829059891"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40272:comment:2830652252:spec:github:Azure/azure-rest-api-specs#40272",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-19T23:33:46Z",
+      "observedAt": "2026-02-19T23:33:46Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40272",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "raosuhas"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40272",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40272#discussion_r2830652252"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Seems like this advice is in the microsoft general guidelines. [https://github.com/Azure/azure-rest-api-specs/tasks/4b3adcce-21b1-4fdc-bde3-e21eef1b9e7d I will update the instructions to ](https://github.com/microsoft/api-guidelines/blob/vN",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40272:review:3829060483:spec:github:Azure/azure-rest-api-specs#40272",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-19T23:34:02Z",
+      "observedAt": "2026-02-19T23:34:02Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40272",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "raosuhas"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40272",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40272#pullrequestreview-3829060483"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40272:comment:2830652904:spec:github:Azure/azure-rest-api-specs#40272",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-19T23:34:02Z",
+      "observedAt": "2026-02-19T23:34:02Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40272",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "raosuhas"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40272",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40272#discussion_r2830652904"
+      },
+      "confidence": "authoritative",
+      "excerpt": "please ignore these comments from copilot for now",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40272:review:3832630705:spec:github:Azure/azure-rest-api-specs#40272",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-20T15:19:45Z",
+      "observedAt": "2026-02-20T15:19:45Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40272",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "kaibocai"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40272",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40272#pullrequestreview-3832630705"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40272:pr.merged:spec:github:Azure/azure-rest-api-specs#40272",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-20T15:19:47Z",
+      "observedAt": "2026-02-20T15:19:47Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40272",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40272",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40272"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:33143:created",
+      "type": "plan.created",
+      "phase": "plan",
+      "occurredAt": "2026-03-09T19:20:03.343Z",
+      "observedAt": "2026-03-09T19:20:03.343Z",
+      "trackId": "plan",
+      "title": "Release Plan created",
+      "confidence": "authoritative",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33143",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33143"
+      },
+      "stack": 0
+    },
+    {
+      "id": "ado:33143:1:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-03-09T19:20:03.343Z",
+      "observedAt": "2026-03-09T19:20:03.343Z",
+      "trackId": "plan",
+      "value": "New",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33143",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33143"
+      },
+      "title": "Plan state changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33143:1:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-09T19:20:03.343Z",
+      "observedAt": "2026-03-09T19:20:03.343Z",
+      "trackId": "plan",
+      "value": "Not Available",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33143",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33143"
+      },
+      "title": "Spec approval changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:33143:1:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-09T19:20:03.343Z",
+      "observedAt": "2026-03-09T19:20:03.343Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DurableTask",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33143",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33143"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33143:1:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-09T19:20:03.343Z",
+      "observedAt": "2026-03-09T19:20:03.343Z",
+      "trackId": "sdk:JavaScript:@azure/arm-durabletask",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33143",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33143"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33143:1:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-09T19:20:03.343Z",
+      "observedAt": "2026-03-09T19:20:03.343Z",
+      "trackId": "sdk:Python:azure-mgmt-durabletask",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33143",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33143"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33143:1:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-09T19:20:03.343Z",
+      "observedAt": "2026-03-09T19:20:03.343Z",
+      "trackId": "sdk:Java:azure-resourcemanager-durabletask",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33143",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33143"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33143:1:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-09T19:20:03.343Z",
+      "observedAt": "2026-03-09T19:20:03.343Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/durabletask/armdurabletask",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33143",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33143"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33143:6:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-03-09T19:20:25.447Z",
+      "observedAt": "2026-03-09T19:20:25.447Z",
+      "trackId": "plan",
+      "value": "In Progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33143",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33143"
+      },
+      "title": "Plan state changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:33144:2:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-09T19:21:06.877Z",
+      "observedAt": "2026-03-09T19:21:06.877Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40272",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/40272",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33144",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33144"
+      },
+      "title": "Spec PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado:33143:8:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-09T19:21:09.327Z",
+      "observedAt": "2026-03-09T19:21:09.327Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DurableTask",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33143",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33143"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33143:8:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-09T19:21:09.327Z",
+      "observedAt": "2026-03-09T19:21:09.327Z",
+      "trackId": "sdk:JavaScript:@azure/arm-durabletask",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33143",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33143"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33143:8:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-09T19:21:09.327Z",
+      "observedAt": "2026-03-09T19:21:09.327Z",
+      "trackId": "sdk:Python:azure-mgmt-durabletask",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33143",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33143"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33143:8:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-09T19:21:09.327Z",
+      "observedAt": "2026-03-09T19:21:09.327Z",
+      "trackId": "sdk:Java:azure-resourcemanager-durabletask",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33143",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33143"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33143:8:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-09T19:21:09.327Z",
+      "observedAt": "2026-03-09T19:21:09.327Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/durabletask/armdurabletask",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33143",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33143"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33143:9:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-09T19:21:27.087Z",
+      "observedAt": "2026-03-09T19:21:27.087Z",
+      "trackId": "plan",
+      "value": "Approved",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33143",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33143"
+      },
+      "title": "Spec approval changed",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:5982513:generation.queued:sdk:.NET:Azure.ResourceManager.DurableTask",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-03-09T19:52:33.6100726Z",
+      "observedAt": "2026-03-09T20:04:02.8221227Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DurableTask",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5982513",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5982513"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:5982514:generation.queued:sdk:JavaScript:@azure/arm-durabletask",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-03-09T19:52:44.6939655Z",
+      "observedAt": "2026-03-09T20:04:28.2339336Z",
+      "trackId": "sdk:JavaScript:@azure/arm-durabletask",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5982514",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5982514"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:5982515:generation.queued:sdk:Python:azure-mgmt-durabletask",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-03-09T19:52:53.3506538Z",
+      "observedAt": "2026-03-09T20:05:12.265648Z",
+      "trackId": "sdk:Python:azure-mgmt-durabletask",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5982515",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5982515"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:5982516:generation.queued:sdk:Java:azure-resourcemanager-durabletask",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-03-09T19:53:03.7713226Z",
+      "observedAt": "2026-03-09T20:16:14.0363344Z",
+      "trackId": "sdk:Java:azure-resourcemanager-durabletask",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5982516",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5982516"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:5982517:generation.queued:sdk:Go:sdk/resourcemanager/durabletask/armdurabletask",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-03-09T19:53:14.3891996Z",
+      "observedAt": "2026-03-09T20:03:20.3553006Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/durabletask/armdurabletask",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5982517",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5982517"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:5982514:generation.started:sdk:JavaScript:@azure/arm-durabletask",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-03-09T19:57:46.2553215Z",
+      "observedAt": "2026-03-09T20:04:28.2339336Z",
+      "trackId": "sdk:JavaScript:@azure/arm-durabletask",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5982514",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5982514"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:5982513:generation.started:sdk:.NET:Azure.ResourceManager.DurableTask",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-03-09T19:57:46.5084921Z",
+      "observedAt": "2026-03-09T20:04:02.8221227Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DurableTask",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5982513",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5982513"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:5982516:generation.started:sdk:Java:azure-resourcemanager-durabletask",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-03-09T19:57:53.4221927Z",
+      "observedAt": "2026-03-09T20:16:14.0363344Z",
+      "trackId": "sdk:Java:azure-resourcemanager-durabletask",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5982516",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5982516"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:5982515:generation.started:sdk:Python:azure-mgmt-durabletask",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-03-09T19:57:53.7189755Z",
+      "observedAt": "2026-03-09T20:05:12.265648Z",
+      "trackId": "sdk:Python:azure-mgmt-durabletask",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5982515",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5982515"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:5982517:generation.started:sdk:Go:sdk/resourcemanager/durabletask/armdurabletask",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-03-09T19:57:57.307909Z",
+      "observedAt": "2026-03-09T20:03:20.3553006Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/durabletask/armdurabletask",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5982517",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5982517"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26182:commit:703912e0714c:sdk:Go:sdk/resourcemanager/durabletask/armdurabletask",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-09T20:02:26Z",
+      "observedAt": "2026-03-09T20:02:26Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/durabletask/armdurabletask",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26182",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/703912e0714c5af13970093411378a557408d4fa"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26182:pr.created:sdk:Go:sdk/resourcemanager/durabletask/armdurabletask",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-09T20:02:29Z",
+      "observedAt": "2026-03-09T20:02:29Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/durabletask/armdurabletask",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26182",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26182"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56886:commit:53db9849627b:sdk:.NET:Azure.ResourceManager.DurableTask",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-09T20:02:53Z",
+      "observedAt": "2026-03-09T20:02:53Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DurableTask",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56886",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/53db9849627baaec85be554de8516d967ee76da3"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56886:pr.created:sdk:.NET:Azure.ResourceManager.DurableTask",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-09T20:02:56Z",
+      "observedAt": "2026-03-09T20:02:56Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DurableTask",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56886",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56886"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37544:commit:b41c273962d2:sdk:JavaScript:@azure/arm-durabletask",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-09T20:03:12Z",
+      "observedAt": "2026-03-09T20:03:12Z",
+      "trackId": "sdk:JavaScript:@azure/arm-durabletask",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37544",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/b41c273962d2361bb0e236ce861b7f1d509483a8"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37544:pr.created:sdk:JavaScript:@azure/arm-durabletask",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-09T20:03:16Z",
+      "observedAt": "2026-03-09T20:03:16Z",
+      "trackId": "sdk:JavaScript:@azure/arm-durabletask",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37544",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37544"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:5982517:generation.completed:sdk:Go:sdk/resourcemanager/durabletask/armdurabletask",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-03-09T20:03:20.3553006Z",
+      "observedAt": "2026-03-09T20:03:20.3553006Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/durabletask/armdurabletask",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5982517",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5982517"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45588:commit:5955b1471345:sdk:Python:azure-mgmt-durabletask",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-09T20:03:59Z",
+      "observedAt": "2026-03-09T20:03:59Z",
+      "trackId": "sdk:Python:azure-mgmt-durabletask",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45588",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/5955b14713458ac92c5f04cd438efc39afb33990"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45588:pr.created:sdk:Python:azure-mgmt-durabletask",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-09T20:04:02Z",
+      "observedAt": "2026-03-09T20:04:02Z",
+      "trackId": "sdk:Python:azure-mgmt-durabletask",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45588",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45588"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:5982513:generation.completed:sdk:.NET:Azure.ResourceManager.DurableTask",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-03-09T20:04:02.8221227Z",
+      "observedAt": "2026-03-09T20:04:02.8221227Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DurableTask",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5982513",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5982513"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:5982514:generation.completed:sdk:JavaScript:@azure/arm-durabletask",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-03-09T20:04:28.2339336Z",
+      "observedAt": "2026-03-09T20:04:28.2339336Z",
+      "trackId": "sdk:JavaScript:@azure/arm-durabletask",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5982514",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5982514"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:5982515:generation.completed:sdk:Python:azure-mgmt-durabletask",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-03-09T20:05:12.265648Z",
+      "observedAt": "2026-03-09T20:05:12.265648Z",
+      "trackId": "sdk:Python:azure-mgmt-durabletask",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5982515",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5982515"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48340:commit:ee574ecec724:sdk:Java:azure-resourcemanager-durabletask",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-09T20:05:38Z",
+      "observedAt": "2026-03-09T20:05:38Z",
+      "trackId": "sdk:Java:azure-resourcemanager-durabletask",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48340",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/ee574ecec7241c7caa6331c499a05881fe51a22b"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48340:pr.created:sdk:Java:azure-resourcemanager-durabletask",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-09T20:05:41Z",
+      "observedAt": "2026-03-09T20:05:41Z",
+      "trackId": "sdk:Java:azure-resourcemanager-durabletask",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48340",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48340"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:5982516:generation.completed:sdk:Java:azure-resourcemanager-durabletask",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-03-09T20:16:14.0363344Z",
+      "observedAt": "2026-03-09T20:16:14.0363344Z",
+      "trackId": "sdk:Java:azure-resourcemanager-durabletask",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5982516",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5982516"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:33143:11:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-09T21:05:39.67Z",
+      "observedAt": "2026-03-09T21:05:39.67Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DurableTask",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33143",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33143"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33143:11:Custom.SDKPullRequestForDotnet",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-03-09T21:05:39.67Z",
+      "observedAt": "2026-03-09T21:05:39.67Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DurableTask",
+      "value": "https://github.com/Azure/azure-sdk-for-net/pull/56886",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33143",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33143"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "ado:33143:12:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-09T21:05:42.95Z",
+      "observedAt": "2026-03-09T21:05:42.95Z",
+      "trackId": "sdk:JavaScript:@azure/arm-durabletask",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33143",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33143"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33143:12:Custom.SDKPullRequestForJavaScript",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-03-09T21:05:42.95Z",
+      "observedAt": "2026-03-09T21:05:42.95Z",
+      "trackId": "sdk:JavaScript:@azure/arm-durabletask",
+      "value": "https://github.com/Azure/azure-sdk-for-js/pull/37544",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33143",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33143"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "ado:33143:13:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-09T21:05:46.183Z",
+      "observedAt": "2026-03-09T21:05:46.183Z",
+      "trackId": "sdk:Python:azure-mgmt-durabletask",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33143",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33143"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33143:13:Custom.SDKPullRequestForPython",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-03-09T21:05:46.183Z",
+      "observedAt": "2026-03-09T21:05:46.183Z",
+      "trackId": "sdk:Python:azure-mgmt-durabletask",
+      "value": "https://github.com/Azure/azure-sdk-for-python/pull/45588",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33143",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33143"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "ado:33143:14:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-09T21:05:49.467Z",
+      "observedAt": "2026-03-09T21:05:49.467Z",
+      "trackId": "sdk:Java:azure-resourcemanager-durabletask",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33143",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33143"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33143:14:Custom.SDKPullRequestForJava",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-03-09T21:05:49.467Z",
+      "observedAt": "2026-03-09T21:05:49.467Z",
+      "trackId": "sdk:Java:azure-resourcemanager-durabletask",
+      "value": "https://github.com/Azure/azure-sdk-for-java/pull/48340",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33143",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33143"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "ado:33143:15:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-09T21:05:52.773Z",
+      "observedAt": "2026-03-09T21:05:52.773Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/durabletask/armdurabletask",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33143",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33143"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33143:15:Custom.SDKPullRequestForGo",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-03-09T21:05:52.773Z",
+      "observedAt": "2026-03-09T21:05:52.773Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/durabletask/armdurabletask",
+      "value": "https://github.com/Azure/azure-sdk-for-go/pull/26182",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33143",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33143"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45588:review:3918236552:sdk:Python:azure-mgmt-durabletask",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-09T21:10:13Z",
+      "observedAt": "2026-03-09T21:10:13Z",
+      "trackId": "sdk:Python:azure-mgmt-durabletask",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "berndverst"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45588",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45588#pullrequestreview-3918236552"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Approved from DurableTask team",
+      "reviewState": "approved",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26182:review:3918248665:sdk:Go:sdk/resourcemanager/durabletask/armdurabletask",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-09T21:13:11Z",
+      "observedAt": "2026-03-09T21:13:11Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/durabletask/armdurabletask",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "berndverst"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26182",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26182#pullrequestreview-3918248665"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Approved from DurableTask team",
+      "reviewState": "approved",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45588:comment:2907965453:sdk:Python:azure-mgmt-durabletask",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-09T21:13:27Z",
+      "observedAt": "2026-03-09T21:13:27Z",
+      "trackId": "sdk:Python:azure-mgmt-durabletask",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45588",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45588#discussion_r2907965453"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The docstring says the known values for `api_version` are \"2026-02-01\" and `None`, but `api_version` is typed as `str` and is used as-is when building requests. Either drop `None` from the documented known values, or make the type `Optional",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45588:comment:2907965475:sdk:Python:azure-mgmt-durabletask",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-09T21:13:28Z",
+      "observedAt": "2026-03-09T21:13:28Z",
+      "trackId": "sdk:Python:azure-mgmt-durabletask",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45588",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45588#discussion_r2907965475"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Same issue as the sync configuration: the docstring lists `None` as a known value for `api_version`, but the type is `str` and it is passed through into request building. Update the documentation and/or type/validation so `None` is not pres",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45588:comment:2907965493:sdk:Python:azure-mgmt-durabletask",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-09T21:13:28Z",
+      "observedAt": "2026-03-09T21:13:28Z",
+      "trackId": "sdk:Python:azure-mgmt-durabletask",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45588",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45588#discussion_r2907965493"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`serialize_basic(..., data_type=\"bool\")` currently uses `bool(data)`, which will serialize any non-empty string (e.g., \"false\") as `True`. Consider either enforcing that `data` is already a `bool` for this path, or implementing string parsi",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45588:comment:2907965508:sdk:Python:azure-mgmt-durabletask",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-09T21:13:28Z",
+      "observedAt": "2026-03-09T21:13:28Z",
+      "trackId": "sdk:Python:azure-mgmt-durabletask",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45588",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45588#discussion_r2907965508"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The `DurableTaskMgmtClient` docstring lists `None` as a known value for `api_version`, but `api_version` is treated as a string and forwarded into request building. Either remove `None` from the documented known values, or update the typing",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45588:comment:2907965520:sdk:Python:azure-mgmt-durabletask",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-09T21:13:28Z",
+      "observedAt": "2026-03-09T21:13:28Z",
+      "trackId": "sdk:Python:azure-mgmt-durabletask",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45588",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45588#discussion_r2907965520"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The async `DurableTaskMgmtClient` docstring also lists `None` as a known value for `api_version`, but `api_version` is passed through as a string into request construction. Please align the docs with actual supported values, or make `None` ",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45588:review:3918249771:sdk:Python:azure-mgmt-durabletask",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-09T21:13:29Z",
+      "observedAt": "2026-03-09T21:13:29Z",
+      "trackId": "sdk:Python:azure-mgmt-durabletask",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45588",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45588#pullrequestreview-3918249771"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Auto-generated refresh of `azure-mgmt-durabletask` from the DurableTask TypeSpec config, updating to API version `2026-02-01` and shipping new networking/private-link surface area as part of a stable `1.1.0` release",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48340:review:3918258966:sdk:Java:azure-resourcemanager-durabletask",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-09T21:15:41Z",
+      "observedAt": "2026-03-09T21:15:41Z",
+      "trackId": "sdk:Java:azure-resourcemanager-durabletask",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "berndverst"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48340",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48340#pullrequestreview-3918258966"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Approved from DurableTask team",
+      "reviewState": "approved",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48340:comment:4026967583:sdk:Java:azure-resourcemanager-durabletask",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-09T21:16:52Z",
+      "observedAt": "2026-03-09T21:16:52Z",
+      "trackId": "sdk:Java:azure-resourcemanager-durabletask",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "berndverst"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48340",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48340#issuecomment-4026967583"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@ArthurMa1978 could you approve and merge this for me? It can be merged / release immediately. Thanks.",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37544:review:3918271970:sdk:JavaScript:@azure/arm-durabletask",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-09T21:18:01Z",
+      "observedAt": "2026-03-09T21:18:01Z",
+      "trackId": "sdk:JavaScript:@azure/arm-durabletask",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "berndverst"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37544",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37544#pullrequestreview-3918271970"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Approved from DurableTask team",
+      "reviewState": "approved",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26182:review:3918273054:sdk:Go:sdk/resourcemanager/durabletask/armdurabletask",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-09T21:18:11Z",
+      "observedAt": "2026-03-09T21:18:11Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/durabletask/armdurabletask",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26182",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26182#pullrequestreview-3918273054"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Updates the `armdurabletask` ARM Go SDK module to the DurableTask.Management `2026-02-01` API version generated from the TypeSpec configuration, adding new scheduler networking (private endpoint/private link) surfac",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26182:comment:2907986663:sdk:Go:sdk/resourcemanager/durabletask/armdurabletask",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-09T21:18:11Z",
+      "observedAt": "2026-03-09T21:18:11Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/durabletask/armdurabletask",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26182",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26182#discussion_r2907986663"
+      },
+      "confidence": "authoritative",
+      "excerpt": "New public type name `OptionalPropertiesUpdateableProperties` uses the uncommon spelling “Updateable”. Across other ARM Go SDK packages the established convention is “Updatable” (e.g., `SessionPoolUpdatableProperties` in armappcontainers). ",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56886:review:3918280245:sdk:.NET:Azure.ResourceManager.DurableTask",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-09T21:19:27Z",
+      "observedAt": "2026-03-09T21:19:27Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DurableTask",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "berndverst"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56886",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56886#pullrequestreview-3918280245"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Approved from DurableTask team",
+      "reviewState": "approved",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48340:review:3918284268:sdk:Java:azure-resourcemanager-durabletask",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-09T21:20:05Z",
+      "observedAt": "2026-03-09T21:20:05Z",
+      "trackId": "sdk:Java:azure-resourcemanager-durabletask",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48340",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48340#pullrequestreview-3918284268"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This PR upgrades the `azure-resourcemanager-durabletask` SDK from API version `2025-11-01` to the stable release `2026-02-01`. It adds private endpoint connectivity and private link resource management support to th",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56886:comment:2908012380:sdk:.NET:Azure.ResourceManager.DurableTask",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-09T21:23:05Z",
+      "observedAt": "2026-03-09T21:23:05Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DurableTask",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56886",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56886#discussion_r2908012380"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The API listing files in the `api/` directory have not been updated to reflect the new public API surface introduced in this PR. All new types (PrivateEndpointConnectionResource, SchedulerPrivateLinkResource, DurableTaskPrivateEndpointConne",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56886:comment:2908012434:sdk:.NET:Azure.ResourceManager.DurableTask",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-09T21:23:05Z",
+      "observedAt": "2026-03-09T21:23:05Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DurableTask",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56886",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56886#discussion_r2908012434"
+      },
+      "confidence": "authoritative",
+      "excerpt": "In the pagination logic of both `SchedulersGetPrivateLinksCollectionResultOfT.AsPages` and `SchedulersGetPrivateEndpointConnectionsCollectionResultOfT.AsPages`, the continuation token passed to `Page<T>.FromValues` is taken from `nextPage` ",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56886:review:3918302817:sdk:.NET:Azure.ResourceManager.DurableTask",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-09T21:23:06Z",
+      "observedAt": "2026-03-09T21:23:06Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DurableTask",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56886",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56886#pullrequestreview-3918302817"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This PR is an auto-generated SDK update for `Azure.ResourceManager.DurableTask`, bumping the API version from `2025-11-01` to `2026-02-01` and promoting the package from `1.1.0-beta.1` to `1.1.0` (stable release). T",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56886:comment:2908012471:sdk:.NET:Azure.ResourceManager.DurableTask",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-09T21:23:06Z",
+      "observedAt": "2026-03-09T21:23:06Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DurableTask",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56886",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56886#discussion_r2908012471"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Same paging continuation token bug as in `SchedulersGetPrivateLinksCollectionResultOfT`: the continuation token yielded with each page is the `nextPage` URI from the previous iteration rather than from `result.NextLink`. The value should be",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56886:comment:2908012509:sdk:.NET:Azure.ResourceManager.DurableTask",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-09T21:23:06Z",
+      "observedAt": "2026-03-09T21:23:06Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DurableTask",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56886",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56886#discussion_r2908012509"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Same paging continuation token bug: the continuation token yielded with each page uses `nextPage` (the prior iteration's next link) instead of `result.NextLink`.",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56886:comment:2908012540:sdk:.NET:Azure.ResourceManager.DurableTask",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-09T21:23:06Z",
+      "observedAt": "2026-03-09T21:23:06Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DurableTask",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56886",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56886#discussion_r2908012540"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Same paging continuation token bug: the continuation token yielded with each page uses `nextPage` (the prior iteration's next link) instead of `result.NextLink`.",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56886:comment:2908012574:sdk:.NET:Azure.ResourceManager.DurableTask",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-09T21:23:06Z",
+      "observedAt": "2026-03-09T21:23:06Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DurableTask",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56886",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56886#discussion_r2908012574"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The `tsp-location.yaml` file now has `additionalDirectories:` with a blank value followed by an empty line (lines 4–5). According to the repository convention for tsp-location.yaml, an empty `additionalDirectories` list should either be omi",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37544:comment:2908034092:sdk:JavaScript:@azure/arm-durabletask",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-09T21:27:53Z",
+      "observedAt": "2026-03-09T21:27:53Z",
+      "trackId": "sdk:JavaScript:@azure/arm-durabletask",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37544",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37544#discussion_r2908034092"
+      },
+      "confidence": "authoritative",
+      "excerpt": "getApiVersionFromUrl uses `new URL(urlStr)` without a base URL. In @azure/core-lro, `initialRequestUrl` can be a relative request path (e.g. \"path\"), which would cause this to throw when restoring a poller. Consider using `new URL(urlStr, \"",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37544:comment:2908034123:sdk:JavaScript:@azure/arm-durabletask",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-09T21:27:53Z",
+      "observedAt": "2026-03-09T21:27:53Z",
+      "trackId": "sdk:JavaScript:@azure/arm-durabletask",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37544",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37544#discussion_r2908034123"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The comment for `normalizeUnreserved` is incorrect/incomplete: RFC 3986 unreserved characters are ALPHA / DIGIT / \"-\" / \".\" / \"_\" / \"~\", not just \"-\" / \".\" / \"~\". Either update the comment/function to match RFC 3986, or rename/document this",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37544:comment:2908034142:sdk:JavaScript:@azure/arm-durabletask",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-09T21:27:54Z",
+      "observedAt": "2026-03-09T21:27:54Z",
+      "trackId": "sdk:JavaScript:@azure/arm-durabletask",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37544",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37544#discussion_r2908034142"
+      },
+      "confidence": "authoritative",
+      "excerpt": "addApiVersionToUrl builds the URL by string-concatenating onto the original `url`. This can produce malformed URLs for valid inputs (e.g. URLs with an empty query string ending in `?`, or URLs with a `#fragment`, where the query must be ins",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37544:comment:2908034156:sdk:JavaScript:@azure/arm-durabletask",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-09T21:27:54Z",
+      "observedAt": "2026-03-09T21:27:54Z",
+      "trackId": "sdk:JavaScript:@azure/arm-durabletask",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37544",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37544#discussion_r2908034156"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This file reintroduces a second copy of addApiVersionToUrl with the same string-concatenation approach as pollingHelpers.ts. Besides the same edge-case URL correctness issues, this duplication makes the helpers likely to drift over time. Co",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37544:comment:2908034171:sdk:JavaScript:@azure/arm-durabletask",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-09T21:27:54Z",
+      "observedAt": "2026-03-09T21:27:54Z",
+      "trackId": "sdk:JavaScript:@azure/arm-durabletask",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37544",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37544#discussion_r2908034171"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The “cross-platform” example under “run a single sample with the required environment variables set” does not actually set any environment variables (it just runs `node ...`). This is inconsistent with the pattern used across the repo (e.g.",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37544:comment:2908034189:sdk:JavaScript:@azure/arm-durabletask",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-09T21:27:54Z",
+      "observedAt": "2026-03-09T21:27:54Z",
+      "trackId": "sdk:JavaScript:@azure/arm-durabletask",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37544",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37544#discussion_r2908034189"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The “cross-platform” example says it runs the sample with required environment variables set, but the command shown (`node operationsListSample.js`) doesn’t set any env vars. This is inconsistent with the standard samples pattern in this re",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37544:review:3918326818:sdk:JavaScript:@azure/arm-durabletask",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-09T21:27:55Z",
+      "observedAt": "2026-03-09T21:27:55Z",
+      "trackId": "sdk:JavaScript:@azure/arm-durabletask",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37544",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37544#pullrequestreview-3918326818"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Regenerates `@azure/arm-durabletask` from the DurableTask.Management TypeSpec configuration for API version **2026-02-01** and prepares a **1.1.0** stable release, including new Scheduler private endpoint/private li",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37544:comment:2908034206:sdk:JavaScript:@azure/arm-durabletask",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-09T21:27:55Z",
+      "observedAt": "2026-03-09T21:27:55Z",
+      "trackId": "sdk:JavaScript:@azure/arm-durabletask",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37544",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37544#discussion_r2908034206"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The export targets for the API subpaths use \"src/...\" instead of \"./src/...\". Other packages’ warp configs consistently use \"./src/...\"; leaving off the leading \"./\" may break module resolution during build/publish. Update these 4 entries t",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56886:commit:c18be7489e04:sdk:.NET:Azure.ResourceManager.DurableTask",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-09T21:55:25Z",
+      "observedAt": "2026-03-09T21:55:25Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DurableTask",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56886",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/c18be7489e04077c3bb1af8d9e4d6c3aaa333bed"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56886:commit:bc4571fc0123:sdk:.NET:Azure.ResourceManager.DurableTask",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-09T22:14:08Z",
+      "observedAt": "2026-03-09T22:14:08Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DurableTask",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56886",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/bc4571fc01239fd2b28964f4622a588239ef5efa"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56886:comment:4027257771:sdk:.NET:Azure.ResourceManager.DurableTask",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-09T22:16:01Z",
+      "observedAt": "2026-03-09T22:16:01Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DurableTask",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "berndverst"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56886",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56886#issuecomment-4027257771"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This auto generated PR is not passing without manual intervention. I manually edited the CHANGELOG (usually this is autogenerated in other SDKs). I also manually ran the ExportAPI script.",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56886:commit:5e39e4231fd7:sdk:.NET:Azure.ResourceManager.DurableTask",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-09T23:51:16Z",
+      "observedAt": "2026-03-09T23:51:16Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DurableTask",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56886",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/5e39e4231fd76eacd8b567bd44aeba92602d52b6"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48340:review:3919247630:sdk:Java:azure-resourcemanager-durabletask",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-10T02:06:38Z",
+      "observedAt": "2026-03-10T02:06:38Z",
+      "trackId": "sdk:Java:azure-resourcemanager-durabletask",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48340",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48340#pullrequestreview-3919247630"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48340:pr.merged:sdk:Java:azure-resourcemanager-durabletask",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-10T02:06:45Z",
+      "observedAt": "2026-03-10T02:06:45Z",
+      "trackId": "sdk:Java:azure-resourcemanager-durabletask",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48340",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48340"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45588:commit:c5c7ac65b005:sdk:Python:azure-mgmt-durabletask",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-10T02:38:02Z",
+      "observedAt": "2026-03-10T02:38:02Z",
+      "trackId": "sdk:Python:azure-mgmt-durabletask",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45588",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/c5c7ac65b0053834cdeed497cfe0f4b45d307235"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45588:review:3919345700:sdk:Python:azure-mgmt-durabletask",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-10T02:38:26Z",
+      "observedAt": "2026-03-10T02:38:26Z",
+      "trackId": "sdk:Python:azure-mgmt-durabletask",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45588",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45588#pullrequestreview-3919345700"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45588:comment:4028207418:sdk:Python:azure-mgmt-durabletask",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-10T02:38:48Z",
+      "observedAt": "2026-03-10T02:38:48Z",
+      "trackId": "sdk:Python:azure-mgmt-durabletask",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45588",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45588#issuecomment-4028207418"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@msyyc pr ready, please help review",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56886:commit:3e1881843c11:sdk:.NET:Azure.ResourceManager.DurableTask",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-10T05:26:24Z",
+      "observedAt": "2026-03-10T05:26:24Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DurableTask",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56886",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/3e1881843c11fead1126e2c07ad5644c8c1ab9a8"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37544:comment:4029638804:sdk:JavaScript:@azure/arm-durabletask",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-10T08:41:33Z",
+      "observedAt": "2026-03-10T08:41:33Z",
+      "trackId": "sdk:JavaScript:@azure/arm-durabletask",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37544",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37544#issuecomment-4029638804"
+      },
+      "confidence": "authoritative",
+      "excerpt": "LGTM cc @JialinHuang803",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26182:review:3920793073:sdk:Go:sdk/resourcemanager/durabletask/armdurabletask",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-10T08:55:56Z",
+      "observedAt": "2026-03-10T08:55:56Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/durabletask/armdurabletask",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "tadelesh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26182",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26182#pullrequestreview-3920793073"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56886:comment:4033323166:sdk:.NET:Azure.ResourceManager.DurableTask",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-10T17:48:08Z",
+      "observedAt": "2026-03-10T17:48:08Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DurableTask",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "berndverst"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56886",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56886#issuecomment-4033323166"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@ArthurMa1978 could you check whether this is OK to merge from your perspective? Thanks!",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56886:review:3927605600:sdk:.NET:Azure.ResourceManager.DurableTask",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-11T07:56:07Z",
+      "observedAt": "2026-03-11T07:56:07Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DurableTask",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56886",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56886#pullrequestreview-3927605600"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Management Plane SDK Review: Azure.ResourceManager.DurableTask 1.1.0 ### Versioning :white_check_mark: - Version: 1.0.0 1.1.0 (minor bump, appropriate for additive changes) - `ApiCompatVersion`: 1.0.0 present, no breaking changes detecte",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56886:comment:2916563349:sdk:.NET:Azure.ResourceManager.DurableTask",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-11T07:56:07Z",
+      "observedAt": "2026-03-11T07:56:07Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DurableTask",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56886",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56886#discussion_r2916563349"
+      },
+      "confidence": "authoritative",
+      "excerpt": ":red_circle: **Naming Issue**: `OptionalPropertiesUpdateableProperties` is a meaningless name that leaks TypeSpec/ARM template mechanics. A user reading this API cannot tell this type represents the updateable properties of a private endpoi",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56886:comment:2916563353:sdk:.NET:Azure.ResourceManager.DurableTask",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-11T07:56:07Z",
+      "observedAt": "2026-03-11T07:56:07Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DurableTask",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56886",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56886#discussion_r2916563353"
+      },
+      "confidence": "authoritative",
+      "excerpt": ":yellow_circle: **Naming Issue**: `PublicNetworkAccess` is a very common type name used across many Azure services. It should have the `DurableTask` prefix for disambiguation, consistent with other enum/union types in this SDK. **Suggested ",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56886:comment:2916563358:sdk:.NET:Azure.ResourceManager.DurableTask",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-11T07:56:07Z",
+      "observedAt": "2026-03-11T07:56:07Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DurableTask",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56886",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56886#discussion_r2916563358"
+      },
+      "confidence": "authoritative",
+      "excerpt": ":yellow_circle: **Naming Issue**: `PrivateEndpointConnectionProperties` lacks the `DurableTask` service prefix. Other properties types in this SDK are correctly prefixed (e.g., `DurableTaskSchedulerProperties`, `DurableTaskHubProperties`). ",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56886:comment:2916563361:sdk:.NET:Azure.ResourceManager.DurableTask",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-11T07:56:07Z",
+      "observedAt": "2026-03-11T07:56:07Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DurableTask",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56886",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56886#discussion_r2916563361"
+      },
+      "confidence": "authoritative",
+      "excerpt": ":yellow_circle: **Naming Issue**: `PrivateEndpointConnectionPatch` lacks the `DurableTask` service prefix. The analogous patch type for schedulers is `DurableTaskSchedulerPatch`. **Suggested rename**: `DurableTaskPrivateEndpointConnectionPa",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56886:comment:2916563362:sdk:.NET:Azure.ResourceManager.DurableTask",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-11T07:56:07Z",
+      "observedAt": "2026-03-11T07:56:07Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DurableTask",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56886",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56886#discussion_r2916563362"
+      },
+      "confidence": "authoritative",
+      "excerpt": ":yellow_circle: **Naming Issue**: `PrivateEndpointConnectionResource` and `PrivateEndpointConnectionCollection` lack the `DurableTask` prefix. This is inconsistent with the data type `DurableTaskPrivateEndpointConnectionData` which IS corre",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56886:commit:8599a074442a:sdk:.NET:Azure.ResourceManager.DurableTask",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-12T03:21:57Z",
+      "observedAt": "2026-03-12T03:21:57Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DurableTask",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56886",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/8599a074442ae427f376b1706f130beca40739a2"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56886:commit:e593259fadae:sdk:.NET:Azure.ResourceManager.DurableTask",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-12T03:35:55Z",
+      "observedAt": "2026-03-12T03:35:55Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DurableTask",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56886",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/e593259fadae0eb28b47909344bd498f3aa27ca1"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56886:commit:4e0c5edfbd34:sdk:.NET:Azure.ResourceManager.DurableTask",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-12T03:40:53Z",
+      "observedAt": "2026-03-12T03:40:53Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DurableTask",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56886",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/4e0c5edfbd34c17c9aa1e2bb322a07acf350c9ee"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56886:comment:4043716787:sdk:.NET:Azure.ResourceManager.DurableTask",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-12T03:44:47Z",
+      "observedAt": "2026-03-12T03:44:47Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DurableTask",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "berndverst"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56886",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56886#issuecomment-4043716787"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## PR Review: Azure.ResourceManager.DurableTask v1.1.0 ### Phase 1: Versioning Review — :white_check_mark: PASS | Check | Result | |-------|--------| | No major version bump | :white_check_mark: Version `1.1.0` (minor bump) | | `ApiCompatVe",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56886:comment:4043721568:sdk:.NET:Azure.ResourceManager.DurableTask",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-12T03:46:19Z",
+      "observedAt": "2026-03-12T03:46:19Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DurableTask",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "berndverst"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56886",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56886#issuecomment-4043721568"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@ArthurMa1978 can you approve and merge now :) - I can trigger the release pipeline myself, or you can do it for me.",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56886:review:3934134450:sdk:.NET:Azure.ResourceManager.DurableTask",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-12T05:53:15Z",
+      "observedAt": "2026-03-12T05:53:15Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DurableTask",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56886",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56886#pullrequestreview-3934134450"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56886:pr.merged:sdk:.NET:Azure.ResourceManager.DurableTask",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-12T05:53:57Z",
+      "observedAt": "2026-03-12T05:53:57Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DurableTask",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56886",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56886"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github-release:33143:.NET:Azure.ResourceManager.DurableTask_1.1.0",
+      "type": "package.github_release_published",
+      "phase": "release",
+      "occurredAt": "2026-03-12T15:25:04Z",
+      "observedAt": "2026-03-12T15:25:04Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DurableTask",
+      "title": "GitHub Release published",
+      "value": "Azure.ResourceManager.DurableTask_1.1.0",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "azure-sdk-for-net release Azure.ResourceManager.DurableTask_1.1.0",
+        "url": "https://github.com/Azure/azure-sdk-for-net/releases/tag/Azure.ResourceManager.DurableTask_1.1.0"
+      },
+      "confidence": "inferred",
+      "stack": 1
+    },
+    {
+      "id": "ado:33143:39:Custom.ReleaseStatusForDotnet",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-03-12T15:44:20.82Z",
+      "observedAt": "2026-03-12T15:44:20.82Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DurableTask",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33143",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33143"
+      },
+      "title": "Release status changed",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37544:comment:4048327303:sdk:JavaScript:@azure/arm-durabletask",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-12T16:50:20Z",
+      "observedAt": "2026-03-12T16:50:20Z",
+      "trackId": "sdk:JavaScript:@azure/arm-durabletask",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "berndverst"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37544",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37544#issuecomment-4048327303"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@JialinHuang803 can you merge :)",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26182:pr.merged:sdk:Go:sdk/resourcemanager/durabletask/armdurabletask",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-12T16:50:38Z",
+      "observedAt": "2026-03-12T16:50:38Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/durabletask/armdurabletask",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26182",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26182"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github-release:33143:Java:com.azure.resourcemanager+azure-resourcemanager-durabletask_1.1.0",
+      "type": "package.github_release_published",
+      "phase": "release",
+      "occurredAt": "2026-03-12T19:51:54Z",
+      "observedAt": "2026-03-12T19:51:54Z",
+      "trackId": "sdk:Java:azure-resourcemanager-durabletask",
+      "title": "GitHub Release published",
+      "value": "com.azure.resourcemanager+azure-resourcemanager-durabletask_1.1.0",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "azure-sdk-for-java release com.azure.resourcemanager+azure-resourcemanager-durabletask_1.1.0",
+        "url": "https://github.com/Azure/azure-sdk-for-java/releases/tag/com.azure.resourcemanager%2Bazure-resourcemanager-durabletask_1.1.0"
+      },
+      "confidence": "inferred",
+      "stack": 0
+    },
+    {
+      "id": "ado:33143:41:Custom.ReleaseStatusForJava",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-03-12T20:15:17.837Z",
+      "observedAt": "2026-03-12T20:15:17.837Z",
+      "trackId": "sdk:Java:azure-resourcemanager-durabletask",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33143",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33143"
+      },
+      "title": "Release status changed",
+      "stack": 1
+    },
+    {
+      "id": "github-release:33143:Go:sdk/resourcemanager/durabletask/armdurabletask/v1.1.0",
+      "type": "package.github_release_published",
+      "phase": "release",
+      "occurredAt": "2026-03-13T01:01:46Z",
+      "observedAt": "2026-03-13T01:01:46Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/durabletask/armdurabletask",
+      "title": "GitHub Release published",
+      "value": "sdk/resourcemanager/durabletask/armdurabletask/v1.1.0",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "azure-sdk-for-go release sdk/resourcemanager/durabletask/armdurabletask/v1.1.0",
+        "url": "https://github.com/Azure/azure-sdk-for-go/releases/tag/sdk/resourcemanager/durabletask/armdurabletask/v1.1.0"
+      },
+      "confidence": "inferred",
+      "stack": 1
+    },
+    {
+      "id": "ado:33143:42:Custom.ReleaseStatusForGo",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-03-13T01:02:04.09Z",
+      "observedAt": "2026-03-13T01:02:04.09Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/durabletask/armdurabletask",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33143",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33143"
+      },
+      "title": "Release status changed",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37544:comment:2928724732:sdk:JavaScript:@azure/arm-durabletask",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-13T02:57:15Z",
+      "observedAt": "2026-03-13T02:57:15Z",
+      "trackId": "sdk:JavaScript:@azure/arm-durabletask",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "JialinHuang803"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37544",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37544#discussion_r2928724732"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Practically, it's low-risk today — warp uses path.resolve(packageRoot, sourcePath) internally, which resolves both \"src/...\" and \"./src/...\" identically. The generated dist paths in package.json always get \"./\" prepended. But I would sugges",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37544:review:3941292366:sdk:JavaScript:@azure/arm-durabletask",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-13T02:57:16Z",
+      "observedAt": "2026-03-13T02:57:16Z",
+      "trackId": "sdk:JavaScript:@azure/arm-durabletask",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "JialinHuang803"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37544",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37544#pullrequestreview-3941292366"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37544:review:3941298669:sdk:JavaScript:@azure/arm-durabletask",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-13T02:59:21Z",
+      "observedAt": "2026-03-13T02:59:21Z",
+      "trackId": "sdk:JavaScript:@azure/arm-durabletask",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "JialinHuang803"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37544",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37544#pullrequestreview-3941298669"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37544:pr.merged:sdk:JavaScript:@azure/arm-durabletask",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-13T02:59:23Z",
+      "observedAt": "2026-03-13T02:59:23Z",
+      "trackId": "sdk:JavaScript:@azure/arm-durabletask",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37544",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37544"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45588:review:3942449677:sdk:Python:azure-mgmt-durabletask",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-13T08:33:17Z",
+      "observedAt": "2026-03-13T08:33:17Z",
+      "trackId": "sdk:Python:azure-mgmt-durabletask",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45588",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45588#pullrequestreview-3942449677"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45588:pr.merged:sdk:Python:azure-mgmt-durabletask",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-13T19:40:35Z",
+      "observedAt": "2026-03-13T19:40:35Z",
+      "trackId": "sdk:Python:azure-mgmt-durabletask",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45588",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45588"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:33143:47:Custom.ReleaseStatusForPython",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-05-07T21:42:40.63Z",
+      "observedAt": "2026-05-07T21:42:40.63Z",
+      "trackId": "sdk:Python:azure-mgmt-durabletask",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33143",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33143"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33143:47:Custom.ReleasedVersionForPython",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-05-07T21:42:40.63Z",
+      "observedAt": "2026-05-07T21:42:40.63Z",
+      "trackId": "sdk:Python:azure-mgmt-durabletask",
+      "value": "1.1.0",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33143",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33143"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33143:48:Custom.ReleaseStatusForJavaScript",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-05-07T21:43:01.84Z",
+      "observedAt": "2026-05-07T21:43:01.84Z",
+      "trackId": "sdk:JavaScript:@azure/arm-durabletask",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33143",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33143"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33143:48:Custom.ReleasedVersionForJavaScript",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-05-07T21:43:01.84Z",
+      "observedAt": "2026-05-07T21:43:01.84Z",
+      "trackId": "sdk:JavaScript:@azure/arm-durabletask",
+      "value": "1.1.0",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33143",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33143"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33143:49:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-05-07T21:43:43.313Z",
+      "observedAt": "2026-05-07T21:43:43.313Z",
+      "trackId": "plan",
+      "value": "Finished",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33143",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33143"
+      },
+      "title": "Plan state changed",
+      "stack": 0
+    }
+  ],
+  "quality": {
+    "warnings": [],
+    "unavailablePullRequests": 0,
+    "unavailablePipelineRuns": 0
+  },
+  "boundaryFacts": {
+    "id": "33143",
+    "state": "finished",
+    "specPrs": [
+      {
+        "id": "github:Azure/azure-rest-api-specs#40272",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#40272",
+        "createdAt": "2026-02-10T01:17:34Z",
+        "mergedAt": "2026-02-20T15:19:47Z",
+        "closedAt": "2026-02-20T15:19:48Z",
+        "available": true
+      }
+    ],
+    "artifacts": [
+      {
+        "language": ".NET",
+        "package": "Azure.ResourceManager.DurableTask",
+        "trackId": "sdk:.NET:Azure.ResourceManager.DurableTask",
+        "prId": "github:Azure/azure-sdk-for-net#56886",
+        "prCreatedAt": "2026-03-09T20:02:56Z",
+        "prMergedAt": "2026-03-12T05:53:57Z",
+        "prClosedAt": "2026-03-12T05:53:57Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-net#56886",
+            "createdAt": "2026-03-09T20:02:56Z",
+            "mergedAt": "2026-03-12T05:53:57Z",
+            "closedAt": "2026-03-12T05:53:57Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:5982513",
+        "generationStartAt": "2026-03-09T19:57:46.5084921Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-03-12T15:44:20.82Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": null,
+        "releaseBoundaryAt": "2026-03-12T15:25:04Z",
+        "releaseBoundarySource": "github-release",
+        "releaseBoundaryConfidence": "inferred",
+        "releaseBoundaryUrl": "https://github.com/Azure/azure-sdk-for-net/releases/tag/Azure.ResourceManager.DurableTask_1.1.0",
+        "releaseTag": "Azure.ResourceManager.DurableTask_1.1.0",
+        "releaseMatchMethod": "unique-nearby-release",
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "github-release"
+        }
+      },
+      {
+        "language": "JavaScript",
+        "package": "@azure/arm-durabletask",
+        "trackId": "sdk:JavaScript:@azure/arm-durabletask",
+        "prId": "github:Azure/azure-sdk-for-js#37544",
+        "prCreatedAt": "2026-03-09T20:03:16Z",
+        "prMergedAt": "2026-03-13T02:59:23Z",
+        "prClosedAt": "2026-03-13T02:59:23Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-js#37544",
+            "createdAt": "2026-03-09T20:03:16Z",
+            "mergedAt": "2026-03-13T02:59:23Z",
+            "closedAt": "2026-03-13T02:59:23Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:5982514",
+        "generationStartAt": "2026-03-09T19:57:46.2553215Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-05-07T21:43:01.84Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.1.0",
+        "releaseBoundaryAt": "2026-05-07T21:43:01.84Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Python",
+        "package": "azure-mgmt-durabletask",
+        "trackId": "sdk:Python:azure-mgmt-durabletask",
+        "prId": "github:Azure/azure-sdk-for-python#45588",
+        "prCreatedAt": "2026-03-09T20:04:02Z",
+        "prMergedAt": "2026-03-13T19:40:35Z",
+        "prClosedAt": "2026-03-13T19:40:35Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-python#45588",
+            "createdAt": "2026-03-09T20:04:02Z",
+            "mergedAt": "2026-03-13T19:40:35Z",
+            "closedAt": "2026-03-13T19:40:35Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:5982515",
+        "generationStartAt": "2026-03-09T19:57:53.7189755Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-05-07T21:42:40.63Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.1.0",
+        "releaseBoundaryAt": "2026-05-07T21:42:40.63Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Java",
+        "package": "azure-resourcemanager-durabletask",
+        "trackId": "sdk:Java:azure-resourcemanager-durabletask",
+        "prId": "github:Azure/azure-sdk-for-java#48340",
+        "prCreatedAt": "2026-03-09T20:05:41Z",
+        "prMergedAt": "2026-03-10T02:06:45Z",
+        "prClosedAt": "2026-03-10T02:06:45Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-java#48340",
+            "createdAt": "2026-03-09T20:05:41Z",
+            "mergedAt": "2026-03-10T02:06:45Z",
+            "closedAt": "2026-03-10T02:06:45Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:5982516",
+        "generationStartAt": "2026-03-09T19:57:53.4221927Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-03-12T20:15:17.837Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": null,
+        "releaseBoundaryAt": "2026-03-12T19:51:54Z",
+        "releaseBoundarySource": "github-release",
+        "releaseBoundaryConfidence": "inferred",
+        "releaseBoundaryUrl": "https://github.com/Azure/azure-sdk-for-java/releases/tag/com.azure.resourcemanager%2Bazure-resourcemanager-durabletask_1.1.0",
+        "releaseTag": "com.azure.resourcemanager+azure-resourcemanager-durabletask_1.1.0",
+        "releaseMatchMethod": "release-index-version",
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "github-release"
+        }
+      },
+      {
+        "language": "Go",
+        "package": "sdk/resourcemanager/durabletask/armdurabletask",
+        "trackId": "sdk:Go:sdk/resourcemanager/durabletask/armdurabletask",
+        "prId": "github:Azure/azure-sdk-for-go#26182",
+        "prCreatedAt": "2026-03-09T20:02:29Z",
+        "prMergedAt": "2026-03-12T16:50:38Z",
+        "prClosedAt": "2026-03-12T16:50:38Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-go#26182",
+            "createdAt": "2026-03-09T20:02:29Z",
+            "mergedAt": "2026-03-12T16:50:38Z",
+            "closedAt": "2026-03-12T16:50:38Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:5982517",
+        "generationStartAt": "2026-03-09T19:57:57.307909Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-03-13T01:02:04.09Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": null,
+        "releaseBoundaryAt": "2026-03-13T01:01:46Z",
+        "releaseBoundarySource": "github-release",
+        "releaseBoundaryConfidence": "inferred",
+        "releaseBoundaryUrl": "https://github.com/Azure/azure-sdk-for-go/releases/tag/sdk/resourcemanager/durabletask/armdurabletask/v1.1.0",
+        "releaseTag": "sdk/resourcemanager/durabletask/armdurabletask/v1.1.0",
+        "releaseMatchMethod": "unique-nearby-release",
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "github-release"
+        }
+      }
+    ],
+    "cohortPlan": {
+      "id": "33143",
+      "releasePlanId": "2120",
+      "title": "Release Plan - 2120 - GA - Durable Task Scheduler",
+      "service": "Durable Task Scheduler",
+      "state": "finished"
+    },
+    "quality": {
+      "warnings": [],
+      "unavailablePullRequests": 0,
+      "unavailablePipelineRuns": 0
+    }
+  },
+  "summary": {
+    "durationHours": 1418.4,
+    "pullRequestCount": 6,
+    "humanReviewCount": 24,
+    "humanCommentCount": 26
+  }
+}

@@ -1,0 +1,4231 @@
+{
+  "schemaVersion": 2,
+  "id": "35170",
+  "correlation": {
+    "policyVersion": 1,
+    "preflight": "passed"
+  },
+  "releasePlanId": "35170",
+  "title": "Public Preview release plan for Datadog.Management",
+  "service": "Datadog.Management",
+  "product": "Release",
+  "path": "specification/datadog/Datadog.Management",
+  "state": "finished",
+  "plane": "management",
+  "releaseType": "APEX Public Preview",
+  "intendedMonth": "July 2026",
+  "createdAt": "2026-07-02T05:32:11.47Z",
+  "completedAt": "2026-07-27T12:01:25.7Z",
+  "sourceUrl": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35170",
+  "range": {
+    "start": "2026-02-25T05:23:41.000Z",
+    "end": "2026-07-27T14:17:45.430Z"
+  },
+  "intendedArtifacts": [
+    {
+      "prId": "github:Azure/azure-sdk-for-net#61153",
+      "language": ".NET",
+      "package": "Azure.ResourceManager.Datadog",
+      "version": "1.1.0-beta.2",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6593545",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-js#38754",
+      "language": "JavaScript",
+      "package": "@azure/arm-datadog",
+      "version": "4.0.0-beta.1",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6517563",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-python#47830",
+      "language": "Python",
+      "package": "azure-mgmt-datadog",
+      "version": "3.0.0b1",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6593547",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-java#49718",
+      "language": "Java",
+      "package": "azure-resourcemanager-datadog",
+      "version": "1.2.0-beta.1",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6593546",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-go#27128",
+      "language": "Go",
+      "package": "sdk/resourcemanager/datadog/armdatadog",
+      "version": "2.0.0-beta.1",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6593548",
+      "releasePipelineUrl": null
+    }
+  ],
+  "links": [
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#40732",
+      "role": "spec-pr",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/40732",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-net#60649",
+      "role": "sdk-pr-history",
+      "language": ".NET",
+      "url": "https://github.com/Azure/azure-sdk-for-net/pull/60649",
+      "releasePlanIds": [
+        "35170"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-net#61153",
+      "role": "sdk-pr",
+      "language": ".NET",
+      "url": "https://github.com/Azure/azure-sdk-for-net/pull/61153",
+      "releasePlanIds": [
+        "35170"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-js#39181",
+      "role": "sdk-pr-history",
+      "language": "JavaScript",
+      "url": "https://github.com/Azure/azure-sdk-for-js/pull/39181",
+      "releasePlanIds": [
+        "35170"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-js#38754",
+      "role": "sdk-pr",
+      "language": "JavaScript",
+      "url": "https://github.com/Azure/azure-sdk-for-js/pull/38754",
+      "releasePlanIds": [
+        "35170"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-python#47830",
+      "role": "sdk-pr",
+      "language": "Python",
+      "url": "https://github.com/Azure/azure-sdk-for-python/pull/47830",
+      "releasePlanIds": [
+        "35170"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-java#49718",
+      "role": "sdk-pr",
+      "language": "Java",
+      "url": "https://github.com/Azure/azure-sdk-for-java/pull/49718",
+      "releasePlanIds": [
+        "35170"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-go#27128",
+      "role": "sdk-pr",
+      "language": "Go",
+      "url": "https://github.com/Azure/azure-sdk-for-go/pull/27128",
+      "releasePlanIds": [
+        "35170"
+      ]
+    }
+  ],
+  "tracks": [
+    {
+      "id": "plan",
+      "kind": "plan",
+      "label": "Release Plan",
+      "detail": "APEX Public Preview"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#40732",
+      "kind": "spec",
+      "label": "Spec PR",
+      "detail": "azure-rest-api-specs #40732",
+      "artifactId": "github:Azure/azure-rest-api-specs#40732",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:.NET:Azure.ResourceManager.Datadog",
+      "kind": "sdk",
+      "label": ".NET",
+      "detail": "Azure.ResourceManager.Datadog",
+      "artifactId": "github:Azure/azure-sdk-for-net#61153",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:JavaScript:@azure/arm-datadog",
+      "kind": "sdk",
+      "label": "JavaScript",
+      "detail": "@azure/arm-datadog",
+      "artifactId": "github:Azure/azure-sdk-for-js#38754",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Python:azure-mgmt-datadog",
+      "kind": "sdk",
+      "label": "Python",
+      "detail": "azure-mgmt-datadog",
+      "artifactId": "github:Azure/azure-sdk-for-python#47830",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Java:azure-resourcemanager-datadog",
+      "kind": "sdk",
+      "label": "Java",
+      "detail": "azure-resourcemanager-datadog",
+      "artifactId": "github:Azure/azure-sdk-for-java#49718",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Go:sdk/resourcemanager/datadog/armdatadog",
+      "kind": "sdk",
+      "label": "Go",
+      "detail": "sdk/resourcemanager/datadog/armdatadog",
+      "artifactId": "github:Azure/azure-sdk-for-go#27128",
+      "state": "merged"
+    }
+  ],
+  "events": [
+    {
+      "id": "github:Azure/azure-rest-api-specs#40732:pr.created:spec:github:Azure/azure-rest-api-specs#40732",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-25T05:23:41Z",
+      "observedAt": "2026-02-25T05:23:41Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40732",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "pramodchaitanya"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40732",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40732"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40732:comment:3956919624:spec:github:Azure/azure-rest-api-specs#40732",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-25T05:24:08Z",
+      "observedAt": "2026-02-25T05:24:08Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40732",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40732",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40732#issuecomment-3956919624"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>✅ All automated merging requirements have been met! To get your PR merged, see <a href=\"https://aka.ms/azsdk/specreview/merge\">aka.ms/azsdk/specreview/merge</a>.<br /><br />Comment generated by <a href=\"https://g",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40732:comment:3956925905:spec:github:Azure/azure-rest-api-specs#40732",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-25T05:25:27Z",
+      "observedAt": "2026-02-25T05:25:27Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40732",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "pramodchaitanya"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40732",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40732#issuecomment-3956925905"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This new API Version is already added & tested in private repo https://github.com/Azure/azure-rest-api-specs-pr/blob/RPSaaSMaster/specification/datadog/resource-manager/Microsoft.Datadog/preview/2025-12-26-preview/swagger.json. We are doing",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40732:commit:698ffc840f86:spec:github:Azure/azure-rest-api-specs#40732",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-25T05:25:48Z",
+      "observedAt": "2026-02-25T05:25:48Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40732",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "pramodchaitanya"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40732",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/698ffc840f866e1686e92e31d07ae55f29e62d35"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40732:comment:3957104991:spec:github:Azure/azure-rest-api-specs#40732",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-25T06:19:53Z",
+      "observedAt": "2026-02-25T06:19:53Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40732",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "samsaha-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40732",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40732#issuecomment-3957104991"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Fix the lintdiff errors and remove `ARMChangesRequested` tag.",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40732:comment:3957173972:spec:github:Azure/azure-rest-api-specs#40732",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-25T06:37:56Z",
+      "observedAt": "2026-02-25T06:37:56Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40732",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "samsaha-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40732",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40732#issuecomment-3957173972"
+      },
+      "confidence": "authoritative",
+      "excerpt": "If you are sure you want to suppress these (rather than fixing them), you can follow this guide: https://github.com/Azure/azure-rest-api-specs/wiki/Swagger-LintDiff#adding-scoped-suppressions If you wanted to try to fix ProvisioningStateMus",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40732:commit:97d2c9fb0bcb:spec:github:Azure/azure-rest-api-specs#40732",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-25T06:47:23Z",
+      "observedAt": "2026-02-25T06:47:23Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40732",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40732",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/97d2c9fb0bcb07b964cea18bddd01d2842459f9f"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40732:commit:bcb6d8b77b8f:spec:github:Azure/azure-rest-api-specs#40732",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-25T06:47:54Z",
+      "observedAt": "2026-02-25T06:47:54Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40732",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40732",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/bcb6d8b77b8f3459610c85ad44df71211ebf121a"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40732:commit:4286b97d4cab:spec:github:Azure/azure-rest-api-specs#40732",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-25T07:00:33Z",
+      "observedAt": "2026-02-25T07:00:33Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40732",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40732",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/4286b97d4cabe0cc5b5e97e095c5f2811f0a09c0"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40732:commit:41bbc7afeadd:spec:github:Azure/azure-rest-api-specs#40732",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-25T07:08:53Z",
+      "observedAt": "2026-02-25T07:08:53Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40732",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40732",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/41bbc7afeadd316a4a7534cada26a4c9f8604526"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40732:commit:94bc0eae51c3:spec:github:Azure/azure-rest-api-specs#40732",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-25T07:39:46Z",
+      "observedAt": "2026-02-25T07:39:46Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40732",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40732",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/94bc0eae51c374a6a603f42eac565c59f98b5788"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40732:commit:b4e664b38f7c:spec:github:Azure/azure-rest-api-specs#40732",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-25T07:40:59Z",
+      "observedAt": "2026-02-25T07:40:59Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40732",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "pramodchaitanya"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40732",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/b4e664b38f7cb8852bcb563cef20ea7c984e00d1"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40732:review:3852497490:spec:github:Azure/azure-rest-api-specs#40732",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-25T07:54:10Z",
+      "observedAt": "2026-02-25T07:54:10Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40732",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "samsaha-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40732",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40732#pullrequestreview-3852497490"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40732:commit:b37577bc7d41:spec:github:Azure/azure-rest-api-specs#40732",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-25T10:01:54Z",
+      "observedAt": "2026-02-25T10:01:54Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40732",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "pramodchaitanya"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40732",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/b37577bc7d414bcfc4aac19118e87a1c7130ed56"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40732:pr.merged:spec:github:Azure/azure-rest-api-specs#40732",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-25T10:21:13Z",
+      "observedAt": "2026-02-25T10:21:13Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40732",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40732",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40732"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38754:commit:35ccc573e8cd:sdk:JavaScript:@azure/arm-datadog",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-01T06:02:36Z",
+      "observedAt": "2026-06-01T06:02:36Z",
+      "trackId": "sdk:JavaScript:@azure/arm-datadog",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38754",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/35ccc573e8cd2ed05d65520803aa2441badccb46"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38754:pr.created:sdk:JavaScript:@azure/arm-datadog",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-01T06:02:40Z",
+      "observedAt": "2026-06-01T06:02:40Z",
+      "trackId": "sdk:JavaScript:@azure/arm-datadog",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38754",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38754"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38754:commit:d4b1e5a6eac5:sdk:JavaScript:@azure/arm-datadog",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-01T09:03:44Z",
+      "observedAt": "2026-06-01T09:03:44Z",
+      "trackId": "sdk:JavaScript:@azure/arm-datadog",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38754",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/d4b1e5a6eac5d9e8f1d5fc6431448cd56fe0e19c"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38754:commit:4966d0a5bae4:sdk:JavaScript:@azure/arm-datadog",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-01T09:23:28Z",
+      "observedAt": "2026-06-01T09:23:28Z",
+      "trackId": "sdk:JavaScript:@azure/arm-datadog",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "v-jiaodi"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38754",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/4966d0a5bae40d26e8c6f54314a2fec83de46dce"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38754:review:4399971378:sdk:JavaScript:@azure/arm-datadog",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-01T09:24:24Z",
+      "observedAt": "2026-06-01T09:24:24Z",
+      "trackId": "sdk:JavaScript:@azure/arm-datadog",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38754",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38754#pullrequestreview-4399971378"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot wasn't able to review this pull request because it exceeds the maximum number of lines (20,000). Try reducing the number of changed lines and requesting a review from Copilot again.",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38754:comment:4591283816:sdk:JavaScript:@azure/arm-datadog",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-01T09:30:07Z",
+      "observedAt": "2026-06-01T09:30:07Z",
+      "trackId": "sdk:JavaScript:@azure/arm-datadog",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "v-jiaodi"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38754",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38754#issuecomment-4591283816"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Breaking Change Analysis: `@azure/arm-datadog` (PR 38754) ### Summary | Metric | Value | |---|---| | Package | `@azure/arm-datadog` | | Old version (baseline) | 3.1.0 | | New version | 4.0.0-beta.1 | | Old API version | 2023-01-01 | | Ne",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38754:comment:4591298378:sdk:JavaScript:@azure/arm-datadog",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-01T09:32:08Z",
+      "observedAt": "2026-06-01T09:32:08Z",
+      "trackId": "sdk:JavaScript:@azure/arm-datadog",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38754",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38754#issuecomment-4591298378"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Next Steps to Merge Only failed checks and required actions are listed below. - ⏳ js - pullrequest (Build Analyze): still running. - ⏳ js - pullrequest (Build Build): still running. - ⏳ js - pullrequest (Build generate_job_matrix): still",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38754:review:4400023004:sdk:JavaScript:@azure/arm-datadog",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-01T09:32:10Z",
+      "observedAt": "2026-06-01T09:32:10Z",
+      "trackId": "sdk:JavaScript:@azure/arm-datadog",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38754",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38754#pullrequestreview-4400023004"
+      },
+      "confidence": "authoritative",
+      "excerpt": "1 tool issue found: a historical CHANGELOG entry (`## 3.0.1`) was corrupted by the generation tool, replacing `### Features Added` with `**features**`. All other checks pass — package version (`4.0.0-beta.1`) is consistent across `package.j",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38754:comment:3333076860:sdk:JavaScript:@azure/arm-datadog",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-01T09:32:11Z",
+      "observedAt": "2026-06-01T09:32:11Z",
+      "trackId": "sdk:JavaScript:@azure/arm-datadog",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38754",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38754#discussion_r3333076860"
+      },
+      "confidence": "authoritative",
+      "excerpt": "🔴 **Tool Issue** — `CHANGELOG.md:122` `**features**` The historical `## 3.0.1 (2022-04-18)` entry was corrupted by the generation tool: `### Features Added` was replaced with `**features**`. Historical CHANGELOG entries should never be mod",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38754:commit:2b350d6671f7:sdk:JavaScript:@azure/arm-datadog",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-01T10:02:55Z",
+      "observedAt": "2026-06-01T10:02:55Z",
+      "trackId": "sdk:JavaScript:@azure/arm-datadog",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "v-jiaodi"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38754",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/2b350d6671f78a279cf35388baf86d6e3fea4103"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38754:review:4405734672:sdk:JavaScript:@azure/arm-datadog",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-02T01:30:00Z",
+      "observedAt": "2026-06-02T01:30:00Z",
+      "trackId": "sdk:JavaScript:@azure/arm-datadog",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "JialinHuang803"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38754",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38754#pullrequestreview-4405734672"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38754:pr.merged:sdk:JavaScript:@azure/arm-datadog",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-02T01:30:18Z",
+      "observedAt": "2026-06-02T01:30:18Z",
+      "trackId": "sdk:JavaScript:@azure/arm-datadog",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38754",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38754"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:35170:created",
+      "type": "plan.created",
+      "phase": "plan",
+      "occurredAt": "2026-07-02T05:32:11.47Z",
+      "observedAt": "2026-07-02T05:32:11.47Z",
+      "trackId": "plan",
+      "title": "Release Plan created",
+      "confidence": "authoritative",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35170",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35170"
+      },
+      "stack": 0
+    },
+    {
+      "id": "ado:35170:1:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-07-02T05:32:11.47Z",
+      "observedAt": "2026-07-02T05:32:11.47Z",
+      "trackId": "plan",
+      "value": "New",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35170",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35170"
+      },
+      "title": "Plan state changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35170:1:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-02T05:32:11.47Z",
+      "observedAt": "2026-07-02T05:32:11.47Z",
+      "trackId": "plan",
+      "value": "Not Available",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35170",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35170"
+      },
+      "title": "Spec approval changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:35170:1:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-02T05:32:11.47Z",
+      "observedAt": "2026-07-02T05:32:11.47Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Datadog",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35170",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35170"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35170:1:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-02T05:32:11.47Z",
+      "observedAt": "2026-07-02T05:32:11.47Z",
+      "trackId": "sdk:JavaScript:@azure/arm-datadog",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35170",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35170"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35170:1:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-02T05:32:11.47Z",
+      "observedAt": "2026-07-02T05:32:11.47Z",
+      "trackId": "sdk:Python:azure-mgmt-datadog",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35170",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35170"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35170:1:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-02T05:32:11.47Z",
+      "observedAt": "2026-07-02T05:32:11.47Z",
+      "trackId": "sdk:Java:azure-resourcemanager-datadog",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35170",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35170"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35170:1:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-02T05:32:11.47Z",
+      "observedAt": "2026-07-02T05:32:11.47Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/datadog/armdatadog",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35170",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35170"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35170:2:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-07-02T05:32:13.197Z",
+      "observedAt": "2026-07-02T05:32:13.197Z",
+      "trackId": "plan",
+      "value": "In Progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35170",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35170"
+      },
+      "title": "Plan state changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:35171:2:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-03T09:55:05.55Z",
+      "observedAt": "2026-07-03T09:55:05.55Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40732",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/40732",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35171",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35171"
+      },
+      "title": "Spec PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado:35170:3:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-03T09:55:05.937Z",
+      "observedAt": "2026-07-03T09:55:05.937Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Datadog",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35170",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35170"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35170:3:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-03T09:55:05.937Z",
+      "observedAt": "2026-07-03T09:55:05.937Z",
+      "trackId": "sdk:JavaScript:@azure/arm-datadog",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35170",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35170"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35170:3:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-03T09:55:05.937Z",
+      "observedAt": "2026-07-03T09:55:05.937Z",
+      "trackId": "sdk:Python:azure-mgmt-datadog",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35170",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35170"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35170:3:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-03T09:55:05.937Z",
+      "observedAt": "2026-07-03T09:55:05.937Z",
+      "trackId": "sdk:Java:azure-resourcemanager-datadog",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35170",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35170"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35170:3:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-03T09:55:05.937Z",
+      "observedAt": "2026-07-03T09:55:05.937Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/datadog/armdatadog",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35170",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35170"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6517563:generation.queued:sdk:JavaScript:@azure/arm-datadog",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-07-03T10:01:08.7287831Z",
+      "observedAt": "2026-07-03T10:09:03.9460592Z",
+      "trackId": "sdk:JavaScript:@azure/arm-datadog",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6517563",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6517563"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6517563:generation.started:sdk:JavaScript:@azure/arm-datadog",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-07-03T10:01:37.1500703Z",
+      "observedAt": "2026-07-03T10:09:03.9460592Z",
+      "trackId": "sdk:JavaScript:@azure/arm-datadog",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6517563",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6517563"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27128:commit:4bd7a9a4c4c2:sdk:Go:sdk/resourcemanager/datadog/armdatadog",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-03T10:06:20Z",
+      "observedAt": "2026-07-03T10:06:20Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/datadog/armdatadog",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27128",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/4bd7a9a4c4c20853eac470f1ce81692bf0e5a0dc"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27128:pr.created:sdk:Go:sdk/resourcemanager/datadog/armdatadog",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-03T10:06:24Z",
+      "observedAt": "2026-07-03T10:06:24Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/datadog/armdatadog",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27128",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27128"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27128:review:4624948045:sdk:Go:sdk/resourcemanager/datadog/armdatadog",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-03T10:06:27Z",
+      "observedAt": "2026-07-03T10:06:27Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/datadog/armdatadog",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27128",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27128#pullrequestreview-4624948045"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot can't review bot-authored pull requests automatically. A user with Copilot access can request a review manually.",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "ado:35170:10:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-03T10:06:30.743Z",
+      "observedAt": "2026-07-03T10:06:30.743Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/datadog/armdatadog",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35170",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35170"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:35170:10:Custom.SDKPullRequestForGo",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-03T10:06:30.743Z",
+      "observedAt": "2026-07-03T10:06:30.743Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/datadog/armdatadog",
+      "value": "https://github.com/Azure/azure-sdk-for-go/pull/27128",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35170",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35170"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47830:commit:7b358949d8be:sdk:Python:azure-mgmt-datadog",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-03T10:07:53Z",
+      "observedAt": "2026-07-03T10:07:53Z",
+      "trackId": "sdk:Python:azure-mgmt-datadog",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47830",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/7b358949d8bec6cc39484479d364367c20b0502f"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47830:pr.created:sdk:Python:azure-mgmt-datadog",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-03T10:07:57Z",
+      "observedAt": "2026-07-03T10:07:57Z",
+      "trackId": "sdk:Python:azure-mgmt-datadog",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47830",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47830"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47830:review:4624958876:sdk:Python:azure-mgmt-datadog",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-03T10:08:00Z",
+      "observedAt": "2026-07-03T10:08:00Z",
+      "trackId": "sdk:Python:azure-mgmt-datadog",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47830",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47830#pullrequestreview-4624958876"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot can't review bot-authored pull requests automatically. A user with Copilot access can request a review manually.",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39181:commit:1266419df05b:sdk:JavaScript:@azure/arm-datadog",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-03T10:08:02Z",
+      "observedAt": "2026-07-03T10:08:02Z",
+      "trackId": "sdk:JavaScript:@azure/arm-datadog",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39181",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/1266419df05b519db1d50d54a366708b0b28aa39"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:35170:11:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-03T10:08:03.993Z",
+      "observedAt": "2026-07-03T10:08:03.993Z",
+      "trackId": "sdk:Python:azure-mgmt-datadog",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35170",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35170"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:35170:11:Custom.SDKPullRequestForPython",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-03T10:08:03.993Z",
+      "observedAt": "2026-07-03T10:08:03.993Z",
+      "trackId": "sdk:Python:azure-mgmt-datadog",
+      "value": "https://github.com/Azure/azure-sdk-for-python/pull/47830",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35170",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35170"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39181:pr.created:sdk:JavaScript:@azure/arm-datadog",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-03T10:08:06Z",
+      "observedAt": "2026-07-03T10:08:06Z",
+      "trackId": "sdk:JavaScript:@azure/arm-datadog",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39181",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39181"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39181:review:4624959753:sdk:JavaScript:@azure/arm-datadog",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-03T10:08:08Z",
+      "observedAt": "2026-07-03T10:08:08Z",
+      "trackId": "sdk:JavaScript:@azure/arm-datadog",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39181",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39181#pullrequestreview-4624959753"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot can't review bot-authored pull requests automatically. A user with Copilot access can request a review manually.",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "ado:35170:12:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-03T10:08:12.8Z",
+      "observedAt": "2026-07-03T10:08:12.8Z",
+      "trackId": "sdk:JavaScript:@azure/arm-datadog",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35170",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35170"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35170:12:Custom.SDKPullRequestForJavaScript",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-03T10:08:12.8Z",
+      "observedAt": "2026-07-03T10:08:12.8Z",
+      "trackId": "sdk:JavaScript:@azure/arm-datadog",
+      "value": "https://github.com/Azure/azure-sdk-for-js/pull/39181",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35170",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35170"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60649:commit:7e25f225980c:sdk:.NET:Azure.ResourceManager.Datadog",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-03T10:08:43Z",
+      "observedAt": "2026-07-03T10:08:43Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Datadog",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60649",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/7e25f225980cc55f65de2431f0f700a7ee3cab50"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60649:pr.created:sdk:.NET:Azure.ResourceManager.Datadog",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-03T10:08:47Z",
+      "observedAt": "2026-07-03T10:08:47Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Datadog",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60649",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60649"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60649:review:4624964158:sdk:.NET:Azure.ResourceManager.Datadog",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-03T10:08:49Z",
+      "observedAt": "2026-07-03T10:08:49Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Datadog",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60649",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60649#pullrequestreview-4624964158"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot can't review bot-authored pull requests automatically. A user with Copilot access can request a review manually.",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "ado:35170:13:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-03T10:08:53.917Z",
+      "observedAt": "2026-07-03T10:08:53.917Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Datadog",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35170",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35170"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:35170:13:Custom.SDKPullRequestForDotnet",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-03T10:08:53.917Z",
+      "observedAt": "2026-07-03T10:08:53.917Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Datadog",
+      "value": "https://github.com/Azure/azure-sdk-for-net/pull/60649",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35170",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35170"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6517563:generation.completed:sdk:JavaScript:@azure/arm-datadog",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-07-03T10:09:03.9460592Z",
+      "observedAt": "2026-07-03T10:09:03.9460592Z",
+      "trackId": "sdk:JavaScript:@azure/arm-datadog",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6517563",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6517563"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49718:commit:08ce01c86b36:sdk:Java:azure-resourcemanager-datadog",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-03T10:11:01Z",
+      "observedAt": "2026-07-03T10:11:01Z",
+      "trackId": "sdk:Java:azure-resourcemanager-datadog",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49718",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/08ce01c86b36f3564c17f2621e19b663ed7761b1"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49718:pr.created:sdk:Java:azure-resourcemanager-datadog",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-03T10:11:05Z",
+      "observedAt": "2026-07-03T10:11:05Z",
+      "trackId": "sdk:Java:azure-resourcemanager-datadog",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49718",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49718"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49718:review:4624978132:sdk:Java:azure-resourcemanager-datadog",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-03T10:11:09Z",
+      "observedAt": "2026-07-03T10:11:09Z",
+      "trackId": "sdk:Java:azure-resourcemanager-datadog",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49718",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49718#pullrequestreview-4624978132"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot can't review bot-authored pull requests automatically. A user with Copilot access can request a review manually.",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "ado:35170:14:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-03T10:11:12.95Z",
+      "observedAt": "2026-07-03T10:11:12.95Z",
+      "trackId": "sdk:Java:azure-resourcemanager-datadog",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35170",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35170"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:35170:14:Custom.SDKPullRequestForJava",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-03T10:11:12.95Z",
+      "observedAt": "2026-07-03T10:11:12.95Z",
+      "trackId": "sdk:Java:azure-resourcemanager-datadog",
+      "value": "https://github.com/Azure/azure-sdk-for-java/pull/49718",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35170",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35170"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60649:commit:5c2f40c03195:sdk:.NET:Azure.ResourceManager.Datadog",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-03T10:19:25Z",
+      "observedAt": "2026-07-03T10:19:25Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Datadog",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "piyushvermaa"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60649",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/5c2f40c031959a874dd49969f8c92b04d53e6001"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60649:review:4625217073:sdk:.NET:Azure.ResourceManager.Datadog",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-03T10:52:33Z",
+      "observedAt": "2026-07-03T10:52:33Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Datadog",
+      "title": "Changes requested",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60649",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60649#pullrequestreview-4625217073"
+      },
+      "confidence": "authoritative",
+      "excerpt": "### Management SDK Review Summary - **Scope**: `Azure.ResourceManager.Datadog` (1.1.0-beta.2) - **Versioning**: pass — version `1.1.0-beta.2`, `ApiCompatVersion=1.0.0` present, no major version bump - **API surface**: fail — 1 type-formatti",
+      "reviewState": "changes_requested",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60649:comment:3519368526:sdk:.NET:Azure.ResourceManager.Datadog",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-03T10:52:33Z",
+      "observedAt": "2026-07-03T10:52:33Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Datadog",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60649",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60649#discussion_r3519368526"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[TYPE001]** `SaaSResourceId` is typed as `string`, but the ARM naming convention requires `Azure.Core.ResourceIdentifier` for properties whose name ends with `ResourceId` and holds an ARM resource identifier. This is inconsistent with `Da",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49718:review:4625264734:sdk:Java:azure-resourcemanager-datadog",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-03T11:01:14Z",
+      "observedAt": "2026-07-03T11:01:14Z",
+      "trackId": "sdk:Java:azure-resourcemanager-datadog",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49718",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49718#pullrequestreview-4625264734"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27128:comment:4887836052:sdk:Go:sdk/resourcemanager/datadog/armdatadog",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-05T22:39:22Z",
+      "observedAt": "2026-07-05T22:39:22Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/datadog/armdatadog",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27128",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27128#issuecomment-4887836052"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## PR is ready to merge",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47830:commit:402771ffaced:sdk:Python:azure-mgmt-datadog",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-06T02:57:05Z",
+      "observedAt": "2026-07-06T02:57:05Z",
+      "trackId": "sdk:Python:azure-mgmt-datadog",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47830",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/402771ffacede2037dc967289390e08d1f9b6013"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47830:comment:4888707288:sdk:Python:azure-mgmt-datadog",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-06T02:57:17Z",
+      "observedAt": "2026-07-06T02:57:17Z",
+      "trackId": "sdk:Python:azure-mgmt-datadog",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47830",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47830#issuecomment-4888707288"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @piyushvermaa, we have approved the PR and we will hold the PR merge and release until you explicitly ping us to merge then release.",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39181:review:4632622727:sdk:JavaScript:@azure/arm-datadog",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-06T03:05:51Z",
+      "observedAt": "2026-07-06T03:05:51Z",
+      "trackId": "sdk:JavaScript:@azure/arm-datadog",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39181",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39181#pullrequestreview-4632622727"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Found **1 tool issue** in this `@azure/arm-datadog` `4.0.0-beta.2` PR: the `api-version` (`2025-12-26-preview`) introduced in this PR is the same as the one already present in the package (`4.0.0-beta.1`); the only substantive change is an ",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39181:comment:3526225392:sdk:JavaScript:@azure/arm-datadog",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-06T03:05:51Z",
+      "observedAt": "2026-07-06T03:05:51Z",
+      "trackId": "sdk:JavaScript:@azure/arm-datadog",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39181",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39181#discussion_r3526225392"
+      },
+      "confidence": "authoritative",
+      "excerpt": "🔴 **Tool Issue** — `metadata.json:3` `\"Microsoft.Datadog\": \"2025-12-26-preview\"` The `api-version` introduced in this PR (`2025-12-26-preview`) is identical to the one already present in the package in `4.0.0-beta.1`. A new SDK version rel",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27128:review:4632624753:sdk:Go:sdk/resourcemanager/datadog/armdatadog",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-06T03:06:33Z",
+      "observedAt": "2026-07-06T03:06:33Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/datadog/armdatadog",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27128",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27128#pullrequestreview-4632624753"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27128:comment:3526226924:sdk:Go:sdk/resourcemanager/datadog/armdatadog",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-06T03:06:33Z",
+      "observedAt": "2026-07-06T03:06:33Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/datadog/armdatadog",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27128",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27128#discussion_r3526226924"
+      },
+      "confidence": "authoritative",
+      "excerpt": "need mitigate https://github.com/Azure/azure-rest-api-specs/pull/44431",
+      "stack": 2
+    },
+    {
+      "id": "ado:35170:15:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-06T03:15:11.09Z",
+      "observedAt": "2026-07-06T03:15:11.09Z",
+      "trackId": "plan",
+      "value": "Approved",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35170",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35170"
+      },
+      "title": "Spec approval changed",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47830:commit:a960f2cf4a35:sdk:Python:azure-mgmt-datadog",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-06T03:15:41Z",
+      "observedAt": "2026-07-06T03:15:41Z",
+      "trackId": "sdk:Python:azure-mgmt-datadog",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47830",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/a960f2cf4a35f3525518219bc37f61384aa29b4a"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47830:commit:7060f7aeda5f:sdk:Python:azure-mgmt-datadog",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-06T03:22:01Z",
+      "observedAt": "2026-07-06T03:22:01Z",
+      "trackId": "sdk:Python:azure-mgmt-datadog",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47830",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/7060f7aeda5f55f2746b84e703ca00d0c5a1944f"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47830:commit:6ca779a61a78:sdk:Python:azure-mgmt-datadog",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-06T03:34:27Z",
+      "observedAt": "2026-07-06T03:34:27Z",
+      "trackId": "sdk:Python:azure-mgmt-datadog",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47830",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/6ca779a61a7863ccbd3ec9cd41487fc7d3609ede"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47830:review:4632700816:sdk:Python:azure-mgmt-datadog",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-06T03:38:41Z",
+      "observedAt": "2026-07-06T03:38:41Z",
+      "trackId": "sdk:Python:azure-mgmt-datadog",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47830",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47830#pullrequestreview-4632700816"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47830:commit:d91a50f234b6:sdk:Python:azure-mgmt-datadog",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-06T03:55:50Z",
+      "observedAt": "2026-07-06T03:55:50Z",
+      "trackId": "sdk:Python:azure-mgmt-datadog",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47830",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/d91a50f234b67110545141d6390beed0cc0fd5d9"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47830:review:4632750948:sdk:Python:azure-mgmt-datadog",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-06T03:59:13Z",
+      "observedAt": "2026-07-06T03:59:13Z",
+      "trackId": "sdk:Python:azure-mgmt-datadog",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47830",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47830#pullrequestreview-4632750948"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27128:commit:aa2149f35474:sdk:Go:sdk/resourcemanager/datadog/armdatadog",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-06T05:48:32Z",
+      "observedAt": "2026-07-06T05:48:32Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/datadog/armdatadog",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27128",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/aa2149f3547474038f2a5b4391db2e30273e29a8"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39181:comment:4889497944:sdk:JavaScript:@azure/arm-datadog",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-06T05:50:12Z",
+      "observedAt": "2026-07-06T05:50:12Z",
+      "trackId": "sdk:JavaScript:@azure/arm-datadog",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39181",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39181#issuecomment-4889497944"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @piyushvermaa we have released a package with the same api-version 2025-12-26-preview in https://github.com/Azure/azure-sdk-for-js/pull/38754 as part of the TypeSpec migration work, and here is the npm link of the package https://www.npm",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27128:commit:f7a798a55913:sdk:Go:sdk/resourcemanager/datadog/armdatadog",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-06T06:29:07Z",
+      "observedAt": "2026-07-06T06:29:07Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/datadog/armdatadog",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27128",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/f7a798a559135cbd2b75188081b825b8a6fbe2d7"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27128:comment:4889790954:sdk:Go:sdk/resourcemanager/datadog/armdatadog",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-06T06:35:27Z",
+      "observedAt": "2026-07-06T06:35:27Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/datadog/armdatadog",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27128",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27128#issuecomment-4889790954"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @piyushvermaa, we have released a package with the same api-version 2025-12-26-preview in https://github.com/Azure/azure-sdk-for-go/pull/26313 as part of the TypeSpec migration work. here is the go package link: https://pkg.go.dev/github",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27128:review:4633522876:sdk:Go:sdk/resourcemanager/datadog/armdatadog",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-06T06:56:51Z",
+      "observedAt": "2026-07-06T06:56:51Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/datadog/armdatadog",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "tadelesh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27128",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27128#pullrequestreview-4633522876"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60649:review:4634276738:sdk:.NET:Azure.ResourceManager.Datadog",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-06T08:54:14Z",
+      "observedAt": "2026-07-06T08:54:14Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Datadog",
+      "title": "Changes requested",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60649",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60649#pullrequestreview-4634276738"
+      },
+      "confidence": "authoritative",
+      "excerpt": "### Management SDK Review Summary - **Scope**: `Azure.ResourceManager.Datadog` (1.1.0-beta.2) - **Versioning**: pass — version `1.1.0-beta.2`, `ApiCompatVersion=1.0.0` present, no major version bump - **API surface**: fail — 1 type-formatti",
+      "reviewState": "changes_requested",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60649:comment:3527648015:sdk:.NET:Azure.ResourceManager.Datadog",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-06T09:09:32Z",
+      "observedAt": "2026-07-06T09:09:32Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Datadog",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60649",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60649#discussion_r3527648015"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`DatadogActivateSaaSContent.SaaSResourceId` is exposed as `string`, but other Datadog models treat the same concept (`SaaSResourceId`) as an ARM resource ID via `Azure.Core.ResourceIdentifier` (e.g., `DatadogSaaSInfo.SaaSResourceId`). If th",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60649:review:4634386380:sdk:.NET:Azure.ResourceManager.Datadog",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-06T09:09:33Z",
+      "observedAt": "2026-07-06T09:09:33Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Datadog",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60649",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60649#pullrequestreview-4634386380"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Copilot reviewed 5 out of 8 changed files in this pull request and generated 2 comments.",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60649:comment:3527648066:sdk:.NET:Azure.ResourceManager.Datadog",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-06T09:09:33Z",
+      "observedAt": "2026-07-06T09:09:33Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Datadog",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60649",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60649#discussion_r3527648066"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`ArmDatadogModelFactory.DatadogActivateSaaSContent` takes `string saaSResourceId`, which propagates the same potential type issue as the model (`SaaSResourceId` vs `ResourceIdentifier`). If this is an ARM resource ID (as in other models), c",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39181:comment:4923869075:sdk:JavaScript:@azure/arm-datadog",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-09T10:01:40Z",
+      "observedAt": "2026-07-09T10:01:40Z",
+      "trackId": "sdk:JavaScript:@azure/arm-datadog",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "piyushvermaa"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39181",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39181#issuecomment-4923869075"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> Hi @kazrael2119, thanks for flagging this. I confirm the package released in #38754 ( @azure/arm-datadog@4.0.0-beta.1 ) is the expected one for API version 2025-12-26-preview . I compared this auto-PR against the released 4.0.0-beta.1 and",
+      "stack": 0
+    },
+    {
+      "id": "ado:35170:16:Custom.SDKPullRequestForJavaScript",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-13T06:53:38.047Z",
+      "observedAt": "2026-07-13T06:53:38.047Z",
+      "trackId": "sdk:JavaScript:@azure/arm-datadog",
+      "value": "https://github.com/Azure/azure-sdk-for-js/pull/38754",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35170",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35170"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39181:pr.closed:sdk:JavaScript:@azure/arm-datadog",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-13T06:56:47Z",
+      "observedAt": "2026-07-13T06:56:47Z",
+      "trackId": "sdk:JavaScript:@azure/arm-datadog",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39181",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39181"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:35170:17:Custom.ReleaseStatusForJavaScript",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-07-13T14:33:08.543Z",
+      "observedAt": "2026-07-13T14:33:08.543Z",
+      "trackId": "sdk:JavaScript:@azure/arm-datadog",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35170",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35170"
+      },
+      "title": "Release status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:35170:17:Custom.ReleasedVersionForJavaScript",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-07-13T14:33:08.543Z",
+      "observedAt": "2026-07-13T14:33:08.543Z",
+      "trackId": "sdk:JavaScript:@azure/arm-datadog",
+      "value": "4.0.0-beta.1",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35170",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35170"
+      },
+      "title": "Package version observed",
+      "stack": 3
+    },
+    {
+      "id": "ado:35170:19:Custom.ReleaseStatusForJavaScript",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-07-13T19:33:47.947Z",
+      "observedAt": "2026-07-13T19:33:47.947Z",
+      "trackId": "sdk:JavaScript:@azure/arm-datadog",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35170",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35170"
+      },
+      "title": "Release status changed",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27128:comment:4979065323:sdk:Go:sdk/resourcemanager/datadog/armdatadog",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-15T09:31:25Z",
+      "observedAt": "2026-07-15T09:31:25Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/datadog/armdatadog",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27128",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27128#issuecomment-4979065323"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@piyushvermaa please merge this pr if this is good to you",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6593545:generation.queued:sdk:.NET:Azure.ResourceManager.Datadog",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-07-21T09:14:20.3157477Z",
+      "observedAt": "2026-07-21T09:22:57.2326538Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Datadog",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6593545",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6593545"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:35170:20:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-21T09:14:24.407Z",
+      "observedAt": "2026-07-21T09:14:24.407Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Datadog",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35170",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35170"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6593546:generation.queued:sdk:Java:azure-resourcemanager-datadog",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-07-21T09:14:30.1034831Z",
+      "observedAt": "2026-07-21T09:19:52.9324902Z",
+      "trackId": "sdk:Java:azure-resourcemanager-datadog",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6593546",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6593546"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:35170:21:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-21T09:14:35.003Z",
+      "observedAt": "2026-07-21T09:14:35.003Z",
+      "trackId": "sdk:Java:azure-resourcemanager-datadog",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35170",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35170"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6593547:generation.queued:sdk:Python:azure-mgmt-datadog",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-07-21T09:14:40.2989253Z",
+      "observedAt": "2026-07-21T09:20:29.710359Z",
+      "trackId": "sdk:Python:azure-mgmt-datadog",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6593547",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6593547"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6593545:generation.started:sdk:.NET:Azure.ResourceManager.Datadog",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-07-21T09:14:42.6473404Z",
+      "observedAt": "2026-07-21T09:22:57.2326538Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Datadog",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6593545",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6593545"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:35170:22:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-21T09:14:42.7Z",
+      "observedAt": "2026-07-21T09:14:42.7Z",
+      "trackId": "sdk:Python:azure-mgmt-datadog",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35170",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35170"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6593548:generation.queued:sdk:Go:sdk/resourcemanager/datadog/armdatadog",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-07-21T09:14:47.9865474Z",
+      "observedAt": "2026-07-21T09:19:58.3441196Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/datadog/armdatadog",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6593548",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6593548"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:35170:23:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-21T09:14:50.36Z",
+      "observedAt": "2026-07-21T09:14:50.36Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/datadog/armdatadog",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35170",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35170"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6593546:generation.started:sdk:Java:azure-resourcemanager-datadog",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-07-21T09:14:50.4601968Z",
+      "observedAt": "2026-07-21T09:19:52.9324902Z",
+      "trackId": "sdk:Java:azure-resourcemanager-datadog",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6593546",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6593546"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6593547:generation.started:sdk:Python:azure-mgmt-datadog",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-07-21T09:14:58.118261Z",
+      "observedAt": "2026-07-21T09:20:29.710359Z",
+      "trackId": "sdk:Python:azure-mgmt-datadog",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6593547",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6593547"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6593548:generation.started:sdk:Go:sdk/resourcemanager/datadog/armdatadog",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-07-21T09:15:01.427278Z",
+      "observedAt": "2026-07-21T09:19:58.3441196Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/datadog/armdatadog",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6593548",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6593548"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6593546:00be4b52-4a63-5865-8e02-c61723ad0692:sdk:Java:azure-resourcemanager-datadog",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-07-21T09:19:07.1766667Z",
+      "observedAt": "2026-07-21T09:19:52.9324902Z",
+      "trackId": "sdk:Java:azure-resourcemanager-datadog",
+      "title": "task failed: Generate SDK",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6593546",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6593546"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 3
+    },
+    {
+      "id": "ado:35170:24:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-21T09:19:14.537Z",
+      "observedAt": "2026-07-21T09:19:14.537Z",
+      "trackId": "sdk:Java:azure-resourcemanager-datadog",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35170",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35170"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6593548:00be4b52-4a63-5865-8e02-c61723ad0692:sdk:Go:sdk/resourcemanager/datadog/armdatadog",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-07-21T09:19:21.07Z",
+      "observedAt": "2026-07-21T09:19:58.3441196Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/datadog/armdatadog",
+      "title": "task failed: Generate SDK",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6593548",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6593548"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 3
+    },
+    {
+      "id": "ado:35170:25:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-21T09:19:27.003Z",
+      "observedAt": "2026-07-21T09:19:27.003Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/datadog/armdatadog",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35170",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35170"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6593546:83516c17-6666-5250-abde-63983ce72a49:sdk:Java:azure-resourcemanager-datadog",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-07-21T09:19:33.82Z",
+      "observedAt": "2026-07-21T09:19:52.9324902Z",
+      "trackId": "sdk:Java:azure-resourcemanager-datadog",
+      "title": "job failed: Job",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6593546",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6593546"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:6593547:00be4b52-4a63-5865-8e02-c61723ad0692:sdk:Python:azure-mgmt-datadog",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-07-21T09:19:41.5566667Z",
+      "observedAt": "2026-07-21T09:20:29.710359Z",
+      "trackId": "sdk:Python:azure-mgmt-datadog",
+      "title": "task failed: Generate SDK",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6593547",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6593547"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6593548:83516c17-6666-5250-abde-63983ce72a49:sdk:Go:sdk/resourcemanager/datadog/armdatadog",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-07-21T09:19:46.7133333Z",
+      "observedAt": "2026-07-21T09:19:58.3441196Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/datadog/armdatadog",
+      "title": "job failed: Job",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6593548",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6593548"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:6593546:6884a131-87da-5381-61f3-d7acc3b91d76:sdk:Java:azure-resourcemanager-datadog",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-07-21T09:19:50.8766667Z",
+      "observedAt": "2026-07-21T09:19:52.9324902Z",
+      "trackId": "sdk:Java:azure-resourcemanager-datadog",
+      "title": "stage failed: SDK Generation",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6593546",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6593546"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6593546:generation.failed:sdk:Java:azure-resourcemanager-datadog",
+      "type": "generation.failed",
+      "phase": "generation",
+      "occurredAt": "2026-07-21T09:19:52.9324902Z",
+      "observedAt": "2026-07-21T09:19:52.9324902Z",
+      "trackId": "sdk:Java:azure-resourcemanager-datadog",
+      "title": "Pipeline failed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6593546",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6593546"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6593548:6884a131-87da-5381-61f3-d7acc3b91d76:sdk:Go:sdk/resourcemanager/datadog/armdatadog",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-07-21T09:19:57.9833333Z",
+      "observedAt": "2026-07-21T09:19:58.3441196Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/datadog/armdatadog",
+      "title": "stage failed: SDK Generation",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6593548",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6593548"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6593548:generation.failed:sdk:Go:sdk/resourcemanager/datadog/armdatadog",
+      "type": "generation.failed",
+      "phase": "generation",
+      "occurredAt": "2026-07-21T09:19:58.3441196Z",
+      "observedAt": "2026-07-21T09:19:58.3441196Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/datadog/armdatadog",
+      "title": "Pipeline failed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6593548",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6593548"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:35170:26:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-21T09:20:00.84Z",
+      "observedAt": "2026-07-21T09:20:00.84Z",
+      "trackId": "sdk:Python:azure-mgmt-datadog",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35170",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35170"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6593547:83516c17-6666-5250-abde-63983ce72a49:sdk:Python:azure-mgmt-datadog",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-07-21T09:20:20.7066667Z",
+      "observedAt": "2026-07-21T09:20:29.710359Z",
+      "trackId": "sdk:Python:azure-mgmt-datadog",
+      "title": "job failed: Job",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6593547",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6593547"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:6593547:6884a131-87da-5381-61f3-d7acc3b91d76:sdk:Python:azure-mgmt-datadog",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-07-21T09:20:27.0066667Z",
+      "observedAt": "2026-07-21T09:20:29.710359Z",
+      "trackId": "sdk:Python:azure-mgmt-datadog",
+      "title": "stage failed: SDK Generation",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6593547",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6593547"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6593547:generation.failed:sdk:Python:azure-mgmt-datadog",
+      "type": "generation.failed",
+      "phase": "generation",
+      "occurredAt": "2026-07-21T09:20:29.710359Z",
+      "observedAt": "2026-07-21T09:20:29.710359Z",
+      "trackId": "sdk:Python:azure-mgmt-datadog",
+      "title": "Pipeline failed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6593547",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6593547"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61153:commit:afd30dcb1524:sdk:.NET:Azure.ResourceManager.Datadog",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-21T09:21:52Z",
+      "observedAt": "2026-07-21T09:21:52Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Datadog",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61153",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/afd30dcb1524318ff9963b8ab19f08be2b126a55"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61153:pr.created:sdk:.NET:Azure.ResourceManager.Datadog",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-21T09:21:56Z",
+      "observedAt": "2026-07-21T09:21:56Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Datadog",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61153",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61153"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:35170:27:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-21T09:22:04.603Z",
+      "observedAt": "2026-07-21T09:22:04.603Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Datadog",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35170",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35170"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:35170:27:Custom.SDKPullRequestForDotnet",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-21T09:22:04.603Z",
+      "observedAt": "2026-07-21T09:22:04.603Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Datadog",
+      "value": "https://github.com/Azure/azure-sdk-for-net/pull/61153",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35170",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35170"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61153:comment:5032278097:sdk:.NET:Azure.ResourceManager.Datadog",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-21T09:22:31Z",
+      "observedAt": "2026-07-21T09:22:31Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Datadog",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61153",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61153#issuecomment-5032278097"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 10 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6593545:generation.completed:sdk:.NET:Azure.ResourceManager.Datadog",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-07-21T09:22:57.2326538Z",
+      "observedAt": "2026-07-21T09:22:57.2326538Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Datadog",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6593545",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6593545"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61153:comment:3620925308:sdk:.NET:Azure.ResourceManager.Datadog",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-21T09:23:01Z",
+      "observedAt": "2026-07-21T09:23:01Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Datadog",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61153",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61153#discussion_r3620925308"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`additionalDirectories:` is introduced but left empty/null. If the tooling expects an array, this can break code generation or produce unexpected defaults. Either remove the key or explicitly set it to an empty list (e.g., `additionalDirect",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61153:comment:3620925357:sdk:.NET:Azure.ResourceManager.Datadog",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-21T09:23:01Z",
+      "observedAt": "2026-07-21T09:23:01Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Datadog",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61153",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61153#discussion_r3620925357"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`Utf8JsonWriter.WriteStringValue` does not accept `Azure.Core.ResourceIdentifier` directly; this is likely a compile-time error. Serialize the identifier as a string (e.g., `SaaSResourceId.ToString()`) to ensure valid JSON output.",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61153:review:4743113561:sdk:.NET:Azure.ResourceManager.Datadog",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-21T09:23:02Z",
+      "observedAt": "2026-07-21T09:23:02Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Datadog",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61153",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61153#pullrequestreview-4743113561"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview > [!NOTE] > Copilot could not run the full agentic suite for this review because it was automatically requested on a bot-authored pull request. Request a review from Copilot under Reviewers to retry with the full ag",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61153:comment:3620925390:sdk:.NET:Azure.ResourceManager.Datadog",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-21T09:23:02Z",
+      "observedAt": "2026-07-21T09:23:02Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Datadog",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61153",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61153#discussion_r3620925390"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Deserialization only recognizes `saaSResourceId`. If older service responses or persisted payloads still use `saaSGuid`, this becomes a wire-compat breaking change. Consider supporting both property names during a transition (read both, pre",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61153:comment:3620925430:sdk:.NET:Azure.ResourceManager.Datadog",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-21T09:23:02Z",
+      "observedAt": "2026-07-21T09:23:02Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Datadog",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61153",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61153#discussion_r3620925430"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This is a public API breaking change (constructor parameter and property type/name changed from `Guid SaaSGuid` to `ResourceIdentifier SaaSResourceId`). If this package is not in a breaking-change-allowed stage, consider keeping the previou",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61153:commit:f24e2f7a6ed1:sdk:.NET:Azure.ResourceManager.Datadog",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-21T09:39:30Z",
+      "observedAt": "2026-07-21T09:39:30Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Datadog",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "piyushvermaa"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61153",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/f24e2f7a6ed1f25d115111a5a0f29f7ec1936d3a"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60649:comment:5032466798:sdk:.NET:Azure.ResourceManager.Datadog",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-21T09:43:11Z",
+      "observedAt": "2026-07-21T09:43:11Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Datadog",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60649",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60649#issuecomment-5032466798"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 10 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#60649:pr.closed:sdk:.NET:Azure.ResourceManager.Datadog",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-21T09:43:17Z",
+      "observedAt": "2026-07-21T09:43:17Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Datadog",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#60649",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/60649"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61153:comment:3621131168:sdk:.NET:Azure.ResourceManager.Datadog",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-21T09:54:37Z",
+      "observedAt": "2026-07-21T09:54:37Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Datadog",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61153",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61153#discussion_r3621131168"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`using Azure.ResourceManager.Datadog;` appears unused in this file (no symbols from that namespace are referenced). With `TreatWarningsAsErrors` enabled in this repo, this can produce CS8019 and break builds; even if suppressed, it adds noi",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61153:review:4743354037:sdk:.NET:Azure.ResourceManager.Datadog",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-21T09:54:38Z",
+      "observedAt": "2026-07-21T09:54:38Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Datadog",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61153",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61153#pullrequestreview-4743354037"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Copilot reviewed 5 out of 8 changed files in this pull request and generated 2 comments.",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61153:comment:3621131205:sdk:.NET:Azure.ResourceManager.Datadog",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-21T09:54:38Z",
+      "observedAt": "2026-07-21T09:54:38Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Datadog",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61153",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61153#discussion_r3621131205"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This change removes/renames a shipped public API (`DatadogActivateSaaSContent(Guid)` + `SaaSGuid`) and replaces it with a different type (`ResourceIdentifier`) and JSON wire name. Since the project has `ApiCompatVersion` set (currently 1.0.",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61153:review:4743468172:sdk:.NET:Azure.ResourceManager.Datadog",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-21T10:10:08Z",
+      "observedAt": "2026-07-21T10:10:08Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Datadog",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61153",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61153#pullrequestreview-4743468172"
+      },
+      "confidence": "authoritative",
+      "excerpt": "### Management SDK Review Summary - **Scope**: `Azure.ResourceManager.Datadog` (1.1.0-beta.2) - **Versioning**: pass — version is pre-release beta, `ApiCompatVersion=1.0.0` preserved - **API surface**: pass — no scanner violations; type cha",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61153:review:4743697993:sdk:.NET:Azure.ResourceManager.Datadog",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-21T10:42:22Z",
+      "observedAt": "2026-07-21T10:42:22Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Datadog",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "piyushvermaa"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61153",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61153#pullrequestreview-4743697993"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61153:comment:3621413535:sdk:.NET:Azure.ResourceManager.Datadog",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-21T10:42:22Z",
+      "observedAt": "2026-07-21T10:42:22Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Datadog",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "piyushvermaa"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61153",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61153#discussion_r3621413535"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This file is generated by the tsp-client tooling; `additionalDirectories` with an empty value is the tool's default and is valid. It isn't hand-edited, and generation + build both pass in CI. No action needed.",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61153:review:4743702003:sdk:.NET:Azure.ResourceManager.Datadog",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-21T10:42:55Z",
+      "observedAt": "2026-07-21T10:42:55Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Datadog",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "piyushvermaa"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61153",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61153#pullrequestreview-4743702003"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61153:comment:3621416749:sdk:.NET:Azure.ResourceManager.Datadog",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-21T10:42:55Z",
+      "observedAt": "2026-07-21T10:42:55Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Datadog",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "piyushvermaa"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61153",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61153#discussion_r3621416749"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`Azure.Core.ResourceIdentifier` defines an implicit conversion to `string`, so `Utf8JsonWriter.WriteStringValue(ResourceIdentifier)` compiles and writes the ARM ID as a plain string. The sibling model `DatadogSaaSInfo` (also `ResourceIdenti",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61153:review:4743702333:sdk:.NET:Azure.ResourceManager.Datadog",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-21T10:42:56Z",
+      "observedAt": "2026-07-21T10:42:56Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Datadog",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "piyushvermaa"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61153",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61153#pullrequestreview-4743702333"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61153:comment:3621416930:sdk:.NET:Azure.ResourceManager.Datadog",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-21T10:42:56Z",
+      "observedAt": "2026-07-21T10:42:56Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Datadog",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "piyushvermaa"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61153",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61153#discussion_r3621416930"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This is a preview-only model. The wire property was renamed `saaSGuid` -> `saaSResourceId` in the spec (Azure/azure-rest-api-specs#41946) and the service now emits/accepts `saaSResourceId`. The earlier `saaSGuid` shape existed only in a pri",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61153:review:4743702588:sdk:.NET:Azure.ResourceManager.Datadog",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-21T10:42:58Z",
+      "observedAt": "2026-07-21T10:42:58Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Datadog",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "piyushvermaa"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61153",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61153#pullrequestreview-4743702588"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61153:comment:3621417176:sdk:.NET:Azure.ResourceManager.Datadog",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-21T10:42:58Z",
+      "observedAt": "2026-07-21T10:42:58Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Datadog",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "piyushvermaa"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61153",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61153#discussion_r3621417176"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`DatadogActivateSaaSContent` was introduced after 1.0.0 and isn't part of the `ApiCompatVersion=1.0.0` baseline, so ApiCompat doesn't flag it and no `[Obsolete]` shim is required. It ships only in the unreleased `1.1.0-beta.2`; beta->beta r",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61153:review:4743702786:sdk:.NET:Azure.ResourceManager.Datadog",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-21T10:43:00Z",
+      "observedAt": "2026-07-21T10:43:00Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Datadog",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "piyushvermaa"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61153",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61153#pullrequestreview-4743702786"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61153:comment:3621417356:sdk:.NET:Azure.ResourceManager.Datadog",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-21T10:43:00Z",
+      "observedAt": "2026-07-21T10:43:00Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Datadog",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "piyushvermaa"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61153",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61153#discussion_r3621417356"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The build passes on all target frameworks, including the warnings-as-errors legs, so CS8019 isn't triggered here. This is emitter-generated code and the using is emitted by the generator; it would be regenerated on the next pass. No build i",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61153:review:4743702994:sdk:.NET:Azure.ResourceManager.Datadog",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-21T10:43:02Z",
+      "observedAt": "2026-07-21T10:43:02Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Datadog",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "piyushvermaa"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61153",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61153#pullrequestreview-4743702994"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61153:comment:3621417575:sdk:.NET:Azure.ResourceManager.Datadog",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-21T10:43:02Z",
+      "observedAt": "2026-07-21T10:43:02Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Datadog",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "piyushvermaa"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61153",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61153#discussion_r3621417575"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Same as the ApiCompat thread above: this model isn't in the 1.0.0 baseline, so ApiCompat passes and no shim is needed (Management SDK PR Review returned **pass**). Retaining the old `Guid SaaSGuid` member would actually diverge from the upd",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61153:comment:5033001091:sdk:.NET:Azure.ResourceManager.Datadog",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-21T10:44:31Z",
+      "observedAt": "2026-07-21T10:44:31Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Datadog",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "piyushvermaa"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61153",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61153#issuecomment-5033001091"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@ArcturusZhang @ArthurMa1978 -- this PR is green on all automated gates, including **Azure .NET Management SDK PR Review** (no findings; it explicitly validates `Guid SaaSGuid` -> `ResourceIdentifier SaaSResourceId` as correct and passes Ap",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61153:comment:5035978569:sdk:.NET:Azure.ResourceManager.Datadog",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-21T15:35:13Z",
+      "observedAt": "2026-07-21T15:35:13Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Datadog",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jsquire"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61153",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61153#issuecomment-5035978569"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@piyushvermaa: Please don't create arbitrary labels in the repository.",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61153:review:4753093380:sdk:.NET:Azure.ResourceManager.Datadog",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T09:45:52Z",
+      "observedAt": "2026-07-22T09:45:52Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Datadog",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61153",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61153#pullrequestreview-4753093380"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61153:review:4769346490:sdk:.NET:Azure.ResourceManager.Datadog",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T01:10:31Z",
+      "observedAt": "2026-07-24T01:10:31Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Datadog",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61153",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61153#pullrequestreview-4769346490"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61153:comment:3642318442:sdk:.NET:Azure.ResourceManager.Datadog",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T01:10:31Z",
+      "observedAt": "2026-07-24T01:10:31Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Datadog",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61153",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61153#discussion_r3642318442"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Since this is not a breaking change, so please move this to Other Changes section.",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61153:review:4769363714:sdk:.NET:Azure.ResourceManager.Datadog",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T01:14:47Z",
+      "observedAt": "2026-07-24T01:14:47Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Datadog",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61153",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61153#pullrequestreview-4769363714"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61153:comment:3642332640:sdk:.NET:Azure.ResourceManager.Datadog",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T01:14:48Z",
+      "observedAt": "2026-07-24T01:14:48Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Datadog",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61153",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61153#discussion_r3642332640"
+      },
+      "confidence": "authoritative",
+      "excerpt": "To release a new sdk, please: 1. Replace the Unreleased section with the actual release date using the format yyyy-MM-dd. 2. Remove empty sections below, including Features Added, Breaking Changes (move the content to Other Changes), Bugs F",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61153:commit:009c189b713c:sdk:.NET:Azure.ResourceManager.Datadog",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T05:53:54Z",
+      "observedAt": "2026-07-24T05:53:54Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Datadog",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "piyushvermaa"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61153",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/009c189b713ca00dbe9beeae9fd632044c1e9852"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61153:review:4770490876:sdk:.NET:Azure.ResourceManager.Datadog",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T05:55:01Z",
+      "observedAt": "2026-07-24T05:55:01Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Datadog",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "piyushvermaa"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61153",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61153#pullrequestreview-4770490876"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61153:comment:3643223336:sdk:.NET:Azure.ResourceManager.Datadog",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T05:55:01Z",
+      "observedAt": "2026-07-24T05:55:01Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Datadog",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "piyushvermaa"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61153",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61153#discussion_r3643223336"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Done in 009c189. Replaced the Unreleased section with the release date 2026-07-27 (yyyy-MM-dd) and removed the empty Features Added, Breaking Changes, and Bugs Fixed sections (the entry now lives under Other Changes).",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61153:review:4770491022:sdk:.NET:Azure.ResourceManager.Datadog",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T05:55:03Z",
+      "observedAt": "2026-07-24T05:55:03Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Datadog",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "piyushvermaa"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61153",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61153#pullrequestreview-4770491022"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61153:comment:3643223448:sdk:.NET:Azure.ResourceManager.Datadog",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T05:55:03Z",
+      "observedAt": "2026-07-24T05:55:03Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Datadog",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "piyushvermaa"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61153",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61153#discussion_r3643223448"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Done in 009c189 — moved this entry to the Other Changes section.",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61153:review:4770521097:sdk:.NET:Azure.ResourceManager.Datadog",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T05:59:14Z",
+      "observedAt": "2026-07-24T05:59:14Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Datadog",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61153",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61153#pullrequestreview-4770521097"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47830:comment:5066689635:sdk:Python:azure-mgmt-datadog",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T06:07:52Z",
+      "observedAt": "2026-07-24T06:07:52Z",
+      "trackId": "sdk:Python:azure-mgmt-datadog",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "piyushvermaa"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47830",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47830#issuecomment-5066689635"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> Hi @ChenxiJiang333 You can go ahead and merge the PR and kick off the release. Thanks!",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47830:pr.merged:sdk:Python:azure-mgmt-datadog",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T06:08:20Z",
+      "observedAt": "2026-07-24T06:08:20Z",
+      "trackId": "sdk:Python:azure-mgmt-datadog",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47830",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47830"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27128:pr.merged:sdk:Go:sdk/resourcemanager/datadog/armdatadog",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T06:09:28Z",
+      "observedAt": "2026-07-24T06:09:28Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/datadog/armdatadog",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27128",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27128"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27128:comment:5066705370:sdk:Go:sdk/resourcemanager/datadog/armdatadog",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T06:10:22Z",
+      "observedAt": "2026-07-24T06:10:22Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/datadog/armdatadog",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "piyushvermaa"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27128",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27128#issuecomment-5066705370"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> Hey @tadelesh, I merged the PR, please kick off the release. Thanks!",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49718:comment:5066713344:sdk:Java:azure-resourcemanager-datadog",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T06:11:22Z",
+      "observedAt": "2026-07-24T06:11:22Z",
+      "trackId": "sdk:Java:azure-resourcemanager-datadog",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "piyushvermaa"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49718",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49718#issuecomment-5066713344"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @weidongxu-microsoft, can you go ahead and merge the PR and kick off the release. Thanks!",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49718:pr.merged:sdk:Java:azure-resourcemanager-datadog",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T06:17:26Z",
+      "observedAt": "2026-07-24T06:17:26Z",
+      "trackId": "sdk:Java:azure-resourcemanager-datadog",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49718",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49718"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61153:review:4770664278:sdk:.NET:Azure.ResourceManager.Datadog",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T06:25:25Z",
+      "observedAt": "2026-07-24T06:25:25Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Datadog",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61153",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61153#pullrequestreview-4770664278"
+      },
+      "confidence": "authoritative",
+      "excerpt": "### Management SDK Review Summary Same status as the previous management SDK review: no management SDK review findings. No new management SDK review findings on this head commit. --- Analyzed by Azure .NET Management SDK PR Review: Azure/az",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "ado:35170:28:Custom.ReleaseStatusForPython",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-07-24T07:09:21.607Z",
+      "observedAt": "2026-07-24T07:09:21.607Z",
+      "trackId": "sdk:Python:azure-mgmt-datadog",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35170",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35170"
+      },
+      "title": "Release status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:35170:28:Custom.ReleasedVersionForPython",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-07-24T07:09:21.607Z",
+      "observedAt": "2026-07-24T07:09:21.607Z",
+      "trackId": "sdk:Python:azure-mgmt-datadog",
+      "value": "3.0.0b1",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35170",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35170"
+      },
+      "title": "Package version observed",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61153:pr.merged:sdk:.NET:Azure.ResourceManager.Datadog",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T09:12:10Z",
+      "observedAt": "2026-07-24T09:12:10Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Datadog",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61153",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61153"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:35170:29:Custom.ReleaseStatusForDotnet",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-07-24T10:38:44.133Z",
+      "observedAt": "2026-07-24T10:38:44.133Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Datadog",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35170",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35170"
+      },
+      "title": "Release status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:35170:29:Custom.ReleasedVersionForDotnet",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-07-24T10:38:44.133Z",
+      "observedAt": "2026-07-24T10:38:44.133Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Datadog",
+      "value": "1.1.0-beta.2",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35170",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35170"
+      },
+      "title": "Package version observed",
+      "stack": 2
+    },
+    {
+      "id": "ado:35170:30:Custom.ReleaseStatusForGo",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-07-27T10:23:39.507Z",
+      "observedAt": "2026-07-27T10:23:39.507Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/datadog/armdatadog",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35170",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35170"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35170:30:Custom.ReleasedVersionForGo",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-07-27T10:23:39.507Z",
+      "observedAt": "2026-07-27T10:23:39.507Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/datadog/armdatadog",
+      "value": "v2.0.0-beta.1",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35170",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35170"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35170:32:Custom.ReleaseStatusForJava",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-07-27T12:01:25.32Z",
+      "observedAt": "2026-07-27T12:01:25.32Z",
+      "trackId": "sdk:Java:azure-resourcemanager-datadog",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35170",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35170"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35170:32:Custom.ReleasedVersionForJava",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-07-27T12:01:25.32Z",
+      "observedAt": "2026-07-27T12:01:25.32Z",
+      "trackId": "sdk:Java:azure-resourcemanager-datadog",
+      "value": "1.2.0-beta.1",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35170",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35170"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35170:33:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-07-27T12:01:25.7Z",
+      "observedAt": "2026-07-27T12:01:25.7Z",
+      "trackId": "plan",
+      "value": "Finished",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35170",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35170"
+      },
+      "title": "Plan state changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35170:37:Custom.ReleasedVersionForGo",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-07-27T14:17:45.43Z",
+      "observedAt": "2026-07-27T14:17:45.43Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/datadog/armdatadog",
+      "value": "2.0.0-beta.1",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35170",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35170"
+      },
+      "title": "Package version observed",
+      "stack": 2
+    }
+  ],
+  "quality": {
+    "warnings": [
+      "2 historical linked PR(s) closed without merge",
+      "2 superseded SDK PR link(s) retained"
+    ],
+    "unavailablePullRequests": 0,
+    "unavailablePipelineRuns": 0
+  },
+  "boundaryFacts": {
+    "id": "35170",
+    "state": "finished",
+    "specPrs": [
+      {
+        "id": "github:Azure/azure-rest-api-specs#40732",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#40732",
+        "createdAt": "2026-02-25T05:23:41Z",
+        "mergedAt": "2026-02-25T10:21:13Z",
+        "closedAt": "2026-02-25T10:21:13Z",
+        "available": true
+      }
+    ],
+    "artifacts": [
+      {
+        "language": ".NET",
+        "package": "Azure.ResourceManager.Datadog",
+        "trackId": "sdk:.NET:Azure.ResourceManager.Datadog",
+        "prId": "github:Azure/azure-sdk-for-net#61153",
+        "prCreatedAt": "2026-07-21T09:21:56Z",
+        "prMergedAt": "2026-07-24T09:12:10Z",
+        "prClosedAt": "2026-07-24T09:12:10Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-net#60649",
+            "createdAt": "2026-07-03T10:08:47Z",
+            "mergedAt": null,
+            "closedAt": "2026-07-21T09:43:17Z",
+            "state": "closed"
+          },
+          {
+            "id": "github:Azure/azure-sdk-for-net#61153",
+            "createdAt": "2026-07-21T09:21:56Z",
+            "mergedAt": "2026-07-24T09:12:10Z",
+            "closedAt": "2026-07-24T09:12:10Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6593545",
+        "generationStartAt": "2026-07-21T09:14:42.6473404Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-07-24T10:38:44.133Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.1.0-beta.2",
+        "releaseBoundaryAt": "2026-07-24T10:38:44.133Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "JavaScript",
+        "package": "@azure/arm-datadog",
+        "trackId": "sdk:JavaScript:@azure/arm-datadog",
+        "prId": "github:Azure/azure-sdk-for-js#38754",
+        "prCreatedAt": "2026-06-01T06:02:40Z",
+        "prMergedAt": "2026-06-02T01:30:18Z",
+        "prClosedAt": "2026-06-02T01:30:18Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-js#39181",
+            "createdAt": "2026-07-03T10:08:06Z",
+            "mergedAt": null,
+            "closedAt": "2026-07-13T06:56:47Z",
+            "state": "closed"
+          },
+          {
+            "id": "github:Azure/azure-sdk-for-js#38754",
+            "createdAt": "2026-06-01T06:02:40Z",
+            "mergedAt": "2026-06-02T01:30:18Z",
+            "closedAt": "2026-06-02T01:30:18Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6517563",
+        "generationStartAt": "2026-07-03T10:01:37.1500703Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-07-13T14:33:08.543Z",
+            "value": "Released"
+          },
+          {
+            "occurredAt": "2026-07-13T19:33:47.947Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "4.0.0-beta.1",
+        "releaseBoundaryAt": "2026-07-13T14:33:08.543Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Python",
+        "package": "azure-mgmt-datadog",
+        "trackId": "sdk:Python:azure-mgmt-datadog",
+        "prId": "github:Azure/azure-sdk-for-python#47830",
+        "prCreatedAt": "2026-07-03T10:07:57Z",
+        "prMergedAt": "2026-07-24T06:08:20Z",
+        "prClosedAt": "2026-07-24T06:08:20Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-python#47830",
+            "createdAt": "2026-07-03T10:07:57Z",
+            "mergedAt": "2026-07-24T06:08:20Z",
+            "closedAt": "2026-07-24T06:08:20Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6593547",
+        "generationStartAt": "2026-07-21T09:14:58.118261Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-07-24T07:09:21.607Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "3.0.0b1",
+        "releaseBoundaryAt": "2026-07-24T07:09:21.607Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Java",
+        "package": "azure-resourcemanager-datadog",
+        "trackId": "sdk:Java:azure-resourcemanager-datadog",
+        "prId": "github:Azure/azure-sdk-for-java#49718",
+        "prCreatedAt": "2026-07-03T10:11:05Z",
+        "prMergedAt": "2026-07-24T06:17:26Z",
+        "prClosedAt": "2026-07-24T06:17:26Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-java#49718",
+            "createdAt": "2026-07-03T10:11:05Z",
+            "mergedAt": "2026-07-24T06:17:26Z",
+            "closedAt": "2026-07-24T06:17:26Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6593546",
+        "generationStartAt": "2026-07-21T09:14:50.4601968Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-07-27T12:01:25.32Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.2.0-beta.1",
+        "releaseBoundaryAt": "2026-07-27T12:01:25.32Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Go",
+        "package": "sdk/resourcemanager/datadog/armdatadog",
+        "trackId": "sdk:Go:sdk/resourcemanager/datadog/armdatadog",
+        "prId": "github:Azure/azure-sdk-for-go#27128",
+        "prCreatedAt": "2026-07-03T10:06:24Z",
+        "prMergedAt": "2026-07-24T06:09:28Z",
+        "prClosedAt": "2026-07-24T06:09:28Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-go#27128",
+            "createdAt": "2026-07-03T10:06:24Z",
+            "mergedAt": "2026-07-24T06:09:28Z",
+            "closedAt": "2026-07-24T06:09:28Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6593548",
+        "generationStartAt": "2026-07-21T09:15:01.427278Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-07-27T10:23:39.507Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "2.0.0-beta.1",
+        "releaseBoundaryAt": "2026-07-27T10:23:39.507Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      }
+    ],
+    "cohortPlan": {
+      "id": "35170",
+      "releasePlanId": "35170",
+      "title": "Public Preview release plan for Datadog.Management",
+      "service": "Datadog.Management",
+      "state": "finished"
+    },
+    "quality": {
+      "warnings": [
+        "2 historical linked PR(s) closed without merge",
+        "2 superseded SDK PR link(s) retained"
+      ],
+      "unavailablePullRequests": 0,
+      "unavailablePipelineRuns": 0
+    }
+  },
+  "summary": {
+    "durationHours": 606.5,
+    "pullRequestCount": 8,
+    "humanReviewCount": 19,
+    "humanCommentCount": 25
+  }
+}

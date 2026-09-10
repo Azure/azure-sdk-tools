@@ -1,0 +1,2454 @@
+{
+  "schemaVersion": 2,
+  "id": "35323",
+  "correlation": {
+    "policyVersion": 1,
+    "preflight": "passed"
+  },
+  "releasePlanId": "35323",
+  "title": "Public Preview release plan for RedisEnterprise",
+  "service": "RedisEnterprise",
+  "product": "Release",
+  "path": "specification/redisenterprise/resource-manager/Microsoft.Cache/RedisEnterprise",
+  "state": "in-progress",
+  "plane": "management",
+  "releaseType": "APEX Public Preview",
+  "intendedMonth": "July 2026",
+  "createdAt": "2026-07-14T10:49:14.977Z",
+  "completedAt": null,
+  "sourceUrl": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35323",
+  "range": {
+    "start": "2026-07-01T21:29:20.000Z",
+    "end": "2026-08-14T00:37:23.589Z"
+  },
+  "intendedArtifacts": [
+    {
+      "prId": "github:Azure/azure-sdk-for-js#39270",
+      "language": "JavaScript",
+      "package": "@azure/arm-redisenterprisecache",
+      "version": "5.0.0-beta.2",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6559280",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-python#48041",
+      "language": "Python",
+      "package": "azure-mgmt-redisenterprise",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6559277",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-java#49805",
+      "language": "Java",
+      "package": "azure-resourcemanager-redisenterprise",
+      "version": "2.2.0-beta.1",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6559278",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-go#27179",
+      "language": "Go",
+      "package": "sdk/resourcemanager/redisenterprise/armredisenterprise/v4",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6559279",
+      "releasePipelineUrl": null
+    }
+  ],
+  "links": [
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#44373",
+      "role": "spec-pr",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/44373",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-js#39270",
+      "role": "sdk-pr",
+      "language": "JavaScript",
+      "url": "https://github.com/Azure/azure-sdk-for-js/pull/39270",
+      "releasePlanIds": [
+        "35323"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-python#48041",
+      "role": "sdk-pr",
+      "language": "Python",
+      "url": "https://github.com/Azure/azure-sdk-for-python/pull/48041",
+      "releasePlanIds": [
+        "35323"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-java#49805",
+      "role": "sdk-pr",
+      "language": "Java",
+      "url": "https://github.com/Azure/azure-sdk-for-java/pull/49805",
+      "releasePlanIds": [
+        "35323"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-go#27179",
+      "role": "sdk-pr",
+      "language": "Go",
+      "url": "https://github.com/Azure/azure-sdk-for-go/pull/27179",
+      "releasePlanIds": [
+        "35323"
+      ]
+    }
+  ],
+  "tracks": [
+    {
+      "id": "plan",
+      "kind": "plan",
+      "label": "Release Plan",
+      "detail": "APEX Public Preview"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#44373",
+      "kind": "spec",
+      "label": "Spec PR",
+      "detail": "azure-rest-api-specs #44373",
+      "artifactId": "github:Azure/azure-rest-api-specs#44373",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:JavaScript:@azure/arm-redisenterprisecache",
+      "kind": "sdk",
+      "label": "JavaScript",
+      "detail": "@azure/arm-redisenterprisecache",
+      "artifactId": "github:Azure/azure-sdk-for-js#39270",
+      "state": "open"
+    },
+    {
+      "id": "sdk:Python:azure-mgmt-redisenterprise",
+      "kind": "sdk",
+      "label": "Python",
+      "detail": "azure-mgmt-redisenterprise",
+      "artifactId": "github:Azure/azure-sdk-for-python#48041",
+      "state": "open"
+    },
+    {
+      "id": "sdk:Java:azure-resourcemanager-redisenterprise",
+      "kind": "sdk",
+      "label": "Java",
+      "detail": "azure-resourcemanager-redisenterprise",
+      "artifactId": "github:Azure/azure-sdk-for-java#49805",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Go:sdk/resourcemanager/redisenterprise/armredisenterprise/v4",
+      "kind": "sdk",
+      "label": "Go",
+      "detail": "sdk/resourcemanager/redisenterprise/armredisenterprise/v4",
+      "artifactId": "github:Azure/azure-sdk-for-go#27179",
+      "state": "open"
+    }
+  ],
+  "events": [
+    {
+      "id": "github:Azure/azure-rest-api-specs#44373:pr.created:spec:github:Azure/azure-rest-api-specs#44373",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-01T21:29:20Z",
+      "observedAt": "2026-07-01T21:29:20Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44373",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "marianor"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44373",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44373"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44373:comment:4860193843:spec:github:Azure/azure-rest-api-specs#44373",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-01T21:30:14Z",
+      "observedAt": "2026-07-01T21:30:14Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44373",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44373",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44373#issuecomment-4860193843"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>✅ All automated merging requirements have been met! To get your PR merged, see <a href=\"https://aka.ms/azsdk/specreview/merge\">aka.ms/azsdk/specreview/merge</a>.<br /><br />Comment generated by <a href=\"https://g",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44373:comment:4860223786:spec:github:Azure/azure-rest-api-specs#44373",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-01T21:34:54Z",
+      "observedAt": "2026-07-01T21:34:54Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44373",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44373",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44373#issuecomment-4860223786"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews | Language | API Review for Package | |----------|---------| | Swagger | [Microsoft.Cache-RedisEnterprise](https://apiview.dev/Assembl",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44373:commit:775d07610dd8:spec:github:Azure/azure-rest-api-specs#44373",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-01T22:04:51Z",
+      "observedAt": "2026-07-01T22:04:51Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44373",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "marianor"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44373",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/775d07610dd84fadac876f0dee46b8797b342ea5"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44373:commit:eff6a69a64e2:spec:github:Azure/azure-rest-api-specs#44373",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-01T22:08:08Z",
+      "observedAt": "2026-07-01T22:08:08Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44373",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "marianor"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44373",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/eff6a69a64e238242ac8f384a0872b918b5f76d5"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44373:review:4613854344:spec:github:Azure/azure-rest-api-specs#44373",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-02T01:33:35Z",
+      "observedAt": "2026-07-02T01:33:35Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44373",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44373",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44373#pullrequestreview-4613854344"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This PR adds a new preview API version `2026-06-01-preview` for the RedisEnterprise ARM resource provider (`Microsoft.Cache`). The project is authored in TypeSpec, and the generated OpenAPI/examples are checked in a",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44373:comment:3509927118:spec:github:Azure/azure-rest-api-specs#44373",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-02T01:33:35Z",
+      "observedAt": "2026-07-02T01:33:35Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44373",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44373",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44373#discussion_r3509927118"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This PR changes the `operationId` of the Migration operations from `Migration_*` to `Migrations_*` in the already-published preview API version `2025-08-01-preview` (line 1827 here, plus `1877`/`1922`/`2016`), and the same rename is applied",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44373:review:4618489021:spec:github:Azure/azure-rest-api-specs#44373",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-02T14:32:44Z",
+      "observedAt": "2026-07-02T14:32:44Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44373",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "marianor"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44373",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44373#pullrequestreview-4618489021"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44373:comment:3513862282:spec:github:Azure/azure-rest-api-specs#44373",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-02T14:32:44Z",
+      "observedAt": "2026-07-02T14:32:44Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44373",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "marianor"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44373",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44373#discussion_r3513862282"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This change is the core of the PR, so disregard the comment",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44373:commit:621cca26fcec:spec:github:Azure/azure-rest-api-specs#44373",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-02T15:51:05Z",
+      "observedAt": "2026-07-02T15:51:05Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44373",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "marianor"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44373",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/621cca26fcec363ee8247a0739eb5be05635eebe"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44373:commit:f4d030f1a685:spec:github:Azure/azure-rest-api-specs#44373",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-13T16:53:50Z",
+      "observedAt": "2026-07-13T16:53:50Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44373",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "marianor"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44373",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/f4d030f1a68561f1a2807323074125b8f163c529"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44373:commit:b54079f2424c:spec:github:Azure/azure-rest-api-specs#44373",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-13T18:32:53Z",
+      "observedAt": "2026-07-13T18:32:53Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44373",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "marianor"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44373",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/b54079f2424c3bb848c0abe99fcd951a09f34bc3"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44373:commit:4e2b9ddf2196:spec:github:Azure/azure-rest-api-specs#44373",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-13T18:40:34Z",
+      "observedAt": "2026-07-13T18:40:34Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44373",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44373",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/4e2b9ddf21965ebdabc6c57c6e9ccb14cd90c059"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44373:commit:7dc178bd0461:spec:github:Azure/azure-rest-api-specs#44373",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-13T19:12:13Z",
+      "observedAt": "2026-07-13T19:12:13Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44373",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "marianor"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44373",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/7dc178bd046150a4dd212ab6373dbf6e17615bfc"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44373:commit:4cca480d2e87:spec:github:Azure/azure-rest-api-specs#44373",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-13T19:20:22Z",
+      "observedAt": "2026-07-13T19:20:22Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44373",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44373",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/4cca480d2e876418b68ee8c9ff0033d4e832eeb2"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44373:commit:0e85ddcfdae4:spec:github:Azure/azure-rest-api-specs#44373",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-13T19:26:48Z",
+      "observedAt": "2026-07-13T19:26:48Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44373",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44373",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/0e85ddcfdae42e08cb24a5016a94f9a18de5b338"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44373:commit:6993172d38a6:spec:github:Azure/azure-rest-api-specs#44373",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-13T19:31:47Z",
+      "observedAt": "2026-07-13T19:31:47Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44373",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44373",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/6993172d38a603f0ce01e460807fb912a83dcb1c"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44373:commit:a88854cdd351:spec:github:Azure/azure-rest-api-specs#44373",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-13T19:58:06Z",
+      "observedAt": "2026-07-13T19:58:06Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44373",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44373",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/a88854cdd3519c12ffb6a3677d33357422bb5081"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44373:commit:6de982680b95:spec:github:Azure/azure-rest-api-specs#44373",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-13T23:23:48Z",
+      "observedAt": "2026-07-13T23:23:48Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44373",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "marianor"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44373",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/6de982680b951949ccf721964e489607ba66f1ea"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44373:commit:abdf3c2b8718:spec:github:Azure/azure-rest-api-specs#44373",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-14T00:18:00Z",
+      "observedAt": "2026-07-14T00:18:00Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44373",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "MushMal"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44373",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/abdf3c2b87181e7e0098b088ecb1fa32c7231c43"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44373:review:4689913019:spec:github:Azure/azure-rest-api-specs#44373",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-14T00:19:42Z",
+      "observedAt": "2026-07-14T00:19:42Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44373",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "MushMal"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44373",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44373#pullrequestreview-4689913019"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Approved previously.",
+      "reviewState": "approved",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44373:pr.merged:spec:github:Azure/azure-rest-api-specs#44373",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-14T00:36:13Z",
+      "observedAt": "2026-07-14T00:36:13Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44373",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44373",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44373"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:35323:created",
+      "type": "plan.created",
+      "phase": "plan",
+      "occurredAt": "2026-07-14T10:49:14.977Z",
+      "observedAt": "2026-07-14T10:49:14.977Z",
+      "trackId": "plan",
+      "title": "Release Plan created",
+      "confidence": "authoritative",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35323",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35323"
+      },
+      "stack": 0
+    },
+    {
+      "id": "ado:35323:1:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-07-14T10:49:14.977Z",
+      "observedAt": "2026-07-14T10:49:14.977Z",
+      "trackId": "plan",
+      "value": "New",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35323",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35323"
+      },
+      "title": "Plan state changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35323:1:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-14T10:49:14.977Z",
+      "observedAt": "2026-07-14T10:49:14.977Z",
+      "trackId": "plan",
+      "value": "Not Available",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35323",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35323"
+      },
+      "title": "Spec approval changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:35323:1:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-14T10:49:14.977Z",
+      "observedAt": "2026-07-14T10:49:14.977Z",
+      "trackId": "sdk:JavaScript:@azure/arm-redisenterprisecache",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35323",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35323"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35323:1:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-14T10:49:14.977Z",
+      "observedAt": "2026-07-14T10:49:14.977Z",
+      "trackId": "sdk:Python:azure-mgmt-redisenterprise",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35323",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35323"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35323:1:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-14T10:49:14.977Z",
+      "observedAt": "2026-07-14T10:49:14.977Z",
+      "trackId": "sdk:Java:azure-resourcemanager-redisenterprise",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35323",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35323"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35323:1:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-14T10:49:14.977Z",
+      "observedAt": "2026-07-14T10:49:14.977Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/redisenterprise/armredisenterprise/v4",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35323",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35323"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35324:1:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-14T10:49:15.56Z",
+      "observedAt": "2026-07-14T10:49:15.56Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44373",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/44373",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35324",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35324"
+      },
+      "title": "Spec PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado:35323:2:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-07-14T10:49:17.05Z",
+      "observedAt": "2026-07-14T10:49:17.05Z",
+      "trackId": "plan",
+      "value": "In Progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35323",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35323"
+      },
+      "title": "Plan state changed",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6559277:generation.queued:sdk:Python:azure-mgmt-redisenterprise",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-07-14T10:58:43.1583972Z",
+      "observedAt": "2026-07-14T11:06:08.1448692Z",
+      "trackId": "sdk:Python:azure-mgmt-redisenterprise",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6559277",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6559277"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:35323:4:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-14T10:58:51.04Z",
+      "observedAt": "2026-07-14T10:58:51.04Z",
+      "trackId": "sdk:Python:azure-mgmt-redisenterprise",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35323",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35323"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6559278:generation.queued:sdk:Java:azure-resourcemanager-redisenterprise",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-07-14T10:58:59.2413548Z",
+      "observedAt": "2026-07-14T11:17:57.242098Z",
+      "trackId": "sdk:Java:azure-resourcemanager-redisenterprise",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6559278",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6559278"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:35323:5:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-14T10:59:02.953Z",
+      "observedAt": "2026-07-14T10:59:02.953Z",
+      "trackId": "sdk:Java:azure-resourcemanager-redisenterprise",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35323",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35323"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6559277:generation.started:sdk:Python:azure-mgmt-redisenterprise",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-07-14T10:59:05.2809244Z",
+      "observedAt": "2026-07-14T11:06:08.1448692Z",
+      "trackId": "sdk:Python:azure-mgmt-redisenterprise",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6559277",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6559277"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6559279:generation.queued:sdk:Go:sdk/resourcemanager/redisenterprise/armredisenterprise/v4",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-07-14T10:59:11.0605817Z",
+      "observedAt": "2026-07-14T11:05:21.3460924Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/redisenterprise/armredisenterprise/v4",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6559279",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6559279"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6559278:generation.started:sdk:Java:azure-resourcemanager-redisenterprise",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-07-14T10:59:14.0260478Z",
+      "observedAt": "2026-07-14T11:17:57.242098Z",
+      "trackId": "sdk:Java:azure-resourcemanager-redisenterprise",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6559278",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6559278"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado:35323:6:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-14T10:59:15.883Z",
+      "observedAt": "2026-07-14T10:59:15.883Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/redisenterprise/armredisenterprise/v4",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35323",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35323"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6559280:generation.queued:sdk:JavaScript:@azure/arm-redisenterprisecache",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-07-14T10:59:23.6764356Z",
+      "observedAt": "2026-07-14T11:07:20.1199911Z",
+      "trackId": "sdk:JavaScript:@azure/arm-redisenterprisecache",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6559280",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6559280"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6559279:generation.started:sdk:Go:sdk/resourcemanager/redisenterprise/armredisenterprise/v4",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-07-14T10:59:26.8917811Z",
+      "observedAt": "2026-07-14T11:05:21.3460924Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/redisenterprise/armredisenterprise/v4",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6559279",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6559279"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado:35323:7:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-14T10:59:26.947Z",
+      "observedAt": "2026-07-14T10:59:26.947Z",
+      "trackId": "sdk:JavaScript:@azure/arm-redisenterprisecache",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35323",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35323"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6559280:generation.started:sdk:JavaScript:@azure/arm-redisenterprisecache",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-07-14T10:59:42.8793542Z",
+      "observedAt": "2026-07-14T11:07:20.1199911Z",
+      "trackId": "sdk:JavaScript:@azure/arm-redisenterprisecache",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6559280",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6559280"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27179:commit:77949036eb84:sdk:Go:sdk/resourcemanager/redisenterprise/armredisenterprise/v4",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-14T11:04:13Z",
+      "observedAt": "2026-07-14T11:04:13Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/redisenterprise/armredisenterprise/v4",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27179",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/77949036eb842ff2d853118ad0f397cbac98e2e2"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27179:pr.created:sdk:Go:sdk/resourcemanager/redisenterprise/armredisenterprise/v4",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-14T11:04:17Z",
+      "observedAt": "2026-07-14T11:04:17Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/redisenterprise/armredisenterprise/v4",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27179",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27179"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27179:review:4693637171:sdk:Go:sdk/resourcemanager/redisenterprise/armredisenterprise/v4",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-14T11:04:20Z",
+      "observedAt": "2026-07-14T11:04:20Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/redisenterprise/armredisenterprise/v4",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27179",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27179#pullrequestreview-4693637171"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot can't review bot-authored pull requests automatically. A user with Copilot access can request a review manually.",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "ado:35323:8:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-14T11:04:23.693Z",
+      "observedAt": "2026-07-14T11:04:23.693Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/redisenterprise/armredisenterprise/v4",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35323",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35323"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35323:8:Custom.SDKPullRequestForGo",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-14T11:04:23.693Z",
+      "observedAt": "2026-07-14T11:04:23.693Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/redisenterprise/armredisenterprise/v4",
+      "value": "https://github.com/Azure/azure-sdk-for-go/pull/27179",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35323",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35323"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27179:comment:4968458292:sdk:Go:sdk/resourcemanager/redisenterprise/armredisenterprise/v4",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-14T11:04:46Z",
+      "observedAt": "2026-07-14T11:04:46Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/redisenterprise/armredisenterprise/v4",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27179",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27179#issuecomment-4968458292"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 6 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48041:commit:57cdbe8eec18:sdk:Python:azure-mgmt-redisenterprise",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-14T11:05:01Z",
+      "observedAt": "2026-07-14T11:05:01Z",
+      "trackId": "sdk:Python:azure-mgmt-redisenterprise",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48041",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/57cdbe8eec18dfbcf2440726b3a2405cd1d4b75e"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48041:pr.created:sdk:Python:azure-mgmt-redisenterprise",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-14T11:05:06Z",
+      "observedAt": "2026-07-14T11:05:06Z",
+      "trackId": "sdk:Python:azure-mgmt-redisenterprise",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48041",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48041"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48041:review:4693642792:sdk:Python:azure-mgmt-redisenterprise",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-14T11:05:08Z",
+      "observedAt": "2026-07-14T11:05:08Z",
+      "trackId": "sdk:Python:azure-mgmt-redisenterprise",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48041",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48041#pullrequestreview-4693642792"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot can't review bot-authored pull requests automatically. A user with Copilot access can request a review manually.",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "ado:35323:9:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-14T11:05:12.487Z",
+      "observedAt": "2026-07-14T11:05:12.487Z",
+      "trackId": "sdk:Python:azure-mgmt-redisenterprise",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35323",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35323"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35323:9:Custom.SDKPullRequestForPython",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-14T11:05:12.487Z",
+      "observedAt": "2026-07-14T11:05:12.487Z",
+      "trackId": "sdk:Python:azure-mgmt-redisenterprise",
+      "value": "https://github.com/Azure/azure-sdk-for-python/pull/48041",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35323",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35323"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6559279:generation.completed:sdk:Go:sdk/resourcemanager/redisenterprise/armredisenterprise/v4",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-07-14T11:05:21.3460924Z",
+      "observedAt": "2026-07-14T11:05:21.3460924Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/redisenterprise/armredisenterprise/v4",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6559279",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6559279"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48041:comment:4968465805:sdk:Python:azure-mgmt-redisenterprise",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-14T11:05:41Z",
+      "observedAt": "2026-07-14T11:05:41Z",
+      "trackId": "sdk:Python:azure-mgmt-redisenterprise",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48041",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48041#issuecomment-4968465805"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 9 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6559277:generation.completed:sdk:Python:azure-mgmt-redisenterprise",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-07-14T11:06:08.1448692Z",
+      "observedAt": "2026-07-14T11:06:08.1448692Z",
+      "trackId": "sdk:Python:azure-mgmt-redisenterprise",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6559277",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6559277"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39270:commit:30d4fb4f59b8:sdk:JavaScript:@azure/arm-redisenterprisecache",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-14T11:06:14Z",
+      "observedAt": "2026-07-14T11:06:14Z",
+      "trackId": "sdk:JavaScript:@azure/arm-redisenterprisecache",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39270",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/30d4fb4f59b877fe147fd850554a7a2380e11040"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39270:pr.created:sdk:JavaScript:@azure/arm-redisenterprisecache",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-14T11:06:19Z",
+      "observedAt": "2026-07-14T11:06:19Z",
+      "trackId": "sdk:JavaScript:@azure/arm-redisenterprisecache",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39270",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39270"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39270:review:4693650873:sdk:JavaScript:@azure/arm-redisenterprisecache",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-14T11:06:21Z",
+      "observedAt": "2026-07-14T11:06:21Z",
+      "trackId": "sdk:JavaScript:@azure/arm-redisenterprisecache",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39270",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39270#pullrequestreview-4693650873"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot can't review bot-authored pull requests automatically. A user with Copilot access can request a review manually.",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "ado:35323:10:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-14T11:06:25.003Z",
+      "observedAt": "2026-07-14T11:06:25.003Z",
+      "trackId": "sdk:JavaScript:@azure/arm-redisenterprisecache",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35323",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35323"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35323:10:Custom.SDKPullRequestForJavaScript",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-14T11:06:25.003Z",
+      "observedAt": "2026-07-14T11:06:25.003Z",
+      "trackId": "sdk:JavaScript:@azure/arm-redisenterprisecache",
+      "value": "https://github.com/Azure/azure-sdk-for-js/pull/39270",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35323",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35323"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39270:comment:4968475485:sdk:JavaScript:@azure/arm-redisenterprisecache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-14T11:06:50Z",
+      "observedAt": "2026-07-14T11:06:50Z",
+      "trackId": "sdk:JavaScript:@azure/arm-redisenterprisecache",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39270",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39270#issuecomment-4968475485"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 9 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6559280:generation.completed:sdk:JavaScript:@azure/arm-redisenterprisecache",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-07-14T11:07:20.1199911Z",
+      "observedAt": "2026-07-14T11:07:20.1199911Z",
+      "trackId": "sdk:JavaScript:@azure/arm-redisenterprisecache",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6559280",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6559280"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49805:commit:ddf00cc3c49a:sdk:Java:azure-resourcemanager-redisenterprise",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-14T11:07:40Z",
+      "observedAt": "2026-07-14T11:07:40Z",
+      "trackId": "sdk:Java:azure-resourcemanager-redisenterprise",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49805",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/ddf00cc3c49a8c2052f2ef7ae98ef2520bd686be"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49805:pr.created:sdk:Java:azure-resourcemanager-redisenterprise",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-14T11:07:45Z",
+      "observedAt": "2026-07-14T11:07:45Z",
+      "trackId": "sdk:Java:azure-resourcemanager-redisenterprise",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49805",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49805"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49805:review:4693660127:sdk:Java:azure-resourcemanager-redisenterprise",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-14T11:07:48Z",
+      "observedAt": "2026-07-14T11:07:48Z",
+      "trackId": "sdk:Java:azure-resourcemanager-redisenterprise",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49805",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49805#pullrequestreview-4693660127"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot can't review bot-authored pull requests automatically. A user with Copilot access can request a review manually.",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "ado:35323:11:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-14T11:07:51.073Z",
+      "observedAt": "2026-07-14T11:07:51.073Z",
+      "trackId": "sdk:Java:azure-resourcemanager-redisenterprise",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35323",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35323"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35323:11:Custom.SDKPullRequestForJava",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-14T11:07:51.073Z",
+      "observedAt": "2026-07-14T11:07:51.073Z",
+      "trackId": "sdk:Java:azure-resourcemanager-redisenterprise",
+      "value": "https://github.com/Azure/azure-sdk-for-java/pull/49805",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35323",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35323"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49805:comment:4968489353:sdk:Java:azure-resourcemanager-redisenterprise",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-14T11:08:28Z",
+      "observedAt": "2026-07-14T11:08:28Z",
+      "trackId": "sdk:Java:azure-resourcemanager-redisenterprise",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49805",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49805#issuecomment-4968489353"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 36 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6559278:generation.completed:sdk:Java:azure-resourcemanager-redisenterprise",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-07-14T11:17:57.242098Z",
+      "observedAt": "2026-07-14T11:17:57.242098Z",
+      "trackId": "sdk:Java:azure-resourcemanager-redisenterprise",
+      "title": "Pipeline completed with issues",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6559278",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6559278"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39270:comment:4968662007:sdk:JavaScript:@azure/arm-redisenterprisecache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-14T11:30:35Z",
+      "observedAt": "2026-07-14T11:30:35Z",
+      "trackId": "sdk:JavaScript:@azure/arm-redisenterprisecache",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39270",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39270#issuecomment-4968662007"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Next Steps to Merge ✅ All CI checks have passed — this PR is ready for review! The SDK engineer will review this PR shortly. Once it's approved, you can go ahead and merge it. To make things easier, feel free to [enable auto-merge](https",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48041:comment:4968703684:sdk:Python:azure-mgmt-redisenterprise",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-14T11:35:36Z",
+      "observedAt": "2026-07-14T11:35:36Z",
+      "trackId": "sdk:Python:azure-mgmt-redisenterprise",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "koderjoker"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48041",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48041#issuecomment-4968703684"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @msyyc and @ChenxiJiang333 we want to highlight in the changelog not to use the 2 preceding Python SDK releases (they were released with a bug in our preview api spec, which we have corrected now in the June preview api version)",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27179:comment:4968745821:sdk:Go:sdk/resourcemanager/redisenterprise/armredisenterprise/v4",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-14T11:41:09Z",
+      "observedAt": "2026-07-14T11:41:09Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/redisenterprise/armredisenterprise/v4",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "koderjoker"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27179",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27179#issuecomment-4968745821"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @lirenhe @tadelesh @JiaqiZhang-Dev we want to highlight in the changelog not to use the preceding Go SDK release (it was released with a bug in our preview api spec, which we have corrected now in the June preview api version)",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49805:review:4694114706:sdk:Java:azure-resourcemanager-redisenterprise",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-14T12:13:18Z",
+      "observedAt": "2026-07-14T12:13:18Z",
+      "trackId": "sdk:Java:azure-resourcemanager-redisenterprise",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49805",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49805#pullrequestreview-4694114706"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49805:review:4698801156:sdk:Java:azure-resourcemanager-redisenterprise",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-14T21:51:09Z",
+      "observedAt": "2026-07-14T21:51:09Z",
+      "trackId": "sdk:Java:azure-resourcemanager-redisenterprise",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "marianor"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49805",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49805#pullrequestreview-4698801156"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48041:commit:ba299f103a1b:sdk:Python:azure-mgmt-redisenterprise",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-14T21:58:57Z",
+      "observedAt": "2026-07-14T21:58:57Z",
+      "trackId": "sdk:Python:azure-mgmt-redisenterprise",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "marianor"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48041",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/ba299f103a1b0decd122311018ca7b4b347461cd"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27179:comment:4975721231:sdk:Go:sdk/resourcemanager/redisenterprise/armredisenterprise/v4",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-15T01:05:05Z",
+      "observedAt": "2026-07-15T01:05:05Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/redisenterprise/armredisenterprise/v4",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27179",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27179#issuecomment-4975721231"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## PR is ready to merge",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49805:pr.merged:sdk:Java:azure-resourcemanager-redisenterprise",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-15T02:38:59Z",
+      "observedAt": "2026-07-15T02:38:59Z",
+      "trackId": "sdk:Java:azure-resourcemanager-redisenterprise",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49805",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49805"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48041:comment:4976360785:sdk:Python:azure-mgmt-redisenterprise",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-15T02:48:01Z",
+      "observedAt": "2026-07-15T02:48:01Z",
+      "trackId": "sdk:Python:azure-mgmt-redisenterprise",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48041",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48041#issuecomment-4976360785"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@copilot+claude-opus-4.8 update CHANGELOG.md as declared by https://github.com/Azure/azure-sdk-for-python/pull/48041#issuecomment-4968703684",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48041:commit:e07640e49073:sdk:Python:azure-mgmt-redisenterprise",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-15T02:50:28Z",
+      "observedAt": "2026-07-15T02:50:28Z",
+      "trackId": "sdk:Python:azure-mgmt-redisenterprise",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48041",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/e07640e4907324b473cc98797626c47d143f08e5"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48041:comment:4976374090:sdk:Python:azure-mgmt-redisenterprise",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-15T02:50:54Z",
+      "observedAt": "2026-07-15T02:50:54Z",
+      "trackId": "sdk:Python:azure-mgmt-redisenterprise",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48041",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48041#issuecomment-4976374090"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> @copilot+claude-opus-4.8 update CHANGELOG.md as declared by https://github.com/Azure/azure-sdk-for-python/pull/48041#issuecomment-4968703684 Updated CHANGELOG.md — added an \"Other Changes\" note under `4.0.0b3` advising users not to use `4",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48041:commit:8467c5e7279f:sdk:Python:azure-mgmt-redisenterprise",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-15T02:51:30Z",
+      "observedAt": "2026-07-15T02:51:30Z",
+      "trackId": "sdk:Python:azure-mgmt-redisenterprise",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48041",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/8467c5e7279f0b13337120077a0265327b15580b"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48041:review:4700449536:sdk:Python:azure-mgmt-redisenterprise",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-15T02:53:11Z",
+      "observedAt": "2026-07-15T02:53:11Z",
+      "trackId": "sdk:Python:azure-mgmt-redisenterprise",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48041",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48041#pullrequestreview-4700449536"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48041:comment:3584145754:sdk:Python:azure-mgmt-redisenterprise",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-15T02:53:11Z",
+      "observedAt": "2026-07-15T02:53:11Z",
+      "trackId": "sdk:Python:azure-mgmt-redisenterprise",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48041",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48041#discussion_r3584145754"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@ChenxiJiang333 pls help optimize the changelog declaration for some items.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48041:review:4700467594:sdk:Python:azure-mgmt-redisenterprise",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-15T02:56:35Z",
+      "observedAt": "2026-07-15T02:56:35Z",
+      "trackId": "sdk:Python:azure-mgmt-redisenterprise",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48041",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48041#pullrequestreview-4700467594"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48041:comment:3584159542:sdk:Python:azure-mgmt-redisenterprise",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-15T02:56:35Z",
+      "observedAt": "2026-07-15T02:56:35Z",
+      "trackId": "sdk:Python:azure-mgmt-redisenterprise",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48041",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48041#discussion_r3584159542"
+      },
+      "confidence": "authoritative",
+      "excerpt": "got it",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48041:comment:4976425741:sdk:Python:azure-mgmt-redisenterprise",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-15T02:59:17Z",
+      "observedAt": "2026-07-15T02:59:17Z",
+      "trackId": "sdk:Python:azure-mgmt-redisenterprise",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48041",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48041#issuecomment-4976425741"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi, the new api version `2026-06-01-preview` seems not deployed on portal yet, we recommend making sure the api version to be deployed before releasing the SDK, though we won't block the release in self-serve release flow.",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48041:comment:4976427900:sdk:Python:azure-mgmt-redisenterprise",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-15T02:59:43Z",
+      "observedAt": "2026-07-15T02:59:43Z",
+      "trackId": "sdk:Python:azure-mgmt-redisenterprise",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48041",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48041#issuecomment-4976427900"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @koderjoker, we have approved the PR and we will hold the PR merge and release until you explicitly ping us to merge then release.",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48041:commit:c8c549084411:sdk:Python:azure-mgmt-redisenterprise",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-15T03:06:21Z",
+      "observedAt": "2026-07-15T03:06:21Z",
+      "trackId": "sdk:Python:azure-mgmt-redisenterprise",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48041",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/c8c5490844114bba6915b17a97bf3fa3604b9c4d"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48041:review:4700544639:sdk:Python:azure-mgmt-redisenterprise",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-15T03:10:12Z",
+      "observedAt": "2026-07-15T03:10:12Z",
+      "trackId": "sdk:Python:azure-mgmt-redisenterprise",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48041",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48041#pullrequestreview-4700544639"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27179:comment:4978718794:sdk:Go:sdk/resourcemanager/redisenterprise/armredisenterprise/v4",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-15T08:52:01Z",
+      "observedAt": "2026-07-15T08:52:01Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/redisenterprise/armredisenterprise/v4",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "JiaqiZhang-Dev"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27179",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27179#issuecomment-4978718794"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @koderjoker, could you help confirm if the `4.0.0-beta.1` version has a bug? Since this is a beta version, when there is a new beta release, it usually means the previous version is deprecated, so the changelog may not need to update.",
+      "stack": 1
+    },
+    {
+      "id": "ado:35323:12:Custom.ReleaseStatusForJavaScript",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-07-16T05:57:14.503Z",
+      "observedAt": "2026-07-16T05:57:14.503Z",
+      "trackId": "sdk:JavaScript:@azure/arm-redisenterprisecache",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35323",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35323"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35323:12:Custom.ReleasedVersionForJavaScript",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-07-16T05:57:14.503Z",
+      "observedAt": "2026-07-16T05:57:14.503Z",
+      "trackId": "sdk:JavaScript:@azure/arm-redisenterprisecache",
+      "value": "5.0.0-beta.2",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35323",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35323"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27179:comment:4999617210:sdk:Go:sdk/resourcemanager/redisenterprise/armredisenterprise/v4",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-17T06:17:28Z",
+      "observedAt": "2026-07-17T06:17:28Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/redisenterprise/armredisenterprise/v4",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "koderjoker"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27179",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27179#issuecomment-4999617210"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @JiaqiZhang-Dev yes the api spec which would have generated the that Go SDK had a bug in the operation id. We've updated the Python CHANGELOG similarly https://github.com/Azure/azure-sdk-for-python/pull/48041, just to be safe could we me",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27179:comment:5018473547:sdk:Go:sdk/resourcemanager/redisenterprise/armredisenterprise/v4",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-20T03:23:20Z",
+      "observedAt": "2026-07-20T03:23:20Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/redisenterprise/armredisenterprise/v4",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "tadelesh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27179",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27179#issuecomment-5018473547"
+      },
+      "confidence": "authoritative",
+      "excerpt": "If you think the previous version should not be used anymore. You could retract that version with current release. If OK, just ask copilot to do so in this PR.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27179:review:4740840873:sdk:Go:sdk/resourcemanager/redisenterprise/armredisenterprise/v4",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-21T02:59:34Z",
+      "observedAt": "2026-07-21T02:59:34Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/redisenterprise/armredisenterprise/v4",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "tadelesh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27179",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27179#pullrequestreview-4740840873"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "ado:35323:13:Custom.ReleaseStatusForJava",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-07-22T03:55:33.243Z",
+      "observedAt": "2026-07-22T03:55:33.243Z",
+      "trackId": "sdk:Java:azure-resourcemanager-redisenterprise",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35323",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35323"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35323:13:Custom.ReleasedVersionForJava",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-07-22T03:55:33.243Z",
+      "observedAt": "2026-07-22T03:55:33.243Z",
+      "trackId": "sdk:Java:azure-resourcemanager-redisenterprise",
+      "value": "2.2.0-beta.1",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35323",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35323"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39270:review:4816406185:sdk:JavaScript:@azure/arm-redisenterprisecache",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-30T07:29:21Z",
+      "observedAt": "2026-07-30T07:29:21Z",
+      "trackId": "sdk:JavaScript:@azure/arm-redisenterprisecache",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39270",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39270#pullrequestreview-4816406185"
+      },
+      "confidence": "authoritative",
+      "excerpt": "No API design issues found. The public API surface for `@azure/arm-redisenterprisecache` `5.0.0-beta.2` looks clean: - **API version** upgraded from `2026-02-01-preview` to `2026-06-01-preview` (strictly newer ✓) - **CHANGELOG baseline** co",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39270:commit:bd019616adb0:sdk:JavaScript:@azure/arm-redisenterprisecache",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-03T07:55:27Z",
+      "observedAt": "2026-08-03T07:55:27Z",
+      "trackId": "sdk:JavaScript:@azure/arm-redisenterprisecache",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39270",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/bd019616adb07c6e996ae6719ef347e0d9c131c0"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39270:commit:b444c3f63740:sdk:JavaScript:@azure/arm-redisenterprisecache",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-03T08:06:09Z",
+      "observedAt": "2026-08-03T08:06:09Z",
+      "trackId": "sdk:JavaScript:@azure/arm-redisenterprisecache",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39270",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/b444c3f63740126e026f9521a2cd238a5dbff59e"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39270:review:4841957904:sdk:JavaScript:@azure/arm-redisenterprisecache",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-03T08:06:46Z",
+      "observedAt": "2026-08-03T08:06:46Z",
+      "trackId": "sdk:JavaScript:@azure/arm-redisenterprisecache",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39270",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39270#pullrequestreview-4841957904"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Copilot reviewed 152 out of 152 changed files in this pull request and generated no new comments. <details> <summary>Suppressed comments (2)</summary> **sdk/redisenterprise/arm-redisenterprisecache/src/models/models",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39270:review:4841974563:sdk:JavaScript:@azure/arm-redisenterprisecache",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-03T08:08:39Z",
+      "observedAt": "2026-08-03T08:08:39Z",
+      "trackId": "sdk:JavaScript:@azure/arm-redisenterprisecache",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39270",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39270#pullrequestreview-4841974563"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Copilot reviewed 152 out of 152 changed files in this pull request and generated no new comments. <details> <summary>Suppressed comments (5)</summary> **sdk/redisenterprise/arm-redisenterprisecache/src/classic/migra",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39270:comment:5163983217:sdk:JavaScript:@azure/arm-redisenterprisecache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-03T08:21:59Z",
+      "observedAt": "2026-08-03T08:21:59Z",
+      "trackId": "sdk:JavaScript:@azure/arm-redisenterprisecache",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39270",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39270#issuecomment-5163983217"
+      },
+      "confidence": "authoritative",
+      "excerpt": "LGTM cc @JialinHuang803",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39270:comment:5164020513:sdk:JavaScript:@azure/arm-redisenterprisecache",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-03T08:26:07Z",
+      "observedAt": "2026-08-03T08:26:07Z",
+      "trackId": "sdk:JavaScript:@azure/arm-redisenterprisecache",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39270",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39270#issuecomment-5164020513"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Next Steps to Merge ✅ All CI checks have passed — this PR is ready for review! The SDK engineer will review this PR shortly. Once it's approved, you can go ahead and merge it. To make things easier, feel free to [enable auto-merge](https",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39270:review:4849771976:sdk:JavaScript:@azure/arm-redisenterprisecache",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-04T01:19:07Z",
+      "observedAt": "2026-08-04T01:19:07Z",
+      "trackId": "sdk:JavaScript:@azure/arm-redisenterprisecache",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "JialinHuang803"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39270",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39270#pullrequestreview-4849771976"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    }
+  ],
+  "quality": {
+    "warnings": [
+      "3 historical linked PR(s) closed without merge"
+    ],
+    "unavailablePullRequests": 0,
+    "unavailablePipelineRuns": 0
+  },
+  "boundaryFacts": {
+    "id": "35323",
+    "state": "in-progress",
+    "specPrs": [
+      {
+        "id": "github:Azure/azure-rest-api-specs#44373",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#44373",
+        "createdAt": "2026-07-01T21:29:20Z",
+        "mergedAt": "2026-07-14T00:36:13Z",
+        "closedAt": "2026-07-14T00:36:13Z",
+        "available": true
+      }
+    ],
+    "artifacts": [
+      {
+        "language": "JavaScript",
+        "package": "@azure/arm-redisenterprisecache",
+        "trackId": "sdk:JavaScript:@azure/arm-redisenterprisecache",
+        "prId": "github:Azure/azure-sdk-for-js#39270",
+        "prCreatedAt": "2026-07-14T11:06:19Z",
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-js#39270",
+            "createdAt": "2026-07-14T11:06:19Z",
+            "mergedAt": null,
+            "closedAt": null,
+            "state": "open"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6559280",
+        "generationStartAt": "2026-07-14T10:59:42.8793542Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-07-16T05:57:14.503Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "5.0.0-beta.2",
+        "releaseBoundaryAt": "2026-07-16T05:57:14.503Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Python",
+        "package": "azure-mgmt-redisenterprise",
+        "trackId": "sdk:Python:azure-mgmt-redisenterprise",
+        "prId": "github:Azure/azure-sdk-for-python#48041",
+        "prCreatedAt": "2026-07-14T11:05:06Z",
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-python#48041",
+            "createdAt": "2026-07-14T11:05:06Z",
+            "mergedAt": null,
+            "closedAt": null,
+            "state": "open"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6559277",
+        "generationStartAt": "2026-07-14T10:59:05.2809244Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Java",
+        "package": "azure-resourcemanager-redisenterprise",
+        "trackId": "sdk:Java:azure-resourcemanager-redisenterprise",
+        "prId": "github:Azure/azure-sdk-for-java#49805",
+        "prCreatedAt": "2026-07-14T11:07:45Z",
+        "prMergedAt": "2026-07-15T02:38:59Z",
+        "prClosedAt": "2026-07-15T02:38:59Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-java#49805",
+            "createdAt": "2026-07-14T11:07:45Z",
+            "mergedAt": "2026-07-15T02:38:59Z",
+            "closedAt": "2026-07-15T02:38:59Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6559278",
+        "generationStartAt": "2026-07-14T10:59:14.0260478Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-07-22T03:55:33.243Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "2.2.0-beta.1",
+        "releaseBoundaryAt": "2026-07-22T03:55:33.243Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Go",
+        "package": "sdk/resourcemanager/redisenterprise/armredisenterprise/v4",
+        "trackId": "sdk:Go:sdk/resourcemanager/redisenterprise/armredisenterprise/v4",
+        "prId": "github:Azure/azure-sdk-for-go#27179",
+        "prCreatedAt": "2026-07-14T11:04:17Z",
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-go#27179",
+            "createdAt": "2026-07-14T11:04:17Z",
+            "mergedAt": null,
+            "closedAt": null,
+            "state": "open"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6559279",
+        "generationStartAt": "2026-07-14T10:59:26.8917811Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      }
+    ],
+    "cohortPlan": {
+      "id": "35323",
+      "releasePlanId": "35323",
+      "title": "Public Preview release plan for RedisEnterprise",
+      "service": "RedisEnterprise",
+      "state": "in-progress"
+    },
+    "quality": {
+      "warnings": [
+        "3 historical linked PR(s) closed without merge"
+      ],
+      "unavailablePullRequests": 0,
+      "unavailablePipelineRuns": 0
+    }
+  },
+  "summary": {
+    "durationHours": 733.8,
+    "pullRequestCount": 5,
+    "humanReviewCount": 9,
+    "humanCommentCount": 12
+  }
+}

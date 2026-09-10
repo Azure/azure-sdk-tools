@@ -1,0 +1,3893 @@
+{
+  "schemaVersion": 2,
+  "id": "33710",
+  "correlation": {
+    "policyVersion": 1,
+    "preflight": "passed"
+  },
+  "releasePlanId": "2154",
+  "title": "Release Plan - 2154 - GA - Vaulted backup for Azure blobs",
+  "service": "Vaulted backup for Azure blobs",
+  "product": "Release",
+  "path": "specification/dataprotection/resource-manager/Microsoft.DataProtection/DataProtection",
+  "state": "finished",
+  "plane": "management",
+  "releaseType": "APEX GA",
+  "intendedMonth": "May 2026",
+  "createdAt": "2026-04-01T06:09:24.407Z",
+  "completedAt": "2026-06-15T15:02:07.733Z",
+  "sourceUrl": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33710",
+  "range": {
+    "start": "2026-02-13T03:11:27.000Z",
+    "end": "2026-06-15T15:02:07.733Z"
+  },
+  "intendedArtifacts": [
+    {
+      "prId": "github:Azure/azure-sdk-for-net#57681",
+      "language": ".NET",
+      "package": "Azure.ResourceManager.DataProtectionBackup",
+      "version": "1.8.0",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6095429",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-js#37934",
+      "language": "JavaScript",
+      "package": "@azure/arm-dataprotection",
+      "version": null,
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6095430",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-python#46064",
+      "language": "Python",
+      "package": "azure-mgmt-dataprotection",
+      "version": null,
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6095431",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-java#48666",
+      "language": "Java",
+      "package": "azure-resourcemanager-dataprotection",
+      "version": "1.6.0-beta.1",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6095432",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-go#26477",
+      "language": "Go",
+      "package": "sdk/resourcemanager/dataprotection/armdataprotection",
+      "version": null,
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6095434",
+      "releasePipelineUrl": null
+    }
+  ],
+  "links": [
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#40422",
+      "role": "spec-pr",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/40422",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-net#57681",
+      "role": "sdk-pr",
+      "language": ".NET",
+      "url": "https://github.com/Azure/azure-sdk-for-net/pull/57681",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-js#37934",
+      "role": "sdk-pr",
+      "language": "JavaScript",
+      "url": "https://github.com/Azure/azure-sdk-for-js/pull/37934",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-python#46064",
+      "role": "sdk-pr",
+      "language": "Python",
+      "url": "https://github.com/Azure/azure-sdk-for-python/pull/46064",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-java#48666",
+      "role": "sdk-pr",
+      "language": "Java",
+      "url": "https://github.com/Azure/azure-sdk-for-java/pull/48666",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-go#26477",
+      "role": "sdk-pr",
+      "language": "Go",
+      "url": "https://github.com/Azure/azure-sdk-for-go/pull/26477",
+      "releasePlanIds": []
+    }
+  ],
+  "tracks": [
+    {
+      "id": "plan",
+      "kind": "plan",
+      "label": "Release Plan",
+      "detail": "APEX GA"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#40422",
+      "kind": "spec",
+      "label": "Spec PR",
+      "detail": "azure-rest-api-specs #40422",
+      "artifactId": "github:Azure/azure-rest-api-specs#40422",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "kind": "sdk",
+      "label": ".NET",
+      "detail": "Azure.ResourceManager.DataProtectionBackup",
+      "artifactId": "github:Azure/azure-sdk-for-net#57681",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:JavaScript:@azure/arm-dataprotection",
+      "kind": "sdk",
+      "label": "JavaScript",
+      "detail": "@azure/arm-dataprotection",
+      "artifactId": "github:Azure/azure-sdk-for-js#37934",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Python:azure-mgmt-dataprotection",
+      "kind": "sdk",
+      "label": "Python",
+      "detail": "azure-mgmt-dataprotection",
+      "artifactId": "github:Azure/azure-sdk-for-python#46064",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Java:azure-resourcemanager-dataprotection",
+      "kind": "sdk",
+      "label": "Java",
+      "detail": "azure-resourcemanager-dataprotection",
+      "artifactId": "github:Azure/azure-sdk-for-java#48666",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Go:sdk/resourcemanager/dataprotection/armdataprotection",
+      "kind": "sdk",
+      "label": "Go",
+      "detail": "sdk/resourcemanager/dataprotection/armdataprotection",
+      "artifactId": "github:Azure/azure-sdk-for-go#26477",
+      "state": "merged"
+    }
+  ],
+  "events": [
+    {
+      "id": "github:Azure/azure-rest-api-specs#40422:pr.created:spec:github:Azure/azure-rest-api-specs#40422",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-13T03:11:27Z",
+      "observedAt": "2026-02-13T03:11:27Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40422",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "Komla-Ansah"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40422",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40422"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40422:comment:3894571179:spec:github:Azure/azure-rest-api-specs#40422",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-13T03:11:50Z",
+      "observedAt": "2026-02-13T03:11:50Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40422",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40422",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40422#issuecomment-3894571179"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>✅ All automated merging requirements have been met! To get your PR merged, see <a href=\"https://aka.ms/azsdk/specreview/merge\">aka.ms/azsdk/specreview/merge</a>.<br /><br />Comment generated by <a href=\"https://g",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40422:comment:3894579790:spec:github:Azure/azure-rest-api-specs#40422",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-13T03:15:36Z",
+      "observedAt": "2026-02-13T03:15:36Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40422",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40422",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40422#issuecomment-3894579790"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews | Language | API Review for Package | |----------|---------| | Swagger | [Microsoft.DataProtection-DataProtection](https://apiview.dev",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40422:commit:86b70a7ff6bb:spec:github:Azure/azure-rest-api-specs#40422",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-14T00:36:41Z",
+      "observedAt": "2026-02-14T00:36:41Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40422",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40422",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/86b70a7ff6bbfaf7097310966c65d261fce2410a"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40422:comment:3900422480:spec:github:Azure/azure-rest-api-specs#40422",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-14T01:50:21Z",
+      "observedAt": "2026-02-14T01:50:21Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40422",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "Komla-Ansah"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40422",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40422#issuecomment-3900422480"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@microsoft-github-policy-service agree company=\"Microsoft\"",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40422:commit:20c0a5936370:spec:github:Azure/azure-rest-api-specs#40422",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-17T21:49:30Z",
+      "observedAt": "2026-02-17T21:49:30Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40422",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40422",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/20c0a5936370c67bb2cec6b05fa5d6a12f15ebb5"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40422:commit:47ab58e7da93:spec:github:Azure/azure-rest-api-specs#40422",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-17T23:08:40Z",
+      "observedAt": "2026-02-17T23:08:40Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40422",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40422",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/47ab58e7da93ce08c89a1ec102736a56f5ba4a7b"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40422:commit:f00090ab4a5b:spec:github:Azure/azure-rest-api-specs#40422",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-17T23:28:16Z",
+      "observedAt": "2026-02-17T23:28:16Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40422",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "Komla-Ansah"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40422",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/f00090ab4a5bb73ec4983084ad4f7b8676642926"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40422:commit:3b8d5077d99c:spec:github:Azure/azure-rest-api-specs#40422",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-20T17:25:06Z",
+      "observedAt": "2026-02-20T17:25:06Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40422",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "Komla-Ansah"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40422",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/3b8d5077d99c11e08af614dc289438440d87ae2f"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40422:review:3834486161:spec:github:Azure/azure-rest-api-specs#40422",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-20T22:32:22Z",
+      "observedAt": "2026-02-20T22:32:22Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40422",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "IannGeorges"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40422",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40422#pullrequestreview-3834486161"
+      },
+      "confidence": "authoritative",
+      "excerpt": "lgtm, signing off from blob/adls backup data protection team",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40422:commit:863b373f8d68:spec:github:Azure/azure-rest-api-specs#40422",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-23T05:10:36Z",
+      "observedAt": "2026-02-23T05:10:36Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40422",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "Komla-Ansah"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40422",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/863b373f8d68b6c6907577b5b2fc2c8e1808f6c7"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40422:comment:2871154977:spec:github:Azure/azure-rest-api-specs#40422",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-02T08:36:16Z",
+      "observedAt": "2026-03-02T08:36:16Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40422",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "hiaga"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40422",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40422#discussion_r2871154977"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Both of these fields are being marked as required, is that expected ?",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40422:comment:2871347948:spec:github:Azure/azure-rest-api-specs#40422",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-02T09:24:25Z",
+      "observedAt": "2026-03-02T09:24:25Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40422",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "hiaga"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40422",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40422#discussion_r2871347948"
+      },
+      "confidence": "authoritative",
+      "excerpt": "all fields getting marked as required, is that expected ?",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40422:comment:2871417279:spec:github:Azure/azure-rest-api-specs#40422",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-02T09:40:00Z",
+      "observedAt": "2026-03-02T09:40:00Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40422",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "hiaga"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40422",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40422#discussion_r2871417279"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Object type not getting defined properly",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40422:review:3874759804:spec:github:Azure/azure-rest-api-specs#40422",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-02T12:46:42Z",
+      "observedAt": "2026-03-02T12:46:42Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40422",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "hiaga"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40422",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40422#pullrequestreview-3874759804"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40422:commit:7d75a13f9698:spec:github:Azure/azure-rest-api-specs#40422",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-05T20:34:32Z",
+      "observedAt": "2026-03-05T20:34:32Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40422",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40422",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/7d75a13f96981510a3d717a83d72c783786b7945"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40422:commit:e9e38ea0162e:spec:github:Azure/azure-rest-api-specs#40422",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-05T20:36:08Z",
+      "observedAt": "2026-03-05T20:36:08Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40422",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40422",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/e9e38ea0162e9303b421f498d8d6533d7d958fa1"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40422:review:3951130126:spec:github:Azure/azure-rest-api-specs#40422",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-16T02:22:23Z",
+      "observedAt": "2026-03-16T02:22:23Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40422",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "Komla-Ansah"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40422",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40422#pullrequestreview-3951130126"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40422:comment:2937836827:spec:github:Azure/azure-rest-api-specs#40422",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-16T02:22:23Z",
+      "observedAt": "2026-03-16T02:22:23Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40422",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "Komla-Ansah"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40422",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40422#discussion_r2937836827"
+      },
+      "confidence": "authoritative",
+      "excerpt": "yes, this is expected as we have to specify the autoprotection settings",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40422:review:3951133094:spec:github:Azure/azure-rest-api-specs#40422",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-16T02:24:00Z",
+      "observedAt": "2026-03-16T02:24:00Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40422",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "Komla-Ansah"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40422",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40422#pullrequestreview-3951133094"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40422:comment:2937839858:spec:github:Azure/azure-rest-api-specs#40422",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-16T02:24:00Z",
+      "observedAt": "2026-03-16T02:24:00Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40422",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "Komla-Ansah"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40422",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40422#discussion_r2937839858"
+      },
+      "confidence": "authoritative",
+      "excerpt": "yes",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40422:comment:2937847364:spec:github:Azure/azure-rest-api-specs#40422",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-16T02:27:43Z",
+      "observedAt": "2026-03-16T02:27:43Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40422",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "Komla-Ansah"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40422",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40422#discussion_r2937847364"
+      },
+      "confidence": "authoritative",
+      "excerpt": "BlobBackupAutoProtectionRule is a concrete leaf model with no subtypes, so objectType is defined as a string literal to enforce the exact discriminator value at the schema level. This ensures only valid rule objects can be submitted and avo",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40422:review:3951142001:spec:github:Azure/azure-rest-api-specs#40422",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-16T02:27:44Z",
+      "observedAt": "2026-03-16T02:27:44Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40422",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "Komla-Ansah"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40422",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40422#pullrequestreview-3951142001"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40422:commit:3dd17453bd80:spec:github:Azure/azure-rest-api-specs#40422",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-16T02:36:45Z",
+      "observedAt": "2026-03-16T02:36:45Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40422",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40422",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/3dd17453bd80a3885f52d0d22210d8727953bcc3"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40422:commit:164706585ec7:spec:github:Azure/azure-rest-api-specs#40422",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-16T16:59:50Z",
+      "observedAt": "2026-03-16T16:59:50Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40422",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "Komla-Ansah"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40422",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/164706585ec77939d547145e24bf724048ed0fea"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40422:commit:71bbff347f26:spec:github:Azure/azure-rest-api-specs#40422",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-16T20:12:12Z",
+      "observedAt": "2026-03-16T20:12:12Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40422",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "Komla-Ansah"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40422",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/71bbff347f26365f24ee236dce2a43a65f6c1cd4"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40422:commit:b24d6eaca2f6:spec:github:Azure/azure-rest-api-specs#40422",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-16T22:29:38Z",
+      "observedAt": "2026-03-16T22:29:38Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40422",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40422",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/b24d6eaca2f6b1aae292bc6d2393a046bd6f9044"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40422:commit:fc68a3bb498a:spec:github:Azure/azure-rest-api-specs#40422",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-17T05:01:37Z",
+      "observedAt": "2026-03-17T05:01:37Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40422",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "Komla-Ansah"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40422",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/fc68a3bb498abd4bcda4afb527e0cf1efaf8acb8"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40422:commit:aefe2977899b:spec:github:Azure/azure-rest-api-specs#40422",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-17T19:39:49Z",
+      "observedAt": "2026-03-17T19:39:49Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40422",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40422",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/aefe2977899bae533ddefb25a9652ea73027e032"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40422:commit:da6ef42e3fe1:spec:github:Azure/azure-rest-api-specs#40422",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-17T19:40:23Z",
+      "observedAt": "2026-03-17T19:40:23Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40422",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40422",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/da6ef42e3fe199c60988653c2bb372324eb56ef0"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40422:review:3975165721:spec:github:Azure/azure-rest-api-specs#40422",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-19T13:34:19Z",
+      "observedAt": "2026-03-19T13:34:19Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40422",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "hiaga"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40422",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40422#pullrequestreview-3975165721"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40422:commit:8a7372567376:spec:github:Azure/azure-rest-api-specs#40422",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-19T14:02:13Z",
+      "observedAt": "2026-03-19T14:02:13Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40422",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "Komla-Ansah"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40422",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/8a73725673763de1124888c46e7ad96502b9e267"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40422:commit:173e0956fe34:spec:github:Azure/azure-rest-api-specs#40422",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-19T17:02:01Z",
+      "observedAt": "2026-03-19T17:02:01Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40422",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "Komla-Ansah"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40422",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/173e0956fe34edfcd9c56e9483ad7385012c4690"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40422:commit:812eab932ac1:spec:github:Azure/azure-rest-api-specs#40422",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-20T02:11:46Z",
+      "observedAt": "2026-03-20T02:11:46Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40422",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "Komla-Ansah"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40422",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/812eab932ac15660d0e2b816c96dad2fe84aafa3"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#40422:pr.merged:spec:github:Azure/azure-rest-api-specs#40422",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-20T03:38:09Z",
+      "observedAt": "2026-03-20T03:38:09Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40422",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#40422",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/40422"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:33710:created",
+      "type": "plan.created",
+      "phase": "plan",
+      "occurredAt": "2026-04-01T06:09:24.407Z",
+      "observedAt": "2026-04-01T06:09:24.407Z",
+      "trackId": "plan",
+      "title": "Release Plan created",
+      "confidence": "authoritative",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33710",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33710"
+      },
+      "stack": 0
+    },
+    {
+      "id": "ado:33710:1:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-04-01T06:09:24.407Z",
+      "observedAt": "2026-04-01T06:09:24.407Z",
+      "trackId": "plan",
+      "value": "New",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33710",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33710"
+      },
+      "title": "Plan state changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33710:1:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-01T06:09:24.407Z",
+      "observedAt": "2026-04-01T06:09:24.407Z",
+      "trackId": "plan",
+      "value": "Not Available",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33710",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33710"
+      },
+      "title": "Spec approval changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:33710:1:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T06:09:24.407Z",
+      "observedAt": "2026-04-01T06:09:24.407Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33710",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33710"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33710:1:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T06:09:24.407Z",
+      "observedAt": "2026-04-01T06:09:24.407Z",
+      "trackId": "sdk:JavaScript:@azure/arm-dataprotection",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33710",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33710"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33710:1:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T06:09:24.407Z",
+      "observedAt": "2026-04-01T06:09:24.407Z",
+      "trackId": "sdk:Python:azure-mgmt-dataprotection",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33710",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33710"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33710:1:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T06:09:24.407Z",
+      "observedAt": "2026-04-01T06:09:24.407Z",
+      "trackId": "sdk:Java:azure-resourcemanager-dataprotection",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33710",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33710"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33710:1:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T06:09:24.407Z",
+      "observedAt": "2026-04-01T06:09:24.407Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/dataprotection/armdataprotection",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33710",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33710"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33710:8:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-04-01T17:13:38.807Z",
+      "observedAt": "2026-04-01T17:13:38.807Z",
+      "trackId": "plan",
+      "value": "In Progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33710",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33710"
+      },
+      "title": "Plan state changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:33711:2:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-01T18:45:05.54Z",
+      "observedAt": "2026-04-01T18:45:05.54Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#40422",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/40422",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33711",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33711"
+      },
+      "title": "Spec PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado:33710:9:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T18:45:09.92Z",
+      "observedAt": "2026-04-01T18:45:09.92Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33710",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33710"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33710:9:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T18:45:09.92Z",
+      "observedAt": "2026-04-01T18:45:09.92Z",
+      "trackId": "sdk:JavaScript:@azure/arm-dataprotection",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33710",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33710"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33710:9:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T18:45:09.92Z",
+      "observedAt": "2026-04-01T18:45:09.92Z",
+      "trackId": "sdk:Python:azure-mgmt-dataprotection",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33710",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33710"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33710:9:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T18:45:09.92Z",
+      "observedAt": "2026-04-01T18:45:09.92Z",
+      "trackId": "sdk:Java:azure-resourcemanager-dataprotection",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33710",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33710"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33710:9:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T18:45:09.92Z",
+      "observedAt": "2026-04-01T18:45:09.92Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/dataprotection/armdataprotection",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33710",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33710"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33710:10:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-01T18:47:48.85Z",
+      "observedAt": "2026-04-01T18:47:48.85Z",
+      "trackId": "plan",
+      "value": "Approved",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33710",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33710"
+      },
+      "title": "Spec approval changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:33710:24:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T21:20:20.043Z",
+      "observedAt": "2026-04-01T21:20:20.043Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33710",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33710"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:33710:25:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T21:20:31.67Z",
+      "observedAt": "2026-04-01T21:20:31.67Z",
+      "trackId": "sdk:JavaScript:@azure/arm-dataprotection",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33710",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33710"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:33710:26:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T21:20:44.137Z",
+      "observedAt": "2026-04-01T21:20:44.137Z",
+      "trackId": "sdk:Python:azure-mgmt-dataprotection",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33710",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33710"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:33710:27:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T21:20:57.287Z",
+      "observedAt": "2026-04-01T21:20:57.287Z",
+      "trackId": "sdk:Java:azure-resourcemanager-dataprotection",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33710",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33710"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:33710:28:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T21:21:09.033Z",
+      "observedAt": "2026-04-01T21:21:09.033Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/dataprotection/armdataprotection",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33710",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33710"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26477:commit:bbb71582db2e:sdk:Go:sdk/resourcemanager/dataprotection/armdataprotection",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-01T21:28:08Z",
+      "observedAt": "2026-04-01T21:28:08Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/dataprotection/armdataprotection",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26477",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/bbb71582db2e51416e593e66026b560a056d3477"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26477:pr.created:sdk:Go:sdk/resourcemanager/dataprotection/armdataprotection",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-01T21:28:11Z",
+      "observedAt": "2026-04-01T21:28:11Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/dataprotection/armdataprotection",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26477",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26477"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:33710:29:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T21:28:19.48Z",
+      "observedAt": "2026-04-01T21:28:19.48Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/dataprotection/armdataprotection",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33710",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33710"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:33710:29:Custom.SDKPullRequestForGo",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T21:28:19.48Z",
+      "observedAt": "2026-04-01T21:28:19.48Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/dataprotection/armdataprotection",
+      "value": "https://github.com/Azure/azure-sdk-for-go/pull/26477",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33710",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33710"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57681:commit:65cff76954e1:sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-01T21:28:31Z",
+      "observedAt": "2026-04-01T21:28:31Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57681",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/65cff76954e1ca64646a049a32b635e68ade2112"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57681:pr.created:sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-01T21:28:35Z",
+      "observedAt": "2026-04-01T21:28:35Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57681",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57681"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:33710:30:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T21:28:45.717Z",
+      "observedAt": "2026-04-01T21:28:45.717Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33710",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33710"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:33710:30:Custom.SDKPullRequestForDotnet",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T21:28:45.717Z",
+      "observedAt": "2026-04-01T21:28:45.717Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "value": "https://github.com/Azure/azure-sdk-for-net/pull/57681",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33710",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33710"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48666:commit:7ee81bce9541:sdk:Java:azure-resourcemanager-dataprotection",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-01T21:31:55Z",
+      "observedAt": "2026-04-01T21:31:55Z",
+      "trackId": "sdk:Java:azure-resourcemanager-dataprotection",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48666",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/7ee81bce954189bc671583d41cf87b9c9d6cc266"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48666:pr.created:sdk:Java:azure-resourcemanager-dataprotection",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-01T21:31:59Z",
+      "observedAt": "2026-04-01T21:31:59Z",
+      "trackId": "sdk:Java:azure-resourcemanager-dataprotection",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48666",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48666"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:33710:31:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T21:32:06.933Z",
+      "observedAt": "2026-04-01T21:32:06.933Z",
+      "trackId": "sdk:Java:azure-resourcemanager-dataprotection",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33710",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33710"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:33710:31:Custom.SDKPullRequestForJava",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T21:32:06.933Z",
+      "observedAt": "2026-04-01T21:32:06.933Z",
+      "trackId": "sdk:Java:azure-resourcemanager-dataprotection",
+      "value": "https://github.com/Azure/azure-sdk-for-java/pull/48666",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33710",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33710"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37934:commit:27b8794c90fb:sdk:JavaScript:@azure/arm-dataprotection",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-01T21:32:28Z",
+      "observedAt": "2026-04-01T21:32:28Z",
+      "trackId": "sdk:JavaScript:@azure/arm-dataprotection",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37934",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/27b8794c90fb277070c0d680f995d82e2d1b4bdb"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37934:pr.created:sdk:JavaScript:@azure/arm-dataprotection",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-01T21:32:32Z",
+      "observedAt": "2026-04-01T21:32:32Z",
+      "trackId": "sdk:JavaScript:@azure/arm-dataprotection",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37934",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37934"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46064:commit:b6f1057ffc67:sdk:Python:azure-mgmt-dataprotection",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-01T21:32:35Z",
+      "observedAt": "2026-04-01T21:32:35Z",
+      "trackId": "sdk:Python:azure-mgmt-dataprotection",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46064",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/b6f1057ffc6775cf9245b28b9c6d85cc89b41871"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46064:pr.created:sdk:Python:azure-mgmt-dataprotection",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-01T21:32:38Z",
+      "observedAt": "2026-04-01T21:32:38Z",
+      "trackId": "sdk:Python:azure-mgmt-dataprotection",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46064",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46064"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:33710:32:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T21:32:39.16Z",
+      "observedAt": "2026-04-01T21:32:39.16Z",
+      "trackId": "sdk:JavaScript:@azure/arm-dataprotection",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33710",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33710"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:33710:32:Custom.SDKPullRequestForJavaScript",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T21:32:39.16Z",
+      "observedAt": "2026-04-01T21:32:39.16Z",
+      "trackId": "sdk:JavaScript:@azure/arm-dataprotection",
+      "value": "https://github.com/Azure/azure-sdk-for-js/pull/37934",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33710",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33710"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado:33710:33:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T21:32:45.81Z",
+      "observedAt": "2026-04-01T21:32:45.81Z",
+      "trackId": "sdk:Python:azure-mgmt-dataprotection",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33710",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33710"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:33710:33:Custom.SDKPullRequestForPython",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T21:32:45.81Z",
+      "observedAt": "2026-04-01T21:32:45.81Z",
+      "trackId": "sdk:Python:azure-mgmt-dataprotection",
+      "value": "https://github.com/Azure/azure-sdk-for-python/pull/46064",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33710",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33710"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26477:comment:4173096959:sdk:Go:sdk/resourcemanager/dataprotection/armdataprotection",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-01T21:33:44Z",
+      "observedAt": "2026-04-01T21:33:44Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/dataprotection/armdataprotection",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26477",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26477#issuecomment-4173096959"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews [sdk/resourcemanager/dataprotection/armdataprotection](https://spa.apiview.dev/review/e2570bf91cb7455383da253f3544b1e5?activeApiRevisi",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6095429:generation.queued:sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T21:42:29.0906529Z",
+      "observedAt": "2026-04-01T21:51:32.3450448Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6095429",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6095429"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:33710:34:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T21:42:32.96Z",
+      "observedAt": "2026-04-01T21:42:32.96Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33710",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33710"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6095430:generation.queued:sdk:JavaScript:@azure/arm-dataprotection",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T21:42:42.4246552Z",
+      "observedAt": "2026-04-01T21:54:50.4361504Z",
+      "trackId": "sdk:JavaScript:@azure/arm-dataprotection",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6095430",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6095430"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:33710:35:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T21:42:45.407Z",
+      "observedAt": "2026-04-01T21:42:45.407Z",
+      "trackId": "sdk:JavaScript:@azure/arm-dataprotection",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33710",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33710"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6095431:generation.queued:sdk:Python:azure-mgmt-dataprotection",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T21:42:54.2043056Z",
+      "observedAt": "2026-04-01T21:55:54.3710464Z",
+      "trackId": "sdk:Python:azure-mgmt-dataprotection",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6095431",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6095431"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:33710:36:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T21:42:56.29Z",
+      "observedAt": "2026-04-01T21:42:56.29Z",
+      "trackId": "sdk:Python:azure-mgmt-dataprotection",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33710",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33710"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6095432:generation.queued:sdk:Java:azure-resourcemanager-dataprotection",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T21:43:06.3821569Z",
+      "observedAt": "2026-04-01T22:03:06.1460331Z",
+      "trackId": "sdk:Java:azure-resourcemanager-dataprotection",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6095432",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6095432"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:33710:37:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T21:43:11.407Z",
+      "observedAt": "2026-04-01T21:43:11.407Z",
+      "trackId": "sdk:Java:azure-resourcemanager-dataprotection",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33710",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33710"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6095434:generation.queued:sdk:Go:sdk/resourcemanager/dataprotection/armdataprotection",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T21:43:22.8947576Z",
+      "observedAt": "2026-04-01T21:50:40.2538031Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/dataprotection/armdataprotection",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6095434",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6095434"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:33710:38:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T21:43:24.943Z",
+      "observedAt": "2026-04-01T21:43:24.943Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/dataprotection/armdataprotection",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33710",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33710"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6095429:generation.started:sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T21:43:48.9394893Z",
+      "observedAt": "2026-04-01T21:51:32.3450448Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6095429",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6095429"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48666:comment:4173141102:sdk:Java:azure-resourcemanager-dataprotection",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-01T21:44:08Z",
+      "observedAt": "2026-04-01T21:44:08Z",
+      "trackId": "sdk:Java:azure-resourcemanager-dataprotection",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48666",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48666#issuecomment-4173141102"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews [com.azure.resourcemanager:azure-resourcemanager-dataprotection](https://spa.apiview.dev/review/b3e7b2d708da48ffb66f463064ff01d4?activ",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6095431:generation.started:sdk:Python:azure-mgmt-dataprotection",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T21:44:18.8563429Z",
+      "observedAt": "2026-04-01T21:55:54.3710464Z",
+      "trackId": "sdk:Python:azure-mgmt-dataprotection",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6095431",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6095431"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6095430:generation.started:sdk:JavaScript:@azure/arm-dataprotection",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T21:44:23.4987714Z",
+      "observedAt": "2026-04-01T21:54:50.4361504Z",
+      "trackId": "sdk:JavaScript:@azure/arm-dataprotection",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6095430",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6095430"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6095432:generation.started:sdk:Java:azure-resourcemanager-dataprotection",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T21:44:24.7351999Z",
+      "observedAt": "2026-04-01T22:03:06.1460331Z",
+      "trackId": "sdk:Java:azure-resourcemanager-dataprotection",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6095432",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6095432"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6095434:generation.started:sdk:Go:sdk/resourcemanager/dataprotection/armdataprotection",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T21:44:26.5173446Z",
+      "observedAt": "2026-04-01T21:50:40.2538031Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/dataprotection/armdataprotection",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6095434",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6095434"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37934:comment:4173149222:sdk:JavaScript:@azure/arm-dataprotection",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-01T21:45:47Z",
+      "observedAt": "2026-04-01T21:45:47Z",
+      "trackId": "sdk:JavaScript:@azure/arm-dataprotection",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37934",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37934#issuecomment-4173149222"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews [@azure/arm-dataprotection](https://spa.apiview.dev/review/86d65b0627994d63a1e82847baff2216?activeApiRevisionId=fb1406bdef5d4f0bbcc186",
+      "stack": 4
+    },
+    {
+      "id": "ado:33710:39:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T21:49:47.687Z",
+      "observedAt": "2026-04-01T21:49:47.687Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/dataprotection/armdataprotection",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33710",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33710"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33710:40:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T21:50:34.953Z",
+      "observedAt": "2026-04-01T21:50:34.953Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33710",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33710"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6095434:generation.completed:sdk:Go:sdk/resourcemanager/dataprotection/armdataprotection",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T21:50:40.2538031Z",
+      "observedAt": "2026-04-01T21:50:40.2538031Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/dataprotection/armdataprotection",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6095434",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6095434"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:6095429:generation.completed:sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T21:51:32.3450448Z",
+      "observedAt": "2026-04-01T21:51:32.3450448Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6095429",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6095429"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:33710:41:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T21:53:38.35Z",
+      "observedAt": "2026-04-01T21:53:38.35Z",
+      "trackId": "sdk:Java:azure-resourcemanager-dataprotection",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33710",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33710"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33710:42:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T21:54:01.037Z",
+      "observedAt": "2026-04-01T21:54:01.037Z",
+      "trackId": "sdk:JavaScript:@azure/arm-dataprotection",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33710",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33710"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33710:43:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T21:54:33.303Z",
+      "observedAt": "2026-04-01T21:54:33.303Z",
+      "trackId": "sdk:Python:azure-mgmt-dataprotection",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33710",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33710"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6095430:generation.completed:sdk:JavaScript:@azure/arm-dataprotection",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T21:54:50.4361504Z",
+      "observedAt": "2026-04-01T21:54:50.4361504Z",
+      "trackId": "sdk:JavaScript:@azure/arm-dataprotection",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6095430",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6095430"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:6095431:generation.completed:sdk:Python:azure-mgmt-dataprotection",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T21:55:54.3710464Z",
+      "observedAt": "2026-04-01T21:55:54.3710464Z",
+      "trackId": "sdk:Python:azure-mgmt-dataprotection",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6095431",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6095431"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6095432:generation.completed:sdk:Java:azure-resourcemanager-dataprotection",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-04-01T22:03:06.1460331Z",
+      "observedAt": "2026-04-01T22:03:06.1460331Z",
+      "trackId": "sdk:Java:azure-resourcemanager-dataprotection",
+      "title": "Pipeline completed with issues",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6095432",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6095432"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48666:review:4053668534:sdk:Java:azure-resourcemanager-dataprotection",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-02T23:44:33Z",
+      "observedAt": "2026-04-02T23:44:33Z",
+      "trackId": "sdk:Java:azure-resourcemanager-dataprotection",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48666",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48666#pullrequestreview-4053668534"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37934:comment:3031574994:sdk:JavaScript:@azure/arm-dataprotection",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-03T05:59:13Z",
+      "observedAt": "2026-04-03T05:59:13Z",
+      "trackId": "sdk:JavaScript:@azure/arm-dataprotection",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37934",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37934#discussion_r3031574994"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The default API version string (`\"2026-03-01\"`) is now duplicated across many operation files (request building, paging config, and LRO config). This makes future API-version updates error-prone and risks inconsistent defaults. Consider cen",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37934:review:4054407686:sdk:JavaScript:@azure/arm-dataprotection",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-03T05:59:14Z",
+      "observedAt": "2026-04-03T05:59:14Z",
+      "trackId": "sdk:JavaScript:@azure/arm-dataprotection",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37934",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37934#pullrequestreview-4054407686"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This PR updates **@azure/arm-dataprotection** for the **2026-03-01** ARM API version (beta release), including new operations and regenerated client/runtime behavior. **Changes:** - Bumps the package to **5.0.0-beta",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37934:comment:3031575003:sdk:JavaScript:@azure/arm-dataprotection",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-03T05:59:14Z",
+      "observedAt": "2026-04-03T05:59:14Z",
+      "trackId": "sdk:JavaScript:@azure/arm-dataprotection",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37934",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37934#discussion_r3031575003"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The default API version string (`\"2026-03-01\"`) is now duplicated across many operation files (request building, paging config, and LRO config). This makes future API-version updates error-prone and risks inconsistent defaults. Consider cen",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37934:comment:3031575007:sdk:JavaScript:@azure/arm-dataprotection",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-03T05:59:14Z",
+      "observedAt": "2026-04-03T05:59:14Z",
+      "trackId": "sdk:JavaScript:@azure/arm-dataprotection",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37934",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37934#discussion_r3031575007"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The changelog’s “Breaking Changes” list appears incomplete relative to the API report updates in this PR. For example, multiple operations changed return types from `T | null` to `T` (e.g., `OperationResult.get`, `ExportJobsOperationResult.",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37934:comment:3031575012:sdk:JavaScript:@azure/arm-dataprotection",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-03T05:59:14Z",
+      "observedAt": "2026-04-03T05:59:14Z",
+      "trackId": "sdk:JavaScript:@azure/arm-dataprotection",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37934",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37934#discussion_r3031575012"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This package is being released as `5.0.0-beta.1`, but the README now points to the non-preview API reference URL; that page often defaults to the latest stable surface and may not reflect beta APIs. Consider linking to the preview view (or ",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37934:comment:4182059296:sdk:JavaScript:@azure/arm-dataprotection",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-03T06:05:05Z",
+      "observedAt": "2026-04-03T06:05:05Z",
+      "trackId": "sdk:JavaScript:@azure/arm-dataprotection",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37934",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37934#issuecomment-4182059296"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Next Steps to Merge Only failed checks and required actions are listed below. - 🔄 **pnpm-lock conflict**: The PR has a merge conflict (`mergeable_state: dirty`). Follow the [conflict guide](https://github.com/Azure/azure-sdk-for-js/blob",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37934:review:4054421809:sdk:JavaScript:@azure/arm-dataprotection",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-03T06:05:06Z",
+      "observedAt": "2026-04-03T06:05:06Z",
+      "trackId": "sdk:JavaScript:@azure/arm-dataprotection",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37934",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37934#pullrequestreview-4054421809"
+      },
+      "confidence": "authoritative",
+      "excerpt": "No API design issues found for `@azure/arm-dataprotection@5.0.0-beta.1`. Version consistency is correct across `package.json`, `src/api/dataProtectionContext.ts`, and `CHANGELOG.md`. The changelog correctly compares with the prior stable `4",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37934:comment:4182777062:sdk:JavaScript:@azure/arm-dataprotection",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-03T09:46:15Z",
+      "observedAt": "2026-04-03T09:46:15Z",
+      "trackId": "sdk:JavaScript:@azure/arm-dataprotection",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37934",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37934#issuecomment-4182777062"
+      },
+      "confidence": "authoritative",
+      "excerpt": "please resolve conflict first. ci failure is because you need to run the test and push the test recordings see this [guide](https://github.com/Azure/azure-sdk-for-js/blob/main/documentation/Quickstart-on-how-to-write-tests.md#run-tests-in-r",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26477:comment:3038013209:sdk:Go:sdk/resourcemanager/dataprotection/armdataprotection",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-06T05:14:12Z",
+      "observedAt": "2026-04-06T05:14:12Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/dataprotection/armdataprotection",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26477",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26477#discussion_r3038013209"
+      },
+      "confidence": "authoritative",
+      "excerpt": "In the commented example response, the resource ID and type use `deletedBackupVaults`, but the client’s request path uses `/deletedVaults/...` (see DeletedBackupVaultsClient.getCreateRequest). This inconsistency can confuse users copying th",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26477:comment:3038013231:sdk:Go:sdk/resourcemanager/dataprotection/armdataprotection",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-06T05:14:12Z",
+      "observedAt": "2026-04-06T05:14:12Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/dataprotection/armdataprotection",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26477",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26477#discussion_r3038013231"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Same mismatch as above: the commented pager example output uses `.../deletedBackupVaults/...` and type `Microsoft.DataProtection/deletedBackupVaults`, while the generated client endpoints are under `/deletedVaults`. Please make the example ",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26477:review:4060423662:sdk:Go:sdk/resourcemanager/dataprotection/armdataprotection",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-06T05:14:13Z",
+      "observedAt": "2026-04-06T05:14:13Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/dataprotection/armdataprotection",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26477",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26477#pullrequestreview-4060423662"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Updates the `armdataprotection` Resource Manager SDK module to the `2026-03-01` DataProtection API version (beta), including newly generated client surface area and models for deleted vault operations and blob auto-",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26477:comment:3038013237:sdk:Go:sdk/resourcemanager/dataprotection/armdataprotection",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-06T05:14:13Z",
+      "observedAt": "2026-04-06T05:14:13Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/dataprotection/armdataprotection",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26477",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26477#discussion_r3038013237"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Typo in the doc comment: `Paramters` should be `Parameters`.",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46064:review:4060430495:sdk:Python:azure-mgmt-dataprotection",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-06T05:16:08Z",
+      "observedAt": "2026-04-06T05:16:08Z",
+      "trackId": "sdk:Python:azure-mgmt-dataprotection",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46064",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46064#pullrequestreview-4060430495"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Regenerates **azure-mgmt-dataprotection** from the DataProtection TypeSpec config for API version **2026-03-01**, updating the package to a new **2.1.0b1** beta release and introducing new operations/models (notably",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46064:comment:3038017650:sdk:Python:azure-mgmt-dataprotection",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-06T05:16:08Z",
+      "observedAt": "2026-04-06T05:16:08Z",
+      "trackId": "sdk:Python:azure-mgmt-dataprotection",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46064",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46064#discussion_r3038017650"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The package metadata and docs reference a client name that doesn’t exist in this package. `pyproject.toml` sets `title = \"DataProtectionClient\"` and `README.md` uses `DataProtectionClient`, but the package only exports `DataProtectionMgmtCl",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48666:comment:3038021038:sdk:Java:azure-resourcemanager-dataprotection",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-06T05:17:26Z",
+      "observedAt": "2026-04-06T05:17:26Z",
+      "trackId": "sdk:Java:azure-resourcemanager-dataprotection",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48666",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48666#discussion_r3038021038"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The top CHANGELOG entry is marked with a release date (2026-04-01). For an unreleased SDK generation PR, this section should remain \"(Unreleased)\" until the package is actually released, to match the repo’s management library CHANGELOG conv",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48666:review:4060434995:sdk:Java:azure-resourcemanager-dataprotection",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-06T05:17:27Z",
+      "observedAt": "2026-04-06T05:17:27Z",
+      "trackId": "sdk:Java:azure-resourcemanager-dataprotection",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48666",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48666#pullrequestreview-4060434995"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Updates the **azure-resourcemanager-dataprotection** management library to the newly generated **2026-03-01** Data Protection ARM API surface (beta), including new Deleted Backup Vaults support and Blob auto-protect",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48666:comment:3038021053:sdk:Java:azure-resourcemanager-dataprotection",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-06T05:17:27Z",
+      "observedAt": "2026-04-06T05:17:27Z",
+      "trackId": "sdk:Java:azure-resourcemanager-dataprotection",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48666",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48666#discussion_r3038021053"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The 1.6.0-beta.1 section no longer includes the standard empty subsections (Breaking Changes / Bugs Fixed / Other Changes). Most management library CHANGELOGs keep these headings under the current Unreleased version to preserve a consistent",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48666:comment:3038021071:sdk:Java:azure-resourcemanager-dataprotection",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-06T05:17:27Z",
+      "observedAt": "2026-04-06T05:17:27Z",
+      "trackId": "sdk:Java:azure-resourcemanager-dataprotection",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48666",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48666#discussion_r3038021071"
+      },
+      "confidence": "authoritative",
+      "excerpt": "JavaDoc typo: \"undelete flow..\" has a double period. Please change this to a single period for grammatical correctness. ```suggestion * undelete flow. ```",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46064:commit:7ed95a3eb021:sdk:Python:azure-mgmt-dataprotection",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-07T01:56:42Z",
+      "observedAt": "2026-04-07T01:56:42Z",
+      "trackId": "sdk:Python:azure-mgmt-dataprotection",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46064",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/7ed95a3eb02158fc80ddba2b74cf4525e4316a0f"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46064:commit:d74ea3c48627:sdk:Python:azure-mgmt-dataprotection",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-07T02:07:52Z",
+      "observedAt": "2026-04-07T02:07:52Z",
+      "trackId": "sdk:Python:azure-mgmt-dataprotection",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46064",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/d74ea3c48627c7cec11e24d74cb1acf9b732e43f"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26477:review:4065407175:sdk:Go:sdk/resourcemanager/dataprotection/armdataprotection",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-07T02:10:28Z",
+      "observedAt": "2026-04-07T02:10:28Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/dataprotection/armdataprotection",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "JiaqiZhang-Dev"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26477",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26477#pullrequestreview-4065407175"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46064:commit:fa2120bfb7c7:sdk:Python:azure-mgmt-dataprotection",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-07T02:16:31Z",
+      "observedAt": "2026-04-07T02:16:31Z",
+      "trackId": "sdk:Python:azure-mgmt-dataprotection",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46064",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/fa2120bfb7c7db556e9e85779196959d72d4c62e"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46064:comment:3042555367:sdk:Python:azure-mgmt-dataprotection",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-07T02:19:51Z",
+      "observedAt": "2026-04-07T02:19:51Z",
+      "trackId": "sdk:Python:azure-mgmt-dataprotection",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46064",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46064#discussion_r3042555367"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The changelog entry says \"Added model `DeletedBackupVaultsOperations`\", but `DeletedBackupVaultsOperations` is an operation group (client operation class), not a model. Please update this bullet to reflect that it’s an operation group/addit",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46064:review:4065427602:sdk:Python:azure-mgmt-dataprotection",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-07T02:19:52Z",
+      "observedAt": "2026-04-07T02:19:52Z",
+      "trackId": "sdk:Python:azure-mgmt-dataprotection",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46064",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46064#pullrequestreview-4065427602"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Copilot reviewed 120 out of 122 changed files in this pull request and generated 1 comment.",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46064:commit:b7d79b4c9238:sdk:Python:azure-mgmt-dataprotection",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-07T03:39:37Z",
+      "observedAt": "2026-04-07T03:39:37Z",
+      "trackId": "sdk:Python:azure-mgmt-dataprotection",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46064",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/b7d79b4c92385df3e51cc3bdbb81147d432e0e77"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46064:review:4065604781:sdk:Python:azure-mgmt-dataprotection",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-07T03:39:56Z",
+      "observedAt": "2026-04-07T03:39:56Z",
+      "trackId": "sdk:Python:azure-mgmt-dataprotection",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46064",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46064#pullrequestreview-4065604781"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46064:review:4065606522:sdk:Python:azure-mgmt-dataprotection",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-07T03:40:49Z",
+      "observedAt": "2026-04-07T03:40:49Z",
+      "trackId": "sdk:Python:azure-mgmt-dataprotection",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46064",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46064#pullrequestreview-4065606522"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57681:comment:3047978088:sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-07T21:33:27Z",
+      "observedAt": "2026-04-07T21:33:27Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57681",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57681#discussion_r3047978088"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The public constructor `DataProtectionBackupVaultProperties(IEnumerable<DataProtectionBackupStorageSetting> storageSettings)` appears to have been removed and replaced with a parameterless constructor. This is a breaking change for consumer",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57681:comment:3047978128:sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-07T21:33:27Z",
+      "observedAt": "2026-04-07T21:33:27Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57681",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57681#discussion_r3047978128"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`DataProtectionDeletedBackupVaultProperties()` initializes several collections but does not initialize `MonitoringSettings`. Since `MonitoringAlertSettingsForAllJobFailures` dereferences `MonitoringSettings` without a null-check, instances ",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57681:comment:3047978142:sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-07T21:33:27Z",
+      "observedAt": "2026-04-07T21:33:27Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57681",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57681#discussion_r3047978142"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Typo in XML doc comment: \"Paramters\" should be \"Parameters\". ```suggestion /// <summary> Parameters to be used during configuration of backup of blobs using AutoProtection settings. </summary> ```",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57681:review:4071412254:sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-07T21:33:28Z",
+      "observedAt": "2026-04-07T21:33:28Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57681",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57681#pullrequestreview-4071412254"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This PR updates the generated **Azure.ResourceManager.DataProtectionBackup** management SDK to align with the **Microsoft.DataProtection 2026-03-01** API version (TypeSpec config commit `32ab0a3f...`), and adds newl",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57681:comment:3047978176:sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-07T21:33:28Z",
+      "observedAt": "2026-04-07T21:33:28Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57681",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57681#discussion_r3047978176"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Typo in XML doc comment: \"Paramters\" should be \"Parameters\". ```suggestion /// <summary> Parameters to be used during configuration of backup of blobs using AutoProtection settings. </summary> ```",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57681:comment:3047978195:sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-07T21:33:28Z",
+      "observedAt": "2026-04-07T21:33:28Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57681",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57681#discussion_r3047978195"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`Mode` and `Type` are extensible-enum structs; if either is left as the default value, `ToString()` returns null and `Utf8JsonWriter.WriteStringValue(...)` will throw at runtime. Consider validating `Mode`/`Type` in the model constructor(s)",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57681:commit:f309d6178f15:sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-07T22:09:51Z",
+      "observedAt": "2026-04-07T22:09:51Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "Komla-Ansah"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57681",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/f309d6178f1597510b5d243747f710230dd84a4a"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57681:commit:5d677a803739:sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-07T22:10:07Z",
+      "observedAt": "2026-04-07T22:10:07Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "Komla-Ansah"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57681",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/5d677a80373996e9df5fd2d07403fd3e6282b258"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37934:commit:112ffc57447b:sdk:JavaScript:@azure/arm-dataprotection",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-07T22:28:56Z",
+      "observedAt": "2026-04-07T22:28:56Z",
+      "trackId": "sdk:JavaScript:@azure/arm-dataprotection",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37934",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/112ffc57447b729063b676d6f3f38884972f2b5a"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37934:commit:ebdba1e81154:sdk:JavaScript:@azure/arm-dataprotection",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-07T23:12:44Z",
+      "observedAt": "2026-04-07T23:12:44Z",
+      "trackId": "sdk:JavaScript:@azure/arm-dataprotection",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37934",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/ebdba1e81154b3e94dbce860817416f4bf4b9542"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37934:review:4075614797:sdk:JavaScript:@azure/arm-dataprotection",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-08T13:53:43Z",
+      "observedAt": "2026-04-08T13:53:43Z",
+      "trackId": "sdk:JavaScript:@azure/arm-dataprotection",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "JialinHuang803"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37934",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37934#pullrequestreview-4075614797"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37934:review:4080375092:sdk:JavaScript:@azure/arm-dataprotection",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-09T07:13:41Z",
+      "observedAt": "2026-04-09T07:13:41Z",
+      "trackId": "sdk:JavaScript:@azure/arm-dataprotection",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37934",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37934#pullrequestreview-4080375092"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37934:comment:3056091870:sdk:JavaScript:@azure/arm-dataprotection",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-09T07:13:41Z",
+      "observedAt": "2026-04-09T07:13:41Z",
+      "trackId": "sdk:JavaScript:@azure/arm-dataprotection",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37934",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37934#discussion_r3056091870"
+      },
+      "confidence": "authoritative",
+      "excerpt": "we will take these breakings as this is a tcgc feature.",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37934:comment:4212278027:sdk:JavaScript:@azure/arm-dataprotection",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-09T07:16:53Z",
+      "observedAt": "2026-04-09T07:16:53Z",
+      "trackId": "sdk:JavaScript:@azure/arm-dataprotection",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37934",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37934#issuecomment-4212278027"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@Komla-Ansah please enable auto-merge to avoid any merge blockers",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57681:review:4109674980:sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-14T22:46:53Z",
+      "observedAt": "2026-04-14T22:46:53Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "Komla-Ansah"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57681",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57681#pullrequestreview-4109674980"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57681:comment:3082940352:sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-14T22:46:53Z",
+      "observedAt": "2026-04-14T22:46:53Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "Komla-Ansah"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57681",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57681#discussion_r3082940352"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@copilot apply changes based on [this feedback](https://github.com/Azure/azure-sdk-for-net/pull/57681#discussion_r3047978128)",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57681:commit:0eb9456f75a5:sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-14T23:23:51Z",
+      "observedAt": "2026-04-14T23:23:51Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57681",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/0eb9456f75a598140094e7dbcd44886898db4ed6"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57681:review:4109852659:sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-14T23:23:58Z",
+      "observedAt": "2026-04-14T23:23:58Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-swe-agent[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57681",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57681#pullrequestreview-4109852659"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57681:comment:3083085647:sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-14T23:23:58Z",
+      "observedAt": "2026-04-14T23:23:58Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57681",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57681#discussion_r3083085647"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Addressed in 0eb9456: updated `MonitoringAlertSettingsForAllJobFailures` to safely handle missing `monitoringSettings` and avoid a null dereference during access. No UI changes were involved.",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57681:comment:4247942576:sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-14T23:24:46Z",
+      "observedAt": "2026-04-14T23:24:46Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57681",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57681#issuecomment-4247942576"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Just as a heads up, I was blocked by some firewall rules while working on your feedback. Expand below for details. > [!WARNING] > > <details> > <summary>Firewall rules blocked me from connecting to one or more addresses (expand for details)",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57681:commit:22ac98d7eea1:sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-15T04:31:50Z",
+      "observedAt": "2026-04-15T04:31:50Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57681",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/22ac98d7eea17a6107162504025c8cc59bda15bc"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57681:commit:ec1dfbfd7e11:sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-15T19:01:37Z",
+      "observedAt": "2026-04-15T19:01:37Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57681",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/ec1dfbfd7e11e38efe43075515b7bed94eff6a62"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57681:commit:11daa24ec87c:sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-15T21:11:15Z",
+      "observedAt": "2026-04-15T21:11:15Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57681",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/11daa24ec87c7c9f69f7d858e50b760071c0ed04"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57681:commit:dabbc5e31fdb:sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-20T18:27:39Z",
+      "observedAt": "2026-04-20T18:27:39Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57681",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/dabbc5e31fdb743b65183cafcf8d1a5ddd66c370"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37934:pr.merged:sdk:JavaScript:@azure/arm-dataprotection",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-23T17:30:37Z",
+      "observedAt": "2026-04-23T17:30:37Z",
+      "trackId": "sdk:JavaScript:@azure/arm-dataprotection",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37934",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37934"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48666:pr.merged:sdk:Java:azure-resourcemanager-dataprotection",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-23T17:31:04Z",
+      "observedAt": "2026-04-23T17:31:04Z",
+      "trackId": "sdk:Java:azure-resourcemanager-dataprotection",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48666",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48666"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26477:pr.merged:sdk:Go:sdk/resourcemanager/dataprotection/armdataprotection",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-23T17:31:32Z",
+      "observedAt": "2026-04-23T17:31:32Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/dataprotection/armdataprotection",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26477",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26477"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46064:pr.merged:sdk:Python:azure-mgmt-dataprotection",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-23T17:31:58Z",
+      "observedAt": "2026-04-23T17:31:58Z",
+      "trackId": "sdk:Python:azure-mgmt-dataprotection",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46064",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46064"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57681:commit:27e6dd4e4e3e:sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-10T20:30:52Z",
+      "observedAt": "2026-05-10T20:30:52Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57681",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/27e6dd4e4e3e4e40fc1c977100142a4d63148a36"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57681:commit:f682f5da3e0f:sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-10T20:55:09Z",
+      "observedAt": "2026-05-10T20:55:09Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57681",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/f682f5da3e0f08a41f5eb036c0f49de614ca2ff8"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57681:commit:bdfd037391b4:sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-10T22:25:44Z",
+      "observedAt": "2026-05-10T22:25:44Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57681",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/bdfd037391b4a1d8b14b1148344988bb4c629ebc"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57681:commit:a056d6c2b832:sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-10T23:03:08Z",
+      "observedAt": "2026-05-10T23:03:08Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57681",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/a056d6c2b832dc6fb64ab34a373ac4eecd327312"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57681:comment:4425090375:sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-11T20:51:47Z",
+      "observedAt": "2026-05-11T20:51:47Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57681",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57681#issuecomment-4425090375"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Please specify the release date in the changelog.md file by replacing the \"Unreleased\" section, and describe the change, something like \"Upgraded the api-version to 2026-03-01\", under the Features Added section, and remove other empty secti",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57681:commit:cb2fa31e9f6a:sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-11T21:04:51Z",
+      "observedAt": "2026-05-11T21:04:51Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57681",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/cb2fa31e9f6aca1f3f43af3ee0bdfc83f41e8595"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57681:review:4267921466:sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-11T22:42:37Z",
+      "observedAt": "2026-05-11T22:42:37Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57681",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57681#pullrequestreview-4267921466"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57681:pr.merged:sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-12T13:52:54Z",
+      "observedAt": "2026-05-12T13:52:54Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57681",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57681"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github-release:33710:Python:azure-mgmt-dataprotection_2.1.0b1",
+      "type": "package.github_release_published",
+      "phase": "release",
+      "occurredAt": "2026-05-12T20:02:09Z",
+      "observedAt": "2026-05-12T20:02:09Z",
+      "trackId": "sdk:Python:azure-mgmt-dataprotection",
+      "title": "GitHub Release published",
+      "value": "azure-mgmt-dataprotection_2.1.0b1",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "azure-sdk-for-python release azure-mgmt-dataprotection_2.1.0b1",
+        "url": "https://github.com/Azure/azure-sdk-for-python/releases/tag/azure-mgmt-dataprotection_2.1.0b1"
+      },
+      "confidence": "inferred",
+      "stack": 0
+    },
+    {
+      "id": "ado:33710:58:Custom.ReleaseStatusForPython",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-05-12T20:10:50.617Z",
+      "observedAt": "2026-05-12T20:10:50.617Z",
+      "trackId": "sdk:Python:azure-mgmt-dataprotection",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33710",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33710"
+      },
+      "title": "Release status changed",
+      "stack": 1
+    },
+    {
+      "id": "github-release:33710:Go:sdk/resourcemanager/dataprotection/armdataprotection/v4.1.0-beta.1",
+      "type": "package.github_release_published",
+      "phase": "release",
+      "occurredAt": "2026-05-12T20:21:53Z",
+      "observedAt": "2026-05-12T20:21:53Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/dataprotection/armdataprotection",
+      "title": "GitHub Release published",
+      "value": "sdk/resourcemanager/dataprotection/armdataprotection/v4.1.0-beta.1",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "azure-sdk-for-go release sdk/resourcemanager/dataprotection/armdataprotection/v4.1.0-beta.1",
+        "url": "https://github.com/Azure/azure-sdk-for-go/releases/tag/sdk/resourcemanager/dataprotection/armdataprotection/v4.1.0-beta.1"
+      },
+      "confidence": "inferred",
+      "stack": 0
+    },
+    {
+      "id": "ado:33710:59:Custom.ReleaseStatusForGo",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-05-12T20:22:18.743Z",
+      "observedAt": "2026-05-12T20:22:18.743Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/dataprotection/armdataprotection",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33710",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33710"
+      },
+      "title": "Release status changed",
+      "stack": 1
+    },
+    {
+      "id": "github-release:33710:JavaScript:@azure/arm-dataprotection_5.0.0-beta.1",
+      "type": "package.github_release_published",
+      "phase": "release",
+      "occurredAt": "2026-05-13T02:13:45Z",
+      "observedAt": "2026-05-13T02:13:45Z",
+      "trackId": "sdk:JavaScript:@azure/arm-dataprotection",
+      "title": "GitHub Release published",
+      "value": "@azure/arm-dataprotection_5.0.0-beta.1",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "azure-sdk-for-js release @azure/arm-dataprotection_5.0.0-beta.1",
+        "url": "https://github.com/Azure/azure-sdk-for-js/releases/tag/%40azure/arm-dataprotection_5.0.0-beta.1"
+      },
+      "confidence": "inferred",
+      "stack": 0
+    },
+    {
+      "id": "ado:33710:60:Custom.ReleaseStatusForJavaScript",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-05-13T02:30:45.607Z",
+      "observedAt": "2026-05-13T02:30:45.607Z",
+      "trackId": "sdk:JavaScript:@azure/arm-dataprotection",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33710",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33710"
+      },
+      "title": "Release status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33710:61:Custom.ReleaseStatusForDotnet",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-05-18T05:18:45.74Z",
+      "observedAt": "2026-05-18T05:18:45.74Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33710",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33710"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33710:61:Custom.ReleasedVersionForDotnet",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-05-18T05:18:45.74Z",
+      "observedAt": "2026-05-18T05:18:45.74Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+      "value": "1.8.0",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33710",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33710"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33710:62:Custom.ReleaseStatusForJava",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-06-15T15:02:07.423Z",
+      "observedAt": "2026-06-15T15:02:07.423Z",
+      "trackId": "sdk:Java:azure-resourcemanager-dataprotection",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33710",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33710"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33710:62:Custom.ReleasedVersionForJava",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-06-15T15:02:07.423Z",
+      "observedAt": "2026-06-15T15:02:07.423Z",
+      "trackId": "sdk:Java:azure-resourcemanager-dataprotection",
+      "value": "1.6.0-beta.1",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33710",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33710"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33710:63:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-06-15T15:02:07.733Z",
+      "observedAt": "2026-06-15T15:02:07.733Z",
+      "trackId": "plan",
+      "value": "Finished",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33710",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33710"
+      },
+      "title": "Plan state changed",
+      "stack": 0
+    }
+  ],
+  "quality": {
+    "warnings": [],
+    "unavailablePullRequests": 0,
+    "unavailablePipelineRuns": 0
+  },
+  "boundaryFacts": {
+    "id": "33710",
+    "state": "finished",
+    "specPrs": [
+      {
+        "id": "github:Azure/azure-rest-api-specs#40422",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#40422",
+        "createdAt": "2026-02-13T03:11:27Z",
+        "mergedAt": "2026-03-20T03:38:09Z",
+        "closedAt": "2026-03-20T03:38:09Z",
+        "available": true
+      }
+    ],
+    "artifacts": [
+      {
+        "language": ".NET",
+        "package": "Azure.ResourceManager.DataProtectionBackup",
+        "trackId": "sdk:.NET:Azure.ResourceManager.DataProtectionBackup",
+        "prId": "github:Azure/azure-sdk-for-net#57681",
+        "prCreatedAt": "2026-04-01T21:28:35Z",
+        "prMergedAt": "2026-05-12T13:52:54Z",
+        "prClosedAt": "2026-05-12T13:52:55Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-net#57681",
+            "createdAt": "2026-04-01T21:28:35Z",
+            "mergedAt": "2026-05-12T13:52:54Z",
+            "closedAt": "2026-05-12T13:52:55Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6095429",
+        "generationStartAt": "2026-04-01T21:43:48.9394893Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-05-18T05:18:45.74Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.8.0",
+        "releaseBoundaryAt": "2026-05-18T05:18:45.74Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "JavaScript",
+        "package": "@azure/arm-dataprotection",
+        "trackId": "sdk:JavaScript:@azure/arm-dataprotection",
+        "prId": "github:Azure/azure-sdk-for-js#37934",
+        "prCreatedAt": "2026-04-01T21:32:32Z",
+        "prMergedAt": "2026-04-23T17:30:37Z",
+        "prClosedAt": "2026-04-23T17:30:38Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-js#37934",
+            "createdAt": "2026-04-01T21:32:32Z",
+            "mergedAt": "2026-04-23T17:30:37Z",
+            "closedAt": "2026-04-23T17:30:38Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6095430",
+        "generationStartAt": "2026-04-01T21:44:23.4987714Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-05-13T02:30:45.607Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": null,
+        "releaseBoundaryAt": "2026-05-13T02:13:45Z",
+        "releaseBoundarySource": "github-release",
+        "releaseBoundaryConfidence": "inferred",
+        "releaseBoundaryUrl": "https://github.com/Azure/azure-sdk-for-js/releases/tag/%40azure/arm-dataprotection_5.0.0-beta.1",
+        "releaseTag": "@azure/arm-dataprotection_5.0.0-beta.1",
+        "releaseMatchMethod": "unique-nearby-release",
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "github-release"
+        }
+      },
+      {
+        "language": "Python",
+        "package": "azure-mgmt-dataprotection",
+        "trackId": "sdk:Python:azure-mgmt-dataprotection",
+        "prId": "github:Azure/azure-sdk-for-python#46064",
+        "prCreatedAt": "2026-04-01T21:32:38Z",
+        "prMergedAt": "2026-04-23T17:31:58Z",
+        "prClosedAt": "2026-04-23T17:31:58Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-python#46064",
+            "createdAt": "2026-04-01T21:32:38Z",
+            "mergedAt": "2026-04-23T17:31:58Z",
+            "closedAt": "2026-04-23T17:31:58Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6095431",
+        "generationStartAt": "2026-04-01T21:44:18.8563429Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-05-12T20:10:50.617Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": null,
+        "releaseBoundaryAt": "2026-05-12T20:02:09Z",
+        "releaseBoundarySource": "github-release",
+        "releaseBoundaryConfidence": "inferred",
+        "releaseBoundaryUrl": "https://github.com/Azure/azure-sdk-for-python/releases/tag/azure-mgmt-dataprotection_2.1.0b1",
+        "releaseTag": "azure-mgmt-dataprotection_2.1.0b1",
+        "releaseMatchMethod": "unique-nearby-release",
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "github-release"
+        }
+      },
+      {
+        "language": "Java",
+        "package": "azure-resourcemanager-dataprotection",
+        "trackId": "sdk:Java:azure-resourcemanager-dataprotection",
+        "prId": "github:Azure/azure-sdk-for-java#48666",
+        "prCreatedAt": "2026-04-01T21:31:59Z",
+        "prMergedAt": "2026-04-23T17:31:04Z",
+        "prClosedAt": "2026-04-23T17:31:04Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-java#48666",
+            "createdAt": "2026-04-01T21:31:59Z",
+            "mergedAt": "2026-04-23T17:31:04Z",
+            "closedAt": "2026-04-23T17:31:04Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6095432",
+        "generationStartAt": "2026-04-01T21:44:24.7351999Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-06-15T15:02:07.423Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.6.0-beta.1",
+        "releaseBoundaryAt": "2026-06-15T15:02:07.423Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Go",
+        "package": "sdk/resourcemanager/dataprotection/armdataprotection",
+        "trackId": "sdk:Go:sdk/resourcemanager/dataprotection/armdataprotection",
+        "prId": "github:Azure/azure-sdk-for-go#26477",
+        "prCreatedAt": "2026-04-01T21:28:11Z",
+        "prMergedAt": "2026-04-23T17:31:32Z",
+        "prClosedAt": "2026-04-23T17:31:32Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-go#26477",
+            "createdAt": "2026-04-01T21:28:11Z",
+            "mergedAt": "2026-04-23T17:31:32Z",
+            "closedAt": "2026-04-23T17:31:32Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6095434",
+        "generationStartAt": "2026-04-01T21:44:26.5173446Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-05-12T20:22:18.743Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": null,
+        "releaseBoundaryAt": "2026-05-12T20:21:53Z",
+        "releaseBoundarySource": "github-release",
+        "releaseBoundaryConfidence": "inferred",
+        "releaseBoundaryUrl": "https://github.com/Azure/azure-sdk-for-go/releases/tag/sdk/resourcemanager/dataprotection/armdataprotection/v4.1.0-beta.1",
+        "releaseTag": "sdk/resourcemanager/dataprotection/armdataprotection/v4.1.0-beta.1",
+        "releaseMatchMethod": "unique-nearby-release",
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "github-release"
+        }
+      }
+    ],
+    "cohortPlan": {
+      "id": "33710",
+      "releasePlanId": "2154",
+      "title": "Release Plan - 2154 - GA - Vaulted backup for Azure blobs",
+      "service": "Vaulted backup for Azure blobs",
+      "state": "finished"
+    },
+    "quality": {
+      "warnings": [],
+      "unavailablePullRequests": 0,
+      "unavailablePipelineRuns": 0
+    }
+  },
+  "summary": {
+    "durationHours": 1808.9,
+    "pullRequestCount": 6,
+    "humanReviewCount": 14,
+    "humanCommentCount": 12
+  }
+}

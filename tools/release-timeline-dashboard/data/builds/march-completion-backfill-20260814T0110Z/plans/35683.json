@@ -1,0 +1,3354 @@
+{
+  "schemaVersion": 2,
+  "id": "35683",
+  "correlation": {
+    "policyVersion": 1,
+    "preflight": "passed"
+  },
+  "releasePlanId": "35683",
+  "title": "GA release plan for EdgeZones.Management",
+  "service": "EdgeZones.Management",
+  "product": "Release",
+  "path": "specification/edgezones/EdgeZones.Management",
+  "state": "in-progress",
+  "plane": "management",
+  "releaseType": "GA",
+  "intendedMonth": "August 2026",
+  "createdAt": "2026-07-29T17:26:55.33Z",
+  "completedAt": null,
+  "sourceUrl": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35683",
+  "range": {
+    "start": "2026-07-10T14:38:52.000Z",
+    "end": "2026-08-14T00:37:23.589Z"
+  },
+  "intendedArtifacts": [
+    {
+      "prId": "github:Azure/azure-sdk-for-net#61530",
+      "language": ".NET",
+      "package": "Azure.ResourceManager.EdgeZones",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6639984",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-js#39458",
+      "language": "JavaScript",
+      "package": "@azure/arm-edgezones",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6639986",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-python#48348",
+      "language": "Python",
+      "package": "azure-mgmt-edgezones",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6639987",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-java#49987",
+      "language": "Java",
+      "package": "azure-resourcemanager-edgezones",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6639985",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-go#27288",
+      "language": "Go",
+      "package": "sdk/resourcemanager/edgezones/armedgezones",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6639988",
+      "releasePipelineUrl": null
+    }
+  ],
+  "links": [
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#44581",
+      "role": "spec-pr",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/44581",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-net#61530",
+      "role": "sdk-pr",
+      "language": ".NET",
+      "url": "https://github.com/Azure/azure-sdk-for-net/pull/61530",
+      "releasePlanIds": [
+        "35683"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-js#39458",
+      "role": "sdk-pr",
+      "language": "JavaScript",
+      "url": "https://github.com/Azure/azure-sdk-for-js/pull/39458",
+      "releasePlanIds": [
+        "35683"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-python#48348",
+      "role": "sdk-pr",
+      "language": "Python",
+      "url": "https://github.com/Azure/azure-sdk-for-python/pull/48348",
+      "releasePlanIds": [
+        "35683"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-java#49987",
+      "role": "sdk-pr",
+      "language": "Java",
+      "url": "https://github.com/Azure/azure-sdk-for-java/pull/49987",
+      "releasePlanIds": [
+        "35683"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-go#27288",
+      "role": "sdk-pr",
+      "language": "Go",
+      "url": "https://github.com/Azure/azure-sdk-for-go/pull/27288",
+      "releasePlanIds": [
+        "35683"
+      ]
+    }
+  ],
+  "tracks": [
+    {
+      "id": "plan",
+      "kind": "plan",
+      "label": "Release Plan",
+      "detail": "GA"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#44581",
+      "kind": "spec",
+      "label": "Spec PR",
+      "detail": "azure-rest-api-specs #44581",
+      "artifactId": "github:Azure/azure-rest-api-specs#44581",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:.NET:Azure.ResourceManager.EdgeZones",
+      "kind": "sdk",
+      "label": ".NET",
+      "detail": "Azure.ResourceManager.EdgeZones",
+      "artifactId": "github:Azure/azure-sdk-for-net#61530",
+      "state": "open"
+    },
+    {
+      "id": "sdk:JavaScript:@azure/arm-edgezones",
+      "kind": "sdk",
+      "label": "JavaScript",
+      "detail": "@azure/arm-edgezones",
+      "artifactId": "github:Azure/azure-sdk-for-js#39458",
+      "state": "open"
+    },
+    {
+      "id": "sdk:Python:azure-mgmt-edgezones",
+      "kind": "sdk",
+      "label": "Python",
+      "detail": "azure-mgmt-edgezones",
+      "artifactId": "github:Azure/azure-sdk-for-python#48348",
+      "state": "open"
+    },
+    {
+      "id": "sdk:Java:azure-resourcemanager-edgezones",
+      "kind": "sdk",
+      "label": "Java",
+      "detail": "azure-resourcemanager-edgezones",
+      "artifactId": "github:Azure/azure-sdk-for-java#49987",
+      "state": "open"
+    },
+    {
+      "id": "sdk:Go:sdk/resourcemanager/edgezones/armedgezones",
+      "kind": "sdk",
+      "label": "Go",
+      "detail": "sdk/resourcemanager/edgezones/armedgezones",
+      "artifactId": "github:Azure/azure-sdk-for-go#27288",
+      "state": "open"
+    }
+  ],
+  "events": [
+    {
+      "id": "github:Azure/azure-rest-api-specs#44581:pr.created:spec:github:Azure/azure-rest-api-specs#44581",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-10T14:38:52Z",
+      "observedAt": "2026-07-10T14:38:52Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44581",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "mert-s"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44581",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44581"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44581:comment:4936455575:spec:github:Azure/azure-rest-api-specs#44581",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-10T14:40:12Z",
+      "observedAt": "2026-07-10T14:40:12Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44581",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44581",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44581#issuecomment-4936455575"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>✅ All automated merging requirements have been met! To get your PR merged, see <a href=\"https://aka.ms/azsdk/specreview/merge\">aka.ms/azsdk/specreview/merge</a>.<br /><br />Comment generated by <a href=\"https://g",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44581:comment:4936470826:spec:github:Azure/azure-rest-api-specs#44581",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-10T14:41:55Z",
+      "observedAt": "2026-07-10T14:41:55Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44581",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44581",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44581#issuecomment-4936470826"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Namespace Review Required **Plane:** Management Plane | Language | Proposed Namespace | Format | Status | Approvers | |----------|-------------------|--------|--------|----------| | python | `azure.mgmt.edgezones` | ⚠️ Invalid | ✅ Approv",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44581:comment:4936490028:spec:github:Azure/azure-rest-api-specs#44581",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-10T14:44:03Z",
+      "observedAt": "2026-07-10T14:44:03Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44581",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44581",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44581#issuecomment-4936490028"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews | Language | API Review for Package | |----------|---------| | Swagger | [Microsoft.EdgeZones](https://apiview.dev/Assemblies/Review/6",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44581:commit:a41481956a61:spec:github:Azure/azure-rest-api-specs#44581",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-10T15:43:02Z",
+      "observedAt": "2026-07-10T15:43:02Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44581",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "mertsahan_microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44581",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/a41481956a61e05aa92ae6f9f3e47a2f10833572"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44581:commit:4c74f80e78c1:spec:github:Azure/azure-rest-api-specs#44581",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-10T15:50:42Z",
+      "observedAt": "2026-07-10T15:50:42Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44581",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "mertsahan_microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44581",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/4c74f80e78c1744b4ef12e9ccbb2a3d490b6c0bc"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44581:commit:871a84c933b7:spec:github:Azure/azure-rest-api-specs#44581",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-10T17:13:24Z",
+      "observedAt": "2026-07-10T17:13:24Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44581",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "mertsahan_microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44581",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/871a84c933b73168a3046fae1a34b6668b18a200"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44581:comment:4954313172:spec:github:Azure/azure-rest-api-specs#44581",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-13T04:03:24Z",
+      "observedAt": "2026-07-13T04:03:24Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44581",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44581",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44581#issuecomment-4954313172"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## ✅ Namespace Approved All required namespace approvals received. This PR is clear to merge from a namespace perspective.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44581:review:4811115088:spec:github:Azure/azure-rest-api-specs#44581",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-29T17:23:10Z",
+      "observedAt": "2026-07-29T17:23:10Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44581",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "jasonurban1"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44581",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44581#pullrequestreview-4811115088"
+      },
+      "confidence": "authoritative",
+      "excerpt": "this is the latest we are running canary using the swagger in the azure-rest-api-specs-pr RPaaS branch. approved.",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44581:pr.merged:spec:github:Azure/azure-rest-api-specs#44581",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-29T17:23:14Z",
+      "observedAt": "2026-07-29T17:23:14Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44581",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44581",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44581"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:35683:created",
+      "type": "plan.created",
+      "phase": "plan",
+      "occurredAt": "2026-07-29T17:26:55.33Z",
+      "observedAt": "2026-07-29T17:26:55.33Z",
+      "trackId": "plan",
+      "title": "Release Plan created",
+      "confidence": "authoritative",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35683",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35683"
+      },
+      "stack": 0
+    },
+    {
+      "id": "ado:35683:1:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-07-29T17:26:55.33Z",
+      "observedAt": "2026-07-29T17:26:55.33Z",
+      "trackId": "plan",
+      "value": "New",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35683",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35683"
+      },
+      "title": "Plan state changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35683:1:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-29T17:26:55.33Z",
+      "observedAt": "2026-07-29T17:26:55.33Z",
+      "trackId": "plan",
+      "value": "Not Available",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35683",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35683"
+      },
+      "title": "Spec approval changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:35683:1:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-29T17:26:55.33Z",
+      "observedAt": "2026-07-29T17:26:55.33Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.EdgeZones",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35683",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35683"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35683:1:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-29T17:26:55.33Z",
+      "observedAt": "2026-07-29T17:26:55.33Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgezones",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35683",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35683"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35683:1:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-29T17:26:55.33Z",
+      "observedAt": "2026-07-29T17:26:55.33Z",
+      "trackId": "sdk:Python:azure-mgmt-edgezones",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35683",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35683"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35683:1:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-29T17:26:55.33Z",
+      "observedAt": "2026-07-29T17:26:55.33Z",
+      "trackId": "sdk:Java:azure-resourcemanager-edgezones",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35683",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35683"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35683:1:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-29T17:26:55.33Z",
+      "observedAt": "2026-07-29T17:26:55.33Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/edgezones/armedgezones",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35683",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35683"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35684:1:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-29T17:26:55.733Z",
+      "observedAt": "2026-07-29T17:26:55.733Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44581",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/44581",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35684",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35684"
+      },
+      "title": "Spec PR linked",
+      "stack": 2
+    },
+    {
+      "id": "ado:35683:2:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-07-29T17:26:56.55Z",
+      "observedAt": "2026-07-29T17:26:56.55Z",
+      "trackId": "plan",
+      "value": "In Progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35683",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35683"
+      },
+      "title": "Plan state changed",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44581:comment:5121291998:spec:github:Azure/azure-rest-api-specs#44581",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-29T17:27:02Z",
+      "observedAt": "2026-07-29T17:27:02Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44581",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44581",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44581#issuecomment-5121291998"
+      },
+      "confidence": "authoritative",
+      "excerpt": "### ✅ Release Plan Created | Field | Value | |-------|-------| | **Release Plan** | [View Release Plan](https://azsdk-releaseplan-dashboard-hveph5aqhhcfhtgu.westus-01.azurewebsites.net/?releaseplan=35683) | | **API Version** | `2026-10-01` ",
+      "stack": 3
+    },
+    {
+      "id": "ado:35683:4:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-29T17:27:11.347Z",
+      "observedAt": "2026-07-29T17:27:11.347Z",
+      "trackId": "plan",
+      "value": "Approved",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35683",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35683"
+      },
+      "title": "Spec approval changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:35683:5:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-29T17:31:40.95Z",
+      "observedAt": "2026-07-29T17:31:40.95Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.EdgeZones",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35683",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35683"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35683:6:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-29T17:31:48.79Z",
+      "observedAt": "2026-07-29T17:31:48.79Z",
+      "trackId": "sdk:Java:azure-resourcemanager-edgezones",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35683",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35683"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35683:7:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-29T17:31:55.85Z",
+      "observedAt": "2026-07-29T17:31:55.85Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgezones",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35683",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35683"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35683:8:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-29T17:32:02.723Z",
+      "observedAt": "2026-07-29T17:32:02.723Z",
+      "trackId": "sdk:Python:azure-mgmt-edgezones",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35683",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35683"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35683:9:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-29T17:32:10.06Z",
+      "observedAt": "2026-07-29T17:32:10.06Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/edgezones/armedgezones",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35683",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35683"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27288:commit:e1c6cd5f0468:sdk:Go:sdk/resourcemanager/edgezones/armedgezones",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-29T17:38:02Z",
+      "observedAt": "2026-07-29T17:38:02Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/edgezones/armedgezones",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27288",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/e1c6cd5f04683657edaaee04a31ca21958e338c7"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27288:pr.created:sdk:Go:sdk/resourcemanager/edgezones/armedgezones",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-29T17:38:06Z",
+      "observedAt": "2026-07-29T17:38:06Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/edgezones/armedgezones",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27288",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27288"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado:35683:10:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-29T17:38:15.827Z",
+      "observedAt": "2026-07-29T17:38:15.827Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/edgezones/armedgezones",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35683",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35683"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:35683:10:Custom.SDKPullRequestForGo",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-29T17:38:15.827Z",
+      "observedAt": "2026-07-29T17:38:15.827Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/edgezones/armedgezones",
+      "value": "https://github.com/Azure/azure-sdk-for-go/pull/27288",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35683",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35683"
+      },
+      "title": "SDK PR linked",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48348:commit:9317dde2d3df:sdk:Python:azure-mgmt-edgezones",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-29T17:38:19Z",
+      "observedAt": "2026-07-29T17:38:19Z",
+      "trackId": "sdk:Python:azure-mgmt-edgezones",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48348",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/9317dde2d3df38f5f91fb2a34401c4bda403e228"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48348:pr.created:sdk:Python:azure-mgmt-edgezones",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-29T17:38:24Z",
+      "observedAt": "2026-07-29T17:38:24Z",
+      "trackId": "sdk:Python:azure-mgmt-edgezones",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48348",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48348"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61530:commit:53fce405f8da:sdk:.NET:Azure.ResourceManager.EdgeZones",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-29T17:38:28Z",
+      "observedAt": "2026-07-29T17:38:28Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.EdgeZones",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61530",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/53fce405f8dad265acbbfa44b3fee28fc8468343"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:35683:11:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-29T17:38:32.607Z",
+      "observedAt": "2026-07-29T17:38:32.607Z",
+      "trackId": "sdk:Python:azure-mgmt-edgezones",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35683",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35683"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:35683:11:Custom.SDKPullRequestForPython",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-29T17:38:32.607Z",
+      "observedAt": "2026-07-29T17:38:32.607Z",
+      "trackId": "sdk:Python:azure-mgmt-edgezones",
+      "value": "https://github.com/Azure/azure-sdk-for-python/pull/48348",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35683",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35683"
+      },
+      "title": "SDK PR linked",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61530:pr.created:sdk:.NET:Azure.ResourceManager.EdgeZones",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-29T17:38:33Z",
+      "observedAt": "2026-07-29T17:38:33Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.EdgeZones",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61530",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61530"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27288:comment:5121421977:sdk:Go:sdk/resourcemanager/edgezones/armedgezones",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-29T17:38:37Z",
+      "observedAt": "2026-07-29T17:38:37Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/edgezones/armedgezones",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27288",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27288#issuecomment-5121421977"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 5 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 0
+    },
+    {
+      "id": "ado:35683:12:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-29T17:38:40.62Z",
+      "observedAt": "2026-07-29T17:38:40.62Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.EdgeZones",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35683",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35683"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:35683:12:Custom.SDKPullRequestForDotnet",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-29T17:38:40.62Z",
+      "observedAt": "2026-07-29T17:38:40.62Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.EdgeZones",
+      "value": "https://github.com/Azure/azure-sdk-for-net/pull/61530",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35683",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35683"
+      },
+      "title": "SDK PR linked",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39458:commit:017dd8a5e1be:sdk:JavaScript:@azure/arm-edgezones",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-29T17:38:42Z",
+      "observedAt": "2026-07-29T17:38:42Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgezones",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39458",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/017dd8a5e1be0a3a33c1a170b0d41531bdb32ff2"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39458:pr.created:sdk:JavaScript:@azure/arm-edgezones",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-29T17:38:46Z",
+      "observedAt": "2026-07-29T17:38:46Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgezones",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39458",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39458"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27288:comment:3676716761:sdk:Go:sdk/resourcemanager/edgezones/armedgezones",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-29T17:38:51Z",
+      "observedAt": "2026-07-29T17:38:51Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/edgezones/armedgezones",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27288",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27288#discussion_r3676716761"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The new `1.0.0` changelog section is empty (only headers). This is likely to produce unhelpful release notes; either add at least one bullet describing what changed in 1.0.0, or remove the empty subsection until there are entries to record.",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27288:review:4811256940:sdk:Go:sdk/resourcemanager/edgezones/armedgezones",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-29T17:38:53Z",
+      "observedAt": "2026-07-29T17:38:53Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/edgezones/armedgezones",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27288",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27288#pullrequestreview-4811256940"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview > [!NOTE] > Copilot could not run the full agentic suite for this review because it was automatically requested on a bot-authored pull request. Request a review from Copilot under Reviewers to retry with the full ag",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "ado:35683:13:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-29T17:38:54.23Z",
+      "observedAt": "2026-07-29T17:38:54.23Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgezones",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35683",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35683"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:35683:13:Custom.SDKPullRequestForJavaScript",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-29T17:38:54.23Z",
+      "observedAt": "2026-07-29T17:38:54.23Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgezones",
+      "value": "https://github.com/Azure/azure-sdk-for-js/pull/39458",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35683",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35683"
+      },
+      "title": "SDK PR linked",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48348:comment:5121426904:sdk:Python:azure-mgmt-edgezones",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-29T17:39:04Z",
+      "observedAt": "2026-07-29T17:39:04Z",
+      "trackId": "sdk:Python:azure-mgmt-edgezones",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48348",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48348#issuecomment-5121426904"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 9 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61530:comment:5121428629:sdk:.NET:Azure.ResourceManager.EdgeZones",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-29T17:39:13Z",
+      "observedAt": "2026-07-29T17:39:13Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.EdgeZones",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61530",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61530#issuecomment-5121428629"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 10 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61530:review:4811261363:sdk:.NET:Azure.ResourceManager.EdgeZones",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-29T17:39:15Z",
+      "observedAt": "2026-07-29T17:39:15Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.EdgeZones",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61530",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61530#pullrequestreview-4811261363"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview > [!NOTE] > Copilot could not run the full agentic suite for this review because it was automatically requested on a bot-authored pull request. Request a review from Copilot under Reviewers to retry with the full ag",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61530:comment:3676719340:sdk:.NET:Azure.ResourceManager.EdgeZones",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-29T17:39:15Z",
+      "observedAt": "2026-07-29T17:39:15Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.EdgeZones",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61530",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61530#discussion_r3676719340"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`additionalDirectories` is currently set to a YAML null value (with an empty following line). If the tooling expects a sequence, this can be interpreted differently than an empty list and may cause config parsing/behavior differences. Consi",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39458:comment:5121430581:sdk:JavaScript:@azure/arm-edgezones",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-29T17:39:22Z",
+      "observedAt": "2026-07-29T17:39:22Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgezones",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39458",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39458#issuecomment-5121430581"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 2 pipeline(s).<br> 8 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39458:comment:3676729434:sdk:JavaScript:@azure/arm-edgezones",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-29T17:40:44Z",
+      "observedAt": "2026-07-29T17:40:44Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgezones",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39458",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39458#discussion_r3676729434"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The `ifEmpty` handling is inverted: for named expansions with an empty value, RFC6570 requires appending the operator-specific `ifEmpty` string (e.g., '=' for '?' and '&') when `ifEmpty` is present. As written, it only pushes when `ifEmpty`",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39458:comment:3676729456:sdk:JavaScript:@azure/arm-edgezones",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-29T17:40:44Z",
+      "observedAt": "2026-07-29T17:40:44Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgezones",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39458",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39458#discussion_r3676729456"
+      },
+      "confidence": "authoritative",
+      "excerpt": "RFC 3986 'unreserved' includes ALPHA / DIGIT / '-' / '.' / '_' / '~'. The implementation (and comment) only decodes .~- and misses '_' and alphanumerics, which can leave URLs unnecessarily encoded and makes the comment inaccurate. Update th",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39458:comment:3676729485:sdk:JavaScript:@azure/arm-edgezones",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-29T17:40:44Z",
+      "observedAt": "2026-07-29T17:40:44Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgezones",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39458",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39458#discussion_r3676729485"
+      },
+      "confidence": "authoritative",
+      "excerpt": "When `cloudSetting` (or a non-public `endpoint`) is used, the default AAD scope must match the selected ARM authority host. Hardcoding `https://management.azure.com/.default` will break auth in China/Government clouds (and any custom endpoi",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39458:comment:3676729507:sdk:JavaScript:@azure/arm-edgezones",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-29T17:40:44Z",
+      "observedAt": "2026-07-29T17:40:44Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgezones",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39458",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39458#discussion_r3676729507"
+      },
+      "confidence": "authoritative",
+      "excerpt": "When `cloudSetting` (or a non-public `endpoint`) is used, the default AAD scope must match the selected ARM authority host. Hardcoding `https://management.azure.com/.default` will break auth in China/Government clouds (and any custom endpoi",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39458:comment:3676729535:sdk:JavaScript:@azure/arm-edgezones",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-29T17:40:45Z",
+      "observedAt": "2026-07-29T17:40:45Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgezones",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39458",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39458#discussion_r3676729535"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Appending via string interpolation can produce invalid URLs when `url` contains a fragment (`#...`), because the query parameter would be appended after the fragment. Since you're already using `URL` for parsing, prefer mutating `urlObj.sea",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39458:comment:3676729573:sdk:JavaScript:@azure/arm-edgezones",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-29T17:40:45Z",
+      "observedAt": "2026-07-29T17:40:45Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgezones",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39458",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39458#discussion_r3676729573"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The identifier uses `KnowncreatedByType` (lowercase 'c'), but the exported enum is `KnownCreatedByType` (as reflected elsewhere in this PR). This mismatch can break cross-language mapping lookups; update the key to match the actual symbol n",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39458:comment:3676729604:sdk:JavaScript:@azure/arm-edgezones",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-29T17:40:45Z",
+      "observedAt": "2026-07-29T17:40:45Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgezones",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39458",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39458#discussion_r3676729604"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`operationArrayDeserializer` is typed as taking `Array<Operation>` and returning `any[]`, but it's used to deserialize raw JSON (`item['value']`). This should accept `any[]` (or `unknown[]`) and return `Operation[]` to reflect actual usage ",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39458:comment:3676729629:sdk:JavaScript:@azure/arm-edgezones",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-29T17:40:45Z",
+      "observedAt": "2026-07-29T17:40:45Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgezones",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39458",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39458#discussion_r3676729629"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`KnownVersions` is imported as a value but not referenced in this file (the JSDoc link does not require a runtime import). This can fail lint/build under unused-import rules; remove the import or convert it to a type-only reference if neede",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39458:review:4811274762:sdk:JavaScript:@azure/arm-edgezones",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-29T17:40:46Z",
+      "observedAt": "2026-07-29T17:40:46Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgezones",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39458",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39458#pullrequestreview-4811274762"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview > [!NOTE] > Copilot could not run the full agentic suite for this review because it was automatically requested on a bot-authored pull request. Request a review from Copilot under Reviewers to retry with the full ag",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39458:comment:3676729654:sdk:JavaScript:@azure/arm-edgezones",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-29T17:40:46Z",
+      "observedAt": "2026-07-29T17:40:46Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgezones",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39458",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39458#discussion_r3676729654"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The sample embeds a non-placeholder subscriptionId that appears to be a real GUID. Samples should use a clearly fake placeholder (commonly all zeros) to avoid accidental disclosure and copy/paste misuse; update this (and the other samples i",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39458:comment:3676729680:sdk:JavaScript:@azure/arm-edgezones",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-29T17:40:46Z",
+      "observedAt": "2026-07-29T17:40:46Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgezones",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39458",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39458#discussion_r3676729680"
+      },
+      "confidence": "authoritative",
+      "excerpt": "There is a whitespace-only line at the top of the changelog which can trip markdown linting in some pipelines. Remove the trailing spaces / blank line padding.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48348:comment:3676730194:sdk:Python:azure-mgmt-edgezones",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-29T17:40:50Z",
+      "observedAt": "2026-07-29T17:40:50Z",
+      "trackId": "sdk:Python:azure-mgmt-edgezones",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48348",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48348#discussion_r3676730194"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The docstring says `api_version` default is `None`, but the implementation defaults it to `\"2026-10-01\"`. Update the docstring to match the actual behavior (or change the implementation to default `None` and rely on per-operation defaults) ",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48348:comment:3676730251:sdk:Python:azure-mgmt-edgezones",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-29T17:40:51Z",
+      "observedAt": "2026-07-29T17:40:51Z",
+      "trackId": "sdk:Python:azure-mgmt-edgezones",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48348",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48348#discussion_r3676730251"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The docstring says `api_version` default is `None`, but the implementation defaults it to `\"2026-10-01\"`. Update the docstring to match the actual behavior (or change the implementation to default `None` and rely on per-operation defaults) ",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48348:comment:3676730290:sdk:Python:azure-mgmt-edgezones",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-29T17:40:51Z",
+      "observedAt": "2026-07-29T17:40:51Z",
+      "trackId": "sdk:Python:azure-mgmt-edgezones",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48348",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48348#discussion_r3676730290"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The docstring’s `:type base_url:` still says `str`, but the signature is `Optional[str]` with default `None`. Update the docstring type to `Optional[str]` (and similarly in the async client) to keep the public docs accurate.",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48348:comment:3676730318:sdk:Python:azure-mgmt-edgezones",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-29T17:40:51Z",
+      "observedAt": "2026-07-29T17:40:51Z",
+      "trackId": "sdk:Python:azure-mgmt-edgezones",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48348",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48348#discussion_r3676730318"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The docstring’s `:type base_url:` still says `str`, but the signature is `Optional[str]` with default `None`. Update the docstring type to `Optional[str]` (and similarly in the async client) to keep the public docs accurate.",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48348:review:4811275641:sdk:Python:azure-mgmt-edgezones",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-29T17:40:52Z",
+      "observedAt": "2026-07-29T17:40:52Z",
+      "trackId": "sdk:Python:azure-mgmt-edgezones",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48348",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48348#pullrequestreview-4811275641"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview > [!NOTE] > Copilot could not run the full agentic suite for this review because it was automatically requested on a bot-authored pull request. Request a review from Copilot under Reviewers to retry with the full ag",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48348:comment:3676730360:sdk:Python:azure-mgmt-edgezones",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-29T17:40:52Z",
+      "observedAt": "2026-07-29T17:40:52Z",
+      "trackId": "sdk:Python:azure-mgmt-edgezones",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48348",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48348#discussion_r3676730360"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The changelog entry only mentions `cloud_setting`, but this PR also changes packaging/runtime expectations (e.g., Python requirement now `>=3.10` and `base_url` default behavior changed to `None` with cloud endpoint resolution). Consider do",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49987:commit:9aed0c325d75:sdk:Java:azure-resourcemanager-edgezones",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-29T17:40:53Z",
+      "observedAt": "2026-07-29T17:40:53Z",
+      "trackId": "sdk:Java:azure-resourcemanager-edgezones",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49987",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/9aed0c325d7593acb0564b857a2e086de3bbe06d"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49987:pr.created:sdk:Java:azure-resourcemanager-edgezones",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-29T17:40:58Z",
+      "observedAt": "2026-07-29T17:40:58Z",
+      "trackId": "sdk:Java:azure-resourcemanager-edgezones",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49987",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49987"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado:35683:14:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-29T17:41:05.227Z",
+      "observedAt": "2026-07-29T17:41:05.227Z",
+      "trackId": "sdk:Java:azure-resourcemanager-edgezones",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35683",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35683"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:35683:14:Custom.SDKPullRequestForJava",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-29T17:41:05.227Z",
+      "observedAt": "2026-07-29T17:41:05.227Z",
+      "trackId": "sdk:Java:azure-resourcemanager-edgezones",
+      "value": "https://github.com/Azure/azure-sdk-for-java/pull/49987",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35683",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35683"
+      },
+      "title": "SDK PR linked",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49987:comment:5121455530:sdk:Java:azure-resourcemanager-edgezones",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-29T17:41:42Z",
+      "observedAt": "2026-07-29T17:41:42Z",
+      "trackId": "sdk:Java:azure-resourcemanager-edgezones",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49987",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49987#issuecomment-5121455530"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 34 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49987:review:4811286174:sdk:Java:azure-resourcemanager-edgezones",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-29T17:42:02Z",
+      "observedAt": "2026-07-29T17:42:02Z",
+      "trackId": "sdk:Java:azure-resourcemanager-edgezones",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49987",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49987#pullrequestreview-4811286174"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview > [!NOTE] > Copilot could not run the full agentic suite for this review because it was automatically requested on a bot-authored pull request. Request a review from Copilot under Reviewers to retry with the full ag",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39458:comment:5121636376:sdk:JavaScript:@azure/arm-edgezones",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-29T17:58:44Z",
+      "observedAt": "2026-07-29T17:58:44Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgezones",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39458",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39458#issuecomment-5121636376"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Next Steps to Merge Only failed checks and required actions are listed below. - ❌ **UnitTest (ubuntu/macos/windows node)**: Stale test recordings — tests for `@azure/arm-edgezones` reference API version `2026-10-01` but no matching recor",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61530:review:4811530229:sdk:.NET:Azure.ResourceManager.EdgeZones",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-29T18:10:33Z",
+      "observedAt": "2026-07-29T18:10:33Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.EdgeZones",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61530",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61530#pullrequestreview-4811530229"
+      },
+      "confidence": "authoritative",
+      "excerpt": "### Management SDK Review Summary - Scope: `Azure.ResourceManager.EdgeZones` - Versioning: **FAIL** — CHANGELOG not updated for 1.0.0 stable release - API surface: pass (no API surface changes in this PR) - Contextual naming: evaluated 11 n",
+      "reviewState": "dismissed",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27288:comment:5125118068:sdk:Go:sdk/resourcemanager/edgezones/armedgezones",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-30T01:05:33Z",
+      "observedAt": "2026-07-30T01:05:33Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/edgezones/armedgezones",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27288",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27288#issuecomment-5125118068"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Next Steps to Merge Only failed checks and required actions are listed below. - ❌ `go - pullrequest (Build Analyze)`: Changelog validation failed — the `### Other Changes` section under `## 1.0.0 (2026-07-29)` in `CHANGELOG.md` is empty ",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49987:commit:90878c2333ee:sdk:Java:azure-resourcemanager-edgezones",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-30T01:32:30Z",
+      "observedAt": "2026-07-30T01:32:30Z",
+      "trackId": "sdk:Java:azure-resourcemanager-edgezones",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49987",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/90878c2333eebfb12003e4e988dd12a2f3c2d6c5"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49987:review:4814495160:sdk:Java:azure-resourcemanager-edgezones",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-30T01:47:17Z",
+      "observedAt": "2026-07-30T01:47:17Z",
+      "trackId": "sdk:Java:azure-resourcemanager-edgezones",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49987",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49987#pullrequestreview-4814495160"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@XiaofeiCao for review",
+      "reviewState": "approved",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48348:comment:5125855788:sdk:Python:azure-mgmt-edgezones",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-30T02:58:32Z",
+      "observedAt": "2026-07-30T02:58:32Z",
+      "trackId": "sdk:Python:azure-mgmt-edgezones",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48348",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48348#issuecomment-5125855788"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi, the new api version `2026-10-01` seems not deployed on portal yet, we recommend making sure the api version to be deployed before releasing the SDK, though we won't block the release in self-serve release flow.",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48348:commit:d637c14377b4:sdk:Python:azure-mgmt-edgezones",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-30T02:58:45Z",
+      "observedAt": "2026-07-30T02:58:45Z",
+      "trackId": "sdk:Python:azure-mgmt-edgezones",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48348",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/d637c14377b4b751e140922426f8865c38d1311f"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48348:review:4814838547:sdk:Python:azure-mgmt-edgezones",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-30T02:59:09Z",
+      "observedAt": "2026-07-30T02:59:09Z",
+      "trackId": "sdk:Python:azure-mgmt-edgezones",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48348",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48348#pullrequestreview-4814838547"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @mert-s, we have approved the PR. You can move on to merge and release though the action suggestion in Release Plan.",
+      "reviewState": "approved",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48348:review:4814857052:sdk:Python:azure-mgmt-edgezones",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-30T03:03:10Z",
+      "observedAt": "2026-07-30T03:03:10Z",
+      "trackId": "sdk:Python:azure-mgmt-edgezones",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48348",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48348#pullrequestreview-4814857052"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Copilot reviewed 38 out of 38 changed files in this pull request and generated no new comments. <details> <summary>Comments suppressed due to low confidence (1)</summary> **sdk/edgezones/azure-mgmt-edgezones/CHANGEL",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48348:review:4814883569:sdk:Python:azure-mgmt-edgezones",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-30T03:07:33Z",
+      "observedAt": "2026-07-30T03:07:33Z",
+      "trackId": "sdk:Python:azure-mgmt-edgezones",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48348",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48348#pullrequestreview-4814883569"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27288:commit:a33b6218876d:sdk:Go:sdk/resourcemanager/edgezones/armedgezones",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-30T03:23:31Z",
+      "observedAt": "2026-07-30T03:23:31Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/edgezones/armedgezones",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27288",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/a33b6218876dd1abd853cf13a8a9bdfc9e0c239d"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27288:review:4814974649:sdk:Go:sdk/resourcemanager/edgezones/armedgezones",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-30T03:26:21Z",
+      "observedAt": "2026-07-30T03:26:21Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/edgezones/armedgezones",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27288",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27288#pullrequestreview-4814974649"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Copilot reviewed 3 out of 10 changed files in this pull request and generated no new comments. <details> <summary>Files not reviewed (7)</summary> * **sdk/resourcemanager/edgezones/armedgezones/constants.go**: Gener",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39458:review:4815781651:sdk:JavaScript:@azure/arm-edgezones",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-30T06:01:09Z",
+      "observedAt": "2026-07-30T06:01:09Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgezones",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39458",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39458#pullrequestreview-4815781651"
+      },
+      "confidence": "authoritative",
+      "excerpt": "2 tooling issues found in the API report for `@azure/arm-edgezones` 1.0.0 (stable, api-version `2026-10-01`, graduating from `1.0.0-beta.4`). Both findings relate to missing `// `@public`` tags on re-exported symbols (`isRestError`, `RestEr",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27288:comment:5127337653:sdk:Go:sdk/resourcemanager/edgezones/armedgezones",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-30T06:21:08Z",
+      "observedAt": "2026-07-30T06:21:08Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/edgezones/armedgezones",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27288",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27288#issuecomment-5127337653"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## PR is ready to merge",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27288:review:4816231199:sdk:Go:sdk/resourcemanager/edgezones/armedgezones",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-30T07:08:35Z",
+      "observedAt": "2026-07-30T07:08:35Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/edgezones/armedgezones",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "tadelesh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27288",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27288#pullrequestreview-4816231199"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6639984:generation.queued:sdk:.NET:Azure.ResourceManager.EdgeZones",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-07-30T13:56:47.592758Z",
+      "observedAt": "2026-07-30T14:04:25.0684216Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.EdgeZones",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6639984",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6639984"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:35683:15:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-30T13:56:53.76Z",
+      "observedAt": "2026-07-30T13:56:53.76Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.EdgeZones",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35683",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35683"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6639985:generation.queued:sdk:Java:azure-resourcemanager-edgezones",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-07-30T13:57:11.1538006Z",
+      "observedAt": "2026-07-30T14:17:34.465113Z",
+      "trackId": "sdk:Java:azure-resourcemanager-edgezones",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6639985",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6639985"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6639984:generation.started:sdk:.NET:Azure.ResourceManager.EdgeZones",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-07-30T13:57:11.8252601Z",
+      "observedAt": "2026-07-30T14:04:25.0684216Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.EdgeZones",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6639984",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6639984"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:35683:16:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-30T13:57:15.477Z",
+      "observedAt": "2026-07-30T13:57:15.477Z",
+      "trackId": "sdk:Java:azure-resourcemanager-edgezones",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35683",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35683"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6639985:generation.started:sdk:Java:azure-resourcemanager-edgezones",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-07-30T13:57:30.7109276Z",
+      "observedAt": "2026-07-30T14:17:34.465113Z",
+      "trackId": "sdk:Java:azure-resourcemanager-edgezones",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6639985",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6639985"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6639986:generation.queued:sdk:JavaScript:@azure/arm-edgezones",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-07-30T13:57:32.7614025Z",
+      "observedAt": "2026-07-30T14:04:49.6891599Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgezones",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6639986",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6639986"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:35683:17:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-30T13:57:40.77Z",
+      "observedAt": "2026-07-30T13:57:40.77Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgezones",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35683",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35683"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6639986:generation.started:sdk:JavaScript:@azure/arm-edgezones",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-07-30T13:57:53.017384Z",
+      "observedAt": "2026-07-30T14:04:49.6891599Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgezones",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6639986",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6639986"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6639987:generation.queued:sdk:Python:azure-mgmt-edgezones",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-07-30T13:57:57.0262695Z",
+      "observedAt": "2026-07-30T14:05:01.1486266Z",
+      "trackId": "sdk:Python:azure-mgmt-edgezones",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6639987",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6639987"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:35683:18:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-30T13:58:00.643Z",
+      "observedAt": "2026-07-30T13:58:00.643Z",
+      "trackId": "sdk:Python:azure-mgmt-edgezones",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35683",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35683"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6639987:generation.started:sdk:Python:azure-mgmt-edgezones",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-07-30T13:58:15.9519266Z",
+      "observedAt": "2026-07-30T14:05:01.1486266Z",
+      "trackId": "sdk:Python:azure-mgmt-edgezones",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6639987",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6639987"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6639988:generation.queued:sdk:Go:sdk/resourcemanager/edgezones/armedgezones",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-07-30T13:58:20.5749848Z",
+      "observedAt": "2026-07-30T14:04:39.7371813Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/edgezones/armedgezones",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6639988",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6639988"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:35683:19:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-30T13:58:25.807Z",
+      "observedAt": "2026-07-30T13:58:25.807Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/edgezones/armedgezones",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35683",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35683"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6639988:generation.started:sdk:Go:sdk/resourcemanager/edgezones/armedgezones",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-07-30T13:58:38.2399005Z",
+      "observedAt": "2026-07-30T14:04:39.7371813Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/edgezones/armedgezones",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6639988",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6639988"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61530:commit:b03e800e9636:sdk:.NET:Azure.ResourceManager.EdgeZones",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-30T14:03:24Z",
+      "observedAt": "2026-07-30T14:03:24Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.EdgeZones",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61530",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/b03e800e963656a219bc0607ea8f5866d1567618"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27288:commit:92b9c5725b1e:sdk:Go:sdk/resourcemanager/edgezones/armedgezones",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-30T14:03:27Z",
+      "observedAt": "2026-07-30T14:03:27Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/edgezones/armedgezones",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27288",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/92b9c5725b1e17b287ef2f3b6f22fd5e0040590b"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:35683:20:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-30T14:03:35.187Z",
+      "observedAt": "2026-07-30T14:03:35.187Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.EdgeZones",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35683",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35683"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:35683:21:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-30T14:03:39.993Z",
+      "observedAt": "2026-07-30T14:03:39.993Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/edgezones/armedgezones",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35683",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35683"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48348:commit:41681d409905:sdk:Python:azure-mgmt-edgezones",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-30T14:03:48Z",
+      "observedAt": "2026-07-30T14:03:48Z",
+      "trackId": "sdk:Python:azure-mgmt-edgezones",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48348",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/41681d409905cfb88b4ffb7cc6208c02dcd098d9"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39458:commit:1832b1cb2877:sdk:JavaScript:@azure/arm-edgezones",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-30T14:03:49Z",
+      "observedAt": "2026-07-30T14:03:49Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgezones",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39458",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/1832b1cb28778d25fec849dead176b084b367734"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:35683:22:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-30T14:03:59.197Z",
+      "observedAt": "2026-07-30T14:03:59.197Z",
+      "trackId": "sdk:Python:azure-mgmt-edgezones",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35683",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35683"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:35683:23:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-30T14:03:59.643Z",
+      "observedAt": "2026-07-30T14:03:59.643Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgezones",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35683",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35683"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27288:review:4819592454:sdk:Go:sdk/resourcemanager/edgezones/armedgezones",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-30T14:04:11Z",
+      "observedAt": "2026-07-30T14:04:11Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/edgezones/armedgezones",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27288",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27288#pullrequestreview-4819592454"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Copilot reviewed 3 out of 10 changed files in this pull request and generated no new comments. <details> <summary>Files not reviewed (7)</summary> * **sdk/resourcemanager/edgezones/armedgezones/constants.go**: Gener",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6639984:generation.completed:sdk:.NET:Azure.ResourceManager.EdgeZones",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-07-30T14:04:25.0684216Z",
+      "observedAt": "2026-07-30T14:04:25.0684216Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.EdgeZones",
+      "title": "Pipeline completed with issues",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6639984",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6639984"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:6639988:generation.completed:sdk:Go:sdk/resourcemanager/edgezones/armedgezones",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-07-30T14:04:39.7371813Z",
+      "observedAt": "2026-07-30T14:04:39.7371813Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/edgezones/armedgezones",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6639988",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6639988"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6639986:generation.completed:sdk:JavaScript:@azure/arm-edgezones",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-07-30T14:04:49.6891599Z",
+      "observedAt": "2026-07-30T14:04:49.6891599Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgezones",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6639986",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6639986"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6639987:generation.completed:sdk:Python:azure-mgmt-edgezones",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-07-30T14:05:01.1486266Z",
+      "observedAt": "2026-07-30T14:05:01.1486266Z",
+      "trackId": "sdk:Python:azure-mgmt-edgezones",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6639987",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6639987"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48348:review:4819608924:sdk:Python:azure-mgmt-edgezones",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-30T14:05:59Z",
+      "observedAt": "2026-07-30T14:05:59Z",
+      "trackId": "sdk:Python:azure-mgmt-edgezones",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48348",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48348#pullrequestreview-4819608924"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Copilot reviewed 38 out of 38 changed files in this pull request and generated 1 comment. <details> <summary>Comments suppressed due to low confidence (3)</summary> **sdk/edgezones/azure-mgmt-edgezones/azure/mgmt/ed",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48348:comment:3683353838:sdk:Python:azure-mgmt-edgezones",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-30T14:05:59Z",
+      "observedAt": "2026-07-30T14:05:59Z",
+      "trackId": "sdk:Python:azure-mgmt-edgezones",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48348",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48348#discussion_r3683353838"
+      },
+      "confidence": "authoritative",
+      "excerpt": "In the async client, `pipeline_response.http_response` is an `AsyncHttpResponse`. Its `json()` is typically awaitable; calling it without `await` will return a coroutine and break `.get(...)`. Update this to await the JSON body (and similar",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39458:review:4819609361:sdk:JavaScript:@azure/arm-edgezones",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-30T14:06:02Z",
+      "observedAt": "2026-07-30T14:06:02Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgezones",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39458",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39458#pullrequestreview-4819609361"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Copilot reviewed 33 out of 33 changed files in this pull request and generated 1 comment. <details> <summary>Comments suppressed due to low confidence (8)</summary> **sdk/edgezones/arm-edgezones/tsp-location.yaml:1*",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39458:comment:3683354211:sdk:JavaScript:@azure/arm-edgezones",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-30T14:06:02Z",
+      "observedAt": "2026-07-30T14:06:02Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgezones",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39458",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39458#discussion_r3683354211"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Default credential scope is hard-coded to the public cloud resource (\\\"https://management.azure.com/.default\\\"). This breaks authentication when `cloudSetting` selects a sovereign ARM endpoint (China/US Gov). Use a scope derived from `endpo",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49987:commit:204c14c2ce99:sdk:Java:azure-resourcemanager-edgezones",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-30T14:06:47Z",
+      "observedAt": "2026-07-30T14:06:47Z",
+      "trackId": "sdk:Java:azure-resourcemanager-edgezones",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49987",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/204c14c2ce99ff6fa16b770c008879e9a666de77"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado:35683:24:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-30T14:06:58.657Z",
+      "observedAt": "2026-07-30T14:06:58.657Z",
+      "trackId": "sdk:Java:azure-resourcemanager-edgezones",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35683",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35683"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6639985:generation.completed:sdk:Java:azure-resourcemanager-edgezones",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-07-30T14:17:34.465113Z",
+      "observedAt": "2026-07-30T14:17:34.465113Z",
+      "trackId": "sdk:Java:azure-resourcemanager-edgezones",
+      "title": "Pipeline completed with issues",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6639985",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6639985"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39458:comment:5132057234:sdk:JavaScript:@azure/arm-edgezones",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-30T14:23:45Z",
+      "observedAt": "2026-07-30T14:23:45Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgezones",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39458",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39458#issuecomment-5132057234"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Next Steps to Merge Only failed checks and required actions are listed below. - ❌ **UnitTest (all node environments)**: Stale recordings — requests use API version `2026-10-01` but recordings expect `2024-04-01-preview`. Action: Re-recor",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61530:comment:5132254059:sdk:.NET:Azure.ResourceManager.EdgeZones",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-30T14:40:31Z",
+      "observedAt": "2026-07-30T14:40:31Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.EdgeZones",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61530",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61530#issuecomment-5132254059"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## 🔍 CI Failure Analysis for PR #61530 ### Check Status | Check | Status | |---|---| | `net - pullrequest` | ❌ failure | | `Build Build PRBatch` | ❌ failure | | `Build Analyze PRBatch` | ✅ success | | All other build/test matrix jobs | ✅ s",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48348:review:4824894548:sdk:Python:azure-mgmt-edgezones",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-31T02:19:16Z",
+      "observedAt": "2026-07-31T02:19:16Z",
+      "trackId": "sdk:Python:azure-mgmt-edgezones",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48348",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48348#pullrequestreview-4824894548"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49987:commit:cd071b2f0ae8:sdk:Java:azure-resourcemanager-edgezones",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-31T02:24:53Z",
+      "observedAt": "2026-07-31T02:24:53Z",
+      "trackId": "sdk:Java:azure-resourcemanager-edgezones",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49987",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/cd071b2f0ae8a849c8d484cb35c09aef0b91f80f"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61530:commit:14de1042c01b:sdk:.NET:Azure.ResourceManager.EdgeZones",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-31T14:14:19Z",
+      "observedAt": "2026-07-31T14:14:19Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.EdgeZones",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "mertsahan_microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61530",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/14de1042c01bc01a14d9680446aca49a663303f1"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61530:review:4829578610:sdk:.NET:Azure.ResourceManager.EdgeZones",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-31T14:52:06Z",
+      "observedAt": "2026-07-31T14:52:06Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.EdgeZones",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61530",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61530#pullrequestreview-4829578610"
+      },
+      "confidence": "authoritative",
+      "excerpt": "### Management SDK Review Summary - Scope: `Azure.ResourceManager.EdgeZones` - Versioning: **pass** — `1.0.0-beta.4` → `1.0.0` stable promotion is correct; `CHANGELOG.md` now properly updated with `## 1.0.0 (Unreleased)` entry describing th",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27288:commit:b2074aef0498:sdk:Go:sdk/resourcemanager/edgezones/armedgezones",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-31T15:49:57Z",
+      "observedAt": "2026-07-31T15:49:57Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/edgezones/armedgezones",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "mertsahan_microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27288",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/b2074aef04980db026849a03e9019b297c838abd"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27288:review:4830190984:sdk:Go:sdk/resourcemanager/edgezones/armedgezones",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-31T16:06:59Z",
+      "observedAt": "2026-07-31T16:06:59Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/edgezones/armedgezones",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27288",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27288#pullrequestreview-4830190984"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Copilot reviewed 4 out of 12 changed files in this pull request and generated no new comments. <details> <summary>Files not reviewed (7)</summary> * **sdk/resourcemanager/edgezones/armedgezones/constants.go**: Gener",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39458:commit:641281f23471:sdk:JavaScript:@azure/arm-edgezones",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-31T16:15:42Z",
+      "observedAt": "2026-07-31T16:15:42Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgezones",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "mertsahan_microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39458",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/641281f234717b004a696d2937d351b3b2f176cb"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39458:review:4830318747:sdk:JavaScript:@azure/arm-edgezones",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-31T16:24:19Z",
+      "observedAt": "2026-07-31T16:24:19Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgezones",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39458",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39458#pullrequestreview-4830318747"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Copilot reviewed 34 out of 34 changed files in this pull request and generated no new comments. <details> <summary>Suppressed comments (1)</summary> **sdk/edgezones/arm-edgezones/src/api/edgeZonesContext.ts:35** * T",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39458:comment:5145229038:sdk:JavaScript:@azure/arm-edgezones",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-31T16:37:51Z",
+      "observedAt": "2026-07-31T16:37:51Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgezones",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39458",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39458#issuecomment-5145229038"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Next Steps to Merge ✅ All CI checks have passed — this PR is ready for review! The SDK engineer will review this PR shortly. Once it's approved, you can go ahead and merge it. To make things easier, feel free to [enable auto-merge](https",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49987:review:4840310753:sdk:Java:azure-resourcemanager-edgezones",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-03T01:52:13Z",
+      "observedAt": "2026-08-03T01:52:13Z",
+      "trackId": "sdk:Java:azure-resourcemanager-edgezones",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49987",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49987#pullrequestreview-4840310753"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27288:review:4840332325:sdk:Go:sdk/resourcemanager/edgezones/armedgezones",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-03T02:00:13Z",
+      "observedAt": "2026-08-03T02:00:13Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/edgezones/armedgezones",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "JiaqiZhang-Dev"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27288",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27288#pullrequestreview-4840332325"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39458:comment:5163436985:sdk:JavaScript:@azure/arm-edgezones",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-03T07:19:27Z",
+      "observedAt": "2026-08-03T07:19:27Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgezones",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39458",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39458#issuecomment-5163436985"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@mert-s please use the SDK agent to generate/re-generate the SDK which can make sure no changes are missing in the SDK PR.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39458:commit:972a39ac5fca:sdk:JavaScript:@azure/arm-edgezones",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-03T07:27:05Z",
+      "observedAt": "2026-08-03T07:27:05Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgezones",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39458",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/972a39ac5fca13827537954857dc5c77f91cfa4f"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39458:review:4841708205:sdk:JavaScript:@azure/arm-edgezones",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-03T07:29:26Z",
+      "observedAt": "2026-08-03T07:29:26Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgezones",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39458",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39458#pullrequestreview-4841708205"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Copilot reviewed 34 out of 34 changed files in this pull request and generated 3 comments. <details> <summary>Suppressed comments (6)</summary> **sdk/edgezones/arm-edgezones/tsp-location.yaml:1** * `additionalDirect",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39458:comment:3702062158:sdk:JavaScript:@azure/arm-edgezones",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-03T07:29:26Z",
+      "observedAt": "2026-08-03T07:29:26Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgezones",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39458",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39458#discussion_r3702062158"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The `ifEmpty` handling is inverted: for `?`/`&` operators `ifEmpty` is `'='`, and the empty-value form should include the equals sign (e.g., `name=`). The current condition `if (!ifEmpty)` prevents adding `'='` in those cases. Flip this che",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39458:comment:3702062200:sdk:JavaScript:@azure/arm-edgezones",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-03T07:29:26Z",
+      "observedAt": "2026-08-03T07:29:26Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgezones",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39458",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39458#discussion_r3702062200"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The regex `/[.~-]/` defines a character range from `.` to `~` (because `-` is unescaped), which matches many characters beyond `.` `~` `-`. This can incorrectly decode percent-encoded reserved characters and change the expanded URI. Escape ",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39458:comment:3702062225:sdk:JavaScript:@azure/arm-edgezones",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-03T07:29:26Z",
+      "observedAt": "2026-08-03T07:29:26Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgezones",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39458",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39458#discussion_r3702062225"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`cloudSetting`/`endpointUrl` supports sovereign clouds, but the default credential scope is hard-coded to the public cloud (`https://management.azure.com/.default`). This will break authentication when `cloudSetting` resolves to a non-publi",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39458:comment:5163642541:sdk:JavaScript:@azure/arm-edgezones",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-03T07:45:00Z",
+      "observedAt": "2026-08-03T07:45:00Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgezones",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39458",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39458#issuecomment-5163642541"
+      },
+      "confidence": "authoritative",
+      "excerpt": "LGTM cc @JialinHuang803",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39458:comment:5163678564:sdk:JavaScript:@azure/arm-edgezones",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-03T07:49:24Z",
+      "observedAt": "2026-08-03T07:49:24Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgezones",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39458",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39458#issuecomment-5163678564"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Next Steps to Merge ✅ All CI checks have passed — this PR is ready for review! The SDK engineer will review this PR shortly. Once it's approved, you can go ahead and merge it. To make things easier, feel free to [enable auto-merge](https",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39458:review:4849809049:sdk:JavaScript:@azure/arm-edgezones",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-04T01:28:25Z",
+      "observedAt": "2026-08-04T01:28:25Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgezones",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "JialinHuang803"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39458",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39458#pullrequestreview-4849809049"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61530:review:4880214711:sdk:.NET:Azure.ResourceManager.EdgeZones",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-07T05:32:50Z",
+      "observedAt": "2026-08-07T05:32:50Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.EdgeZones",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61530",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61530#pullrequestreview-4880214711"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61530:comment:3733653634:sdk:.NET:Azure.ResourceManager.EdgeZones",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-07T05:32:50Z",
+      "observedAt": "2026-08-07T05:32:50Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.EdgeZones",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61530",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61530#discussion_r3733653634"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Please specify the release date by replacing the Unreleased section, the format is yyyy-mm-dd",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49987:review:4913961552:sdk:Java:azure-resourcemanager-edgezones",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T07:22:14Z",
+      "observedAt": "2026-08-12T07:22:14Z",
+      "trackId": "sdk:Java:azure-resourcemanager-edgezones",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "XiaofeiCao"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49987",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49987#pullrequestreview-4913961552"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    }
+  ],
+  "quality": {
+    "warnings": [
+      "5 historical linked PR(s) closed without merge"
+    ],
+    "unavailablePullRequests": 0,
+    "unavailablePipelineRuns": 0
+  },
+  "boundaryFacts": {
+    "id": "35683",
+    "state": "in-progress",
+    "specPrs": [
+      {
+        "id": "github:Azure/azure-rest-api-specs#44581",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#44581",
+        "createdAt": "2026-07-10T14:38:52Z",
+        "mergedAt": "2026-07-29T17:23:14Z",
+        "closedAt": "2026-07-29T17:23:14Z",
+        "available": true
+      }
+    ],
+    "artifacts": [
+      {
+        "language": ".NET",
+        "package": "Azure.ResourceManager.EdgeZones",
+        "trackId": "sdk:.NET:Azure.ResourceManager.EdgeZones",
+        "prId": "github:Azure/azure-sdk-for-net#61530",
+        "prCreatedAt": "2026-07-29T17:38:33Z",
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-net#61530",
+            "createdAt": "2026-07-29T17:38:33Z",
+            "mergedAt": null,
+            "closedAt": null,
+            "state": "open"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6639984",
+        "generationStartAt": "2026-07-30T13:57:11.8252601Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "JavaScript",
+        "package": "@azure/arm-edgezones",
+        "trackId": "sdk:JavaScript:@azure/arm-edgezones",
+        "prId": "github:Azure/azure-sdk-for-js#39458",
+        "prCreatedAt": "2026-07-29T17:38:46Z",
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-js#39458",
+            "createdAt": "2026-07-29T17:38:46Z",
+            "mergedAt": null,
+            "closedAt": null,
+            "state": "open"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6639986",
+        "generationStartAt": "2026-07-30T13:57:53.017384Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Python",
+        "package": "azure-mgmt-edgezones",
+        "trackId": "sdk:Python:azure-mgmt-edgezones",
+        "prId": "github:Azure/azure-sdk-for-python#48348",
+        "prCreatedAt": "2026-07-29T17:38:24Z",
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-python#48348",
+            "createdAt": "2026-07-29T17:38:24Z",
+            "mergedAt": null,
+            "closedAt": null,
+            "state": "open"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6639987",
+        "generationStartAt": "2026-07-30T13:58:15.9519266Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Java",
+        "package": "azure-resourcemanager-edgezones",
+        "trackId": "sdk:Java:azure-resourcemanager-edgezones",
+        "prId": "github:Azure/azure-sdk-for-java#49987",
+        "prCreatedAt": "2026-07-29T17:40:58Z",
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-java#49987",
+            "createdAt": "2026-07-29T17:40:58Z",
+            "mergedAt": null,
+            "closedAt": null,
+            "state": "open"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6639985",
+        "generationStartAt": "2026-07-30T13:57:30.7109276Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Go",
+        "package": "sdk/resourcemanager/edgezones/armedgezones",
+        "trackId": "sdk:Go:sdk/resourcemanager/edgezones/armedgezones",
+        "prId": "github:Azure/azure-sdk-for-go#27288",
+        "prCreatedAt": "2026-07-29T17:38:06Z",
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-go#27288",
+            "createdAt": "2026-07-29T17:38:06Z",
+            "mergedAt": null,
+            "closedAt": null,
+            "state": "open"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6639988",
+        "generationStartAt": "2026-07-30T13:58:38.2399005Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      }
+    ],
+    "cohortPlan": {
+      "id": "35683",
+      "releasePlanId": "35683",
+      "title": "GA release plan for EdgeZones.Management",
+      "service": "EdgeZones.Management",
+      "state": "in-progress"
+    },
+    "quality": {
+      "warnings": [
+        "5 historical linked PR(s) closed without merge"
+      ],
+      "unavailablePullRequests": 0,
+      "unavailablePipelineRuns": 0
+    }
+  },
+  "summary": {
+    "durationHours": 367.2,
+    "pullRequestCount": 6,
+    "humanReviewCount": 11,
+    "humanCommentCount": 4
+  }
+}

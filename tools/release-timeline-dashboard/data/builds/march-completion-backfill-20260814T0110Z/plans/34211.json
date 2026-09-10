@@ -1,0 +1,4027 @@
+{
+  "schemaVersion": 2,
+  "id": "34211",
+  "correlation": {
+    "policyVersion": 1,
+    "preflight": "passed"
+  },
+  "releasePlanId": "2215",
+  "title": "Release Plan - 2215 - Public Preview - Artifact Signing",
+  "service": "Code Signing",
+  "product": "Release",
+  "path": "specification/codesigning/resource-manager/Microsoft.CodeSigning/CodeSigning",
+  "state": "in-progress",
+  "plane": "management",
+  "releaseType": "APEX Public Preview",
+  "intendedMonth": "June 2026",
+  "createdAt": "2026-05-06T11:53:27.167Z",
+  "completedAt": null,
+  "sourceUrl": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34211",
+  "range": {
+    "start": "2026-04-27T15:52:01.000Z",
+    "end": "2026-08-14T00:37:23.589Z"
+  },
+  "intendedArtifacts": [
+    {
+      "prId": "github:Azure/azure-sdk-for-net#59768",
+      "language": ".NET",
+      "package": "Azure.ResourceManager.ArtifactSigning",
+      "version": "1.1.0-beta.1",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6411461",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-js#38876",
+      "language": "JavaScript",
+      "package": "@azure/arm-artifactsigning",
+      "version": "2.0.0-beta.1",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6411462",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-python#47410",
+      "language": "Python",
+      "package": "azure-mgmt-artifactsigning",
+      "version": "2.0.0b1",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6411460",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-java#49429",
+      "language": "Java",
+      "package": "com.azure.resourcemanager.artifactsigning",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6411465",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-go#26963",
+      "language": "Go",
+      "package": "azure.mgmt.artifactsigning",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6411467",
+      "releasePipelineUrl": null
+    }
+  ],
+  "links": [
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#42683",
+      "role": "spec-pr",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/42683",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-net#59768",
+      "role": "sdk-pr",
+      "language": ".NET",
+      "url": "https://github.com/Azure/azure-sdk-for-net/pull/59768",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-js#38876",
+      "role": "sdk-pr",
+      "language": "JavaScript",
+      "url": "https://github.com/Azure/azure-sdk-for-js/pull/38876",
+      "releasePlanIds": [
+        "2215"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-python#47410",
+      "role": "sdk-pr",
+      "language": "Python",
+      "url": "https://github.com/Azure/azure-sdk-for-python/pull/47410",
+      "releasePlanIds": [
+        "2215"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-java#49429",
+      "role": "sdk-pr",
+      "language": "Java",
+      "url": "https://github.com/Azure/azure-sdk-for-java/pull/49429",
+      "releasePlanIds": [
+        "2215"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-go#26963",
+      "role": "sdk-pr",
+      "language": "Go",
+      "url": "https://github.com/Azure/azure-sdk-for-go/pull/26963",
+      "releasePlanIds": [
+        "2215"
+      ]
+    }
+  ],
+  "tracks": [
+    {
+      "id": "plan",
+      "kind": "plan",
+      "label": "Release Plan",
+      "detail": "APEX Public Preview"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#42683",
+      "kind": "spec",
+      "label": "Spec PR",
+      "detail": "azure-rest-api-specs #42683",
+      "artifactId": "github:Azure/azure-rest-api-specs#42683",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "kind": "sdk",
+      "label": ".NET",
+      "detail": "Azure.ResourceManager.ArtifactSigning",
+      "artifactId": "github:Azure/azure-sdk-for-net#59768",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:JavaScript:@azure/arm-artifactsigning",
+      "kind": "sdk",
+      "label": "JavaScript",
+      "detail": "@azure/arm-artifactsigning",
+      "artifactId": "github:Azure/azure-sdk-for-js#38876",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Python:azure-mgmt-artifactsigning",
+      "kind": "sdk",
+      "label": "Python",
+      "detail": "azure-mgmt-artifactsigning",
+      "artifactId": "github:Azure/azure-sdk-for-python#47410",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Java:com.azure.resourcemanager.artifactsigning",
+      "kind": "sdk",
+      "label": "Java",
+      "detail": "com.azure.resourcemanager.artifactsigning",
+      "artifactId": "github:Azure/azure-sdk-for-java#49429",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Go:azure.mgmt.artifactsigning",
+      "kind": "sdk",
+      "label": "Go",
+      "detail": "azure.mgmt.artifactsigning",
+      "artifactId": "github:Azure/azure-sdk-for-go#26963",
+      "state": "merged"
+    }
+  ],
+  "events": [
+    {
+      "id": "github:Azure/azure-rest-api-specs#42683:pr.created:spec:github:Azure/azure-rest-api-specs#42683",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-27T15:52:01Z",
+      "observedAt": "2026-04-27T15:52:01Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42683",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "amritas"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42683",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42683"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42683:comment:4328434079:spec:github:Azure/azure-rest-api-specs#42683",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-27T15:52:50Z",
+      "observedAt": "2026-04-27T15:52:50Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42683",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42683",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42683#issuecomment-4328434079"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>✅ All automated merging requirements have been met! To get your PR merged, see <a href=\"https://aka.ms/azsdk/specreview/merge\">aka.ms/azsdk/specreview/merge</a>.<br /><br />Comment generated by <a href=\"https://g",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42683:comment:4328496295:spec:github:Azure/azure-rest-api-specs#42683",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-27T16:02:01Z",
+      "observedAt": "2026-04-27T16:02:01Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42683",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42683",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42683#issuecomment-4328496295"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews | Language | API Review for Package | |----------|---------| | Swagger | [Microsoft.CodeSigning](https://apiview.dev/Assemblies/Review",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42683:commit:63c121ff7c94:spec:github:Azure/azure-rest-api-specs#42683",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-27T16:06:20Z",
+      "observedAt": "2026-04-27T16:06:20Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42683",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "amritas"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42683",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/63c121ff7c94f2abfd9b96c7659a072ae267f980"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42683:commit:452959bc52a7:spec:github:Azure/azure-rest-api-specs#42683",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-28T04:40:22Z",
+      "observedAt": "2026-04-28T04:40:22Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42683",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "amritas"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42683",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/452959bc52a75cef6b4eec5809d4f02c39783bb2"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42683:commit:4b14fca7231d:spec:github:Azure/azure-rest-api-specs#42683",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-28T04:45:35Z",
+      "observedAt": "2026-04-28T04:45:35Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42683",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "amritas"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42683",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/4b14fca7231d09b4a0691de7f9a44ec89ed4226a"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42683:commit:ca4764860008:spec:github:Azure/azure-rest-api-specs#42683",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-28T04:45:43Z",
+      "observedAt": "2026-04-28T04:45:43Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42683",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "amritas"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42683",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/ca4764860008b85a710e2ad87b1dc4350804782b"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42683:commit:7ffcc5746b1a:spec:github:Azure/azure-rest-api-specs#42683",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-28T05:12:05Z",
+      "observedAt": "2026-04-28T05:12:05Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42683",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "amritas"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42683",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/7ffcc5746b1a6242015bc24e9ef7560b54804524"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42683:commit:dcc6461c9017:spec:github:Azure/azure-rest-api-specs#42683",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-28T07:10:46Z",
+      "observedAt": "2026-04-28T07:10:46Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42683",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "amritas"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42683",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/dcc6461c9017d725faa6b17d28b2e7088ffd7c6b"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42683:comment:3152236471:spec:github:Azure/azure-rest-api-specs#42683",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-28T07:19:34Z",
+      "observedAt": "2026-04-28T07:19:34Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42683",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42683",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42683#discussion_r3152236471"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The readme sets the default `tag:` to a **preview** package. Per ARM versioning guidance, the default tag should point to the latest **stable** version, and preview tags should be opt-in via `--tag`. Suggest keeping `tag: package-2025-10-13",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42683:comment:3152236523:spec:github:Azure/azure-rest-api-specs#42683",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-28T07:19:35Z",
+      "observedAt": "2026-04-28T07:19:35Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42683",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42683",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42683#discussion_r3152236523"
+      },
+      "confidence": "authoritative",
+      "excerpt": "PR description mentions **OperationalInsights** changes (e.g., `protectionLevel`, `dataAuthorizationMode`), but this PR changes **CodeSigning** (new 2026-05-15-preview version, revokeCertificates, programType). Please update the PR descript",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42683:comment:3152236556:spec:github:Azure/azure-rest-api-specs#42683",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-28T07:19:35Z",
+      "observedAt": "2026-04-28T07:19:35Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42683",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42683",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42683#discussion_r3152236556"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Async PATCH responses must include **both** `Location` and `Azure-AsyncOperation` headers (RPC-Async-V1-08). The `202` response headers only declare `Location`/`Retry-After`. Add the `Azure-AsyncOperation` header to the `202` response (and ",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42683:comment:3152236584:spec:github:Azure/azure-rest-api-specs#42683",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-28T07:19:35Z",
+      "observedAt": "2026-04-28T07:19:35Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42683",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42683",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42683#discussion_r3152236584"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Async DELETE responses must include **both** `Location` and `Azure-AsyncOperation` headers (RPC-Async-V1-09). The `202` response headers only declare `Location`/`Retry-After`. Add `Azure-AsyncOperation` to meet the ARM LRO contract.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42683:comment:3152236598:spec:github:Azure/azure-rest-api-specs#42683",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-28T07:19:36Z",
+      "observedAt": "2026-04-28T07:19:36Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42683",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42683",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42683#discussion_r3152236598"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This PUT is marked `x-ms-long-running-operation: true` but does not declare any polling headers (e.g., `Azure-AsyncOperation`) on the `200/201` responses. For ARM async PUT, new versions are expected to return `200/201` with a `provisioning",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42683:comment:3152236626:spec:github:Azure/azure-rest-api-specs#42683",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-28T07:19:36Z",
+      "observedAt": "2026-04-28T07:19:36Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42683",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42683",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42683#discussion_r3152236626"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This PUT is marked `x-ms-long-running-operation: true` but does not declare any polling headers (e.g., `Azure-AsyncOperation`) on the `200/201` responses. For ARM async PUT, new versions are expected to return `200/201` with a `provisioning",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42683:comment:3152236643:spec:github:Azure/azure-rest-api-specs#42683",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-28T07:19:36Z",
+      "observedAt": "2026-04-28T07:19:36Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42683",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42683",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42683#discussion_r3152236643"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This is a PUT upsert, but the `operationId` and description imply create-only semantics. For ARM/SDK consistency, PUT operationId should be `..._CreateOrUpdate` and the description should use idempotent language like \\\"Creates or updates...",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42683:comment:3152236654:spec:github:Azure/azure-rest-api-specs#42683",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-28T07:19:36Z",
+      "observedAt": "2026-04-28T07:19:36Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42683",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42683",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42683#discussion_r3152236654"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This is a PUT upsert, but the `operationId` and description imply create-only semantics. For ARM/SDK consistency, PUT operationId should be `..._CreateOrUpdate` and the description should use idempotent language like \\\"Creates or updates...",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42683:comment:3152236679:spec:github:Azure/azure-rest-api-specs#42683",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-28T07:19:37Z",
+      "observedAt": "2026-04-28T07:19:37Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42683",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42683",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42683#discussion_r3152236679"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This POST action is missing `x-ms-examples`, but repo guidance requires `x-ms-examples` on every operation. Add an `x-ms-examples` entry referencing `./examples/CertificateProfiles_RevokeCertificates.json` (and ensure the example’s `operati",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42683:comment:3152236696:spec:github:Azure/azure-rest-api-specs#42683",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-28T07:19:37Z",
+      "observedAt": "2026-04-28T07:19:37Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42683",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42683",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42683#discussion_r3152236696"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This POST action is missing `x-ms-examples`, but repo guidance requires `x-ms-examples` on every operation. Add an `x-ms-examples` entry referencing `./examples/CertificateProfiles_RevokeCertificates.json` (and ensure the example’s `operati",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42683:comment:3152236709:spec:github:Azure/azure-rest-api-specs#42683",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-28T07:19:37Z",
+      "observedAt": "2026-04-28T07:19:37Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42683",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42683",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42683#discussion_r3152236709"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Example `operationId` does not match the Swagger operationId (`CertificateProfiles_RevokeCertificates`), which will break example validation/linking. Update the example `operationId` (and title) to reflect the batch revoke operation. ```sug",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42683:comment:3152236727:spec:github:Azure/azure-rest-api-specs#42683",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-28T07:19:37Z",
+      "observedAt": "2026-04-28T07:19:37Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42683",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42683",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42683#discussion_r3152236727"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The Operations list endpoint is tenant-scoped (`/providers/Microsoft.CodeSigning/operations`) and should only take `api-version`. Including `subscriptionId` and `resourceGroupName` violates EX-PARAM-CONSISTENCY and will fail validation. ```",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42683:comment:3152236754:spec:github:Azure/azure-rest-api-specs#42683",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-28T07:19:38Z",
+      "observedAt": "2026-04-28T07:19:38Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42683",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42683",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42683#discussion_r3152236754"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Example violates EX-RESOURCE-ID: `name` must match the last segment of `id`. Here `name` is `alpha` but `id` ends with `MyAccount`. Please align `name` (and similarly in ListByResourceGroup example). ```suggestion \"name\": \"MyAccount\", ```",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42683:comment:3152236787:spec:github:Azure/azure-rest-api-specs#42683",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-28T07:19:38Z",
+      "observedAt": "2026-04-28T07:19:38Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42683",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42683",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42683#discussion_r3152236787"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Example `id` is missing required nested segments (`.../codeSigningAccounts/{accountName}/certificateProfiles/{profileName}`) and does not match the declared `type`. This violates EX-RESOURCE-ID and will fail example validation. ```suggestio",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42683:comment:3152236811:spec:github:Azure/azure-rest-api-specs#42683",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-28T07:19:38Z",
+      "observedAt": "2026-04-28T07:19:38Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42683",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42683",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42683#discussion_r3152236811"
+      },
+      "confidence": "authoritative",
+      "excerpt": "LRO example headers should use correct casing (`Azure-AsyncOperation`, `Location`, `Retry-After`) and must use `https://management.azure.com/...` polling URLs with the correct `api-version` (EX-LRO-HEADERS). Using `http://azure.async.operat",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42683:review:4186607063:spec:github:Azure/azure-rest-api-specs#42683",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-28T07:19:39Z",
+      "observedAt": "2026-04-28T07:19:39Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42683",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42683",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42683#pullrequestreview-4186607063"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview > [!NOTE] > Copilot was unable to run its full agentic suite in this review. Adds a new **2026-05-15-preview** API version for the CodeSigning ARM (control plane) specification, including a batch certificate revocat",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42683:comment:3152236840:spec:github:Azure/azure-rest-api-specs#42683",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-28T07:19:39Z",
+      "observedAt": "2026-04-28T07:19:39Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42683",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42683",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42683#discussion_r3152236840"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Client-facing text should not use 'Azure Active Directory'/'AAD'. Please update this description to 'Microsoft Entra ID OAuth2 Flow.' to align with Azure terminology guidance. ```suggestion \"description\": \"Microsoft Entra ID OAuth2 Flow.\", ",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42683:commit:276ea3fd7a28:spec:github:Azure/azure-rest-api-specs#42683",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-28T07:28:35Z",
+      "observedAt": "2026-04-28T07:28:35Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42683",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "amritas"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42683",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/276ea3fd7a28a2f619fa1cde9e404a563c873808"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42683:commit:6a24d28695df:spec:github:Azure/azure-rest-api-specs#42683",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-28T07:31:01Z",
+      "observedAt": "2026-04-28T07:31:01Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42683",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "amritas"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42683",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/6a24d28695df95de47b1caffb045f839a75989fe"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42683:commit:dd129fd2b555:spec:github:Azure/azure-rest-api-specs#42683",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-28T07:32:03Z",
+      "observedAt": "2026-04-28T07:32:03Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42683",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "amritas"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42683",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/dd129fd2b5553d79f9d0f5f8b4e4f6a8f1c68e82"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42683:review:4186682375:spec:github:Azure/azure-rest-api-specs#42683",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-28T07:32:46Z",
+      "observedAt": "2026-04-28T07:32:46Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42683",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "amritas"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42683",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42683#pullrequestreview-4186682375"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42683:comment:3152302177:spec:github:Azure/azure-rest-api-specs#42683",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-28T07:32:46Z",
+      "observedAt": "2026-04-28T07:32:46Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42683",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "amritas"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42683",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42683#discussion_r3152302177"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@copilot apply changes based on [this feedback](https://github.com/Azure/azure-rest-api-specs/pull/42683#discussion_r3152236556)",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42683:comment:3152302632:spec:github:Azure/azure-rest-api-specs#42683",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-28T07:32:51Z",
+      "observedAt": "2026-04-28T07:32:51Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42683",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "amritas"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42683",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42683#discussion_r3152302632"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@copilot apply changes based on [this feedback](https://github.com/Azure/azure-rest-api-specs/pull/42683#discussion_r3152236584)",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42683:review:4186682885:spec:github:Azure/azure-rest-api-specs#42683",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-28T07:32:52Z",
+      "observedAt": "2026-04-28T07:32:52Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42683",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "amritas"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42683",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42683#pullrequestreview-4186682885"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42683:review:4186692094:spec:github:Azure/azure-rest-api-specs#42683",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-28T07:34:40Z",
+      "observedAt": "2026-04-28T07:34:40Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42683",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "amritas"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42683",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42683#pullrequestreview-4186692094"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42683:comment:3152311409:spec:github:Azure/azure-rest-api-specs#42683",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-28T07:34:40Z",
+      "observedAt": "2026-04-28T07:34:40Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42683",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "amritas"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42683",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42683#discussion_r3152311409"
+      },
+      "confidence": "authoritative",
+      "excerpt": "fixed",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42683:review:4186705634:spec:github:Azure/azure-rest-api-specs#42683",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-28T07:37:08Z",
+      "observedAt": "2026-04-28T07:37:08Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42683",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "amritas"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42683",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42683#pullrequestreview-4186705634"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42683:comment:3152323223:spec:github:Azure/azure-rest-api-specs#42683",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-28T07:37:08Z",
+      "observedAt": "2026-04-28T07:37:08Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42683",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "amritas"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42683",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42683#discussion_r3152323223"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Fixed",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42683:review:4186709286:spec:github:Azure/azure-rest-api-specs#42683",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-28T07:37:50Z",
+      "observedAt": "2026-04-28T07:37:50Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42683",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "amritas"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42683",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42683#pullrequestreview-4186709286"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42683:comment:3152326653:spec:github:Azure/azure-rest-api-specs#42683",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-28T07:37:50Z",
+      "observedAt": "2026-04-28T07:37:50Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42683",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "amritas"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42683",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42683#discussion_r3152326653"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Fixed",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42683:review:4186713074:spec:github:Azure/azure-rest-api-specs#42683",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-28T07:38:30Z",
+      "observedAt": "2026-04-28T07:38:30Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42683",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "amritas"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42683",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42683#pullrequestreview-4186713074"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42683:comment:3152330086:spec:github:Azure/azure-rest-api-specs#42683",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-28T07:38:30Z",
+      "observedAt": "2026-04-28T07:38:30Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42683",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "amritas"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42683",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42683#discussion_r3152330086"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Updated",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42683:commit:82753c069f8d:spec:github:Azure/azure-rest-api-specs#42683",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-28T07:42:27Z",
+      "observedAt": "2026-04-28T07:42:27Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42683",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "amritas"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42683",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/82753c069f8dea6d84acff89293d62439a5d248e"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42683:commit:b58094216819:spec:github:Azure/azure-rest-api-specs#42683",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-05T05:10:20Z",
+      "observedAt": "2026-05-05T05:10:20Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42683",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "amritas"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42683",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/b58094216819b87c2d5bfbb93022590a16f7d6ed"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42683:commit:9b270b84463b:spec:github:Azure/azure-rest-api-specs#42683",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-06T04:38:30Z",
+      "observedAt": "2026-05-06T04:38:30Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42683",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "amritas"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42683",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/9b270b84463b27e5999891c1731bdfd93e4119e6"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:34211:created",
+      "type": "plan.created",
+      "phase": "plan",
+      "occurredAt": "2026-05-06T11:53:27.167Z",
+      "observedAt": "2026-05-06T11:53:27.167Z",
+      "trackId": "plan",
+      "title": "Release Plan created",
+      "confidence": "authoritative",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34211",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34211"
+      },
+      "stack": 0
+    },
+    {
+      "id": "ado:34211:1:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-05-06T11:53:27.167Z",
+      "observedAt": "2026-05-06T11:53:27.167Z",
+      "trackId": "plan",
+      "value": "New",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34211",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34211"
+      },
+      "title": "Plan state changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34211:1:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-06T11:53:27.167Z",
+      "observedAt": "2026-05-06T11:53:27.167Z",
+      "trackId": "plan",
+      "value": "Not Available",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34211",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34211"
+      },
+      "title": "Spec approval changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:34211:1:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T11:53:27.167Z",
+      "observedAt": "2026-05-06T11:53:27.167Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34211",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34211"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34211:1:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T11:53:27.167Z",
+      "observedAt": "2026-05-06T11:53:27.167Z",
+      "trackId": "sdk:JavaScript:@azure/arm-artifactsigning",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34211",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34211"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34211:1:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T11:53:27.167Z",
+      "observedAt": "2026-05-06T11:53:27.167Z",
+      "trackId": "sdk:Python:azure-mgmt-artifactsigning",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34211",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34211"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34211:1:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T11:53:27.167Z",
+      "observedAt": "2026-05-06T11:53:27.167Z",
+      "trackId": "sdk:Java:com.azure.resourcemanager.artifactsigning",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34211",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34211"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34211:1:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T11:53:27.167Z",
+      "observedAt": "2026-05-06T11:53:27.167Z",
+      "trackId": "sdk:Go:azure.mgmt.artifactsigning",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34211",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34211"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34211:7:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-05-06T11:57:40.257Z",
+      "observedAt": "2026-05-06T11:57:40.257Z",
+      "trackId": "plan",
+      "value": "In Progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34211",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34211"
+      },
+      "title": "Plan state changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:34212:2:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-06T11:58:36.413Z",
+      "observedAt": "2026-05-06T11:58:36.413Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42683",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/42683",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34212",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34212"
+      },
+      "title": "Spec PR linked",
+      "stack": 1
+    },
+    {
+      "id": "ado:34211:8:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T11:58:40.457Z",
+      "observedAt": "2026-05-06T11:58:40.457Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34211",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34211"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34211:8:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T11:58:40.457Z",
+      "observedAt": "2026-05-06T11:58:40.457Z",
+      "trackId": "sdk:JavaScript:@azure/arm-artifactsigning",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34211",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34211"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34211:8:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T11:58:40.457Z",
+      "observedAt": "2026-05-06T11:58:40.457Z",
+      "trackId": "sdk:Python:azure-mgmt-artifactsigning",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34211",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34211"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34211:8:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T11:58:40.457Z",
+      "observedAt": "2026-05-06T11:58:40.457Z",
+      "trackId": "sdk:Java:com.azure.resourcemanager.artifactsigning",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34211",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34211"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34211:8:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T11:58:40.457Z",
+      "observedAt": "2026-05-06T11:58:40.457Z",
+      "trackId": "sdk:Go:azure.mgmt.artifactsigning",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34211",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34211"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34211:9:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-06T12:01:21.85Z",
+      "observedAt": "2026-05-06T12:01:21.85Z",
+      "trackId": "plan",
+      "value": "Approved",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34211",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34211"
+      },
+      "title": "Spec approval changed",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42683:commit:7ebe99abc25c:spec:github:Azure/azure-rest-api-specs#42683",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-11T14:32:43Z",
+      "observedAt": "2026-05-11T14:32:43Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42683",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "tejaswiMinnu"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42683",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/7ebe99abc25ccd556be9e8c981f9fbff168cd52d"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42683:commit:11df02cc1bfe:spec:github:Azure/azure-rest-api-specs#42683",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-13T08:08:34Z",
+      "observedAt": "2026-05-13T08:08:34Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42683",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "amritas"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42683",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/11df02cc1bfe0ab69732fa20132662a8575526fb"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42683:commit:a246ad2016ab:spec:github:Azure/azure-rest-api-specs#42683",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-14T05:40:51Z",
+      "observedAt": "2026-05-14T05:40:51Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42683",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "amritas"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42683",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/a246ad2016ab1ae2953a536203db0c08a51ccfb3"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42683:comment:4448218391:spec:github:Azure/azure-rest-api-specs#42683",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-14T06:30:03Z",
+      "observedAt": "2026-05-14T06:30:03Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42683",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "amritas"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42683",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42683#issuecomment-4448218391"
+      },
+      "confidence": "authoritative",
+      "excerpt": "/azp run",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42683:comment:4448219073:spec:github:Azure/azure-rest-api-specs#42683",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-14T06:30:11Z",
+      "observedAt": "2026-05-14T06:30:11Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42683",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42683",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42683#issuecomment-4448219073"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> You have several pipelines (over 10) configured to build pull requests in this repository. Specify which pipelines you would like to run by using /azp run [pipelines] command. You can specify multiple pipelines using a comma separate",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42683:commit:7c650cf1b680:spec:github:Azure/azure-rest-api-specs#42683",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-14T06:39:51Z",
+      "observedAt": "2026-05-14T06:39:51Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42683",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "amritas"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42683",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/7c650cf1b680fa0d90117a4f3f69a7fe483bfd3b"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42683:commit:59f43960f4fd:spec:github:Azure/azure-rest-api-specs#42683",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-14T06:45:37Z",
+      "observedAt": "2026-05-14T06:45:37Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42683",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "amritas"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42683",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/59f43960f4fdcf8070a46d41394b0e548d041cc2"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42683:review:4288001580:spec:github:Azure/azure-rest-api-specs#42683",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-14T07:07:29Z",
+      "observedAt": "2026-05-14T07:07:29Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42683",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "manishpatil8149"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42683",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42683#pullrequestreview-4288001580"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42683:pr.merged:spec:github:Azure/azure-rest-api-specs#42683",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-14T07:07:32Z",
+      "observedAt": "2026-05-14T07:07:32Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42683",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42683",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42683"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6411460:generation.queued:sdk:Python:azure-mgmt-artifactsigning",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-06-09T08:56:37.9430554Z",
+      "observedAt": "2026-06-09T09:04:08.9804384Z",
+      "trackId": "sdk:Python:azure-mgmt-artifactsigning",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6411460",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6411460"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:34211:24:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-09T08:56:44.807Z",
+      "observedAt": "2026-06-09T08:56:44.807Z",
+      "trackId": "sdk:Python:azure-mgmt-artifactsigning",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34211",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34211"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6411460:generation.started:sdk:Python:azure-mgmt-artifactsigning",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-06-09T08:56:54.0804986Z",
+      "observedAt": "2026-06-09T09:04:08.9804384Z",
+      "trackId": "sdk:Python:azure-mgmt-artifactsigning",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6411460",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6411460"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6411461:generation.queued:sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-06-09T08:57:15.3489287Z",
+      "observedAt": "2026-06-09T09:04:16.2094794Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6411461",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6411461"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:34211:25:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-09T08:57:19.883Z",
+      "observedAt": "2026-06-09T08:57:19.883Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34211",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34211"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6411461:generation.started:sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-06-09T08:57:32.7630759Z",
+      "observedAt": "2026-06-09T09:04:16.2094794Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6411461",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6411461"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6411462:generation.queued:sdk:JavaScript:@azure/arm-artifactsigning",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-06-09T08:57:35.5872875Z",
+      "observedAt": "2026-06-09T09:04:42.95934Z",
+      "trackId": "sdk:JavaScript:@azure/arm-artifactsigning",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6411462",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6411462"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:34211:26:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-09T08:57:38.287Z",
+      "observedAt": "2026-06-09T08:57:38.287Z",
+      "trackId": "sdk:JavaScript:@azure/arm-artifactsigning",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34211",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34211"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6411462:generation.started:sdk:JavaScript:@azure/arm-artifactsigning",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-06-09T08:57:47.9165639Z",
+      "observedAt": "2026-06-09T09:04:42.95934Z",
+      "trackId": "sdk:JavaScript:@azure/arm-artifactsigning",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6411462",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6411462"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6411465:generation.queued:sdk:Java:com.azure.resourcemanager.artifactsigning",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-06-09T08:57:53.4673758Z",
+      "observedAt": "2026-06-09T09:18:16.8941824Z",
+      "trackId": "sdk:Java:com.azure.resourcemanager.artifactsigning",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6411465",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6411465"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:34211:27:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-09T08:57:58.023Z",
+      "observedAt": "2026-06-09T08:57:58.023Z",
+      "trackId": "sdk:Java:com.azure.resourcemanager.artifactsigning",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34211",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34211"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6411465:generation.started:sdk:Java:com.azure.resourcemanager.artifactsigning",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-06-09T08:58:10.772657Z",
+      "observedAt": "2026-06-09T09:18:16.8941824Z",
+      "trackId": "sdk:Java:com.azure.resourcemanager.artifactsigning",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6411465",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6411465"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6411467:generation.queued:sdk:Go:azure.mgmt.artifactsigning",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-06-09T08:58:20.7619221Z",
+      "observedAt": "2026-06-09T09:04:39.1677054Z",
+      "trackId": "sdk:Go:azure.mgmt.artifactsigning",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6411467",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6411467"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:34211:28:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-09T08:58:23.597Z",
+      "observedAt": "2026-06-09T08:58:23.597Z",
+      "trackId": "sdk:Go:azure.mgmt.artifactsigning",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34211",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34211"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6411467:generation.started:sdk:Go:azure.mgmt.artifactsigning",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-06-09T08:58:37.7452204Z",
+      "observedAt": "2026-06-09T09:04:39.1677054Z",
+      "trackId": "sdk:Go:azure.mgmt.artifactsigning",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6411467",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6411467"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47410:commit:be0cf755f834:sdk:Python:azure-mgmt-artifactsigning",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-09T09:02:57Z",
+      "observedAt": "2026-06-09T09:02:57Z",
+      "trackId": "sdk:Python:azure-mgmt-artifactsigning",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47410",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/be0cf755f8349b9192c6748fa982601522a12b8c"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47410:pr.created:sdk:Python:azure-mgmt-artifactsigning",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-09T09:03:01Z",
+      "observedAt": "2026-06-09T09:03:01Z",
+      "trackId": "sdk:Python:azure-mgmt-artifactsigning",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47410",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47410"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:34211:29:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-09T09:03:08.48Z",
+      "observedAt": "2026-06-09T09:03:08.48Z",
+      "trackId": "sdk:Python:azure-mgmt-artifactsigning",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34211",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34211"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:34211:29:Custom.SDKPullRequestForPython",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-06-09T09:03:08.48Z",
+      "observedAt": "2026-06-09T09:03:08.48Z",
+      "trackId": "sdk:Python:azure-mgmt-artifactsigning",
+      "value": "https://github.com/Azure/azure-sdk-for-python/pull/47410",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34211",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34211"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59768:commit:18e94382d453:sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-09T09:03:17Z",
+      "observedAt": "2026-06-09T09:03:17Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59768",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/18e94382d45304e1dad578285c9966ca417408fa"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59768:pr.created:sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-09T09:03:22Z",
+      "observedAt": "2026-06-09T09:03:22Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59768",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59768"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26963:commit:19fa7a7b8711:sdk:Go:azure.mgmt.artifactsigning",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-09T09:03:25Z",
+      "observedAt": "2026-06-09T09:03:25Z",
+      "trackId": "sdk:Go:azure.mgmt.artifactsigning",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26963",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/19fa7a7b87111c1d7368a27fef3ea1d8809fabb9"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26963:pr.created:sdk:Go:azure.mgmt.artifactsigning",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-09T09:03:29Z",
+      "observedAt": "2026-06-09T09:03:29Z",
+      "trackId": "sdk:Go:azure.mgmt.artifactsigning",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26963",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26963"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:34211:30:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-09T09:03:29.233Z",
+      "observedAt": "2026-06-09T09:03:29.233Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34211",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34211"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:34211:30:Custom.SDKPullRequestForDotnet",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-06-09T09:03:29.233Z",
+      "observedAt": "2026-06-09T09:03:29.233Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "value": "https://github.com/Azure/azure-sdk-for-net/pull/59768",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34211",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34211"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38876:commit:d96638af274b:sdk:JavaScript:@azure/arm-artifactsigning",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-09T09:03:31Z",
+      "observedAt": "2026-06-09T09:03:31Z",
+      "trackId": "sdk:JavaScript:@azure/arm-artifactsigning",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38876",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/d96638af274bfcee5708dcd9755f9e635fde3bbf"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38876:pr.created:sdk:JavaScript:@azure/arm-artifactsigning",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-09T09:03:34Z",
+      "observedAt": "2026-06-09T09:03:34Z",
+      "trackId": "sdk:JavaScript:@azure/arm-artifactsigning",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38876",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38876"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:34211:31:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-09T09:03:35.807Z",
+      "observedAt": "2026-06-09T09:03:35.807Z",
+      "trackId": "sdk:Go:azure.mgmt.artifactsigning",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34211",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34211"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:34211:31:Custom.SDKPullRequestForGo",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-06-09T09:03:35.807Z",
+      "observedAt": "2026-06-09T09:03:35.807Z",
+      "trackId": "sdk:Go:azure.mgmt.artifactsigning",
+      "value": "https://github.com/Azure/azure-sdk-for-go/pull/26963",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34211",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34211"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado:34211:32:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-09T09:03:41.23Z",
+      "observedAt": "2026-06-09T09:03:41.23Z",
+      "trackId": "sdk:JavaScript:@azure/arm-artifactsigning",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34211",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34211"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:34211:32:Custom.SDKPullRequestForJavaScript",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-06-09T09:03:41.23Z",
+      "observedAt": "2026-06-09T09:03:41.23Z",
+      "trackId": "sdk:JavaScript:@azure/arm-artifactsigning",
+      "value": "https://github.com/Azure/azure-sdk-for-js/pull/38876",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34211",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34211"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6411460:generation.completed:sdk:Python:azure-mgmt-artifactsigning",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-06-09T09:04:08.9804384Z",
+      "observedAt": "2026-06-09T09:04:08.9804384Z",
+      "trackId": "sdk:Python:azure-mgmt-artifactsigning",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6411460",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6411460"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6411461:generation.completed:sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-06-09T09:04:16.2094794Z",
+      "observedAt": "2026-06-09T09:04:16.2094794Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "title": "Pipeline completed with issues",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6411461",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6411461"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6411467:generation.completed:sdk:Go:azure.mgmt.artifactsigning",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-06-09T09:04:39.1677054Z",
+      "observedAt": "2026-06-09T09:04:39.1677054Z",
+      "trackId": "sdk:Go:azure.mgmt.artifactsigning",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6411467",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6411467"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6411462:generation.completed:sdk:JavaScript:@azure/arm-artifactsigning",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-06-09T09:04:42.95934Z",
+      "observedAt": "2026-06-09T09:04:42.95934Z",
+      "trackId": "sdk:JavaScript:@azure/arm-artifactsigning",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6411462",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6411462"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49429:commit:67525c32b720:sdk:Java:com.azure.resourcemanager.artifactsigning",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-09T09:06:53Z",
+      "observedAt": "2026-06-09T09:06:53Z",
+      "trackId": "sdk:Java:com.azure.resourcemanager.artifactsigning",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49429",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/67525c32b720058b38e392aa87734e49997b9513"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49429:pr.created:sdk:Java:com.azure.resourcemanager.artifactsigning",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-09T09:06:58Z",
+      "observedAt": "2026-06-09T09:06:58Z",
+      "trackId": "sdk:Java:com.azure.resourcemanager.artifactsigning",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49429",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49429"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:34211:33:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-09T09:07:06.19Z",
+      "observedAt": "2026-06-09T09:07:06.19Z",
+      "trackId": "sdk:Java:com.azure.resourcemanager.artifactsigning",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34211",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34211"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:34211:33:Custom.SDKPullRequestForJava",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-06-09T09:07:06.19Z",
+      "observedAt": "2026-06-09T09:07:06.19Z",
+      "trackId": "sdk:Java:com.azure.resourcemanager.artifactsigning",
+      "value": "https://github.com/Azure/azure-sdk-for-java/pull/49429",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34211",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34211"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26963:review:4457081276:sdk:Go:azure.mgmt.artifactsigning",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-09T09:07:44Z",
+      "observedAt": "2026-06-09T09:07:44Z",
+      "trackId": "sdk:Go:azure.mgmt.artifactsigning",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26963",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26963#pullrequestreview-4457081276"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Updates the `armartifactsigning` ARM management SDK module generated from the `CodeSigning.Management` TypeSpec configuration, moving the SDK to the `2026-05-15-preview` API version and aligning generated clients, m",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47410:review:4457095902:sdk:Python:azure-mgmt-artifactsigning",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-09T09:09:10Z",
+      "observedAt": "2026-06-09T09:09:10Z",
+      "trackId": "sdk:Python:azure-mgmt-artifactsigning",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47410",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47410#pullrequestreview-4457095902"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Regenerates **azure-mgmt-artifactsigning** from the CodeSigning.Management TypeSpec config to align with the **2026-05-15-preview** API version and ship a new **2.0.0b1** beta. **Changes:** - Bumps package version t",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38876:comment:3379369451:sdk:JavaScript:@azure/arm-artifactsigning",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-09T09:10:52Z",
+      "observedAt": "2026-06-09T09:10:52Z",
+      "trackId": "sdk:JavaScript:@azure/arm-artifactsigning",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38876",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38876#discussion_r3379369451"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`cloudSetting` can change `endpointUrl` to China/US Gov ARM endpoints, but the default AAD scope is hardcoded to `https://management.azure.com/.default`. This makes `createCodeSigning()` request tokens for the public cloud even when targeti",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38876:review:4457113225:sdk:JavaScript:@azure/arm-artifactsigning",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-09T09:10:53Z",
+      "observedAt": "2026-06-09T09:10:53Z",
+      "trackId": "sdk:JavaScript:@azure/arm-artifactsigning",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38876",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38876#pullrequestreview-4457113225"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This AutoPR updates the `@azure/arm-artifactsigning` management client generated from `specification/codesigning/CodeSigning.Management` for API version `2026-05-15-preview`, bumping the package to `2.0.0-beta.1` an",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59768:comment:3379378958:sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-09T09:12:00Z",
+      "observedAt": "2026-06-09T09:12:00Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59768",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59768#discussion_r3379378958"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This change renames the previously exposed revoke operation and changes its request body type (from `RevokeCertificateContent` to `RevokeCertificateList`). Because the package has `ApiCompatVersion` set (1.0.1), removing/renaming the existi",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59768:review:4457123826:sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-09T09:12:01Z",
+      "observedAt": "2026-06-09T09:12:01Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59768",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59768#pullrequestreview-4457123826"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Updates the `Azure.ResourceManager.ArtifactSigning` management SDK to align with the `2026-05-15-preview` TypeSpec/spec generation inputs, including new/updated request shapes and API version defaults. **Changes:** ",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59768:comment:3379379031:sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-09T09:12:01Z",
+      "observedAt": "2026-06-09T09:12:01Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59768",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59768#discussion_r3379379031"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Public surface area changes were introduced here (new `ProgramType` property). This package uses checked-in `api/*.cs` public API listings (e.g., `sdk/artifactsigning/Azure.ResourceManager.ArtifactSigning/api/Azure.ResourceManager.ArtifactS",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49429:review:4457124080:sdk:Java:com.azure.resourcemanager.artifactsigning",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-09T09:12:02Z",
+      "observedAt": "2026-06-09T09:12:02Z",
+      "trackId": "sdk:Java:com.azure.resourcemanager.artifactsigning",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49429",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49429#pullrequestreview-4457124080"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Updates the `azure-resourcemanager-artifactsigning` management library generated output to the `2026-05-15-preview` TypeSpec/API version, including new model shape and updated samples/tests aligned to the latest spe",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49429:comment:3379379118:sdk:Java:com.azure.resourcemanager.artifactsigning",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-09T09:12:02Z",
+      "observedAt": "2026-06-09T09:12:02Z",
+      "trackId": "sdk:Java:com.azure.resourcemanager.artifactsigning",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49429",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49429#discussion_r3379379118"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The JavaDoc for `withProgramType` contains a double period (\"scenario..\"). This looks like a generator typo and should be corrected to a single period.",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49429:comment:3379379180:sdk:Java:com.azure.resourcemanager.artifactsigning",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-09T09:12:02Z",
+      "observedAt": "2026-06-09T09:12:02Z",
+      "trackId": "sdk:Java:com.azure.resourcemanager.artifactsigning",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49429",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49429#discussion_r3379379180"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This release notes section indicates multiple public methods were removed from a GA (`1.0.0`) package (e.g., `revokeCertificate*`), which is a breaking change under SemVer. Either the package version should be bumped to the next major (e.g.",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6411465:generation.completed:sdk:Java:com.azure.resourcemanager.artifactsigning",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-06-09T09:18:16.8941824Z",
+      "observedAt": "2026-06-09T09:18:16.8941824Z",
+      "trackId": "sdk:Java:com.azure.resourcemanager.artifactsigning",
+      "title": "Pipeline completed with issues",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6411465",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6411465"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49429:comment:3379512335:sdk:Java:com.azure.resourcemanager.artifactsigning",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-09T09:32:30Z",
+      "observedAt": "2026-06-09T09:32:30Z",
+      "trackId": "sdk:Java:com.azure.resourcemanager.artifactsigning",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49429",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49429#discussion_r3379512335"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This is a breaking change. It this intended for GA SDK? https://github.com/Azure/azure-rest-api-specs/pull/42683/changes#diff-2d3e18e2d61ea09ef2b9b54c4f252c3f0fa011396a00a0c4561910624ff44ddd",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49429:review:4457283394:sdk:Java:com.azure.resourcemanager.artifactsigning",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-09T09:32:58Z",
+      "observedAt": "2026-06-09T09:32:58Z",
+      "trackId": "sdk:Java:com.azure.resourcemanager.artifactsigning",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49429",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49429#pullrequestreview-4457283394"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59768:commit:9213ce104b55:sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-09T09:44:59Z",
+      "observedAt": "2026-06-09T09:44:59Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59768",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/9213ce104b55b44fd8613af8034b2182580d64e0"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59768:review:4457490537:sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-09T09:58:27Z",
+      "observedAt": "2026-06-09T09:58:27Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "ashutakagain"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59768",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59768#pullrequestreview-4457490537"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49429:review:4460389190:sdk:Java:com.azure.resourcemanager.artifactsigning",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-09T16:05:48Z",
+      "observedAt": "2026-06-09T16:05:48Z",
+      "trackId": "sdk:Java:com.azure.resourcemanager.artifactsigning",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ashutakagain"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49429",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49429#pullrequestreview-4460389190"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49429:comment:3382115484:sdk:Java:com.azure.resourcemanager.artifactsigning",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-09T16:05:48Z",
+      "observedAt": "2026-06-09T16:05:48Z",
+      "trackId": "sdk:Java:com.azure.resourcemanager.artifactsigning",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ashutakagain"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49429",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49429#discussion_r3382115484"
+      },
+      "confidence": "authoritative",
+      "excerpt": "yeah this is needed",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49429:review:4460648369:sdk:Java:com.azure.resourcemanager.artifactsigning",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-09T16:43:08Z",
+      "observedAt": "2026-06-09T16:43:08Z",
+      "trackId": "sdk:Java:com.azure.resourcemanager.artifactsigning",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49429",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49429#pullrequestreview-4460648369"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26963:review:4463551615:sdk:Go:azure.mgmt.artifactsigning",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-10T00:38:44Z",
+      "observedAt": "2026-06-10T00:38:44Z",
+      "trackId": "sdk:Go:azure.mgmt.artifactsigning",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "JiaqiZhang-Dev"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26963",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26963#pullrequestreview-4463551615"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38876:comment:4665894788:sdk:JavaScript:@azure/arm-artifactsigning",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-10T02:26:44Z",
+      "observedAt": "2026-06-10T02:26:44Z",
+      "trackId": "sdk:JavaScript:@azure/arm-artifactsigning",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38876",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38876#issuecomment-4665894788"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Next Steps to Merge Only failed checks and required actions are listed below. - ⏳ Awaiting required code review approvals from requested reviewers.",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38876:review:4463991040:sdk:JavaScript:@azure/arm-artifactsigning",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-10T02:26:46Z",
+      "observedAt": "2026-06-10T02:26:46Z",
+      "trackId": "sdk:JavaScript:@azure/arm-artifactsigning",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38876",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38876#pullrequestreview-4463991040"
+      },
+      "confidence": "authoritative",
+      "excerpt": "1 design concern found: `revokeCertificate` → `revokeCertificates` is a breaking change in the stable `1.0.0` release (published 2026-02-11, ~4 months ago), which falls within the 6-month guideline window for flagging frequent breaking chan",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38876:comment:3385079748:sdk:JavaScript:@azure/arm-artifactsigning",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-10T02:26:46Z",
+      "observedAt": "2026-06-10T02:26:46Z",
+      "trackId": "sdk:JavaScript:@azure/arm-artifactsigning",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38876",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38876#discussion_r3385079748"
+      },
+      "confidence": "authoritative",
+      "excerpt": "🔴 **Design Concern** — `CHANGELOG.md:3` `## 2.0.0-beta.1 (2026-06-09)` introduces breaking changes against `1.0.0` which was released on `2026-02-11` (~4 months ago, within the 6-month guideline window). Breaking changes: - Removed `Certif",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38876:review:4464058661:sdk:JavaScript:@azure/arm-artifactsigning",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-10T02:43:25Z",
+      "observedAt": "2026-06-10T02:43:25Z",
+      "trackId": "sdk:JavaScript:@azure/arm-artifactsigning",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38876",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38876#pullrequestreview-4464058661"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38876:comment:3385136538:sdk:JavaScript:@azure/arm-artifactsigning",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-10T02:43:25Z",
+      "observedAt": "2026-06-10T02:43:25Z",
+      "trackId": "sdk:JavaScript:@azure/arm-artifactsigning",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38876",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38876#discussion_r3385136538"
+      },
+      "confidence": "authoritative",
+      "excerpt": "this is introduced by spec",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47410:commit:5f67d6cd811b:sdk:Python:azure-mgmt-artifactsigning",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-10T02:45:17Z",
+      "observedAt": "2026-06-10T02:45:17Z",
+      "trackId": "sdk:Python:azure-mgmt-artifactsigning",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47410",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/5f67d6cd811bf624e1a8f17bfd47e98cc475d74c"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47410:review:4464070940:sdk:Python:azure-mgmt-artifactsigning",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-10T02:46:37Z",
+      "observedAt": "2026-06-10T02:46:37Z",
+      "trackId": "sdk:Python:azure-mgmt-artifactsigning",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47410",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47410#pullrequestreview-4464070940"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47410:review:4464082901:sdk:Python:azure-mgmt-artifactsigning",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-10T02:50:46Z",
+      "observedAt": "2026-06-10T02:50:46Z",
+      "trackId": "sdk:Python:azure-mgmt-artifactsigning",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47410",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47410#pullrequestreview-4464082901"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47410:comment:3385158896:sdk:Python:azure-mgmt-artifactsigning",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-10T02:50:46Z",
+      "observedAt": "2026-06-10T02:50:46Z",
+      "trackId": "sdk:Python:azure-mgmt-artifactsigning",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47410",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47410#discussion_r3385158896"
+      },
+      "confidence": "authoritative",
+      "excerpt": "FYI: the breaking is introduced by spec change https://github.com/Azure/azure-rest-api-specs/pull/42683/changes#diff-2d3e18e2d61ea09ef2b9b54c4f252c3f0fa011396a00a0c4561910624ff44ddd",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47410:review:4464083800:sdk:Python:azure-mgmt-artifactsigning",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-10T02:51:04Z",
+      "observedAt": "2026-06-10T02:51:04Z",
+      "trackId": "sdk:Python:azure-mgmt-artifactsigning",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47410",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47410#pullrequestreview-4464083800"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38876:comment:4666041206:sdk:JavaScript:@azure/arm-artifactsigning",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-10T03:00:10Z",
+      "observedAt": "2026-06-10T03:00:10Z",
+      "trackId": "sdk:JavaScript:@azure/arm-artifactsigning",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38876",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38876#issuecomment-4666041206"
+      },
+      "confidence": "authoritative",
+      "excerpt": "LGTM cc @JialinHuang803",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38876:review:4464137590:sdk:JavaScript:@azure/arm-artifactsigning",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-10T03:03:57Z",
+      "observedAt": "2026-06-10T03:03:57Z",
+      "trackId": "sdk:JavaScript:@azure/arm-artifactsigning",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "JialinHuang803"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38876",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38876#pullrequestreview-4464137590"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38876:pr.merged:sdk:JavaScript:@azure/arm-artifactsigning",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-10T03:03:59Z",
+      "observedAt": "2026-06-10T03:03:59Z",
+      "trackId": "sdk:JavaScript:@azure/arm-artifactsigning",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38876",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38876"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26963:pr.merged:sdk:Go:azure.mgmt.artifactsigning",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-10T11:17:48Z",
+      "observedAt": "2026-06-10T11:17:48Z",
+      "trackId": "sdk:Go:azure.mgmt.artifactsigning",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26963",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26963"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59768:review:4467235495:sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-10T11:18:12Z",
+      "observedAt": "2026-06-10T11:18:12Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "ashutakagain"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59768",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59768#pullrequestreview-4467235495"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49429:pr.merged:sdk:Java:com.azure.resourcemanager.artifactsigning",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-17T01:36:47Z",
+      "observedAt": "2026-06-17T01:36:47Z",
+      "trackId": "sdk:Java:com.azure.resourcemanager.artifactsigning",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49429",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49429"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47410:pr.merged:sdk:Python:azure-mgmt-artifactsigning",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-23T17:25:22Z",
+      "observedAt": "2026-06-23T17:25:22Z",
+      "trackId": "sdk:Python:azure-mgmt-artifactsigning",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47410",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47410"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59768:comment:4807118849:sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-26T07:00:51Z",
+      "observedAt": "2026-06-26T07:00:51Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59768",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59768#issuecomment-4807118849"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Please try to ask copilot to mitigate the breaking changes with this [skill](https://github.com/Azure/azure-sdk-for-net/blob/main/.github/skills/mitigate-breaking-changes/SKILL.md)",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59768:review:4577347525:sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-26T07:02:10Z",
+      "observedAt": "2026-06-26T07:02:10Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59768",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59768#pullrequestreview-4577347525"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59768:comment:3479703108:sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-26T07:02:10Z",
+      "observedAt": "2026-06-26T07:02:10Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59768",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59768#discussion_r3479703108"
+      },
+      "confidence": "authoritative",
+      "excerpt": "revert this",
+      "stack": 2
+    },
+    {
+      "id": "ado:34211:35:Custom.ReleaseStatusForJavaScript",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-07-09T09:34:53.987Z",
+      "observedAt": "2026-07-09T09:34:53.987Z",
+      "trackId": "sdk:JavaScript:@azure/arm-artifactsigning",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34211",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34211"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34211:35:Custom.ReleasedVersionForJavaScript",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-07-09T09:34:53.987Z",
+      "observedAt": "2026-07-09T09:34:53.987Z",
+      "trackId": "sdk:JavaScript:@azure/arm-artifactsigning",
+      "value": "2.0.0-beta.1",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34211",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34211"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34211:36:Custom.ReleaseStatusForPython",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-07-09T10:08:31.077Z",
+      "observedAt": "2026-07-09T10:08:31.077Z",
+      "trackId": "sdk:Python:azure-mgmt-artifactsigning",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34211",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34211"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34211:36:Custom.ReleasedVersionForPython",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-07-09T10:08:31.077Z",
+      "observedAt": "2026-07-09T10:08:31.077Z",
+      "trackId": "sdk:Python:azure-mgmt-artifactsigning",
+      "value": "2.0.0b1",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34211",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34211"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59768:commit:c5e108f69df7:sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-09T10:39:02Z",
+      "observedAt": "2026-07-09T10:39:02Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59768",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/c5e108f69df7211d44d8ef81f85edc83133298e6"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59768:review:4662790009:sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-09T12:03:57Z",
+      "observedAt": "2026-07-09T12:03:57Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59768",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59768#pullrequestreview-4662790009"
+      },
+      "confidence": "authoritative",
+      "excerpt": "### Management SDK Review Summary - **Scope:** `Azure.ResourceManager.ArtifactSigning` (1.1.0-beta.1) - **Versioning:** pass — `1.1.0-beta.1` bump from baseline `1.0.1`; `ApiCompatVersion` present; CHANGELOG has `(Unreleased)` section with ",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59768:comment:3551426628:sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-09T12:03:57Z",
+      "observedAt": "2026-07-09T12:03:57Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59768",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59768#discussion_r3551426628"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[Phase 2 — naming, non-blocking]** `RevokeCertificateList` is used as the POST body for the `RevokeCertificates` operation. Per Azure .NET SDK conventions, PUT/POST body models should carry a `*Content` or `*Data` suffix (describing the m",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59768:review:4662888823:sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-09T12:17:52Z",
+      "observedAt": "2026-07-09T12:17:52Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ashutakagain"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59768",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59768#pullrequestreview-4662888823"
+      },
+      "confidence": "authoritative",
+      "excerpt": ".net release for artifact signing",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59768:review:4668326624:sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-10T03:33:55Z",
+      "observedAt": "2026-07-10T03:33:55Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59768",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59768#pullrequestreview-4668326624"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59768:comment:3556206395:sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-10T03:33:55Z",
+      "observedAt": "2026-07-10T03:33:55Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59768",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59768#discussion_r3556206395"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Please specify the released date by replacing the `Unreleased` section, the format is yyyy-mm-dd,",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59768:commit:d7312427165f:sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-10T09:10:00Z",
+      "observedAt": "2026-07-10T09:10:00Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ashutakagain"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59768",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/d7312427165f38fb5cf0a9340606299d76bbe385"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59768:commit:24a43768ce9f:sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-10T09:11:17Z",
+      "observedAt": "2026-07-10T09:11:17Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ashutakagain"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59768",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/24a43768ce9f34834907461649d86ebb764b9ec8"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59768:review:4670113067:sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-10T09:12:52Z",
+      "observedAt": "2026-07-10T09:12:52Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "ashutakagain"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59768",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59768#pullrequestreview-4670113067"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59768:commit:d74f518f17cf:sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-10T09:15:20Z",
+      "observedAt": "2026-07-10T09:15:20Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ashutakagain"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59768",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/d74f518f17cf97f8ef7487900e78b1a0df8bc4c3"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59768:review:4670356632:sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-10T09:51:18Z",
+      "observedAt": "2026-07-10T09:51:18Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59768",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59768#pullrequestreview-4670356632"
+      },
+      "confidence": "authoritative",
+      "excerpt": "### Management SDK Review Summary Same status as the previous management SDK review: no management SDK review findings on `Azure.ResourceManager.ArtifactSigning` 1.1.0-beta.1. No new management SDK review findings on this head commit. --- A",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59768:commit:2e625c003a61:sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-10T09:57:24Z",
+      "observedAt": "2026-07-10T09:57:24Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ashutakagain"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59768",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/2e625c003a61f1d5d70e4e7a850d6ca704f8c71b"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59768:commit:2bcdc4d45b37:sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-10T10:11:24Z",
+      "observedAt": "2026-07-10T10:11:24Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ashutakagain"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59768",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/2bcdc4d45b378a46599fdb982c603f1ef195b46e"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59768:comment:4934584388:sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-10T10:55:22Z",
+      "observedAt": "2026-07-10T10:55:22Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59768",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59768#issuecomment-4934584388"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## 🔍 CI Failure Analysis for PR #59768 **CI run:** [net - pullrequest](https://github.com/Azure/azure-sdk-for-net/runs/86343042674) · build [`6545688`]((dev.azure.com/redacted) · head `2bcdc4d` ### Check run summary | Check | Status | |---",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59768:review:4682386142:sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-13T06:56:41Z",
+      "observedAt": "2026-07-13T06:56:41Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59768",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59768#pullrequestreview-4682386142"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59768:comment:3568595183:sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-13T06:56:41Z",
+      "observedAt": "2026-07-13T06:56:41Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59768",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59768#discussion_r3568595183"
+      },
+      "confidence": "authoritative",
+      "excerpt": "should have brackets on the date: (2026-07-15)",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59768:commit:5ebf05aae7b4:sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-13T07:10:31Z",
+      "observedAt": "2026-07-13T07:10:31Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ashutakagain"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59768",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/5ebf05aae7b4e0d53f0900344d67a1f9614d9829"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59768:review:4682478334:sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-13T07:11:29Z",
+      "observedAt": "2026-07-13T07:11:29Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ashutakagain"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59768",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59768#pullrequestreview-4682478334"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59768:comment:3568670174:sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-13T07:11:29Z",
+      "observedAt": "2026-07-13T07:11:29Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ashutakagain"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59768",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59768#discussion_r3568670174"
+      },
+      "confidence": "authoritative",
+      "excerpt": "have fixed it also corrected the version, it is supposed to be in preview for this one.",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59768:review:4682735864:sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-13T07:49:57Z",
+      "observedAt": "2026-07-13T07:49:57Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59768",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59768#pullrequestreview-4682735864"
+      },
+      "confidence": "authoritative",
+      "excerpt": "### Management SDK Review Summary - **Scope:** `Azure.ResourceManager.ArtifactSigning` (1.1.0-beta.1) - **Versioning:** pass with non-blocking note — `ApiCompatVersion` present (`1.0.1`), version bump correct; CHANGELOG date format regresse",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59768:comment:3568904034:sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-13T07:49:58Z",
+      "observedAt": "2026-07-13T07:49:58Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59768",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59768#discussion_r3568904034"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[Phase 1 — CHANGELOG date format]** The release date `(2026-05-15-preview)` is the API version string, not a calendar date. This entry regressed from the previous `(Unreleased)` that was correct. - For `1.1.0-beta.1` (not yet released): c",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59768:review:4695611172:sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-14T14:56:25Z",
+      "observedAt": "2026-07-14T14:56:25Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59768",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59768#pullrequestreview-4695611172"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59768:comment:3580097514:sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-14T14:56:25Z",
+      "observedAt": "2026-07-14T14:56:25Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59768",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59768#discussion_r3580097514"
+      },
+      "confidence": "authoritative",
+      "excerpt": "revert this file",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59768:commit:7028e4227532:sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-14T15:15:41Z",
+      "observedAt": "2026-07-14T15:15:41Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59768",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/7028e4227532f725e8625bda6010a9a9b91d0c07"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59768:review:4695808369:sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-14T15:16:25Z",
+      "observedAt": "2026-07-14T15:16:25Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ashutakagain"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59768",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59768#pullrequestreview-4695808369"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59768:comment:3580264390:sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-14T15:16:25Z",
+      "observedAt": "2026-07-14T15:16:25Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ashutakagain"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59768",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59768#discussion_r3580264390"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Reverted .github/workflows/mgmt-review.lock.yml back to its base state in 7028e422753 — the PR no longer modifies this file.",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59768:review:4696178401:sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-14T15:58:53Z",
+      "observedAt": "2026-07-14T15:58:53Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59768",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59768#pullrequestreview-4696178401"
+      },
+      "confidence": "authoritative",
+      "excerpt": "### Management SDK Review Summary - **Scope:** `Azure.ResourceManager.ArtifactSigning` (1.1.0-beta.1) - **Versioning:** pass with non-blocking note — `ApiCompatVersion` present (`1.0.1`), version bump correct; CHANGELOG dates still use API ",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59768:review:4699608587:sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-15T00:05:46Z",
+      "observedAt": "2026-07-15T00:05:46Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59768",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59768#pullrequestreview-4699608587"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59768:pr.merged:sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-15T00:05:48Z",
+      "observedAt": "2026-07-15T00:05:48Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59768",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59768"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:34211:39:Custom.ReleaseStatusForDotnet",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-07-15T11:59:23.11Z",
+      "observedAt": "2026-07-15T11:59:23.11Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34211",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34211"
+      },
+      "title": "Release status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:34211:39:Custom.ReleasedVersionForDotnet",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-07-15T11:59:23.11Z",
+      "observedAt": "2026-07-15T11:59:23.11Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+      "value": "1.1.0-beta.1",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34211",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34211"
+      },
+      "title": "Package version observed",
+      "stack": 3
+    }
+  ],
+  "quality": {
+    "warnings": [],
+    "unavailablePullRequests": 0,
+    "unavailablePipelineRuns": 0
+  },
+  "boundaryFacts": {
+    "id": "34211",
+    "state": "in-progress",
+    "specPrs": [
+      {
+        "id": "github:Azure/azure-rest-api-specs#42683",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#42683",
+        "createdAt": "2026-04-27T15:52:01Z",
+        "mergedAt": "2026-05-14T07:07:32Z",
+        "closedAt": "2026-05-14T07:07:32Z",
+        "available": true
+      }
+    ],
+    "artifacts": [
+      {
+        "language": ".NET",
+        "package": "Azure.ResourceManager.ArtifactSigning",
+        "trackId": "sdk:.NET:Azure.ResourceManager.ArtifactSigning",
+        "prId": "github:Azure/azure-sdk-for-net#59768",
+        "prCreatedAt": "2026-06-09T09:03:22Z",
+        "prMergedAt": "2026-07-15T00:05:48Z",
+        "prClosedAt": "2026-07-15T00:05:48Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-net#59768",
+            "createdAt": "2026-06-09T09:03:22Z",
+            "mergedAt": "2026-07-15T00:05:48Z",
+            "closedAt": "2026-07-15T00:05:48Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6411461",
+        "generationStartAt": "2026-06-09T08:57:32.7630759Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-07-15T11:59:23.11Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.1.0-beta.1",
+        "releaseBoundaryAt": "2026-07-15T11:59:23.11Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "JavaScript",
+        "package": "@azure/arm-artifactsigning",
+        "trackId": "sdk:JavaScript:@azure/arm-artifactsigning",
+        "prId": "github:Azure/azure-sdk-for-js#38876",
+        "prCreatedAt": "2026-06-09T09:03:34Z",
+        "prMergedAt": "2026-06-10T03:03:59Z",
+        "prClosedAt": "2026-06-10T03:03:59Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-js#38876",
+            "createdAt": "2026-06-09T09:03:34Z",
+            "mergedAt": "2026-06-10T03:03:59Z",
+            "closedAt": "2026-06-10T03:03:59Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6411462",
+        "generationStartAt": "2026-06-09T08:57:47.9165639Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-07-09T09:34:53.987Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "2.0.0-beta.1",
+        "releaseBoundaryAt": "2026-07-09T09:34:53.987Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Python",
+        "package": "azure-mgmt-artifactsigning",
+        "trackId": "sdk:Python:azure-mgmt-artifactsigning",
+        "prId": "github:Azure/azure-sdk-for-python#47410",
+        "prCreatedAt": "2026-06-09T09:03:01Z",
+        "prMergedAt": "2026-06-23T17:25:22Z",
+        "prClosedAt": "2026-06-23T17:25:22Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-python#47410",
+            "createdAt": "2026-06-09T09:03:01Z",
+            "mergedAt": "2026-06-23T17:25:22Z",
+            "closedAt": "2026-06-23T17:25:22Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6411460",
+        "generationStartAt": "2026-06-09T08:56:54.0804986Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-07-09T10:08:31.077Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "2.0.0b1",
+        "releaseBoundaryAt": "2026-07-09T10:08:31.077Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Java",
+        "package": "com.azure.resourcemanager.artifactsigning",
+        "trackId": "sdk:Java:com.azure.resourcemanager.artifactsigning",
+        "prId": "github:Azure/azure-sdk-for-java#49429",
+        "prCreatedAt": "2026-06-09T09:06:58Z",
+        "prMergedAt": "2026-06-17T01:36:47Z",
+        "prClosedAt": "2026-06-17T01:36:47Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-java#49429",
+            "createdAt": "2026-06-09T09:06:58Z",
+            "mergedAt": "2026-06-17T01:36:47Z",
+            "closedAt": "2026-06-17T01:36:47Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6411465",
+        "generationStartAt": "2026-06-09T08:58:10.772657Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Go",
+        "package": "azure.mgmt.artifactsigning",
+        "trackId": "sdk:Go:azure.mgmt.artifactsigning",
+        "prId": "github:Azure/azure-sdk-for-go#26963",
+        "prCreatedAt": "2026-06-09T09:03:29Z",
+        "prMergedAt": "2026-06-10T11:17:48Z",
+        "prClosedAt": "2026-06-10T11:17:48Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-go#26963",
+            "createdAt": "2026-06-09T09:03:29Z",
+            "mergedAt": "2026-06-10T11:17:48Z",
+            "closedAt": "2026-06-10T11:17:48Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6411467",
+        "generationStartAt": "2026-06-09T08:58:37.7452204Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      }
+    ],
+    "cohortPlan": {
+      "id": "34211",
+      "releasePlanId": "2215",
+      "title": "Release Plan - 2215 - Public Preview - Artifact Signing",
+      "service": "Code Signing",
+      "state": "in-progress"
+    },
+    "quality": {
+      "warnings": [],
+      "unavailablePullRequests": 0,
+      "unavailablePipelineRuns": 0
+    }
+  },
+  "summary": {
+    "durationHours": 2388.7,
+    "pullRequestCount": 6,
+    "humanReviewCount": 27,
+    "humanCommentCount": 19
+  }
+}

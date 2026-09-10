@@ -1,0 +1,2743 @@
+{
+  "schemaVersion": 2,
+  "id": "35847",
+  "correlation": {
+    "policyVersion": 1,
+    "preflight": "passed"
+  },
+  "releasePlanId": "35847",
+  "title": "GA release plan for Microsoft Foundry",
+  "service": "Microsoft Foundry",
+  "product": "Release",
+  "path": "specification/cognitiveservices/CognitiveServices.Management",
+  "state": "in-progress",
+  "plane": "management",
+  "releaseType": "GA",
+  "intendedMonth": "September 2026",
+  "createdAt": "2026-08-03T22:16:12.78Z",
+  "completedAt": null,
+  "sourceUrl": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35847",
+  "range": {
+    "start": "2026-06-30T17:51:43.000Z",
+    "end": "2026-08-14T00:37:23.589Z"
+  },
+  "intendedArtifacts": [
+    {
+      "prId": "github:Azure/azure-sdk-for-net#61682",
+      "language": ".NET",
+      "package": "Azure.ResourceManager.CognitiveServices",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6654551",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-js#39498",
+      "language": "JavaScript",
+      "package": "@azure/arm-cognitiveservices",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6654555",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-python#48412",
+      "language": "Python",
+      "package": "azure-mgmt-cognitiveservices",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6654556",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-java#50024",
+      "language": "Java",
+      "package": "azure-resourcemanager-cognitiveservices",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6654553",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-go#27321",
+      "language": "Go",
+      "package": "sdk/resourcemanager/cognitiveservices/armcognitiveservices",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6654557",
+      "releasePipelineUrl": null
+    }
+  ],
+  "links": [
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#44323",
+      "role": "spec-pr",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/44323",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-net#61682",
+      "role": "sdk-pr",
+      "language": ".NET",
+      "url": "https://github.com/Azure/azure-sdk-for-net/pull/61682",
+      "releasePlanIds": [
+        "35847"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-js#39498",
+      "role": "sdk-pr",
+      "language": "JavaScript",
+      "url": "https://github.com/Azure/azure-sdk-for-js/pull/39498",
+      "releasePlanIds": [
+        "35847"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-python#48412",
+      "role": "sdk-pr",
+      "language": "Python",
+      "url": "https://github.com/Azure/azure-sdk-for-python/pull/48412",
+      "releasePlanIds": [
+        "35847"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-java#50024",
+      "role": "sdk-pr",
+      "language": "Java",
+      "url": "https://github.com/Azure/azure-sdk-for-java/pull/50024",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-go#27321",
+      "role": "sdk-pr",
+      "language": "Go",
+      "url": "https://github.com/Azure/azure-sdk-for-go/pull/27321",
+      "releasePlanIds": [
+        "35847"
+      ]
+    }
+  ],
+  "tracks": [
+    {
+      "id": "plan",
+      "kind": "plan",
+      "label": "Release Plan",
+      "detail": "GA"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#44323",
+      "kind": "spec",
+      "label": "Spec PR",
+      "detail": "azure-rest-api-specs #44323",
+      "artifactId": "github:Azure/azure-rest-api-specs#44323",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:.NET:Azure.ResourceManager.CognitiveServices",
+      "kind": "sdk",
+      "label": ".NET",
+      "detail": "Azure.ResourceManager.CognitiveServices",
+      "artifactId": "github:Azure/azure-sdk-for-net#61682",
+      "state": "open"
+    },
+    {
+      "id": "sdk:JavaScript:@azure/arm-cognitiveservices",
+      "kind": "sdk",
+      "label": "JavaScript",
+      "detail": "@azure/arm-cognitiveservices",
+      "artifactId": "github:Azure/azure-sdk-for-js#39498",
+      "state": "open"
+    },
+    {
+      "id": "sdk:Python:azure-mgmt-cognitiveservices",
+      "kind": "sdk",
+      "label": "Python",
+      "detail": "azure-mgmt-cognitiveservices",
+      "artifactId": "github:Azure/azure-sdk-for-python#48412",
+      "state": "open"
+    },
+    {
+      "id": "sdk:Java:azure-resourcemanager-cognitiveservices",
+      "kind": "sdk",
+      "label": "Java",
+      "detail": "azure-resourcemanager-cognitiveservices",
+      "artifactId": "github:Azure/azure-sdk-for-java#50024",
+      "state": "open"
+    },
+    {
+      "id": "sdk:Go:sdk/resourcemanager/cognitiveservices/armcognitiveservices",
+      "kind": "sdk",
+      "label": "Go",
+      "detail": "sdk/resourcemanager/cognitiveservices/armcognitiveservices",
+      "artifactId": "github:Azure/azure-sdk-for-go#27321",
+      "state": "open"
+    }
+  ],
+  "events": [
+    {
+      "id": "github:Azure/azure-rest-api-specs#44323:pr.created:spec:github:Azure/azure-rest-api-specs#44323",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-30T17:51:43Z",
+      "observedAt": "2026-06-30T17:51:43Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44323",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "fmabroukmsft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44323",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44323"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44323:comment:4846409572:spec:github:Azure/azure-rest-api-specs#44323",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-30T17:52:35Z",
+      "observedAt": "2026-06-30T17:52:35Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44323",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44323",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44323#issuecomment-4846409572"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>✅ All automated merging requirements have been met! To get your PR merged, see <a href=\"https://aka.ms/azsdk/specreview/merge\">aka.ms/azsdk/specreview/merge</a>.<br /><br />Comment generated by <a href=\"https://g",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44323:comment:4846512811:spec:github:Azure/azure-rest-api-specs#44323",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-30T18:02:34Z",
+      "observedAt": "2026-06-30T18:02:34Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44323",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44323",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44323#issuecomment-4846512811"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews | Language | API Review for Package | |----------|---------| | Swagger | [Microsoft.CognitiveServices](https://apiview.dev/Assemblies/",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44323:commit:629f644262e0:spec:github:Azure/azure-rest-api-specs#44323",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-10T05:06:38Z",
+      "observedAt": "2026-07-10T05:06:38Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44323",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ritwikdesai"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44323",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/629f644262e02f0f94cb34bde644e481f80dc063"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44323:review:4848949771:spec:github:Azure/azure-rest-api-specs#44323",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-03T22:09:52Z",
+      "observedAt": "2026-08-03T22:09:52Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44323",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "rkuthala"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44323",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44323#pullrequestreview-4848949771"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44323:pr.merged:spec:github:Azure/azure-rest-api-specs#44323",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-03T22:12:12Z",
+      "observedAt": "2026-08-03T22:12:12Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44323",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44323",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44323"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:35847:created",
+      "type": "plan.created",
+      "phase": "plan",
+      "occurredAt": "2026-08-03T22:16:12.78Z",
+      "observedAt": "2026-08-03T22:16:12.78Z",
+      "trackId": "plan",
+      "title": "Release Plan created",
+      "confidence": "authoritative",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35847",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35847"
+      },
+      "stack": 0
+    },
+    {
+      "id": "ado:35847:1:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-08-03T22:16:12.78Z",
+      "observedAt": "2026-08-03T22:16:12.78Z",
+      "trackId": "plan",
+      "value": "New",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35847",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35847"
+      },
+      "title": "Plan state changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35847:1:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-03T22:16:12.78Z",
+      "observedAt": "2026-08-03T22:16:12.78Z",
+      "trackId": "plan",
+      "value": "Not Available",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35847",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35847"
+      },
+      "title": "Spec approval changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:35847:1:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-03T22:16:12.78Z",
+      "observedAt": "2026-08-03T22:16:12.78Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CognitiveServices",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35847",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35847"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35847:1:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-03T22:16:12.78Z",
+      "observedAt": "2026-08-03T22:16:12.78Z",
+      "trackId": "sdk:JavaScript:@azure/arm-cognitiveservices",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35847",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35847"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35847:1:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-03T22:16:12.78Z",
+      "observedAt": "2026-08-03T22:16:12.78Z",
+      "trackId": "sdk:Python:azure-mgmt-cognitiveservices",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35847",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35847"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35847:1:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-03T22:16:12.78Z",
+      "observedAt": "2026-08-03T22:16:12.78Z",
+      "trackId": "sdk:Java:azure-resourcemanager-cognitiveservices",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35847",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35847"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35847:1:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-03T22:16:12.78Z",
+      "observedAt": "2026-08-03T22:16:12.78Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/cognitiveservices/armcognitiveservices",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35847",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35847"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35848:1:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-03T22:16:13.24Z",
+      "observedAt": "2026-08-03T22:16:13.24Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44323",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/44323",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35848",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35848"
+      },
+      "title": "Spec PR linked",
+      "stack": 2
+    },
+    {
+      "id": "ado:35847:2:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-08-03T22:16:13.96Z",
+      "observedAt": "2026-08-03T22:16:13.96Z",
+      "trackId": "plan",
+      "value": "In Progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35847",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35847"
+      },
+      "title": "Plan state changed",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44323:comment:5172331971:spec:github:Azure/azure-rest-api-specs#44323",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-03T22:16:22Z",
+      "observedAt": "2026-08-03T22:16:22Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44323",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44323",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44323#issuecomment-5172331971"
+      },
+      "confidence": "authoritative",
+      "excerpt": "### ✅ Release Plan Created | Field | Value | |-------|-------| | **Release Plan** | [View Release Plan](https://azsdk-releaseplan-dashboard-hveph5aqhhcfhtgu.westus-01.azurewebsites.net/?releaseplan=35847) | | **API Version** | `2026-07-01` ",
+      "stack": 3
+    },
+    {
+      "id": "ado:35847:4:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-03T22:16:32.343Z",
+      "observedAt": "2026-08-03T22:16:32.343Z",
+      "trackId": "plan",
+      "value": "Approved",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35847",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35847"
+      },
+      "title": "Spec approval changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:35847:5:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-03T22:21:39.04Z",
+      "observedAt": "2026-08-03T22:21:39.04Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CognitiveServices",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35847",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35847"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35847:6:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-03T22:21:47.607Z",
+      "observedAt": "2026-08-03T22:21:47.607Z",
+      "trackId": "sdk:Java:azure-resourcemanager-cognitiveservices",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35847",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35847"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35847:7:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-03T22:21:54.833Z",
+      "observedAt": "2026-08-03T22:21:54.833Z",
+      "trackId": "sdk:JavaScript:@azure/arm-cognitiveservices",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35847",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35847"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35847:8:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-03T22:22:01.68Z",
+      "observedAt": "2026-08-03T22:22:01.68Z",
+      "trackId": "sdk:Python:azure-mgmt-cognitiveservices",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35847",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35847"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35847:9:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-03T22:22:08.58Z",
+      "observedAt": "2026-08-03T22:22:08.58Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/cognitiveservices/armcognitiveservices",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35847",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35847"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27321:commit:90ac8a2c53f4:sdk:Go:sdk/resourcemanager/cognitiveservices/armcognitiveservices",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-03T22:27:13Z",
+      "observedAt": "2026-08-03T22:27:13Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/cognitiveservices/armcognitiveservices",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27321",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/90ac8a2c53f49a62199d7f660df633ac8abdaea5"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27321:pr.created:sdk:Go:sdk/resourcemanager/cognitiveservices/armcognitiveservices",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-03T22:27:17Z",
+      "observedAt": "2026-08-03T22:27:17Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/cognitiveservices/armcognitiveservices",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27321",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27321"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado:35847:10:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-03T22:27:25.153Z",
+      "observedAt": "2026-08-03T22:27:25.153Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/cognitiveservices/armcognitiveservices",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35847",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35847"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:35847:10:Custom.SDKPullRequestForGo",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-08-03T22:27:25.153Z",
+      "observedAt": "2026-08-03T22:27:25.153Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/cognitiveservices/armcognitiveservices",
+      "value": "https://github.com/Azure/azure-sdk-for-go/pull/27321",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35847",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35847"
+      },
+      "title": "SDK PR linked",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27321:comment:5172415027:sdk:Go:sdk/resourcemanager/cognitiveservices/armcognitiveservices",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-03T22:27:45Z",
+      "observedAt": "2026-08-03T22:27:45Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/cognitiveservices/armcognitiveservices",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27321",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27321#issuecomment-5172415027"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 6 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39498:commit:793581a973ae:sdk:JavaScript:@azure/arm-cognitiveservices",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-03T22:28:39Z",
+      "observedAt": "2026-08-03T22:28:39Z",
+      "trackId": "sdk:JavaScript:@azure/arm-cognitiveservices",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39498",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/793581a973ae745b1770e263a8c1ff408508c45b"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39498:pr.created:sdk:JavaScript:@azure/arm-cognitiveservices",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-03T22:28:43Z",
+      "observedAt": "2026-08-03T22:28:43Z",
+      "trackId": "sdk:JavaScript:@azure/arm-cognitiveservices",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39498",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39498"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39498:review:4849043284:sdk:JavaScript:@azure/arm-cognitiveservices",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-03T22:28:50Z",
+      "observedAt": "2026-08-03T22:28:50Z",
+      "trackId": "sdk:JavaScript:@azure/arm-cognitiveservices",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39498",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39498#pullrequestreview-4849043284"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot wasn't able to review this pull request because it exceeds the maximum number of files (300). Try reducing the number of changed files and requesting a review from Copilot again.",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "ado:35847:11:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-03T22:28:51.403Z",
+      "observedAt": "2026-08-03T22:28:51.403Z",
+      "trackId": "sdk:JavaScript:@azure/arm-cognitiveservices",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35847",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35847"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:35847:11:Custom.SDKPullRequestForJavaScript",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-08-03T22:28:51.403Z",
+      "observedAt": "2026-08-03T22:28:51.403Z",
+      "trackId": "sdk:JavaScript:@azure/arm-cognitiveservices",
+      "value": "https://github.com/Azure/azure-sdk-for-js/pull/39498",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35847",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35847"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27321:review:4849044120:sdk:Go:sdk/resourcemanager/cognitiveservices/armcognitiveservices",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-03T22:29:01Z",
+      "observedAt": "2026-08-03T22:29:01Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/cognitiveservices/armcognitiveservices",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27321",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27321#pullrequestreview-4849044120"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview > [!NOTE] > Copilot could not run the full agentic suite for this review because it was automatically requested on a bot-authored pull request. Request a review from Copilot under Reviewers to retry with the full ag",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27321:comment:3708110225:sdk:Go:sdk/resourcemanager/cognitiveservices/armcognitiveservices",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-03T22:29:01Z",
+      "observedAt": "2026-08-03T22:29:01Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/cognitiveservices/armcognitiveservices",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27321",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27321#discussion_r3708110225"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The changelog appears to have removed prior release entries (e.g., 4.0.0-beta.x). For a published SDK, release history is typically cumulative; consider keeping previous version sections and appending the new `4.0.0` entry on top to preserv",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27321:comment:3708110260:sdk:Go:sdk/resourcemanager/cognitiveservices/armcognitiveservices",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-03T22:29:01Z",
+      "observedAt": "2026-08-03T22:29:01Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/cognitiveservices/armcognitiveservices",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27321",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27321#discussion_r3708110260"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This PR removes multiple previously-generated public clients/types (e.g., `ComputeOperationsClient`, `ComputesClient`, `ManagedComputeCapacitiesClient`, `ManagedComputeDeploymentsClient`, `ManagedComputeUsagesOperationGroupClient`, `Workben",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39498:comment:5172426494:sdk:JavaScript:@azure/arm-cognitiveservices",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-03T22:29:20Z",
+      "observedAt": "2026-08-03T22:29:20Z",
+      "trackId": "sdk:JavaScript:@azure/arm-cognitiveservices",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39498",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39498#issuecomment-5172426494"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 9 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48412:commit:bdaffb30fc8f:sdk:Python:azure-mgmt-cognitiveservices",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-03T22:29:48Z",
+      "observedAt": "2026-08-03T22:29:48Z",
+      "trackId": "sdk:Python:azure-mgmt-cognitiveservices",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48412",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/bdaffb30fc8f5b8a57ea7d0545e53f0029a861b8"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48412:pr.created:sdk:Python:azure-mgmt-cognitiveservices",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-03T22:29:52Z",
+      "observedAt": "2026-08-03T22:29:52Z",
+      "trackId": "sdk:Python:azure-mgmt-cognitiveservices",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48412",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48412"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado:35847:12:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-03T22:30:00.09Z",
+      "observedAt": "2026-08-03T22:30:00.09Z",
+      "trackId": "sdk:Python:azure-mgmt-cognitiveservices",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35847",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35847"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:35847:12:Custom.SDKPullRequestForPython",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-08-03T22:30:00.09Z",
+      "observedAt": "2026-08-03T22:30:00.09Z",
+      "trackId": "sdk:Python:azure-mgmt-cognitiveservices",
+      "value": "https://github.com/Azure/azure-sdk-for-python/pull/48412",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35847",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35847"
+      },
+      "title": "SDK PR linked",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48412:comment:5172434553:sdk:Python:azure-mgmt-cognitiveservices",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-03T22:30:30Z",
+      "observedAt": "2026-08-03T22:30:30Z",
+      "trackId": "sdk:Python:azure-mgmt-cognitiveservices",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48412",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48412#issuecomment-5172434553"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 9 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61682:commit:53aa93933ce6:sdk:.NET:Azure.ResourceManager.CognitiveServices",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-03T22:31:00Z",
+      "observedAt": "2026-08-03T22:31:00Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CognitiveServices",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61682",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/53aa93933ce6caa86d8c74c92532ae3dce8a2ff1"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61682:pr.created:sdk:.NET:Azure.ResourceManager.CognitiveServices",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-03T22:31:04Z",
+      "observedAt": "2026-08-03T22:31:04Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CognitiveServices",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61682",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61682"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado:35847:13:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-03T22:31:13.437Z",
+      "observedAt": "2026-08-03T22:31:13.437Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CognitiveServices",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35847",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35847"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:35847:13:Custom.SDKPullRequestForDotnet",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-08-03T22:31:13.437Z",
+      "observedAt": "2026-08-03T22:31:13.437Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CognitiveServices",
+      "value": "https://github.com/Azure/azure-sdk-for-net/pull/61682",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35847",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35847"
+      },
+      "title": "SDK PR linked",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50024:commit:cf034b9c41e9:sdk:Java:azure-resourcemanager-cognitiveservices",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-03T22:31:16Z",
+      "observedAt": "2026-08-03T22:31:16Z",
+      "trackId": "sdk:Java:azure-resourcemanager-cognitiveservices",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50024",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/cf034b9c41e94af91fcb6fbe79b57a2fff6cd1e7"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50024:pr.created:sdk:Java:azure-resourcemanager-cognitiveservices",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-03T22:31:21Z",
+      "observedAt": "2026-08-03T22:31:21Z",
+      "trackId": "sdk:Java:azure-resourcemanager-cognitiveservices",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50024",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/50024"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50024:review:4849055245:sdk:Java:azure-resourcemanager-cognitiveservices",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-03T22:31:28Z",
+      "observedAt": "2026-08-03T22:31:28Z",
+      "trackId": "sdk:Java:azure-resourcemanager-cognitiveservices",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50024",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/50024#pullrequestreview-4849055245"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot wasn't able to review this pull request because it exceeds the maximum number of files (300). Try reducing the number of changed files and requesting a review from Copilot again.",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "ado:35847:14:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-03T22:31:29.38Z",
+      "observedAt": "2026-08-03T22:31:29.38Z",
+      "trackId": "sdk:Java:azure-resourcemanager-cognitiveservices",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35847",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35847"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:35847:14:Custom.SDKPullRequestForJava",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-08-03T22:31:29.38Z",
+      "observedAt": "2026-08-03T22:31:29.38Z",
+      "trackId": "sdk:Java:azure-resourcemanager-cognitiveservices",
+      "value": "https://github.com/Azure/azure-sdk-for-java/pull/50024",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35847",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35847"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61682:comment:5172443081:sdk:.NET:Azure.ResourceManager.CognitiveServices",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-03T22:31:41Z",
+      "observedAt": "2026-08-03T22:31:41Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CognitiveServices",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61682",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61682#issuecomment-5172443081"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 10 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48412:review:4849058094:sdk:Python:azure-mgmt-cognitiveservices",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-03T22:32:06Z",
+      "observedAt": "2026-08-03T22:32:06Z",
+      "trackId": "sdk:Python:azure-mgmt-cognitiveservices",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48412",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48412#pullrequestreview-4849058094"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview > [!NOTE] > Copilot could not run the full agentic suite for this review because it was automatically requested on a bot-authored pull request. Request a review from Copilot under Reviewers to retry with the full ag",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48412:comment:3708123304:sdk:Python:azure-mgmt-cognitiveservices",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-03T22:32:06Z",
+      "observedAt": "2026-08-03T22:32:06Z",
+      "trackId": "sdk:Python:azure-mgmt-cognitiveservices",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48412",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48412#discussion_r3708123304"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`_deserialize_bool_as_str` will throw an `AttributeError` if `attr` is `None` or any non-string non-bool type (since it calls `.lower()`). This can break deserialization if the service returns `null` or an unexpected type for a `bool` field",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48412:comment:3708123327:sdk:Python:azure-mgmt-cognitiveservices",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-03T22:32:06Z",
+      "observedAt": "2026-08-03T22:32:06Z",
+      "trackId": "sdk:Python:azure-mgmt-cognitiveservices",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48412",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48412#discussion_r3708123327"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This release removes multiple public operation groups and their models/enums (e.g., `computes`, `workbenches`, `managed_compute_*`, and `compute_operations`) from the client and `operations/__init__.py`. Those API surface removals are break",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50024:comment:5172446412:sdk:Java:azure-resourcemanager-cognitiveservices",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-03T22:32:09Z",
+      "observedAt": "2026-08-03T22:32:09Z",
+      "trackId": "sdk:Java:azure-resourcemanager-cognitiveservices",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50024",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/50024#issuecomment-5172446412"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 34 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61682:review:4849063043:sdk:.NET:Azure.ResourceManager.CognitiveServices",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-03T22:33:09Z",
+      "observedAt": "2026-08-03T22:33:09Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CognitiveServices",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61682",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61682#pullrequestreview-4849063043"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview > [!NOTE] > Copilot could not run the full agentic suite for this review because it was automatically requested on a bot-authored pull request. Request a review from Copilot under Reviewers to retry with the full ag",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61682:comment:3708127916:sdk:.NET:Azure.ResourceManager.CognitiveServices",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-03T22:33:09Z",
+      "observedAt": "2026-08-03T22:33:09Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CognitiveServices",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61682",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61682#discussion_r3708127916"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The package version is updated to `1.6.0`, but `ApiCompatVersion` remains `1.5.2`. If `ApiCompatVersion` is used by the repo’s API compatibility tooling as the baseline version, leaving it behind can make the compat check compare against an",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48412:comment:5172581077:sdk:Python:azure-mgmt-cognitiveservices",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-03T22:51:42Z",
+      "observedAt": "2026-08-03T22:51:42Z",
+      "trackId": "sdk:Python:azure-mgmt-cognitiveservices",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48412",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48412#issuecomment-5172581077"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<details> <summary><strong>[Pilot] PR Pipeline Failure Analysis</strong></summary> A CI pipeline failed on this pull request. Here is an automated analysis of what went wrong and how to get the build green. ### What failed Two tests in `azu",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39498:comment:5172596186:sdk:JavaScript:@azure/arm-cognitiveservices",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-03T22:53:56Z",
+      "observedAt": "2026-08-03T22:53:56Z",
+      "trackId": "sdk:JavaScript:@azure/arm-cognitiveservices",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39498",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39498#issuecomment-5172596186"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Next Steps to Merge ✅ All CI checks have passed — this PR is ready for review! The SDK engineer will review this PR shortly. Once it's approved, you can go ahead and merge it. To make things easier, feel free to [enable auto-merge](https",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61682:comment:5172672053:sdk:.NET:Azure.ResourceManager.CognitiveServices",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-03T23:05:24Z",
+      "observedAt": "2026-08-03T23:05:24Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CognitiveServices",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61682",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61682#issuecomment-5172672053"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## 🔍 CI Failure Analysis for PR #61682 ### Check Run Summary | Check | Status | |---|---| | `net - pullrequest` | ❌ **Failure** | | `net - pullrequest (Build Build PRBatch)` | ❌ **Failure** | | `net - pullrequest (Build Analyze PRBatch)` |",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27321:comment:5173410206:sdk:Go:sdk/resourcemanager/cognitiveservices/armcognitiveservices",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-04T01:05:50Z",
+      "observedAt": "2026-08-04T01:05:50Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/cognitiveservices/armcognitiveservices",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27321",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27321#issuecomment-5173410206"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Next Steps to Merge Only failed checks and required actions are listed below. - ❌ `go - pullrequest (Build Build/Test on windows_go_1258)`: build/test failed on Windows with Go 1.25.8. [ADO logs]((dev.azure.com/redacted) - Fix: Confirm w",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48412:commit:27e643ba6a28:sdk:Python:azure-mgmt-cognitiveservices",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-04T02:57:40Z",
+      "observedAt": "2026-08-04T02:57:40Z",
+      "trackId": "sdk:Python:azure-mgmt-cognitiveservices",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48412",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/27e643ba6a285e264a52cf02ddd9606521d0b874"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39498:review:4850200461:sdk:JavaScript:@azure/arm-cognitiveservices",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-04T03:02:11Z",
+      "observedAt": "2026-08-04T03:02:11Z",
+      "trackId": "sdk:JavaScript:@azure/arm-cognitiveservices",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39498",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39498#pullrequestreview-4850200461"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Found 1 tooling/design finding (undocumented breaking API removal in CHANGELOG); no other public API surface or tooling rule violations detected (package version, CHANGELOG version, and `KnownVersions` API version are consistent, and the ne",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39498:comment:3709139530:sdk:JavaScript:@azure/arm-cognitiveservices",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-04T03:02:11Z",
+      "observedAt": "2026-08-04T03:02:11Z",
+      "trackId": "sdk:JavaScript:@azure/arm-cognitiveservices",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39498",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39498#discussion_r3709139530"
+      },
+      "confidence": "authoritative",
+      "excerpt": "🔴 **Design Concern** — Undocumented breaking removal of API surface The `9.0.0` entry lists `Breaking Changes` (operation signature changes, a handful of removed interfaces), but it does **not** mention the removal of several entire operat",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48412:review:4850204208:sdk:Python:azure-mgmt-cognitiveservices",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-04T03:03:04Z",
+      "observedAt": "2026-08-04T03:03:04Z",
+      "trackId": "sdk:Python:azure-mgmt-cognitiveservices",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48412",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48412#pullrequestreview-4850204208"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Copilot reviewed 223 out of 228 changed files in this pull request and generated no new comments. <details> <summary>Suppressed comments (2)</summary> **sdk/cognitiveservices/azure-mgmt-cognitiveservices/tests/test_",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39498:comment:5174241812:sdk:JavaScript:@azure/arm-cognitiveservices",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-04T03:23:40Z",
+      "observedAt": "2026-08-04T03:23:40Z",
+      "trackId": "sdk:JavaScript:@azure/arm-cognitiveservices",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39498",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39498#issuecomment-5174241812"
+      },
+      "confidence": "authoritative",
+      "excerpt": "LGTM cc @JialinHuang803",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48412:comment:5174252221:sdk:Python:azure-mgmt-cognitiveservices",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-04T03:25:24Z",
+      "observedAt": "2026-08-04T03:25:24Z",
+      "trackId": "sdk:Python:azure-mgmt-cognitiveservices",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48412",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48412#issuecomment-5174252221"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @swarupecenits, does service team already fix the issue of https://github.com/Azure/azure-sdk-for-python/pull/48096? If yes, could we remove the unnecessary patch code?",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50024:commit:ba013c9e548b:sdk:Java:azure-resourcemanager-cognitiveservices",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-04T03:37:29Z",
+      "observedAt": "2026-08-04T03:37:29Z",
+      "trackId": "sdk:Java:azure-resourcemanager-cognitiveservices",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50024",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/ba013c9e548b947ead57e6eddee17521aa9e44ac"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39498:review:4850798030:sdk:JavaScript:@azure/arm-cognitiveservices",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-04T05:02:00Z",
+      "observedAt": "2026-08-04T05:02:00Z",
+      "trackId": "sdk:JavaScript:@azure/arm-cognitiveservices",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "JialinHuang803"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39498",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39498#pullrequestreview-4850798030"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:6654551:generation.queued:sdk:.NET:Azure.ResourceManager.CognitiveServices",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-08-04T05:24:18.5961375Z",
+      "observedAt": "2026-08-04T05:34:48.5038185Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CognitiveServices",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6654551",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6654551"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:35847:15:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-04T05:24:21.153Z",
+      "observedAt": "2026-08-04T05:24:21.153Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CognitiveServices",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35847",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35847"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:6654553:generation.queued:sdk:Java:azure-resourcemanager-cognitiveservices",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-08-04T05:24:26.680978Z",
+      "observedAt": "2026-08-04T05:44:27.4144466Z",
+      "trackId": "sdk:Java:azure-resourcemanager-cognitiveservices",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6654553",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6654553"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado:35847:16:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-04T05:24:29.85Z",
+      "observedAt": "2026-08-04T05:24:29.85Z",
+      "trackId": "sdk:Java:azure-resourcemanager-cognitiveservices",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35847",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35847"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6654551:generation.started:sdk:.NET:Azure.ResourceManager.CognitiveServices",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-08-04T05:24:34.0459584Z",
+      "observedAt": "2026-08-04T05:34:48.5038185Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CognitiveServices",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6654551",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6654551"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6654555:generation.queued:sdk:JavaScript:@azure/arm-cognitiveservices",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-08-04T05:24:35.5067351Z",
+      "observedAt": "2026-08-04T05:32:19.0070717Z",
+      "trackId": "sdk:JavaScript:@azure/arm-cognitiveservices",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6654555",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6654555"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:35847:17:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-04T05:24:38.01Z",
+      "observedAt": "2026-08-04T05:24:38.01Z",
+      "trackId": "sdk:JavaScript:@azure/arm-cognitiveservices",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35847",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35847"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6654556:generation.queued:sdk:Python:azure-mgmt-cognitiveservices",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-08-04T05:24:43.1712984Z",
+      "observedAt": "2026-08-04T05:33:24.5073425Z",
+      "trackId": "sdk:Python:azure-mgmt-cognitiveservices",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6654556",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6654556"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6654553:generation.started:sdk:Java:azure-resourcemanager-cognitiveservices",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-08-04T05:24:44.5596623Z",
+      "observedAt": "2026-08-04T05:44:27.4144466Z",
+      "trackId": "sdk:Java:azure-resourcemanager-cognitiveservices",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6654553",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6654553"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:35847:18:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-04T05:24:45.88Z",
+      "observedAt": "2026-08-04T05:24:45.88Z",
+      "trackId": "sdk:Python:azure-mgmt-cognitiveservices",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35847",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35847"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6654557:generation.queued:sdk:Go:sdk/resourcemanager/cognitiveservices/armcognitiveservices",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-08-04T05:24:51.6205871Z",
+      "observedAt": "2026-08-04T05:31:17.9008903Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/cognitiveservices/armcognitiveservices",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6654557",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6654557"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:6654555:generation.started:sdk:JavaScript:@azure/arm-cognitiveservices",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-08-04T05:24:51.8664943Z",
+      "observedAt": "2026-08-04T05:32:19.0070717Z",
+      "trackId": "sdk:JavaScript:@azure/arm-cognitiveservices",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6654555",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6654555"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado:35847:19:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-04T05:24:54.043Z",
+      "observedAt": "2026-08-04T05:24:54.043Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/cognitiveservices/armcognitiveservices",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35847",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35847"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6654556:generation.started:sdk:Python:azure-mgmt-cognitiveservices",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-08-04T05:25:01.1864316Z",
+      "observedAt": "2026-08-04T05:33:24.5073425Z",
+      "trackId": "sdk:Python:azure-mgmt-cognitiveservices",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6654556",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6654556"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6654557:generation.started:sdk:Go:sdk/resourcemanager/cognitiveservices/armcognitiveservices",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-08-04T05:25:08.8691272Z",
+      "observedAt": "2026-08-04T05:31:17.9008903Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/cognitiveservices/armcognitiveservices",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6654557",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6654557"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50024:commit:503ffa13ec8a:sdk:Java:azure-resourcemanager-cognitiveservices",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-04T05:27:01Z",
+      "observedAt": "2026-08-04T05:27:01Z",
+      "trackId": "sdk:Java:azure-resourcemanager-cognitiveservices",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50024",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/503ffa13ec8a8b6ef79c6b3a8c0098a92be1c9b3"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27321:commit:5a4ab4f33d06:sdk:Go:sdk/resourcemanager/cognitiveservices/armcognitiveservices",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-04T05:30:10Z",
+      "observedAt": "2026-08-04T05:30:10Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/cognitiveservices/armcognitiveservices",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27321",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/5a4ab4f33d0689c33c2e03366ff8f269dd99ec5d"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:35847:20:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-04T05:30:20.283Z",
+      "observedAt": "2026-08-04T05:30:20.283Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/cognitiveservices/armcognitiveservices",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35847",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35847"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39498:commit:7d42bcadd350:sdk:JavaScript:@azure/arm-cognitiveservices",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-04T05:31:15Z",
+      "observedAt": "2026-08-04T05:31:15Z",
+      "trackId": "sdk:JavaScript:@azure/arm-cognitiveservices",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39498",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/7d42bcadd35046d2a43e75126267cfdc7d70243f"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6654557:generation.completed:sdk:Go:sdk/resourcemanager/cognitiveservices/armcognitiveservices",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-08-04T05:31:17.9008903Z",
+      "observedAt": "2026-08-04T05:31:17.9008903Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/cognitiveservices/armcognitiveservices",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6654557",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6654557"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39498:review:4850950943:sdk:JavaScript:@azure/arm-cognitiveservices",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-04T05:31:23Z",
+      "observedAt": "2026-08-04T05:31:23Z",
+      "trackId": "sdk:JavaScript:@azure/arm-cognitiveservices",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39498",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39498#pullrequestreview-4850950943"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot wasn't able to review this pull request because it exceeds the maximum number of files (300). Try reducing the number of changed files and requesting a review from Copilot again.",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "ado:35847:21:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-04T05:31:25.22Z",
+      "observedAt": "2026-08-04T05:31:25.22Z",
+      "trackId": "sdk:JavaScript:@azure/arm-cognitiveservices",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35847",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35847"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27321:review:4850952520:sdk:Go:sdk/resourcemanager/cognitiveservices/armcognitiveservices",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-04T05:31:43Z",
+      "observedAt": "2026-08-04T05:31:43Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/cognitiveservices/armcognitiveservices",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27321",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27321#pullrequestreview-4850952520"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Copilot reviewed 84 out of 110 changed files in this pull request and generated no new comments. <details> <summary>Files not reviewed (25)</summary> * **sdk/resourcemanager/cognitiveservices/armcognitiveservices/ac",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48412:commit:a931b48e031d:sdk:Python:azure-mgmt-cognitiveservices",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-04T05:31:57Z",
+      "observedAt": "2026-08-04T05:31:57Z",
+      "trackId": "sdk:Python:azure-mgmt-cognitiveservices",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48412",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/a931b48e031d027f4b8fd7108829e1a9fe49ab39"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:35847:22:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-04T05:32:07.903Z",
+      "observedAt": "2026-08-04T05:32:07.903Z",
+      "trackId": "sdk:Python:azure-mgmt-cognitiveservices",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35847",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35847"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6654555:generation.completed:sdk:JavaScript:@azure/arm-cognitiveservices",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-08-04T05:32:19.0070717Z",
+      "observedAt": "2026-08-04T05:32:19.0070717Z",
+      "trackId": "sdk:JavaScript:@azure/arm-cognitiveservices",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6654555",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6654555"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6654556:generation.completed:sdk:Python:azure-mgmt-cognitiveservices",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-08-04T05:33:24.5073425Z",
+      "observedAt": "2026-08-04T05:33:24.5073425Z",
+      "trackId": "sdk:Python:azure-mgmt-cognitiveservices",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6654556",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6654556"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61682:commit:67fd2acbce01:sdk:.NET:Azure.ResourceManager.CognitiveServices",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-04T05:33:50Z",
+      "observedAt": "2026-08-04T05:33:50Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CognitiveServices",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61682",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/67fd2acbce017ef7d653a1d314f25e92b6c99180"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:35847:23:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-04T05:34:01.313Z",
+      "observedAt": "2026-08-04T05:34:01.313Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CognitiveServices",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35847",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35847"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:35847:24:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-04T05:34:21.57Z",
+      "observedAt": "2026-08-04T05:34:21.57Z",
+      "trackId": "sdk:Java:azure-resourcemanager-cognitiveservices",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35847",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35847"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48412:review:4850964779:sdk:Python:azure-mgmt-cognitiveservices",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-04T05:34:28Z",
+      "observedAt": "2026-08-04T05:34:28Z",
+      "trackId": "sdk:Python:azure-mgmt-cognitiveservices",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48412",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48412#pullrequestreview-4850964779"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Copilot reviewed 223 out of 228 changed files in this pull request and generated 1 comment. <details> <summary>Suppressed comments (3)</summary> **sdk/cognitiveservices/azure-mgmt-cognitiveservices/tests/test_cognit",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48412:comment:3709729869:sdk:Python:azure-mgmt-cognitiveservices",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-04T05:34:28Z",
+      "observedAt": "2026-08-04T05:34:28Z",
+      "trackId": "sdk:Python:azure-mgmt-cognitiveservices",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48412",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48412#discussion_r3709729869"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The public client surface appears to have removed several previously exposed operation groups (e.g., computes/workbenches/managed compute-related). This is a breaking change for existing SDK consumers; if the service/API truly removed these",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6654551:generation.completed:sdk:.NET:Azure.ResourceManager.CognitiveServices",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-08-04T05:34:48.5038185Z",
+      "observedAt": "2026-08-04T05:34:48.5038185Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CognitiveServices",
+      "title": "Pipeline completed with issues",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6654551",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6654551"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50024:commit:0a960dadd49b:sdk:Java:azure-resourcemanager-cognitiveservices",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-04T05:38:58Z",
+      "observedAt": "2026-08-04T05:38:58Z",
+      "trackId": "sdk:Java:azure-resourcemanager-cognitiveservices",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50024",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/0a960dadd49b208271e1520531e2b671d8132de2"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6654553:generation.completed:sdk:Java:azure-resourcemanager-cognitiveservices",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-08-04T05:44:27.4144466Z",
+      "observedAt": "2026-08-04T05:44:27.4144466Z",
+      "trackId": "sdk:Java:azure-resourcemanager-cognitiveservices",
+      "title": "Pipeline completed with issues",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6654553",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6654553"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39498:comment:5175137343:sdk:JavaScript:@azure/arm-cognitiveservices",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-04T05:50:25Z",
+      "observedAt": "2026-08-04T05:50:25Z",
+      "trackId": "sdk:JavaScript:@azure/arm-cognitiveservices",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39498",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39498#issuecomment-5175137343"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Next Steps to Merge ✅ All CI checks have passed — this PR is ready for review! The SDK engineer will review this PR shortly. Once it's approved, you can go ahead and merge it. To make things easier, feel free to [enable auto-merge](https",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50024:review:4851154599:sdk:Java:azure-resourcemanager-cognitiveservices",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-04T06:07:49Z",
+      "observedAt": "2026-08-04T06:07:49Z",
+      "trackId": "sdk:Java:azure-resourcemanager-cognitiveservices",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50024",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/50024#pullrequestreview-4851154599"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@XiaofeiCao for review",
+      "reviewState": "approved",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50024:review:4851212907:sdk:Java:azure-resourcemanager-cognitiveservices",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-04T06:18:26Z",
+      "observedAt": "2026-08-04T06:18:26Z",
+      "trackId": "sdk:Java:azure-resourcemanager-cognitiveservices",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "XiaofeiCao"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50024",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/50024#pullrequestreview-4851212907"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61682:comment:5175341836:sdk:.NET:Azure.ResourceManager.CognitiveServices",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-04T06:19:07Z",
+      "observedAt": "2026-08-04T06:19:07Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.CognitiveServices",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61682",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61682#issuecomment-5175341836"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## 🔍 CI Failure Analysis for PR #61682 ### Check Run Summary | Check | Status | |---|---| | `net - pullrequest` | ❌ **Failure** | | `net - pullrequest (Build Build PRBatch)` | ❌ **Failure** | | `net - pullrequest (Build Analyze PRBatch)` |",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48412:review:4851472622:sdk:Python:azure-mgmt-cognitiveservices",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-04T06:56:05Z",
+      "observedAt": "2026-08-04T06:56:05Z",
+      "trackId": "sdk:Python:azure-mgmt-cognitiveservices",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48412",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48412#pullrequestreview-4851472622"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Copilot reviewed 223 out of 228 changed files in this pull request and generated no new comments. <details> <summary>Suppressed comments (2)</summary> **sdk/cognitiveservices/azure-mgmt-cognitiveservices/tests/test_",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48412:review:4851615236:sdk:Python:azure-mgmt-cognitiveservices",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-04T07:16:55Z",
+      "observedAt": "2026-08-04T07:16:55Z",
+      "trackId": "sdk:Python:azure-mgmt-cognitiveservices",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48412",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48412#pullrequestreview-4851615236"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Copilot reviewed 223 out of 228 changed files in this pull request and generated no new comments. <details> <summary>Suppressed comments (2)</summary> **sdk/cognitiveservices/azure-mgmt-cognitiveservices/tests/test_",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48412:commit:763bee40ffa1:sdk:Python:azure-mgmt-cognitiveservices",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-04T07:22:48Z",
+      "observedAt": "2026-08-04T07:22:48Z",
+      "trackId": "sdk:Python:azure-mgmt-cognitiveservices",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48412",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/763bee40ffa11829dcff77dca10a0f85180ce34d"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48412:review:4851660549:sdk:Python:azure-mgmt-cognitiveservices",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-04T07:23:13Z",
+      "observedAt": "2026-08-04T07:23:13Z",
+      "trackId": "sdk:Python:azure-mgmt-cognitiveservices",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48412",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48412#pullrequestreview-4851660549"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @fmabroukmsft, we have approved the PR. You can move on to merge and release though the action suggestion in Release Plan.",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48412:review:4851689127:sdk:Python:azure-mgmt-cognitiveservices",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-04T07:26:57Z",
+      "observedAt": "2026-08-04T07:26:57Z",
+      "trackId": "sdk:Python:azure-mgmt-cognitiveservices",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48412",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48412#pullrequestreview-4851689127"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Copilot reviewed 223 out of 228 changed files in this pull request and generated no new comments. <details> <summary>Suppressed comments (4)</summary> **sdk/cognitiveservices/azure-mgmt-cognitiveservices/tests/test_",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48412:commit:b9555977a3de:sdk:Python:azure-mgmt-cognitiveservices",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-04T07:28:13Z",
+      "observedAt": "2026-08-04T07:28:13Z",
+      "trackId": "sdk:Python:azure-mgmt-cognitiveservices",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48412",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/b9555977a3de28e11165e4b4dbb1e7b3f63a3657"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48412:review:4851746365:sdk:Python:azure-mgmt-cognitiveservices",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-04T07:33:04Z",
+      "observedAt": "2026-08-04T07:33:04Z",
+      "trackId": "sdk:Python:azure-mgmt-cognitiveservices",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48412",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48412#pullrequestreview-4851746365"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Copilot reviewed 223 out of 228 changed files in this pull request and generated no new comments. <details> <summary>Suppressed comments (4)</summary> **sdk/cognitiveservices/azure-mgmt-cognitiveservices/tests/test_",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27321:comment:5188595331:sdk:Go:sdk/resourcemanager/cognitiveservices/armcognitiveservices",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-05T06:58:57Z",
+      "observedAt": "2026-08-05T06:58:57Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/cognitiveservices/armcognitiveservices",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27321",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27321#issuecomment-5188595331"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The breaking changes are introduced and approved in beta versions, @jhendrixMSFT , please help approve this major version release by adding label of Approved Major Version, thanks.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27321:review:4870387680:sdk:Go:sdk/resourcemanager/cognitiveservices/armcognitiveservices",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-06T02:09:49Z",
+      "observedAt": "2026-08-06T02:09:49Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/cognitiveservices/armcognitiveservices",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "JiaqiZhang-Dev"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27321",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27321#pullrequestreview-4870387680"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48412:review:4871366798:sdk:Python:azure-mgmt-cognitiveservices",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-06T05:35:20Z",
+      "observedAt": "2026-08-06T05:35:20Z",
+      "trackId": "sdk:Python:azure-mgmt-cognitiveservices",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48412",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48412#pullrequestreview-4871366798"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39498:review:4902478338:sdk:JavaScript:@azure/arm-cognitiveservices",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T02:25:20Z",
+      "observedAt": "2026-08-11T02:25:20Z",
+      "trackId": "sdk:JavaScript:@azure/arm-cognitiveservices",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "JialinHuang803"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39498",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39498#pullrequestreview-4902478338"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    }
+  ],
+  "quality": {
+    "warnings": [
+      "5 historical linked PR(s) closed without merge"
+    ],
+    "unavailablePullRequests": 0,
+    "unavailablePipelineRuns": 0
+  },
+  "boundaryFacts": {
+    "id": "35847",
+    "state": "in-progress",
+    "specPrs": [
+      {
+        "id": "github:Azure/azure-rest-api-specs#44323",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#44323",
+        "createdAt": "2026-06-30T17:51:43Z",
+        "mergedAt": "2026-08-03T22:12:12Z",
+        "closedAt": "2026-08-03T22:12:12Z",
+        "available": true
+      }
+    ],
+    "artifacts": [
+      {
+        "language": ".NET",
+        "package": "Azure.ResourceManager.CognitiveServices",
+        "trackId": "sdk:.NET:Azure.ResourceManager.CognitiveServices",
+        "prId": "github:Azure/azure-sdk-for-net#61682",
+        "prCreatedAt": "2026-08-03T22:31:04Z",
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-net#61682",
+            "createdAt": "2026-08-03T22:31:04Z",
+            "mergedAt": null,
+            "closedAt": null,
+            "state": "open"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6654551",
+        "generationStartAt": "2026-08-04T05:24:34.0459584Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "JavaScript",
+        "package": "@azure/arm-cognitiveservices",
+        "trackId": "sdk:JavaScript:@azure/arm-cognitiveservices",
+        "prId": "github:Azure/azure-sdk-for-js#39498",
+        "prCreatedAt": "2026-08-03T22:28:43Z",
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-js#39498",
+            "createdAt": "2026-08-03T22:28:43Z",
+            "mergedAt": null,
+            "closedAt": null,
+            "state": "open"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6654555",
+        "generationStartAt": "2026-08-04T05:24:51.8664943Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Python",
+        "package": "azure-mgmt-cognitiveservices",
+        "trackId": "sdk:Python:azure-mgmt-cognitiveservices",
+        "prId": "github:Azure/azure-sdk-for-python#48412",
+        "prCreatedAt": "2026-08-03T22:29:52Z",
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-python#48412",
+            "createdAt": "2026-08-03T22:29:52Z",
+            "mergedAt": null,
+            "closedAt": null,
+            "state": "open"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6654556",
+        "generationStartAt": "2026-08-04T05:25:01.1864316Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Java",
+        "package": "azure-resourcemanager-cognitiveservices",
+        "trackId": "sdk:Java:azure-resourcemanager-cognitiveservices",
+        "prId": "github:Azure/azure-sdk-for-java#50024",
+        "prCreatedAt": "2026-08-03T22:31:21Z",
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-java#50024",
+            "createdAt": "2026-08-03T22:31:21Z",
+            "mergedAt": null,
+            "closedAt": null,
+            "state": "open"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6654553",
+        "generationStartAt": "2026-08-04T05:24:44.5596623Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Go",
+        "package": "sdk/resourcemanager/cognitiveservices/armcognitiveservices",
+        "trackId": "sdk:Go:sdk/resourcemanager/cognitiveservices/armcognitiveservices",
+        "prId": "github:Azure/azure-sdk-for-go#27321",
+        "prCreatedAt": "2026-08-03T22:27:17Z",
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-go#27321",
+            "createdAt": "2026-08-03T22:27:17Z",
+            "mergedAt": null,
+            "closedAt": null,
+            "state": "open"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6654557",
+        "generationStartAt": "2026-08-04T05:25:08.8691272Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      }
+    ],
+    "cohortPlan": {
+      "id": "35847",
+      "releasePlanId": "35847",
+      "title": "GA release plan for Microsoft Foundry",
+      "service": "Microsoft Foundry",
+      "state": "in-progress"
+    },
+    "quality": {
+      "warnings": [
+        "5 historical linked PR(s) closed without merge"
+      ],
+      "unavailablePullRequests": 0,
+      "unavailablePipelineRuns": 0
+    }
+  },
+  "summary": {
+    "durationHours": 242.4,
+    "pullRequestCount": 6,
+    "humanReviewCount": 8,
+    "humanCommentCount": 3
+  }
+}

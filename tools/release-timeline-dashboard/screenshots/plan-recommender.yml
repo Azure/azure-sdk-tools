@@ -1,0 +1,281 @@
+- generic [active] [ref=f2e1]:
+  - link "Skip to content" [ref=f2e2] [cursor=pointer]:
+    - /url: "#main"
+  - banner [ref=f2e3]:
+    - button "AZ SDK Flow Generation and release intelligence" [ref=f2e4] [cursor=pointer]:
+      - generic [ref=f2e5]: AZ
+      - generic [ref=f2e6]:
+        - strong [ref=f2e7]: SDK Flow
+        - generic [ref=f2e8]: Generation and release intelligence
+    - generic [ref=f2e9]:
+      - text: Daily snapshot
+      - time [ref=f2e11]: Aug 11, 2026
+  - main [ref=f2e12]:
+    - generic [ref=f2e20]:
+      - navigation "Breadcrumb" [ref=f2e21]:
+        - button "Portfolio" [ref=f2e22] [cursor=pointer]
+        - generic [ref=f2e23]: /
+        - generic [ref=f2e24]: Recommender
+        - generic [ref=f2e25]: /
+        - strong [ref=f2e26]: Plan 35782
+      - generic [ref=f2e27]:
+        - generic [ref=f2e28]:
+          - generic [ref=f2e29]:
+            - generic [ref=f2e30]: Finished
+            - generic [ref=f2e31]: management
+            - generic [ref=f2e32]: APEX Public Preview
+          - heading "Recommender" [level=1] [ref=f2e33]
+          - paragraph [ref=f2e34]: Public Preview release plan for Recommender
+        - link "Open Release Plan ↗" [ref=f2e35] [cursor=pointer]:
+          - /url: https://dev.azure.com/azure-sdk/Release/_workitems/edit/35782
+      - generic "Release workflow" [ref=f2e36]:
+        - generic [ref=f2e37]:
+          - generic [ref=f2e38]: "1"
+          - paragraph [ref=f2e39]:
+            - strong [ref=f2e40]: Plan intake
+            - generic [ref=f2e41]: Aug 3, 2026
+        - generic [ref=f2e42]:
+          - generic [ref=f2e43]: "2"
+          - paragraph [ref=f2e44]:
+            - strong [ref=f2e45]: Spec review
+            - generic [ref=f2e46]: 3.6d
+        - generic [ref=f2e47]:
+          - generic [ref=f2e48]: "3"
+          - paragraph [ref=f2e49]:
+            - strong [ref=f2e50]: Generation
+            - generic [ref=f2e51]: 6m
+        - generic [ref=f2e52]:
+          - generic [ref=f2e53]: "4"
+          - paragraph [ref=f2e54]:
+            - strong [ref=f2e55]: SDK review
+            - generic [ref=f2e56]: 26h
+        - generic [ref=f2e57]:
+          - generic [ref=f2e58]: "5"
+          - paragraph [ref=f2e59]:
+            - strong [ref=f2e60]: Released
+            - generic [ref=f2e61]: 2h
+      - generic [ref=f2e62]:
+        - article [ref=f2e63]:
+          - generic [ref=f2e64]: End-to-end
+          - strong [ref=f2e65]: 6.8d
+        - article [ref=f2e66]:
+          - generic [ref=f2e67]: PRs correlated
+          - strong [ref=f2e68]: "6"
+        - article [ref=f2e69]:
+          - generic [ref=f2e70]: Human reviews
+          - strong [ref=f2e71]: "22"
+        - article [ref=f2e72]:
+          - generic [ref=f2e73]: Human comments
+          - strong [ref=f2e74]: "20"
+      - generic [ref=f2e75]:
+        - generic [ref=f2e76]:
+          - generic [ref=f2e77]:
+            - paragraph [ref=f2e78]: Evidence timeline
+            - heading "Specification to release" [level=2] [ref=f2e79]
+          - generic [ref=f2e81]:
+            - text: Event detail
+            - combobox "Event detail" [ref=f2e82]:
+              - option "Milestones" [selected]
+              - option "Human activity"
+              - option "All evidence"
+        - generic [ref=f2e83]:
+          - generic [ref=f2e84]: Spec review
+          - generic [ref=f2e86]: Generation
+          - generic [ref=f2e88]: SDK review
+          - generic [ref=f2e90]: Release
+          - generic [ref=f2e92]: Event
+        - generic [ref=f2e95]:
+          - generic [ref=f2e98]:
+            - generic [ref=f2e99]: Jul 30
+            - generic [ref=f2e101]: Aug 1
+            - generic [ref=f2e103]: Aug 2
+            - generic [ref=f2e105]: Aug 4
+            - generic [ref=f2e107]: Aug 5
+            - generic [ref=f2e109]: Aug 6
+          - generic [ref=f2e111]:
+            - generic [ref=f2e112]:
+              - strong [ref=f2e113]: Release Plan
+              - generic [ref=f2e114]: APEX Public Preview
+            - generic [ref=f2e115]:
+              - button "Release Plan created at Aug 3, 2026, 3:32 PM" [ref=f2e116] [cursor=pointer]
+              - button "Plan state changed at Aug 3, 2026, 3:32 PM" [ref=f2e117] [cursor=pointer]
+              - button "Spec approval changed at Aug 3, 2026, 3:32 PM" [ref=f2e118] [cursor=pointer]
+              - button "Plan state changed at Aug 3, 2026, 3:32 PM" [ref=f2e119] [cursor=pointer]
+              - button "Spec approval changed at Aug 5, 2026, 11:20 AM" [ref=f2e120] [cursor=pointer]
+              - button "Plan state changed at Aug 6, 2026, 3:47 PM" [ref=f2e121] [cursor=pointer]
+          - generic [ref=f2e122]:
+            - generic [ref=f2e123]:
+              - strong [ref=f2e124]: Spec PR
+              - generic [ref=f2e125]: "azure-rest-api-specs #45157"
+            - generic [ref=f2e126]:
+              - button "3.6d" [ref=f2e127]
+              - button "PR opened at Jul 30, 2026, 9:01 PM" [ref=f2e129] [cursor=pointer]
+              - button "PR merged at Aug 3, 2026, 11:16 AM" [ref=f2e130] [cursor=pointer]
+          - generic [ref=f2e131]:
+            - generic [ref=f2e132]:
+              - strong [ref=f2e133]: .NET
+              - generic [ref=f2e134]: Azure.ResourceManager.Compute.Recommender
+            - generic [ref=f2e135]:
+              - button "2.9d" [ref=f2e136]
+              - 'button "Release latency: 1h" [ref=f2e138]'
+              - button "PR opened at Aug 3, 2026, 3:45 PM" [ref=f2e139] [cursor=pointer]
+              - button "PR merged at Aug 6, 2026, 2:34 PM" [ref=f2e140] [cursor=pointer]
+              - button "Release status changed at Aug 6, 2026, 3:47 PM" [ref=f2e141] [cursor=pointer]
+              - button "Package version observed at Aug 6, 2026, 3:47 PM" [ref=f2e142] [cursor=pointer]
+          - generic [ref=f2e143]:
+            - generic [ref=f2e144]:
+              - strong [ref=f2e145]: JavaScript
+              - generic [ref=f2e146]: "@azure/arm-computerecommender"
+            - generic [ref=f2e147]:
+              - button "27h" [ref=f2e148]
+              - 'button "Generation execution: 6m" [ref=f2e150]'
+              - 'button "Release latency: 2h" [ref=f2e151]'
+              - button "PR opened at Aug 3, 2026, 3:45 PM" [ref=f2e152] [cursor=pointer]
+              - button "PR merged at Aug 4, 2026, 6:32 PM" [ref=f2e153] [cursor=pointer]
+              - button "Release status changed at Aug 4, 2026, 8:51 PM" [ref=f2e154] [cursor=pointer]
+              - button "Package version observed at Aug 4, 2026, 8:51 PM" [ref=f2e155] [cursor=pointer]
+          - generic [ref=f2e156]:
+            - generic [ref=f2e157]:
+              - strong [ref=f2e158]: Python
+              - generic [ref=f2e159]: azure-mgmt-computerecommender
+            - generic [ref=f2e160]:
+              - button "26h" [ref=f2e161]
+              - 'button "Generation execution: 6m" [ref=f2e163]'
+              - button "28h" [ref=f2e164]
+              - button "PR opened at Aug 3, 2026, 3:45 PM" [ref=f2e166] [cursor=pointer]
+              - button "PR merged at Aug 4, 2026, 6:03 PM" [ref=f2e167] [cursor=pointer]
+              - button "Release status changed at Aug 4, 2026, 6:48 PM" [ref=f2e168] [cursor=pointer]
+              - button "Release status changed at Aug 5, 2026, 9:47 PM" [ref=f2e169] [cursor=pointer]
+              - button "Package version observed at Aug 5, 2026, 9:47 PM" [ref=f2e170] [cursor=pointer]
+          - generic [ref=f2e171]:
+            - generic [ref=f2e172]:
+              - strong [ref=f2e173]: Java
+              - generic [ref=f2e174]: azure-resourcemanager-compute-recommender
+            - generic [ref=f2e175]:
+              - button "26h" [ref=f2e176]
+              - 'button "Generation execution: 6m" [ref=f2e178]'
+              - 'button "Release latency: 2h" [ref=f2e179]'
+              - button "PR opened at Aug 3, 2026, 3:47 PM" [ref=f2e180] [cursor=pointer]
+              - button "PR merged at Aug 4, 2026, 6:03 PM" [ref=f2e181] [cursor=pointer]
+              - button "Release status changed at Aug 4, 2026, 6:59 PM" [ref=f2e182] [cursor=pointer]
+              - button "Release status changed at Aug 4, 2026, 7:57 PM" [ref=f2e183] [cursor=pointer]
+              - button "Package version observed at Aug 4, 2026, 7:57 PM" [ref=f2e184] [cursor=pointer]
+          - generic [ref=f2e185]:
+            - generic [ref=f2e186]:
+              - strong [ref=f2e187]: Go
+              - generic [ref=f2e188]: sdk/resourcemanager/compute/armrecommender
+            - generic [ref=f2e189]:
+              - button "26h" [ref=f2e190]
+              - 'button "Generation execution: 6m" [ref=f2e192]'
+              - 'button "Release latency: 48m" [ref=f2e193]'
+              - button "PR opened at Aug 3, 2026, 3:44 PM" [ref=f2e194] [cursor=pointer]
+              - button "PR merged at Aug 4, 2026, 6:03 PM" [ref=f2e195] [cursor=pointer]
+              - button "Release status changed at Aug 4, 2026, 6:23 PM" [ref=f2e196] [cursor=pointer]
+              - button "Release status changed at Aug 4, 2026, 6:48 PM" [ref=f2e197] [cursor=pointer]
+              - button "Package version observed at Aug 4, 2026, 6:48 PM" [ref=f2e198] [cursor=pointer]
+      - generic [ref=f2e199]:
+        - generic [ref=f2e200]:
+          - generic [ref=f2e202]:
+            - paragraph [ref=f2e203]: Metric evidence
+            - heading "Plan measurements" [level=2] [ref=f2e204]
+          - generic [ref=f2e205]:
+            - article [ref=f2e206]:
+              - generic [ref=f2e207]:
+                - strong [ref=f2e208]: Full time-to-SDK
+                - generic [ref=f2e209]: observed
+              - strong [ref=f2e210]: 6.8d
+              - generic [ref=f2e211]: 1/1 complete result
+            - article [ref=f2e212]:
+              - generic [ref=f2e213]:
+                - strong [ref=f2e214]: Spec PR cycle time
+                - generic [ref=f2e215]: authoritative
+              - strong [ref=f2e216]: 3.6d
+              - generic [ref=f2e217]: 1/1 complete result
+            - article [ref=f2e218]:
+              - generic [ref=f2e219]:
+                - strong [ref=f2e220]: Generation trigger latency
+                - generic [ref=f2e221]: authoritative
+              - strong [ref=f2e222]: 4h
+              - generic [ref=f2e223]: 5/5 complete results
+            - article [ref=f2e224]:
+              - generic [ref=f2e225]:
+                - strong [ref=f2e226]: Generation execution
+                - generic [ref=f2e227]: authoritative
+              - strong [ref=f2e228]: 6m
+              - generic [ref=f2e229]: 4/5 complete results
+            - article [ref=f2e230]:
+              - generic [ref=f2e231]:
+                - strong [ref=f2e232]: SDK PR cycle time
+                - generic [ref=f2e233]: authoritative
+              - strong [ref=f2e234]: 26h
+              - generic [ref=f2e235]: 5/5 complete results
+            - article [ref=f2e236]:
+              - generic [ref=f2e237]:
+                - strong [ref=f2e238]: Release latency
+                - generic [ref=f2e239]: observed
+              - strong [ref=f2e240]: 2h
+              - generic [ref=f2e241]: 5/5 complete results
+        - generic [ref=f2e242]:
+          - generic [ref=f2e244]:
+            - paragraph [ref=f2e245]: Intended vs actual
+            - heading "Language releases" [level=2] [ref=f2e246]
+          - generic [ref=f2e247]:
+            - article [ref=f2e248]:
+              - generic [ref=f2e249]: "N"
+              - paragraph [ref=f2e250]:
+                - strong [ref=f2e251]: .NET
+                - generic [ref=f2e252]: Azure.ResourceManager.Compute.Recommender
+              - paragraph [ref=f2e253]:
+                - strong [ref=f2e254]: 1.1.0-beta.1
+                - generic [ref=f2e255]: Released version
+              - generic [ref=f2e256]: Released
+              - link "PR ↗" [ref=f2e257] [cursor=pointer]:
+                - /url: https://github.com/Azure/azure-sdk-for-net/pull/61669
+            - article [ref=f2e258]:
+              - generic [ref=f2e259]: JS
+              - paragraph [ref=f2e260]:
+                - strong [ref=f2e261]: JavaScript
+                - generic [ref=f2e262]: "@azure/arm-computerecommender"
+              - paragraph [ref=f2e263]:
+                - strong [ref=f2e264]: 1.1.0-beta.1
+                - generic [ref=f2e265]: Released version
+              - generic [ref=f2e266]: Released
+              - link "PR ↗" [ref=f2e267] [cursor=pointer]:
+                - /url: https://github.com/Azure/azure-sdk-for-js/pull/39494
+            - article [ref=f2e268]:
+              - generic [ref=f2e269]: PY
+              - paragraph [ref=f2e270]:
+                - strong [ref=f2e271]: Python
+                - generic [ref=f2e272]: azure-mgmt-computerecommender
+              - paragraph [ref=f2e273]:
+                - strong [ref=f2e274]: 1.0.0b2
+                - generic [ref=f2e275]: Released version
+              - generic [ref=f2e276]: Released
+              - link "PR ↗" [ref=f2e277] [cursor=pointer]:
+                - /url: https://github.com/Azure/azure-sdk-for-python/pull/48405
+            - article [ref=f2e278]:
+              - generic [ref=f2e279]: JV
+              - paragraph [ref=f2e280]:
+                - strong [ref=f2e281]: Java
+                - generic [ref=f2e282]: azure-resourcemanager-compute-recommender
+              - paragraph [ref=f2e283]:
+                - strong [ref=f2e284]: 1.0.0-beta.2
+                - generic [ref=f2e285]: Released version
+              - generic [ref=f2e286]: Released
+              - link "PR ↗" [ref=f2e287] [cursor=pointer]:
+                - /url: https://github.com/Azure/azure-sdk-for-java/pull/50020
+            - article [ref=f2e288]:
+              - generic [ref=f2e289]: GO
+              - paragraph [ref=f2e290]:
+                - strong [ref=f2e291]: Go
+                - generic [ref=f2e292]: sdk/resourcemanager/compute/armrecommender
+              - paragraph [ref=f2e293]:
+                - strong [ref=f2e294]: 0.2.0
+                - generic [ref=f2e295]: Released version
+              - generic [ref=f2e296]: Released
+              - link "PR ↗" [ref=f2e297] [cursor=pointer]:
+                - /url: https://github.com/Azure/azure-sdk-for-go/pull/27301
+  - complementary [ref=f2e16]:
+    - button [ref=f2e17] [cursor=pointer]:
+      - generic [ref=f2e18]: Close event details
+      - text: ×

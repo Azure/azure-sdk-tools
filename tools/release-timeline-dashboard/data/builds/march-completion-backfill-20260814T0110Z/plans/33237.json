@@ -1,0 +1,4034 @@
+{
+  "schemaVersion": 2,
+  "id": "33237",
+  "correlation": {
+    "policyVersion": 1,
+    "preflight": "passed"
+  },
+  "releasePlanId": "2125",
+  "title": "Release Plan - 2125 - GA - NGINXaaS - Azure Native Service",
+  "service": "NGINXaaS - Azure Native Service",
+  "product": "Release",
+  "path": "specification/nginx/Nginx.Management",
+  "state": "finished",
+  "plane": "management",
+  "releaseType": "APEX GA",
+  "intendedMonth": "April 2026",
+  "createdAt": "2026-03-12T16:05:18.19Z",
+  "completedAt": "2026-04-29T23:23:34.88Z",
+  "sourceUrl": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33237",
+  "range": {
+    "start": "2026-01-26T14:58:58.000Z",
+    "end": "2026-04-29T23:23:34.880Z"
+  },
+  "intendedArtifacts": [
+    {
+      "prId": "github:Azure/azure-sdk-for-net#57070",
+      "language": ".NET",
+      "package": "Azure.ResourceManager.Nginx",
+      "version": "1.1.0",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6007418",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-js#37616",
+      "language": "JavaScript",
+      "package": "@azure/arm-nginx",
+      "version": "4.0.0",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6007421",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-python#45661",
+      "language": "Python",
+      "package": "azure-mgmt-nginx",
+      "version": "4.0.0",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6007417",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-java#48399",
+      "language": "Java",
+      "package": "azure-resourcemanager-nginx",
+      "version": "1.1.0",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6007423",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-go#26240",
+      "language": "Go",
+      "package": "sdk/resourcemanager/nginx/armnginx",
+      "version": "4.0.0",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6007422",
+      "releasePipelineUrl": null
+    }
+  ],
+  "links": [
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#39907",
+      "role": "spec-pr",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/39907",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-net#57070",
+      "role": "sdk-pr",
+      "language": ".NET",
+      "url": "https://github.com/Azure/azure-sdk-for-net/pull/57070",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-js#37616",
+      "role": "sdk-pr",
+      "language": "JavaScript",
+      "url": "https://github.com/Azure/azure-sdk-for-js/pull/37616",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-python#45661",
+      "role": "sdk-pr",
+      "language": "Python",
+      "url": "https://github.com/Azure/azure-sdk-for-python/pull/45661",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-java#48399",
+      "role": "sdk-pr",
+      "language": "Java",
+      "url": "https://github.com/Azure/azure-sdk-for-java/pull/48399",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-go#26240",
+      "role": "sdk-pr",
+      "language": "Go",
+      "url": "https://github.com/Azure/azure-sdk-for-go/pull/26240",
+      "releasePlanIds": []
+    }
+  ],
+  "tracks": [
+    {
+      "id": "plan",
+      "kind": "plan",
+      "label": "Release Plan",
+      "detail": "APEX GA"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#39907",
+      "kind": "spec",
+      "label": "Spec PR",
+      "detail": "azure-rest-api-specs #39907",
+      "artifactId": "github:Azure/azure-rest-api-specs#39907",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:.NET:Azure.ResourceManager.Nginx",
+      "kind": "sdk",
+      "label": ".NET",
+      "detail": "Azure.ResourceManager.Nginx",
+      "artifactId": "github:Azure/azure-sdk-for-net#57070",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:JavaScript:@azure/arm-nginx",
+      "kind": "sdk",
+      "label": "JavaScript",
+      "detail": "@azure/arm-nginx",
+      "artifactId": "github:Azure/azure-sdk-for-js#37616",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Python:azure-mgmt-nginx",
+      "kind": "sdk",
+      "label": "Python",
+      "detail": "azure-mgmt-nginx",
+      "artifactId": "github:Azure/azure-sdk-for-python#45661",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Java:azure-resourcemanager-nginx",
+      "kind": "sdk",
+      "label": "Java",
+      "detail": "azure-resourcemanager-nginx",
+      "artifactId": "github:Azure/azure-sdk-for-java#48399",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Go:sdk/resourcemanager/nginx/armnginx",
+      "kind": "sdk",
+      "label": "Go",
+      "detail": "sdk/resourcemanager/nginx/armnginx",
+      "artifactId": "github:Azure/azure-sdk-for-go#26240",
+      "state": "merged"
+    }
+  ],
+  "events": [
+    {
+      "id": "github:Azure/azure-rest-api-specs#39907:pr.created:spec:github:Azure/azure-rest-api-specs#39907",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-01-26T14:58:58Z",
+      "observedAt": "2026-01-26T14:58:58Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39907",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "briantkim93"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39907",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39907"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39907:comment:3800030344:spec:github:Azure/azure-rest-api-specs#39907",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-01-26T14:59:19Z",
+      "observedAt": "2026-01-26T14:59:19Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39907",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39907",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39907#issuecomment-3800030344"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>✅ All automated merging requirements have been met! To get your PR merged, see <a href=\"https://aka.ms/azsdk/specreview/merge\">aka.ms/azsdk/specreview/merge</a>.<br /><br />Comment generated by <a href=\"https://g",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39907:comment:3800042470:spec:github:Azure/azure-rest-api-specs#39907",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-01-26T15:01:48Z",
+      "observedAt": "2026-01-26T15:01:48Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39907",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39907",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39907#issuecomment-3800042470"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews | Language | API Review for Package | |----------|---------| | Swagger | [Nginx.NginxPlus](https://apiview.dev/Assemblies/Review/4b5af",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39907:commit:cd6266b23738:spec:github:Azure/azure-rest-api-specs#39907",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-01-26T15:07:01Z",
+      "observedAt": "2026-01-26T15:07:01Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39907",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "briantkim-msft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39907",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/cd6266b23738549a1823c9357a188bbfde3ccac9"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39907:comment:3800083728:spec:github:Azure/azure-rest-api-specs#39907",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-01-26T15:10:37Z",
+      "observedAt": "2026-01-26T15:10:37Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39907",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "briantkim93"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39907",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39907#issuecomment-3800083728"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Same diff was merged in RPSaaSMaster - https://github.com/Azure/azure-rest-api-specs-pr/pull/26257",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39907:comment:3800085733:spec:github:Azure/azure-rest-api-specs#39907",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-01-26T15:10:59Z",
+      "observedAt": "2026-01-26T15:10:59Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39907",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "briantkim93"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39907",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39907#issuecomment-3800085733"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Breaking change has already been approved by ARM Breaking Change team",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39907:review:3717219819:spec:github:Azure/azure-rest-api-specs#39907",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-01-28T15:07:02Z",
+      "observedAt": "2026-01-28T15:07:02Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39907",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "razvanbadea-msft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39907",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39907#pullrequestreview-3717219819"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39907:comment:2737079625:spec:github:Azure/azure-rest-api-specs#39907",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-01-28T15:07:03Z",
+      "observedAt": "2026-01-28T15:07:03Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39907",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "razvanbadea-msft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39907",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39907#discussion_r2737079625"
+      },
+      "confidence": "authoritative",
+      "excerpt": ">he file path of the policy [](http://example.com/codeflow?start=6&length=26) does this allow to be in relative or absolute format? you should update the description",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39907:review:3717222239:spec:github:Azure/azure-rest-api-specs#39907",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-01-28T15:07:30Z",
+      "observedAt": "2026-01-28T15:07:30Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39907",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "razvanbadea-msft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39907",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39907#pullrequestreview-3717222239"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39907:comment:2737081740:spec:github:Azure/azure-rest-api-specs#39907",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-01-28T15:07:30Z",
+      "observedAt": "2026-01-28T15:07:30Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39907",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "razvanbadea-msft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39907",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39907#discussion_r2737081740"
+      },
+      "confidence": "authoritative",
+      "excerpt": ">string [](http://example.com/codeflow?start=11&length=6) are the values for this any string or it can be an enum?",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39907:review:3717613279:spec:github:Azure/azure-rest-api-specs#39907",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-01-28T16:10:46Z",
+      "observedAt": "2026-01-28T16:10:46Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39907",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "briantkim93"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39907",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39907#pullrequestreview-3717613279"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39907:comment:2737388192:spec:github:Azure/azure-rest-api-specs#39907",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-01-28T16:10:46Z",
+      "observedAt": "2026-01-28T16:10:46Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39907",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "briantkim93"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39907",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39907#discussion_r2737388192"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Yes the values can be any string. There isn't a defined set of possible values",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39907:commit:16230677905d:spec:github:Azure/azure-rest-api-specs#39907",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-01-28T16:18:54Z",
+      "observedAt": "2026-01-28T16:18:54Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39907",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "briantkim-msft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39907",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/16230677905d87fd3494efb1ed29acd2f8475a59"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39907:review:3717663117:spec:github:Azure/azure-rest-api-specs#39907",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-01-28T16:21:25Z",
+      "observedAt": "2026-01-28T16:21:25Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39907",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "briantkim93"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39907",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39907#pullrequestreview-3717663117"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39907:comment:2737431749:spec:github:Azure/azure-rest-api-specs#39907",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-01-28T16:21:25Z",
+      "observedAt": "2026-01-28T16:21:25Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39907",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "briantkim93"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39907",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39907#discussion_r2737431749"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Updated",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39907:review:3717664476:spec:github:Azure/azure-rest-api-specs#39907",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-01-28T16:21:43Z",
+      "observedAt": "2026-01-28T16:21:43Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39907",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "briantkim93"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39907",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39907#pullrequestreview-3717664476"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39907:comment:2737432975:spec:github:Azure/azure-rest-api-specs#39907",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-01-28T16:21:43Z",
+      "observedAt": "2026-01-28T16:21:43Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39907",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "briantkim93"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39907",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39907#discussion_r2737432975"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Updated the description",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39907:comment:3835042681:spec:github:Azure/azure-rest-api-specs#39907",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-02T13:11:31Z",
+      "observedAt": "2026-02-02T13:11:31Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39907",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "briantkim93"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39907",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39907#issuecomment-3835042681"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@qiaozha need your help here",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39907:comment:3835104440:spec:github:Azure/azure-rest-api-specs#39907",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-02T13:24:18Z",
+      "observedAt": "2026-02-02T13:24:18Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39907",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "briantkim93"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39907",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39907#issuecomment-3835104440"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@taledesh need your help here",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39907:commit:5625e7353d91:spec:github:Azure/azure-rest-api-specs#39907",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-03T02:34:22Z",
+      "observedAt": "2026-02-03T02:34:22Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39907",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39907",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/5625e7353d9142bd153f1d6b80aa2b99abc3db97"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39907:commit:6273bf26d50b:spec:github:Azure/azure-rest-api-specs#39907",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-03T03:19:25Z",
+      "observedAt": "2026-02-03T03:19:25Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39907",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39907",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/6273bf26d50bcaad3c8ca10edac5ab4c505bd617"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39907:comment:3840248742:spec:github:Azure/azure-rest-api-specs#39907",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-03T09:49:26Z",
+      "observedAt": "2026-02-03T09:49:26Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39907",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "briantkim93"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39907",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39907#issuecomment-3840248742"
+      },
+      "confidence": "authoritative",
+      "excerpt": "/azp run",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39907:comment:3840249843:spec:github:Azure/azure-rest-api-specs#39907",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-03T09:49:36Z",
+      "observedAt": "2026-02-03T09:49:36Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39907",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39907",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39907#issuecomment-3840249843"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> You have several pipelines (over 10) configured to build pull requests in this repository. Specify which pipelines you would like to run by using /azp run [pipelines] command. You can specify multiple pipelines using a comma separate",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39907:comment:3840255378:spec:github:Azure/azure-rest-api-specs#39907",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-03T09:50:36Z",
+      "observedAt": "2026-02-03T09:50:36Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39907",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "briantkim93"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39907",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39907#issuecomment-3840255378"
+      },
+      "confidence": "authoritative",
+      "excerpt": "/azp run [Swagger LintDiff](https://github.com/Azure/azure-rest-api-specs/actions/runs/21615549252)",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39907:comment:3840255917:spec:github:Azure/azure-rest-api-specs#39907",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-03T09:50:43Z",
+      "observedAt": "2026-02-03T09:50:43Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39907",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39907",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39907#issuecomment-3840255917"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> No pipelines are associated with this pull request.<br> </samp>",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39907:comment:3840258126:spec:github:Azure/azure-rest-api-specs#39907",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-03T09:51:11Z",
+      "observedAt": "2026-02-03T09:51:11Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39907",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "briantkim93"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39907",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39907#issuecomment-3840258126"
+      },
+      "confidence": "authoritative",
+      "excerpt": "/azp run https://github.com/Azure/azure-rest-api-specs/actions/runs/21615549252",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39907:comment:3840258989:spec:github:Azure/azure-rest-api-specs#39907",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-03T09:51:20Z",
+      "observedAt": "2026-02-03T09:51:20Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39907",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39907",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39907#issuecomment-3840258989"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> No pipelines are associated with this pull request.<br> </samp>",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39907:comment:3840264890:spec:github:Azure/azure-rest-api-specs#39907",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-03T09:52:25Z",
+      "observedAt": "2026-02-03T09:52:25Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39907",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "briantkim93"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39907",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39907#issuecomment-3840264890"
+      },
+      "confidence": "authoritative",
+      "excerpt": "/azp run Swagger LintDiff",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39907:comment:3840265924:spec:github:Azure/azure-rest-api-specs#39907",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-03T09:52:34Z",
+      "observedAt": "2026-02-03T09:52:34Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39907",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39907",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39907#issuecomment-3840265924"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> No pipelines are associated with this pull request.<br> </samp>",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39907:comment:3841779345:spec:github:Azure/azure-rest-api-specs#39907",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-03T14:47:31Z",
+      "observedAt": "2026-02-03T14:47:31Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39907",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "briantkim93"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39907",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39907#issuecomment-3841779345"
+      },
+      "confidence": "authoritative",
+      "excerpt": "/azp list",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39907:comment:3841780591:spec:github:Azure/azure-rest-api-specs#39907",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-03T14:47:42Z",
+      "observedAt": "2026-02-03T14:47:42Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39907",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39907",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39907#issuecomment-3841780591"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> CI/CD Pipelines for this repository:<br> <ul type=\"none\"><li><a href=\"https://dev.azure.com/azure-sdk/29ec6040-b234-4e31-b139-33dc4287b756/_build/definition?definitionId=110\">public.rest-api-specs</a></li><li><a href=\"https://dev.azu",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39907:comment:3841791210:spec:github:Azure/azure-rest-api-specs#39907",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-03T14:49:24Z",
+      "observedAt": "2026-02-03T14:49:24Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39907",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "briantkim93"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39907",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39907#issuecomment-3841791210"
+      },
+      "confidence": "authoritative",
+      "excerpt": "/azp run rest-api-specs - codeowners-linter - ci",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39907:comment:3841792035:spec:github:Azure/azure-rest-api-specs#39907",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-03T14:49:33Z",
+      "observedAt": "2026-02-03T14:49:33Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39907",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39907",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39907#issuecomment-3841792035"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines could not run because the pipeline triggers exclude this branch/path.<br> </samp>",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39907:comment:3841795869:spec:github:Azure/azure-rest-api-specs#39907",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-03T14:50:13Z",
+      "observedAt": "2026-02-03T14:50:13Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39907",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "briantkim93"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39907",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39907#issuecomment-3841795869"
+      },
+      "confidence": "authoritative",
+      "excerpt": "/azp run SDK Validation - Go",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39907:comment:3841796837:spec:github:Azure/azure-rest-api-specs#39907",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-03T14:50:25Z",
+      "observedAt": "2026-02-03T14:50:25Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39907",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39907",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39907#issuecomment-3841796837"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines successfully started running 1 pipeline(s).<br> </samp>",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39907:comment:3841812530:spec:github:Azure/azure-rest-api-specs#39907",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-03T14:53:08Z",
+      "observedAt": "2026-02-03T14:53:08Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39907",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "briantkim93"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39907",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39907#issuecomment-3841812530"
+      },
+      "confidence": "authoritative",
+      "excerpt": "/azp run Swagger LintDiff",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39907:comment:3841813198:spec:github:Azure/azure-rest-api-specs#39907",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-03T14:53:16Z",
+      "observedAt": "2026-02-03T14:53:16Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39907",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39907",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39907#issuecomment-3841813198"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> No pipelines are associated with this pull request.<br> </samp>",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39907:comment:3841834811:spec:github:Azure/azure-rest-api-specs#39907",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-03T14:57:13Z",
+      "observedAt": "2026-02-03T14:57:13Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39907",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "briantkim93"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39907",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39907#issuecomment-3841834811"
+      },
+      "confidence": "authoritative",
+      "excerpt": "/azp run Set LintDiff Status",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39907:comment:3841836049:spec:github:Azure/azure-rest-api-specs#39907",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-03T14:57:27Z",
+      "observedAt": "2026-02-03T14:57:27Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39907",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39907",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39907#issuecomment-3841836049"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> No pipelines are associated with this pull request.<br> </samp>",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39907:comment:3841855732:spec:github:Azure/azure-rest-api-specs#39907",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-03T15:00:40Z",
+      "observedAt": "2026-02-03T15:00:40Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39907",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "briantkim93"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39907",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39907#issuecomment-3841855732"
+      },
+      "confidence": "authoritative",
+      "excerpt": "/azp run Swagger LintDiff - Set Status",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39907:comment:3841856418:spec:github:Azure/azure-rest-api-specs#39907",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-03T15:00:47Z",
+      "observedAt": "2026-02-03T15:00:47Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39907",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39907",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39907#issuecomment-3841856418"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> No pipelines are associated with this pull request.<br> </samp>",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39907:commit:6b9715cf2a0e:spec:github:Azure/azure-rest-api-specs#39907",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-04T09:39:10Z",
+      "observedAt": "2026-02-04T09:39:10Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39907",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "skywing918"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39907",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/6b9715cf2a0e505bb312d4fe18f585b913083883"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39907:review:3771806053:spec:github:Azure/azure-rest-api-specs#39907",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-09T08:14:35Z",
+      "observedAt": "2026-02-09T08:14:35Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39907",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "SpencerOfwiti"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39907",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39907#pullrequestreview-3771806053"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39907:pr.merged:spec:github:Azure/azure-rest-api-specs#39907",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-09T08:18:34Z",
+      "observedAt": "2026-02-09T08:18:34Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39907",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39907",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39907"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:33237:created",
+      "type": "plan.created",
+      "phase": "plan",
+      "occurredAt": "2026-03-12T16:05:18.19Z",
+      "observedAt": "2026-03-12T16:05:18.19Z",
+      "trackId": "plan",
+      "title": "Release Plan created",
+      "confidence": "authoritative",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33237",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33237"
+      },
+      "stack": 0
+    },
+    {
+      "id": "ado:33237:1:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-03-12T16:05:18.19Z",
+      "observedAt": "2026-03-12T16:05:18.19Z",
+      "trackId": "plan",
+      "value": "New",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33237",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33237"
+      },
+      "title": "Plan state changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33237:1:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-12T16:05:18.19Z",
+      "observedAt": "2026-03-12T16:05:18.19Z",
+      "trackId": "plan",
+      "value": "Not Available",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33237",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33237"
+      },
+      "title": "Spec approval changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:33237:1:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-12T16:05:18.19Z",
+      "observedAt": "2026-03-12T16:05:18.19Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Nginx",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33237",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33237"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33237:1:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-12T16:05:18.19Z",
+      "observedAt": "2026-03-12T16:05:18.19Z",
+      "trackId": "sdk:JavaScript:@azure/arm-nginx",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33237",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33237"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33237:1:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-12T16:05:18.19Z",
+      "observedAt": "2026-03-12T16:05:18.19Z",
+      "trackId": "sdk:Python:azure-mgmt-nginx",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33237",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33237"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33237:1:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-12T16:05:18.19Z",
+      "observedAt": "2026-03-12T16:05:18.19Z",
+      "trackId": "sdk:Java:azure-resourcemanager-nginx",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33237",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33237"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33237:1:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-12T16:05:18.19Z",
+      "observedAt": "2026-03-12T16:05:18.19Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/nginx/armnginx",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33237",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33237"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33237:6:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-03-12T16:06:20.233Z",
+      "observedAt": "2026-03-12T16:06:20.233Z",
+      "trackId": "plan",
+      "value": "In Progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33237",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33237"
+      },
+      "title": "Plan state changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:33238:2:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-12T16:07:23.547Z",
+      "observedAt": "2026-03-12T16:07:23.547Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39907",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/39907",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33238",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33238"
+      },
+      "title": "Spec PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado:33237:8:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-12T16:07:28.22Z",
+      "observedAt": "2026-03-12T16:07:28.22Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Nginx",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33237",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33237"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33237:8:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-12T16:07:28.22Z",
+      "observedAt": "2026-03-12T16:07:28.22Z",
+      "trackId": "sdk:JavaScript:@azure/arm-nginx",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33237",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33237"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33237:8:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-12T16:07:28.22Z",
+      "observedAt": "2026-03-12T16:07:28.22Z",
+      "trackId": "sdk:Python:azure-mgmt-nginx",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33237",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33237"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33237:8:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-12T16:07:28.22Z",
+      "observedAt": "2026-03-12T16:07:28.22Z",
+      "trackId": "sdk:Java:azure-resourcemanager-nginx",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33237",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33237"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33237:8:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-12T16:07:28.22Z",
+      "observedAt": "2026-03-12T16:07:28.22Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/nginx/armnginx",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33237",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33237"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33237:9:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-12T16:08:07.857Z",
+      "observedAt": "2026-03-12T16:08:07.857Z",
+      "trackId": "plan",
+      "value": "Approved",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33237",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33237"
+      },
+      "title": "Spec approval changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:33237:23:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-12T16:18:20.943Z",
+      "observedAt": "2026-03-12T16:18:20.943Z",
+      "trackId": "sdk:Python:azure-mgmt-nginx",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33237",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33237"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:33237:24:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-12T16:18:22.22Z",
+      "observedAt": "2026-03-12T16:18:22.22Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Nginx",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33237",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33237"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:33237:25:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-12T16:18:34.677Z",
+      "observedAt": "2026-03-12T16:18:34.677Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/nginx/armnginx",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33237",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33237"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:33237:26:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-12T16:18:35.773Z",
+      "observedAt": "2026-03-12T16:18:35.773Z",
+      "trackId": "sdk:Java:azure-resourcemanager-nginx",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33237",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33237"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:33237:27:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-12T16:18:36.1Z",
+      "observedAt": "2026-03-12T16:18:36.1Z",
+      "trackId": "sdk:JavaScript:@azure/arm-nginx",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33237",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33237"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26240:commit:ed29ef3eda90:sdk:Go:sdk/resourcemanager/nginx/armnginx",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-12T16:29:39Z",
+      "observedAt": "2026-03-12T16:29:39Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/nginx/armnginx",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26240",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/ed29ef3eda90d9be689e8ae7cef4bdcac323bacf"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26240:pr.created:sdk:Go:sdk/resourcemanager/nginx/armnginx",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-12T16:29:42Z",
+      "observedAt": "2026-03-12T16:29:42Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/nginx/armnginx",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26240",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26240"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:33237:28:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-12T16:29:48.84Z",
+      "observedAt": "2026-03-12T16:29:48.84Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/nginx/armnginx",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33237",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33237"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:33237:28:Custom.SDKPullRequestForGo",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-03-12T16:29:48.84Z",
+      "observedAt": "2026-03-12T16:29:48.84Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/nginx/armnginx",
+      "value": "https://github.com/Azure/azure-sdk-for-go/pull/26240",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33237",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33237"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado:33237:29:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-12T16:29:54Z",
+      "observedAt": "2026-03-12T16:29:54Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Nginx",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33237",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33237"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37616:commit:e264be324e75:sdk:JavaScript:@azure/arm-nginx",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-12T16:31:06Z",
+      "observedAt": "2026-03-12T16:31:06Z",
+      "trackId": "sdk:JavaScript:@azure/arm-nginx",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37616",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/e264be324e757b6ae4e653763c07faf146cf6e76"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37616:pr.created:sdk:JavaScript:@azure/arm-nginx",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-12T16:31:09Z",
+      "observedAt": "2026-03-12T16:31:09Z",
+      "trackId": "sdk:JavaScript:@azure/arm-nginx",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37616",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37616"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:33237:30:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-12T16:31:18.487Z",
+      "observedAt": "2026-03-12T16:31:18.487Z",
+      "trackId": "sdk:JavaScript:@azure/arm-nginx",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33237",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33237"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:33237:30:Custom.SDKPullRequestForJavaScript",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-03-12T16:31:18.487Z",
+      "observedAt": "2026-03-12T16:31:18.487Z",
+      "trackId": "sdk:JavaScript:@azure/arm-nginx",
+      "value": "https://github.com/Azure/azure-sdk-for-js/pull/37616",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33237",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33237"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45661:commit:b7b8aa9bcd0c:sdk:Python:azure-mgmt-nginx",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-12T16:31:45Z",
+      "observedAt": "2026-03-12T16:31:45Z",
+      "trackId": "sdk:Python:azure-mgmt-nginx",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45661",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/b7b8aa9bcd0c18ce07c38f07eac8f9e1954698d8"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45661:pr.created:sdk:Python:azure-mgmt-nginx",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-12T16:31:48Z",
+      "observedAt": "2026-03-12T16:31:48Z",
+      "trackId": "sdk:Python:azure-mgmt-nginx",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45661",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45661"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:33237:31:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-12T16:31:55.34Z",
+      "observedAt": "2026-03-12T16:31:55.34Z",
+      "trackId": "sdk:Python:azure-mgmt-nginx",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33237",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33237"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:33237:31:Custom.SDKPullRequestForPython",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-03-12T16:31:55.34Z",
+      "observedAt": "2026-03-12T16:31:55.34Z",
+      "trackId": "sdk:Python:azure-mgmt-nginx",
+      "value": "https://github.com/Azure/azure-sdk-for-python/pull/45661",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33237",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33237"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48399:commit:39f7bd65633e:sdk:Java:azure-resourcemanager-nginx",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-12T16:32:41Z",
+      "observedAt": "2026-03-12T16:32:41Z",
+      "trackId": "sdk:Java:azure-resourcemanager-nginx",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48399",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/39f7bd65633e422e556250f358bfac1dbe332825"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48399:pr.created:sdk:Java:azure-resourcemanager-nginx",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-12T16:32:44Z",
+      "observedAt": "2026-03-12T16:32:44Z",
+      "trackId": "sdk:Java:azure-resourcemanager-nginx",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48399",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48399"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:33237:32:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-12T16:32:51.367Z",
+      "observedAt": "2026-03-12T16:32:51.367Z",
+      "trackId": "sdk:Java:azure-resourcemanager-nginx",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33237",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33237"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:33237:32:Custom.SDKPullRequestForJava",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-03-12T16:32:51.367Z",
+      "observedAt": "2026-03-12T16:32:51.367Z",
+      "trackId": "sdk:Java:azure-resourcemanager-nginx",
+      "value": "https://github.com/Azure/azure-sdk-for-java/pull/48399",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33237",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33237"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado:33237:36:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-12T16:33:50.01Z",
+      "observedAt": "2026-03-12T16:33:50.01Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Nginx",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33237",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33237"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:33237:36:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-12T16:33:50.01Z",
+      "observedAt": "2026-03-12T16:33:50.01Z",
+      "trackId": "sdk:JavaScript:@azure/arm-nginx",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33237",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33237"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33237:36:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-12T16:33:50.01Z",
+      "observedAt": "2026-03-12T16:33:50.01Z",
+      "trackId": "sdk:Python:azure-mgmt-nginx",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33237",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33237"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33237:36:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-12T16:33:50.01Z",
+      "observedAt": "2026-03-12T16:33:50.01Z",
+      "trackId": "sdk:Java:azure-resourcemanager-nginx",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33237",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33237"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33237:36:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-12T16:33:50.01Z",
+      "observedAt": "2026-03-12T16:33:50.01Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/nginx/armnginx",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33237",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33237"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6007418:generation.queued:sdk:.NET:Azure.ResourceManager.Nginx",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-03-13T09:18:13.1420948Z",
+      "observedAt": "2026-03-13T09:29:05.5549478Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Nginx",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6007418",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6007418"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:6007417:generation.queued:sdk:Python:azure-mgmt-nginx",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-03-13T09:18:14.3847843Z",
+      "observedAt": "2026-03-13T09:31:06.7879973Z",
+      "trackId": "sdk:Python:azure-mgmt-nginx",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6007417",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6007417"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:33237:38:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-13T09:18:17.47Z",
+      "observedAt": "2026-03-13T09:18:17.47Z",
+      "trackId": "sdk:Python:azure-mgmt-nginx",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33237",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33237"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:33237:39:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-13T09:18:18.59Z",
+      "observedAt": "2026-03-13T09:18:18.59Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Nginx",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33237",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33237"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6007423:generation.queued:sdk:Java:azure-resourcemanager-nginx",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-03-13T09:18:22.5089389Z",
+      "observedAt": "2026-03-13T09:40:12.8269779Z",
+      "trackId": "sdk:Java:azure-resourcemanager-nginx",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6007423",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6007423"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6007422:generation.queued:sdk:Go:sdk/resourcemanager/nginx/armnginx",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-03-13T09:18:22.6662093Z",
+      "observedAt": "2026-03-13T09:28:02.6484271Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/nginx/armnginx",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6007422",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6007422"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6007421:generation.queued:sdk:JavaScript:@azure/arm-nginx",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-03-13T09:18:22.7061227Z",
+      "observedAt": "2026-03-13T09:29:45.6656474Z",
+      "trackId": "sdk:JavaScript:@azure/arm-nginx",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6007421",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6007421"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:33237:40:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-13T09:18:25.01Z",
+      "observedAt": "2026-03-13T09:18:25.01Z",
+      "trackId": "sdk:JavaScript:@azure/arm-nginx",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33237",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33237"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:33237:41:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-13T09:18:25.67Z",
+      "observedAt": "2026-03-13T09:18:25.67Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/nginx/armnginx",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33237",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33237"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:33237:42:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-13T09:18:25.75Z",
+      "observedAt": "2026-03-13T09:18:25.75Z",
+      "trackId": "sdk:Java:azure-resourcemanager-nginx",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33237",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33237"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6007417:generation.started:sdk:Python:azure-mgmt-nginx",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-03-13T09:21:52.7131201Z",
+      "observedAt": "2026-03-13T09:31:06.7879973Z",
+      "trackId": "sdk:Python:azure-mgmt-nginx",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6007417",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6007417"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6007418:generation.started:sdk:.NET:Azure.ResourceManager.Nginx",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-03-13T09:21:53.6771738Z",
+      "observedAt": "2026-03-13T09:29:05.5549478Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Nginx",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6007418",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6007418"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6007421:generation.started:sdk:JavaScript:@azure/arm-nginx",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-03-13T09:22:01.3765633Z",
+      "observedAt": "2026-03-13T09:29:45.6656474Z",
+      "trackId": "sdk:JavaScript:@azure/arm-nginx",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6007421",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6007421"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6007423:generation.started:sdk:Java:azure-resourcemanager-nginx",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-03-13T09:22:05.6420034Z",
+      "observedAt": "2026-03-13T09:40:12.8269779Z",
+      "trackId": "sdk:Java:azure-resourcemanager-nginx",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6007423",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6007423"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6007422:generation.started:sdk:Go:sdk/resourcemanager/nginx/armnginx",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-03-13T09:22:05.6423289Z",
+      "observedAt": "2026-03-13T09:28:02.6484271Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/nginx/armnginx",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6007422",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6007422"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26240:commit:f786ef5df9cf:sdk:Go:sdk/resourcemanager/nginx/armnginx",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-13T09:27:00Z",
+      "observedAt": "2026-03-13T09:27:00Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/nginx/armnginx",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26240",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/f786ef5df9cfbff2fa0f36edc3c779970319fd72"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:33237:43:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-13T09:27:07.92Z",
+      "observedAt": "2026-03-13T09:27:07.92Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/nginx/armnginx",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33237",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33237"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57070:commit:540ba541d1e0:sdk:.NET:Azure.ResourceManager.Nginx",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-13T09:27:52Z",
+      "observedAt": "2026-03-13T09:27:52Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Nginx",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57070",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/540ba541d1e0d500978e4a96352acce9fd1dc182"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57070:pr.created:sdk:.NET:Azure.ResourceManager.Nginx",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-13T09:27:55Z",
+      "observedAt": "2026-03-13T09:27:55Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Nginx",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57070",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57070"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado:33237:44:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-13T09:28:02.233Z",
+      "observedAt": "2026-03-13T09:28:02.233Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Nginx",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33237",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33237"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:33237:44:Custom.SDKPullRequestForDotnet",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-03-13T09:28:02.233Z",
+      "observedAt": "2026-03-13T09:28:02.233Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Nginx",
+      "value": "https://github.com/Azure/azure-sdk-for-net/pull/57070",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33237",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33237"
+      },
+      "title": "SDK PR linked",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:6007422:generation.completed:sdk:Go:sdk/resourcemanager/nginx/armnginx",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-03-13T09:28:02.6484271Z",
+      "observedAt": "2026-03-13T09:28:02.6484271Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/nginx/armnginx",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6007422",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6007422"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45661:commit:1a10fb0a2b85:sdk:Python:azure-mgmt-nginx",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-13T09:28:31Z",
+      "observedAt": "2026-03-13T09:28:31Z",
+      "trackId": "sdk:Python:azure-mgmt-nginx",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45661",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/1a10fb0a2b856245bc8d1082d15299ae932746d8"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37616:commit:1db802dc0a82:sdk:JavaScript:@azure/arm-nginx",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-13T09:28:34Z",
+      "observedAt": "2026-03-13T09:28:34Z",
+      "trackId": "sdk:JavaScript:@azure/arm-nginx",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37616",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/1db802dc0a82482cc4fc7dc16865b2d7679c8dc4"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:33237:45:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-13T09:28:38.713Z",
+      "observedAt": "2026-03-13T09:28:38.713Z",
+      "trackId": "sdk:Python:azure-mgmt-nginx",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33237",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33237"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:33237:46:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-13T09:28:41.263Z",
+      "observedAt": "2026-03-13T09:28:41.263Z",
+      "trackId": "sdk:JavaScript:@azure/arm-nginx",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33237",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33237"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:6007418:generation.completed:sdk:.NET:Azure.ResourceManager.Nginx",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-03-13T09:29:05.5549478Z",
+      "observedAt": "2026-03-13T09:29:05.5549478Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Nginx",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6007418",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6007418"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48399:commit:9ecb73d8b77d:sdk:Java:azure-resourcemanager-nginx",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-13T09:29:40Z",
+      "observedAt": "2026-03-13T09:29:40Z",
+      "trackId": "sdk:Java:azure-resourcemanager-nginx",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48399",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/9ecb73d8b77dcda140770408231c655b121dab47"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6007421:generation.completed:sdk:JavaScript:@azure/arm-nginx",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-03-13T09:29:45.6656474Z",
+      "observedAt": "2026-03-13T09:29:45.6656474Z",
+      "trackId": "sdk:JavaScript:@azure/arm-nginx",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6007421",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6007421"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:33237:47:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-13T09:29:47.773Z",
+      "observedAt": "2026-03-13T09:29:47.773Z",
+      "trackId": "sdk:Java:azure-resourcemanager-nginx",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33237",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33237"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:6007417:generation.completed:sdk:Python:azure-mgmt-nginx",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-03-13T09:31:06.7879973Z",
+      "observedAt": "2026-03-13T09:31:06.7879973Z",
+      "trackId": "sdk:Python:azure-mgmt-nginx",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6007417",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6007417"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6007423:generation.completed:sdk:Java:azure-resourcemanager-nginx",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-03-13T09:40:12.8269779Z",
+      "observedAt": "2026-03-13T09:40:12.8269779Z",
+      "trackId": "sdk:Java:azure-resourcemanager-nginx",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6007423",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6007423"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48399:commit:c05b5bf6ea36:sdk:Java:azure-resourcemanager-nginx",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-16T09:01:21Z",
+      "observedAt": "2026-03-16T09:01:21Z",
+      "trackId": "sdk:Java:azure-resourcemanager-nginx",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48399",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/c05b5bf6ea36840c6a53adb704edc660fc543b8c"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26240:comment:2938997202:sdk:Go:sdk/resourcemanager/nginx/armnginx",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-16T09:01:32Z",
+      "observedAt": "2026-03-16T09:01:32Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/nginx/armnginx",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26240",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26240#discussion_r2938997202"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The `moduleName` constant is missing the `/v4` suffix. The `go.mod` module path is `github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/nginx/armnginx/v4`, so `moduleName` should match and include `/v4`.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26240:review:3952342241:sdk:Go:sdk/resourcemanager/nginx/armnginx",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-16T09:01:33Z",
+      "observedAt": "2026-03-16T09:01:33Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/nginx/armnginx",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26240",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26240#pullrequestreview-3952342241"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Auto-generated SDK update for `armnginx` from API version `2025-03-01-preview` to stable `2025-11-01`, bumping the module from v3 to v4. This is a major version bump with breaking changes and new features. **Changes",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48399:review:3952345329:sdk:Java:azure-resourcemanager-nginx",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-16T09:02:10Z",
+      "observedAt": "2026-03-16T09:02:10Z",
+      "trackId": "sdk:Java:azure-resourcemanager-nginx",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48399",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48399#pullrequestreview-3952345329"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57070:comment:2939008137:sdk:.NET:Azure.ResourceManager.Nginx",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-16T09:03:56Z",
+      "observedAt": "2026-03-16T09:03:56Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Nginx",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57070",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57070#discussion_r2939008137"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`DataErrors` directly returns `Data.Errors`, but `Data` can be null when the service omits the `data` property or returns it as null (the deserializer leaves `data` as default). This can cause a `NullReferenceException` for consumers (and a",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57070:review:3952353950:sdk:.NET:Azure.ResourceManager.Nginx",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-16T09:03:57Z",
+      "observedAt": "2026-03-16T09:03:57Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Nginx",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57070",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57070#pullrequestreview-3952353950"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Auto-generated update of **Azure.ResourceManager.Nginx** for the `2025-11-01` (stable) management API version, aligning the SDK’s default API versions and package versioning with the latest spec commit. **Changes:**",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48399:comment:2939009550:sdk:Java:azure-resourcemanager-nginx",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-16T09:04:15Z",
+      "observedAt": "2026-03-16T09:04:15Z",
+      "trackId": "sdk:Java:azure-resourcemanager-nginx",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48399",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48399#discussion_r2939009550"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The changelog no longer has a top \"(Unreleased)\" section. In this repo, CHANGELOG.md files typically start with the next unreleased version header (with empty Features Added/Breaking Changes/Bugs Fixed/Other Changes subsections) above the m",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48399:comment:2939009570:sdk:Java:azure-resourcemanager-nginx",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-16T09:04:15Z",
+      "observedAt": "2026-03-16T09:04:15Z",
+      "trackId": "sdk:Java:azure-resourcemanager-nginx",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48399",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48399#discussion_r2939009570"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The release is marked as 1.1.0 (stable) in the POM, but the CHANGELOG entry for 1.1.0 lists multiple breaking changes (including removals of public model types). If those breaking changes are real/public, this should be a major version bump",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48399:review:3952355449:sdk:Java:azure-resourcemanager-nginx",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-16T09:04:16Z",
+      "observedAt": "2026-03-16T09:04:16Z",
+      "trackId": "sdk:Java:azure-resourcemanager-nginx",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48399",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48399#pullrequestreview-3952355449"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Updates the `azure-resourcemanager-nginx` management SDK to the 2025-11-01 (stable) API version and regenerates the package outputs (clients/models/tests/samples) from TypeSpec, including the new Nginx deployment WA",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37616:review:3952358725:sdk:JavaScript:@azure/arm-nginx",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-16T09:04:54Z",
+      "observedAt": "2026-03-16T09:04:54Z",
+      "trackId": "sdk:JavaScript:@azure/arm-nginx",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37616",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37616#pullrequestreview-3952358725"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This PR is an automated TypeSpec-based regeneration of `@azure/arm-nginx` for API version `2025-11-01`, moving the package from beta to stable (`4.0.0`) and adding the new `nginxDeploymentWafPolicies` operation grou",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37616:comment:2939012459:sdk:JavaScript:@azure/arm-nginx",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-16T09:04:54Z",
+      "observedAt": "2026-03-16T09:04:54Z",
+      "trackId": "sdk:JavaScript:@azure/arm-nginx",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37616",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37616#discussion_r2939012459"
+      },
+      "confidence": "authoritative",
+      "excerpt": "A new public operation group (`nginxDeploymentWafPolicies`) is added to the client, but there’s no corresponding test coverage. Consider adding at least a lightweight test that exercises this operation group (or validates the method exists)",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37616:comment:2939012493:sdk:JavaScript:@azure/arm-nginx",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-16T09:04:54Z",
+      "observedAt": "2026-03-16T09:04:54Z",
+      "trackId": "sdk:JavaScript:@azure/arm-nginx",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37616",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37616#discussion_r2939012493"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`normalizeUnreserved` claims to decode RFC 3986 “unreserved” characters, but the implementation only decodes `.`, `~`, and `-` (and the JSDoc above also omits alphanumerics and `_`). Either update the documentation/function intent, or expan",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45661:review:3952374720:sdk:Python:azure-mgmt-nginx",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-16T09:08:05Z",
+      "observedAt": "2026-03-16T09:08:05Z",
+      "trackId": "sdk:Python:azure-mgmt-nginx",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45661",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45661#pullrequestreview-3952374720"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This PR updates the **azure-mgmt-nginx** management SDK package to a newer generated surface (TypeSpec Python code generator) targeting API version **2025-11-01**, and bumps the package to a **stable 4.0.0** release",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45661:comment:2939026943:sdk:Python:azure-mgmt-nginx",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-16T09:08:05Z",
+      "observedAt": "2026-03-16T09:08:05Z",
+      "trackId": "sdk:Python:azure-mgmt-nginx",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45661",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45661#discussion_r2939026943"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The docstring for `api_version` says the known values are \"2025-11-01\" and `None`, but passing `api_version=None` will break request building (the serializer raises on None when setting the `api-version` query param). Either remove `None` f",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45661:comment:2939026967:sdk:Python:azure-mgmt-nginx",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-16T09:08:05Z",
+      "observedAt": "2026-03-16T09:08:05Z",
+      "trackId": "sdk:Python:azure-mgmt-nginx",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45661",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45661#discussion_r2939026967"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The docstring for `api_version` says the known values are \"2025-11-01\" and `None`, but passing `api_version=None` will break request building (the serializer raises on None when setting the `api-version` query param). Either remove `None` f",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45661:review:3959442674:sdk:Python:azure-mgmt-nginx",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T09:49:13Z",
+      "observedAt": "2026-03-17T09:49:13Z",
+      "trackId": "sdk:Python:azure-mgmt-nginx",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45661",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45661#pullrequestreview-3959442674"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45661:comment:2945569444:sdk:Python:azure-mgmt-nginx",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T09:49:13Z",
+      "observedAt": "2026-03-17T09:49:13Z",
+      "trackId": "sdk:Python:azure-mgmt-nginx",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45661",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45661#discussion_r2945569444"
+      },
+      "confidence": "authoritative",
+      "excerpt": "breaking change from past swagger version: https://github.com/azure-sdk/azure-sdk-for-python/blob/1a10fb0a2b856245bc8d1082d15299ae932746d8/sdk/nginx/azure-mgmt-nginx/CHANGELOG.md#breaking-changes-2",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45661:review:3959447774:sdk:Python:azure-mgmt-nginx",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T09:49:57Z",
+      "observedAt": "2026-03-17T09:49:57Z",
+      "trackId": "sdk:Python:azure-mgmt-nginx",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45661",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45661#pullrequestreview-3959447774"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45661:comment:2945574319:sdk:Python:azure-mgmt-nginx",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T09:49:57Z",
+      "observedAt": "2026-03-17T09:49:57Z",
+      "trackId": "sdk:Python:azure-mgmt-nginx",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45661",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45661#discussion_r2945574319"
+      },
+      "confidence": "authoritative",
+      "excerpt": "breaking change from past preview version https://github.com/azure-sdk/azure-sdk-for-python/blob/1a10fb0a2b856245bc8d1082d15299ae932746d8/sdk/nginx/azure-mgmt-nginx/CHANGELOG.md#breaking-changes-1",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45661:review:3959453953:sdk:Python:azure-mgmt-nginx",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T09:50:54Z",
+      "observedAt": "2026-03-17T09:50:54Z",
+      "trackId": "sdk:Python:azure-mgmt-nginx",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45661",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45661#pullrequestreview-3959453953"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45661:comment:2945579998:sdk:Python:azure-mgmt-nginx",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T09:50:54Z",
+      "observedAt": "2026-03-17T09:50:54Z",
+      "trackId": "sdk:Python:azure-mgmt-nginx",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45661",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45661#discussion_r2945579998"
+      },
+      "confidence": "authoritative",
+      "excerpt": "breaking change from past preview version https://github.com/azure-sdk/azure-sdk-for-python/blob/1a10fb0a2b856245bc8d1082d15299ae932746d8/sdk/nginx/azure-mgmt-nginx/CHANGELOG.md#breaking-changes-2",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45661:review:3959455874:sdk:Python:azure-mgmt-nginx",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T09:51:15Z",
+      "observedAt": "2026-03-17T09:51:15Z",
+      "trackId": "sdk:Python:azure-mgmt-nginx",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45661",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45661#pullrequestreview-3959455874"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45661:comment:2945581793:sdk:Python:azure-mgmt-nginx",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T09:51:15Z",
+      "observedAt": "2026-03-17T09:51:15Z",
+      "trackId": "sdk:Python:azure-mgmt-nginx",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45661",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45661#discussion_r2945581793"
+      },
+      "confidence": "authoritative",
+      "excerpt": "breaking change from past preview version https://github.com/azure-sdk/azure-sdk-for-python/blob/1a10fb0a2b856245bc8d1082d15299ae932746d8/sdk/nginx/azure-mgmt-nginx/CHANGELOG.md#breaking-changes-2",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45661:review:3959481728:sdk:Python:azure-mgmt-nginx",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T09:55:16Z",
+      "observedAt": "2026-03-17T09:55:16Z",
+      "trackId": "sdk:Python:azure-mgmt-nginx",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45661",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45661#pullrequestreview-3959481728"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45661:comment:2945603860:sdk:Python:azure-mgmt-nginx",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T09:55:16Z",
+      "observedAt": "2026-03-17T09:55:16Z",
+      "trackId": "sdk:Python:azure-mgmt-nginx",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45661",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45661#discussion_r2945603860"
+      },
+      "confidence": "authoritative",
+      "excerpt": "breaking change from past preview version https://github.com/azure-sdk/azure-sdk-for-python/blob/1a10fb0a2b856245bc8d1082d15299ae932746d8/sdk/nginx/azure-mgmt-nginx/CHANGELOG.md#breaking-changes-2",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45661:commit:6c30fb151e87:sdk:Python:azure-mgmt-nginx",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T09:58:34Z",
+      "observedAt": "2026-03-17T09:58:34Z",
+      "trackId": "sdk:Python:azure-mgmt-nginx",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45661",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/6c30fb151e870c9a3519524d3933f3d9c541c29d"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45661:commit:c55875fbb46f:sdk:Python:azure-mgmt-nginx",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T09:59:16Z",
+      "observedAt": "2026-03-17T09:59:16Z",
+      "trackId": "sdk:Python:azure-mgmt-nginx",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45661",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/c55875fbb46f1ca69fda8f61d6ccf175580d93e9"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45661:review:3959509616:sdk:Python:azure-mgmt-nginx",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T09:59:24Z",
+      "observedAt": "2026-03-17T09:59:24Z",
+      "trackId": "sdk:Python:azure-mgmt-nginx",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45661",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45661#pullrequestreview-3959509616"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26240:comment:4073801986:sdk:Go:sdk/resourcemanager/nginx/armnginx",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T10:12:15Z",
+      "observedAt": "2026-03-17T10:12:15Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/nginx/armnginx",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "tadelesh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26240",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26240#issuecomment-4073801986"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@briantkim93 You last release [PR](https://github.com/Azure/azure-sdk-for-go/pull/26005) did not merge. Do you want to skip that previous version and release this new stable version directly?",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45661:review:3959670676:sdk:Python:azure-mgmt-nginx",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T10:24:19Z",
+      "observedAt": "2026-03-17T10:24:19Z",
+      "trackId": "sdk:Python:azure-mgmt-nginx",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45661",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45661#pullrequestreview-3959670676"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26240:comment:4074072501:sdk:Go:sdk/resourcemanager/nginx/armnginx",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T10:53:33Z",
+      "observedAt": "2026-03-17T10:53:33Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/nginx/armnginx",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "briantkim93"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26240",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26240#issuecomment-4074072501"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> @briantkim93 You last release [PR](https://github.com/Azure/azure-sdk-for-go/pull/26005) did not merge. Do you want to skip that previous version and release this new stable version directly? @tadelesh Yes we want to release this stable v",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57070:commit:f39be267017e:sdk:.NET:Azure.ResourceManager.Nginx",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T14:46:52Z",
+      "observedAt": "2026-03-17T14:46:52Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Nginx",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "briantkim-msft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57070",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/f39be267017eae77924383399e6002209c8c15cc"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45661:comment:2947498906:sdk:Python:azure-mgmt-nginx",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T15:07:55Z",
+      "observedAt": "2026-03-17T15:07:55Z",
+      "trackId": "sdk:Python:azure-mgmt-nginx",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "briantkim93"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45661",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45661#discussion_r2947498906"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Breaking change was approved and communicated to customers",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45661:review:3961567398:sdk:Python:azure-mgmt-nginx",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T15:07:56Z",
+      "observedAt": "2026-03-17T15:07:56Z",
+      "trackId": "sdk:Python:azure-mgmt-nginx",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "briantkim93"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45661",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45661#pullrequestreview-3961567398"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45661:review:3961576128:sdk:Python:azure-mgmt-nginx",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T15:08:46Z",
+      "observedAt": "2026-03-17T15:08:46Z",
+      "trackId": "sdk:Python:azure-mgmt-nginx",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "briantkim93"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45661",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45661#pullrequestreview-3961576128"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45661:comment:2947506767:sdk:Python:azure-mgmt-nginx",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T15:08:46Z",
+      "observedAt": "2026-03-17T15:08:46Z",
+      "trackId": "sdk:Python:azure-mgmt-nginx",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "briantkim93"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45661",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45661#discussion_r2947506767"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Breaking change was approved and communicated to customers",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45661:review:3961580854:sdk:Python:azure-mgmt-nginx",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T15:09:14Z",
+      "observedAt": "2026-03-17T15:09:14Z",
+      "trackId": "sdk:Python:azure-mgmt-nginx",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "briantkim93"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45661",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45661#pullrequestreview-3961580854"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45661:comment:2947511160:sdk:Python:azure-mgmt-nginx",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T15:09:14Z",
+      "observedAt": "2026-03-17T15:09:14Z",
+      "trackId": "sdk:Python:azure-mgmt-nginx",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "briantkim93"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45661",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45661#discussion_r2947511160"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Breaking change was approved and communicated to customers",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45661:review:3961588008:sdk:Python:azure-mgmt-nginx",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T15:10:08Z",
+      "observedAt": "2026-03-17T15:10:08Z",
+      "trackId": "sdk:Python:azure-mgmt-nginx",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "briantkim93"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45661",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45661#pullrequestreview-3961588008"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45661:comment:2947518179:sdk:Python:azure-mgmt-nginx",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T15:10:08Z",
+      "observedAt": "2026-03-17T15:10:08Z",
+      "trackId": "sdk:Python:azure-mgmt-nginx",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "briantkim93"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45661",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45661#discussion_r2947518179"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Not necessary for now",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45661:comment:2947521829:sdk:Python:azure-mgmt-nginx",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T15:10:40Z",
+      "observedAt": "2026-03-17T15:10:40Z",
+      "trackId": "sdk:Python:azure-mgmt-nginx",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "briantkim93"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45661",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45661#discussion_r2947521829"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Not necessary for now",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45661:review:3961591747:sdk:Python:azure-mgmt-nginx",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T15:10:41Z",
+      "observedAt": "2026-03-17T15:10:41Z",
+      "trackId": "sdk:Python:azure-mgmt-nginx",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "briantkim93"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45661",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45661#pullrequestreview-3961591747"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45661:pr.merged:sdk:Python:azure-mgmt-nginx",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T15:11:08Z",
+      "observedAt": "2026-03-17T15:11:08Z",
+      "trackId": "sdk:Python:azure-mgmt-nginx",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45661",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45661"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57070:commit:37f242e6f28c:sdk:.NET:Azure.ResourceManager.Nginx",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T15:29:20Z",
+      "observedAt": "2026-03-17T15:29:20Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Nginx",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "briantkim-msft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57070",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/37f242e6f28c659e5a1ba4e62169953b5cc79ebd"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57070:review:3962268767:sdk:.NET:Azure.ResourceManager.Nginx",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T16:48:28Z",
+      "observedAt": "2026-03-17T16:48:28Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Nginx",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "SpencerOfwiti"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57070",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57070#pullrequestreview-3962268767"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#57070:pr.merged:sdk:.NET:Azure.ResourceManager.Nginx",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-17T16:49:32Z",
+      "observedAt": "2026-03-17T16:49:32Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Nginx",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#57070",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/57070"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37616:comment:4079126373:sdk:JavaScript:@azure/arm-nginx",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-18T02:01:49Z",
+      "observedAt": "2026-03-18T02:01:49Z",
+      "trackId": "sdk:JavaScript:@azure/arm-nginx",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37616",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37616#issuecomment-4079126373"
+      },
+      "confidence": "authoritative",
+      "excerpt": "ci failures are because of we have real test cases for this service in https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/nginx/arm-nginx/test/nginx_examples.spec.ts feel free to follow this [doc](https://github.com/Azure/azure-sdk-for",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48399:review:3964613755:sdk:Java:azure-resourcemanager-nginx",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-18T02:08:37Z",
+      "observedAt": "2026-03-18T02:08:37Z",
+      "trackId": "sdk:Java:azure-resourcemanager-nginx",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "XiaofeiCao"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48399",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48399#pullrequestreview-3964613755"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48399:pr.merged:sdk:Java:azure-resourcemanager-nginx",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-18T08:29:22Z",
+      "observedAt": "2026-03-18T08:29:22Z",
+      "trackId": "sdk:Java:azure-resourcemanager-nginx",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48399",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48399"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37616:commit:6ea2f5bf3e8e:sdk:JavaScript:@azure/arm-nginx",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-18T09:54:29Z",
+      "observedAt": "2026-03-18T09:54:29Z",
+      "trackId": "sdk:JavaScript:@azure/arm-nginx",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "briantkim-msft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37616",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/6ea2f5bf3e8ee123e5b6c200cb3af09558971426"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37616:comment:4081285859:sdk:JavaScript:@azure/arm-nginx",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-18T10:11:58Z",
+      "observedAt": "2026-03-18T10:11:58Z",
+      "trackId": "sdk:JavaScript:@azure/arm-nginx",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "briantkim93"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37616",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37616#issuecomment-4081285859"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> ci failures are because of we have real test cases for this service in https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/nginx/arm-nginx/test/nginx_examples.spec.ts feel free to follow this [doc](https://github.com/Azure/azure-sdk-f",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37616:commit:de06a968fe09:sdk:JavaScript:@azure/arm-nginx",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-19T05:48:13Z",
+      "observedAt": "2026-03-19T05:48:13Z",
+      "trackId": "sdk:JavaScript:@azure/arm-nginx",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37616",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/de06a968fe09fc1aff6e61024b2b885b6026b23a"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26240:review:3973466558:sdk:Go:sdk/resourcemanager/nginx/armnginx",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-19T08:11:15Z",
+      "observedAt": "2026-03-19T08:11:15Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/nginx/armnginx",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "tadelesh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26240",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26240#pullrequestreview-3973466558"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26240:pr.merged:sdk:Go:sdk/resourcemanager/nginx/armnginx",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-19T08:14:47Z",
+      "observedAt": "2026-03-19T08:14:47Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/nginx/armnginx",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26240",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26240"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37616:review:3973599464:sdk:JavaScript:@azure/arm-nginx",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-19T08:40:33Z",
+      "observedAt": "2026-03-19T08:40:33Z",
+      "trackId": "sdk:JavaScript:@azure/arm-nginx",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "JialinHuang803"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37616",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37616#pullrequestreview-3973599464"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37616:pr.merged:sdk:JavaScript:@azure/arm-nginx",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-19T08:44:20Z",
+      "observedAt": "2026-03-19T08:44:20Z",
+      "trackId": "sdk:JavaScript:@azure/arm-nginx",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37616",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37616"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:33237:60:Custom.ReleaseStatusForJava",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-03-23T12:17:42.467Z",
+      "observedAt": "2026-03-23T12:17:42.467Z",
+      "trackId": "sdk:Java:azure-resourcemanager-nginx",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33237",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33237"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33237:61:Custom.ReleaseStatusForGo",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-03-23T12:58:11.097Z",
+      "observedAt": "2026-03-23T12:58:11.097Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/nginx/armnginx",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33237",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33237"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33237:63:Custom.ReleaseStatusForDotnet",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-04-29T23:19:43.01Z",
+      "observedAt": "2026-04-29T23:19:43.01Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Nginx",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33237",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33237"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33237:63:Custom.ReleasedVersionForDotnet",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-04-29T23:19:43.01Z",
+      "observedAt": "2026-04-29T23:19:43.01Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Nginx",
+      "value": "1.1.0",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33237",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33237"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33237:64:Custom.ReleaseStatusForJavaScript",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-04-29T23:22:54.533Z",
+      "observedAt": "2026-04-29T23:22:54.533Z",
+      "trackId": "sdk:JavaScript:@azure/arm-nginx",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33237",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33237"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33237:64:Custom.ReleasedVersionForJavaScript",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-04-29T23:22:54.533Z",
+      "observedAt": "2026-04-29T23:22:54.533Z",
+      "trackId": "sdk:JavaScript:@azure/arm-nginx",
+      "value": "4.0.0",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33237",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33237"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33237:64:Custom.ReleaseStatusForPython",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-04-29T23:22:54.533Z",
+      "observedAt": "2026-04-29T23:22:54.533Z",
+      "trackId": "sdk:Python:azure-mgmt-nginx",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33237",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33237"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33237:64:Custom.ReleasedVersionForPython",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-04-29T23:22:54.533Z",
+      "observedAt": "2026-04-29T23:22:54.533Z",
+      "trackId": "sdk:Python:azure-mgmt-nginx",
+      "value": "4.0.0",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33237",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33237"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33237:64:Custom.ReleasedVersionForJava",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-04-29T23:22:54.533Z",
+      "observedAt": "2026-04-29T23:22:54.533Z",
+      "trackId": "sdk:Java:azure-resourcemanager-nginx",
+      "value": "1.1.0",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33237",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33237"
+      },
+      "title": "Package version observed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33237:64:Custom.ReleasedVersionForGo",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-04-29T23:22:54.533Z",
+      "observedAt": "2026-04-29T23:22:54.533Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/nginx/armnginx",
+      "value": "4.0.0",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33237",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33237"
+      },
+      "title": "Package version observed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33237:65:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-04-29T23:23:34.88Z",
+      "observedAt": "2026-04-29T23:23:34.88Z",
+      "trackId": "plan",
+      "value": "Finished",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33237",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33237"
+      },
+      "title": "Plan state changed",
+      "stack": 0
+    }
+  ],
+  "quality": {
+    "warnings": [],
+    "unavailablePullRequests": 0,
+    "unavailablePipelineRuns": 0
+  },
+  "boundaryFacts": {
+    "id": "33237",
+    "state": "finished",
+    "specPrs": [
+      {
+        "id": "github:Azure/azure-rest-api-specs#39907",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#39907",
+        "createdAt": "2026-01-26T14:58:58Z",
+        "mergedAt": "2026-02-09T08:18:34Z",
+        "closedAt": "2026-02-09T08:18:34Z",
+        "available": true
+      }
+    ],
+    "artifacts": [
+      {
+        "language": ".NET",
+        "package": "Azure.ResourceManager.Nginx",
+        "trackId": "sdk:.NET:Azure.ResourceManager.Nginx",
+        "prId": "github:Azure/azure-sdk-for-net#57070",
+        "prCreatedAt": "2026-03-13T09:27:55Z",
+        "prMergedAt": "2026-03-17T16:49:32Z",
+        "prClosedAt": "2026-03-17T16:49:32Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-net#57070",
+            "createdAt": "2026-03-13T09:27:55Z",
+            "mergedAt": "2026-03-17T16:49:32Z",
+            "closedAt": "2026-03-17T16:49:32Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6007418",
+        "generationStartAt": "2026-03-13T09:21:53.6771738Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-04-29T23:19:43.01Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.1.0",
+        "releaseBoundaryAt": "2026-04-29T23:19:43.01Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "JavaScript",
+        "package": "@azure/arm-nginx",
+        "trackId": "sdk:JavaScript:@azure/arm-nginx",
+        "prId": "github:Azure/azure-sdk-for-js#37616",
+        "prCreatedAt": "2026-03-12T16:31:09Z",
+        "prMergedAt": "2026-03-19T08:44:20Z",
+        "prClosedAt": "2026-03-19T08:44:20Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-js#37616",
+            "createdAt": "2026-03-12T16:31:09Z",
+            "mergedAt": "2026-03-19T08:44:20Z",
+            "closedAt": "2026-03-19T08:44:20Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6007421",
+        "generationStartAt": "2026-03-13T09:22:01.3765633Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-04-29T23:22:54.533Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "4.0.0",
+        "releaseBoundaryAt": "2026-04-29T23:22:54.533Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Python",
+        "package": "azure-mgmt-nginx",
+        "trackId": "sdk:Python:azure-mgmt-nginx",
+        "prId": "github:Azure/azure-sdk-for-python#45661",
+        "prCreatedAt": "2026-03-12T16:31:48Z",
+        "prMergedAt": "2026-03-17T15:11:08Z",
+        "prClosedAt": "2026-03-17T15:11:08Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-python#45661",
+            "createdAt": "2026-03-12T16:31:48Z",
+            "mergedAt": "2026-03-17T15:11:08Z",
+            "closedAt": "2026-03-17T15:11:08Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6007417",
+        "generationStartAt": "2026-03-13T09:21:52.7131201Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-04-29T23:22:54.533Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "4.0.0",
+        "releaseBoundaryAt": "2026-04-29T23:22:54.533Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Java",
+        "package": "azure-resourcemanager-nginx",
+        "trackId": "sdk:Java:azure-resourcemanager-nginx",
+        "prId": "github:Azure/azure-sdk-for-java#48399",
+        "prCreatedAt": "2026-03-12T16:32:44Z",
+        "prMergedAt": "2026-03-18T08:29:22Z",
+        "prClosedAt": "2026-03-18T08:29:22Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-java#48399",
+            "createdAt": "2026-03-12T16:32:44Z",
+            "mergedAt": "2026-03-18T08:29:22Z",
+            "closedAt": "2026-03-18T08:29:22Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6007423",
+        "generationStartAt": "2026-03-13T09:22:05.6420034Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-03-23T12:17:42.467Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.1.0",
+        "releaseBoundaryAt": "2026-03-23T12:17:42.467Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Go",
+        "package": "sdk/resourcemanager/nginx/armnginx",
+        "trackId": "sdk:Go:sdk/resourcemanager/nginx/armnginx",
+        "prId": "github:Azure/azure-sdk-for-go#26240",
+        "prCreatedAt": "2026-03-12T16:29:42Z",
+        "prMergedAt": "2026-03-19T08:14:47Z",
+        "prClosedAt": "2026-03-19T08:14:47Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-go#26240",
+            "createdAt": "2026-03-12T16:29:42Z",
+            "mergedAt": "2026-03-19T08:14:47Z",
+            "closedAt": "2026-03-19T08:14:47Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6007422",
+        "generationStartAt": "2026-03-13T09:22:05.6423289Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-03-23T12:58:11.097Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "4.0.0",
+        "releaseBoundaryAt": "2026-03-23T12:58:11.097Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      }
+    ],
+    "cohortPlan": {
+      "id": "33237",
+      "releasePlanId": "2125",
+      "title": "Release Plan - 2125 - GA - NGINXaaS - Azure Native Service",
+      "service": "NGINXaaS - Azure Native Service",
+      "state": "finished"
+    },
+    "quality": {
+      "warnings": [],
+      "unavailablePullRequests": 0,
+      "unavailablePipelineRuns": 0
+    }
+  },
+  "summary": {
+    "durationHours": 1159.3,
+    "pullRequestCount": 6,
+    "humanReviewCount": 23,
+    "humanCommentCount": 33
+  }
+}

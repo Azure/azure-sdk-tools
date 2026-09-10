@@ -1,0 +1,3643 @@
+{
+  "schemaVersion": 2,
+  "id": "33154",
+  "correlation": {
+    "policyVersion": 1,
+    "preflight": "passed"
+  },
+  "releasePlanId": "2121",
+  "title": "Release Plan - 2121 - GA - Standby Pool",
+  "service": "Standby Pool",
+  "product": "Release",
+  "path": "specification/standbypool/StandbyPool.Management",
+  "state": "finished",
+  "plane": "management",
+  "releaseType": "APEX GA",
+  "intendedMonth": "April 2026",
+  "createdAt": "2026-03-10T18:55:00.297Z",
+  "completedAt": "2026-06-17T06:09:32.927Z",
+  "sourceUrl": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33154",
+  "range": {
+    "start": "2025-10-09T04:18:05.000Z",
+    "end": "2026-06-17T06:09:32.927Z"
+  },
+  "intendedArtifacts": [
+    {
+      "prId": "github:Azure/azure-sdk-for-net#56926",
+      "language": ".NET",
+      "package": "Azure.ResourceManager.StandbyPool",
+      "version": null,
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5989680",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-js#37572",
+      "language": "JavaScript",
+      "package": "@azure/arm-standbypool",
+      "version": "2.1.0",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5989684",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-python#45629",
+      "language": "Python",
+      "package": "azure-mgmt-standbypool",
+      "version": "2.1.0",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5989681",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-java#48361",
+      "language": "Java",
+      "package": "azure-resourcemanager-standbypool",
+      "version": "1.2.0",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5989683",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-go#26208",
+      "language": "Go",
+      "package": "sdk/resourcemanager/standbypool/armstandbypool",
+      "version": "2.1.0",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5989682",
+      "releasePipelineUrl": null
+    }
+  ],
+  "links": [
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#38001",
+      "role": "spec-pr",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/38001",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-net#56919",
+      "role": "sdk-pr-history",
+      "language": ".NET",
+      "url": "https://github.com/Azure/azure-sdk-for-net/pull/56919",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-net#56926",
+      "role": "sdk-pr",
+      "language": ".NET",
+      "url": "https://github.com/Azure/azure-sdk-for-net/pull/56926",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-js#37572",
+      "role": "sdk-pr",
+      "language": "JavaScript",
+      "url": "https://github.com/Azure/azure-sdk-for-js/pull/37572",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-python#45629",
+      "role": "sdk-pr",
+      "language": "Python",
+      "url": "https://github.com/Azure/azure-sdk-for-python/pull/45629",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-java#48361",
+      "role": "sdk-pr",
+      "language": "Java",
+      "url": "https://github.com/Azure/azure-sdk-for-java/pull/48361",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-go#26208",
+      "role": "sdk-pr",
+      "language": "Go",
+      "url": "https://github.com/Azure/azure-sdk-for-go/pull/26208",
+      "releasePlanIds": []
+    }
+  ],
+  "tracks": [
+    {
+      "id": "plan",
+      "kind": "plan",
+      "label": "Release Plan",
+      "detail": "APEX GA"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#38001",
+      "kind": "spec",
+      "label": "Spec PR",
+      "detail": "azure-rest-api-specs #38001",
+      "artifactId": "github:Azure/azure-rest-api-specs#38001",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:.NET:Azure.ResourceManager.StandbyPool",
+      "kind": "sdk",
+      "label": ".NET",
+      "detail": "Azure.ResourceManager.StandbyPool",
+      "artifactId": "github:Azure/azure-sdk-for-net#56926",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:JavaScript:@azure/arm-standbypool",
+      "kind": "sdk",
+      "label": "JavaScript",
+      "detail": "@azure/arm-standbypool",
+      "artifactId": "github:Azure/azure-sdk-for-js#37572",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Python:azure-mgmt-standbypool",
+      "kind": "sdk",
+      "label": "Python",
+      "detail": "azure-mgmt-standbypool",
+      "artifactId": "github:Azure/azure-sdk-for-python#45629",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Java:azure-resourcemanager-standbypool",
+      "kind": "sdk",
+      "label": "Java",
+      "detail": "azure-resourcemanager-standbypool",
+      "artifactId": "github:Azure/azure-sdk-for-java#48361",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Go:sdk/resourcemanager/standbypool/armstandbypool",
+      "kind": "sdk",
+      "label": "Go",
+      "detail": "sdk/resourcemanager/standbypool/armstandbypool",
+      "artifactId": "github:Azure/azure-sdk-for-go#26208",
+      "state": "merged"
+    }
+  ],
+  "events": [
+    {
+      "id": "github:Azure/azure-rest-api-specs#38001:pr.created:spec:github:Azure/azure-rest-api-specs#38001",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-09T04:18:05Z",
+      "observedAt": "2025-10-09T04:18:05Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38001",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "carlosh-msft2025"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38001",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/38001"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38001:comment:3384063588:spec:github:Azure/azure-rest-api-specs#38001",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-09T04:18:25Z",
+      "observedAt": "2025-10-09T04:18:25Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38001",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38001",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/38001#issuecomment-3384063588"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>✅ All automated merging requirements have been met! To get your PR merged, see <a href=\"https://aka.ms/azsdk/specreview/merge\">aka.ms/azsdk/specreview/merge</a>.<br /><br />Comment generated by <a href=\"https://g",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38001:comment:3384069205:spec:github:Azure/azure-rest-api-specs#38001",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-09T04:22:17Z",
+      "observedAt": "2025-10-09T04:22:17Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38001",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38001",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/38001#issuecomment-3384069205"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews | Language | API Review for Package | |----------|---------| | Swagger | [Microsoft.StandbyPool](https://apiview.dev/Assemblies/Review",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38001:comment:3384594743:spec:github:Azure/azure-rest-api-specs#38001",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-09T07:53:27Z",
+      "observedAt": "2025-10-09T07:53:27Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38001",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "sandipsh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38001",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/38001#issuecomment-3384594743"
+      },
+      "confidence": "authoritative",
+      "excerpt": "please address avocado and swagger validation errors.",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38001:commit:de2bec4f1500:spec:github:Azure/azure-rest-api-specs#38001",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-09T16:59:26Z",
+      "observedAt": "2025-10-09T16:59:26Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38001",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38001",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/de2bec4f150073e6e224b6629e6ac4bf3f9a552f"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38001:comment:3387765395:spec:github:Azure/azure-rest-api-specs#38001",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-09T23:23:12Z",
+      "observedAt": "2025-10-09T23:23:12Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38001",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "mentat9"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38001",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/38001#issuecomment-3387765395"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hey @carlosh-msft2025 - It looks like you are still working on your PR and don't want it reviewed yet, which is totally fine, but the best way to handle that is not with labels, since there is a bunch of automation connected to most of the ",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38001:commit:439443a962ec:spec:github:Azure/azure-rest-api-specs#38001",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-28T22:06:09Z",
+      "observedAt": "2025-10-28T22:06:09Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38001",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38001",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/439443a962ec0108c0705c6243eeadfbd3c17c29"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38001:commit:a2565237ac79:spec:github:Azure/azure-rest-api-specs#38001",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-28T22:23:34Z",
+      "observedAt": "2025-10-28T22:23:34Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38001",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38001",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/a2565237ac79668eb4767c93ccd419269531f818"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38001:commit:77cf0a6199fc:spec:github:Azure/azure-rest-api-specs#38001",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-28T22:41:24Z",
+      "observedAt": "2025-10-28T22:41:24Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38001",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38001",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/77cf0a6199fcd2e38ee91aeddb86b408adda5d57"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38001:commit:f9b0673d630c:spec:github:Azure/azure-rest-api-specs#38001",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-28T22:58:51Z",
+      "observedAt": "2025-10-28T22:58:51Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38001",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38001",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/f9b0673d630cbaacec341c67121a4ec8e7c37445"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38001:commit:f328f307452f:spec:github:Azure/azure-rest-api-specs#38001",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-28T23:15:36Z",
+      "observedAt": "2025-10-28T23:15:36Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38001",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38001",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/f328f307452fe2748264cab2bd29b27c98d17d3b"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38001:commit:2fa25d8ff1ea:spec:github:Azure/azure-rest-api-specs#38001",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-28T23:29:59Z",
+      "observedAt": "2025-10-28T23:29:59Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38001",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38001",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/2fa25d8ff1eace35669c1478fd6991f76b907bd3"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38001:commit:b5e4230e8f18:spec:github:Azure/azure-rest-api-specs#38001",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-29T00:25:38Z",
+      "observedAt": "2025-10-29T00:25:38Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38001",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38001",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/b5e4230e8f18b4c6ecfdba8695b5ee1ca9cec673"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38001:commit:07fdfbbd2fb5:spec:github:Azure/azure-rest-api-specs#38001",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-29T00:50:11Z",
+      "observedAt": "2025-10-29T00:50:11Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38001",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38001",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/07fdfbbd2fb5eb148582e09e4c45077154a50fd0"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38001:commit:e4ad130e06c0:spec:github:Azure/azure-rest-api-specs#38001",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-29T00:51:44Z",
+      "observedAt": "2025-10-29T00:51:44Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38001",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "carlosh-msft2025"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38001",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/e4ad130e06c02cc04e2faeba882f03e3065c599a"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38001:commit:cb5366317cbc:spec:github:Azure/azure-rest-api-specs#38001",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-29T00:54:57Z",
+      "observedAt": "2025-10-29T00:54:57Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38001",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38001",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/cb5366317cbcb66bc3da7d1edbb81f85caf8c7f1"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38001:commit:8546d552cd53:spec:github:Azure/azure-rest-api-specs#38001",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-29T00:57:56Z",
+      "observedAt": "2025-10-29T00:57:56Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38001",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38001",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/8546d552cd53366d71c8d9b07c394dd9efb1aafa"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38001:commit:74b8a02c8672:spec:github:Azure/azure-rest-api-specs#38001",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-29T01:12:32Z",
+      "observedAt": "2025-10-29T01:12:32Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38001",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38001",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/74b8a02c86725ddd44190417b6407ef7f1731e1b"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38001:commit:30d660386771:spec:github:Azure/azure-rest-api-specs#38001",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-29T01:21:03Z",
+      "observedAt": "2025-10-29T01:21:03Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38001",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38001",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/30d66038677124599bda05019aec2bb593612f56"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38001:commit:e73332233902:spec:github:Azure/azure-rest-api-specs#38001",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-29T01:37:49Z",
+      "observedAt": "2025-10-29T01:37:49Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38001",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38001",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/e73332233902b1cc8d5b6cfdee12bdf0ace609b4"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38001:commit:a9e4ba486a2c:spec:github:Azure/azure-rest-api-specs#38001",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-29T01:40:24Z",
+      "observedAt": "2025-10-29T01:40:24Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38001",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "carlosh-msft2025"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38001",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/a9e4ba486a2c6ac049e6af6b983b7c4b5b8de70f"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38001:commit:da3766cd6328:spec:github:Azure/azure-rest-api-specs#38001",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-29T22:31:39Z",
+      "observedAt": "2025-10-29T22:31:39Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38001",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38001",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/da3766cd632885936b7c63633cf5ad955d882485"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38001:commit:04c85589140e:spec:github:Azure/azure-rest-api-specs#38001",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-30T17:17:34Z",
+      "observedAt": "2025-10-30T17:17:34Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38001",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "carlosh-msft2025"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38001",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/04c85589140e987414c1a8748e33d26487c505f6"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38001:commit:af2bfbef509d:spec:github:Azure/azure-rest-api-specs#38001",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2025-11-03T19:03:41Z",
+      "observedAt": "2025-11-03T19:03:41Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38001",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "carlosh-msft2025"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38001",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/af2bfbef509d6709820188898571aa910c06bc12"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38001:comment:3488259311:spec:github:Azure/azure-rest-api-specs#38001",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-11-04T22:40:48Z",
+      "observedAt": "2025-11-04T22:40:48Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38001",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "carlosh-msft2025"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38001",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/38001#issuecomment-3488259311"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @mentat9 @sandipsh - I see the github bot added the label ARMSignedOff but this hasn't get any feedback. Is there any action required from me to mark this PR as ready for review? Thanks!",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38001:commit:62e5c80676bf:spec:github:Azure/azure-rest-api-specs#38001",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2025-11-06T20:13:15Z",
+      "observedAt": "2025-11-06T20:13:15Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38001",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "carlosh-msft2025"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38001",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/62e5c80676bf8788d9496cde8bbbfd3c1d0cfcaa"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38001:comment:2501191510:spec:github:Azure/azure-rest-api-specs#38001",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-11-06T23:23:44Z",
+      "observedAt": "2025-11-06T23:23:44Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38001",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "fangru2023"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38001",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/38001#discussion_r2501191510"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This file usually modified by SDK teams in the past, any reason to change it?",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38001:review:3430954471:spec:github:Azure/azure-rest-api-specs#38001",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2025-11-06T23:29:31Z",
+      "observedAt": "2025-11-06T23:29:31Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38001",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "fangru2023"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38001",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/38001#pullrequestreview-3430954471"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38001:comment:2511735837:spec:github:Azure/azure-rest-api-specs#38001",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-11-10T19:36:29Z",
+      "observedAt": "2025-11-10T19:36:29Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38001",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "carlosh-msft2025"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38001",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/38001#discussion_r2511735837"
+      },
+      "confidence": "authoritative",
+      "excerpt": "I don't understand the concern. Adding a blank space between the triple backticks and the language identifier in a markdown file seems like a very trivial change. This was probably done when running a prettifier.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38001:review:3444838320:spec:github:Azure/azure-rest-api-specs#38001",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2025-11-10T19:36:30Z",
+      "observedAt": "2025-11-10T19:36:30Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38001",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "carlosh-msft2025"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38001",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/38001#pullrequestreview-3444838320"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38001:commit:f2702e409fbb:spec:github:Azure/azure-rest-api-specs#38001",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2025-11-10T19:40:08Z",
+      "observedAt": "2025-11-10T19:40:08Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38001",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38001",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/f2702e409fbb5f5df6eaf2b2d9d048db3d0ade9f"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38001:commit:fc7204615d31:spec:github:Azure/azure-rest-api-specs#38001",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2025-11-10T19:40:39Z",
+      "observedAt": "2025-11-10T19:40:39Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38001",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38001",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/fc7204615d3138a5f8758ea0053d50b256ad720f"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38001:review:3444855309:spec:github:Azure/azure-rest-api-specs#38001",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2025-11-10T19:42:00Z",
+      "observedAt": "2025-11-10T19:42:00Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38001",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "carlosh-msft2025"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38001",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/38001#pullrequestreview-3444855309"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38001:comment:2511748905:spec:github:Azure/azure-rest-api-specs#38001",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-11-10T19:42:00Z",
+      "observedAt": "2025-11-10T19:42:00Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38001",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "carlosh-msft2025"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38001",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/38001#discussion_r2511748905"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Reverted",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38001:commit:64300912016d:spec:github:Azure/azure-rest-api-specs#38001",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2025-11-10T19:42:34Z",
+      "observedAt": "2025-11-10T19:42:34Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38001",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "carlosh-msft2025"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38001",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/64300912016dc8151ffa64f7041580bd9a5363b0"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38001:review:3445319054:spec:github:Azure/azure-rest-api-specs#38001",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2025-11-10T21:59:03Z",
+      "observedAt": "2025-11-10T21:59:03Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38001",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "fangru2023"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38001",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/38001#pullrequestreview-3445319054"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38001:review:3445631753:spec:github:Azure/azure-rest-api-specs#38001",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2025-11-10T23:45:41Z",
+      "observedAt": "2025-11-10T23:45:41Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38001",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "jiaosummer"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38001",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/38001#pullrequestreview-3445631753"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38001:commit:6cd38f76853b:spec:github:Azure/azure-rest-api-specs#38001",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2025-11-10T23:54:41Z",
+      "observedAt": "2025-11-10T23:54:41Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38001",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "carlosh-msft2025"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38001",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/6cd38f76853b01cdfb727cbbc0c128101ea7b1c0"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38001:commit:fe435e47a089:spec:github:Azure/azure-rest-api-specs#38001",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2025-11-11T23:35:12Z",
+      "observedAt": "2025-11-11T23:35:12Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38001",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "carlosh-msft2025"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38001",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/fe435e47a089b4ae7bd1676bfcf6f90824fd393d"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38001:pr.merged:spec:github:Azure/azure-rest-api-specs#38001",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2025-11-11T23:47:47Z",
+      "observedAt": "2025-11-11T23:47:47Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38001",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38001",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/38001"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:33154:created",
+      "type": "plan.created",
+      "phase": "plan",
+      "occurredAt": "2026-03-10T18:55:00.297Z",
+      "observedAt": "2026-03-10T18:55:00.297Z",
+      "trackId": "plan",
+      "title": "Release Plan created",
+      "confidence": "authoritative",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33154",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33154"
+      },
+      "stack": 0
+    },
+    {
+      "id": "ado:33154:1:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-03-10T18:55:00.297Z",
+      "observedAt": "2026-03-10T18:55:00.297Z",
+      "trackId": "plan",
+      "value": "New",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33154",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33154"
+      },
+      "title": "Plan state changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33154:1:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-10T18:55:00.297Z",
+      "observedAt": "2026-03-10T18:55:00.297Z",
+      "trackId": "plan",
+      "value": "Not Available",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33154",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33154"
+      },
+      "title": "Spec approval changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:33154:1:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-10T18:55:00.297Z",
+      "observedAt": "2026-03-10T18:55:00.297Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.StandbyPool",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33154",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33154"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33154:1:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-10T18:55:00.297Z",
+      "observedAt": "2026-03-10T18:55:00.297Z",
+      "trackId": "sdk:JavaScript:@azure/arm-standbypool",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33154",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33154"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33154:1:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-10T18:55:00.297Z",
+      "observedAt": "2026-03-10T18:55:00.297Z",
+      "trackId": "sdk:Python:azure-mgmt-standbypool",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33154",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33154"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33154:1:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-10T18:55:00.297Z",
+      "observedAt": "2026-03-10T18:55:00.297Z",
+      "trackId": "sdk:Java:azure-resourcemanager-standbypool",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33154",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33154"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33154:1:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-10T18:55:00.297Z",
+      "observedAt": "2026-03-10T18:55:00.297Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/standbypool/armstandbypool",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33154",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33154"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33154:7:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-03-10T20:16:11.353Z",
+      "observedAt": "2026-03-10T20:16:11.353Z",
+      "trackId": "plan",
+      "value": "In Progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33154",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33154"
+      },
+      "title": "Plan state changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:33155:2:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-10T20:49:30.137Z",
+      "observedAt": "2026-03-10T20:49:30.137Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38001",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/38001",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33155",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33155"
+      },
+      "title": "Spec PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado:33154:9:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-10T20:49:33.44Z",
+      "observedAt": "2026-03-10T20:49:33.44Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.StandbyPool",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33154",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33154"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33154:9:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-10T20:49:33.44Z",
+      "observedAt": "2026-03-10T20:49:33.44Z",
+      "trackId": "sdk:JavaScript:@azure/arm-standbypool",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33154",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33154"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33154:9:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-10T20:49:33.44Z",
+      "observedAt": "2026-03-10T20:49:33.44Z",
+      "trackId": "sdk:Python:azure-mgmt-standbypool",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33154",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33154"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33154:9:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-10T20:49:33.44Z",
+      "observedAt": "2026-03-10T20:49:33.44Z",
+      "trackId": "sdk:Java:azure-resourcemanager-standbypool",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33154",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33154"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33154:9:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-10T20:49:33.44Z",
+      "observedAt": "2026-03-10T20:49:33.44Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/standbypool/armstandbypool",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33154",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33154"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33154:10:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-10T20:49:39.297Z",
+      "observedAt": "2026-03-10T20:49:39.297Z",
+      "trackId": "plan",
+      "value": "Approved",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33154",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33154"
+      },
+      "title": "Spec approval changed",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:5989680:generation.queued:sdk:.NET:Azure.ResourceManager.StandbyPool",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-03-10T20:58:00.7658334Z",
+      "observedAt": "2026-03-10T21:06:49.4434413Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.StandbyPool",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5989680",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5989680"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:33154:24:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-10T20:58:07.733Z",
+      "observedAt": "2026-03-10T20:58:07.733Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.StandbyPool",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33154",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33154"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:5989681:generation.queued:sdk:Python:azure-mgmt-standbypool",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-03-10T20:58:18.2334541Z",
+      "observedAt": "2026-03-10T21:07:02.3095104Z",
+      "trackId": "sdk:Python:azure-mgmt-standbypool",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5989681",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5989681"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:33154:25:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-10T20:58:20.313Z",
+      "observedAt": "2026-03-10T20:58:20.313Z",
+      "trackId": "sdk:Python:azure-mgmt-standbypool",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33154",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33154"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:5989680:generation.started:sdk:.NET:Azure.ResourceManager.StandbyPool",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-03-10T20:58:28.6771965Z",
+      "observedAt": "2026-03-10T21:06:49.4434413Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.StandbyPool",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5989680",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5989680"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:5989682:generation.queued:sdk:Go:sdk/resourcemanager/standbypool/armstandbypool",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-03-10T20:58:29.730638Z",
+      "observedAt": "2026-03-10T21:04:45.4996822Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/standbypool/armstandbypool",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5989682",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5989682"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:33154:26:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-10T20:58:33.183Z",
+      "observedAt": "2026-03-10T20:58:33.183Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/standbypool/armstandbypool",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33154",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33154"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:5989681:generation.started:sdk:Python:azure-mgmt-standbypool",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-03-10T20:58:38.5209487Z",
+      "observedAt": "2026-03-10T21:07:02.3095104Z",
+      "trackId": "sdk:Python:azure-mgmt-standbypool",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5989681",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5989681"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:5989683:generation.queued:sdk:Java:azure-resourcemanager-standbypool",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-03-10T20:58:42.2596486Z",
+      "observedAt": "2026-03-10T21:19:04.7151369Z",
+      "trackId": "sdk:Java:azure-resourcemanager-standbypool",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5989683",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5989683"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:5989682:generation.started:sdk:Go:sdk/resourcemanager/standbypool/armstandbypool",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-03-10T20:58:44.198381Z",
+      "observedAt": "2026-03-10T21:04:45.4996822Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/standbypool/armstandbypool",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5989682",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5989682"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:33154:27:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-10T20:58:44.557Z",
+      "observedAt": "2026-03-10T20:58:44.557Z",
+      "trackId": "sdk:Java:azure-resourcemanager-standbypool",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33154",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33154"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:5989684:generation.queued:sdk:JavaScript:@azure/arm-standbypool",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-03-10T20:58:53.093624Z",
+      "observedAt": "2026-03-10T21:07:01.5162357Z",
+      "trackId": "sdk:JavaScript:@azure/arm-standbypool",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5989684",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5989684"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:33154:28:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-10T20:58:56.96Z",
+      "observedAt": "2026-03-10T20:58:56.96Z",
+      "trackId": "sdk:JavaScript:@azure/arm-standbypool",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33154",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33154"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:5989683:generation.started:sdk:Java:azure-resourcemanager-standbypool",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-03-10T20:59:05.7970083Z",
+      "observedAt": "2026-03-10T21:19:04.7151369Z",
+      "trackId": "sdk:Java:azure-resourcemanager-standbypool",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5989683",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5989683"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:5989684:generation.started:sdk:JavaScript:@azure/arm-standbypool",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-03-10T20:59:09.9324831Z",
+      "observedAt": "2026-03-10T21:07:01.5162357Z",
+      "trackId": "sdk:JavaScript:@azure/arm-standbypool",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5989684",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5989684"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26208:commit:4018340ef44e:sdk:Go:sdk/resourcemanager/standbypool/armstandbypool",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-10T21:03:48Z",
+      "observedAt": "2026-03-10T21:03:48Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/standbypool/armstandbypool",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26208",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/4018340ef44eab85e0b4915c78e574446775688d"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26208:pr.created:sdk:Go:sdk/resourcemanager/standbypool/armstandbypool",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-10T21:03:51Z",
+      "observedAt": "2026-03-10T21:03:51Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/standbypool/armstandbypool",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26208",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26208"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:33154:29:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-10T21:03:58.727Z",
+      "observedAt": "2026-03-10T21:03:58.727Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/standbypool/armstandbypool",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33154",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33154"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33154:29:Custom.SDKPullRequestForGo",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-03-10T21:03:58.727Z",
+      "observedAt": "2026-03-10T21:03:58.727Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/standbypool/armstandbypool",
+      "value": "https://github.com/Azure/azure-sdk-for-go/pull/26208",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33154",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33154"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:5989682:generation.completed:sdk:Go:sdk/resourcemanager/standbypool/armstandbypool",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-03-10T21:04:45.4996822Z",
+      "observedAt": "2026-03-10T21:04:45.4996822Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/standbypool/armstandbypool",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5989682",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5989682"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45629:commit:2e767b4e1490:sdk:Python:azure-mgmt-standbypool",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-10T21:05:25Z",
+      "observedAt": "2026-03-10T21:05:25Z",
+      "trackId": "sdk:Python:azure-mgmt-standbypool",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45629",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/2e767b4e1490fc9abe1a8c72de6a8247dad243bb"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45629:pr.created:sdk:Python:azure-mgmt-standbypool",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-10T21:05:28Z",
+      "observedAt": "2026-03-10T21:05:28Z",
+      "trackId": "sdk:Python:azure-mgmt-standbypool",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45629",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45629"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:33154:30:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-10T21:05:35.653Z",
+      "observedAt": "2026-03-10T21:05:35.653Z",
+      "trackId": "sdk:Python:azure-mgmt-standbypool",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33154",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33154"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33154:30:Custom.SDKPullRequestForPython",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-03-10T21:05:35.653Z",
+      "observedAt": "2026-03-10T21:05:35.653Z",
+      "trackId": "sdk:Python:azure-mgmt-standbypool",
+      "value": "https://github.com/Azure/azure-sdk-for-python/pull/45629",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33154",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33154"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56919:commit:a15ebfd6e02a:sdk:.NET:Azure.ResourceManager.StandbyPool",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-10T21:05:42Z",
+      "observedAt": "2026-03-10T21:05:42Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.StandbyPool",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56919",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/a15ebfd6e02a20884834118ca6e41ab2143b7e93"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56926:commit:a15ebfd6e02a:sdk:.NET:Azure.ResourceManager.StandbyPool",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-10T21:05:42Z",
+      "observedAt": "2026-03-10T21:05:42Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.StandbyPool",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56926",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/a15ebfd6e02a20884834118ca6e41ab2143b7e93"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37572:commit:de08c9e19e3f:sdk:JavaScript:@azure/arm-standbypool",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-10T21:05:44Z",
+      "observedAt": "2026-03-10T21:05:44Z",
+      "trackId": "sdk:JavaScript:@azure/arm-standbypool",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37572",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/de08c9e19e3fc118623fa64d7595228ee1fb0d02"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56919:pr.created:sdk:.NET:Azure.ResourceManager.StandbyPool",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-10T21:05:46Z",
+      "observedAt": "2026-03-10T21:05:46Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.StandbyPool",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56919",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56919"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37572:pr.created:sdk:JavaScript:@azure/arm-standbypool",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-10T21:05:47Z",
+      "observedAt": "2026-03-10T21:05:47Z",
+      "trackId": "sdk:JavaScript:@azure/arm-standbypool",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37572",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37572"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:33154:31:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-10T21:05:52.95Z",
+      "observedAt": "2026-03-10T21:05:52.95Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.StandbyPool",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33154",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33154"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:33154:31:Custom.SDKPullRequestForDotnet",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-03-10T21:05:52.95Z",
+      "observedAt": "2026-03-10T21:05:52.95Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.StandbyPool",
+      "value": "https://github.com/Azure/azure-sdk-for-net/pull/56919",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33154",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33154"
+      },
+      "title": "SDK PR linked",
+      "stack": 3
+    },
+    {
+      "id": "ado:33154:32:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-10T21:05:54.7Z",
+      "observedAt": "2026-03-10T21:05:54.7Z",
+      "trackId": "sdk:JavaScript:@azure/arm-standbypool",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33154",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33154"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33154:32:Custom.SDKPullRequestForJavaScript",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-03-10T21:05:54.7Z",
+      "observedAt": "2026-03-10T21:05:54.7Z",
+      "trackId": "sdk:JavaScript:@azure/arm-standbypool",
+      "value": "https://github.com/Azure/azure-sdk-for-js/pull/37572",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33154",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33154"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:5989680:generation.completed:sdk:.NET:Azure.ResourceManager.StandbyPool",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-03-10T21:06:49.4434413Z",
+      "observedAt": "2026-03-10T21:06:49.4434413Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.StandbyPool",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5989680",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5989680"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:5989684:generation.completed:sdk:JavaScript:@azure/arm-standbypool",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-03-10T21:07:01.5162357Z",
+      "observedAt": "2026-03-10T21:07:01.5162357Z",
+      "trackId": "sdk:JavaScript:@azure/arm-standbypool",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5989684",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5989684"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:5989681:generation.completed:sdk:Python:azure-mgmt-standbypool",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-03-10T21:07:02.3095104Z",
+      "observedAt": "2026-03-10T21:07:02.3095104Z",
+      "trackId": "sdk:Python:azure-mgmt-standbypool",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5989681",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5989681"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48361:commit:17801f67e011:sdk:Java:azure-resourcemanager-standbypool",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-10T21:08:06Z",
+      "observedAt": "2026-03-10T21:08:06Z",
+      "trackId": "sdk:Java:azure-resourcemanager-standbypool",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48361",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/17801f67e0111973bc13dc2a7b1beaf413b3ed1c"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48361:pr.created:sdk:Java:azure-resourcemanager-standbypool",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-10T21:08:09Z",
+      "observedAt": "2026-03-10T21:08:09Z",
+      "trackId": "sdk:Java:azure-resourcemanager-standbypool",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48361",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48361"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:33154:35:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-10T21:08:16.573Z",
+      "observedAt": "2026-03-10T21:08:16.573Z",
+      "trackId": "sdk:Java:azure-resourcemanager-standbypool",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33154",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33154"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33154:35:Custom.SDKPullRequestForJava",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-03-10T21:08:16.573Z",
+      "observedAt": "2026-03-10T21:08:16.573Z",
+      "trackId": "sdk:Java:azure-resourcemanager-standbypool",
+      "value": "https://github.com/Azure/azure-sdk-for-java/pull/48361",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33154",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33154"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:5989683:generation.completed:sdk:Java:azure-resourcemanager-standbypool",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-03-10T21:19:04.7151369Z",
+      "observedAt": "2026-03-10T21:19:04.7151369Z",
+      "trackId": "sdk:Java:azure-resourcemanager-standbypool",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5989683",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5989683"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56926:commit:57889c01eaa9:sdk:.NET:Azure.ResourceManager.StandbyPool",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-11T00:23:39Z",
+      "observedAt": "2026-03-11T00:23:39Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.StandbyPool",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56926",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/57889c01eaa94826dcec518b0f01ac374db14175"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56926:pr.created:sdk:.NET:Azure.ResourceManager.StandbyPool",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-11T00:44:52Z",
+      "observedAt": "2026-03-11T00:44:52Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.StandbyPool",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "carlosh-msft2025"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56926",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56926"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56926:review:3926263714:sdk:.NET:Azure.ResourceManager.StandbyPool",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-11T00:50:12Z",
+      "observedAt": "2026-03-11T00:50:12Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.StandbyPool",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56926",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56926#pullrequestreview-3926263714"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Updates the StandbyPool management SDK package to align with the `2025-10-01` TypeSpec/spec inputs and reflects the associated surface area changes in tests and package metadata. **Changes:** - Updated `tsp-location",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56926:comment:2915266469:sdk:.NET:Azure.ResourceManager.StandbyPool",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-11T00:50:12Z",
+      "observedAt": "2026-03-11T00:50:12Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.StandbyPool",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56926",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56926#discussion_r2915266469"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`additionalDirectories:` is currently present but empty (null). If there are no dependency directories, consider either removing the key entirely or setting it explicitly to an empty list (`[]`) to avoid ambiguity (and also remove the trail",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56926:comment:2915266487:sdk:.NET:Azure.ResourceManager.StandbyPool",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-11T00:50:12Z",
+      "observedAt": "2026-03-11T00:50:12Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.StandbyPool",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56926",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56926#discussion_r2915266487"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The new changelog bullets under \"Features Added\" / \"Breaking Changes\" are missing trailing periods, while existing entries in this file consistently end sentences with a period. Consider adding periods for consistency/readability.",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56926:comment:4051157335:sdk:.NET:Azure.ResourceManager.StandbyPool",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-12T23:51:58Z",
+      "observedAt": "2026-03-12T23:51:58Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.StandbyPool",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "carlosh-msft2025"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56926",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56926#issuecomment-4051157335"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hello @ArthurMa1978 @ArcturusZhang gentle ping on this PR",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56926:review:3957233756:sdk:.NET:Azure.ResourceManager.StandbyPool",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-16T23:00:00Z",
+      "observedAt": "2026-03-16T23:00:00Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.StandbyPool",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "carlosh-msft2025"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56926",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56926#pullrequestreview-3957233756"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56926:comment:2943457888:sdk:.NET:Azure.ResourceManager.StandbyPool",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-16T23:00:00Z",
+      "observedAt": "2026-03-16T23:00:00Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.StandbyPool",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "carlosh-msft2025"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56926",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56926#discussion_r2943457888"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@copilot open a new pull request to apply changes based on [this feedback](https://github.com/Azure/azure-sdk-for-net/pull/56926#discussion_r2915266487)",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56926:review:3964352505:sdk:.NET:Azure.ResourceManager.StandbyPool",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-18T00:12:53Z",
+      "observedAt": "2026-03-18T00:12:53Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.StandbyPool",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56926",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56926#pullrequestreview-3964352505"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56926:comment:2950171915:sdk:.NET:Azure.ResourceManager.StandbyPool",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-18T00:12:53Z",
+      "observedAt": "2026-03-18T00:12:53Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.StandbyPool",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56926",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56926#discussion_r2950171915"
+      },
+      "confidence": "authoritative",
+      "excerpt": "please change unreleased to a desire release date here.",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56926:review:3964353137:sdk:.NET:Azure.ResourceManager.StandbyPool",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-18T00:13:07Z",
+      "observedAt": "2026-03-18T00:13:07Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.StandbyPool",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56926",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56926#pullrequestreview-3964353137"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56926:comment:2950172597:sdk:.NET:Azure.ResourceManager.StandbyPool",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-18T00:13:07Z",
+      "observedAt": "2026-03-18T00:13:07Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.StandbyPool",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56926",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56926#discussion_r2950172597"
+      },
+      "confidence": "authoritative",
+      "excerpt": "also we need to remove these empty sections.",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56926:commit:bc55502c577f:sdk:.NET:Azure.ResourceManager.StandbyPool",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-18T17:12:13Z",
+      "observedAt": "2026-03-18T17:12:13Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.StandbyPool",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56926",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/bc55502c577f5de88d0811a95c30dc47ea4fe6a6"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56926:review:3969548278:sdk:.NET:Azure.ResourceManager.StandbyPool",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-18T17:16:16Z",
+      "observedAt": "2026-03-18T17:16:16Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.StandbyPool",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "carlosh-msft2025"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56926",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56926#pullrequestreview-3969548278"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56926:comment:2955016672:sdk:.NET:Azure.ResourceManager.StandbyPool",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-18T17:16:16Z",
+      "observedAt": "2026-03-18T17:16:16Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.StandbyPool",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "carlosh-msft2025"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56926",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56926#discussion_r2955016672"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Thanks, updated.",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56926:review:3969557773:sdk:.NET:Azure.ResourceManager.StandbyPool",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-18T17:17:49Z",
+      "observedAt": "2026-03-18T17:17:49Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.StandbyPool",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "carlosh-msft2025"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56926",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56926#pullrequestreview-3969557773"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56926:comment:2955025873:sdk:.NET:Azure.ResourceManager.StandbyPool",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-18T17:17:49Z",
+      "observedAt": "2026-03-18T17:17:49Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.StandbyPool",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "carlosh-msft2025"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56926",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56926#discussion_r2955025873"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Thanks, removed",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48361:commit:8a80fd8f4d42:sdk:Java:azure-resourcemanager-standbypool",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-24T18:31:36Z",
+      "observedAt": "2026-03-24T18:31:36Z",
+      "trackId": "sdk:Java:azure-resourcemanager-standbypool",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "carlosh-msft2025"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48361",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/8a80fd8f4d42d301e0bf16394e256b5674361161"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45629:commit:a31b5147c238:sdk:Python:azure-mgmt-standbypool",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-24T18:32:20Z",
+      "observedAt": "2026-03-24T18:32:20Z",
+      "trackId": "sdk:Python:azure-mgmt-standbypool",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "carlosh-msft2025"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45629",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/a31b5147c2385b114c1dc5fb78b262777b53ed0c"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26208:comment:2983551713:sdk:Go:sdk/resourcemanager/standbypool/armstandbypool",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-24T18:34:15Z",
+      "observedAt": "2026-03-24T18:34:15Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/standbypool/armstandbypool",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26208",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26208#discussion_r2983551713"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`moduleName` should include the `/v2` suffix to match the module path in go.mod (`.../armstandbypool/v2`). Other v2 RM modules follow this (e.g., armhealthbot). Keeping this mismatched can lead to incorrect module identification in user-age",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26208:review:4001448348:sdk:Go:sdk/resourcemanager/standbypool/armstandbypool",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-24T18:34:16Z",
+      "observedAt": "2026-03-24T18:34:16Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/standbypool/armstandbypool",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26208",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26208#pullrequestreview-4001448348"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Regenerates the `armstandbypool` resource manager SDK for `Microsoft.StandbyPool` to the `2025-10-01` API version and publishes a new stable package version. **Changes:** - Bumps package version to `v2.1.0` and upda",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45629:comment:2983567399:sdk:Python:azure-mgmt-standbypool",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-24T18:37:30Z",
+      "observedAt": "2026-03-24T18:37:30Z",
+      "trackId": "sdk:Python:azure-mgmt-standbypool",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45629",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45629#discussion_r2983567399"
+      },
+      "confidence": "authoritative",
+      "excerpt": "In the changelog entries, \"Model `StandbyPoolMgmtClient`\" is inaccurate terminology (StandbyPoolMgmtClient is the client type, not a model). Please update these bullets to refer to the client (and keep wording consistent with other changelo",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45629:review:4001468908:sdk:Python:azure-mgmt-standbypool",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-24T18:37:31Z",
+      "observedAt": "2026-03-24T18:37:31Z",
+      "trackId": "sdk:Python:azure-mgmt-standbypool",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45629",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45629#pullrequestreview-4001468908"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Updates the `azure-mgmt-standbypool` management-plane SDK to the 2025-10-01 API version and refreshes the generated client, models, samples, and packaging metadata for a stable release. **Changes:** - Bump package v",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37572:comment:2983572575:sdk:JavaScript:@azure/arm-standbypool",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-24T18:38:38Z",
+      "observedAt": "2026-03-24T18:38:38Z",
+      "trackId": "sdk:JavaScript:@azure/arm-standbypool",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37572",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37572#discussion_r2983572575"
+      },
+      "confidence": "authoritative",
+      "excerpt": "In `exports`, most entries map to paths like `./src/...`, but the newly added api subpath exports map to `src/...` (missing the leading `./`). This is inconsistent with other warp configs and can break module resolution for these export tar",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37572:comment:2983572599:sdk:JavaScript:@azure/arm-standbypool",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-24T18:38:38Z",
+      "observedAt": "2026-03-24T18:38:38Z",
+      "trackId": "sdk:JavaScript:@azure/arm-standbypool",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37572",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37572#discussion_r2983572599"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`additionalDirectories:` is currently present with no value, which serializes to `null` in YAML. If there are no additional directories, it’s clearer and more consistent to either remove this key or set it to an explicit empty array (e.g., ",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37572:review:4001476380:sdk:JavaScript:@azure/arm-standbypool",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-24T18:38:39Z",
+      "observedAt": "2026-03-24T18:38:39Z",
+      "trackId": "sdk:JavaScript:@azure/arm-standbypool",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37572",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37572#pullrequestreview-4001476380"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Auto-generated update for `@azure/arm-standbypool` to align the SDK with the StandbyPool.Management TypeSpec/REST API version **2025-10-01**, including a package version bump to **2.1.0** and corresponding API surfa",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37572:comment:2983572615:sdk:JavaScript:@azure/arm-standbypool",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-24T18:38:39Z",
+      "observedAt": "2026-03-24T18:38:39Z",
+      "trackId": "sdk:JavaScript:@azure/arm-standbypool",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37572",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37572#discussion_r2983572615"
+      },
+      "confidence": "authoritative",
+      "excerpt": "In `encodeReservedComponent`, the string is split on full percent-encoded bytes (`%HH`), but the subsequent test uses `/%[0-9A-Fa-f]/`, which will also treat invalid/partial sequences (e.g., `%A`) as already-encoded and skip encoding. The r",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37572:comment:2983572633:sdk:JavaScript:@azure/arm-standbypool",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-24T18:38:39Z",
+      "observedAt": "2026-03-24T18:38:39Z",
+      "trackId": "sdk:JavaScript:@azure/arm-standbypool",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37572",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37572#discussion_r2983572633"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`normalizeUnreserved` is documented as decoding percent-encoded RFC 3986 unreserved characters, but the implementation only decodes `.`, `~`, and `-`. RFC 3986 unreserved also includes `_` and all alphanumerics, so callers may still get unn",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48361:comment:2983573893:sdk:Java:azure-resourcemanager-standbypool",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-24T18:38:55Z",
+      "observedAt": "2026-03-24T18:38:55Z",
+      "trackId": "sdk:Java:azure-resourcemanager-standbypool",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48361",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48361#discussion_r2983573893"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The changelog top entry is written as an already-released version (`## 1.2.0 (2026-03-10)`). In this repo, management library changelogs typically keep the top section as `(Unreleased)` until the release is actually cut; otherwise the date ",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48361:review:4001478335:sdk:Java:azure-resourcemanager-standbypool",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-24T18:38:56Z",
+      "observedAt": "2026-03-24T18:38:56Z",
+      "trackId": "sdk:Java:azure-resourcemanager-standbypool",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48361",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48361#pullrequestreview-4001478335"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This PR updates the `azure-resourcemanager-standbypool` management library to a newly generated stable surface based on StandbyPool.Management API version `2025-10-01` from `azure-rest-api-specs` commit `856e8ce5…`.",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48361:comment:2983573949:sdk:Java:azure-resourcemanager-standbypool",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-24T18:38:56Z",
+      "observedAt": "2026-03-24T18:38:56Z",
+      "trackId": "sdk:Java:azure-resourcemanager-standbypool",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48361",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48361#discussion_r2983573949"
+      },
+      "confidence": "authoritative",
+      "excerpt": "pom.xml updates the artifact to a stable 1.2.0 release, but this PR also removes previously published public APIs (e.g., the changelog calls out many `validate()` removals). For a stable library, removing public methods is a breaking change",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48361:comment:2983573969:sdk:Java:azure-resourcemanager-standbypool",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-24T18:38:56Z",
+      "observedAt": "2026-03-24T18:38:56Z",
+      "trackId": "sdk:Java:azure-resourcemanager-standbypool",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48361",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48361#discussion_r2983573969"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This module no longer sets `<revapi.skip>true</revapi.skip>`. With the API surface changing (e.g., `validate()` methods removed per CHANGELOG), enabling RevApi without adding appropriate RevApi configuration/suppressions is likely to break ",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48361:review:4003051171:sdk:Java:azure-resourcemanager-standbypool",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-24T23:34:10Z",
+      "observedAt": "2026-03-24T23:34:10Z",
+      "trackId": "sdk:Java:azure-resourcemanager-standbypool",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48361",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48361#pullrequestreview-4003051171"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48361:pr.merged:sdk:Java:azure-resourcemanager-standbypool",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-24T23:46:03Z",
+      "observedAt": "2026-03-24T23:46:03Z",
+      "trackId": "sdk:Java:azure-resourcemanager-standbypool",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48361",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48361"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45629:commit:b2a870037204:sdk:Python:azure-mgmt-standbypool",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-25T02:47:28Z",
+      "observedAt": "2026-03-25T02:47:28Z",
+      "trackId": "sdk:Python:azure-mgmt-standbypool",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45629",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/b2a8700372047a6ebb6eed79faf9c737d89a02da"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45629:comment:4122772500:sdk:Python:azure-mgmt-standbypool",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-25T02:51:35Z",
+      "observedAt": "2026-03-25T02:51:35Z",
+      "trackId": "sdk:Python:azure-mgmt-standbypool",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45629",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45629#issuecomment-4122772500"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@msyyc, pr ready, please help review",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45629:commit:2f040955deff:sdk:Python:azure-mgmt-standbypool",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-25T02:51:41Z",
+      "observedAt": "2026-03-25T02:51:41Z",
+      "trackId": "sdk:Python:azure-mgmt-standbypool",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45629",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/2f040955defff80a382acdf72ae3678d885ee9a3"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26208:review:4003752120:sdk:Go:sdk/resourcemanager/standbypool/armstandbypool",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-25T03:55:11Z",
+      "observedAt": "2026-03-25T03:55:11Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/standbypool/armstandbypool",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "tadelesh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26208",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26208#pullrequestreview-4003752120"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56926:review:4005080332:sdk:.NET:Azure.ResourceManager.StandbyPool",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-25T08:59:02Z",
+      "observedAt": "2026-03-25T08:59:02Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.StandbyPool",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56926",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56926#pullrequestreview-4005080332"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56926:pr.merged:sdk:.NET:Azure.ResourceManager.StandbyPool",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-25T09:00:04Z",
+      "observedAt": "2026-03-25T09:00:04Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.StandbyPool",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56926",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56926"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37572:review:4005184735:sdk:JavaScript:@azure/arm-standbypool",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-25T09:18:59Z",
+      "observedAt": "2026-03-25T09:18:59Z",
+      "trackId": "sdk:JavaScript:@azure/arm-standbypool",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37572",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37572#pullrequestreview-4005184735"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This PR adds new features to `@azure/arm-standbypool` (`2.0.0` → `2.1.0`). CHANGELOG and versioning look clean. Two public-API design findings were identified in `review/arm-standbypool-node.api.md`: 1. **Enum naming** — `AzureClouds` is mi",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37572:comment:2986873127:sdk:JavaScript:@azure/arm-standbypool",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-25T09:18:59Z",
+      "observedAt": "2026-03-25T09:18:59Z",
+      "trackId": "sdk:JavaScript:@azure/arm-standbypool",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37572",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37572#discussion_r2986873127"
+      },
+      "confidence": "authoritative",
+      "excerpt": "🔴 **Design Issue** — `AzureClouds` enum naming violates `Known*` convention Every other extensible enum in this package uses the `Known*` prefix (e.g., `KnownActionType`, `KnownProvisioningState`, `KnownRefillPolicy`). The new `AzureClouds",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37572:comment:2986873135:sdk:JavaScript:@azure/arm-standbypool",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-25T09:18:59Z",
+      "observedAt": "2026-03-25T09:18:59Z",
+      "trackId": "sdk:JavaScript:@azure/arm-standbypool",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37572",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37572#discussion_r2986873135"
+      },
+      "confidence": "authoritative",
+      "excerpt": "🔴 **Design Issue** — `AzureSupportedClouds` should be `string`, not a closed template literal type The standard Azure SDK extensible-enum pattern is: ```ts export type Foo = string; ``` Using `` `\\$\\{AzureClouds}` `` creates a **closed uni",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26208:pr.merged:sdk:Go:sdk/resourcemanager/standbypool/armstandbypool",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-25T17:17:47Z",
+      "observedAt": "2026-03-25T17:17:47Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/standbypool/armstandbypool",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26208",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26208"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45629:commit:ddc58889b26c:sdk:Python:azure-mgmt-standbypool",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-25T17:18:56Z",
+      "observedAt": "2026-03-25T17:18:56Z",
+      "trackId": "sdk:Python:azure-mgmt-standbypool",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "carlosh-msft2025"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45629",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/ddc58889b26ccf73b6549fb01a2f00e957c65e42"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45629:commit:4606b635afac:sdk:Python:azure-mgmt-standbypool",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-25T23:57:07Z",
+      "observedAt": "2026-03-25T23:57:07Z",
+      "trackId": "sdk:Python:azure-mgmt-standbypool",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45629",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/4606b635afacc88a99f0f3b1dfd49eb7e325d38a"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45629:review:4010626701:sdk:Python:azure-mgmt-standbypool",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-25T23:57:21Z",
+      "observedAt": "2026-03-25T23:57:21Z",
+      "trackId": "sdk:Python:azure-mgmt-standbypool",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45629",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45629#pullrequestreview-4010626701"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45629:comment:4130687572:sdk:Python:azure-mgmt-standbypool",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-26T00:19:44Z",
+      "observedAt": "2026-03-26T00:19:44Z",
+      "trackId": "sdk:Python:azure-mgmt-standbypool",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45629",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45629#issuecomment-4130687572"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@ChenxiJiang333 Approved. Since I click \"Update main\", need your approval too.",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45629:comment:4131196591:sdk:Python:azure-mgmt-standbypool",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-26T02:46:56Z",
+      "observedAt": "2026-03-26T02:46:56Z",
+      "trackId": "sdk:Python:azure-mgmt-standbypool",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45629",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45629#issuecomment-4131196591"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> @ChenxiJiang333 Approved. Since I click \"Update main\", need your approval too. It looks like we don't need another approve for `Update main` operation XD.",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45629:pr.merged:sdk:Python:azure-mgmt-standbypool",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-26T17:00:19Z",
+      "observedAt": "2026-03-26T17:00:19Z",
+      "trackId": "sdk:Python:azure-mgmt-standbypool",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45629",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45629"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45629:review:4016343915:sdk:Python:azure-mgmt-standbypool",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-26T18:11:43Z",
+      "observedAt": "2026-03-26T18:11:43Z",
+      "trackId": "sdk:Python:azure-mgmt-standbypool",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "Ari4ka"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45629",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45629#pullrequestreview-4016343915"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37572:review:4018632804:sdk:JavaScript:@azure/arm-standbypool",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-27T03:16:19Z",
+      "observedAt": "2026-03-27T03:16:19Z",
+      "trackId": "sdk:JavaScript:@azure/arm-standbypool",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "JialinHuang803"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37572",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37572#pullrequestreview-4018632804"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37572:pr.merged:sdk:JavaScript:@azure/arm-standbypool",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-27T16:44:45Z",
+      "observedAt": "2026-03-27T16:44:45Z",
+      "trackId": "sdk:JavaScript:@azure/arm-standbypool",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37572",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37572"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github-release:33154:.NET:Azure.ResourceManager.StandbyPool_1.2.0",
+      "type": "package.github_release_published",
+      "phase": "release",
+      "occurredAt": "2026-03-30T10:20:58Z",
+      "observedAt": "2026-03-30T10:20:58Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.StandbyPool",
+      "title": "GitHub Release published",
+      "value": "Azure.ResourceManager.StandbyPool_1.2.0",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "azure-sdk-for-net release Azure.ResourceManager.StandbyPool_1.2.0",
+        "url": "https://github.com/Azure/azure-sdk-for-net/releases/tag/Azure.ResourceManager.StandbyPool_1.2.0"
+      },
+      "confidence": "inferred",
+      "stack": 0
+    },
+    {
+      "id": "ado:33154:47:Custom.ReleaseStatusForDotnet",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-03-30T10:33:37.087Z",
+      "observedAt": "2026-03-30T10:33:37.087Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.StandbyPool",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33154",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33154"
+      },
+      "title": "Release status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33154:49:Custom.SDKPullRequestForDotnet",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T19:55:09.66Z",
+      "observedAt": "2026-05-06T19:55:09.66Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.StandbyPool",
+      "value": "https://github.com/Azure/azure-sdk-for-net/pull/56926",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33154",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33154"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56919:comment:4457409418:sdk:.NET:Azure.ResourceManager.StandbyPool",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-15T06:16:28Z",
+      "observedAt": "2026-05-15T06:16:28Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.StandbyPool",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56919",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56919#issuecomment-4457409418"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @azure-sdk. Thank you for your interest in helping to improve the Azure SDK experience and for your contribution. We've noticed that there hasn't been recent engagement on this pull request. If this is still an active work stream, please",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56919:comment:4517553158:sdk:.NET:Azure.ResourceManager.StandbyPool",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-22T09:43:06Z",
+      "observedAt": "2026-05-22T09:43:06Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.StandbyPool",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56919",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56919#issuecomment-4517553158"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @azure-sdk. Thank you for your contribution. Since there hasn't been recent engagement, we're going to close this out. Feel free to respond with a comment containing `/reopen` if you'd like to continue working on these changes. Please be",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56919:pr.closed:sdk:.NET:Azure.ResourceManager.StandbyPool",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-22T09:43:18Z",
+      "observedAt": "2026-05-22T09:43:18Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.StandbyPool",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56919",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56919"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:33154:50:Custom.ReleaseStatusForGo",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-06-11T06:41:07.607Z",
+      "observedAt": "2026-06-11T06:41:07.607Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/standbypool/armstandbypool",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33154",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33154"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33154:50:Custom.ReleasedVersionForGo",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-06-11T06:41:07.607Z",
+      "observedAt": "2026-06-11T06:41:07.607Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/standbypool/armstandbypool",
+      "value": "2.1.0",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33154",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33154"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33154:51:Custom.ReleaseStatusForPython",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-06-11T09:57:41.513Z",
+      "observedAt": "2026-06-11T09:57:41.513Z",
+      "trackId": "sdk:Python:azure-mgmt-standbypool",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33154",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33154"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33154:51:Custom.ReleasedVersionForPython",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-06-11T09:57:41.513Z",
+      "observedAt": "2026-06-11T09:57:41.513Z",
+      "trackId": "sdk:Python:azure-mgmt-standbypool",
+      "value": "2.1.0",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33154",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33154"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33154:52:Custom.ReleaseStatusForJavaScript",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-06-12T08:46:10.427Z",
+      "observedAt": "2026-06-12T08:46:10.427Z",
+      "trackId": "sdk:JavaScript:@azure/arm-standbypool",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33154",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33154"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33154:52:Custom.ReleasedVersionForJavaScript",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-06-12T08:46:10.427Z",
+      "observedAt": "2026-06-12T08:46:10.427Z",
+      "trackId": "sdk:JavaScript:@azure/arm-standbypool",
+      "value": "2.1.0",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33154",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33154"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33154:53:Custom.ReleaseStatusForJava",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-06-17T06:09:32.7Z",
+      "observedAt": "2026-06-17T06:09:32.7Z",
+      "trackId": "sdk:Java:azure-resourcemanager-standbypool",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33154",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33154"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33154:53:Custom.ReleasedVersionForJava",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-06-17T06:09:32.7Z",
+      "observedAt": "2026-06-17T06:09:32.7Z",
+      "trackId": "sdk:Java:azure-resourcemanager-standbypool",
+      "value": "1.2.0",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33154",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33154"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33154:54:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-06-17T06:09:32.927Z",
+      "observedAt": "2026-06-17T06:09:32.927Z",
+      "trackId": "plan",
+      "value": "Finished",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33154",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33154"
+      },
+      "title": "Plan state changed",
+      "stack": 0
+    }
+  ],
+  "quality": {
+    "warnings": [
+      "1 historical linked PR(s) closed without merge",
+      "1 superseded SDK PR link(s) retained"
+    ],
+    "unavailablePullRequests": 0,
+    "unavailablePipelineRuns": 0
+  },
+  "boundaryFacts": {
+    "id": "33154",
+    "state": "finished",
+    "specPrs": [
+      {
+        "id": "github:Azure/azure-rest-api-specs#38001",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#38001",
+        "createdAt": "2025-10-09T04:18:05Z",
+        "mergedAt": "2025-11-11T23:47:47Z",
+        "closedAt": "2025-11-11T23:47:47Z",
+        "available": true
+      }
+    ],
+    "artifacts": [
+      {
+        "language": ".NET",
+        "package": "Azure.ResourceManager.StandbyPool",
+        "trackId": "sdk:.NET:Azure.ResourceManager.StandbyPool",
+        "prId": "github:Azure/azure-sdk-for-net#56926",
+        "prCreatedAt": "2026-03-11T00:44:52Z",
+        "prMergedAt": "2026-03-25T09:00:04Z",
+        "prClosedAt": "2026-03-25T09:00:04Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-net#56919",
+            "createdAt": "2026-03-10T21:05:46Z",
+            "mergedAt": null,
+            "closedAt": "2026-05-22T09:43:18Z",
+            "state": "closed"
+          },
+          {
+            "id": "github:Azure/azure-sdk-for-net#56926",
+            "createdAt": "2026-03-11T00:44:52Z",
+            "mergedAt": "2026-03-25T09:00:04Z",
+            "closedAt": "2026-03-25T09:00:04Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:5989680",
+        "generationStartAt": "2026-03-10T20:58:28.6771965Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-03-30T10:33:37.087Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": null,
+        "releaseBoundaryAt": "2026-03-30T10:20:58Z",
+        "releaseBoundarySource": "github-release",
+        "releaseBoundaryConfidence": "inferred",
+        "releaseBoundaryUrl": "https://github.com/Azure/azure-sdk-for-net/releases/tag/Azure.ResourceManager.StandbyPool_1.2.0",
+        "releaseTag": "Azure.ResourceManager.StandbyPool_1.2.0",
+        "releaseMatchMethod": "unique-nearby-release",
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "github-release"
+        }
+      },
+      {
+        "language": "JavaScript",
+        "package": "@azure/arm-standbypool",
+        "trackId": "sdk:JavaScript:@azure/arm-standbypool",
+        "prId": "github:Azure/azure-sdk-for-js#37572",
+        "prCreatedAt": "2026-03-10T21:05:47Z",
+        "prMergedAt": "2026-03-27T16:44:45Z",
+        "prClosedAt": "2026-03-27T16:44:45Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-js#37572",
+            "createdAt": "2026-03-10T21:05:47Z",
+            "mergedAt": "2026-03-27T16:44:45Z",
+            "closedAt": "2026-03-27T16:44:45Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:5989684",
+        "generationStartAt": "2026-03-10T20:59:09.9324831Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-06-12T08:46:10.427Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "2.1.0",
+        "releaseBoundaryAt": "2026-06-12T08:46:10.427Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Python",
+        "package": "azure-mgmt-standbypool",
+        "trackId": "sdk:Python:azure-mgmt-standbypool",
+        "prId": "github:Azure/azure-sdk-for-python#45629",
+        "prCreatedAt": "2026-03-10T21:05:28Z",
+        "prMergedAt": "2026-03-26T17:00:19Z",
+        "prClosedAt": "2026-03-26T17:00:19Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-python#45629",
+            "createdAt": "2026-03-10T21:05:28Z",
+            "mergedAt": "2026-03-26T17:00:19Z",
+            "closedAt": "2026-03-26T17:00:19Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:5989681",
+        "generationStartAt": "2026-03-10T20:58:38.5209487Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-06-11T09:57:41.513Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "2.1.0",
+        "releaseBoundaryAt": "2026-06-11T09:57:41.513Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Java",
+        "package": "azure-resourcemanager-standbypool",
+        "trackId": "sdk:Java:azure-resourcemanager-standbypool",
+        "prId": "github:Azure/azure-sdk-for-java#48361",
+        "prCreatedAt": "2026-03-10T21:08:09Z",
+        "prMergedAt": "2026-03-24T23:46:03Z",
+        "prClosedAt": "2026-03-24T23:46:04Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-java#48361",
+            "createdAt": "2026-03-10T21:08:09Z",
+            "mergedAt": "2026-03-24T23:46:03Z",
+            "closedAt": "2026-03-24T23:46:04Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:5989683",
+        "generationStartAt": "2026-03-10T20:59:05.7970083Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-06-17T06:09:32.7Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.2.0",
+        "releaseBoundaryAt": "2026-06-17T06:09:32.7Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Go",
+        "package": "sdk/resourcemanager/standbypool/armstandbypool",
+        "trackId": "sdk:Go:sdk/resourcemanager/standbypool/armstandbypool",
+        "prId": "github:Azure/azure-sdk-for-go#26208",
+        "prCreatedAt": "2026-03-10T21:03:51Z",
+        "prMergedAt": "2026-03-25T17:17:47Z",
+        "prClosedAt": "2026-03-25T17:17:47Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-go#26208",
+            "createdAt": "2026-03-10T21:03:51Z",
+            "mergedAt": "2026-03-25T17:17:47Z",
+            "closedAt": "2026-03-25T17:17:47Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:5989682",
+        "generationStartAt": "2026-03-10T20:58:44.198381Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-06-11T06:41:07.607Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "2.1.0",
+        "releaseBoundaryAt": "2026-06-11T06:41:07.607Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      }
+    ],
+    "cohortPlan": {
+      "id": "33154",
+      "releasePlanId": "2121",
+      "title": "Release Plan - 2121 - GA - Standby Pool",
+      "service": "Standby Pool",
+      "state": "finished"
+    },
+    "quality": {
+      "warnings": [
+        "1 historical linked PR(s) closed without merge",
+        "1 superseded SDK PR link(s) retained"
+      ],
+      "unavailablePullRequests": 0,
+      "unavailablePipelineRuns": 0
+    }
+  },
+  "summary": {
+    "durationHours": 2363.2,
+    "pullRequestCount": 7,
+    "humanReviewCount": 16,
+    "humanCommentCount": 15
+  }
+}

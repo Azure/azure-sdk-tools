@@ -1,0 +1,4349 @@
+{
+  "schemaVersion": 2,
+  "id": "33678",
+  "correlation": {
+    "policyVersion": 1,
+    "preflight": "passed"
+  },
+  "releasePlanId": "2152",
+  "title": "Release Plan - 2152 - Public Preview - Azure Local",
+  "service": "Stack HCI",
+  "product": "Release",
+  "path": "specification/azurestackhci/resource-manager/Microsoft.AzureStackHCI/StackHCI/",
+  "state": "finished",
+  "plane": "management",
+  "releaseType": "APEX Public Preview",
+  "intendedMonth": "April 2026",
+  "createdAt": "2026-03-31T12:03:37.183Z",
+  "completedAt": "2026-05-20T14:04:43.637Z",
+  "sourceUrl": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33678",
+  "range": {
+    "start": "2026-03-09T10:39:16.000Z",
+    "end": "2026-05-20T14:04:43.637Z"
+  },
+  "intendedArtifacts": [
+    {
+      "prId": "github:Azure/azure-sdk-for-net#58114",
+      "language": ".NET",
+      "package": "Azure.ResourceManager.Hci",
+      "version": "1.3.0-beta.1",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6086558",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-js#38114",
+      "language": "JavaScript",
+      "package": "@azure/arm-azurestackhci",
+      "version": "4.1.0-beta.1",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6086557",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-python#46277",
+      "language": "Python",
+      "package": "azure-mgmt-azurestackhci",
+      "version": "8.1.0b1",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6086555",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-java#48793",
+      "language": "Java",
+      "package": "azure-resourcemanager-azurestackhci",
+      "version": "1.1.0-beta.1",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6086556",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-go#26569",
+      "language": "Go",
+      "package": "sdk/resourcemanager/azurestackhci/armazurestackhci",
+      "version": "3.1.0-beta.1",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6086559",
+      "releasePipelineUrl": null
+    }
+  ],
+  "links": [
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#41155",
+      "role": "spec-pr",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/41155",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-net#58114",
+      "role": "sdk-pr",
+      "language": ".NET",
+      "url": "https://github.com/Azure/azure-sdk-for-net/pull/58114",
+      "releasePlanIds": [
+        "33678"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-js#38114",
+      "role": "sdk-pr",
+      "language": "JavaScript",
+      "url": "https://github.com/Azure/azure-sdk-for-js/pull/38114",
+      "releasePlanIds": [
+        "33678"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-python#46277",
+      "role": "sdk-pr",
+      "language": "Python",
+      "url": "https://github.com/Azure/azure-sdk-for-python/pull/46277",
+      "releasePlanIds": [
+        "33678"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-java#48793",
+      "role": "sdk-pr",
+      "language": "Java",
+      "url": "https://github.com/Azure/azure-sdk-for-java/pull/48793",
+      "releasePlanIds": [
+        "33678"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-go#26569",
+      "role": "sdk-pr",
+      "language": "Go",
+      "url": "https://github.com/Azure/azure-sdk-for-go/pull/26569",
+      "releasePlanIds": [
+        "33678"
+      ]
+    }
+  ],
+  "tracks": [
+    {
+      "id": "plan",
+      "kind": "plan",
+      "label": "Release Plan",
+      "detail": "APEX Public Preview"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#41155",
+      "kind": "spec",
+      "label": "Spec PR",
+      "detail": "azure-rest-api-specs #41155",
+      "artifactId": "github:Azure/azure-rest-api-specs#41155",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:.NET:Azure.ResourceManager.Hci",
+      "kind": "sdk",
+      "label": ".NET",
+      "detail": "Azure.ResourceManager.Hci",
+      "artifactId": "github:Azure/azure-sdk-for-net#58114",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:JavaScript:@azure/arm-azurestackhci",
+      "kind": "sdk",
+      "label": "JavaScript",
+      "detail": "@azure/arm-azurestackhci",
+      "artifactId": "github:Azure/azure-sdk-for-js#38114",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Python:azure-mgmt-azurestackhci",
+      "kind": "sdk",
+      "label": "Python",
+      "detail": "azure-mgmt-azurestackhci",
+      "artifactId": "github:Azure/azure-sdk-for-python#46277",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Java:azure-resourcemanager-azurestackhci",
+      "kind": "sdk",
+      "label": "Java",
+      "detail": "azure-resourcemanager-azurestackhci",
+      "artifactId": "github:Azure/azure-sdk-for-java#48793",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Go:sdk/resourcemanager/azurestackhci/armazurestackhci",
+      "kind": "sdk",
+      "label": "Go",
+      "detail": "sdk/resourcemanager/azurestackhci/armazurestackhci",
+      "artifactId": "github:Azure/azure-sdk-for-go#26569",
+      "state": "merged"
+    }
+  ],
+  "events": [
+    {
+      "id": "github:Azure/azure-rest-api-specs#41155:pr.created:spec:github:Azure/azure-rest-api-specs#41155",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-09T10:39:16Z",
+      "observedAt": "2026-03-09T10:39:16Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41155",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41155",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41155"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41155:commit:9368346f51fc:spec:github:Azure/azure-rest-api-specs#41155",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-09T10:45:21Z",
+      "observedAt": "2026-03-09T10:45:21Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41155",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41155",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/9368346f51fc929e7d30c7f434769e297bd878b8"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41155:comment:4022852191:spec:github:Azure/azure-rest-api-specs#41155",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-09T10:48:22Z",
+      "observedAt": "2026-03-09T10:48:22Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41155",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41155",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41155#issuecomment-4022852191"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>⌛ Please wait. Next steps to merge this PR are being evaluated by automation. ⌛<br /><br />Comment generated by <a href=\"https://github.com/Azure/azure-rest-api-specs/actions/runs/22849767791\">summarize-checks</a",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41155:comment:4022852213:spec:github:Azure/azure-rest-api-specs#41155",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-09T10:48:22Z",
+      "observedAt": "2026-03-09T10:48:22Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41155",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41155",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41155#issuecomment-4022852213"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>✅ All automated merging requirements have been met! To get your PR merged, see <a href=\"https://aka.ms/azsdk/specreview/merge\">aka.ms/azsdk/specreview/merge</a>.<br /><br />Comment generated by <a href=\"https://g",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41155:commit:6917bcf25f6e:spec:github:Azure/azure-rest-api-specs#41155",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-20T08:21:01Z",
+      "observedAt": "2026-03-20T08:21:01Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41155",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "abaranwal-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41155",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/6917bcf25f6e45fe8588cdbea323de8b6d7581a5"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41155:commit:561570281530:spec:github:Azure/azure-rest-api-specs#41155",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-20T08:32:19Z",
+      "observedAt": "2026-03-20T08:32:19Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41155",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "abaranwal-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41155",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/56157028153054cb34e13bb5e8f7465c1a05f16b"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41155:commit:dd4c7cbe922e:spec:github:Azure/azure-rest-api-specs#41155",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-20T08:52:47Z",
+      "observedAt": "2026-03-20T08:52:47Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41155",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "abaranwal-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41155",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/dd4c7cbe922e200cde7d7afc0d2df57a64afb2ad"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41155:commit:160cb28d08bb:spec:github:Azure/azure-rest-api-specs#41155",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-20T09:04:33Z",
+      "observedAt": "2026-03-20T09:04:33Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41155",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "abaranwal-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41155",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/160cb28d08bbadd05a6dc4dc966f89ada1feb123"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41155:commit:8c31ed573616:spec:github:Azure/azure-rest-api-specs#41155",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-20T09:10:47Z",
+      "observedAt": "2026-03-20T09:10:47Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41155",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "abaranwal-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41155",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/8c31ed5736163ce48d621a9476b35e803ef8eb6c"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41155:comment:4096737277:spec:github:Azure/azure-rest-api-specs#41155",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-20T09:11:06Z",
+      "observedAt": "2026-03-20T09:11:06Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41155",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "abaranwal-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41155",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41155#issuecomment-4096737277"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@copilot update description of this PR, based on changes",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41155:comment:4096753446:spec:github:Azure/azure-rest-api-specs#41155",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-20T09:14:41Z",
+      "observedAt": "2026-03-20T09:14:41Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41155",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41155",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41155#issuecomment-4096753446"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> @copilot update description of this PR, based on changes Updated the PR description to reflect all changes in this PR: **Skeleton version (`2026-04-01-preview`)** - `main.tsp`: Replaced `v2026_03_01_preview` with `v2026_04_01_preview` in ",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41155:commit:773601d08dcb:spec:github:Azure/azure-rest-api-specs#41155",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-20T09:44:53Z",
+      "observedAt": "2026-03-20T09:44:53Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41155",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "abaranwal-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41155",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/773601d08dcbabcc827c077374fafbc2649680ea"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41155:review:3980595884:spec:github:Azure/azure-rest-api-specs#41155",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-20T10:07:49Z",
+      "observedAt": "2026-03-20T10:07:49Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41155",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "abaranwal-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41155",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41155#pullrequestreview-3980595884"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41155:commit:5f7fbb1fee8c:spec:github:Azure/azure-rest-api-specs#41155",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-23T10:44:30Z",
+      "observedAt": "2026-03-23T10:44:30Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41155",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "pvsraviteja"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41155",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/5f7fbb1fee8cd974848dadfd80947459d5b724d5"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41155:commit:173d2043e490:spec:github:Azure/azure-rest-api-specs#41155",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-25T04:47:18Z",
+      "observedAt": "2026-03-25T04:47:18Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41155",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "abaranwal-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41155",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/173d2043e4901d395126a5e751fa2e996477a508"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41155:commit:673413accced:spec:github:Azure/azure-rest-api-specs#41155",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-25T04:49:50Z",
+      "observedAt": "2026-03-25T04:49:50Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41155",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "abaranwal-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41155",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/673413accced9cc5fc91569375829ec5d1c20b5e"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41155:commit:a8d952e4b201:spec:github:Azure/azure-rest-api-specs#41155",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-25T05:03:55Z",
+      "observedAt": "2026-03-25T05:03:55Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41155",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "abaranwal-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41155",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/a8d952e4b20175501101c9494573964c394c24c5"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41155:commit:0d013967086c:spec:github:Azure/azure-rest-api-specs#41155",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-25T06:43:23Z",
+      "observedAt": "2026-03-25T06:43:23Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41155",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "abaranwal-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41155",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/0d013967086cf6588d1ab87d68f9bb95f6309726"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41155:commit:e3701e2659b4:spec:github:Azure/azure-rest-api-specs#41155",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-25T06:44:42Z",
+      "observedAt": "2026-03-25T06:44:42Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41155",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "abaranwal-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41155",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/e3701e2659b4f7cb6ea8a16d30b7daea1873c153"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41155:commit:238243a536d2:spec:github:Azure/azure-rest-api-specs#41155",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-26T06:56:40Z",
+      "observedAt": "2026-03-26T06:56:40Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41155",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "pvsraviteja"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41155",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/238243a536d2ff9a2cf094641c56d800da80f93a"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41155:commit:72f65703147d:spec:github:Azure/azure-rest-api-specs#41155",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-26T08:33:34Z",
+      "observedAt": "2026-03-26T08:33:34Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41155",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "abaranwal-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41155",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/72f65703147d1589ac504d8f218e16ec082feacb"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41155:review:4019406057:spec:github:Azure/azure-rest-api-specs#41155",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-27T07:37:35Z",
+      "observedAt": "2026-03-27T07:37:35Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41155",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "abaranwal-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41155",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41155#pullrequestreview-4019406057"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41155:commit:1cc956103a53:spec:github:Azure/azure-rest-api-specs#41155",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-27T07:38:11Z",
+      "observedAt": "2026-03-27T07:38:11Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41155",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "abaranwal-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41155",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/1cc956103a533554fb5e1f3fea0d6c4779b618e4"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41155:review:4019539524:spec:github:Azure/azure-rest-api-specs#41155",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-27T08:12:19Z",
+      "observedAt": "2026-03-27T08:12:19Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41155",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "IndraneelPal"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41155",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41155#pullrequestreview-4019539524"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41155:pr.merged:spec:github:Azure/azure-rest-api-specs#41155",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-27T08:14:39Z",
+      "observedAt": "2026-03-27T08:14:39Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41155",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41155",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41155"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado:33678:created",
+      "type": "plan.created",
+      "phase": "plan",
+      "occurredAt": "2026-03-31T12:03:37.183Z",
+      "observedAt": "2026-03-31T12:03:37.183Z",
+      "trackId": "plan",
+      "title": "Release Plan created",
+      "confidence": "authoritative",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33678",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33678"
+      },
+      "stack": 0
+    },
+    {
+      "id": "ado:33678:1:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-03-31T12:03:37.183Z",
+      "observedAt": "2026-03-31T12:03:37.183Z",
+      "trackId": "plan",
+      "value": "New",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33678",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33678"
+      },
+      "title": "Plan state changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33678:1:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-31T12:03:37.183Z",
+      "observedAt": "2026-03-31T12:03:37.183Z",
+      "trackId": "plan",
+      "value": "Not Available",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33678",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33678"
+      },
+      "title": "Spec approval changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:33678:1:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-31T12:03:37.183Z",
+      "observedAt": "2026-03-31T12:03:37.183Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Hci",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33678",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33678"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33678:1:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-31T12:03:37.183Z",
+      "observedAt": "2026-03-31T12:03:37.183Z",
+      "trackId": "sdk:JavaScript:@azure/arm-azurestackhci",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33678",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33678"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33678:1:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-31T12:03:37.183Z",
+      "observedAt": "2026-03-31T12:03:37.183Z",
+      "trackId": "sdk:Python:azure-mgmt-azurestackhci",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33678",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33678"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33678:1:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-31T12:03:37.183Z",
+      "observedAt": "2026-03-31T12:03:37.183Z",
+      "trackId": "sdk:Java:azure-resourcemanager-azurestackhci",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33678",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33678"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33678:1:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-31T12:03:37.183Z",
+      "observedAt": "2026-03-31T12:03:37.183Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/azurestackhci/armazurestackhci",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33678",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33678"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33678:6:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-03-31T12:05:19.98Z",
+      "observedAt": "2026-03-31T12:05:19.98Z",
+      "trackId": "plan",
+      "value": "In Progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33678",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33678"
+      },
+      "title": "Plan state changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:33679:2:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-31T12:13:25.153Z",
+      "observedAt": "2026-03-31T12:13:25.153Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41155",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/41155",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33679",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33679"
+      },
+      "title": "Spec PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado:33678:9:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-31T12:13:29.32Z",
+      "observedAt": "2026-03-31T12:13:29.32Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Hci",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33678",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33678"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33678:9:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-31T12:13:29.32Z",
+      "observedAt": "2026-03-31T12:13:29.32Z",
+      "trackId": "sdk:JavaScript:@azure/arm-azurestackhci",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33678",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33678"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33678:9:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-31T12:13:29.32Z",
+      "observedAt": "2026-03-31T12:13:29.32Z",
+      "trackId": "sdk:Python:azure-mgmt-azurestackhci",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33678",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33678"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33678:9:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-31T12:13:29.32Z",
+      "observedAt": "2026-03-31T12:13:29.32Z",
+      "trackId": "sdk:Java:azure-resourcemanager-azurestackhci",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33678",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33678"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33678:9:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-31T12:13:29.32Z",
+      "observedAt": "2026-03-31T12:13:29.32Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/azurestackhci/armazurestackhci",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33678",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33678"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33678:10:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-31T12:13:46.62Z",
+      "observedAt": "2026-03-31T12:13:46.62Z",
+      "trackId": "plan",
+      "value": "Approved",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33678",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33678"
+      },
+      "title": "Spec approval changed",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6086555:generation.queued:sdk:Python:azure-mgmt-azurestackhci",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-03-31T12:23:23.2497602Z",
+      "observedAt": "2026-03-31T12:27:36.9148667Z",
+      "trackId": "sdk:Python:azure-mgmt-azurestackhci",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6086555",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6086555"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:33678:24:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-31T12:23:25.857Z",
+      "observedAt": "2026-03-31T12:23:25.857Z",
+      "trackId": "sdk:Python:azure-mgmt-azurestackhci",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33678",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33678"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6086556:generation.queued:sdk:Java:azure-resourcemanager-azurestackhci",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-03-31T12:23:35.8919742Z",
+      "observedAt": "2026-03-31T12:29:03.0973711Z",
+      "trackId": "sdk:Java:azure-resourcemanager-azurestackhci",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6086556",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6086556"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:33678:25:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-31T12:23:40.253Z",
+      "observedAt": "2026-03-31T12:23:40.253Z",
+      "trackId": "sdk:Java:azure-resourcemanager-azurestackhci",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33678",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33678"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6086557:generation.queued:sdk:JavaScript:@azure/arm-azurestackhci",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-03-31T12:23:48.9336296Z",
+      "observedAt": "2026-03-31T12:29:14.6338164Z",
+      "trackId": "sdk:JavaScript:@azure/arm-azurestackhci",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6086557",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6086557"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:33678:26:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-31T12:23:50.923Z",
+      "observedAt": "2026-03-31T12:23:50.923Z",
+      "trackId": "sdk:JavaScript:@azure/arm-azurestackhci",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33678",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33678"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6086558:generation.queued:sdk:.NET:Azure.ResourceManager.Hci",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-03-31T12:23:59.5676095Z",
+      "observedAt": "2026-03-31T12:28:59.1474144Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Hci",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6086558",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6086558"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:33678:27:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-31T12:24:03.16Z",
+      "observedAt": "2026-03-31T12:24:03.16Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Hci",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33678",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33678"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6086559:generation.queued:sdk:Go:sdk/resourcemanager/azurestackhci/armazurestackhci",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-03-31T12:24:11.6299296Z",
+      "observedAt": "2026-03-31T12:29:06.7903383Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/azurestackhci/armazurestackhci",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6086559",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6086559"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:33678:28:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-31T12:24:13.483Z",
+      "observedAt": "2026-03-31T12:24:13.483Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/azurestackhci/armazurestackhci",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33678",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33678"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6086555:generation.started:sdk:Python:azure-mgmt-azurestackhci",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-03-31T12:26:21.2397936Z",
+      "observedAt": "2026-03-31T12:27:36.9148667Z",
+      "trackId": "sdk:Python:azure-mgmt-azurestackhci",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6086555",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6086555"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6086555:839baf29-f257-56a8-705d-5e16727e0f07:sdk:Python:azure-mgmt-azurestackhci",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-03-31T12:27:10.1Z",
+      "observedAt": "2026-03-31T12:27:36.9148667Z",
+      "trackId": "sdk:Python:azure-mgmt-azurestackhci",
+      "title": "task failed: Create Run Time Variables",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6086555",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6086555"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:6086555:53495029-6fd7-5fbf-3ed4-5fd95aecc3eb:sdk:Python:azure-mgmt-azurestackhci",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-03-31T12:27:13.9233333Z",
+      "observedAt": "2026-03-31T12:27:36.9148667Z",
+      "trackId": "sdk:Python:azure-mgmt-azurestackhci",
+      "title": "task failed: Set PR title prefix on failures",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6086555",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6086555"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6086555:4c282368-c5c4-585d-5715-80caf1d2b8ff:sdk:Python:azure-mgmt-azurestackhci",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-03-31T12:27:15.3233333Z",
+      "observedAt": "2026-03-31T12:27:36.9148667Z",
+      "trackId": "sdk:Python:azure-mgmt-azurestackhci",
+      "title": "task failed: Publish failed spec-gen-sdk-logs Artifacts",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6086555",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6086555"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6086555:83516c17-6666-5250-abde-63983ce72a49:sdk:Python:azure-mgmt-azurestackhci",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-03-31T12:27:32.48Z",
+      "observedAt": "2026-03-31T12:27:36.9148667Z",
+      "trackId": "sdk:Python:azure-mgmt-azurestackhci",
+      "title": "job failed: Job",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6086555",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6086555"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6086555:6884a131-87da-5381-61f3-d7acc3b91d76:sdk:Python:azure-mgmt-azurestackhci",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-03-31T12:27:36.0333333Z",
+      "observedAt": "2026-03-31T12:27:36.9148667Z",
+      "trackId": "sdk:Python:azure-mgmt-azurestackhci",
+      "title": "stage failed: SDK Generation",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6086555",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6086555"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6086555:generation.failed:sdk:Python:azure-mgmt-azurestackhci",
+      "type": "generation.failed",
+      "phase": "generation",
+      "occurredAt": "2026-03-31T12:27:36.9148667Z",
+      "observedAt": "2026-03-31T12:27:36.9148667Z",
+      "trackId": "sdk:Python:azure-mgmt-azurestackhci",
+      "title": "Pipeline failed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6086555",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6086555"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6086559:generation.started:sdk:Go:sdk/resourcemanager/azurestackhci/armazurestackhci",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-03-31T12:27:41.6549063Z",
+      "observedAt": "2026-03-31T12:29:06.7903383Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/azurestackhci/armazurestackhci",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6086559",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6086559"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6086558:generation.started:sdk:.NET:Azure.ResourceManager.Hci",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-03-31T12:27:42.6135718Z",
+      "observedAt": "2026-03-31T12:28:59.1474144Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Hci",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6086558",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6086558"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6086556:generation.started:sdk:Java:azure-resourcemanager-azurestackhci",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-03-31T12:27:43.6255722Z",
+      "observedAt": "2026-03-31T12:29:03.0973711Z",
+      "trackId": "sdk:Java:azure-resourcemanager-azurestackhci",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6086556",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6086556"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6086557:generation.started:sdk:JavaScript:@azure/arm-azurestackhci",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-03-31T12:27:43.6993771Z",
+      "observedAt": "2026-03-31T12:29:14.6338164Z",
+      "trackId": "sdk:JavaScript:@azure/arm-azurestackhci",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6086557",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6086557"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6086558:839baf29-f257-56a8-705d-5e16727e0f07:sdk:.NET:Azure.ResourceManager.Hci",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-03-31T12:28:30.4066667Z",
+      "observedAt": "2026-03-31T12:28:59.1474144Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Hci",
+      "title": "task failed: Create Run Time Variables",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6086558",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6086558"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:6086559:839baf29-f257-56a8-705d-5e16727e0f07:sdk:Go:sdk/resourcemanager/azurestackhci/armazurestackhci",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-03-31T12:28:31.09Z",
+      "observedAt": "2026-03-31T12:29:06.7903383Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/azurestackhci/armazurestackhci",
+      "title": "task failed: Create Run Time Variables",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6086559",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6086559"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:6086558:53495029-6fd7-5fbf-3ed4-5fd95aecc3eb:sdk:.NET:Azure.ResourceManager.Hci",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-03-31T12:28:31.9233333Z",
+      "observedAt": "2026-03-31T12:28:59.1474144Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Hci",
+      "title": "task failed: Set PR title prefix on failures",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6086558",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6086558"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6086557:839baf29-f257-56a8-705d-5e16727e0f07:sdk:JavaScript:@azure/arm-azurestackhci",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-03-31T12:28:32.2566667Z",
+      "observedAt": "2026-03-31T12:29:14.6338164Z",
+      "trackId": "sdk:JavaScript:@azure/arm-azurestackhci",
+      "title": "task failed: Create Run Time Variables",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6086557",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6086557"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:6086556:839baf29-f257-56a8-705d-5e16727e0f07:sdk:Java:azure-resourcemanager-azurestackhci",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-03-31T12:28:32.98Z",
+      "observedAt": "2026-03-31T12:29:03.0973711Z",
+      "trackId": "sdk:Java:azure-resourcemanager-azurestackhci",
+      "title": "task failed: Create Run Time Variables",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6086556",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6086556"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:6086558:4c282368-c5c4-585d-5715-80caf1d2b8ff:sdk:.NET:Azure.ResourceManager.Hci",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-03-31T12:28:33.3533333Z",
+      "observedAt": "2026-03-31T12:28:59.1474144Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Hci",
+      "title": "task failed: Publish failed spec-gen-sdk-logs Artifacts",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6086558",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6086558"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6086556:53495029-6fd7-5fbf-3ed4-5fd95aecc3eb:sdk:Java:azure-resourcemanager-azurestackhci",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-03-31T12:28:34.6366667Z",
+      "observedAt": "2026-03-31T12:29:03.0973711Z",
+      "trackId": "sdk:Java:azure-resourcemanager-azurestackhci",
+      "title": "task failed: Set PR title prefix on failures",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6086556",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6086556"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6086557:53495029-6fd7-5fbf-3ed4-5fd95aecc3eb:sdk:JavaScript:@azure/arm-azurestackhci",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-03-31T12:28:35.5433333Z",
+      "observedAt": "2026-03-31T12:29:14.6338164Z",
+      "trackId": "sdk:JavaScript:@azure/arm-azurestackhci",
+      "title": "task failed: Set PR title prefix on failures",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6086557",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6086557"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6086559:53495029-6fd7-5fbf-3ed4-5fd95aecc3eb:sdk:Go:sdk/resourcemanager/azurestackhci/armazurestackhci",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-03-31T12:28:36.0733333Z",
+      "observedAt": "2026-03-31T12:29:06.7903383Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/azurestackhci/armazurestackhci",
+      "title": "task failed: Set PR title prefix on failures",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6086559",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6086559"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6086556:4c282368-c5c4-585d-5715-80caf1d2b8ff:sdk:Java:azure-resourcemanager-azurestackhci",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-03-31T12:28:36.1Z",
+      "observedAt": "2026-03-31T12:29:03.0973711Z",
+      "trackId": "sdk:Java:azure-resourcemanager-azurestackhci",
+      "title": "task failed: Publish failed spec-gen-sdk-logs Artifacts",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6086556",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6086556"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6086557:4c282368-c5c4-585d-5715-80caf1d2b8ff:sdk:JavaScript:@azure/arm-azurestackhci",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-03-31T12:28:36.92Z",
+      "observedAt": "2026-03-31T12:29:14.6338164Z",
+      "trackId": "sdk:JavaScript:@azure/arm-azurestackhci",
+      "title": "task failed: Publish failed spec-gen-sdk-logs Artifacts",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6086557",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6086557"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6086559:4c282368-c5c4-585d-5715-80caf1d2b8ff:sdk:Go:sdk/resourcemanager/azurestackhci/armazurestackhci",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-03-31T12:28:37.4566667Z",
+      "observedAt": "2026-03-31T12:29:06.7903383Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/azurestackhci/armazurestackhci",
+      "title": "task failed: Publish failed spec-gen-sdk-logs Artifacts",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6086559",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6086559"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6086558:83516c17-6666-5250-abde-63983ce72a49:sdk:.NET:Azure.ResourceManager.Hci",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-03-31T12:28:49.91Z",
+      "observedAt": "2026-03-31T12:28:59.1474144Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Hci",
+      "title": "job failed: Job",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6086558",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6086558"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6086556:83516c17-6666-5250-abde-63983ce72a49:sdk:Java:azure-resourcemanager-azurestackhci",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-03-31T12:28:52.7233333Z",
+      "observedAt": "2026-03-31T12:29:03.0973711Z",
+      "trackId": "sdk:Java:azure-resourcemanager-azurestackhci",
+      "title": "job failed: Job",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6086556",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6086556"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6086557:83516c17-6666-5250-abde-63983ce72a49:sdk:JavaScript:@azure/arm-azurestackhci",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-03-31T12:28:53.5266667Z",
+      "observedAt": "2026-03-31T12:29:14.6338164Z",
+      "trackId": "sdk:JavaScript:@azure/arm-azurestackhci",
+      "title": "job failed: Job",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6086557",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6086557"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6086559:83516c17-6666-5250-abde-63983ce72a49:sdk:Go:sdk/resourcemanager/azurestackhci/armazurestackhci",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-03-31T12:28:53.8866667Z",
+      "observedAt": "2026-03-31T12:29:06.7903383Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/azurestackhci/armazurestackhci",
+      "title": "job failed: Job",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6086559",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6086559"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6086558:6884a131-87da-5381-61f3-d7acc3b91d76:sdk:.NET:Azure.ResourceManager.Hci",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-03-31T12:28:58.7966667Z",
+      "observedAt": "2026-03-31T12:28:59.1474144Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Hci",
+      "title": "stage failed: SDK Generation",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6086558",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6086558"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6086558:generation.failed:sdk:.NET:Azure.ResourceManager.Hci",
+      "type": "generation.failed",
+      "phase": "generation",
+      "occurredAt": "2026-03-31T12:28:59.1474144Z",
+      "observedAt": "2026-03-31T12:28:59.1474144Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Hci",
+      "title": "Pipeline failed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6086558",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6086558"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6086556:6884a131-87da-5381-61f3-d7acc3b91d76:sdk:Java:azure-resourcemanager-azurestackhci",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-03-31T12:29:00.8466667Z",
+      "observedAt": "2026-03-31T12:29:03.0973711Z",
+      "trackId": "sdk:Java:azure-resourcemanager-azurestackhci",
+      "title": "stage failed: SDK Generation",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6086556",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6086556"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6086556:generation.failed:sdk:Java:azure-resourcemanager-azurestackhci",
+      "type": "generation.failed",
+      "phase": "generation",
+      "occurredAt": "2026-03-31T12:29:03.0973711Z",
+      "observedAt": "2026-03-31T12:29:03.0973711Z",
+      "trackId": "sdk:Java:azure-resourcemanager-azurestackhci",
+      "title": "Pipeline failed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6086556",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6086556"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6086559:6884a131-87da-5381-61f3-d7acc3b91d76:sdk:Go:sdk/resourcemanager/azurestackhci/armazurestackhci",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-03-31T12:29:06.5366667Z",
+      "observedAt": "2026-03-31T12:29:06.7903383Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/azurestackhci/armazurestackhci",
+      "title": "stage failed: SDK Generation",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6086559",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6086559"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6086559:generation.failed:sdk:Go:sdk/resourcemanager/azurestackhci/armazurestackhci",
+      "type": "generation.failed",
+      "phase": "generation",
+      "occurredAt": "2026-03-31T12:29:06.7903383Z",
+      "observedAt": "2026-03-31T12:29:06.7903383Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/azurestackhci/armazurestackhci",
+      "title": "Pipeline failed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6086559",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6086559"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6086557:6884a131-87da-5381-61f3-d7acc3b91d76:sdk:JavaScript:@azure/arm-azurestackhci",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-03-31T12:29:13.98Z",
+      "observedAt": "2026-03-31T12:29:14.6338164Z",
+      "trackId": "sdk:JavaScript:@azure/arm-azurestackhci",
+      "title": "stage failed: SDK Generation",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6086557",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6086557"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6086557:generation.failed:sdk:JavaScript:@azure/arm-azurestackhci",
+      "type": "generation.failed",
+      "phase": "generation",
+      "occurredAt": "2026-03-31T12:29:14.6338164Z",
+      "observedAt": "2026-03-31T12:29:14.6338164Z",
+      "trackId": "sdk:JavaScript:@azure/arm-azurestackhci",
+      "title": "Pipeline failed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6086557",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6086557"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48793:commit:ae57ee244773:sdk:Java:azure-resourcemanager-azurestackhci",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-13T09:03:43Z",
+      "observedAt": "2026-04-13T09:03:43Z",
+      "trackId": "sdk:Java:azure-resourcemanager-azurestackhci",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48793",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/ae57ee244773e13feb1dc15e7dd904f10ea49033"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46277:commit:5c322a039075:sdk:Python:azure-mgmt-azurestackhci",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-13T09:03:45Z",
+      "observedAt": "2026-04-13T09:03:45Z",
+      "trackId": "sdk:Python:azure-mgmt-azurestackhci",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46277",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/5c322a0390752e2f30cddcd71956c6a5dc6442f3"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48793:pr.created:sdk:Java:azure-resourcemanager-azurestackhci",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-13T09:03:47Z",
+      "observedAt": "2026-04-13T09:03:47Z",
+      "trackId": "sdk:Java:azure-resourcemanager-azurestackhci",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48793",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48793"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46277:pr.created:sdk:Python:azure-mgmt-azurestackhci",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-13T09:03:48Z",
+      "observedAt": "2026-04-13T09:03:48Z",
+      "trackId": "sdk:Python:azure-mgmt-azurestackhci",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46277",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46277"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38114:commit:5a6794fb3290:sdk:JavaScript:@azure/arm-azurestackhci",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-13T09:07:07Z",
+      "observedAt": "2026-04-13T09:07:07Z",
+      "trackId": "sdk:JavaScript:@azure/arm-azurestackhci",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38114",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/5a6794fb3290b31250746e7ea9b9989beec6f5eb"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38114:pr.created:sdk:JavaScript:@azure/arm-azurestackhci",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-13T09:07:10Z",
+      "observedAt": "2026-04-13T09:07:10Z",
+      "trackId": "sdk:JavaScript:@azure/arm-azurestackhci",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38114",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38114"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26569:commit:1b052ca361a3:sdk:Go:sdk/resourcemanager/azurestackhci/armazurestackhci",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-13T09:08:56Z",
+      "observedAt": "2026-04-13T09:08:56Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/azurestackhci/armazurestackhci",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26569",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/1b052ca361a3f8619c0d26713902e21188f111cc"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26569:pr.created:sdk:Go:sdk/resourcemanager/azurestackhci/armazurestackhci",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-13T09:09:00Z",
+      "observedAt": "2026-04-13T09:09:00Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/azurestackhci/armazurestackhci",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26569",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26569"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38114:comment:4235246963:sdk:JavaScript:@azure/arm-azurestackhci",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-13T09:16:03Z",
+      "observedAt": "2026-04-13T09:16:03Z",
+      "trackId": "sdk:JavaScript:@azure/arm-azurestackhci",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38114",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38114#issuecomment-4235246963"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews [@azure/arm-azurestackhci](https://spa.apiview.dev/review/9cb6b13668c54359adf4531a56933de1?activeApiRevisionId=2662d98d16864001ac421c0",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26569:comment:4235255084:sdk:Go:sdk/resourcemanager/azurestackhci/armazurestackhci",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-13T09:17:24Z",
+      "observedAt": "2026-04-13T09:17:24Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/azurestackhci/armazurestackhci",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26569",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26569#issuecomment-4235255084"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews [sdk/resourcemanager/azurestackhci/armazurestackhci](https://spa.apiview.dev/review/714a234c6e7b41d7b2defde3b6cbdecb?activeApiRevision",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48793:comment:4235255163:sdk:Java:azure-resourcemanager-azurestackhci",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-13T09:17:25Z",
+      "observedAt": "2026-04-13T09:17:25Z",
+      "trackId": "sdk:Java:azure-resourcemanager-azurestackhci",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48793",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48793#issuecomment-4235255163"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews [com.azure.resourcemanager:azure-resourcemanager-azurestackhci](https://spa.apiview.dev/review/edc81aded3464d2aa74b65e7a3e87057?active",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58114:commit:f12723fe7575:sdk:.NET:Azure.ResourceManager.Hci",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-13T09:23:10Z",
+      "observedAt": "2026-04-13T09:23:10Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Hci",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58114",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/f12723fe75755ee3f5bec9743f722ab1820ba3b8"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58114:pr.created:sdk:.NET:Azure.ResourceManager.Hci",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-13T09:23:19Z",
+      "observedAt": "2026-04-13T09:23:19Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Hci",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58114",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58114"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58114:review:4097675578:sdk:.NET:Azure.ResourceManager.Hci",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-13T09:25:57Z",
+      "observedAt": "2026-04-13T09:25:57Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Hci",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58114",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58114#pullrequestreview-4097675578"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This PR finalizes the `Azure.ResourceManager.Hci` package changelog entry for `1.3.0-beta.1` by replacing the `(Unreleased)` tag with the release date `2026-04-13`, aligning it with the existing changelog date forma",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48793:comment:3072039872:sdk:Java:azure-resourcemanager-azurestackhci",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-13T09:27:14Z",
+      "observedAt": "2026-04-13T09:27:14Z",
+      "trackId": "sdk:Java:azure-resourcemanager-azurestackhci",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48793",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48793#discussion_r3072039872"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`claimedBy` is deserialized in `fromJson` but never serialized in `toJson`, which breaks round-tripping and can drop data when `DeviceDetail` is embedded in other serializations. Write the `claimedBy` field in `toJson` as well (or remove th",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48793:comment:3072039931:sdk:Java:azure-resourcemanager-azurestackhci",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-13T09:27:15Z",
+      "observedAt": "2026-04-13T09:27:15Z",
+      "trackId": "sdk:Java:azure-resourcemanager-azurestackhci",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48793",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48793#discussion_r3072039931"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`ConfidentialVmProperties` reads three fields in `fromJson` (`confidentialVmIntent`, `confidentialVmStatus`, `confidentialVmStatusSummary`) but `toJson` emits an empty object. This makes serialization inconsistent and can cause the property",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48793:comment:3072039966:sdk:Java:azure-resourcemanager-azurestackhci",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-13T09:27:15Z",
+      "observedAt": "2026-04-13T09:27:15Z",
+      "trackId": "sdk:Java:azure-resourcemanager-azurestackhci",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48793",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48793#discussion_r3072039966"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`ClusterSdnProperties` deserializes multiple fields in `fromJson`, but `toJson` emits an empty object. If a `ClusterSdnProperties` instance is ever serialized (directly or as part of another object), this will drop all SDN fields. Serialize",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48793:comment:3072039988:sdk:Java:azure-resourcemanager-azurestackhci",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-13T09:27:15Z",
+      "observedAt": "2026-04-13T09:27:15Z",
+      "trackId": "sdk:Java:azure-resourcemanager-azurestackhci",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48793",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48793#discussion_r3072039988"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`PublisherProperties` deserializes `provisioningState` in `fromJson` but never writes it in `toJson`. This makes the type non-roundtrippable and can result in lost state if serialized. Write `provisioningState` in `toJson` (or remove `JsonS",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48793:comment:3072040021:sdk:Java:azure-resourcemanager-azurestackhci",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-13T09:27:16Z",
+      "observedAt": "2026-04-13T09:27:16Z",
+      "trackId": "sdk:Java:azure-resourcemanager-azurestackhci",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48793",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48793#discussion_r3072040021"
+      },
+      "confidence": "authoritative",
+      "excerpt": "In this file, `LOGGER` and `manager()` are unused, which adds noise and can trigger build warnings depending on compiler settings. Remove these unused members (or use `LOGGER` for parameter validation/logging if that's intended by the patte",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48793:comment:3072040039:sdk:Java:azure-resourcemanager-azurestackhci",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-13T09:27:16Z",
+      "observedAt": "2026-04-13T09:27:16Z",
+      "trackId": "sdk:Java:azure-resourcemanager-azurestackhci",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48793",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48793#discussion_r3072040039"
+      },
+      "confidence": "authoritative",
+      "excerpt": "In this file, `LOGGER` and `manager()` are unused, which adds noise and can trigger build warnings depending on compiler settings. Remove these unused members (or use `LOGGER` for parameter validation/logging if that's intended by the patte",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48793:comment:3072040060:sdk:Java:azure-resourcemanager-azurestackhci",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-13T09:27:16Z",
+      "observedAt": "2026-04-13T09:27:16Z",
+      "trackId": "sdk:Java:azure-resourcemanager-azurestackhci",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48793",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48793#discussion_r3072040060"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Setting `revapi.skip` to `true` disables API compatibility checks for this artifact, which can allow accidental breaking changes to ship unnoticed. If this is only needed temporarily for the generation update, consider scoping it (e.g., onl",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48793:comment:3072040082:sdk:Java:azure-resourcemanager-azurestackhci",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-13T09:27:17Z",
+      "observedAt": "2026-04-13T09:27:17Z",
+      "trackId": "sdk:Java:azure-resourcemanager-azurestackhci",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48793",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48793#discussion_r3072040082"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Grammatical issue in Javadoc: use 'an update payload' (not 'a update payload') and consider 'Represents the URL of an update payload' for clarity. ```suggestion * Represents the URL of an update payload. ```",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48793:comment:3072040108:sdk:Java:azure-resourcemanager-azurestackhci",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-13T09:27:17Z",
+      "observedAt": "2026-04-13T09:27:17Z",
+      "trackId": "sdk:Java:azure-resourcemanager-azurestackhci",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48793",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48793#discussion_r3072040108"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Grammatical issue in Javadoc: use 'an update payload' (not 'a update payload') and consider 'Represents the URL of an update payload' for clarity.",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48793:comment:3072040131:sdk:Java:azure-resourcemanager-azurestackhci",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-13T09:27:17Z",
+      "observedAt": "2026-04-13T09:27:17Z",
+      "trackId": "sdk:Java:azure-resourcemanager-azurestackhci",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48793",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48793#discussion_r3072040131"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Grammatical issue in Javadoc: use 'an update payload' (not 'a update payload') and consider 'Represents the URL of an update payload' for clarity. ```suggestion * Represents the hash algorithm of an update payload. ```",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48793:comment:3072040152:sdk:Java:azure-resourcemanager-azurestackhci",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-13T09:27:17Z",
+      "observedAt": "2026-04-13T09:27:17Z",
+      "trackId": "sdk:Java:azure-resourcemanager-azurestackhci",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48793",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48793#discussion_r3072040152"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Grammatical issue in Javadoc: use 'an update payload' (not 'a update payload') and consider 'Represents the URL of an update payload' for clarity. ```suggestion * Represents the identifier of an update payload. ```",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48793:comment:3072040167:sdk:Java:azure-resourcemanager-azurestackhci",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-13T09:27:18Z",
+      "observedAt": "2026-04-13T09:27:18Z",
+      "trackId": "sdk:Java:azure-resourcemanager-azurestackhci",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48793",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48793#discussion_r3072040167"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Grammatical issue in Javadoc: use 'an update payload' (not 'a update payload') and consider 'Represents the URL of an update payload' for clarity. ```suggestion * Represents the URL of an update payload. */ private String url; /* * Represen",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48793:comment:3072040190:sdk:Java:azure-resourcemanager-azurestackhci",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-13T09:27:18Z",
+      "observedAt": "2026-04-13T09:27:18Z",
+      "trackId": "sdk:Java:azure-resourcemanager-azurestackhci",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48793",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48793#discussion_r3072040190"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Grammatical issue in Javadoc: use 'an update payload' (not 'a update payload') and consider 'Represents the URL of an update payload' for clarity.",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48793:comment:3072040211:sdk:Java:azure-resourcemanager-azurestackhci",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-13T09:27:18Z",
+      "observedAt": "2026-04-13T09:27:18Z",
+      "trackId": "sdk:Java:azure-resourcemanager-azurestackhci",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48793",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48793#discussion_r3072040211"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Grammatical issue in Javadoc: use 'an update payload' (not 'a update payload') and consider 'Represents the URL of an update payload' for clarity.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48793:comment:3072040232:sdk:Java:azure-resourcemanager-azurestackhci",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-13T09:27:18Z",
+      "observedAt": "2026-04-13T09:27:18Z",
+      "trackId": "sdk:Java:azure-resourcemanager-azurestackhci",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48793",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48793#discussion_r3072040232"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The class-level Javadoc says 'Cluster Jobs resource' but this type is `EdgeMachineJobInner`. Update the Javadoc to match the actual resource (edge machine jobs) to avoid confusion in generated docs. ```suggestion * Edge machine jobs resourc",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48793:review:4097682784:sdk:Java:azure-resourcemanager-azurestackhci",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-13T09:27:19Z",
+      "observedAt": "2026-04-13T09:27:19Z",
+      "trackId": "sdk:Java:azure-resourcemanager-azurestackhci",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48793",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48793#pullrequestreview-4097682784"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview > [!NOTE] > Copilot was unable to run its full agentic suite in this review. Updates the Azure Stack HCI Resource Manager Java SDK to API version **2026-04-01-preview** with newly generated TypeSpec models/clients, ",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26569:review:4097689336:sdk:Go:sdk/resourcemanager/azurestackhci/armazurestackhci",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-13T09:28:24Z",
+      "observedAt": "2026-04-13T09:28:24Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/azurestackhci/armazurestackhci",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26569",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26569#pullrequestreview-4097689336"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Regenerates the `sdk/resourcemanager/azurestackhci/armazurestackhci` Go management-plane SDK from the AzureStackHCI TypeSpec config to target the **2026-04-01-preview** API version, including new/updated clients and",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38114:comment:3072048138:sdk:JavaScript:@azure/arm-azurestackhci",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-13T09:28:47Z",
+      "observedAt": "2026-04-13T09:28:47Z",
+      "trackId": "sdk:JavaScript:@azure/arm-azurestackhci",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38114",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38114#discussion_r3072048138"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This sample deletes the same DevicePool twice (maximum set, then minimum set). The second delete is very likely to fail with a NotFound/Conflict depending on service behavior, making the sample unreliable. Suggestion: pick one scenario to r",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38114:comment:3072048211:sdk:JavaScript:@azure/arm-azurestackhci",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-13T09:28:47Z",
+      "observedAt": "2026-04-13T09:28:47Z",
+      "trackId": "sdk:JavaScript:@azure/arm-azurestackhci",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38114",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38114#discussion_r3072048211"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Per the generated API surface, `updates.prepare(...)` is a long-running operation that returns a Poller, not a Promise for completion. `await` here will not wait for the operation to finish; it will just yield the poller object. Update the ",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38114:comment:3072048244:sdk:JavaScript:@azure/arm-azurestackhci",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-13T09:28:47Z",
+      "observedAt": "2026-04-13T09:28:47Z",
+      "trackId": "sdk:JavaScript:@azure/arm-azurestackhci",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38114",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38114#discussion_r3072048244"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`clusters.changeRing(...)` is an LRO (returns a poller). As written, `result` will be a poller object, not the final `Cluster`. Update the sample to call `pollUntilDone()` on the poller before logging so users see the completed resource and",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38114:review:4097691340:sdk:JavaScript:@azure/arm-azurestackhci",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-13T09:28:48Z",
+      "observedAt": "2026-04-13T09:28:48Z",
+      "trackId": "sdk:JavaScript:@azure/arm-azurestackhci",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38114",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38114#pullrequestreview-4097691340"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview > [!NOTE] > Copilot was unable to run its full agentic suite in this review. Auto-generated AzureStackHCI SDK update for `2026-04-01-preview` (beta), refreshing samples and API surface to match the latest swagger. *",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38114:comment:3072048268:sdk:JavaScript:@azure/arm-azurestackhci",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-13T09:28:48Z",
+      "observedAt": "2026-04-13T09:28:48Z",
+      "trackId": "sdk:JavaScript:@azure/arm-azurestackhci",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38114",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38114#discussion_r3072048268"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Using `new Array()` in TypeScript samples produces an `any[]` and is less idiomatic. Prefer `const resArray = [];` (or better, a typed array) to keep typings accurate and avoid implicit `any`. If the sample’s goal is just to print items, co",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38114:comment:3072048285:sdk:JavaScript:@azure/arm-azurestackhci",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-13T09:28:48Z",
+      "observedAt": "2026-04-13T09:28:48Z",
+      "trackId": "sdk:JavaScript:@azure/arm-azurestackhci",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38114",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38114#discussion_r3072048285"
+      },
+      "confidence": "authoritative",
+      "excerpt": "These samples hardcode `subscriptionId` values. For better copy/paste usability and to match typical Azure SDK sample patterns, prefer reading `subscriptionId` from environment variables (e.g., `AZURE_SUBSCRIPTION_ID`) with a clear error if",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46277:comment:3072054687:sdk:Python:azure-mgmt-azurestackhci",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-13T09:30:03Z",
+      "observedAt": "2026-04-13T09:30:03Z",
+      "trackId": "sdk:Python:azure-mgmt-azurestackhci",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46277",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46277#discussion_r3072054687"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The changelog entries refer to `ClustersOperations`/`UpdatesOperations` as \"Model\"s, but these are operation group classes (not models). Please update the wording (e.g., \"Operation group `ClustersOperations` added method ...\") to avoid conf",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46277:comment:3072054746:sdk:Python:azure-mgmt-azurestackhci",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-13T09:30:03Z",
+      "observedAt": "2026-04-13T09:30:03Z",
+      "trackId": "sdk:Python:azure-mgmt-azurestackhci",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46277",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46277#discussion_r3072054746"
+      },
+      "confidence": "authoritative",
+      "excerpt": "These entries are labeled as \"Added model ...Operations\" but the `*Operations` types listed here are operation group classes, not models. Consider changing these bullets to \"Added operation group ...\" (or similar) for accuracy. ```suggestio",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46277:review:4097698114:sdk:Python:azure-mgmt-azurestackhci",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-13T09:30:04Z",
+      "observedAt": "2026-04-13T09:30:04Z",
+      "trackId": "sdk:Python:azure-mgmt-azurestackhci",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46277",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46277#pullrequestreview-4097698114"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Regenerates `azure-mgmt-azurestackhci` from the 2026-04-01-preview (TypeSpec) API, updating package metadata/versioning and surfacing newly generated operation groups, samples, and test stubs for the new API surface",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58114:comment:4236337675:sdk:.NET:Azure.ResourceManager.Hci",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-13T12:24:08Z",
+      "observedAt": "2026-04-13T12:24:08Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Hci",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "abaranwal-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58114",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58114#issuecomment-4236337675"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@copilot fix the build failure for \"The changelog entry has the following sections with no content (Bugs Fixed). Please ensure to either remove the empty sections or add content to the section\". remove the bug fixed section",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58114:review:4098648749:sdk:.NET:Azure.ResourceManager.Hci",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-13T12:26:16Z",
+      "observedAt": "2026-04-13T12:26:16Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Hci",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "abaranwal-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58114",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58114#pullrequestreview-4098648749"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "dismissed",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58114:commit:64a34fba49c2:sdk:.NET:Azure.ResourceManager.Hci",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-13T12:26:19Z",
+      "observedAt": "2026-04-13T12:26:19Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Hci",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58114",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/64a34fba49c2fa98ca039c0412c91da9facb3601"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58114:comment:4236351162:sdk:.NET:Azure.ResourceManager.Hci",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-13T12:26:29Z",
+      "observedAt": "2026-04-13T12:26:29Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Hci",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58114",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58114#issuecomment-4236351162"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> @copilot fix the build failure for \"The changelog entry has the following sections with no content (Bugs Fixed). Please ensure to either remove the empty sections or add content to the section\". remov... Removed the empty `Bugs Fixed` sec",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48793:review:4103210585:sdk:Java:azure-resourcemanager-azurestackhci",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-14T03:39:17Z",
+      "observedAt": "2026-04-14T03:39:17Z",
+      "trackId": "sdk:Java:azure-resourcemanager-azurestackhci",
+      "title": "Changes requested",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48793",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48793#pullrequestreview-4103210585"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Your last SDK on api-version 2026-02-01 is not yet released? <-- OK, it was released, but the step fails and the last update is not done correctly https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6092788&view=logs&s=e2660204-",
+      "reviewState": "changes_requested",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26569:review:4103251904:sdk:Go:sdk/resourcemanager/azurestackhci/armazurestackhci",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-14T03:52:43Z",
+      "observedAt": "2026-04-14T03:52:43Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/azurestackhci/armazurestackhci",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "JiaqiZhang-Dev"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26569",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26569#pullrequestreview-4103251904"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "dismissed",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48793:commit:d63f78969dd0:sdk:Java:azure-resourcemanager-azurestackhci",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-14T05:57:01Z",
+      "observedAt": "2026-04-14T05:57:01Z",
+      "trackId": "sdk:Java:azure-resourcemanager-azurestackhci",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48793",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/d63f78969dd082152dad69e09a49ae34198d4715"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48793:review:4103655539:sdk:Java:azure-resourcemanager-azurestackhci",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-14T06:05:02Z",
+      "observedAt": "2026-04-14T06:05:02Z",
+      "trackId": "sdk:Java:azure-resourcemanager-azurestackhci",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "XiaofeiCao"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48793",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48793#pullrequestreview-4103655539"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48793:commit:082f495885af:sdk:Java:azure-resourcemanager-azurestackhci",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-14T06:07:14Z",
+      "observedAt": "2026-04-14T06:07:14Z",
+      "trackId": "sdk:Java:azure-resourcemanager-azurestackhci",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48793",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/082f495885afd876787d5dccf16485c2e164a549"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48793:review:4103668518:sdk:Java:azure-resourcemanager-azurestackhci",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-14T06:08:44Z",
+      "observedAt": "2026-04-14T06:08:44Z",
+      "trackId": "sdk:Java:azure-resourcemanager-azurestackhci",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48793",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48793#pullrequestreview-4103668518"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46277:commit:6d3a109c7197:sdk:Python:azure-mgmt-azurestackhci",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-14T08:54:56Z",
+      "observedAt": "2026-04-14T08:54:56Z",
+      "trackId": "sdk:Python:azure-mgmt-azurestackhci",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46277",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/6d3a109c7197824621c186eaae46f0910956e7b1"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46277:commit:929ad56cbb33:sdk:Python:azure-mgmt-azurestackhci",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-14T08:55:13Z",
+      "observedAt": "2026-04-14T08:55:13Z",
+      "trackId": "sdk:Python:azure-mgmt-azurestackhci",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46277",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/929ad56cbb334c405f776e96a64e929232e0f6af"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58114:review:4104865503:sdk:.NET:Azure.ResourceManager.Hci",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-14T09:31:38Z",
+      "observedAt": "2026-04-14T09:31:38Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Hci",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "abaranwal-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58114",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58114#pullrequestreview-4104865503"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "dismissed",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48793:pr.merged:sdk:Java:azure-resourcemanager-azurestackhci",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-16T13:24:04Z",
+      "observedAt": "2026-04-16T13:24:04Z",
+      "trackId": "sdk:Java:azure-resourcemanager-azurestackhci",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48793",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48793"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46277:commit:63a9867e90f2:sdk:Python:azure-mgmt-azurestackhci",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-20T03:55:26Z",
+      "observedAt": "2026-04-20T03:55:26Z",
+      "trackId": "sdk:Python:azure-mgmt-azurestackhci",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46277",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/63a9867e90f26be20eba7bf27f07b363bd421143"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46277:review:4137271246:sdk:Python:azure-mgmt-azurestackhci",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-20T04:37:55Z",
+      "observedAt": "2026-04-20T04:37:55Z",
+      "trackId": "sdk:Python:azure-mgmt-azurestackhci",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "tadelesh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46277",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46277#pullrequestreview-4137271246"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46277:review:4137294770:sdk:Python:azure-mgmt-azurestackhci",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-20T04:47:04Z",
+      "observedAt": "2026-04-20T04:47:04Z",
+      "trackId": "sdk:Python:azure-mgmt-azurestackhci",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46277",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46277#pullrequestreview-4137294770"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46277:comment:4277860901:sdk:Python:azure-mgmt-azurestackhci",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-20T04:47:27Z",
+      "observedAt": "2026-04-20T04:47:27Z",
+      "trackId": "sdk:Python:azure-mgmt-azurestackhci",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46277",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46277#issuecomment-4277860901"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @abaranwal-ms, pr ready, feel free to merge and release",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46277:pr.merged:sdk:Python:azure-mgmt-azurestackhci",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-21T07:21:06Z",
+      "observedAt": "2026-04-21T07:21:06Z",
+      "trackId": "sdk:Python:azure-mgmt-azurestackhci",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46277",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46277"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26569:comment:4286742324:sdk:Go:sdk/resourcemanager/azurestackhci/armazurestackhci",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-21T07:38:14Z",
+      "observedAt": "2026-04-21T07:38:14Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/azurestackhci/armazurestackhci",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "abaranwal-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26569",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26569#issuecomment-4286742324"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@JiaqiZhang-Dev The release was not able to generate this, so I created this via pipeline. I need this SDK still released, so using MCP tools to create the PR",
+      "stack": 0
+    },
+    {
+      "id": "ado:33678:29:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-21T13:57:15.313Z",
+      "observedAt": "2026-04-21T13:57:15.313Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/azurestackhci/armazurestackhci",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33678",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33678"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33678:29:Custom.SDKPullRequestForGo",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-04-21T13:57:15.313Z",
+      "observedAt": "2026-04-21T13:57:15.313Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/azurestackhci/armazurestackhci",
+      "value": "https://github.com/Azure/azure-sdk-for-go/pull/26569",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33678",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33678"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "ado:33678:30:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-21T13:59:46.417Z",
+      "observedAt": "2026-04-21T13:59:46.417Z",
+      "trackId": "sdk:JavaScript:@azure/arm-azurestackhci",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33678",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33678"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33678:30:Custom.SDKPullRequestForJavaScript",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-04-21T13:59:46.417Z",
+      "observedAt": "2026-04-21T13:59:46.417Z",
+      "trackId": "sdk:JavaScript:@azure/arm-azurestackhci",
+      "value": "https://github.com/Azure/azure-sdk-for-js/pull/38114",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33678",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33678"
+      },
+      "title": "SDK PR linked",
+      "stack": 1
+    },
+    {
+      "id": "ado:33678:31:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-21T13:59:46.613Z",
+      "observedAt": "2026-04-21T13:59:46.613Z",
+      "trackId": "sdk:Python:azure-mgmt-azurestackhci",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33678",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33678"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33678:31:Custom.SDKPullRequestForPython",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-04-21T13:59:46.613Z",
+      "observedAt": "2026-04-21T13:59:46.613Z",
+      "trackId": "sdk:Python:azure-mgmt-azurestackhci",
+      "value": "https://github.com/Azure/azure-sdk-for-python/pull/46277",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33678",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33678"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "ado:33678:32:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-21T13:59:47.95Z",
+      "observedAt": "2026-04-21T13:59:47.95Z",
+      "trackId": "sdk:Java:azure-resourcemanager-azurestackhci",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33678",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33678"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33678:32:Custom.SDKPullRequestForJava",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-04-21T13:59:47.95Z",
+      "observedAt": "2026-04-21T13:59:47.95Z",
+      "trackId": "sdk:Java:azure-resourcemanager-azurestackhci",
+      "value": "https://github.com/Azure/azure-sdk-for-java/pull/48793",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33678",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33678"
+      },
+      "title": "SDK PR linked",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26569:comment:4291761597:sdk:Go:sdk/resourcemanager/azurestackhci/armazurestackhci",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-21T21:04:00Z",
+      "observedAt": "2026-04-21T21:04:00Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/azurestackhci/armazurestackhci",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "abaranwal-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26569",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26569#issuecomment-4291761597"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Update: Release plan is linked by @praveenkuttappan https://apps.powerapps.com/play/e/ed2ffefd-774d-40dd-ab23-7fff01aeec9f/a/821ab569-ae60-420d-8264-d7b5d5ef734c?release-plan-id=b1b35a9c-f92c-f111-88b4-000d3a5a7db7&tenantId=72f988bf-86f1-41",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26569:review:4152106990:sdk:Go:sdk/resourcemanager/azurestackhci/armazurestackhci",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-22T04:55:32Z",
+      "observedAt": "2026-04-22T04:55:32Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/azurestackhci/armazurestackhci",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "JiaqiZhang-Dev"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26569",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26569#pullrequestreview-4152106990"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38114:comment:4294134204:sdk:JavaScript:@azure/arm-azurestackhci",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-22T06:43:46Z",
+      "observedAt": "2026-04-22T06:43:46Z",
+      "trackId": "sdk:JavaScript:@azure/arm-azurestackhci",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38114",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38114#issuecomment-4294134204"
+      },
+      "confidence": "authoritative",
+      "excerpt": "LGTM cc @JialinHuang803",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38114:review:4152617415:sdk:JavaScript:@azure/arm-azurestackhci",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-22T06:55:00Z",
+      "observedAt": "2026-04-22T06:55:00Z",
+      "trackId": "sdk:JavaScript:@azure/arm-azurestackhci",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38114",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38114#pullrequestreview-4152617415"
+      },
+      "confidence": "authoritative",
+      "excerpt": "1 design issue found in this PR for `@azure/arm-azurestackhci@4.1.0-beta.1`. All tooling checks (CHANGELOG comparison base, API version progression, userAgent alignment, KnownVersions) are clean. The single finding is a redundant `Operation",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38114:comment:4294188282:sdk:JavaScript:@azure/arm-azurestackhci",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-22T06:55:00Z",
+      "observedAt": "2026-04-22T06:55:00Z",
+      "trackId": "sdk:JavaScript:@azure/arm-azurestackhci",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38114",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38114#issuecomment-4294188282"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Next Steps to Merge Only failed checks and required actions are listed below. - ⏳ Required approvals: PR is awaiting reviews from assigned reviewers (`xirzec`, `jeremymeng`, `MaryGao`, `qiaozha`, `JialinHuang803`). All CI checks have pas",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38114:comment:3122088219:sdk:JavaScript:@azure/arm-azurestackhci",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-22T06:55:00Z",
+      "observedAt": "2026-04-22T06:55:00Z",
+      "trackId": "sdk:JavaScript:@azure/arm-azurestackhci",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38114",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38114#discussion_r3122088219"
+      },
+      "confidence": "authoritative",
+      "excerpt": "🔴 **Design Issue** — Redundant `OperationGroup` in client property name `readonly updateSummariesOperationGroup: UpdateSummariesOperationGroupOperations;` The client property `updateSummariesOperationGroup` contains the redundant suffix `O",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38114:review:4152793753:sdk:JavaScript:@azure/arm-azurestackhci",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-22T07:28:56Z",
+      "observedAt": "2026-04-22T07:28:56Z",
+      "trackId": "sdk:JavaScript:@azure/arm-azurestackhci",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38114",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38114#pullrequestreview-4152793753"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38114:comment:3122254166:sdk:JavaScript:@azure/arm-azurestackhci",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-22T07:28:56Z",
+      "observedAt": "2026-04-22T07:28:56Z",
+      "trackId": "sdk:JavaScript:@azure/arm-azurestackhci",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38114",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38114#discussion_r3122254166"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This is not the codegen issue",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38114:comment:4294371339:sdk:JavaScript:@azure/arm-azurestackhci",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-22T07:29:45Z",
+      "observedAt": "2026-04-22T07:29:45Z",
+      "trackId": "sdk:JavaScript:@azure/arm-azurestackhci",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38114",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38114#issuecomment-4294371339"
+      },
+      "confidence": "authoritative",
+      "excerpt": "LGTM cc @JialinHuang803",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38114:review:4155538223:sdk:JavaScript:@azure/arm-azurestackhci",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-22T14:37:56Z",
+      "observedAt": "2026-04-22T14:37:56Z",
+      "trackId": "sdk:JavaScript:@azure/arm-azurestackhci",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "JialinHuang803"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38114",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38114#pullrequestreview-4155538223"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26569:pr.merged:sdk:Go:sdk/resourcemanager/azurestackhci/armazurestackhci",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-22T18:24:53Z",
+      "observedAt": "2026-04-22T18:24:53Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/azurestackhci/armazurestackhci",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26569",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26569"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38114:pr.merged:sdk:JavaScript:@azure/arm-azurestackhci",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-22T18:26:02Z",
+      "observedAt": "2026-04-22T18:26:02Z",
+      "trackId": "sdk:JavaScript:@azure/arm-azurestackhci",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38114",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38114"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58114:comment:3127660895:sdk:.NET:Azure.ResourceManager.Hci",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-23T00:45:58Z",
+      "observedAt": "2026-04-23T00:45:58Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Hci",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "live1206"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58114",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58114#discussion_r3127660895"
+      },
+      "confidence": "authoritative",
+      "excerpt": "should we update the date to latest?",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58114:review:4158787018:sdk:.NET:Azure.ResourceManager.Hci",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-23T00:45:59Z",
+      "observedAt": "2026-04-23T00:45:59Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Hci",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "live1206"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58114",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58114#pullrequestreview-4158787018"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58114:review:4159886800:sdk:.NET:Azure.ResourceManager.Hci",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-23T05:28:49Z",
+      "observedAt": "2026-04-23T05:28:49Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Hci",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "abaranwal-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58114",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58114#pullrequestreview-4159886800"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58114:comment:3128528021:sdk:.NET:Azure.ResourceManager.Hci",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-23T05:28:49Z",
+      "observedAt": "2026-04-23T05:28:49Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Hci",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "abaranwal-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58114",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58114#discussion_r3128528021"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@copilot update date to today (2026-04-23)",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58114:commit:bdb74c79a12a:sdk:.NET:Azure.ResourceManager.Hci",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-23T05:30:40Z",
+      "observedAt": "2026-04-23T05:30:40Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Hci",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58114",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/bdb74c79a12a7d2b9d8826dad55fb1b988ef12e6"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58114:review:4159897039:sdk:.NET:Azure.ResourceManager.Hci",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-23T05:30:47Z",
+      "observedAt": "2026-04-23T05:30:47Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Hci",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-swe-agent[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58114",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58114#pullrequestreview-4159897039"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58114:comment:3128535297:sdk:.NET:Azure.ResourceManager.Hci",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-23T05:30:47Z",
+      "observedAt": "2026-04-23T05:30:47Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Hci",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58114",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58114#discussion_r3128535297"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Updated the date to `2026-04-23` in commit bdb74c7.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58114:comment:4301951819:sdk:.NET:Azure.ResourceManager.Hci",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-23T05:32:49Z",
+      "observedAt": "2026-04-23T05:32:49Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Hci",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "abaranwal-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58114",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58114#issuecomment-4301951819"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@copilot update release date of sdk/azurestackhci/Azure.ResourceManager.Hci.Vm/CHANGELOG.md to today as well",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58114:commit:6158b5ee301d:sdk:.NET:Azure.ResourceManager.Hci",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-23T05:34:33Z",
+      "observedAt": "2026-04-23T05:34:33Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Hci",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58114",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/6158b5ee301de0242790706464d2b06947c2cca4"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58114:comment:4301959076:sdk:.NET:Azure.ResourceManager.Hci",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-23T05:34:40Z",
+      "observedAt": "2026-04-23T05:34:40Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Hci",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58114",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58114#issuecomment-4301959076"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> @copilot update release date of sdk/azurestackhci/Azure.ResourceManager.Hci.Vm/CHANGELOG.md to today as well Updated `Azure.ResourceManager.Hci.Vm/CHANGELOG.md` release date to `2026-04-23` and removed empty sections (`Breaking Changes`, ",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58114:review:4159920788:sdk:.NET:Azure.ResourceManager.Hci",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-23T05:35:12Z",
+      "observedAt": "2026-04-23T05:35:12Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Hci",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "abaranwal-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58114",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58114#pullrequestreview-4159920788"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "dismissed",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58114:review:4159923429:sdk:.NET:Azure.ResourceManager.Hci",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-23T05:35:57Z",
+      "observedAt": "2026-04-23T05:35:57Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Hci",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "abaranwal-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58114",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58114#pullrequestreview-4159923429"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58114:comment:3128553839:sdk:.NET:Azure.ResourceManager.Hci",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-23T05:35:57Z",
+      "observedAt": "2026-04-23T05:35:57Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Hci",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "abaranwal-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58114",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58114#discussion_r3128553839"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@live1206 done.",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58114:review:4160054272:sdk:.NET:Azure.ResourceManager.Hci",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-23T06:06:18Z",
+      "observedAt": "2026-04-23T06:06:18Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Hci",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "abaranwal-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58114",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58114#pullrequestreview-4160054272"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "dismissed",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58114:review:4160060330:sdk:.NET:Azure.ResourceManager.Hci",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-23T06:07:54Z",
+      "observedAt": "2026-04-23T06:07:54Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Hci",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "live1206"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58114",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58114#pullrequestreview-4160060330"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "dismissed",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58114:comment:4302200689:sdk:.NET:Azure.ResourceManager.Hci",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-23T06:31:47Z",
+      "observedAt": "2026-04-23T06:31:47Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Hci",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58114",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58114#issuecomment-4302200689"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @Copilot. We've noticed that new changes have been pushed to this pull request. Because it is set to automatically merge, we've reset the approvals to allow the opportunity to review the updates.",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58114:review:4160181925:sdk:.NET:Azure.ResourceManager.Hci",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-23T06:34:29Z",
+      "observedAt": "2026-04-23T06:34:29Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Hci",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "abaranwal-ms"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58114",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58114#pullrequestreview-4160181925"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58114:review:4160183392:sdk:.NET:Azure.ResourceManager.Hci",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-23T06:34:49Z",
+      "observedAt": "2026-04-23T06:34:49Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Hci",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "live1206"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58114",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58114#pullrequestreview-4160183392"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58114:pr.merged:sdk:.NET:Azure.ResourceManager.Hci",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-23T06:34:51Z",
+      "observedAt": "2026-04-23T06:34:51Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Hci",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58114",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58114"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:33678:43:Custom.ReleaseStatusForJava",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-04-27T09:48:25.02Z",
+      "observedAt": "2026-04-27T09:48:25.02Z",
+      "trackId": "sdk:Java:azure-resourcemanager-azurestackhci",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33678",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33678"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33678:44:Custom.ReleaseStatusForJavaScript",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-04-30T00:01:33.72Z",
+      "observedAt": "2026-04-30T00:01:33.72Z",
+      "trackId": "sdk:JavaScript:@azure/arm-azurestackhci",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33678",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33678"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33678:44:Custom.ReleasedVersionForJavaScript",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-04-30T00:01:33.72Z",
+      "observedAt": "2026-04-30T00:01:33.72Z",
+      "trackId": "sdk:JavaScript:@azure/arm-azurestackhci",
+      "value": "4.1.0-beta.1",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33678",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33678"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33678:45:Custom.ReleaseStatusForPython",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-04-30T00:02:52.977Z",
+      "observedAt": "2026-04-30T00:02:52.977Z",
+      "trackId": "sdk:Python:azure-mgmt-azurestackhci",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33678",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33678"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33678:45:Custom.ReleasedVersionForPython",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-04-30T00:02:52.977Z",
+      "observedAt": "2026-04-30T00:02:52.977Z",
+      "trackId": "sdk:Python:azure-mgmt-azurestackhci",
+      "value": "8.1.0b1",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33678",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33678"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33678:46:Custom.ReleasedVersionForJava",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-04-30T00:04:11.527Z",
+      "observedAt": "2026-04-30T00:04:11.527Z",
+      "trackId": "sdk:Java:azure-resourcemanager-azurestackhci",
+      "value": "1.1.0-beta.1",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33678",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33678"
+      },
+      "title": "Package version observed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33678:46:Custom.ReleaseStatusForGo",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-04-30T00:04:11.527Z",
+      "observedAt": "2026-04-30T00:04:11.527Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/azurestackhci/armazurestackhci",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33678",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33678"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33678:46:Custom.ReleasedVersionForGo",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-04-30T00:04:11.527Z",
+      "observedAt": "2026-04-30T00:04:11.527Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/azurestackhci/armazurestackhci",
+      "value": "3.1.0-beta.1",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33678",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33678"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33678:48:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-19T15:31:15.52Z",
+      "observedAt": "2026-05-19T15:31:15.52Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Hci",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33678",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33678"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33678:48:Custom.SDKPullRequestForDotnet",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-05-19T15:31:15.52Z",
+      "observedAt": "2026-05-19T15:31:15.52Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Hci",
+      "value": "https://github.com/Azure/azure-sdk-for-net/pull/58114",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33678",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33678"
+      },
+      "title": "SDK PR linked",
+      "stack": 1
+    },
+    {
+      "id": "ado:33678:50:Custom.ReleaseStatusForDotnet",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-05-20T14:03:33.48Z",
+      "observedAt": "2026-05-20T14:03:33.48Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Hci",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33678",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33678"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33678:50:Custom.ReleasedVersionForDotnet",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-05-20T14:03:33.48Z",
+      "observedAt": "2026-05-20T14:03:33.48Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Hci",
+      "value": "1.3.0-beta.1",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33678",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33678"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33678:51:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-05-20T14:04:43.637Z",
+      "observedAt": "2026-05-20T14:04:43.637Z",
+      "trackId": "plan",
+      "value": "Finished",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33678",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33678"
+      },
+      "title": "Plan state changed",
+      "stack": 0
+    }
+  ],
+  "quality": {
+    "warnings": [],
+    "unavailablePullRequests": 0,
+    "unavailablePipelineRuns": 0
+  },
+  "boundaryFacts": {
+    "id": "33678",
+    "state": "finished",
+    "specPrs": [
+      {
+        "id": "github:Azure/azure-rest-api-specs#41155",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#41155",
+        "createdAt": "2026-03-09T10:39:16Z",
+        "mergedAt": "2026-03-27T08:14:39Z",
+        "closedAt": "2026-03-27T08:14:39Z",
+        "available": true
+      }
+    ],
+    "artifacts": [
+      {
+        "language": ".NET",
+        "package": "Azure.ResourceManager.Hci",
+        "trackId": "sdk:.NET:Azure.ResourceManager.Hci",
+        "prId": "github:Azure/azure-sdk-for-net#58114",
+        "prCreatedAt": "2026-04-13T09:23:19Z",
+        "prMergedAt": "2026-04-23T06:34:51Z",
+        "prClosedAt": "2026-04-23T06:34:51Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-net#58114",
+            "createdAt": "2026-04-13T09:23:19Z",
+            "mergedAt": "2026-04-23T06:34:51Z",
+            "closedAt": "2026-04-23T06:34:51Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6086558",
+        "generationStartAt": "2026-03-31T12:27:42.6135718Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-05-20T14:03:33.48Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.3.0-beta.1",
+        "releaseBoundaryAt": "2026-05-20T14:03:33.48Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "JavaScript",
+        "package": "@azure/arm-azurestackhci",
+        "trackId": "sdk:JavaScript:@azure/arm-azurestackhci",
+        "prId": "github:Azure/azure-sdk-for-js#38114",
+        "prCreatedAt": "2026-04-13T09:07:10Z",
+        "prMergedAt": "2026-04-22T18:26:02Z",
+        "prClosedAt": "2026-04-22T18:26:03Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-js#38114",
+            "createdAt": "2026-04-13T09:07:10Z",
+            "mergedAt": "2026-04-22T18:26:02Z",
+            "closedAt": "2026-04-22T18:26:03Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6086557",
+        "generationStartAt": "2026-03-31T12:27:43.6993771Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-04-30T00:01:33.72Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "4.1.0-beta.1",
+        "releaseBoundaryAt": "2026-04-30T00:01:33.72Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Python",
+        "package": "azure-mgmt-azurestackhci",
+        "trackId": "sdk:Python:azure-mgmt-azurestackhci",
+        "prId": "github:Azure/azure-sdk-for-python#46277",
+        "prCreatedAt": "2026-04-13T09:03:48Z",
+        "prMergedAt": "2026-04-21T07:21:06Z",
+        "prClosedAt": "2026-04-21T07:21:07Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-python#46277",
+            "createdAt": "2026-04-13T09:03:48Z",
+            "mergedAt": "2026-04-21T07:21:06Z",
+            "closedAt": "2026-04-21T07:21:07Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6086555",
+        "generationStartAt": "2026-03-31T12:26:21.2397936Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-04-30T00:02:52.977Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "8.1.0b1",
+        "releaseBoundaryAt": "2026-04-30T00:02:52.977Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Java",
+        "package": "azure-resourcemanager-azurestackhci",
+        "trackId": "sdk:Java:azure-resourcemanager-azurestackhci",
+        "prId": "github:Azure/azure-sdk-for-java#48793",
+        "prCreatedAt": "2026-04-13T09:03:47Z",
+        "prMergedAt": "2026-04-16T13:24:04Z",
+        "prClosedAt": "2026-04-16T13:24:04Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-java#48793",
+            "createdAt": "2026-04-13T09:03:47Z",
+            "mergedAt": "2026-04-16T13:24:04Z",
+            "closedAt": "2026-04-16T13:24:04Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6086556",
+        "generationStartAt": "2026-03-31T12:27:43.6255722Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-04-27T09:48:25.02Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.1.0-beta.1",
+        "releaseBoundaryAt": "2026-04-27T09:48:25.02Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Go",
+        "package": "sdk/resourcemanager/azurestackhci/armazurestackhci",
+        "trackId": "sdk:Go:sdk/resourcemanager/azurestackhci/armazurestackhci",
+        "prId": "github:Azure/azure-sdk-for-go#26569",
+        "prCreatedAt": "2026-04-13T09:09:00Z",
+        "prMergedAt": "2026-04-22T18:24:53Z",
+        "prClosedAt": "2026-04-22T18:24:53Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-go#26569",
+            "createdAt": "2026-04-13T09:09:00Z",
+            "mergedAt": "2026-04-22T18:24:53Z",
+            "closedAt": "2026-04-22T18:24:53Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6086559",
+        "generationStartAt": "2026-03-31T12:27:41.6549063Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-04-30T00:04:11.527Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "3.1.0-beta.1",
+        "releaseBoundaryAt": "2026-04-30T00:04:11.527Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      }
+    ],
+    "cohortPlan": {
+      "id": "33678",
+      "releasePlanId": "2152",
+      "title": "Release Plan - 2152 - Public Preview - Azure Local",
+      "service": "Stack HCI",
+      "state": "finished"
+    },
+    "quality": {
+      "warnings": [],
+      "unavailablePullRequests": 0,
+      "unavailablePipelineRuns": 0
+    }
+  },
+  "summary": {
+    "durationHours": 1202,
+    "pullRequestCount": 6,
+    "humanReviewCount": 22,
+    "humanCommentCount": 12
+  }
+}

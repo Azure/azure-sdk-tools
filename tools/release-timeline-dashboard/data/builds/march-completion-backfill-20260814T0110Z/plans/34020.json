@@ -1,0 +1,4053 @@
+{
+  "schemaVersion": 2,
+  "id": "34020",
+  "correlation": {
+    "policyVersion": 1,
+    "preflight": "passed"
+  },
+  "releasePlanId": "2198",
+  "title": "Release plan - 2198 - Public Preview - Azure DocumentDB (with MongoDB compatibility)",
+  "service": "Mongo Cluster",
+  "product": "Release",
+  "path": "specification/mongocluster/resource-manager/Microsoft.DocumentDB/MongoCluster",
+  "state": "finished",
+  "plane": "management",
+  "releaseType": "APEX Public Preview",
+  "intendedMonth": "May 2026",
+  "createdAt": "2026-04-21T22:40:25.827Z",
+  "completedAt": "2026-07-09T14:35:18.85Z",
+  "sourceUrl": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34020",
+  "range": {
+    "start": "2026-04-21T22:26:25.000Z",
+    "end": "2026-07-09T14:35:18.850Z"
+  },
+  "intendedArtifacts": [
+    {
+      "prId": "github:Azure/azure-sdk-for-net#59312",
+      "language": ".NET",
+      "package": "Azure.ResourceManager.MongoCluster",
+      "version": "1.1.0-beta.1",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6314917",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-js#38593",
+      "language": "JavaScript",
+      "package": "@azure/arm-mongocluster",
+      "version": "1.2.0-beta.1",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6321205",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-python#46669",
+      "language": "Python",
+      "package": "azure-mgmt-mongocluster",
+      "version": "1.2.0b1",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6240122",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-java#49020",
+      "language": "Java",
+      "package": "azure-resourcemanager-mongocluster",
+      "version": "1.2.0-beta.1",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6240125",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-go#26705",
+      "language": "Go",
+      "package": "sdk/resourcemanager/mongocluster/armmongocluster",
+      "version": "1.2.0-beta.1",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6240121",
+      "releasePipelineUrl": null
+    }
+  ],
+  "links": [
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#42564",
+      "role": "spec-pr",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/42564",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-net#58923",
+      "role": "sdk-pr-history",
+      "language": ".NET",
+      "url": "https://github.com/Azure/azure-sdk-for-net/pull/58923",
+      "releasePlanIds": [
+        "34020"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-net#59312",
+      "role": "sdk-pr",
+      "language": ".NET",
+      "url": "https://github.com/Azure/azure-sdk-for-net/pull/59312",
+      "releasePlanIds": [
+        "2198"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-js#38371",
+      "role": "sdk-pr-history",
+      "language": "JavaScript",
+      "url": "https://github.com/Azure/azure-sdk-for-js/pull/38371",
+      "releasePlanIds": [
+        "34020"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-js#38593",
+      "role": "sdk-pr",
+      "language": "JavaScript",
+      "url": "https://github.com/Azure/azure-sdk-for-js/pull/38593",
+      "releasePlanIds": [
+        "2198"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-python#46669",
+      "role": "sdk-pr",
+      "language": "Python",
+      "url": "https://github.com/Azure/azure-sdk-for-python/pull/46669",
+      "releasePlanIds": [
+        "34020"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-java#49020",
+      "role": "sdk-pr",
+      "language": "Java",
+      "url": "https://github.com/Azure/azure-sdk-for-java/pull/49020",
+      "releasePlanIds": [
+        "34020"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-go#26705",
+      "role": "sdk-pr",
+      "language": "Go",
+      "url": "https://github.com/Azure/azure-sdk-for-go/pull/26705",
+      "releasePlanIds": [
+        "34020"
+      ]
+    }
+  ],
+  "tracks": [
+    {
+      "id": "plan",
+      "kind": "plan",
+      "label": "Release Plan",
+      "detail": "APEX Public Preview"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#42564",
+      "kind": "spec",
+      "label": "Spec PR",
+      "detail": "azure-rest-api-specs #42564",
+      "artifactId": "github:Azure/azure-rest-api-specs#42564",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:.NET:Azure.ResourceManager.MongoCluster",
+      "kind": "sdk",
+      "label": ".NET",
+      "detail": "Azure.ResourceManager.MongoCluster",
+      "artifactId": "github:Azure/azure-sdk-for-net#59312",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:JavaScript:@azure/arm-mongocluster",
+      "kind": "sdk",
+      "label": "JavaScript",
+      "detail": "@azure/arm-mongocluster",
+      "artifactId": "github:Azure/azure-sdk-for-js#38593",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Python:azure-mgmt-mongocluster",
+      "kind": "sdk",
+      "label": "Python",
+      "detail": "azure-mgmt-mongocluster",
+      "artifactId": "github:Azure/azure-sdk-for-python#46669",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Java:azure-resourcemanager-mongocluster",
+      "kind": "sdk",
+      "label": "Java",
+      "detail": "azure-resourcemanager-mongocluster",
+      "artifactId": "github:Azure/azure-sdk-for-java#49020",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Go:sdk/resourcemanager/mongocluster/armmongocluster",
+      "kind": "sdk",
+      "label": "Go",
+      "detail": "sdk/resourcemanager/mongocluster/armmongocluster",
+      "artifactId": "github:Azure/azure-sdk-for-go#26705",
+      "state": "merged"
+    }
+  ],
+  "events": [
+    {
+      "id": "github:Azure/azure-rest-api-specs#42564:pr.created:spec:github:Azure/azure-rest-api-specs#42564",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-21T22:26:25Z",
+      "observedAt": "2026-04-21T22:26:25Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42564",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "olivertowers"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42564",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42564"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42564:comment:4292257328:spec:github:Azure/azure-rest-api-specs#42564",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-21T22:27:23Z",
+      "observedAt": "2026-04-21T22:27:23Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42564",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42564",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42564#issuecomment-4292257328"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>✅ All automated merging requirements have been met! To get your PR merged, see <a href=\"https://aka.ms/azsdk/specreview/merge\">aka.ms/azsdk/specreview/merge</a>.<br /><br />Comment generated by <a href=\"https://g",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42564:comment:4292279029:spec:github:Azure/azure-rest-api-specs#42564",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-21T22:32:41Z",
+      "observedAt": "2026-04-21T22:32:41Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42564",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42564",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42564#issuecomment-4292279029"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews | Language | API Review for Package | |----------|---------| | Swagger | [Microsoft.DocumentDB-MongoCluster](https://apiview.dev/Assem",
+      "stack": 2
+    },
+    {
+      "id": "ado:34020:created",
+      "type": "plan.created",
+      "phase": "plan",
+      "occurredAt": "2026-04-21T22:40:25.827Z",
+      "observedAt": "2026-04-21T22:40:25.827Z",
+      "trackId": "plan",
+      "title": "Release Plan created",
+      "confidence": "authoritative",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34020",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34020"
+      },
+      "stack": 0
+    },
+    {
+      "id": "ado:34020:1:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-04-21T22:40:25.827Z",
+      "observedAt": "2026-04-21T22:40:25.827Z",
+      "trackId": "plan",
+      "value": "New",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34020",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34020"
+      },
+      "title": "Plan state changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34020:1:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-21T22:40:25.827Z",
+      "observedAt": "2026-04-21T22:40:25.827Z",
+      "trackId": "plan",
+      "value": "Not Available",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34020",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34020"
+      },
+      "title": "Spec approval changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:34020:1:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-21T22:40:25.827Z",
+      "observedAt": "2026-04-21T22:40:25.827Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoCluster",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34020",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34020"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34020:1:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-21T22:40:25.827Z",
+      "observedAt": "2026-04-21T22:40:25.827Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongocluster",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34020",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34020"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34020:1:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-21T22:40:25.827Z",
+      "observedAt": "2026-04-21T22:40:25.827Z",
+      "trackId": "sdk:Python:azure-mgmt-mongocluster",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34020",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34020"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34020:1:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-21T22:40:25.827Z",
+      "observedAt": "2026-04-21T22:40:25.827Z",
+      "trackId": "sdk:Java:azure-resourcemanager-mongocluster",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34020",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34020"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34020:1:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-21T22:40:25.827Z",
+      "observedAt": "2026-04-21T22:40:25.827Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/mongocluster/armmongocluster",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34020",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34020"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34021:1:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-21T22:40:26.013Z",
+      "observedAt": "2026-04-21T22:40:26.013Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42564",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/42564",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34021",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34021"
+      },
+      "title": "Spec PR linked",
+      "stack": 3
+    },
+    {
+      "id": "ado:34020:2:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-04-21T22:40:26.393Z",
+      "observedAt": "2026-04-21T22:40:26.393Z",
+      "trackId": "plan",
+      "value": "In Progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34020",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34020"
+      },
+      "title": "Plan state changed",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42564:commit:a669715f5184:spec:github:Azure/azure-rest-api-specs#42564",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-22T00:25:37Z",
+      "observedAt": "2026-04-22T00:25:37Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42564",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "olivertowers"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42564",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/a669715f51842c7a5a6e83ce22280fbb5098130c"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42564:commit:aae79027f05b:spec:github:Azure/azure-rest-api-specs#42564",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-22T00:41:09Z",
+      "observedAt": "2026-04-22T00:41:09Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42564",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "olivertowers"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42564",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/aae79027f05bfa7b624e21f7c420ccd6ca598ffc"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42564:comment:3121007547:spec:github:Azure/azure-rest-api-specs#42564",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-22T00:48:30Z",
+      "observedAt": "2026-04-22T00:48:30Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42564",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42564",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42564#discussion_r3121007547"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The 202 response polling URLs in `Location`/`Azure-AsyncOperation` use `api-version=2024-06-01-preview`, but this example is for `2026-02-01-preview`. Update the polling URLs to use `api-version=2026-02-01-preview`.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42564:comment:3121007557:spec:github:Azure/azure-rest-api-specs#42564",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-22T00:48:31Z",
+      "observedAt": "2026-04-22T00:48:31Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42564",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42564",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42564#discussion_r3121007557"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The polling URLs in the 202 response headers use `api-version=2024-06-01-preview` but the example request is `2026-02-01-preview`. Update the `Location` and `Azure-AsyncOperation` URLs to use `api-version=2026-02-01-preview`.",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42564:comment:3121007568:spec:github:Azure/azure-rest-api-specs#42564",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-22T00:48:31Z",
+      "observedAt": "2026-04-22T00:48:31Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42564",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42564",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42564#discussion_r3121007568"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The 202 response polling URLs in `Location`/`Azure-AsyncOperation` use `api-version=2024-06-01-preview`, but this example is for `2026-02-01-preview`. Update the polling URLs to use the same api-version as the request.",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42564:comment:3121007586:spec:github:Azure/azure-rest-api-specs#42564",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-22T00:48:31Z",
+      "observedAt": "2026-04-22T00:48:31Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42564",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42564",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42564#discussion_r3121007586"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This example uses a literal password value (`\"password\"`). Example payloads must not contain realistic-looking secrets; use a placeholder like `\"********\"` or `{password}` instead.",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42564:comment:3121007605:spec:github:Azure/azure-rest-api-specs#42564",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-22T00:48:31Z",
+      "observedAt": "2026-04-22T00:48:31Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42564",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42564",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42564#discussion_r3121007605"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The suppression reason \"MUST CHANGE ON NEXT UPDATE\" isn't a concrete technical justification and reads like a placeholder. Please replace it with a specific reason for why `final-state-via` must be `azure-async-operation` for the legacy ver",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42564:comment:3121007622:spec:github:Azure/azure-rest-api-specs#42564",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-22T00:48:32Z",
+      "observedAt": "2026-04-22T00:48:32Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42564",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42564",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42564#discussion_r3121007622"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The operations list endpoint in this API version is tenant-scoped (`/providers/Microsoft.DocumentDB/operations`) and only takes `api-version`. This example includes `subscriptionId`, which doesn't match the operation's path/parameters and w",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42564:comment:3121007632:spec:github:Azure/azure-rest-api-specs#42564",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-22T00:48:32Z",
+      "observedAt": "2026-04-22T00:48:32Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42564",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42564",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42564#discussion_r3121007632"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The response `id` uses `/resourceGroups/TestResourceGroup/` but the request parameters specify `resourceGroupName: \"TestGroup\"`. Update the example so request parameters and response resource IDs are consistent (resource group name, cluster",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42564:comment:3121007640:spec:github:Azure/azure-rest-api-specs#42564",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-22T00:48:32Z",
+      "observedAt": "2026-04-22T00:48:32Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42564",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42564",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42564#discussion_r3121007640"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Async DELETE examples should include both `Location` and `Azure-AsyncOperation` polling headers, and the polling URLs should use the same `api-version` as the example request. This 202 response currently only includes `Location` and uses an",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42564:comment:3121007647:spec:github:Azure/azure-rest-api-specs#42564",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-22T00:48:32Z",
+      "observedAt": "2026-04-22T00:48:32Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42564",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42564",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42564#discussion_r3121007647"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This example uses a literal password value (`\"password\"`). Example payloads must not contain realistic-looking secrets; use a placeholder like `\"********\"` or `{password}` instead.",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42564:comment:3121007657:spec:github:Azure/azure-rest-api-specs#42564",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-22T00:48:33Z",
+      "observedAt": "2026-04-22T00:48:33Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42564",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42564",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42564#discussion_r3121007657"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The example title has a grammar issue: \"is availability\" → \"is available\". Please fix the title text so it reads correctly in generated docs/SDKs.",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42564:comment:3121007670:spec:github:Azure/azure-rest-api-specs#42564",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-22T00:48:33Z",
+      "observedAt": "2026-04-22T00:48:33Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42564",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42564",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42564#discussion_r3121007670"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This GET example includes `properties.connectionString`. Connection strings are treated as secrets in ARM control plane and must not be returned from GET/PUT/PATCH responses; they should be returned only via a `list*` POST action (you alrea",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42564:comment:3121007679:spec:github:Azure/azure-rest-api-specs#42564",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-22T00:48:33Z",
+      "observedAt": "2026-04-22T00:48:33Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42564",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42564",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42564#discussion_r3121007679"
+      },
+      "confidence": "authoritative",
+      "excerpt": "In ARM examples, the `type` field must be the ARM resource type (e.g., `Microsoft.DocumentDB/mongoClusters/users`) and must not start with `/`. Update this example's `type` value to match the resource ID-derived type.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42564:comment:3121007688:spec:github:Azure/azure-rest-api-specs#42564",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-22T00:48:33Z",
+      "observedAt": "2026-04-22T00:48:33Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42564",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42564",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42564#discussion_r3121007688"
+      },
+      "confidence": "authoritative",
+      "excerpt": "In ARM examples, the `type` field must not start with `/` and should be the resource type (e.g., `Microsoft.DocumentDB/mongoClusters`). Update this example's `type` value accordingly so it matches the resource ID-derived type.",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42564:comment:3121007698:spec:github:Azure/azure-rest-api-specs#42564",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-22T00:48:33Z",
+      "observedAt": "2026-04-22T00:48:33Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42564",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42564",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42564#discussion_r3121007698"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The 202 response polling URLs in `Location`/`Azure-AsyncOperation` use `api-version=2024-06-01-preview`, but this example is for `2026-02-01-preview`. Update the polling URLs to use the same `api-version` as the example request.",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42564:review:4151483062:spec:github:Azure/azure-rest-api-specs#42564",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-22T00:48:34Z",
+      "observedAt": "2026-04-22T00:48:34Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42564",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42564",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42564#pullrequestreview-4151483062"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Adds a new `2026-02-01-preview` API version for the `Microsoft.DocumentDB/MongoCluster` ARM spec, updating the TypeSpec source and wiring the new version into the AutoRest readme and examples. **Changes:** - Adds `p",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42564:review:4151486491:spec:github:Azure/azure-rest-api-specs#42564",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-22T00:50:05Z",
+      "observedAt": "2026-04-22T00:50:05Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42564",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "olivertowers"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42564",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42564#pullrequestreview-4151486491"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42564:comment:3121011330:spec:github:Azure/azure-rest-api-specs#42564",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-22T00:50:05Z",
+      "observedAt": "2026-04-22T00:50:05Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42564",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "olivertowers"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42564",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42564#discussion_r3121011330"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This connectionString only contains a placeholder for credentials NEVER actual credential content.",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42564:commit:2f05b7ac2748:spec:github:Azure/azure-rest-api-specs#42564",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-22T06:11:22Z",
+      "observedAt": "2026-04-22T06:11:22Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42564",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "olivertowers"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42564",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/2f05b7ac2748700124a521a3b59b21adb9cc7997"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42564:commit:273bd9020cf9:spec:github:Azure/azure-rest-api-specs#42564",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-22T06:31:07Z",
+      "observedAt": "2026-04-22T06:31:07Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42564",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "olivertowers"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42564",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/273bd9020cf9d4ded76170009b377ef22b8b1c08"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42564:review:4155387352:spec:github:Azure/azure-rest-api-specs#42564",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-22T14:18:33Z",
+      "observedAt": "2026-04-22T14:18:33Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42564",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "javierfigueroa"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42564",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42564#pullrequestreview-4155387352"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42564:comment:4297203237:spec:github:Azure/azure-rest-api-specs#42564",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-22T14:41:17Z",
+      "observedAt": "2026-04-22T14:41:17Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42564",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "joelpineiro"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42564",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42564#issuecomment-4297203237"
+      },
+      "confidence": "authoritative",
+      "excerpt": "With this version we also added storage as an optional property for GeoReplicas and PITR requests, may be worth adding those as examples, similar to `specification/mongocluster/resource-manager/Microsoft.DocumentDB/MongoCluster/examples/202",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42564:review:4155584388:spec:github:Azure/azure-rest-api-specs#42564",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-22T14:44:03Z",
+      "observedAt": "2026-04-22T14:44:03Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42564",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "joelpineiro"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42564",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42564#pullrequestreview-4155584388"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42564:commit:90eed6edfd9b:spec:github:Azure/azure-rest-api-specs#42564",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-22T18:17:21Z",
+      "observedAt": "2026-04-22T18:17:21Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42564",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "olivertowers"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42564",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/90eed6edfd9b74ec5e85b51cb04d499dcb189a48"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42564:review:4208402601:spec:github:Azure/azure-rest-api-specs#42564",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-30T20:39:24Z",
+      "observedAt": "2026-04-30T20:39:24Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42564",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "javierfigueroa"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42564",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42564#pullrequestreview-4208402601"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#42564:pr.merged:spec:github:Azure/azure-rest-api-specs#42564",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-30T20:39:27Z",
+      "observedAt": "2026-04-30T20:39:27Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#42564",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#42564",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/42564"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6240125:generation.queued:sdk:Java:azure-resourcemanager-mongocluster",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-05-01T19:00:30.4889924Z",
+      "observedAt": "2026-05-01T19:21:24.6908589Z",
+      "trackId": "sdk:Java:azure-resourcemanager-mongocluster",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6240125",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6240125"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6240122:generation.queued:sdk:Python:azure-mgmt-mongocluster",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-05-01T19:00:30.6027449Z",
+      "observedAt": "2026-05-01T19:09:03.8459351Z",
+      "trackId": "sdk:Python:azure-mgmt-mongocluster",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6240122",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6240122"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6240121:generation.queued:sdk:Go:sdk/resourcemanager/mongocluster/armmongocluster",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-05-01T19:00:30.7618188Z",
+      "observedAt": "2026-05-01T19:08:06.9770615Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/mongocluster/armmongocluster",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6240121",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6240121"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:34020:11:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-01T19:00:35.137Z",
+      "observedAt": "2026-05-01T19:00:35.137Z",
+      "trackId": "sdk:Python:azure-mgmt-mongocluster",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34020",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34020"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34020:12:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-01T19:00:35.517Z",
+      "observedAt": "2026-05-01T19:00:35.517Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongocluster",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34020",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34020"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34020:13:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-01T19:00:35.85Z",
+      "observedAt": "2026-05-01T19:00:35.85Z",
+      "trackId": "sdk:Java:azure-resourcemanager-mongocluster",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34020",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34020"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34020:14:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-01T19:00:37.443Z",
+      "observedAt": "2026-05-01T19:00:37.443Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/mongocluster/armmongocluster",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34020",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34020"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34020:15:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-01T19:00:38.053Z",
+      "observedAt": "2026-05-01T19:00:38.053Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoCluster",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34020",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34020"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6240122:generation.started:sdk:Python:azure-mgmt-mongocluster",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-05-01T19:01:06.3802605Z",
+      "observedAt": "2026-05-01T19:09:03.8459351Z",
+      "trackId": "sdk:Python:azure-mgmt-mongocluster",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6240122",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6240122"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6240121:generation.started:sdk:Go:sdk/resourcemanager/mongocluster/armmongocluster",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-05-01T19:01:15.3387347Z",
+      "observedAt": "2026-05-01T19:08:06.9770615Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/mongocluster/armmongocluster",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6240121",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6240121"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6240125:generation.started:sdk:Java:azure-resourcemanager-mongocluster",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-05-01T19:01:16.4372838Z",
+      "observedAt": "2026-05-01T19:21:24.6908589Z",
+      "trackId": "sdk:Java:azure-resourcemanager-mongocluster",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6240125",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6240125"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26705:commit:12a3934c7c17:sdk:Go:sdk/resourcemanager/mongocluster/armmongocluster",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-01T19:06:11Z",
+      "observedAt": "2026-05-01T19:06:11Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/mongocluster/armmongocluster",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26705",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/12a3934c7c173d2121cbba6019c5dadf9e27a045"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26705:pr.created:sdk:Go:sdk/resourcemanager/mongocluster/armmongocluster",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-01T19:06:15Z",
+      "observedAt": "2026-05-01T19:06:15Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/mongocluster/armmongocluster",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26705",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26705"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:34020:16:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-01T19:06:22.563Z",
+      "observedAt": "2026-05-01T19:06:22.563Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/mongocluster/armmongocluster",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34020",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34020"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:34020:16:Custom.SDKPullRequestForGo",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-05-01T19:06:22.563Z",
+      "observedAt": "2026-05-01T19:06:22.563Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/mongocluster/armmongocluster",
+      "value": "https://github.com/Azure/azure-sdk-for-go/pull/26705",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34020",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34020"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58923:commit:d78799e1df38:sdk:.NET:Azure.ResourceManager.MongoCluster",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-01T19:07:09Z",
+      "observedAt": "2026-05-01T19:07:09Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoCluster",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58923",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/d78799e1df386095617d91414ef87bd0170cbbf8"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58923:pr.created:sdk:.NET:Azure.ResourceManager.MongoCluster",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-01T19:07:13Z",
+      "observedAt": "2026-05-01T19:07:13Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoCluster",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58923",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58923"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:34020:17:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-01T19:07:21.61Z",
+      "observedAt": "2026-05-01T19:07:21.61Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoCluster",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34020",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34020"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:34020:17:Custom.SDKPullRequestForDotnet",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-05-01T19:07:21.61Z",
+      "observedAt": "2026-05-01T19:07:21.61Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoCluster",
+      "value": "https://github.com/Azure/azure-sdk-for-net/pull/58923",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34020",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34020"
+      },
+      "title": "SDK PR linked",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46669:commit:8080a23095ba:sdk:Python:azure-mgmt-mongocluster",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-01T19:07:26Z",
+      "observedAt": "2026-05-01T19:07:26Z",
+      "trackId": "sdk:Python:azure-mgmt-mongocluster",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46669",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/8080a23095bace7bb22042c16616aecacfc2f259"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46669:pr.created:sdk:Python:azure-mgmt-mongocluster",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-01T19:07:30Z",
+      "observedAt": "2026-05-01T19:07:30Z",
+      "trackId": "sdk:Python:azure-mgmt-mongocluster",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46669",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46669"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:34020:18:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-01T19:07:36.997Z",
+      "observedAt": "2026-05-01T19:07:36.997Z",
+      "trackId": "sdk:Python:azure-mgmt-mongocluster",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34020",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34020"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:34020:18:Custom.SDKPullRequestForPython",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-05-01T19:07:36.997Z",
+      "observedAt": "2026-05-01T19:07:36.997Z",
+      "trackId": "sdk:Python:azure-mgmt-mongocluster",
+      "value": "https://github.com/Azure/azure-sdk-for-python/pull/46669",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34020",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34020"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38371:commit:ade9f469db66:sdk:JavaScript:@azure/arm-mongocluster",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-01T19:07:37Z",
+      "observedAt": "2026-05-01T19:07:37Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongocluster",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38371",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/ade9f469db667dd2b6b1cf39bd352b80911eb68b"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38371:pr.created:sdk:JavaScript:@azure/arm-mongocluster",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-01T19:07:41Z",
+      "observedAt": "2026-05-01T19:07:41Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongocluster",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38371",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38371"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:34020:19:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-01T19:07:47.247Z",
+      "observedAt": "2026-05-01T19:07:47.247Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongocluster",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34020",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34020"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:34020:19:Custom.SDKPullRequestForJavaScript",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-05-01T19:07:47.247Z",
+      "observedAt": "2026-05-01T19:07:47.247Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongocluster",
+      "value": "https://github.com/Azure/azure-sdk-for-js/pull/38371",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34020",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34020"
+      },
+      "title": "SDK PR linked",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6240121:generation.completed:sdk:Go:sdk/resourcemanager/mongocluster/armmongocluster",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-05-01T19:08:06.9770615Z",
+      "observedAt": "2026-05-01T19:08:06.9770615Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/mongocluster/armmongocluster",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6240121",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6240121"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6240122:generation.completed:sdk:Python:azure-mgmt-mongocluster",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-05-01T19:09:03.8459351Z",
+      "observedAt": "2026-05-01T19:09:03.8459351Z",
+      "trackId": "sdk:Python:azure-mgmt-mongocluster",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6240122",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6240122"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49020:commit:bbcf02786dbd:sdk:Java:azure-resourcemanager-mongocluster",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-01T19:10:37Z",
+      "observedAt": "2026-05-01T19:10:37Z",
+      "trackId": "sdk:Java:azure-resourcemanager-mongocluster",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49020",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/bbcf02786dbdc08c7a1367858875577c4513b1bf"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49020:pr.created:sdk:Java:azure-resourcemanager-mongocluster",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-01T19:10:42Z",
+      "observedAt": "2026-05-01T19:10:42Z",
+      "trackId": "sdk:Java:azure-resourcemanager-mongocluster",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49020",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49020"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:34020:20:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-01T19:10:50.277Z",
+      "observedAt": "2026-05-01T19:10:50.277Z",
+      "trackId": "sdk:Java:azure-resourcemanager-mongocluster",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34020",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34020"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:34020:20:Custom.SDKPullRequestForJava",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-05-01T19:10:50.277Z",
+      "observedAt": "2026-05-01T19:10:50.277Z",
+      "trackId": "sdk:Java:azure-resourcemanager-mongocluster",
+      "value": "https://github.com/Azure/azure-sdk-for-java/pull/49020",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34020",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34020"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6240125:generation.completed:sdk:Java:azure-resourcemanager-mongocluster",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-05-01T19:21:24.6908589Z",
+      "observedAt": "2026-05-01T19:21:24.6908589Z",
+      "trackId": "sdk:Java:azure-resourcemanager-mongocluster",
+      "title": "Pipeline completed with issues",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6240125",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6240125"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26705:review:4212981872:sdk:Go:sdk/resourcemanager/mongocluster/armmongocluster",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-01T19:27:12Z",
+      "observedAt": "2026-05-01T19:27:12Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/mongocluster/armmongocluster",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26705",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26705#pullrequestreview-4212981872"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This PR updates the `armmongocluster` Azure Resource Manager client package to the latest preview API version generated from `azure-rest-api-specs`, including new model surface area and regenerated examples/fakes to",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46669:comment:3183269650:sdk:Python:azure-mgmt-mongocluster",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-04T17:25:43Z",
+      "observedAt": "2026-05-04T17:25:43Z",
+      "trackId": "sdk:Python:azure-mgmt-mongocluster",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46669",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46669#discussion_r3183269650"
+      },
+      "confidence": "authoritative",
+      "excerpt": "README states Python 3.10+ is required, but pyproject.toml still declares requires-python \">=3.9\" and includes the Python 3.9 classifier. Please align the stated minimum Python version across README and packaging metadata (either revert REA",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46669:comment:3183269694:sdk:Python:azure-mgmt-mongocluster",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-04T17:25:43Z",
+      "observedAt": "2026-05-04T17:25:43Z",
+      "trackId": "sdk:Python:azure-mgmt-mongocluster",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46669",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46669#discussion_r3183269694"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The client docstring says the only known api_version is \"2026-02-01-preview\", but the generated operations include api_version_validation lists that still allow earlier API versions (e.g. 2025-09-01, 2025-08-01-preview, etc.). Please update",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46669:comment:3183269722:sdk:Python:azure-mgmt-mongocluster",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-04T17:25:43Z",
+      "observedAt": "2026-05-04T17:25:43Z",
+      "trackId": "sdk:Python:azure-mgmt-mongocluster",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46669",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46669#discussion_r3183269722"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The async client docstring says the only known api_version is \"2026-02-01-preview\", but the generated operations include api_version_validation lists that still allow earlier API versions (e.g. 2025-09-01, 2025-08-01-preview, etc.). Please ",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46669:review:4222060545:sdk:Python:azure-mgmt-mongocluster",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-04T17:25:44Z",
+      "observedAt": "2026-05-04T17:25:44Z",
+      "trackId": "sdk:Python:azure-mgmt-mongocluster",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46669",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46669#pullrequestreview-4222060545"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This PR updates the `azure-mgmt-mongocluster` management-plane SDK from the `azure-rest-api-specs` TypeSpec source at a newer commit, moving the default API version forward and adding the new `networkBypassMode` cap",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49020:comment:3183284950:sdk:Java:azure-resourcemanager-mongocluster",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-04T17:28:37Z",
+      "observedAt": "2026-05-04T17:28:37Z",
+      "trackId": "sdk:Java:azure-resourcemanager-mongocluster",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49020",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49020#discussion_r3183284950"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The public API surface for `FirewallRuleProperties` renamed `startIpAddress`/`endIpAddress` accessors to `startIPAddress`/`endIPAddress`, which is a breaking change and also diverges from the predominant `IpAddress` naming used across other",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49020:comment:3183284999:sdk:Java:azure-resourcemanager-mongocluster",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-04T17:28:37Z",
+      "observedAt": "2026-05-04T17:28:37Z",
+      "trackId": "sdk:Java:azure-resourcemanager-mongocluster",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49020",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49020#discussion_r3183284999"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The CHANGELOG entry for `1.2.0-beta.1` is dated, but this PR appears to be preparing the release rather than documenting an already-published version. In this repo, the top version section is typically kept as `(Unreleased)` until the packa",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49020:review:4222079663:sdk:Java:azure-resourcemanager-mongocluster",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-04T17:28:38Z",
+      "observedAt": "2026-05-04T17:28:38Z",
+      "trackId": "sdk:Java:azure-resourcemanager-mongocluster",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49020",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49020#pullrequestreview-4222079663"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This PR is an automated regeneration/update of `azure-resourcemanager-mongocluster` from the MongoCluster TypeSpec configuration, moving the management plane SDK to API version `2026-02-01-preview` and updating the ",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58923:comment:3183285145:sdk:.NET:Azure.ResourceManager.MongoCluster",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-04T17:28:39Z",
+      "observedAt": "2026-05-04T17:28:39Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoCluster",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58923",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58923#discussion_r3183285145"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Adding `networkBypassMode` as an optional parameter changes the public `ArmMongoClusterModelFactory.MongoClusterUpdateProperties(...)` signature and is a binary breaking change for callers compiled against 1.0.0. Unlike `MongoClusterPropert",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58923:comment:3183285192:sdk:.NET:Azure.ResourceManager.MongoCluster",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-04T17:28:39Z",
+      "observedAt": "2026-05-04T17:28:39Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoCluster",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58923",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58923#discussion_r3183285192"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This PR adds new public surface (`MongoClusterNetworkBypassMode` and the new `NetworkBypassMode` members), but the package's API baseline files under `api/` were not updated — they still contain only the old surface. The public API check wi",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58923:review:4222079861:sdk:.NET:Azure.ResourceManager.MongoCluster",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-04T17:28:40Z",
+      "observedAt": "2026-05-04T17:28:40Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoCluster",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58923",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58923#pullrequestreview-4222079861"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This AutoPR refreshes `Azure.ResourceManager.MongoCluster` to the `2026-02-01-preview` TypeSpec/REST API surface. In the MongoCluster management SDK, it mainly updates generated clients/models to the new preview con",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38371:comment:3183301253:sdk:JavaScript:@azure/arm-mongocluster",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-04T17:31:34Z",
+      "observedAt": "2026-05-04T17:31:34Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongocluster",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38371",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38371#discussion_r3183301253"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`ManagedServiceIdentity.userAssignedIdentities` is typed as `Record<string, UserAssignedIdentity>`, but the deserializer can return `null` values (`!p ? p : ...`). This makes the public type inaccurate and can surface `null` at runtime whil",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38371:comment:3183301325:sdk:JavaScript:@azure/arm-mongocluster",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-04T17:31:34Z",
+      "observedAt": "2026-05-04T17:31:34Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongocluster",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38371",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38371#discussion_r3183301325"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`FirewallRuleProperties` was renamed to `startIPAddress`/`endIPAddress`, but there are still in-repo usages of the old `startIpAddress`/`endIpAddress` property names (e.g., the package's existing `test/public/mongoclusterOperations.spec.ts`",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38371:review:4222099126:sdk:JavaScript:@azure/arm-mongocluster",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-04T17:31:35Z",
+      "observedAt": "2026-05-04T17:31:35Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongocluster",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38371",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38371#pullrequestreview-4222099126"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This PR updates the `@azure/arm-mongocluster` management SDK generated from the latest TypeSpec configuration/spec commit, moving the package to a new beta release with the `2026-02-01-preview` API version and updat",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38371:comment:3183301368:sdk:JavaScript:@azure/arm-mongocluster",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-04T17:31:35Z",
+      "observedAt": "2026-05-04T17:31:35Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongocluster",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38371",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38371#discussion_r3183301368"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The Breaking Changes list doesn't mention the `ManagedServiceIdentity.userAssignedIdentities` type change (from allowing `null` values to not allowing them), which is a public API surface change in the api report. Please add an entry here (",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49020:comment:4376191908:sdk:Java:azure-resourcemanager-mongocluster",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-05T02:45:43Z",
+      "observedAt": "2026-05-05T02:45:43Z",
+      "trackId": "sdk:Java:azure-resourcemanager-mongocluster",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49020",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49020#issuecomment-4376191908"
+      },
+      "confidence": "authoritative",
+      "excerpt": "need to fix a break introduced by .NET dev https://github.com/Azure/azure-rest-api-specs/pull/42878",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49020:review:4224962014:sdk:Java:azure-resourcemanager-mongocluster",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-05T02:45:57Z",
+      "observedAt": "2026-05-05T02:45:57Z",
+      "trackId": "sdk:Java:azure-resourcemanager-mongocluster",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49020",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49020#pullrequestreview-4224962014"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49020:comment:3185758155:sdk:Java:azure-resourcemanager-mongocluster",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-05T02:45:57Z",
+      "observedAt": "2026-05-05T02:45:57Z",
+      "trackId": "sdk:Java:azure-resourcemanager-mongocluster",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49020",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49020#discussion_r3185758155"
+      },
+      "confidence": "authoritative",
+      "excerpt": "https://github.com/Azure/azure-sdk-for-java/pull/49020#issuecomment-4376191908",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26705:review:4232693669:sdk:Go:sdk/resourcemanager/mongocluster/armmongocluster",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-06T02:03:34Z",
+      "observedAt": "2026-05-06T02:03:34Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/mongocluster/armmongocluster",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "JiaqiZhang-Dev"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26705",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26705#pullrequestreview-4232693669"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49020:commit:007860ec687d:sdk:Java:azure-resourcemanager-mongocluster",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-06T03:36:48Z",
+      "observedAt": "2026-05-06T03:36:48Z",
+      "trackId": "sdk:Java:azure-resourcemanager-mongocluster",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49020",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/007860ec687d221afb19bcb4fc506e79a420e51c"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49020:review:4233007213:sdk:Java:azure-resourcemanager-mongocluster",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-06T03:40:22Z",
+      "observedAt": "2026-05-06T03:40:22Z",
+      "trackId": "sdk:Java:azure-resourcemanager-mongocluster",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49020",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49020#pullrequestreview-4233007213"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46669:commit:33bf0f4293e2:sdk:Python:azure-mgmt-mongocluster",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-06T05:50:21Z",
+      "observedAt": "2026-05-06T05:50:21Z",
+      "trackId": "sdk:Python:azure-mgmt-mongocluster",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46669",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/33bf0f4293e21c2361f6ac1b8fc61653ea7d464a"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46669:commit:bb3feedae1cb:sdk:Python:azure-mgmt-mongocluster",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-06T06:01:06Z",
+      "observedAt": "2026-05-06T06:01:06Z",
+      "trackId": "sdk:Python:azure-mgmt-mongocluster",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46669",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/bb3feedae1cb4bc286f4941c9802b7eebbbafcad"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46669:commit:4df4ce7f59e0:sdk:Python:azure-mgmt-mongocluster",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-06T06:17:05Z",
+      "observedAt": "2026-05-06T06:17:05Z",
+      "trackId": "sdk:Python:azure-mgmt-mongocluster",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46669",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/4df4ce7f59e0f5a1453e95bfaeb953d3fa5c5c16"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38371:review:4233796391:sdk:JavaScript:@azure/arm-mongocluster",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-06T06:39:56Z",
+      "observedAt": "2026-05-06T06:39:56Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongocluster",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38371",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38371#pullrequestreview-4233796391"
+      },
+      "confidence": "authoritative",
+      "excerpt": "1 tool issue found: `CHANGELOG.md` is missing a breaking-change entry for the `ManagedServiceIdentity.userAssignedIdentities` type narrowing (`Record<string, UserAssignedIdentity | null>` → `Record<string, UserAssignedIdentity>`). All other",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38371:comment:4385679123:sdk:JavaScript:@azure/arm-mongocluster",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-06T06:39:56Z",
+      "observedAt": "2026-05-06T06:39:56Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongocluster",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38371",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38371#issuecomment-4385679123"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Next Steps to Merge Only failed checks and required actions are listed below. - ❌ **UnitTest (ubuntu/windows/macOS node)**: Stale test recordings — tests use api-version `2025-09-01` but the package now targets `2026-02-01-preview`, caus",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38371:comment:3193485825:sdk:JavaScript:@azure/arm-mongocluster",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-06T06:39:56Z",
+      "observedAt": "2026-05-06T06:39:56Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongocluster",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38371",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38371#discussion_r3193485825"
+      },
+      "confidence": "authoritative",
+      "excerpt": "🔴 **Tool Issue** — `CHANGELOG.md:26` The `Breaking Changes` section is missing an entry for the `ManagedServiceIdentity.userAssignedIdentities` property type change. In `review/arm-mongocluster-node.api.md` (line 403), the type changed fro",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46669:commit:7aab76b2beaf:sdk:Python:azure-mgmt-mongocluster",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-06T06:47:50Z",
+      "observedAt": "2026-05-06T06:47:50Z",
+      "trackId": "sdk:Python:azure-mgmt-mongocluster",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46669",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/7aab76b2beafc9544212f36ca5bd3fe550d62320"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38371:comment:4385839877:sdk:JavaScript:@azure/arm-mongocluster",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-06T07:07:29Z",
+      "observedAt": "2026-05-06T07:07:29Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongocluster",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38371",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38371#issuecomment-4385839877"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> ## Next Steps to Merge > Only failed checks and required actions are listed below. > > * ❌ **UnitTest (ubuntu/windows/macOS node)**: Stale test recordings — tests use api-version `2025-09-01` but the package now targets `2026-02-01-previe",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38371:review:4233967648:sdk:JavaScript:@azure/arm-mongocluster",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-06T07:07:46Z",
+      "observedAt": "2026-05-06T07:07:46Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongocluster",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38371",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38371#pullrequestreview-4233967648"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38371:comment:3193628136:sdk:JavaScript:@azure/arm-mongocluster",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-06T07:07:46Z",
+      "observedAt": "2026-05-06T07:07:46Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongocluster",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38371",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38371#discussion_r3193628136"
+      },
+      "confidence": "authoritative",
+      "excerpt": "seems we need disable `ignore-nullable-on-optional` config and do a regen",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46669:review:4234126756:sdk:Python:azure-mgmt-mongocluster",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-06T07:36:22Z",
+      "observedAt": "2026-05-06T07:36:22Z",
+      "trackId": "sdk:Python:azure-mgmt-mongocluster",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46669",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46669#pullrequestreview-4234126756"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46669:comment:4386004645:sdk:Python:azure-mgmt-mongocluster",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-06T07:39:25Z",
+      "observedAt": "2026-05-06T07:39:25Z",
+      "trackId": "sdk:Python:azure-mgmt-mongocluster",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46669",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46669#issuecomment-4386004645"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @olivertowers, pr ready, feel free to merge and release",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38371:review:4234149026:sdk:JavaScript:@azure/arm-mongocluster",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-06T07:39:58Z",
+      "observedAt": "2026-05-06T07:39:58Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongocluster",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38371",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38371#pullrequestreview-4234149026"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38371:comment:3193780239:sdk:JavaScript:@azure/arm-mongocluster",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-06T07:39:58Z",
+      "observedAt": "2026-05-06T07:39:58Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongocluster",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38371",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38371#discussion_r3193780239"
+      },
+      "confidence": "authoritative",
+      "excerpt": "https://github.com/Azure/azure-rest-api-specs/pull/42920",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46669:pr.merged:sdk:Python:azure-mgmt-mongocluster",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-06T17:16:20Z",
+      "observedAt": "2026-05-06T17:16:20Z",
+      "trackId": "sdk:Python:azure-mgmt-mongocluster",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46669",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46669"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26705:pr.merged:sdk:Go:sdk/resourcemanager/mongocluster/armmongocluster",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-06T17:19:20Z",
+      "observedAt": "2026-05-06T17:19:20Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/mongocluster/armmongocluster",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26705",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26705"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49020:pr.merged:sdk:Java:azure-resourcemanager-mongocluster",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-06T17:19:57Z",
+      "observedAt": "2026-05-06T17:19:57Z",
+      "trackId": "sdk:Java:azure-resourcemanager-mongocluster",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49020",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49020"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38371:comment:4390434812:sdk:JavaScript:@azure/arm-mongocluster",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-06T17:23:21Z",
+      "observedAt": "2026-05-06T17:23:21Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongocluster",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "olivertowers"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38371",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38371#issuecomment-4390434812"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> > ## Next Steps to Merge > > Only failed checks and required actions are listed below. > > > > * ❌ **UnitTest (ubuntu/windows/macOS node)**: Stale test recordings — tests use api-version `2025-09-01` but the package now targets `2026-02-0",
+      "stack": 2
+    },
+    {
+      "id": "ado:34020:30:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T17:39:03.103Z",
+      "observedAt": "2026-05-06T17:39:03.103Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoCluster",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34020",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34020"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34020:30:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T17:39:03.103Z",
+      "observedAt": "2026-05-06T17:39:03.103Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongocluster",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34020",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34020"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:34020:30:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T17:39:03.103Z",
+      "observedAt": "2026-05-06T17:39:03.103Z",
+      "trackId": "sdk:Python:azure-mgmt-mongocluster",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34020",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34020"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34020:30:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T17:39:03.103Z",
+      "observedAt": "2026-05-06T17:39:03.103Z",
+      "trackId": "sdk:Java:azure-resourcemanager-mongocluster",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34020",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34020"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:34020:30:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-06T17:39:03.103Z",
+      "observedAt": "2026-05-06T17:39:03.103Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/mongocluster/armmongocluster",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34020",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34020"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:34020:31:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-06T17:39:12.323Z",
+      "observedAt": "2026-05-06T17:39:12.323Z",
+      "trackId": "plan",
+      "value": "Approved",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34020",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34020"
+      },
+      "title": "Spec approval changed",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38371:comment:4393678362:sdk:JavaScript:@azure/arm-mongocluster",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-07T02:13:31Z",
+      "observedAt": "2026-05-07T02:13:31Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongocluster",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38371",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38371#issuecomment-4393678362"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> > > ## Next Steps to Merge > > > Only failed checks and required actions are listed below. > > > > > > * ❌ **UnitTest (ubuntu/windows/macOS node)**: Stale test recordings — tests use api-version `2025-09-01` but the package now targets `2",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38371:commit:ac5d6b4d74c2:sdk:JavaScript:@azure/arm-mongocluster",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-07T05:54:50Z",
+      "observedAt": "2026-05-07T05:54:50Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongocluster",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38371",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/ac5d6b4d74c2febb9de4682a045a7691570b9eb4"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38371:comment:4394489243:sdk:JavaScript:@azure/arm-mongocluster",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-07T06:04:41Z",
+      "observedAt": "2026-05-07T06:04:41Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongocluster",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38371",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38371#issuecomment-4394489243"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Next Steps to Merge Only failed checks and required actions are listed below. - 🔄 **pnpm-lock conflict**: PR has a merge conflict (`mergeable_state: dirty`). Follow the [conflict guide](https://github.com/Azure/azure-sdk-for-js/blob/mai",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38371:review:4241469000:sdk:JavaScript:@azure/arm-mongocluster",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-07T06:04:42Z",
+      "observedAt": "2026-05-07T06:04:42Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongocluster",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38371",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38371#pullrequestreview-4241469000"
+      },
+      "confidence": "authoritative",
+      "excerpt": "No API design issues found. The `@azure/arm-mongocluster` v2.0.0-beta.1 update adds `networkBypassMode` to `MongoClusterProperties`/`MongoClusterUpdateProperties`, `KnownNetworkBypassMode` enum, and new preview API versions in `KnownVersion",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58923:comment:4445434667:sdk:.NET:Azure.ResourceManager.MongoCluster",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-13T21:43:20Z",
+      "observedAt": "2026-05-13T21:43:20Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoCluster",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "olivertowers"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58923",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58923#issuecomment-4445434667"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@ArthurMa1978 @ArcturusZhang @live1206 can I get a review of this? Not clear on whether we should take action on copilot comments considering the content is fully code generated from the spec.",
+      "stack": 0
+    },
+    {
+      "id": "ado:34020:38:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-13T21:44:38.417Z",
+      "observedAt": "2026-05-13T21:44:38.417Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongocluster",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34020",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34020"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38371:commit:42c68748780c:sdk:JavaScript:@azure/arm-mongocluster",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-13T21:53:31Z",
+      "observedAt": "2026-05-13T21:53:31Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongocluster",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38371",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/42c68748780cf53d8878e85a2d77bbce4408ad62"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:34020:39:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-13T21:53:39.49Z",
+      "observedAt": "2026-05-13T21:53:39.49Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongocluster",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34020",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34020"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38371:comment:4446034032:sdk:JavaScript:@azure/arm-mongocluster",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-13T23:37:47Z",
+      "observedAt": "2026-05-13T23:37:47Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongocluster",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "olivertowers"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38371",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38371#issuecomment-4446034032"
+      },
+      "confidence": "authoritative",
+      "excerpt": "/rebase",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38371:commit:88147fc95bfb:sdk:JavaScript:@azure/arm-mongocluster",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-15T22:55:01Z",
+      "observedAt": "2026-05-15T22:55:01Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongocluster",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "olivertowers"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38371",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/88147fc95bfbb33eb03bfbc607d767ccd35a73d6"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58923:commit:f5a3dcc3531e:sdk:.NET:Azure.ResourceManager.MongoCluster",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-16T02:45:34Z",
+      "observedAt": "2026-05-16T02:45:34Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoCluster",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "olivertowers"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58923",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/f5a3dcc3531e4fe496bc51d125cf95e3c8737a5f"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38371:commit:3c814ddd0ade:sdk:JavaScript:@azure/arm-mongocluster",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-16T02:51:36Z",
+      "observedAt": "2026-05-16T02:51:36Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongocluster",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "olivertowers"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38371",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/3c814ddd0ade2c7842bf40595985875edab5a7c8"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38371:commit:e442301bf8f6:sdk:JavaScript:@azure/arm-mongocluster",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-16T03:50:45Z",
+      "observedAt": "2026-05-16T03:50:45Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongocluster",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "olivertowers"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38371",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/e442301bf8f6c23e0d001a9f60fa3376dc684afe"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38371:review:4307661815:sdk:JavaScript:@azure/arm-mongocluster",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-18T06:19:17Z",
+      "observedAt": "2026-05-18T06:19:17Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongocluster",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38371",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38371#pullrequestreview-4307661815"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38371:comment:3256723695:sdk:JavaScript:@azure/arm-mongocluster",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-18T06:19:17Z",
+      "observedAt": "2026-05-18T06:19:17Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongocluster",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38371",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38371#discussion_r3256723695"
+      },
+      "confidence": "authoritative",
+      "excerpt": "why this pr has so many changes in `CODEOWNERS`?",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38371:pr.closed:sdk:JavaScript:@azure/arm-mongocluster",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-18T17:27:04Z",
+      "observedAt": "2026-05-18T17:27:04Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongocluster",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38371",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38371"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38371:comment:4480165297:sdk:JavaScript:@azure/arm-mongocluster",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-18T17:27:04Z",
+      "observedAt": "2026-05-18T17:27:04Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongocluster",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "olivertowers"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38371",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38371#issuecomment-4480165297"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Closing to re-trigger via official generation pipeline for a clean PR without CODEOWNERS/pnpm-lock drift.",
+      "stack": 3
+    },
+    {
+      "id": "ado:34020:41:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-18T17:27:27.093Z",
+      "observedAt": "2026-05-18T17:27:27.093Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongocluster",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34020",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34020"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58923:comment:4480200573:sdk:.NET:Azure.ResourceManager.MongoCluster",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-18T17:32:02Z",
+      "observedAt": "2026-05-18T17:32:02Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoCluster",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "olivertowers"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58923",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58923#issuecomment-4480200573"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Closing to re-trigger via official generation pipeline - PR has merge conflict in generated code due to main advancing.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58923:pr.closed:sdk:.NET:Azure.ResourceManager.MongoCluster",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-18T17:32:03Z",
+      "observedAt": "2026-05-18T17:32:03Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoCluster",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58923",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58923"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6314917:generation.queued:sdk:.NET:Azure.ResourceManager.MongoCluster",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-05-18T17:32:13.7105226Z",
+      "observedAt": "2026-05-18T17:40:35.1663332Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoCluster",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6314917",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6314917"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:34020:42:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-18T17:32:20.227Z",
+      "observedAt": "2026-05-18T17:32:20.227Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoCluster",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34020",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34020"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6314917:generation.started:sdk:.NET:Azure.ResourceManager.MongoCluster",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-05-18T17:32:52.8011659Z",
+      "observedAt": "2026-05-18T17:40:35.1663332Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoCluster",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6314917",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6314917"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:34020:43:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-18T17:33:48.917Z",
+      "observedAt": "2026-05-18T17:33:48.917Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongocluster",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34020",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34020"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59312:commit:97d0523da44c:sdk:.NET:Azure.ResourceManager.MongoCluster",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-18T17:39:39Z",
+      "observedAt": "2026-05-18T17:39:39Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoCluster",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59312",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/97d0523da44c733774625abad8b7b9e76d4697ac"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59312:pr.created:sdk:.NET:Azure.ResourceManager.MongoCluster",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-18T17:39:44Z",
+      "observedAt": "2026-05-18T17:39:44Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoCluster",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59312",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59312"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:34020:44:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-18T17:39:51.09Z",
+      "observedAt": "2026-05-18T17:39:51.09Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoCluster",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34020",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34020"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34020:44:Custom.SDKPullRequestForDotnet",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-05-18T17:39:51.09Z",
+      "observedAt": "2026-05-18T17:39:51.09Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoCluster",
+      "value": "https://github.com/Azure/azure-sdk-for-net/pull/59312",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34020",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34020"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6314917:generation.completed:sdk:.NET:Azure.ResourceManager.MongoCluster",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-05-18T17:40:35.1663332Z",
+      "observedAt": "2026-05-18T17:40:35.1663332Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoCluster",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6314917",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6314917"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59312:review:4312915919:sdk:.NET:Azure.ResourceManager.MongoCluster",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-18T18:57:30Z",
+      "observedAt": "2026-05-18T18:57:30Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoCluster",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59312",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59312#pullrequestreview-4312915919"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This PR is an auto-generated refresh of **Azure.ResourceManager.MongoCluster** from the `azure-rest-api-specs` TypeSpec configuration, updating the library to the **2026-02-01-preview** API version and reflecting ne",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "ado:34020:47:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-18T19:04:37.557Z",
+      "observedAt": "2026-05-18T19:04:37.557Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongocluster",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34020",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34020"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34020:48:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-18T19:13:30.95Z",
+      "observedAt": "2026-05-18T19:13:30.95Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongocluster",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34020",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34020"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6321205:generation.queued:sdk:JavaScript:@azure/arm-mongocluster",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-05-19T15:59:50.9199781Z",
+      "observedAt": "2026-05-19T16:11:28.8704154Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongocluster",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6321205",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6321205"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:34020:50:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-19T15:59:55.867Z",
+      "observedAt": "2026-05-19T15:59:55.867Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongocluster",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34020",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34020"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6321205:generation.started:sdk:JavaScript:@azure/arm-mongocluster",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-05-19T16:00:23.7266778Z",
+      "observedAt": "2026-05-19T16:11:28.8704154Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongocluster",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6321205",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6321205"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38593:commit:380b638e2f12:sdk:JavaScript:@azure/arm-mongocluster",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-19T16:07:13Z",
+      "observedAt": "2026-05-19T16:07:13Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongocluster",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38593",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/380b638e2f12bd96c1f434232ae60c4354363f28"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38593:pr.created:sdk:JavaScript:@azure/arm-mongocluster",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-19T16:07:18Z",
+      "observedAt": "2026-05-19T16:07:18Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongocluster",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38593",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38593"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:34020:51:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-19T16:07:24.99Z",
+      "observedAt": "2026-05-19T16:07:24.99Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongocluster",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34020",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34020"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34020:51:Custom.SDKPullRequestForJavaScript",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-05-19T16:07:24.99Z",
+      "observedAt": "2026-05-19T16:07:24.99Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongocluster",
+      "value": "https://github.com/Azure/azure-sdk-for-js/pull/38593",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34020",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34020"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6321205:generation.completed:sdk:JavaScript:@azure/arm-mongocluster",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-05-19T16:11:28.8704154Z",
+      "observedAt": "2026-05-19T16:11:28.8704154Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongocluster",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6321205",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6321205"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38593:review:4320816638:sdk:JavaScript:@azure/arm-mongocluster",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-19T16:12:52Z",
+      "observedAt": "2026-05-19T16:12:52Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongocluster",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38593",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38593#pullrequestreview-4320816638"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This is an auto-generated SDK regeneration PR for `@azure/arm-mongocluster`, bumping to beta version `1.2.0-beta.1` against TypeSpec commit `b59aeff` and targeting the `2026-02-01-preview` API version. It adds a new",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38593:commit:5d8365a6373c:sdk:JavaScript:@azure/arm-mongocluster",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-19T17:32:01Z",
+      "observedAt": "2026-05-19T17:32:01Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongocluster",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "olivertowers"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38593",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/5d8365a6373ccff13b6a6019ccec1bd585c65584"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59312:commit:9ddf48336d1f:sdk:.NET:Azure.ResourceManager.MongoCluster",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-19T18:12:30Z",
+      "observedAt": "2026-05-19T18:12:30Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoCluster",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "olivertowers"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59312",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/9ddf48336d1fd44bdfee257624ab44db90115f9b"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38593:comment:4496532869:sdk:JavaScript:@azure/arm-mongocluster",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T09:05:55Z",
+      "observedAt": "2026-05-20T09:05:55Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongocluster",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38593",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38593#issuecomment-4496532869"
+      },
+      "confidence": "authoritative",
+      "excerpt": "LGTM cc @JialinHuang803",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38593:comment:4496533284:sdk:JavaScript:@azure/arm-mongocluster",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T09:05:58Z",
+      "observedAt": "2026-05-20T09:05:58Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongocluster",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38593",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38593#issuecomment-4496533284"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Now this pr has a Management Release Assistant / agent failure, this failure is from our review agent and should not be a merge blocker, so you can merge this pr after the approval from Jialin.",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38593:review:4326970310:sdk:JavaScript:@azure/arm-mongocluster",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T09:17:42Z",
+      "observedAt": "2026-05-20T09:17:42Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongocluster",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "JialinHuang803"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38593",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38593#pullrequestreview-4326970310"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38593:pr.merged:sdk:JavaScript:@azure/arm-mongocluster",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-21T04:51:29Z",
+      "observedAt": "2026-05-21T04:51:29Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongocluster",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38593",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38593"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59312:review:4339159836:sdk:.NET:Azure.ResourceManager.MongoCluster",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-21T17:24:01Z",
+      "observedAt": "2026-05-21T17:24:01Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoCluster",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "javierfigueroa"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59312",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59312#pullrequestreview-4339159836"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59312:commit:aa9f5e6ec1f0:sdk:.NET:Azure.ResourceManager.MongoCluster",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-22T20:38:40Z",
+      "observedAt": "2026-05-22T20:38:40Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoCluster",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "olivertowers"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59312",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/aa9f5e6ec1f09675ef1d140fbc335a3dece81311"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:34020:54:Custom.ReleaseStatusForGo",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-05-25T06:23:48.067Z",
+      "observedAt": "2026-05-25T06:23:48.067Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/mongocluster/armmongocluster",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34020",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34020"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34020:54:Custom.ReleasedVersionForGo",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-05-25T06:23:48.067Z",
+      "observedAt": "2026-05-25T06:23:48.067Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/mongocluster/armmongocluster",
+      "value": "1.2.0-beta.1",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34020",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34020"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59312:review:4367859120:sdk:.NET:Azure.ResourceManager.MongoCluster",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-26T22:09:34Z",
+      "observedAt": "2026-05-26T22:09:34Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoCluster",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "javierfigueroa"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59312",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59312#pullrequestreview-4367859120"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59312:comment:4549525863:sdk:.NET:Azure.ResourceManager.MongoCluster",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-26T22:22:29Z",
+      "observedAt": "2026-05-26T22:22:29Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoCluster",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "olivertowers"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59312",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59312#issuecomment-4549525863"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@live1206 Can I get a review of this PR please?",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59312:commit:6a911ae87478:sdk:.NET:Azure.ResourceManager.MongoCluster",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-28T19:30:50Z",
+      "observedAt": "2026-05-28T19:30:50Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoCluster",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "olivertowers"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59312",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/6a911ae874781731fdbeb9ae8238e27b6ff1eb2f"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59312:review:4384170384:sdk:.NET:Azure.ResourceManager.MongoCluster",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-28T19:42:13Z",
+      "observedAt": "2026-05-28T19:42:13Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoCluster",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59312",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59312#pullrequestreview-4384170384"
+      },
+      "confidence": "authoritative",
+      "excerpt": "### Management SDK Review Summary - **Scope:** `Azure.ResourceManager.MongoCluster` (v1.1.0-beta.1) - **Versioning:** ✅ Pass — `ApiCompatVersion=1.0.0` is present, no major version bump, no `ApiCompatBaseline.txt` suppression entries added ",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59312:review:4415091537:sdk:.NET:Azure.ResourceManager.MongoCluster",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-03T02:50:23Z",
+      "observedAt": "2026-06-03T02:50:23Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoCluster",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "live1206"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59312",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59312#pullrequestreview-4415091537"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59312:pr.merged:sdk:.NET:Azure.ResourceManager.MongoCluster",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-03T02:51:04Z",
+      "observedAt": "2026-06-03T02:51:04Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoCluster",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59312",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59312"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:34020:55:Custom.ReleaseStatusForPython",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-06-11T09:57:32.13Z",
+      "observedAt": "2026-06-11T09:57:32.13Z",
+      "trackId": "sdk:Python:azure-mgmt-mongocluster",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34020",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34020"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34020:55:Custom.ReleasedVersionForPython",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-06-11T09:57:32.13Z",
+      "observedAt": "2026-06-11T09:57:32.13Z",
+      "trackId": "sdk:Python:azure-mgmt-mongocluster",
+      "value": "1.2.0b1",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34020",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34020"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34020:56:Custom.ReleaseStatusForJavaScript",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-06-12T09:59:07.577Z",
+      "observedAt": "2026-06-12T09:59:07.577Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongocluster",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34020",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34020"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34020:56:Custom.ReleasedVersionForJavaScript",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-06-12T09:59:07.577Z",
+      "observedAt": "2026-06-12T09:59:07.577Z",
+      "trackId": "sdk:JavaScript:@azure/arm-mongocluster",
+      "value": "1.2.0-beta.1",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34020",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34020"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34020:57:Custom.ReleaseStatusForDotnet",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-06-16T15:53:22.247Z",
+      "observedAt": "2026-06-16T15:53:22.247Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoCluster",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34020",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34020"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34020:57:Custom.ReleasedVersionForDotnet",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-06-16T15:53:22.247Z",
+      "observedAt": "2026-06-16T15:53:22.247Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MongoCluster",
+      "value": "1.1.0-beta.1",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34020",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34020"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34020:59:Custom.ReleaseStatusForJava",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-07-07T14:13:02.607Z",
+      "observedAt": "2026-07-07T14:13:02.607Z",
+      "trackId": "sdk:Java:azure-resourcemanager-mongocluster",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34020",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34020"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34020:59:Custom.ReleasedVersionForJava",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-07-07T14:13:02.607Z",
+      "observedAt": "2026-07-07T14:13:02.607Z",
+      "trackId": "sdk:Java:azure-resourcemanager-mongocluster",
+      "value": "1.2.0-beta.1",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34020",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34020"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34020:60:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-07-09T14:35:18.85Z",
+      "observedAt": "2026-07-09T14:35:18.85Z",
+      "trackId": "plan",
+      "value": "Finished",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34020",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34020"
+      },
+      "title": "Plan state changed",
+      "stack": 0
+    }
+  ],
+  "quality": {
+    "warnings": [
+      "2 historical linked PR(s) closed without merge",
+      "2 superseded SDK PR link(s) retained"
+    ],
+    "unavailablePullRequests": 0,
+    "unavailablePipelineRuns": 0
+  },
+  "boundaryFacts": {
+    "id": "34020",
+    "state": "finished",
+    "specPrs": [
+      {
+        "id": "github:Azure/azure-rest-api-specs#42564",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#42564",
+        "createdAt": "2026-04-21T22:26:25Z",
+        "mergedAt": "2026-04-30T20:39:27Z",
+        "closedAt": "2026-04-30T20:39:27Z",
+        "available": true
+      }
+    ],
+    "artifacts": [
+      {
+        "language": ".NET",
+        "package": "Azure.ResourceManager.MongoCluster",
+        "trackId": "sdk:.NET:Azure.ResourceManager.MongoCluster",
+        "prId": "github:Azure/azure-sdk-for-net#59312",
+        "prCreatedAt": "2026-05-18T17:39:44Z",
+        "prMergedAt": "2026-06-03T02:51:04Z",
+        "prClosedAt": "2026-06-03T02:51:04Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-net#58923",
+            "createdAt": "2026-05-01T19:07:13Z",
+            "mergedAt": null,
+            "closedAt": "2026-05-18T17:32:03Z",
+            "state": "closed"
+          },
+          {
+            "id": "github:Azure/azure-sdk-for-net#59312",
+            "createdAt": "2026-05-18T17:39:44Z",
+            "mergedAt": "2026-06-03T02:51:04Z",
+            "closedAt": "2026-06-03T02:51:04Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6314917",
+        "generationStartAt": "2026-05-18T17:32:52.8011659Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-06-16T15:53:22.247Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.1.0-beta.1",
+        "releaseBoundaryAt": "2026-06-16T15:53:22.247Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "JavaScript",
+        "package": "@azure/arm-mongocluster",
+        "trackId": "sdk:JavaScript:@azure/arm-mongocluster",
+        "prId": "github:Azure/azure-sdk-for-js#38593",
+        "prCreatedAt": "2026-05-19T16:07:18Z",
+        "prMergedAt": "2026-05-21T04:51:29Z",
+        "prClosedAt": "2026-05-21T04:51:29Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-js#38371",
+            "createdAt": "2026-05-01T19:07:41Z",
+            "mergedAt": null,
+            "closedAt": "2026-05-18T17:27:04Z",
+            "state": "closed"
+          },
+          {
+            "id": "github:Azure/azure-sdk-for-js#38593",
+            "createdAt": "2026-05-19T16:07:18Z",
+            "mergedAt": "2026-05-21T04:51:29Z",
+            "closedAt": "2026-05-21T04:51:29Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6321205",
+        "generationStartAt": "2026-05-19T16:00:23.7266778Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-06-12T09:59:07.577Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.2.0-beta.1",
+        "releaseBoundaryAt": "2026-06-12T09:59:07.577Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Python",
+        "package": "azure-mgmt-mongocluster",
+        "trackId": "sdk:Python:azure-mgmt-mongocluster",
+        "prId": "github:Azure/azure-sdk-for-python#46669",
+        "prCreatedAt": "2026-05-01T19:07:30Z",
+        "prMergedAt": "2026-05-06T17:16:20Z",
+        "prClosedAt": "2026-05-06T17:16:20Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-python#46669",
+            "createdAt": "2026-05-01T19:07:30Z",
+            "mergedAt": "2026-05-06T17:16:20Z",
+            "closedAt": "2026-05-06T17:16:20Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6240122",
+        "generationStartAt": "2026-05-01T19:01:06.3802605Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-06-11T09:57:32.13Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.2.0b1",
+        "releaseBoundaryAt": "2026-06-11T09:57:32.13Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Java",
+        "package": "azure-resourcemanager-mongocluster",
+        "trackId": "sdk:Java:azure-resourcemanager-mongocluster",
+        "prId": "github:Azure/azure-sdk-for-java#49020",
+        "prCreatedAt": "2026-05-01T19:10:42Z",
+        "prMergedAt": "2026-05-06T17:19:57Z",
+        "prClosedAt": "2026-05-06T17:19:57Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-java#49020",
+            "createdAt": "2026-05-01T19:10:42Z",
+            "mergedAt": "2026-05-06T17:19:57Z",
+            "closedAt": "2026-05-06T17:19:57Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6240125",
+        "generationStartAt": "2026-05-01T19:01:16.4372838Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-07-07T14:13:02.607Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.2.0-beta.1",
+        "releaseBoundaryAt": "2026-07-07T14:13:02.607Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Go",
+        "package": "sdk/resourcemanager/mongocluster/armmongocluster",
+        "trackId": "sdk:Go:sdk/resourcemanager/mongocluster/armmongocluster",
+        "prId": "github:Azure/azure-sdk-for-go#26705",
+        "prCreatedAt": "2026-05-01T19:06:15Z",
+        "prMergedAt": "2026-05-06T17:19:20Z",
+        "prClosedAt": "2026-05-06T17:19:20Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-go#26705",
+            "createdAt": "2026-05-01T19:06:15Z",
+            "mergedAt": "2026-05-06T17:19:20Z",
+            "closedAt": "2026-05-06T17:19:20Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6240121",
+        "generationStartAt": "2026-05-01T19:01:15.3387347Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-05-25T06:23:48.067Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.2.0-beta.1",
+        "releaseBoundaryAt": "2026-05-25T06:23:48.067Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      }
+    ],
+    "cohortPlan": {
+      "id": "34020",
+      "releasePlanId": "2198",
+      "title": "Release plan - 2198 - Public Preview - Azure DocumentDB (with MongoDB compatibility)",
+      "service": "Mongo Cluster",
+      "state": "finished"
+    },
+    "quality": {
+      "warnings": [
+        "2 historical linked PR(s) closed without merge",
+        "2 superseded SDK PR link(s) retained"
+      ],
+      "unavailablePullRequests": 0,
+      "unavailablePipelineRuns": 0
+    }
+  },
+  "summary": {
+    "durationHours": 1887.9,
+    "pullRequestCount": 8,
+    "humanReviewCount": 15,
+    "humanCommentCount": 18
+  }
+}

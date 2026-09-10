@@ -1,0 +1,3262 @@
+{
+  "schemaVersion": 2,
+  "id": "35199",
+  "correlation": {
+    "policyVersion": 1,
+    "preflight": "passed"
+  },
+  "releasePlanId": "35199",
+  "title": "Public Preview release plan for AzureArcData.Management",
+  "service": "AzureArcData.Management",
+  "product": "Release",
+  "path": "specification/azurearcdata/AzureArcData.Management",
+  "state": "abandoned",
+  "plane": "management",
+  "releaseType": "APEX Public Preview",
+  "intendedMonth": "March 2026",
+  "createdAt": "2026-07-03T08:12:19.987Z",
+  "completedAt": "2026-08-05T14:33:11.27Z",
+  "sourceUrl": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35199",
+  "range": {
+    "start": "2026-06-24T13:35:31.000Z",
+    "end": "2026-08-05T14:33:11.270Z"
+  },
+  "intendedArtifacts": [
+    {
+      "prId": "github:Azure/azure-sdk-for-js#39187",
+      "language": "JavaScript",
+      "package": "@azure/arm-arcdata",
+      "version": null,
+      "outcome": "not-released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6523833",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-python#47867",
+      "language": "Python",
+      "package": "azure-mgmt-azurearcdata",
+      "version": null,
+      "outcome": "not-released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6523834",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-java#49732",
+      "language": "Java",
+      "package": "azure-resourcemanager-azurearcdata",
+      "version": null,
+      "outcome": "not-released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6523836",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-go#27132",
+      "language": "Go",
+      "package": "sdk/resourcemanager/azurearcdata/armazurearcdata",
+      "version": null,
+      "outcome": "not-released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6523835",
+      "releasePipelineUrl": null
+    }
+  ],
+  "links": [
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#44186",
+      "role": "spec-pr",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/44186",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-js#39182",
+      "role": "sdk-pr-history",
+      "language": "JavaScript",
+      "url": "https://github.com/Azure/azure-sdk-for-js/pull/39182",
+      "releasePlanIds": [
+        "35199"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-js#39187",
+      "role": "sdk-pr",
+      "language": "JavaScript",
+      "url": "https://github.com/Azure/azure-sdk-for-js/pull/39187",
+      "releasePlanIds": [
+        "35199"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-python#47832",
+      "role": "sdk-pr-history",
+      "language": "Python",
+      "url": "https://github.com/Azure/azure-sdk-for-python/pull/47832",
+      "releasePlanIds": [
+        "35199"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-python#47867",
+      "role": "sdk-pr",
+      "language": "Python",
+      "url": "https://github.com/Azure/azure-sdk-for-python/pull/47867",
+      "releasePlanIds": [
+        "35199"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-java#49721",
+      "role": "sdk-pr-history",
+      "language": "Java",
+      "url": "https://github.com/Azure/azure-sdk-for-java/pull/49721",
+      "releasePlanIds": [
+        "35199"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-java#49732",
+      "role": "sdk-pr",
+      "language": "Java",
+      "url": "https://github.com/Azure/azure-sdk-for-java/pull/49732",
+      "releasePlanIds": [
+        "35199"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-go#27132",
+      "role": "sdk-pr",
+      "language": "Go",
+      "url": "https://github.com/Azure/azure-sdk-for-go/pull/27132",
+      "releasePlanIds": [
+        "35199"
+      ]
+    }
+  ],
+  "tracks": [
+    {
+      "id": "plan",
+      "kind": "plan",
+      "label": "Release Plan",
+      "detail": "APEX Public Preview"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#44186",
+      "kind": "spec",
+      "label": "Spec PR",
+      "detail": "azure-rest-api-specs #44186",
+      "artifactId": "github:Azure/azure-rest-api-specs#44186",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:JavaScript:@azure/arm-arcdata",
+      "kind": "sdk",
+      "label": "JavaScript",
+      "detail": "@azure/arm-arcdata",
+      "artifactId": "github:Azure/azure-sdk-for-js#39187",
+      "state": "closed"
+    },
+    {
+      "id": "sdk:Python:azure-mgmt-azurearcdata",
+      "kind": "sdk",
+      "label": "Python",
+      "detail": "azure-mgmt-azurearcdata",
+      "artifactId": "github:Azure/azure-sdk-for-python#47867",
+      "state": "closed"
+    },
+    {
+      "id": "sdk:Java:azure-resourcemanager-azurearcdata",
+      "kind": "sdk",
+      "label": "Java",
+      "detail": "azure-resourcemanager-azurearcdata",
+      "artifactId": "github:Azure/azure-sdk-for-java#49732",
+      "state": "closed"
+    },
+    {
+      "id": "sdk:Go:sdk/resourcemanager/azurearcdata/armazurearcdata",
+      "kind": "sdk",
+      "label": "Go",
+      "detail": "sdk/resourcemanager/azurearcdata/armazurearcdata",
+      "artifactId": "github:Azure/azure-sdk-for-go#27132",
+      "state": "closed"
+    }
+  ],
+  "events": [
+    {
+      "id": "github:Azure/azure-rest-api-specs#44186:pr.created:spec:github:Azure/azure-rest-api-specs#44186",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-24T13:35:31Z",
+      "observedAt": "2026-06-24T13:35:31Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44186",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "Shiwani-K"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44186",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44186"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44186:comment:4789860304:spec:github:Azure/azure-rest-api-specs#44186",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-24T13:36:45Z",
+      "observedAt": "2026-06-24T13:36:45Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44186",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44186",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44186#issuecomment-4789860304"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>✅ All automated merging requirements have been met! To get your PR merged, see <a href=\"https://aka.ms/azsdk/specreview/merge\">aka.ms/azsdk/specreview/merge</a>.<br /><br />Comment generated by <a href=\"https://g",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44186:commit:5135ecdd5826:spec:github:Azure/azure-rest-api-specs#44186",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-24T13:43:38Z",
+      "observedAt": "2026-06-24T13:43:38Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44186",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44186",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/5135ecdd582624dab4b715de9c5c0e06e19b7129"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44186:comment:4789949951:spec:github:Azure/azure-rest-api-specs#44186",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-24T13:47:03Z",
+      "observedAt": "2026-06-24T13:47:03Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44186",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44186",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44186#issuecomment-4789949951"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews | Language | API Review for Package | |----------|---------| | Swagger | [Microsoft.AzureArcData](https://apiview.dev/Assemblies/Revie",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44186:commit:21758138f078:spec:github:Azure/azure-rest-api-specs#44186",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-24T14:04:07Z",
+      "observedAt": "2026-06-24T14:04:07Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44186",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44186",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/21758138f0786cbe3542d553dce758bb25b74882"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44186:review:4563371511:spec:github:Azure/azure-rest-api-specs#44186",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-24T14:59:13Z",
+      "observedAt": "2026-06-24T14:59:13Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44186",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ravimeda"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44186",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44186#pullrequestreview-4563371511"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## ARM API Review Posting findings from the [ARM API Reviewer agent](https://github.com/Azure/azure-rest-api-specs/blob/main/documentation/api-reviewer-agent.md) (critic-verified, 2 iterations, converged) against commit [`2175813`](https://",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44186:comment:3468089699:spec:github:Azure/azure-rest-api-specs#44186",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-24T14:59:14Z",
+      "observedAt": "2026-06-24T14:59:14Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44186",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ravimeda"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44186",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44186#discussion_r3468089699"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[NEW] 🔴 Blocking** **[[typespec-review §4.1](https://github.com/Azure/azure-rest-api-specs/blob/main/.github/instructions/typespec-review.instructions.md#41-warning-suppression-policy)]** `specification/azurearcdata/AzureArcData.Manageme",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44186:comment:3468089709:spec:github:Azure/azure-rest-api-specs#44186",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-24T14:59:14Z",
+      "observedAt": "2026-06-24T14:59:14Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44186",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ravimeda"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44186",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44186#discussion_r3468089709"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[NEW] 🔴 Blocking** **[[typespec-review §5](https://github.com/Azure/azure-rest-api-specs/blob/main/.github/instructions/typespec-review.instructions.md#5-common-anti-patterns)]** `specification/azurearcdata/AzureArcData.Management/Failov",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44186:comment:3468089714:spec:github:Azure/azure-rest-api-specs#44186",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-24T14:59:14Z",
+      "observedAt": "2026-06-24T14:59:14Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44186",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ravimeda"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44186",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44186#discussion_r3468089714"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[NEW] 🔴 Blocking** **[[ResourceNameRestriction (LintDiff)](https://github.com/Azure/azure-rest-api-specs/blob/main/documentation/openapi-authoring-automated-guidelines.md) / [typespec-review §2.2](https://github.com/Azure/azure-rest-api-",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44186:comment:3468089720:spec:github:Azure/azure-rest-api-specs#44186",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-24T14:59:14Z",
+      "observedAt": "2026-06-24T14:59:14Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44186",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ravimeda"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44186",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44186#discussion_r3468089720"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[NEW] 🔴 Blocking** **[[DescriptionMustNotBeNodeName (LintDiff)](https://github.com/Azure/azure-rest-api-specs/blob/main/documentation/openapi-authoring-automated-guidelines.md)]** `specification/azurearcdata/AzureArcData.Management/model",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44186:comment:3468089726:spec:github:Azure/azure-rest-api-specs#44186",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-24T14:59:14Z",
+      "observedAt": "2026-06-24T14:59:14Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44186",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ravimeda"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44186",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44186#discussion_r3468089726"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[NEW] 🟠 Warning** **[[arm-api-review §11.2](https://github.com/Azure/azure-rest-api-specs/blob/main/.github/instructions/arm-api-review.instructions.md#112-incremental-version-progression)]** `specification/azurearcdata/resource-manager/",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44186:comment:3468089731:spec:github:Azure/azure-rest-api-specs#44186",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-24T14:59:14Z",
+      "observedAt": "2026-06-24T14:59:14Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44186",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ravimeda"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44186",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44186#discussion_r3468089731"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[NEW] 🟠 Warning** **[[ProvisioningStateMustBeReadOnly (LintDiff)](https://github.com/Azure/azure-rest-api-specs/blob/main/.github/skills/azure-api-review/references/provisioning-state.md)]** `specification/azurearcdata/AzureArcData.Manag",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44186:comment:4795332038:spec:github:Azure/azure-rest-api-specs#44186",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-25T02:36:18Z",
+      "observedAt": "2026-06-25T02:36:18Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44186",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "pshao25"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44186",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44186#issuecomment-4795332038"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@ravimeda This is a TypeSpec conversion PR. I'm going to give an ARMSignedoff. @Shiwani-K Please consider fix these ARM comments in your next API version.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44186:review:4567428532:spec:github:Azure/azure-rest-api-specs#44186",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-25T02:37:32Z",
+      "observedAt": "2026-06-25T02:37:32Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44186",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "pshao25"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44186",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44186#pullrequestreview-4567428532"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44186:commit:f2e76064d89e:spec:github:Azure/azure-rest-api-specs#44186",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-29T03:13:29Z",
+      "observedAt": "2026-06-29T03:13:29Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44186",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "Shiwani-K"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44186",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/f2e76064d89e186c2440ea1eb8aa0d5b4ec738cb"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44186:comment:4828661150:spec:github:Azure/azure-rest-api-specs#44186",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-29T03:21:31Z",
+      "observedAt": "2026-06-29T03:21:31Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44186",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "Shiwani-K"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44186",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44186#issuecomment-4828661150"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> @ravimeda This is a TypeSpec conversion PR. I'm going to give an ARMSignedoff. @Shiwani-K Please consider fix these ARM comments in your next API version. Thanks @ravimeda and @pshao25 these come from historic APIs introduced for resource",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44186:review:4588713925:spec:github:Azure/azure-rest-api-specs#44186",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-29T03:22:47Z",
+      "observedAt": "2026-06-29T03:22:47Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44186",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "Shiwani-K"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44186",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44186#pullrequestreview-4588713925"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44186:comment:3489138699:spec:github:Azure/azure-rest-api-specs#44186",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-29T03:22:47Z",
+      "observedAt": "2026-06-29T03:22:47Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44186",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "Shiwani-K"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44186",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44186#discussion_r3489138699"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Have reverted this change to default version back to stable GA version - was not intentional and was introduced to verify checks failing - thanks",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44186:review:4589004206:spec:github:Azure/azure-rest-api-specs#44186",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-29T04:55:08Z",
+      "observedAt": "2026-06-29T04:55:08Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44186",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "knavneet145"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44186",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44186#pullrequestreview-4589004206"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Moving API version 2026-03-01-preview to public. Looks good to me",
+      "reviewState": "approved",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#44186:pr.merged:spec:github:Azure/azure-rest-api-specs#44186",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-29T06:03:51Z",
+      "observedAt": "2026-06-29T06:03:51Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44186",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#44186",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/44186"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:35199:created",
+      "type": "plan.created",
+      "phase": "plan",
+      "occurredAt": "2026-07-03T08:12:19.987Z",
+      "observedAt": "2026-07-03T08:12:19.987Z",
+      "trackId": "plan",
+      "title": "Release Plan created",
+      "confidence": "authoritative",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35199",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35199"
+      },
+      "stack": 0
+    },
+    {
+      "id": "ado:35199:1:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-07-03T08:12:19.987Z",
+      "observedAt": "2026-07-03T08:12:19.987Z",
+      "trackId": "plan",
+      "value": "New",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35199",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35199"
+      },
+      "title": "Plan state changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35199:1:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-03T08:12:19.987Z",
+      "observedAt": "2026-07-03T08:12:19.987Z",
+      "trackId": "plan",
+      "value": "Not Available",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35199",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35199"
+      },
+      "title": "Spec approval changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:35199:1:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-03T08:12:19.987Z",
+      "observedAt": "2026-07-03T08:12:19.987Z",
+      "trackId": "sdk:JavaScript:@azure/arm-arcdata",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35199",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35199"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35199:1:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-03T08:12:19.987Z",
+      "observedAt": "2026-07-03T08:12:19.987Z",
+      "trackId": "sdk:Python:azure-mgmt-azurearcdata",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35199",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35199"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35199:1:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-03T08:12:19.987Z",
+      "observedAt": "2026-07-03T08:12:19.987Z",
+      "trackId": "sdk:Java:azure-resourcemanager-azurearcdata",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35199",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35199"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35199:1:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-03T08:12:19.987Z",
+      "observedAt": "2026-07-03T08:12:19.987Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/azurearcdata/armazurearcdata",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35199",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35199"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35200:1:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-03T08:12:20.64Z",
+      "observedAt": "2026-07-03T08:12:20.64Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#44186",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/44186",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35200",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35200"
+      },
+      "title": "Spec PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado:35199:2:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-07-03T08:12:22.113Z",
+      "observedAt": "2026-07-03T08:12:22.113Z",
+      "trackId": "plan",
+      "value": "In Progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35199",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35199"
+      },
+      "title": "Plan state changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:35199:5:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-03T12:50:21.96Z",
+      "observedAt": "2026-07-03T12:50:21.96Z",
+      "trackId": "sdk:Python:azure-mgmt-azurearcdata",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35199",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35199"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35199:6:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-03T12:50:30.537Z",
+      "observedAt": "2026-07-03T12:50:30.537Z",
+      "trackId": "sdk:JavaScript:@azure/arm-arcdata",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35199",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35199"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35199:7:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-03T12:50:36.717Z",
+      "observedAt": "2026-07-03T12:50:36.717Z",
+      "trackId": "sdk:Java:azure-resourcemanager-azurearcdata",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35199",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35199"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35199:8:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-03T12:50:37.147Z",
+      "observedAt": "2026-07-03T12:50:37.147Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/azurearcdata/armazurearcdata",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35199",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35199"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35199:9:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-03T12:55:23.907Z",
+      "observedAt": "2026-07-03T12:55:23.907Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/azurearcdata/armazurearcdata",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35199",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35199"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47832:commit:396ae75782a9:sdk:Python:azure-mgmt-azurearcdata",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-03T12:57:35Z",
+      "observedAt": "2026-07-03T12:57:35Z",
+      "trackId": "sdk:Python:azure-mgmt-azurearcdata",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47832",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/396ae75782a9bcede47f7bcbb814ec5d1eea2cff"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47832:pr.created:sdk:Python:azure-mgmt-azurearcdata",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-03T12:57:39Z",
+      "observedAt": "2026-07-03T12:57:39Z",
+      "trackId": "sdk:Python:azure-mgmt-azurearcdata",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47832",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47832"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47832:review:4625923780:sdk:Python:azure-mgmt-azurearcdata",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-03T12:57:42Z",
+      "observedAt": "2026-07-03T12:57:42Z",
+      "trackId": "sdk:Python:azure-mgmt-azurearcdata",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47832",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47832#pullrequestreview-4625923780"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot can't review bot-authored pull requests automatically. A user with Copilot access can request a review manually.",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "ado:35199:10:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-03T12:57:45.113Z",
+      "observedAt": "2026-07-03T12:57:45.113Z",
+      "trackId": "sdk:Python:azure-mgmt-azurearcdata",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35199",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35199"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:35199:10:Custom.SDKPullRequestForPython",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-03T12:57:45.113Z",
+      "observedAt": "2026-07-03T12:57:45.113Z",
+      "trackId": "sdk:Python:azure-mgmt-azurearcdata",
+      "value": "https://github.com/Azure/azure-sdk-for-python/pull/47832",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35199",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35199"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39182:commit:4022a4671225:sdk:JavaScript:@azure/arm-arcdata",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-03T12:58:16Z",
+      "observedAt": "2026-07-03T12:58:16Z",
+      "trackId": "sdk:JavaScript:@azure/arm-arcdata",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39182",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/4022a4671225358fe2056af78d9827db6d627670"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39182:pr.created:sdk:JavaScript:@azure/arm-arcdata",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-03T12:58:21Z",
+      "observedAt": "2026-07-03T12:58:21Z",
+      "trackId": "sdk:JavaScript:@azure/arm-arcdata",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39182",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39182"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39182:review:4625927897:sdk:JavaScript:@azure/arm-arcdata",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-03T12:58:24Z",
+      "observedAt": "2026-07-03T12:58:24Z",
+      "trackId": "sdk:JavaScript:@azure/arm-arcdata",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39182",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39182#pullrequestreview-4625927897"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot can't review bot-authored pull requests automatically. A user with Copilot access can request a review manually.",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "ado:35199:11:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-03T12:58:28.247Z",
+      "observedAt": "2026-07-03T12:58:28.247Z",
+      "trackId": "sdk:JavaScript:@azure/arm-arcdata",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35199",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35199"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:35199:11:Custom.SDKPullRequestForJavaScript",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-03T12:58:28.247Z",
+      "observedAt": "2026-07-03T12:58:28.247Z",
+      "trackId": "sdk:JavaScript:@azure/arm-arcdata",
+      "value": "https://github.com/Azure/azure-sdk-for-js/pull/39182",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35199",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35199"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49721:commit:8b76bc82ae89:sdk:Java:azure-resourcemanager-azurearcdata",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-03T12:59:12Z",
+      "observedAt": "2026-07-03T12:59:12Z",
+      "trackId": "sdk:Java:azure-resourcemanager-azurearcdata",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49721",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/8b76bc82ae890eb77ec1b8e264827036c3fe0431"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49721:pr.created:sdk:Java:azure-resourcemanager-azurearcdata",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-03T12:59:18Z",
+      "observedAt": "2026-07-03T12:59:18Z",
+      "trackId": "sdk:Java:azure-resourcemanager-azurearcdata",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49721",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49721"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49721:review:4625933672:sdk:Java:azure-resourcemanager-azurearcdata",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-03T12:59:20Z",
+      "observedAt": "2026-07-03T12:59:20Z",
+      "trackId": "sdk:Java:azure-resourcemanager-azurearcdata",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49721",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49721#pullrequestreview-4625933672"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot can't review bot-authored pull requests automatically. A user with Copilot access can request a review manually.",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "ado:35199:12:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-03T12:59:24.79Z",
+      "observedAt": "2026-07-03T12:59:24.79Z",
+      "trackId": "sdk:Java:azure-resourcemanager-azurearcdata",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35199",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35199"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:35199:12:Custom.SDKPullRequestForJava",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-03T12:59:24.79Z",
+      "observedAt": "2026-07-03T12:59:24.79Z",
+      "trackId": "sdk:Java:azure-resourcemanager-azurearcdata",
+      "value": "https://github.com/Azure/azure-sdk-for-java/pull/49721",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35199",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35199"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado:35199:13:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-03T13:09:57.17Z",
+      "observedAt": "2026-07-03T13:09:57.17Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/azurearcdata/armazurearcdata",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35199",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35199"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:35199:14:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-03T13:14:29.097Z",
+      "observedAt": "2026-07-03T13:14:29.097Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/azurearcdata/armazurearcdata",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35199",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35199"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49721:review:4629544268:sdk:Java:azure-resourcemanager-azurearcdata",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-04T11:54:49Z",
+      "observedAt": "2026-07-04T11:54:49Z",
+      "trackId": "sdk:Java:azure-resourcemanager-azurearcdata",
+      "title": "Changes requested",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49721",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49721#pullrequestreview-4629544268"
+      },
+      "confidence": "authoritative",
+      "excerpt": "api-version is preview, it cannot release 1.1.0",
+      "reviewState": "changes_requested",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47832:commit:381e52c628a5:sdk:Python:azure-mgmt-azurearcdata",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-06T02:40:30Z",
+      "observedAt": "2026-07-06T02:40:30Z",
+      "trackId": "sdk:Python:azure-mgmt-azurearcdata",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47832",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/381e52c628a536c68cb5db18b68a71a846fe279a"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47832:commit:ae9a5ae00093:sdk:Python:azure-mgmt-azurearcdata",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-06T02:43:50Z",
+      "observedAt": "2026-07-06T02:43:50Z",
+      "trackId": "sdk:Python:azure-mgmt-azurearcdata",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47832",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/ae9a5ae0009373c34de68d0034efdb9dc8515ac5"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47832:commit:97cbaa11a71c:sdk:Python:azure-mgmt-azurearcdata",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-06T02:57:45Z",
+      "observedAt": "2026-07-06T02:57:45Z",
+      "trackId": "sdk:Python:azure-mgmt-azurearcdata",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47832",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/97cbaa11a71c7a8fb82730b16484c3813aef565f"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47832:review:4632640552:sdk:Python:azure-mgmt-azurearcdata",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-06T03:12:30Z",
+      "observedAt": "2026-07-06T03:12:30Z",
+      "trackId": "sdk:Python:azure-mgmt-azurearcdata",
+      "title": "Changes requested",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47832",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47832#pullrequestreview-4632640552"
+      },
+      "confidence": "authoritative",
+      "excerpt": "release-plan pass `stable` parameter but the api-version is preview which is consistent <img width=\"749\" height=\"710\" alt=\"Image\" src=\"https://github.com/user-attachments/assets/98200cf0-f8ab-49b5-b73e-fd9c3cf9b08c\" /> <img width=\"695\" heig",
+      "reviewState": "changes_requested",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39182:review:4633935568:sdk:JavaScript:@azure/arm-arcdata",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-06T08:02:41Z",
+      "observedAt": "2026-07-06T08:02:41Z",
+      "trackId": "sdk:JavaScript:@azure/arm-arcdata",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39182",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39182#pullrequestreview-4633935568"
+      },
+      "confidence": "authoritative",
+      "excerpt": "No API design issues found. This is the first preview release of `@azure/arm-azurearcdata` (`1.0.0-beta.1`), using API version `2026-03-01-preview`. Package version is consistently `1.0.0-beta.1` across `package.json`, the context file (`az",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39182:comment:4890483179:sdk:JavaScript:@azure/arm-arcdata",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-06T08:05:17Z",
+      "observedAt": "2026-07-06T08:05:17Z",
+      "trackId": "sdk:JavaScript:@azure/arm-arcdata",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39182",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39182#issuecomment-4890483179"
+      },
+      "confidence": "authoritative",
+      "excerpt": "namespace review link https://github.com/Azure/azure-sdk-pr/issues/2644",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39182:review:4633956200:sdk:JavaScript:@azure/arm-arcdata",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-06T08:06:16Z",
+      "observedAt": "2026-07-06T08:06:16Z",
+      "trackId": "sdk:JavaScript:@azure/arm-arcdata",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39182",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39182#pullrequestreview-4633956200"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39182:comment:3527292636:sdk:JavaScript:@azure/arm-arcdata",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-06T08:06:16Z",
+      "observedAt": "2026-07-06T08:06:16Z",
+      "trackId": "sdk:JavaScript:@azure/arm-arcdata",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39182",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39182#discussion_r3527292636"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`@azure/arm-arcdata` is the reviewed name, need update the name in tspconfig",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39182:review:4634178313:sdk:JavaScript:@azure/arm-arcdata",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-06T08:38:48Z",
+      "observedAt": "2026-07-06T08:38:48Z",
+      "trackId": "sdk:JavaScript:@azure/arm-arcdata",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39182",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39182#pullrequestreview-4634178313"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39182:comment:3527476644:sdk:JavaScript:@azure/arm-arcdata",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-06T08:38:48Z",
+      "observedAt": "2026-07-06T08:38:48Z",
+      "trackId": "sdk:JavaScript:@azure/arm-arcdata",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39182",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39182#discussion_r3527476644"
+      },
+      "confidence": "authoritative",
+      "excerpt": "https://github.com/Azure/azure-rest-api-specs/pull/44444",
+      "stack": 5
+    },
+    {
+      "id": "ado:35199:15:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-06T09:20:40.337Z",
+      "observedAt": "2026-07-06T09:20:40.337Z",
+      "trackId": "plan",
+      "value": "Approved",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35199",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35199"
+      },
+      "title": "Spec approval changed",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49721:pr.closed:sdk:Java:azure-resourcemanager-azurearcdata",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-06T14:10:39Z",
+      "observedAt": "2026-07-06T14:10:39Z",
+      "trackId": "sdk:Java:azure-resourcemanager-azurearcdata",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49721",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49721"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49721:comment:4893772736:sdk:Java:azure-resourcemanager-azurearcdata",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-06T14:10:39Z",
+      "observedAt": "2026-07-06T14:10:39Z",
+      "trackId": "sdk:Java:azure-resourcemanager-azurearcdata",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "praveenkuttappan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49721",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49721#issuecomment-4893772736"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Closing this PR to regenerate.",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47832:pr.closed:sdk:Python:azure-mgmt-azurearcdata",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-06T14:10:43Z",
+      "observedAt": "2026-07-06T14:10:43Z",
+      "trackId": "sdk:Python:azure-mgmt-azurearcdata",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47832",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47832"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47832:comment:4893773287:sdk:Python:azure-mgmt-azurearcdata",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-06T14:10:43Z",
+      "observedAt": "2026-07-06T14:10:43Z",
+      "trackId": "sdk:Python:azure-mgmt-azurearcdata",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "praveenkuttappan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47832",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47832#issuecomment-4893773287"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Closing this PR to regenerate.",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39182:pr.closed:sdk:JavaScript:@azure/arm-arcdata",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-06T14:10:47Z",
+      "observedAt": "2026-07-06T14:10:47Z",
+      "trackId": "sdk:JavaScript:@azure/arm-arcdata",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39182",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39182"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39182:comment:4893774103:sdk:JavaScript:@azure/arm-arcdata",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-06T14:10:48Z",
+      "observedAt": "2026-07-06T14:10:48Z",
+      "trackId": "sdk:JavaScript:@azure/arm-arcdata",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "praveenkuttappan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39182",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39182#issuecomment-4893774103"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Closing this PR to regenerate.",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6523835:generation.queued:sdk:Go:sdk/resourcemanager/azurearcdata/armazurearcdata",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-07-06T14:24:37.105369Z",
+      "observedAt": "2026-07-06T14:31:03.4550946Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/azurearcdata/armazurearcdata",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6523835",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6523835"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6523834:generation.queued:sdk:Python:azure-mgmt-azurearcdata",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-07-06T14:24:37.8322311Z",
+      "observedAt": "2026-07-06T14:33:15.8216589Z",
+      "trackId": "sdk:Python:azure-mgmt-azurearcdata",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6523834",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6523834"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6523836:generation.queued:sdk:Java:azure-resourcemanager-azurearcdata",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-07-06T14:24:37.9843242Z",
+      "observedAt": "2026-07-06T14:45:44.1572968Z",
+      "trackId": "sdk:Java:azure-resourcemanager-azurearcdata",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6523836",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6523836"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6523833:generation.queued:sdk:JavaScript:@azure/arm-arcdata",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-07-06T14:24:38.0012347Z",
+      "observedAt": "2026-07-06T14:34:02.2550155Z",
+      "trackId": "sdk:JavaScript:@azure/arm-arcdata",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6523833",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6523833"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:35199:19:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-06T14:24:42.837Z",
+      "observedAt": "2026-07-06T14:24:42.837Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/azurearcdata/armazurearcdata",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35199",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35199"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35199:20:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-06T14:24:43.327Z",
+      "observedAt": "2026-07-06T14:24:43.327Z",
+      "trackId": "sdk:Python:azure-mgmt-azurearcdata",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35199",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35199"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35199:21:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-06T14:24:44.407Z",
+      "observedAt": "2026-07-06T14:24:44.407Z",
+      "trackId": "sdk:JavaScript:@azure/arm-arcdata",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35199",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35199"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:35199:22:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-06T14:24:45.473Z",
+      "observedAt": "2026-07-06T14:24:45.473Z",
+      "trackId": "sdk:Java:azure-resourcemanager-azurearcdata",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35199",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35199"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6523834:generation.started:sdk:Python:azure-mgmt-azurearcdata",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-07-06T14:24:59.9720504Z",
+      "observedAt": "2026-07-06T14:33:15.8216589Z",
+      "trackId": "sdk:Python:azure-mgmt-azurearcdata",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6523834",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6523834"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6523836:generation.started:sdk:Java:azure-resourcemanager-azurearcdata",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-07-06T14:25:06.5330218Z",
+      "observedAt": "2026-07-06T14:45:44.1572968Z",
+      "trackId": "sdk:Java:azure-resourcemanager-azurearcdata",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6523836",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6523836"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6523835:generation.started:sdk:Go:sdk/resourcemanager/azurearcdata/armazurearcdata",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-07-06T14:25:07.6004194Z",
+      "observedAt": "2026-07-06T14:31:03.4550946Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/azurearcdata/armazurearcdata",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6523835",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6523835"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6523833:generation.started:sdk:JavaScript:@azure/arm-arcdata",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-07-06T14:25:09.3118603Z",
+      "observedAt": "2026-07-06T14:34:02.2550155Z",
+      "trackId": "sdk:JavaScript:@azure/arm-arcdata",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6523833",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6523833"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27132:commit:e64e83202fc1:sdk:Go:sdk/resourcemanager/azurearcdata/armazurearcdata",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-06T14:29:54Z",
+      "observedAt": "2026-07-06T14:29:54Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/azurearcdata/armazurearcdata",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27132",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/e64e83202fc14c0918bc7a235213c322bd9739e3"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27132:pr.created:sdk:Go:sdk/resourcemanager/azurearcdata/armazurearcdata",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-06T14:30:00Z",
+      "observedAt": "2026-07-06T14:30:00Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/azurearcdata/armazurearcdata",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27132",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27132"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27132:review:4636793123:sdk:Go:sdk/resourcemanager/azurearcdata/armazurearcdata",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-06T14:30:03Z",
+      "observedAt": "2026-07-06T14:30:03Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/azurearcdata/armazurearcdata",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27132",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27132#pullrequestreview-4636793123"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot can't review bot-authored pull requests automatically. A user with Copilot access can request a review manually.",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "ado:35199:23:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-06T14:30:07.33Z",
+      "observedAt": "2026-07-06T14:30:07.33Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/azurearcdata/armazurearcdata",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35199",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35199"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35199:23:Custom.SDKPullRequestForGo",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-06T14:30:07.33Z",
+      "observedAt": "2026-07-06T14:30:07.33Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/azurearcdata/armazurearcdata",
+      "value": "https://github.com/Azure/azure-sdk-for-go/pull/27132",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35199",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35199"
+      },
+      "title": "SDK PR linked",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6523835:generation.completed:sdk:Go:sdk/resourcemanager/azurearcdata/armazurearcdata",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-07-06T14:31:03.4550946Z",
+      "observedAt": "2026-07-06T14:31:03.4550946Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/azurearcdata/armazurearcdata",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6523835",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6523835"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47867:commit:758e2f1b6824:sdk:Python:azure-mgmt-azurearcdata",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-06T14:31:58Z",
+      "observedAt": "2026-07-06T14:31:58Z",
+      "trackId": "sdk:Python:azure-mgmt-azurearcdata",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47867",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/758e2f1b6824aa74c668b449120613c7ea8ad432"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47867:pr.created:sdk:Python:azure-mgmt-azurearcdata",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-06T14:32:03Z",
+      "observedAt": "2026-07-06T14:32:03Z",
+      "trackId": "sdk:Python:azure-mgmt-azurearcdata",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47867",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47867"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47867:review:4636811445:sdk:Python:azure-mgmt-azurearcdata",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-06T14:32:05Z",
+      "observedAt": "2026-07-06T14:32:05Z",
+      "trackId": "sdk:Python:azure-mgmt-azurearcdata",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47867",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47867#pullrequestreview-4636811445"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot can't review bot-authored pull requests automatically. A user with Copilot access can request a review manually.",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "ado:35199:24:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-06T14:32:09.52Z",
+      "observedAt": "2026-07-06T14:32:09.52Z",
+      "trackId": "sdk:Python:azure-mgmt-azurearcdata",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35199",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35199"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35199:24:Custom.SDKPullRequestForPython",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-06T14:32:09.52Z",
+      "observedAt": "2026-07-06T14:32:09.52Z",
+      "trackId": "sdk:Python:azure-mgmt-azurearcdata",
+      "value": "https://github.com/Azure/azure-sdk-for-python/pull/47867",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35199",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35199"
+      },
+      "title": "SDK PR linked",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39187:commit:90bee2796b2e:sdk:JavaScript:@azure/arm-arcdata",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-06T14:32:55Z",
+      "observedAt": "2026-07-06T14:32:55Z",
+      "trackId": "sdk:JavaScript:@azure/arm-arcdata",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39187",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/90bee2796b2e8f57d18bffd42b6128859d47e32e"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39187:pr.created:sdk:JavaScript:@azure/arm-arcdata",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-06T14:33:00Z",
+      "observedAt": "2026-07-06T14:33:00Z",
+      "trackId": "sdk:JavaScript:@azure/arm-arcdata",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39187",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39187"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39187:review:4636818732:sdk:JavaScript:@azure/arm-arcdata",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-06T14:33:02Z",
+      "observedAt": "2026-07-06T14:33:02Z",
+      "trackId": "sdk:JavaScript:@azure/arm-arcdata",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39187",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39187#pullrequestreview-4636818732"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot can't review bot-authored pull requests automatically. A user with Copilot access can request a review manually.",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "ado:35199:25:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-06T14:33:06.92Z",
+      "observedAt": "2026-07-06T14:33:06.92Z",
+      "trackId": "sdk:JavaScript:@azure/arm-arcdata",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35199",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35199"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:35199:25:Custom.SDKPullRequestForJavaScript",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-06T14:33:06.92Z",
+      "observedAt": "2026-07-06T14:33:06.92Z",
+      "trackId": "sdk:JavaScript:@azure/arm-arcdata",
+      "value": "https://github.com/Azure/azure-sdk-for-js/pull/39187",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35199",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35199"
+      },
+      "title": "SDK PR linked",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6523834:generation.completed:sdk:Python:azure-mgmt-azurearcdata",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-07-06T14:33:15.8216589Z",
+      "observedAt": "2026-07-06T14:33:15.8216589Z",
+      "trackId": "sdk:Python:azure-mgmt-azurearcdata",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6523834",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6523834"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6523833:generation.completed:sdk:JavaScript:@azure/arm-arcdata",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-07-06T14:34:02.2550155Z",
+      "observedAt": "2026-07-06T14:34:02.2550155Z",
+      "trackId": "sdk:JavaScript:@azure/arm-arcdata",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6523833",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6523833"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49732:commit:d41937d87c17:sdk:Java:azure-resourcemanager-azurearcdata",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-06T14:34:51Z",
+      "observedAt": "2026-07-06T14:34:51Z",
+      "trackId": "sdk:Java:azure-resourcemanager-azurearcdata",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49732",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/d41937d87c17d8130f26d13ead86cdceb9d8beaf"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49732:pr.created:sdk:Java:azure-resourcemanager-azurearcdata",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-06T14:34:56Z",
+      "observedAt": "2026-07-06T14:34:56Z",
+      "trackId": "sdk:Java:azure-resourcemanager-azurearcdata",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49732",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49732"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49732:review:4636835639:sdk:Java:azure-resourcemanager-azurearcdata",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-06T14:34:59Z",
+      "observedAt": "2026-07-06T14:34:59Z",
+      "trackId": "sdk:Java:azure-resourcemanager-azurearcdata",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49732",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49732#pullrequestreview-4636835639"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot can't review bot-authored pull requests automatically. A user with Copilot access can request a review manually.",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "ado:35199:26:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-06T14:35:03.34Z",
+      "observedAt": "2026-07-06T14:35:03.34Z",
+      "trackId": "sdk:Java:azure-resourcemanager-azurearcdata",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35199",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35199"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:35199:26:Custom.SDKPullRequestForJava",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-06T14:35:03.34Z",
+      "observedAt": "2026-07-06T14:35:03.34Z",
+      "trackId": "sdk:Java:azure-resourcemanager-azurearcdata",
+      "value": "https://github.com/Azure/azure-sdk-for-java/pull/49732",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35199",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35199"
+      },
+      "title": "SDK PR linked",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6523836:generation.completed:sdk:Java:azure-resourcemanager-azurearcdata",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-07-06T14:45:44.1572968Z",
+      "observedAt": "2026-07-06T14:45:44.1572968Z",
+      "trackId": "sdk:Java:azure-resourcemanager-azurearcdata",
+      "title": "Pipeline completed with issues",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6523836",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6523836"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27132:comment:4899082860:sdk:Go:sdk/resourcemanager/azurearcdata/armazurearcdata",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-07T01:06:02Z",
+      "observedAt": "2026-07-07T01:06:02Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/azurearcdata/armazurearcdata",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27132",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27132#issuecomment-4899082860"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## PR is ready to merge",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49732:review:4640846245:sdk:Java:azure-resourcemanager-azurearcdata",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-07T01:10:00Z",
+      "observedAt": "2026-07-07T01:10:00Z",
+      "trackId": "sdk:Java:azure-resourcemanager-azurearcdata",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49732",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49732#pullrequestreview-4640846245"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27132:review:4641064095:sdk:Go:sdk/resourcemanager/azurearcdata/armazurearcdata",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-07T02:08:37Z",
+      "observedAt": "2026-07-07T02:08:37Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/azurearcdata/armazurearcdata",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "tadelesh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27132",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27132#pullrequestreview-4641064095"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39187:commit:10a4702881a6:sdk:JavaScript:@azure/arm-arcdata",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-07T02:23:29Z",
+      "observedAt": "2026-07-07T02:23:29Z",
+      "trackId": "sdk:JavaScript:@azure/arm-arcdata",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39187",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/10a4702881a6b142a288be73c13d4c2455c65745"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39187:commit:c829aff078c9:sdk:JavaScript:@azure/arm-arcdata",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-07T02:31:28Z",
+      "observedAt": "2026-07-07T02:31:28Z",
+      "trackId": "sdk:JavaScript:@azure/arm-arcdata",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39187",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/c829aff078c9c6bbc094541b0067e4e85551aa01"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39187:commit:45c6f50032cd:sdk:JavaScript:@azure/arm-arcdata",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-07T02:39:48Z",
+      "observedAt": "2026-07-07T02:39:48Z",
+      "trackId": "sdk:JavaScript:@azure/arm-arcdata",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39187",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/45c6f50032cdeb91e760c3ec62407a1072f52268"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47867:commit:c42e2ccd7d3d:sdk:Python:azure-mgmt-azurearcdata",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-07T02:54:26Z",
+      "observedAt": "2026-07-07T02:54:26Z",
+      "trackId": "sdk:Python:azure-mgmt-azurearcdata",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47867",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/c42e2ccd7d3de050219f28eb0f3860f0faeb246c"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47867:comment:4899662318:sdk:Python:azure-mgmt-azurearcdata",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-07T02:54:37Z",
+      "observedAt": "2026-07-07T02:54:37Z",
+      "trackId": "sdk:Python:azure-mgmt-azurearcdata",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47867",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47867#issuecomment-4899662318"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi, we have approved the PR and we will hold the PR merge and release until you explicitly ping us to merge then release.",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47867:commit:cf58432718f3:sdk:Python:azure-mgmt-azurearcdata",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-07T03:01:40Z",
+      "observedAt": "2026-07-07T03:01:40Z",
+      "trackId": "sdk:Python:azure-mgmt-azurearcdata",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47867",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/cf58432718f35bfd9ebf083a0c4960a9049e45ad"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39187:comment:4899715075:sdk:JavaScript:@azure/arm-arcdata",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-07T03:05:38Z",
+      "observedAt": "2026-07-07T03:05:38Z",
+      "trackId": "sdk:JavaScript:@azure/arm-arcdata",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39187",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39187#issuecomment-4899715075"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Next Steps to Merge No further action is required from the service team. The SDK PR reviewer will handle the review and merge of this PR.",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47867:review:4641312247:sdk:Python:azure-mgmt-azurearcdata",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-07T03:08:18Z",
+      "observedAt": "2026-07-07T03:08:18Z",
+      "trackId": "sdk:Python:azure-mgmt-azurearcdata",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47867",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47867#pullrequestreview-4641312247"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39187:review:4642145973:sdk:JavaScript:@azure/arm-arcdata",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-07T06:07:27Z",
+      "observedAt": "2026-07-07T06:07:27Z",
+      "trackId": "sdk:JavaScript:@azure/arm-arcdata",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39187",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39187#pullrequestreview-4642145973"
+      },
+      "confidence": "authoritative",
+      "excerpt": "2 tool issues found in this new `@azure/arm-arcdata` (`1.0.0-beta.1`, API version `2026-03-01-preview`) package: both the `repository.directory` and `homepage` fields in `package.json` incorrectly reference the old path `sdk/azurearcdata/ar",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39187:comment:3534008374:sdk:JavaScript:@azure/arm-arcdata",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-07T06:07:27Z",
+      "observedAt": "2026-07-07T06:07:27Z",
+      "trackId": "sdk:JavaScript:@azure/arm-arcdata",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39187",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39187#discussion_r3534008374"
+      },
+      "confidence": "authoritative",
+      "excerpt": "🔴 **Tool Issue** — `package.json:240` `\"directory\": \"sdk/azurearcdata/arm-azurearcdata\"` The `repository.directory` field points to `sdk/azurearcdata/arm-azurearcdata`, but this package is located at `sdk/arcdata/arm-arcdata`. This mismatc",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39187:comment:3534008380:sdk:JavaScript:@azure/arm-arcdata",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-07T06:07:27Z",
+      "observedAt": "2026-07-07T06:07:27Z",
+      "trackId": "sdk:JavaScript:@azure/arm-arcdata",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39187",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39187#discussion_r3534008380"
+      },
+      "confidence": "authoritative",
+      "excerpt": "🔴 **Tool Issue** — `package.json:245` `\"homepage\": \"https://github.com/Azure/azure-sdk-for-js/tree/main/sdk/azurearcdata/arm-azurearcdata/README.md\"` The `homepage` URL references `sdk/azurearcdata/arm-azurearcdata` but this package lives ",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39187:commit:7c40c0d0654c:sdk:JavaScript:@azure/arm-arcdata",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-07T06:25:12Z",
+      "observedAt": "2026-07-07T06:25:12Z",
+      "trackId": "sdk:JavaScript:@azure/arm-arcdata",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39187",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/7c40c0d0654c2fe74404fc034827d46d7de4a918"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39187:comment:4901017144:sdk:JavaScript:@azure/arm-arcdata",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-07T06:57:31Z",
+      "observedAt": "2026-07-07T06:57:31Z",
+      "trackId": "sdk:JavaScript:@azure/arm-arcdata",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39187",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39187#issuecomment-4901017144"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Next Steps to Merge No further action is required from the service team. The SDK PR reviewer will handle the review and merge of this PR.",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39187:comment:4922540170:sdk:JavaScript:@azure/arm-arcdata",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-09T07:09:00Z",
+      "observedAt": "2026-07-09T07:09:00Z",
+      "trackId": "sdk:JavaScript:@azure/arm-arcdata",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39187",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39187#issuecomment-4922540170"
+      },
+      "confidence": "authoritative",
+      "excerpt": "LGTM cc @JialinHuang803",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39187:review:4668346457:sdk:JavaScript:@azure/arm-arcdata",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-10T03:41:28Z",
+      "observedAt": "2026-07-10T03:41:28Z",
+      "trackId": "sdk:JavaScript:@azure/arm-arcdata",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "JialinHuang803"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39187",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39187#pullrequestreview-4668346457"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39187:commit:2453ba1be2b0:sdk:JavaScript:@azure/arm-arcdata",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-14T06:14:01Z",
+      "observedAt": "2026-07-14T06:14:01Z",
+      "trackId": "sdk:JavaScript:@azure/arm-arcdata",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39187",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/2453ba1be2b079219f891e2c71a488c52cf83350"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39187:comment:4966065014:sdk:JavaScript:@azure/arm-arcdata",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-14T06:29:54Z",
+      "observedAt": "2026-07-14T06:29:54Z",
+      "trackId": "sdk:JavaScript:@azure/arm-arcdata",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39187",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39187#issuecomment-4966065014"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Next Steps to Merge Only failed checks and required actions are listed below. - ❌ **Build Build / UnitTest (all environments)**: `ERR_PNPM_OUTDATED_LOCKFILE` — `pnpm-lock.yaml` is out of sync with `sdk/arcdata/arm-arcdata/package.json`, ",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39187:commit:e02e9e44fe0a:sdk:JavaScript:@azure/arm-arcdata",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-14T07:22:36Z",
+      "observedAt": "2026-07-14T07:22:36Z",
+      "trackId": "sdk:JavaScript:@azure/arm-arcdata",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39187",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/e02e9e44fe0ae246a413286f4d5d76d2f8e375da"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39187:commit:83a9712509c9:sdk:JavaScript:@azure/arm-arcdata",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-14T07:27:52Z",
+      "observedAt": "2026-07-14T07:27:52Z",
+      "trackId": "sdk:JavaScript:@azure/arm-arcdata",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39187",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/83a9712509c94bfacebf1325ed7017c5bad3ca20"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39187:comment:4966672660:sdk:JavaScript:@azure/arm-arcdata",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-14T07:55:02Z",
+      "observedAt": "2026-07-14T07:55:02Z",
+      "trackId": "sdk:JavaScript:@azure/arm-arcdata",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39187",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39187#issuecomment-4966672660"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Next Steps to Merge ✅ All CI checks have passed — this PR is ready for review! The SDK engineer will review this PR shortly. Once it's approved, you can go ahead and merge it. To make things easier, feel free to [enable auto-merge](https",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27132:comment:4979047374:sdk:Go:sdk/resourcemanager/azurearcdata/armazurearcdata",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-15T09:29:29Z",
+      "observedAt": "2026-07-15T09:29:29Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/azurearcdata/armazurearcdata",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27132",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27132#issuecomment-4979047374"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@knavneet145 please merge this pr if this is good to you, then we will trigger the release",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39187:comment:4998601640:sdk:JavaScript:@azure/arm-arcdata",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-17T03:10:08Z",
+      "observedAt": "2026-07-17T03:10:08Z",
+      "trackId": "sdk:JavaScript:@azure/arm-arcdata",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39187",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39187#issuecomment-4998601640"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@copilot resolve conflicts",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39187:commit:f0ef000ad7f1:sdk:JavaScript:@azure/arm-arcdata",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-17T03:18:47Z",
+      "observedAt": "2026-07-17T03:18:47Z",
+      "trackId": "sdk:JavaScript:@azure/arm-arcdata",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39187",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/f0ef000ad7f152ea618790e52f91a3ff1980c15e"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39187:commit:86c360f5816e:sdk:JavaScript:@azure/arm-arcdata",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-17T03:31:19Z",
+      "observedAt": "2026-07-17T03:31:19Z",
+      "trackId": "sdk:JavaScript:@azure/arm-arcdata",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39187",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/86c360f5816ee14cd822283f353592de27e1de91"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39187:comment:4998707336:sdk:JavaScript:@azure/arm-arcdata",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-17T03:31:44Z",
+      "observedAt": "2026-07-17T03:31:44Z",
+      "trackId": "sdk:JavaScript:@azure/arm-arcdata",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39187",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39187#issuecomment-4998707336"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> @copilot resolve conflicts Addressed in 86c360f by merging latest `main` into the branch and regenerating `pnpm-lock.yaml` so the PR is mergeable again.",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39187:review:4720416855:sdk:JavaScript:@azure/arm-arcdata",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-17T07:38:55Z",
+      "observedAt": "2026-07-17T07:38:55Z",
+      "trackId": "sdk:JavaScript:@azure/arm-arcdata",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "JialinHuang803"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39187",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39187#pullrequestreview-4720416855"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39187:comment:5041322491:sdk:JavaScript:@azure/arm-arcdata",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T02:59:25Z",
+      "observedAt": "2026-07-22T02:59:25Z",
+      "trackId": "sdk:JavaScript:@azure/arm-arcdata",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39187",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39187#issuecomment-5041322491"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@knavneet145 please merge this pr if this is good to you, then we will trigger the release",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27132:commit:3e02e6d7d548:sdk:Go:sdk/resourcemanager/azurearcdata/armazurearcdata",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-30T02:20:55Z",
+      "observedAt": "2026-07-30T02:20:55Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/azurearcdata/armazurearcdata",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27132",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/3e02e6d7d54854c86ab9f2023a9756d6e9ad053a"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27132:review:4814676364:sdk:Go:sdk/resourcemanager/azurearcdata/armazurearcdata",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-30T02:25:33Z",
+      "observedAt": "2026-07-30T02:25:33Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/azurearcdata/armazurearcdata",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27132",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27132#pullrequestreview-4814676364"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Copilot reviewed 19 out of 51 changed files in this pull request and generated no new comments. <details> <summary>Files not reviewed (23)</summary> * **sdk/resourcemanager/azurearcdata/armazurearcdata/activedirecto",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27132:review:4814816945:sdk:Go:sdk/resourcemanager/azurearcdata/armazurearcdata",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-30T02:54:20Z",
+      "observedAt": "2026-07-30T02:54:20Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/azurearcdata/armazurearcdata",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "tadelesh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27132",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27132#pullrequestreview-4814816945"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39187:pr.closed:sdk:JavaScript:@azure/arm-arcdata",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-05T14:30:22Z",
+      "observedAt": "2026-08-05T14:30:22Z",
+      "trackId": "sdk:JavaScript:@azure/arm-arcdata",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39187",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39187"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39187:comment:5193086501:sdk:JavaScript:@azure/arm-arcdata",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-05T14:30:22Z",
+      "observedAt": "2026-08-05T14:30:22Z",
+      "trackId": "sdk:JavaScript:@azure/arm-arcdata",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "josefree"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39187",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39187#issuecomment-5193086501"
+      },
+      "confidence": "authoritative",
+      "excerpt": "close the PR for the release plan has past due for long time and is abandoned.",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47867:pr.closed:sdk:Python:azure-mgmt-azurearcdata",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-05T14:30:40Z",
+      "observedAt": "2026-08-05T14:30:40Z",
+      "trackId": "sdk:Python:azure-mgmt-azurearcdata",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47867",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47867"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47867:comment:5193089832:sdk:Python:azure-mgmt-azurearcdata",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-05T14:30:40Z",
+      "observedAt": "2026-08-05T14:30:40Z",
+      "trackId": "sdk:Python:azure-mgmt-azurearcdata",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "josefree"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47867",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47867#issuecomment-5193089832"
+      },
+      "confidence": "authoritative",
+      "excerpt": "close the PR for the release plan has past due for long time and is abandoned.",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49732:comment:5193095044:sdk:Java:azure-resourcemanager-azurearcdata",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-05T14:31:07Z",
+      "observedAt": "2026-08-05T14:31:07Z",
+      "trackId": "sdk:Java:azure-resourcemanager-azurearcdata",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "josefree"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49732",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49732#issuecomment-5193095044"
+      },
+      "confidence": "authoritative",
+      "excerpt": "close the PR for the release plan has past due for long time and is abandoned.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49732:pr.closed:sdk:Java:azure-resourcemanager-azurearcdata",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-05T14:31:10Z",
+      "observedAt": "2026-08-05T14:31:10Z",
+      "trackId": "sdk:Java:azure-resourcemanager-azurearcdata",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49732",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49732"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27132:pr.closed:sdk:Go:sdk/resourcemanager/azurearcdata/armazurearcdata",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-05T14:31:34Z",
+      "observedAt": "2026-08-05T14:31:34Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/azurearcdata/armazurearcdata",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27132",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27132"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27132:comment:5193099967:sdk:Go:sdk/resourcemanager/azurearcdata/armazurearcdata",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-05T14:31:34Z",
+      "observedAt": "2026-08-05T14:31:34Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/azurearcdata/armazurearcdata",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "josefree"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27132",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27132#issuecomment-5193099967"
+      },
+      "confidence": "authoritative",
+      "excerpt": "close the PR for the release plan has past due for long time and is abandoned.",
+      "stack": 1
+    },
+    {
+      "id": "ado:35199:31:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-08-05T14:33:11.27Z",
+      "observedAt": "2026-08-05T14:33:11.27Z",
+      "trackId": "plan",
+      "value": "Abandoned",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35199",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35199"
+      },
+      "title": "Plan state changed",
+      "stack": 0
+    }
+  ],
+  "quality": {
+    "warnings": [
+      "7 historical linked PR(s) closed without merge",
+      "3 superseded SDK PR link(s) retained"
+    ],
+    "unavailablePullRequests": 0,
+    "unavailablePipelineRuns": 0
+  },
+  "boundaryFacts": {
+    "id": "35199",
+    "state": "abandoned",
+    "specPrs": [
+      {
+        "id": "github:Azure/azure-rest-api-specs#44186",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#44186",
+        "createdAt": "2026-06-24T13:35:31Z",
+        "mergedAt": "2026-06-29T06:03:51Z",
+        "closedAt": "2026-06-29T06:03:51Z",
+        "available": true
+      }
+    ],
+    "artifacts": [
+      {
+        "language": "JavaScript",
+        "package": "@azure/arm-arcdata",
+        "trackId": "sdk:JavaScript:@azure/arm-arcdata",
+        "prId": "github:Azure/azure-sdk-for-js#39187",
+        "prCreatedAt": "2026-07-06T14:33:00Z",
+        "prMergedAt": null,
+        "prClosedAt": "2026-08-05T14:30:22Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-js#39182",
+            "createdAt": "2026-07-03T12:58:21Z",
+            "mergedAt": null,
+            "closedAt": "2026-07-06T14:10:47Z",
+            "state": "closed"
+          },
+          {
+            "id": "github:Azure/azure-sdk-for-js#39187",
+            "createdAt": "2026-07-06T14:33:00Z",
+            "mergedAt": null,
+            "closedAt": "2026-08-05T14:30:22Z",
+            "state": "closed"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6523833",
+        "generationStartAt": "2026-07-06T14:25:09.3118603Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Python",
+        "package": "azure-mgmt-azurearcdata",
+        "trackId": "sdk:Python:azure-mgmt-azurearcdata",
+        "prId": "github:Azure/azure-sdk-for-python#47867",
+        "prCreatedAt": "2026-07-06T14:32:03Z",
+        "prMergedAt": null,
+        "prClosedAt": "2026-08-05T14:30:40Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-python#47832",
+            "createdAt": "2026-07-03T12:57:39Z",
+            "mergedAt": null,
+            "closedAt": "2026-07-06T14:10:43Z",
+            "state": "closed"
+          },
+          {
+            "id": "github:Azure/azure-sdk-for-python#47867",
+            "createdAt": "2026-07-06T14:32:03Z",
+            "mergedAt": null,
+            "closedAt": "2026-08-05T14:30:40Z",
+            "state": "closed"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6523834",
+        "generationStartAt": "2026-07-06T14:24:59.9720504Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Java",
+        "package": "azure-resourcemanager-azurearcdata",
+        "trackId": "sdk:Java:azure-resourcemanager-azurearcdata",
+        "prId": "github:Azure/azure-sdk-for-java#49732",
+        "prCreatedAt": "2026-07-06T14:34:56Z",
+        "prMergedAt": null,
+        "prClosedAt": "2026-08-05T14:31:10Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-java#49721",
+            "createdAt": "2026-07-03T12:59:18Z",
+            "mergedAt": null,
+            "closedAt": "2026-07-06T14:10:39Z",
+            "state": "closed"
+          },
+          {
+            "id": "github:Azure/azure-sdk-for-java#49732",
+            "createdAt": "2026-07-06T14:34:56Z",
+            "mergedAt": null,
+            "closedAt": "2026-08-05T14:31:10Z",
+            "state": "closed"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6523836",
+        "generationStartAt": "2026-07-06T14:25:06.5330218Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Go",
+        "package": "sdk/resourcemanager/azurearcdata/armazurearcdata",
+        "trackId": "sdk:Go:sdk/resourcemanager/azurearcdata/armazurearcdata",
+        "prId": "github:Azure/azure-sdk-for-go#27132",
+        "prCreatedAt": "2026-07-06T14:30:00Z",
+        "prMergedAt": null,
+        "prClosedAt": "2026-08-05T14:31:34Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-go#27132",
+            "createdAt": "2026-07-06T14:30:00Z",
+            "mergedAt": null,
+            "closedAt": "2026-08-05T14:31:34Z",
+            "state": "closed"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6523835",
+        "generationStartAt": "2026-07-06T14:25:07.6004194Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      }
+    ],
+    "cohortPlan": {
+      "id": "35199",
+      "releasePlanId": "35199",
+      "title": "Public Preview release plan for AzureArcData.Management",
+      "service": "AzureArcData.Management",
+      "state": "abandoned"
+    },
+    "quality": {
+      "warnings": [
+        "7 historical linked PR(s) closed without merge",
+        "3 superseded SDK PR link(s) retained"
+      ],
+      "unavailablePullRequests": 0,
+      "unavailablePipelineRuns": 0
+    }
+  },
+  "summary": {
+    "durationHours": 798.3,
+    "pullRequestCount": 8,
+    "humanReviewCount": 14,
+    "humanCommentCount": 24
+  }
+}

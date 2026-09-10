@@ -1,0 +1,4123 @@
+{
+  "schemaVersion": 2,
+  "id": "34355",
+  "correlation": {
+    "policyVersion": 1,
+    "preflight": "passed"
+  },
+  "releasePlanId": "2236",
+  "title": "Release Plan - 2236 - Public Preview - Azure Chaos Studio",
+  "service": "Chaos",
+  "product": "Release",
+  "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos",
+  "state": "in-progress",
+  "plane": "management",
+  "releaseType": "APEX Public Preview",
+  "intendedMonth": "August 2026",
+  "createdAt": "2026-05-13T14:58:41.287Z",
+  "completedAt": null,
+  "sourceUrl": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34355",
+  "range": {
+    "start": "2026-05-11T15:08:13.000Z",
+    "end": "2026-08-14T00:37:23.589Z"
+  },
+  "intendedArtifacts": [
+    {
+      "prId": "github:Azure/azure-sdk-for-net#59212",
+      "language": ".NET",
+      "package": "Azure.ResourceManager.Chaos",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6292131",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-js#38530",
+      "language": "JavaScript",
+      "package": "@azure/arm-chaos",
+      "version": "2.1.0-beta.1",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6292132",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-python#48256",
+      "language": "Python",
+      "package": "azure-mgmt-chaos",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6615672",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-java#49171",
+      "language": "Java",
+      "package": "azure-resourcemanager-chaos",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6292130",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-go#27254",
+      "language": "Go",
+      "package": "sdk/resourcemanager/chaos/armchaos",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6615673",
+      "releasePipelineUrl": null
+    }
+  ],
+  "links": [
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#43085",
+      "role": "spec-pr",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/43085",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-net#59212",
+      "role": "sdk-pr",
+      "language": ".NET",
+      "url": "https://github.com/Azure/azure-sdk-for-net/pull/59212",
+      "releasePlanIds": [
+        "2236"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-js#38530",
+      "role": "sdk-pr",
+      "language": "JavaScript",
+      "url": "https://github.com/Azure/azure-sdk-for-js/pull/38530",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-python#48256",
+      "role": "sdk-pr",
+      "language": "Python",
+      "url": "https://github.com/Azure/azure-sdk-for-python/pull/48256",
+      "releasePlanIds": [
+        "2236"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-java#49171",
+      "role": "sdk-pr",
+      "language": "Java",
+      "url": "https://github.com/Azure/azure-sdk-for-java/pull/49171",
+      "releasePlanIds": [
+        "2236"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-go#27254",
+      "role": "sdk-pr",
+      "language": "Go",
+      "url": "https://github.com/Azure/azure-sdk-for-go/pull/27254",
+      "releasePlanIds": [
+        "2236"
+      ]
+    }
+  ],
+  "tracks": [
+    {
+      "id": "plan",
+      "kind": "plan",
+      "label": "Release Plan",
+      "detail": "APEX Public Preview"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#43085",
+      "kind": "spec",
+      "label": "Spec PR",
+      "detail": "azure-rest-api-specs #43085",
+      "artifactId": "github:Azure/azure-rest-api-specs#43085",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "kind": "sdk",
+      "label": ".NET",
+      "detail": "Azure.ResourceManager.Chaos",
+      "artifactId": "github:Azure/azure-sdk-for-net#59212",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:JavaScript:@azure/arm-chaos",
+      "kind": "sdk",
+      "label": "JavaScript",
+      "detail": "@azure/arm-chaos",
+      "artifactId": "github:Azure/azure-sdk-for-js#38530",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Python:azure-mgmt-chaos",
+      "kind": "sdk",
+      "label": "Python",
+      "detail": "azure-mgmt-chaos",
+      "artifactId": "github:Azure/azure-sdk-for-python#48256",
+      "state": "open"
+    },
+    {
+      "id": "sdk:Java:azure-resourcemanager-chaos",
+      "kind": "sdk",
+      "label": "Java",
+      "detail": "azure-resourcemanager-chaos",
+      "artifactId": "github:Azure/azure-sdk-for-java#49171",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Go:sdk/resourcemanager/chaos/armchaos",
+      "kind": "sdk",
+      "label": "Go",
+      "detail": "sdk/resourcemanager/chaos/armchaos",
+      "artifactId": "github:Azure/azure-sdk-for-go#27254",
+      "state": "open"
+    }
+  ],
+  "events": [
+    {
+      "id": "github:Azure/azure-rest-api-specs#43085:pr.created:spec:github:Azure/azure-rest-api-specs#43085",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-11T15:08:13Z",
+      "observedAt": "2026-05-11T15:08:13Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43085",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "RenzoPrettoMS"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43085",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43085"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43085:comment:4421967892:spec:github:Azure/azure-rest-api-specs#43085",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-11T15:08:49Z",
+      "observedAt": "2026-05-11T15:08:49Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43085",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43085",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43085#issuecomment-4421967892"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>✅ All automated merging requirements have been met! To get your PR merged, see <a href=\"https://aka.ms/azsdk/specreview/merge\">aka.ms/azsdk/specreview/merge</a>.<br /><br />Comment generated by <a href=\"https://g",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43085:commit:8702635d36bc:spec:github:Azure/azure-rest-api-specs#43085",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-11T16:21:52Z",
+      "observedAt": "2026-05-11T16:21:52Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43085",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "RenzoPrettoMS"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43085",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/8702635d36bc7f04084c63862a963cc1dde081b5"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43085:comment:4422668482:spec:github:Azure/azure-rest-api-specs#43085",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-11T16:30:50Z",
+      "observedAt": "2026-05-11T16:30:50Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43085",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43085",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43085#issuecomment-4422668482"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews | Language | API Review for Package | |----------|---------| | TypeSpec | [Microsoft.Chaos](https://spa.apiview.dev/review/8ca0d9b7ccc",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43085:commit:01b99ba99f16:spec:github:Azure/azure-rest-api-specs#43085",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-11T17:40:13Z",
+      "observedAt": "2026-05-11T17:40:13Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43085",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "RenzoPrettoMS"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43085",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/01b99ba99f1699991809cc9c3655c49f58fcd900"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49171:commit:b1f4b71b7aed:sdk:Java:azure-resourcemanager-chaos",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-11T17:50:25Z",
+      "observedAt": "2026-05-11T17:50:25Z",
+      "trackId": "sdk:Java:azure-resourcemanager-chaos",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "RenzoPrettoMS"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49171",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/b1f4b71b7aed8821c1f3bf2440879678788243a7"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43085:commit:79839a56b9a4:spec:github:Azure/azure-rest-api-specs#43085",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-11T17:50:32Z",
+      "observedAt": "2026-05-11T17:50:32Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43085",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "RenzoPrettoMS"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43085",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/79839a56b9a487d120d4d33d3b294f6031e7720a"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43085:commit:77b20c545158:spec:github:Azure/azure-rest-api-specs#43085",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-11T20:02:52Z",
+      "observedAt": "2026-05-11T20:02:52Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43085",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "RenzoPrettoMS"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43085",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/77b20c545158e23222659aa2ac8f1f328c7c61b2"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43085:comment:3224686423:spec:github:Azure/azure-rest-api-specs#43085",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-12T07:58:33Z",
+      "observedAt": "2026-05-12T07:58:33Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43085",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43085",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43085#discussion_r3224686423"
+      },
+      "confidence": "authoritative",
+      "excerpt": "You may want to remove `v2024_11_01_preview` from TypeSpec (keep it in Swagger as long as it is online) https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/#preview-versioning-rules-for-all-azure-apis):",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43085:review:4270298340:spec:github:Azure/azure-rest-api-specs#43085",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-12T07:58:35Z",
+      "observedAt": "2026-05-12T07:58:35Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43085",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43085",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43085#pullrequestreview-4270298340"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43085:review:4273773944:spec:github:Azure/azure-rest-api-specs#43085",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-12T15:25:00Z",
+      "observedAt": "2026-05-12T15:25:00Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43085",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "RenzoPrettoMS"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43085",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43085#pullrequestreview-4273773944"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43085:comment:3227681699:spec:github:Azure/azure-rest-api-specs#43085",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-12T15:25:00Z",
+      "observedAt": "2026-05-12T15:25:00Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43085",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "RenzoPrettoMS"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43085",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43085#discussion_r3227681699"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Good catch, thank you! Updating.",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43085:commit:3ecdd19315d6:spec:github:Azure/azure-rest-api-specs#43085",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-12T15:27:33Z",
+      "observedAt": "2026-05-12T15:27:33Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43085",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "RenzoPrettoMS"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43085",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/3ecdd19315d6fe6db182a6026484a5d4b2077324"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:commit:8ace3b3377ca:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-12T15:56:40Z",
+      "observedAt": "2026-05-12T15:56:40Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "RenzoPrettoMS"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/8ace3b3377ca81055749abbf007c67e44953e00f"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43085:commit:5b292aa068d5:spec:github:Azure/azure-rest-api-specs#43085",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-12T16:00:48Z",
+      "observedAt": "2026-05-12T16:00:48Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43085",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "RenzoPrettoMS"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43085",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/5b292aa068d52100a7ce1ed6d8b63ac4209b9e02"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:commit:784097aed594:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-12T16:47:59Z",
+      "observedAt": "2026-05-12T16:47:59Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "RenzoPrettoMS"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/784097aed594d2edca98b3102aad310debd66f73"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43085:review:4276812598:spec:github:Azure/azure-rest-api-specs#43085",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-12T22:53:11Z",
+      "observedAt": "2026-05-12T22:53:11Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43085",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "RenzoPrettoMS"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43085",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43085#pullrequestreview-4276812598"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43085:comment:3230343960:spec:github:Azure/azure-rest-api-specs#43085",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-12T22:53:11Z",
+      "observedAt": "2026-05-12T22:53:11Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43085",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "RenzoPrettoMS"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43085",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43085#discussion_r3230343960"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Can I get a reapproval when you have a chance @weidongxu-microsoft",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43085:review:4277512108:spec:github:Azure/azure-rest-api-specs#43085",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-13T01:34:18Z",
+      "observedAt": "2026-05-13T01:34:18Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43085",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43085",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43085#pullrequestreview-4277512108"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43085:pr.merged:spec:github:Azure/azure-rest-api-specs#43085",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-13T01:34:20Z",
+      "observedAt": "2026-05-13T01:34:20Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43085",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43085",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43085"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:34355:created",
+      "type": "plan.created",
+      "phase": "plan",
+      "occurredAt": "2026-05-13T14:58:41.287Z",
+      "observedAt": "2026-05-13T14:58:41.287Z",
+      "trackId": "plan",
+      "title": "Release Plan created",
+      "confidence": "authoritative",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34355",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34355"
+      },
+      "stack": 0
+    },
+    {
+      "id": "ado:34355:1:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-05-13T14:58:41.287Z",
+      "observedAt": "2026-05-13T14:58:41.287Z",
+      "trackId": "plan",
+      "value": "New",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34355",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34355"
+      },
+      "title": "Plan state changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34355:1:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-13T14:58:41.287Z",
+      "observedAt": "2026-05-13T14:58:41.287Z",
+      "trackId": "plan",
+      "value": "Not Available",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34355",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34355"
+      },
+      "title": "Spec approval changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:34355:1:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-13T14:58:41.287Z",
+      "observedAt": "2026-05-13T14:58:41.287Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34355",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34355"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:34355:1:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-13T14:58:41.287Z",
+      "observedAt": "2026-05-13T14:58:41.287Z",
+      "trackId": "sdk:JavaScript:@azure/arm-chaos",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34355",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34355"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34355:1:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-13T14:58:41.287Z",
+      "observedAt": "2026-05-13T14:58:41.287Z",
+      "trackId": "sdk:Python:azure-mgmt-chaos",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34355",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34355"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34355:1:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-13T14:58:41.287Z",
+      "observedAt": "2026-05-13T14:58:41.287Z",
+      "trackId": "sdk:Java:azure-resourcemanager-chaos",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34355",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34355"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34355:1:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-13T14:58:41.287Z",
+      "observedAt": "2026-05-13T14:58:41.287Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/chaos/armchaos",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34355",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34355"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34355:6:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-05-13T14:59:21.2Z",
+      "observedAt": "2026-05-13T14:59:21.2Z",
+      "trackId": "plan",
+      "value": "In Progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34355",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34355"
+      },
+      "title": "Plan state changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:34356:2:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-13T14:59:49.947Z",
+      "observedAt": "2026-05-13T14:59:49.947Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43085",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/43085",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34356",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34356"
+      },
+      "title": "Spec PR linked",
+      "stack": 5
+    },
+    {
+      "id": "ado:34355:8:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-13T14:59:53.403Z",
+      "observedAt": "2026-05-13T14:59:53.403Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34355",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34355"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:34355:8:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-13T14:59:53.403Z",
+      "observedAt": "2026-05-13T14:59:53.403Z",
+      "trackId": "sdk:JavaScript:@azure/arm-chaos",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34355",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34355"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34355:8:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-13T14:59:53.403Z",
+      "observedAt": "2026-05-13T14:59:53.403Z",
+      "trackId": "sdk:Python:azure-mgmt-chaos",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34355",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34355"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34355:8:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-13T14:59:53.403Z",
+      "observedAt": "2026-05-13T14:59:53.403Z",
+      "trackId": "sdk:Java:azure-resourcemanager-chaos",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34355",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34355"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34355:8:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-13T14:59:53.403Z",
+      "observedAt": "2026-05-13T14:59:53.403Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/chaos/armchaos",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34355",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34355"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34355:9:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-13T14:59:57.8Z",
+      "observedAt": "2026-05-13T14:59:57.8Z",
+      "trackId": "plan",
+      "value": "Approved",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34355",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34355"
+      },
+      "title": "Spec approval changed",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6292130:generation.queued:sdk:Java:azure-resourcemanager-chaos",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-05-13T15:23:41.6794305Z",
+      "observedAt": "2026-05-13T15:46:07.1340167Z",
+      "trackId": "sdk:Java:azure-resourcemanager-chaos",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6292130",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6292130"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:34355:24:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-13T15:23:50.65Z",
+      "observedAt": "2026-05-13T15:23:50.65Z",
+      "trackId": "sdk:Java:azure-resourcemanager-chaos",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34355",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34355"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6292131:generation.queued:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-05-13T15:24:01.7240109Z",
+      "observedAt": "2026-05-13T15:34:22.9964932Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6292131",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6292131"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:34355:25:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-13T15:24:04.75Z",
+      "observedAt": "2026-05-13T15:24:04.75Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34355",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34355"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:6292132:generation.queued:sdk:JavaScript:@azure/arm-chaos",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-05-13T15:24:15.8085517Z",
+      "observedAt": "2026-05-13T15:35:56.752386Z",
+      "trackId": "sdk:JavaScript:@azure/arm-chaos",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6292132",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6292132"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:34355:26:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-13T15:24:20.163Z",
+      "observedAt": "2026-05-13T15:24:20.163Z",
+      "trackId": "sdk:JavaScript:@azure/arm-chaos",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34355",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34355"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6292130:generation.started:sdk:Java:azure-resourcemanager-chaos",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-05-13T15:25:39.0867236Z",
+      "observedAt": "2026-05-13T15:46:07.1340167Z",
+      "trackId": "sdk:Java:azure-resourcemanager-chaos",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6292130",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6292130"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6292132:generation.started:sdk:JavaScript:@azure/arm-chaos",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-05-13T15:27:09.6997841Z",
+      "observedAt": "2026-05-13T15:35:56.752386Z",
+      "trackId": "sdk:JavaScript:@azure/arm-chaos",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6292132",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6292132"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6292131:generation.started:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-05-13T15:27:09.8673066Z",
+      "observedAt": "2026-05-13T15:34:22.9964932Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6292131",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6292131"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:commit:23fb070a3c55:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-13T15:33:21Z",
+      "observedAt": "2026-05-13T15:33:21Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/23fb070a3c55de94902aebc8e448cb830283cc00"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:pr.created:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-13T15:33:26Z",
+      "observedAt": "2026-05-13T15:33:26Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59212"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:34355:27:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-13T15:33:34.143Z",
+      "observedAt": "2026-05-13T15:33:34.143Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34355",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34355"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:34355:27:Custom.SDKPullRequestForDotnet",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-05-13T15:33:34.143Z",
+      "observedAt": "2026-05-13T15:33:34.143Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "value": "https://github.com/Azure/azure-sdk-for-net/pull/59212",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34355",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34355"
+      },
+      "title": "SDK PR linked",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6292131:generation.completed:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-05-13T15:34:22.9964932Z",
+      "observedAt": "2026-05-13T15:34:22.9964932Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Pipeline completed with issues",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6292131",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6292131"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38530:commit:f633416c80bc:sdk:JavaScript:@azure/arm-chaos",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-13T15:34:35Z",
+      "observedAt": "2026-05-13T15:34:35Z",
+      "trackId": "sdk:JavaScript:@azure/arm-chaos",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38530",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/f633416c80bc788b97e7e0e40b02ea377531fcd0"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38530:pr.created:sdk:JavaScript:@azure/arm-chaos",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-13T15:34:39Z",
+      "observedAt": "2026-05-13T15:34:39Z",
+      "trackId": "sdk:JavaScript:@azure/arm-chaos",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38530",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38530"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:34355:28:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-13T15:34:46.49Z",
+      "observedAt": "2026-05-13T15:34:46.49Z",
+      "trackId": "sdk:JavaScript:@azure/arm-chaos",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34355",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34355"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34355:28:Custom.SDKPullRequestForJavaScript",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-05-13T15:34:46.49Z",
+      "observedAt": "2026-05-13T15:34:46.49Z",
+      "trackId": "sdk:JavaScript:@azure/arm-chaos",
+      "value": "https://github.com/Azure/azure-sdk-for-js/pull/38530",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34355",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34355"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49171:commit:2c982c16bcdf:sdk:Java:azure-resourcemanager-chaos",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-13T15:35:19Z",
+      "observedAt": "2026-05-13T15:35:19Z",
+      "trackId": "sdk:Java:azure-resourcemanager-chaos",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49171",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/2c982c16bcdf28985f1c39819832842500f52e46"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49171:pr.created:sdk:Java:azure-resourcemanager-chaos",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-13T15:35:24Z",
+      "observedAt": "2026-05-13T15:35:24Z",
+      "trackId": "sdk:Java:azure-resourcemanager-chaos",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49171",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49171"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:34355:29:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-13T15:35:31.81Z",
+      "observedAt": "2026-05-13T15:35:31.81Z",
+      "trackId": "sdk:Java:azure-resourcemanager-chaos",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34355",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34355"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34355:29:Custom.SDKPullRequestForJava",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-05-13T15:35:31.81Z",
+      "observedAt": "2026-05-13T15:35:31.81Z",
+      "trackId": "sdk:Java:azure-resourcemanager-chaos",
+      "value": "https://github.com/Azure/azure-sdk-for-java/pull/49171",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34355",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34355"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6292132:generation.completed:sdk:JavaScript:@azure/arm-chaos",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-05-13T15:35:56.752386Z",
+      "observedAt": "2026-05-13T15:35:56.752386Z",
+      "trackId": "sdk:JavaScript:@azure/arm-chaos",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6292132",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6292132"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6292130:generation.completed:sdk:Java:azure-resourcemanager-chaos",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-05-13T15:46:07.1340167Z",
+      "observedAt": "2026-05-13T15:46:07.1340167Z",
+      "trackId": "sdk:Java:azure-resourcemanager-chaos",
+      "title": "Pipeline completed with issues",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6292130",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6292130"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49171:review:4283696334:sdk:Java:azure-resourcemanager-chaos",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-13T16:46:34Z",
+      "observedAt": "2026-05-13T16:46:34Z",
+      "trackId": "sdk:Java:azure-resourcemanager-chaos",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49171",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49171#pullrequestreview-4283696334"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot wasn't able to review this pull request because it exceeds the maximum number of files (300). Try reducing the number of changed files and requesting a review from Copilot again.",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:review:4283717460:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-13T16:49:32Z",
+      "observedAt": "2026-05-13T16:49:32Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59212#pullrequestreview-4283717460"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Auto-generated SDK regeneration for `Azure.ResourceManager.Chaos` against the Microsoft.Chaos `2026-05-01-preview` API version. The PR bumps the default API version, regenerates all generated code, and adds signific",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38530:review:4283764527:sdk:JavaScript:@azure/arm-chaos",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-13T16:56:00Z",
+      "observedAt": "2026-05-13T16:56:00Z",
+      "trackId": "sdk:JavaScript:@azure/arm-chaos",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38530",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38530#pullrequestreview-4283764527"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Updates `@azure/arm-chaos` from the `azure-rest-api-specs` TypeSpec configuration for **2026-05-01-preview**, regenerating the management-plane client to expose newly added operation groups/resources and aligning sa",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38530:comment:3236059482:sdk:JavaScript:@azure/arm-chaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-13T16:56:00Z",
+      "observedAt": "2026-05-13T16:56:00Z",
+      "trackId": "sdk:JavaScript:@azure/arm-chaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38530",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38530#discussion_r3236059482"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The sample description is grammatically incorrect (\"demonstrates how to the operation to update a Workspace\" / \"@summary the operation to update a Workspace\"). Please rephrase these sentences (e.g., \"demonstrates how to update a Workspace\" ",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:commit:75a0c36f9238:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-13T18:47:33Z",
+      "observedAt": "2026-05-13T18:47:33Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "RenzoPrettoMS"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/75a0c36f9238c2a088965502093d3280c2b2a391"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38530:commit:fc64552cad8e:sdk:JavaScript:@azure/arm-chaos",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-13T18:47:33Z",
+      "observedAt": "2026-05-13T18:47:33Z",
+      "trackId": "sdk:JavaScript:@azure/arm-chaos",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "RenzoPrettoMS"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38530",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/fc64552cad8e3afa28f354f4e8af692e64549ffc"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:commit:8b54a8ade45c:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-13T21:00:31Z",
+      "observedAt": "2026-05-13T21:00:31Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "RenzoPrettoMS"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/8b54a8ade45cd10dfff0db5c054f7ef9b3ac4db7"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:commit:4e3ddb8dfe38:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-13T22:25:54Z",
+      "observedAt": "2026-05-13T22:25:54Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "RenzoPrettoMS"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/4e3ddb8dfe3894e7a419ea2b5f57f4699df38146"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38530:comment:4446809422:sdk:JavaScript:@azure/arm-chaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-14T02:08:18Z",
+      "observedAt": "2026-05-14T02:08:18Z",
+      "trackId": "sdk:JavaScript:@azure/arm-chaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38530",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38530#issuecomment-4446809422"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Next Steps to Merge Only failed checks and required actions are listed below. All CI checks have passed (Build, Analyze, UnitTest across all environments). The PR is currently blocked pending required reviewer approvals. No automated act",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38530:review:4286756193:sdk:JavaScript:@azure/arm-chaos",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-14T02:08:20Z",
+      "observedAt": "2026-05-14T02:08:20Z",
+      "trackId": "sdk:JavaScript:@azure/arm-chaos",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38530",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38530#pullrequestreview-4286756193"
+      },
+      "confidence": "authoritative",
+      "excerpt": "No API design issues found. The `@azure/arm-chaos` 2.1.0-beta.1 update looks good: the API version (2026-05-01-preview) is strictly newer than the previous (2025-01-01), the package version is appropriately a preview release for a preview A",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38530:comment:4446823918:sdk:JavaScript:@azure/arm-chaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-14T02:11:42Z",
+      "observedAt": "2026-05-14T02:11:42Z",
+      "trackId": "sdk:JavaScript:@azure/arm-chaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38530",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38530#issuecomment-4446823918"
+      },
+      "confidence": "authoritative",
+      "excerpt": "LGTM cc @JialinHuang803",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49171:review:4286828015:sdk:Java:azure-resourcemanager-chaos",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-14T02:27:43Z",
+      "observedAt": "2026-05-14T02:27:43Z",
+      "trackId": "sdk:Java:azure-resourcemanager-chaos",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49171",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49171#pullrequestreview-4286828015"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49171:comment:3238694990:sdk:Java:azure-resourcemanager-chaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-14T02:27:43Z",
+      "observedAt": "2026-05-14T02:27:43Z",
+      "trackId": "sdk:Java:azure-resourcemanager-chaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49171",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49171#discussion_r3238694990"
+      },
+      "confidence": "authoritative",
+      "excerpt": "same problem as https://github.com/Azure/azure-sdk-for-java/pull/49072#discussion_r3223178111",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49171:review:4286831024:sdk:Java:azure-resourcemanager-chaos",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-14T02:28:38Z",
+      "observedAt": "2026-05-14T02:28:38Z",
+      "trackId": "sdk:Java:azure-resourcemanager-chaos",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49171",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49171#pullrequestreview-4286831024"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49171:comment:3238697957:sdk:Java:azure-resourcemanager-chaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-14T02:28:39Z",
+      "observedAt": "2026-05-14T02:28:39Z",
+      "trackId": "sdk:Java:azure-resourcemanager-chaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49171",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49171#discussion_r3238697957"
+      },
+      "confidence": "authoritative",
+      "excerpt": "https://github.com/Azure/azure-sdk-for-java/pull/49072#discussion_r3223178111",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49171:review:4286833091:sdk:Java:azure-resourcemanager-chaos",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-14T02:29:28Z",
+      "observedAt": "2026-05-14T02:29:28Z",
+      "trackId": "sdk:Java:azure-resourcemanager-chaos",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49171",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49171#pullrequestreview-4286833091"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49171:comment:3238700131:sdk:Java:azure-resourcemanager-chaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-14T02:29:28Z",
+      "observedAt": "2026-05-14T02:29:28Z",
+      "trackId": "sdk:Java:azure-resourcemanager-chaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49171",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49171#discussion_r3238700131"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This likely just a response of GET of scenario runs. Why it also have `location` and `retry-after`?",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49171:comment:4447021865:sdk:Java:azure-resourcemanager-chaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-14T02:48:49Z",
+      "observedAt": "2026-05-14T02:48:49Z",
+      "trackId": "sdk:Java:azure-resourcemanager-chaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49171",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49171#issuecomment-4447021865"
+      },
+      "confidence": "authoritative",
+      "excerpt": "see https://github.com/Azure/azure-sdk-for-java/pull/49072#issuecomment-4446971663 I've confirmed with TypeSpec dev, `@extension` should never be used for LRO (that's the reason you have lots of `suppress`) Also, writing a template is also ",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38530:review:4287121971:sdk:JavaScript:@azure/arm-chaos",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-14T03:52:16Z",
+      "observedAt": "2026-05-14T03:52:16Z",
+      "trackId": "sdk:JavaScript:@azure/arm-chaos",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "JialinHuang803"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38530",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38530#pullrequestreview-4287121971"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38530:comment:4448038257:sdk:JavaScript:@azure/arm-chaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-14T05:55:12Z",
+      "observedAt": "2026-05-14T05:55:12Z",
+      "trackId": "sdk:JavaScript:@azure/arm-chaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38530",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38530#issuecomment-4448038257"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@RenzoPrettoMS feel free to merge this pr",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38530:pr.merged:sdk:JavaScript:@azure/arm-chaos",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-14T15:33:21Z",
+      "observedAt": "2026-05-14T15:33:21Z",
+      "trackId": "sdk:JavaScript:@azure/arm-chaos",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38530",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38530"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49171:comment:4452331974:sdk:Java:azure-resourcemanager-chaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-14T15:56:55Z",
+      "observedAt": "2026-05-14T15:56:55Z",
+      "trackId": "sdk:Java:azure-resourcemanager-chaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "RenzoPrettoMS"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49171",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49171#issuecomment-4452331974"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hey, thank you for your thorough review on our SDK PR [[AutoPR azure-resourcemanager-chaos]-generated-from-SDK Generation - Java-6292130 by azure-sdk · Pu…](https://github.com/Azure/azure-sdk-for-java/pull/49171)! I think the core issue our",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:commit:fedf143ce737:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-14T18:23:40Z",
+      "observedAt": "2026-05-14T18:23:40Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "RenzoPrettoMS"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/fedf143ce73758ebf1f0282e5d7ef6d37e06f3d7"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:comment:4455630479:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-14T23:45:29Z",
+      "observedAt": "2026-05-14T23:45:29Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "RenzoPrettoMS"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59212#issuecomment-4455630479"
+      },
+      "confidence": "authoritative",
+      "excerpt": "I cant resolve the build issue, I ran it a few times with no luck If you have seen this bug before LMK, if not I can keep trying things from my end. Thank you!",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:commit:307f0bfb2c16:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-15T14:26:30Z",
+      "observedAt": "2026-05-15T14:26:30Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "RenzoPrettoMS"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/307f0bfb2c16091f54e73f20c0f9133a2b2f42fc"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:comment:4461601945:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-15T16:45:51Z",
+      "observedAt": "2026-05-15T16:45:51Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "RenzoPrettoMS"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59212#issuecomment-4461601945"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> I cant resolve the build issue, I ran it a few times with no luck > > If you have seen this bug before LMK, if not I can keep trying things from my end. Thank you! Nevermind :)",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49171:comment:4473546881:sdk:Java:azure-resourcemanager-chaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-18T01:56:45Z",
+      "observedAt": "2026-05-18T01:56:45Z",
+      "trackId": "sdk:Java:azure-resourcemanager-chaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49171",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49171#issuecomment-4473546881"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@RenzoPrettoMS The most critical part is not on the GET. It is on the LRO that uses the GET. All the comments are not on how your REST API structure (whether it polls via URL to `Azure-AsyncOperation` or not) -- it is owned by ARM dev, and ",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49171:comment:4479018928:sdk:Java:azure-resourcemanager-chaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-18T15:10:11Z",
+      "observedAt": "2026-05-18T15:10:11Z",
+      "trackId": "sdk:Java:azure-resourcemanager-chaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "RenzoPrettoMS"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49171",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49171#issuecomment-4479018928"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> @RenzoPrettoMS > > The most critical part is not on the GET. It is on the LRO that uses the GET. > > All the comments are not on how your REST API structure (whether it polls via URL to `Azure-AsyncOperation` or not) -- it is owned by ARM",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49171:commit:567c316e17d3:sdk:Java:azure-resourcemanager-chaos",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-18T15:57:36Z",
+      "observedAt": "2026-05-18T15:57:36Z",
+      "trackId": "sdk:Java:azure-resourcemanager-chaos",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "invalid-email-address"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49171",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/567c316e17d3e541124403fb6d231ab218156e7e"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49171:commit:a0943559841d:sdk:Java:azure-resourcemanager-chaos",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-19T16:04:31Z",
+      "observedAt": "2026-05-19T16:04:31Z",
+      "trackId": "sdk:Java:azure-resourcemanager-chaos",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "invalid-email-address"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49171",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/a0943559841d7bf022c20065b78ede0ef3e95d38"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:comment:3270740495:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T01:38:18Z",
+      "observedAt": "2026-05-20T01:38:18Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59212#discussion_r3270740495"
+      },
+      "confidence": "authoritative",
+      "excerpt": "DiscoveredResourceCollection includes Resource before Collection. Mgmt SDK collection types should not include the Resource infix unless this is PrivateLinkResource; please rename this to a contextual collection name without the infix, such",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:comment:3270740496:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T01:38:18Z",
+      "observedAt": "2026-05-20T01:38:18Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59212#discussion_r3270740496"
+      },
+      "confidence": "authoritative",
+      "excerpt": "DiscoveredResourceData includes Resource before Data. Mgmt SDK data types should not include the Resource infix unless this is PrivateLinkResource; please rename this to a contextual data name without the infix, such as ChaosDiscoveredData,",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:comment:3270740500:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T01:38:18Z",
+      "observedAt": "2026-05-20T01:38:18Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59212#discussion_r3270740500"
+      },
+      "confidence": "authoritative",
+      "excerpt": "PrivateAccess* is new public API surface, but the type names do not identify the Chaos service when seen without the namespace. Please prefix the public resource/data/collection/patch/property types with Chaos context, for example ChaosPriv",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:comment:3270740505:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T01:38:18Z",
+      "observedAt": "2026-05-20T01:38:18Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59212#discussion_r3270740505"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Boolean property names should start with an accepted verb prefix (Is, Can, Has, Does, Should, Allow, Enable, Disable, Use, or Support). Please rename WhatIf to a verb-form name such as IsWhatIf/ShouldWhatIf, preserving the wire name with Ty",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:comment:3270740510:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T01:38:18Z",
+      "observedAt": "2026-05-20T01:38:18Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59212#discussion_r3270740510"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Boolean property names should start with an accepted verb prefix. Please rename Required to IsRequired, preserving the wire name with TypeSpec customization.",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:comment:3270740512:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T01:38:18Z",
+      "observedAt": "2026-05-20T01:38:18Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59212#discussion_r3270740512"
+      },
+      "confidence": "authoritative",
+      "excerpt": "ConfigurationExclusions/ConfigurationFilters are generic public type names. Since they are scenario-configuration-specific models, please include that context in the .NET names, for example ChaosScenarioConfigurationExclusions and ChaosScen",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:comment:3270740515:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T01:38:18Z",
+      "observedAt": "2026-05-20T01:38:18Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59212#discussion_r3270740515"
+      },
+      "confidence": "authoritative",
+      "excerpt": "OperationError is a generic public type name and overlaps with common error terminology. Please prefix it with service/feature context, for example ChaosOperationError or a more specific scenario/workspace error name, using TypeSpec @@clien",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:comment:3270740517:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T01:38:18Z",
+      "observedAt": "2026-05-20T01:38:18Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59212#discussion_r3270740517"
+      },
+      "confidence": "authoritative",
+      "excerpt": "ParameterType is too generic for a public SDK type. This is a scenario parameter type, so please rename it to include that context, for example ChaosScenarioParameterType, using TypeSpec @@clientName customization.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:review:4324611831:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T01:38:19Z",
+      "observedAt": "2026-05-20T01:38:19Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Changes requested",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59212#pullrequestreview-4324611831"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Phase 1 (versioning) passed: no major version bump, ApiCompatVersion remains 1.1.1, and no ApiCompat baseline suppression was added. Phase 2 found API naming/type-shape issues on the new public surface; I left 18 inline comments covering de",
+      "reviewState": "changes_requested",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:comment:3270740521:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T01:38:19Z",
+      "observedAt": "2026-05-20T01:38:19Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59212#discussion_r3270740521"
+      },
+      "confidence": "authoritative",
+      "excerpt": "ResourceId is documented as the affected Azure resource ID and should be exposed as Azure.Core.ResourceIdentifier instead of string. Please update the TypeSpec property to use Azure.Core.armResourceIdentifier (or equivalent customization) s",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:comment:3270740522:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T01:38:19Z",
+      "observedAt": "2026-05-20T01:38:19Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59212#discussion_r3270740522"
+      },
+      "confidence": "authoritative",
+      "excerpt": "PermissionsFix is new public API, derives from ResourceData, and is too generic without Chaos context. Resource-data models should use a Data suffix and contextual naming; please rename this to something like ChaosPermissionsFixData via Typ",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:comment:3270740527:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T01:38:19Z",
+      "observedAt": "2026-05-20T01:38:19Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59212#discussion_r3270740527"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Boolean property names should start with an accepted verb prefix. Please rename WhatIfMode to a verb-form name such as IsWhatIfMode or IsWhatIfEnabled, preserving the wire name with TypeSpec customization.",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:comment:3270740531:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T01:38:19Z",
+      "observedAt": "2026-05-20T01:38:19Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59212#discussion_r3270740531"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Recommendation is a generic public type name. Since this represents a Chaos scenario recommendation, please rename it to include service/feature context, for example ChaosScenarioRecommendation, using TypeSpec @@clientName customization.",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:comment:3270740533:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T01:38:19Z",
+      "observedAt": "2026-05-20T01:38:19Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59212#discussion_r3270740533"
+      },
+      "confidence": "authoritative",
+      "excerpt": "ResourceId is documented as the affected Azure resource ID and should be exposed as Azure.Core.ResourceIdentifier instead of string. Please update the TypeSpec property to use Azure.Core.armResourceIdentifier (or equivalent customization) s",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:comment:3270740534:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T01:38:19Z",
+      "observedAt": "2026-05-20T01:38:19Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59212#discussion_r3270740534"
+      },
+      "confidence": "authoritative",
+      "excerpt": "RoleAssignmentId is documented as the created role assignment resource ID, so it should be exposed as Azure.Core.ResourceIdentifier instead of string. Please update the TypeSpec property to use Azure.Core.armResourceIdentifier (or equivalen",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:comment:3270740538:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T01:38:19Z",
+      "observedAt": "2026-05-20T01:38:19Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59212#discussion_r3270740538"
+      },
+      "confidence": "authoritative",
+      "excerpt": "TargetResourceId is documented as the target Azure resource ID and should be exposed as Azure.Core.ResourceIdentifier instead of string. Please update the TypeSpec property to use Azure.Core.armResourceIdentifier (or equivalent customizatio",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:comment:3270740542:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T01:38:19Z",
+      "observedAt": "2026-05-20T01:38:19Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59212#discussion_r3270740542"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Validation is a generic public type name, and this type derives from ResourceData but does not use the Data suffix. Please rename it to a contextual data model name such as ChaosScenarioValidationData via TypeSpec @@clientName customization",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:comment:3270740545:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T01:38:19Z",
+      "observedAt": "2026-05-20T01:38:19Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59212#discussion_r3270740545"
+      },
+      "confidence": "authoritative",
+      "excerpt": "WorkspaceEvaluation derives from ResourceData but does not use the Data suffix, and it should include Chaos context in the public name. Please rename it to something like ChaosWorkspaceEvaluationData via TypeSpec @@clientName customization.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:comment:3270740549:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T01:38:19Z",
+      "observedAt": "2026-05-20T01:38:19Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59212#discussion_r3270740549"
+      },
+      "confidence": "authoritative",
+      "excerpt": "WorkspaceId is documented as the workspace ID this evaluation belongs to; if this is the ARM resource ID for the workspace, it should be exposed as Azure.Core.ResourceIdentifier instead of string. Please model it as Azure.Core.armResourceId",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49171:comment:4494071976:sdk:Java:azure-resourcemanager-chaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T02:53:02Z",
+      "observedAt": "2026-05-20T02:53:02Z",
+      "trackId": "sdk:Java:azure-resourcemanager-chaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49171",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49171#issuecomment-4494071976"
+      },
+      "confidence": "authoritative",
+      "excerpt": "SDK LTGM. We need a final regen after specs PR merge.",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:commit:bb0ff73b24bf:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-20T17:02:31Z",
+      "observedAt": "2026-05-20T17:02:31Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "invalid-email-address"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/bb0ff73b24bfcdb36640009b51a9110c9ed51323"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:review:4338482938:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-21T15:51:22Z",
+      "observedAt": "2026-05-21T15:51:22Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Changes requested",
+      "actor": {
+        "kind": "human",
+        "publicId": "RenzoPrettoMS"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59212#pullrequestreview-4338482938"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Phase 1 (versioning) passed: no major version bump, ApiCompatVersion remains 1.1.1, and no ApiCompatBaseline suppression was added. Phase 2: the automated management naming scanner passed against the 1.1.1 API baseline, but manual contextua",
+      "reviewState": "changes_requested",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:review:4338486086:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-21T15:51:44Z",
+      "observedAt": "2026-05-21T15:51:44Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "RenzoPrettoMS"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59212#pullrequestreview-4338486086"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Adding inline locations for the Azure SDK management PR validation findings.",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:comment:3282529678:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-21T15:51:45Z",
+      "observedAt": "2026-05-21T15:51:45Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "RenzoPrettoMS"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59212#discussion_r3282529678"
+      },
+      "confidence": "authoritative",
+      "excerpt": "PrivateEndpointConnectionCollection / PrivateEndpointConnectionResource are new public ARM types, but the names do not identify the Chaos service when seen without the namespace. The data type is already contextual (`ChaosPrivateEndpointCon",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:comment:3282529684:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-21T15:51:45Z",
+      "observedAt": "2026-05-21T15:51:45Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "RenzoPrettoMS"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59212#discussion_r3282529684"
+      },
+      "confidence": "authoritative",
+      "excerpt": "ActionDependency is a generic public model name; without the namespace it could apply to many libraries. Please rename it with Chaos/scenario-action context, such as `ChaosScenarioActionDependency` or `ChaosActionDependency`, using a TypeSp",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:comment:3282529690:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-21T15:51:45Z",
+      "observedAt": "2026-05-21T15:51:45Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "RenzoPrettoMS"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59212#discussion_r3282529690"
+      },
+      "confidence": "authoritative",
+      "excerpt": "ActionPropertiesParametersSchema is a generated wire-shaped name and lacks clear service context. Please expose a named contextual model such as `ChaosActionParametersSchema`; because this comes from an anonymous TypeSpec object (`parameter",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:comment:3282529696:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-21T15:51:45Z",
+      "observedAt": "2026-05-21T15:51:45Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "RenzoPrettoMS"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59212#discussion_r3282529696"
+      },
+      "confidence": "authoritative",
+      "excerpt": "EntraIdentity is new public API surface but lacks Chaos/feature context when seen without the namespace. Please rename it to a contextual name such as `ChaosEntraIdentity` or a permissions/scenario-specific identity name via TypeSpec `@@cli",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:comment:3282529700:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-21T15:51:45Z",
+      "observedAt": "2026-05-21T15:51:45Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "RenzoPrettoMS"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59212#discussion_r3282529700"
+      },
+      "confidence": "authoritative",
+      "excerpt": "ObjectId and TenantId represent Entra UUID values in the examples, so they should be exposed as `Guid` rather than `string`. Please model these fields with the TypeSpec `uuid` scalar.",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:comment:3282529705:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-21T15:51:45Z",
+      "observedAt": "2026-05-21T15:51:45Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "RenzoPrettoMS"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59212#discussion_r3282529705"
+      },
+      "confidence": "authoritative",
+      "excerpt": "PrivateEndpointConnectionProperties is also new public surface without Chaos context. Please expose a contextual name such as `ChaosPrivateEndpointConnectionProperties` via TypeSpec `@@clientName`.",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:comment:3282529710:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-21T15:51:45Z",
+      "observedAt": "2026-05-21T15:51:45Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "RenzoPrettoMS"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59212#discussion_r3282529710"
+      },
+      "confidence": "authoritative",
+      "excerpt": "PrivateEndpointId is documented as the Azure identifier for the private endpoint, and the examples show a full ARM private endpoint ID. It should be `Azure.Core.ResourceIdentifier` instead of `string`; please model `PrivateEndpoint.id` as `",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:comment:3282529715:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-21T15:51:45Z",
+      "observedAt": "2026-05-21T15:51:45Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "RenzoPrettoMS"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59212#discussion_r3282529715"
+      },
+      "confidence": "authoritative",
+      "excerpt": "PublicNetworkAccessOption is a generic public enum name. Since this enum is specifically for Chaos private access public network access, please rename it with service/resource context, e.g. `ChaosPrivateAccessPublicNetworkAccessOption` or `",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:comment:3282529719:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-21T15:51:45Z",
+      "observedAt": "2026-05-21T15:51:45Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "RenzoPrettoMS"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59212#discussion_r3282529719"
+      },
+      "confidence": "authoritative",
+      "excerpt": "PrincipalId is a managed identity principal UUID and should be exposed as `Guid`, not `string`. Please model it with the TypeSpec `uuid` scalar.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:comment:3282529724:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-21T15:51:45Z",
+      "observedAt": "2026-05-21T15:51:45Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "RenzoPrettoMS"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59212#discussion_r3282529724"
+      },
+      "confidence": "authoritative",
+      "excerpt": "RunAfter is a generic public model name; in IntelliSense it does not communicate that this is scenario action dependency configuration. Please rename it with scenario/action context, for example `ChaosScenarioActionRunAfter`, and apply the ",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:comment:3282529727:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-21T15:51:45Z",
+      "observedAt": "2026-05-21T15:51:45Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "RenzoPrettoMS"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59212#discussion_r3282529727"
+      },
+      "confidence": "authoritative",
+      "excerpt": "ManagedIdentityPrincipalId is a UUID in the examples and should be exposed as `Guid` rather than `string`. Please model it with the TypeSpec `uuid` scalar.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:comment:3282529732:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-21T15:51:45Z",
+      "observedAt": "2026-05-21T15:51:45Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "RenzoPrettoMS"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59212#discussion_r3282529732"
+      },
+      "confidence": "authoritative",
+      "excerpt": "ScenarioRunResource.Id is documented as a resource ID and examples show full ARM resource IDs, so it should be `Azure.Core.ResourceIdentifier` instead of `string`. Also consider renaming this model to avoid the `Resource` suffix for a non-`",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:review:4338652226:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-21T16:13:23Z",
+      "observedAt": "2026-05-21T16:13:23Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "RenzoPrettoMS"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59212#pullrequestreview-4338652226"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Reran the Azure SDK management PR review validation at PR head `0a23a958bdcdf9d6240457bce322cb415919deb8`. Phase 1 (versioning) passed: no major version bump, `ApiCompatVersion` remains `1.1.1`, and no package `ApiCompatBaseline.txt` suppre",
+      "reviewState": "dismissed",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:commit:b173acd9429e:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-21T16:47:21Z",
+      "observedAt": "2026-05-21T16:47:21Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "RenzoPrettoMS"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/b173acd9429e36341332486dc4d9366239697fa4"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:commit:3bed14a05419:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-21T16:59:39Z",
+      "observedAt": "2026-05-21T16:59:39Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "RenzoPrettoMS"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/3bed14a05419e2aa2b62bcaac6ceff1714944230"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49171:commit:1e9e05173bde:sdk:Java:azure-resourcemanager-chaos",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-26T16:10:32Z",
+      "observedAt": "2026-05-26T16:10:32Z",
+      "trackId": "sdk:Java:azure-resourcemanager-chaos",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "RenzoPrettoMS"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49171",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/1e9e05173bde3c8175f171c971bbd37e28712112"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49171:comment:4546541705:sdk:Java:azure-resourcemanager-chaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-26T16:59:41Z",
+      "observedAt": "2026-05-26T16:59:41Z",
+      "trackId": "sdk:Java:azure-resourcemanager-chaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "RenzoPrettoMS"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49171",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49171#issuecomment-4546541705"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@weidongxu-microsoft I regenerated the SDK after merging in the changes, thank you for your help in this process!",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49171:review:4369093372:sdk:Java:azure-resourcemanager-chaos",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-27T03:09:21Z",
+      "observedAt": "2026-05-27T03:09:21Z",
+      "trackId": "sdk:Java:azure-resourcemanager-chaos",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "XiaofeiCao"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49171",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49171#pullrequestreview-4369093372"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49171:pr.merged:sdk:Java:azure-resourcemanager-chaos",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-27T16:30:10Z",
+      "observedAt": "2026-05-27T16:30:10Z",
+      "trackId": "sdk:Java:azure-resourcemanager-chaos",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49171",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49171"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:review:4386893697:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-29T05:38:32Z",
+      "observedAt": "2026-05-29T05:38:32Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Changes requested",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59212#pullrequestreview-4386893697"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Please update CHANGELOG.md: - Update the Unreleased section in with your expected release date. Use the date format yyyy-mm-dd (for example, 2026-05-29). - Add one line under the Features Added section: \"- Updated the api-version to 2026-05",
+      "reviewState": "changes_requested",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:commit:6bfc511636d2:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-29T15:41:11Z",
+      "observedAt": "2026-05-29T15:41:11Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "RenzoPrettoMS"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/6bfc511636d2ec65f9ca1a2c5244fe12926f66e2"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:comment:3325485423:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-29T15:57:44Z",
+      "observedAt": "2026-05-29T15:57:44Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59212#discussion_r3325485423"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[Contextual Naming – ARM Collection/Resource types]** `PrivateEndpointConnectionCollection` and `PrivateEndpointConnectionResource` (line 969) are new public ARM types in the `Azure.ResourceManager.Chaos` namespace but their names carry n",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:comment:3325485434:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-29T15:57:44Z",
+      "observedAt": "2026-05-29T15:57:44Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59212#discussion_r3325485434"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[Contextual Naming – Action model types]** The following new public types in `Azure.ResourceManager.Chaos.Models` lack Chaos/service context: | Current name | Suggested rename | Fix via | |---|---|---| | `ActionDependency` | `ChaosScenari",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:comment:3325485440:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-29T15:57:44Z",
+      "observedAt": "2026-05-29T15:57:44Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59212#discussion_r3325485440"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[Contextual Naming – Guid-valued UUID properties in EntraIdentity]** `ObjectId` and `TenantId` are Entra/AAD UUID-valued properties and should be typed as `System.Guid` rather than `string`. Additionally, `EntraIdentity` itself lacks Chao",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:comment:3325485447:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-29T15:57:44Z",
+      "observedAt": "2026-05-29T15:57:44Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59212#discussion_r3325485447"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[Contextual Naming – Permissions/Fix types missing Chaos prefix]** The following new public types lack Chaos service context: | Current name | Suggested rename | |---|---| | `PermissionError` | `ChaosPermissionError` | | `PermissionsFixPr",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:comment:3325485454:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-29T15:57:44Z",
+      "observedAt": "2026-05-29T15:57:44Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59212#discussion_r3325485454"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[Contextual Naming – miscellaneous new types without Chaos prefix]** The following additional new public types in the `Models` namespace lack Chaos/resource-domain context: | Current name | Suggested rename | |---|---| | `CustomerDataStor",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:comment:3325485460:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-29T15:57:44Z",
+      "observedAt": "2026-05-29T15:57:44Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59212#discussion_r3325485460"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[Type formatting – `PrivateEndpointId` should be `ResourceIdentifier`]** `PrivateEndpointId` is documented as the Azure resource identifier for a private endpoint. Full ARM resource IDs should be typed as `Azure.Core.ResourceIdentifier` r",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:review:4391016821:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-29T15:57:45Z",
+      "observedAt": "2026-05-29T15:57:45Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Changes requested",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59212#pullrequestreview-4391016821"
+      },
+      "confidence": "authoritative",
+      "excerpt": "### Management SDK Review Summary - **Scope:** `Azure.ResourceManager.Chaos` (1.2.0-beta.1, API version 2026-05-01-preview) - **Versioning:** ✅ Pass — `ApiCompatVersion` present (1.1.1), no major version bump, CHANGELOG updated - **Automate",
+      "reviewState": "changes_requested",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:comment:3325485468:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-29T15:57:45Z",
+      "observedAt": "2026-05-29T15:57:45Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59212#discussion_r3325485468"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[Contextual Naming – PrivateEndpointConnectionProperties missing Chaos prefix]** `PrivateEndpointConnectionProperties` is a new public model without Chaos context. Please rename it to `ChaosPrivateEndpointConnectionProperties` via `@`@cli",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:comment:3325485478:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-29T15:57:45Z",
+      "observedAt": "2026-05-29T15:57:45Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59212#discussion_r3325485478"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[Type formatting – `PrincipalId` should be `System.Guid`]** `PrincipalId` represents a managed identity principal UUID and should be typed as `System.Guid` rather than `string`. Please update the TypeSpec property to use the `uuid` scalar",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:comment:3325485482:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-29T15:57:45Z",
+      "observedAt": "2026-05-29T15:57:45Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59212#discussion_r3325485482"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[Contextual Naming – RoleAssignment types missing Chaos prefix]** The following new public types lack Chaos/service context: | Current name | Suggested rename | |---|---| | `RoleAssignmentError` | `ChaosRoleAssignmentError` | | `RoleAssig",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:comment:3325485486:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-29T15:57:45Z",
+      "observedAt": "2026-05-29T15:57:45Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59212#discussion_r3325485486"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[Contextual Naming – RunAfter and RunAfterBehavior missing Chaos prefix]** `RunAfter` and `RunAfterBehavior` are generic names with no service context. Please rename them: - `RunAfter` → `ChaosRunAfter` (or `ChaosScenarioRunAfter`) - `Run",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:comment:3325485490:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-29T15:57:45Z",
+      "observedAt": "2026-05-29T15:57:45Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59212#discussion_r3325485490"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[Contextual Naming – Scenario* types missing Chaos prefix (large group)]** The following new public types have the `Scenario` prefix but are missing the `Chaos` prefix, making them ambiguous across libraries: | Current name | Suggested re",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:comment:3325485493:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-29T15:57:45Z",
+      "observedAt": "2026-05-29T15:57:45Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59212#discussion_r3325485493"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[Type formatting – `ManagedIdentityPrincipalId` should be `System.Guid`]** `ManagedIdentityPrincipalId` represents a managed identity principal UUID and should be typed as `System.Guid` rather than `string`. Please update the TypeSpec pro",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:comment:3325485497:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-29T15:57:45Z",
+      "observedAt": "2026-05-29T15:57:45Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59212#discussion_r3325485497"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[Contextual Naming – Workspace* types missing Chaos prefix]** The following new public types lack Chaos service context: | Current name | Suggested rename | |---|---| | `WorkspaceEvaluationProperties` | `ChaosWorkspaceEvaluationProperties",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:commit:79640095f2cd:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-29T18:15:27Z",
+      "observedAt": "2026-05-29T18:15:27Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "RenzoPrettoMS"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/79640095f2cda2ecb1f7823db403401ab7fb91e1"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:comment:3326228348:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-29T18:31:50Z",
+      "observedAt": "2026-05-29T18:31:50Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59212#discussion_r3326228348"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[Contextual naming]** `ChaosScenarioRunResource` (Models namespace, line 2091) collides with the ARM resource class `Azure.ResourceManager.Chaos.ChaosScenarioRunResource` (line 749). Both types exist in the same assembly — one in the root",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:review:4391949526:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-29T18:31:51Z",
+      "observedAt": "2026-05-29T18:31:51Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59212#pullrequestreview-4391949526"
+      },
+      "confidence": "authoritative",
+      "excerpt": "### Management SDK Review Summary - **Scope**: `Azure.ResourceManager.Chaos` (v1.2.0-beta.1, api-version 2026-05-01-preview) - **Versioning**: ✅ Pass — version `1.2.0-beta.1`, `ApiCompatVersion` retained at `1.1.1`, no major bump, no new `A",
+      "reviewState": "dismissed",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:commit:60bdcb1db40f:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-29T19:07:30Z",
+      "observedAt": "2026-05-29T19:07:30Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "RenzoPrettoMS"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/60bdcb1db40f767cbf088bcc3dbfb8066bc679ed"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:review:4392225755:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-29T19:18:38Z",
+      "observedAt": "2026-05-29T19:18:38Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59212#pullrequestreview-4392225755"
+      },
+      "confidence": "authoritative",
+      "excerpt": "### Management SDK Review Summary - **Scope**: `Azure.ResourceManager.Chaos` (1.2.0-beta.1, API version 2026-05-01-preview) - **Versioning**: ✅ Pass — version `1.2.0-beta.1` (no major bump), `ApiCompatVersion=1.1.1` present, no `ApiCompatBa",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:review:4398253143:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-01T03:36:59Z",
+      "observedAt": "2026-06-01T03:36:59Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59212#pullrequestreview-4398253143"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59212:pr.merged:sdk:.NET:Azure.ResourceManager.Chaos",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-01T03:39:22Z",
+      "observedAt": "2026-06-01T03:39:22Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59212",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59212"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:34355:36:Custom.ReleaseStatusForJavaScript",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-07-16T18:38:32.28Z",
+      "observedAt": "2026-07-16T18:38:32.28Z",
+      "trackId": "sdk:JavaScript:@azure/arm-chaos",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34355",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34355"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34355:36:Custom.ReleasedVersionForJavaScript",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-07-16T18:38:32.28Z",
+      "observedAt": "2026-07-16T18:38:32.28Z",
+      "trackId": "sdk:JavaScript:@azure/arm-chaos",
+      "value": "2.1.0-beta.1",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34355",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34355"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6615672:generation.queued:sdk:Python:azure-mgmt-chaos",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-07-24T22:43:14.2334077Z",
+      "observedAt": "2026-07-24T22:53:49.5757867Z",
+      "trackId": "sdk:Python:azure-mgmt-chaos",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6615672",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6615672"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:34355:38:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-24T22:43:19.84Z",
+      "observedAt": "2026-07-24T22:43:19.84Z",
+      "trackId": "sdk:Python:azure-mgmt-chaos",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34355",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34355"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6615673:generation.queued:sdk:Go:sdk/resourcemanager/chaos/armchaos",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-07-24T22:43:24.5034883Z",
+      "observedAt": "2026-07-24T22:52:20.5537528Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/chaos/armchaos",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6615673",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6615673"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:34355:39:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-24T22:43:27.23Z",
+      "observedAt": "2026-07-24T22:43:27.23Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/chaos/armchaos",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34355",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34355"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6615672:generation.started:sdk:Python:azure-mgmt-chaos",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-07-24T22:45:56.3975864Z",
+      "observedAt": "2026-07-24T22:53:49.5757867Z",
+      "trackId": "sdk:Python:azure-mgmt-chaos",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6615672",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6615672"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6615673:generation.started:sdk:Go:sdk/resourcemanager/chaos/armchaos",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-07-24T22:45:59.9163165Z",
+      "observedAt": "2026-07-24T22:52:20.5537528Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/chaos/armchaos",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6615673",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6615673"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27254:commit:2bc5547e6579:sdk:Go:sdk/resourcemanager/chaos/armchaos",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T22:51:14Z",
+      "observedAt": "2026-07-24T22:51:14Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/chaos/armchaos",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27254",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/2bc5547e6579468ec23726de4ef09fe8c228d114"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27254:pr.created:sdk:Go:sdk/resourcemanager/chaos/armchaos",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T22:51:19Z",
+      "observedAt": "2026-07-24T22:51:19Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/chaos/armchaos",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27254",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27254"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:34355:40:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-24T22:51:26.727Z",
+      "observedAt": "2026-07-24T22:51:26.727Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/chaos/armchaos",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34355",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34355"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:34355:40:Custom.SDKPullRequestForGo",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-24T22:51:26.727Z",
+      "observedAt": "2026-07-24T22:51:26.727Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/chaos/armchaos",
+      "value": "https://github.com/Azure/azure-sdk-for-go/pull/27254",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34355",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34355"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27254:comment:5075240854:sdk:Go:sdk/resourcemanager/chaos/armchaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T22:51:48Z",
+      "observedAt": "2026-07-24T22:51:48Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/chaos/armchaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27254",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27254#issuecomment-5075240854"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 5 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48256:commit:d411c30f9ae9:sdk:Python:azure-mgmt-chaos",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T22:52:19Z",
+      "observedAt": "2026-07-24T22:52:19Z",
+      "trackId": "sdk:Python:azure-mgmt-chaos",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48256",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/d411c30f9ae910c56325b31cf78279f576344df4"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6615673:generation.completed:sdk:Go:sdk/resourcemanager/chaos/armchaos",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-07-24T22:52:20.5537528Z",
+      "observedAt": "2026-07-24T22:52:20.5537528Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/chaos/armchaos",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6615673",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6615673"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48256:pr.created:sdk:Python:azure-mgmt-chaos",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T22:52:23Z",
+      "observedAt": "2026-07-24T22:52:23Z",
+      "trackId": "sdk:Python:azure-mgmt-chaos",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48256",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48256"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:34355:41:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-24T22:52:30.29Z",
+      "observedAt": "2026-07-24T22:52:30.29Z",
+      "trackId": "sdk:Python:azure-mgmt-chaos",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34355",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34355"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:34355:41:Custom.SDKPullRequestForPython",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-24T22:52:30.29Z",
+      "observedAt": "2026-07-24T22:52:30.29Z",
+      "trackId": "sdk:Python:azure-mgmt-chaos",
+      "value": "https://github.com/Azure/azure-sdk-for-python/pull/48256",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34355",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34355"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48256:comment:5075248619:sdk:Python:azure-mgmt-chaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T22:52:54Z",
+      "observedAt": "2026-07-24T22:52:54Z",
+      "trackId": "sdk:Python:azure-mgmt-chaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48256",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48256#issuecomment-5075248619"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 9 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27254:review:4777350058:sdk:Go:sdk/resourcemanager/chaos/armchaos",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T22:53:23Z",
+      "observedAt": "2026-07-24T22:53:23Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/chaos/armchaos",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27254",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27254#pullrequestreview-4777350058"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview > [!NOTE] > Copilot could not run the full agentic suite for this review because it was automatically requested on a bot-authored pull request. Request a review from Copilot under Reviewers to retry with the full ag",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6615672:generation.completed:sdk:Python:azure-mgmt-chaos",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-07-24T22:53:49.5757867Z",
+      "observedAt": "2026-07-24T22:53:49.5757867Z",
+      "trackId": "sdk:Python:azure-mgmt-chaos",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6615672",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6615672"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48256:comment:3648602526:sdk:Python:azure-mgmt-chaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T22:54:42Z",
+      "observedAt": "2026-07-24T22:54:42Z",
+      "trackId": "sdk:Python:azure-mgmt-chaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48256",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48256#discussion_r3648602526"
+      },
+      "confidence": "authoritative",
+      "excerpt": "In the XML fast-path, attribute values fall back to returning the raw string (`attr_val`) when no custom `deserializer` is provided. This bypasses the previous `_deserialize(rf_type, ...)` behavior and will incorrectly type fields declared ",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48256:comment:3648602540:sdk:Python:azure-mgmt-chaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T22:54:42Z",
+      "observedAt": "2026-07-24T22:54:42Z",
+      "trackId": "sdk:Python:azure-mgmt-chaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48256",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48256#discussion_r3648602540"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Similar to the attribute case, the XML fast-path returns raw `element.text` when no custom `deserializer` is provided, skipping `_deserialize(rf_type, ...)`. This changes behavior and can silently produce wrong types for text-backed fields ",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48256:comment:3648602562:sdk:Python:azure-mgmt-chaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T22:54:42Z",
+      "observedAt": "2026-07-24T22:54:42Z",
+      "trackId": "sdk:Python:azure-mgmt-chaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48256",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48256#discussion_r3648602562"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The new header fast-path boolean parsing is case-sensitive and will mis-handle values like `FALSE`/`TRUE` (common in HTTP headers), falling through to `bool(response_data)` and returning `True` for `FALSE`. Consider normalizing (e.g., `resp",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48256:review:4777357382:sdk:Python:azure-mgmt-chaos",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T22:54:43Z",
+      "observedAt": "2026-07-24T22:54:43Z",
+      "trackId": "sdk:Python:azure-mgmt-chaos",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48256",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48256#pullrequestreview-4777357382"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview > [!NOTE] > Copilot could not run the full agentic suite for this review because it was automatically requested on a bot-authored pull request. Request a review from Copilot under Reviewers to retry with the full ag",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48256:comment:3648602577:sdk:Python:azure-mgmt-chaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-24T22:54:43Z",
+      "observedAt": "2026-07-24T22:54:43Z",
+      "trackId": "sdk:Python:azure-mgmt-chaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48256",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48256#discussion_r3648602577"
+      },
+      "confidence": "authoritative",
+      "excerpt": "For numeric duration formats, `isodate.parse_duration` can return `isodate.Duration` (e.g., durations including months/years), which is not convertible via `float(...)` and will raise a `TypeError` without a clear message. Since numeric wir",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27254:comment:5085729651:sdk:Go:sdk/resourcemanager/chaos/armchaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-26T22:37:46Z",
+      "observedAt": "2026-07-26T22:37:46Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/chaos/armchaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27254",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27254#issuecomment-5085729651"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## PR is ready to merge",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48256:review:4783419493:sdk:Python:azure-mgmt-chaos",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-27T03:31:40Z",
+      "observedAt": "2026-07-27T03:31:40Z",
+      "trackId": "sdk:Python:azure-mgmt-chaos",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48256",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48256#pullrequestreview-4783419493"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48256:comment:5086989432:sdk:Python:azure-mgmt-chaos",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-27T03:32:44Z",
+      "observedAt": "2026-07-27T03:32:44Z",
+      "trackId": "sdk:Python:azure-mgmt-chaos",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48256",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48256#issuecomment-5086989432"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @RenzoPrettoMS, we have approved the PR and we will hold the PR merge and release until you explicitly ping us to merge then release.",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27254:review:4783490279:sdk:Go:sdk/resourcemanager/chaos/armchaos",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-27T03:56:58Z",
+      "observedAt": "2026-07-27T03:56:58Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/chaos/armchaos",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "tadelesh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27254",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27254#pullrequestreview-4783490279"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48256:review:4852639668:sdk:Python:azure-mgmt-chaos",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-04T09:23:15Z",
+      "observedAt": "2026-08-04T09:23:15Z",
+      "trackId": "sdk:Python:azure-mgmt-chaos",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48256",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48256#pullrequestreview-4852639668"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    }
+  ],
+  "quality": {
+    "warnings": [
+      "2 historical linked PR(s) closed without merge"
+    ],
+    "unavailablePullRequests": 0,
+    "unavailablePipelineRuns": 0
+  },
+  "boundaryFacts": {
+    "id": "34355",
+    "state": "in-progress",
+    "specPrs": [
+      {
+        "id": "github:Azure/azure-rest-api-specs#43085",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#43085",
+        "createdAt": "2026-05-11T15:08:13Z",
+        "mergedAt": "2026-05-13T01:34:20Z",
+        "closedAt": "2026-05-13T01:34:20Z",
+        "available": true
+      }
+    ],
+    "artifacts": [
+      {
+        "language": ".NET",
+        "package": "Azure.ResourceManager.Chaos",
+        "trackId": "sdk:.NET:Azure.ResourceManager.Chaos",
+        "prId": "github:Azure/azure-sdk-for-net#59212",
+        "prCreatedAt": "2026-05-13T15:33:26Z",
+        "prMergedAt": "2026-06-01T03:39:22Z",
+        "prClosedAt": "2026-06-01T03:39:22Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-net#59212",
+            "createdAt": "2026-05-13T15:33:26Z",
+            "mergedAt": "2026-06-01T03:39:22Z",
+            "closedAt": "2026-06-01T03:39:22Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6292131",
+        "generationStartAt": "2026-05-13T15:27:09.8673066Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "JavaScript",
+        "package": "@azure/arm-chaos",
+        "trackId": "sdk:JavaScript:@azure/arm-chaos",
+        "prId": "github:Azure/azure-sdk-for-js#38530",
+        "prCreatedAt": "2026-05-13T15:34:39Z",
+        "prMergedAt": "2026-05-14T15:33:21Z",
+        "prClosedAt": "2026-05-14T15:33:21Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-js#38530",
+            "createdAt": "2026-05-13T15:34:39Z",
+            "mergedAt": "2026-05-14T15:33:21Z",
+            "closedAt": "2026-05-14T15:33:21Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6292132",
+        "generationStartAt": "2026-05-13T15:27:09.6997841Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-07-16T18:38:32.28Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "2.1.0-beta.1",
+        "releaseBoundaryAt": "2026-07-16T18:38:32.28Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Python",
+        "package": "azure-mgmt-chaos",
+        "trackId": "sdk:Python:azure-mgmt-chaos",
+        "prId": "github:Azure/azure-sdk-for-python#48256",
+        "prCreatedAt": "2026-07-24T22:52:23Z",
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-python#48256",
+            "createdAt": "2026-07-24T22:52:23Z",
+            "mergedAt": null,
+            "closedAt": null,
+            "state": "open"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6615672",
+        "generationStartAt": "2026-07-24T22:45:56.3975864Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Java",
+        "package": "azure-resourcemanager-chaos",
+        "trackId": "sdk:Java:azure-resourcemanager-chaos",
+        "prId": "github:Azure/azure-sdk-for-java#49171",
+        "prCreatedAt": "2026-05-13T15:35:24Z",
+        "prMergedAt": "2026-05-27T16:30:10Z",
+        "prClosedAt": "2026-05-27T16:30:10Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-java#49171",
+            "createdAt": "2026-05-13T15:35:24Z",
+            "mergedAt": "2026-05-27T16:30:10Z",
+            "closedAt": "2026-05-27T16:30:10Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6292130",
+        "generationStartAt": "2026-05-13T15:25:39.0867236Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Go",
+        "package": "sdk/resourcemanager/chaos/armchaos",
+        "trackId": "sdk:Go:sdk/resourcemanager/chaos/armchaos",
+        "prId": "github:Azure/azure-sdk-for-go#27254",
+        "prCreatedAt": "2026-07-24T22:51:19Z",
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-go#27254",
+            "createdAt": "2026-07-24T22:51:19Z",
+            "mergedAt": null,
+            "closedAt": null,
+            "state": "open"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6615673",
+        "generationStartAt": "2026-07-24T22:45:59.9163165Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      }
+    ],
+    "cohortPlan": {
+      "id": "34355",
+      "releasePlanId": "2236",
+      "title": "Release Plan - 2236 - Public Preview - Azure Chaos Studio",
+      "service": "Chaos",
+      "state": "in-progress"
+    },
+    "quality": {
+      "warnings": [
+        "2 historical linked PR(s) closed without merge"
+      ],
+      "unavailablePullRequests": 0,
+      "unavailablePipelineRuns": 0
+    }
+  },
+  "summary": {
+    "durationHours": 2217.6,
+    "pullRequestCount": 6,
+    "humanReviewCount": 18,
+    "humanCommentCount": 47
+  }
+}

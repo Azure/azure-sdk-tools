@@ -1,0 +1,3367 @@
+{
+  "schemaVersion": 2,
+  "id": "32869",
+  "correlation": {
+    "policyVersion": 1,
+    "preflight": "passed"
+  },
+  "releasePlanId": "2103",
+  "title": "Release Plan - 2103 - GA - Service Fabric",
+  "service": "Service Fabric",
+  "product": "Release",
+  "path": "specification/servicefabricmanagedclusters",
+  "state": "finished",
+  "plane": "management",
+  "releaseType": "APEX GA",
+  "intendedMonth": "February 2026",
+  "createdAt": "2026-02-24T17:16:47.95Z",
+  "completedAt": "2026-03-12T22:18:38.31Z",
+  "sourceUrl": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32869",
+  "range": {
+    "start": "2026-01-09T22:50:03.000Z",
+    "end": "2026-03-12T22:18:38.310Z"
+  },
+  "intendedArtifacts": [
+    {
+      "prId": "github:Azure/azure-sdk-for-net#56433",
+      "language": ".NET",
+      "package": "Azure.ResourceManager.ServiceFabricManagedClusters",
+      "version": null,
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5919240",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-js#37356",
+      "language": "JavaScript",
+      "package": "@azure/arm-servicefabricmanagedclusters",
+      "version": null,
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5919238",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-python#45333",
+      "language": "Python",
+      "package": "azure-mgmt-servicefabricmanagedclusters",
+      "version": null,
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5919239",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-java#48089",
+      "language": "Java",
+      "package": "azure-resourcemanager-servicefabricmanagedclusters",
+      "version": null,
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5919241",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-go#26047",
+      "language": "Go",
+      "package": "sdk/resourcemanager/servicefabricmanagedclusters/armservicefabricmanagedclusters",
+      "version": null,
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5919242",
+      "releasePipelineUrl": null
+    }
+  ],
+  "links": [
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#39563",
+      "role": "spec-pr",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/39563",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-net#56433",
+      "role": "sdk-pr",
+      "language": ".NET",
+      "url": "https://github.com/Azure/azure-sdk-for-net/pull/56433",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-js#37356",
+      "role": "sdk-pr",
+      "language": "JavaScript",
+      "url": "https://github.com/Azure/azure-sdk-for-js/pull/37356",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-python#45333",
+      "role": "sdk-pr",
+      "language": "Python",
+      "url": "https://github.com/Azure/azure-sdk-for-python/pull/45333",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-java#48089",
+      "role": "sdk-pr",
+      "language": "Java",
+      "url": "https://github.com/Azure/azure-sdk-for-java/pull/48089",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-go#26047",
+      "role": "sdk-pr",
+      "language": "Go",
+      "url": "https://github.com/Azure/azure-sdk-for-go/pull/26047",
+      "releasePlanIds": []
+    }
+  ],
+  "tracks": [
+    {
+      "id": "plan",
+      "kind": "plan",
+      "label": "Release Plan",
+      "detail": "APEX GA"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#39563",
+      "kind": "spec",
+      "label": "Spec PR",
+      "detail": "azure-rest-api-specs #39563",
+      "artifactId": "github:Azure/azure-rest-api-specs#39563",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:.NET:Azure.ResourceManager.ServiceFabricManagedClusters",
+      "kind": "sdk",
+      "label": ".NET",
+      "detail": "Azure.ResourceManager.ServiceFabricManagedClusters",
+      "artifactId": "github:Azure/azure-sdk-for-net#56433",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:JavaScript:@azure/arm-servicefabricmanagedclusters",
+      "kind": "sdk",
+      "label": "JavaScript",
+      "detail": "@azure/arm-servicefabricmanagedclusters",
+      "artifactId": "github:Azure/azure-sdk-for-js#37356",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Python:azure-mgmt-servicefabricmanagedclusters",
+      "kind": "sdk",
+      "label": "Python",
+      "detail": "azure-mgmt-servicefabricmanagedclusters",
+      "artifactId": "github:Azure/azure-sdk-for-python#45333",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Java:azure-resourcemanager-servicefabricmanagedclusters",
+      "kind": "sdk",
+      "label": "Java",
+      "detail": "azure-resourcemanager-servicefabricmanagedclusters",
+      "artifactId": "github:Azure/azure-sdk-for-java#48089",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Go:sdk/resourcemanager/servicefabricmanagedclusters/armservicefabricmanagedclusters",
+      "kind": "sdk",
+      "label": "Go",
+      "detail": "sdk/resourcemanager/servicefabricmanagedclusters/armservicefabricmanagedclusters",
+      "artifactId": "github:Azure/azure-sdk-for-go#26047",
+      "state": "merged"
+    }
+  ],
+  "events": [
+    {
+      "id": "github:Azure/azure-rest-api-specs#39563:pr.created:spec:github:Azure/azure-rest-api-specs#39563",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-01-09T22:50:03Z",
+      "observedAt": "2026-01-09T22:50:03Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39563",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "iliu816"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39563",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39563"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39563:comment:3730842601:spec:github:Azure/azure-rest-api-specs#39563",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-01-09T22:50:34Z",
+      "observedAt": "2026-01-09T22:50:34Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39563",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39563",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39563#issuecomment-3730842601"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>✅ All automated merging requirements have been met! To get your PR merged, see <a href=\"https://aka.ms/azsdk/specreview/merge\">aka.ms/azsdk/specreview/merge</a>.<br /><br />Comment generated by <a href=\"https://g",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39563:comment:3730853176:spec:github:Azure/azure-rest-api-specs#39563",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-01-09T22:55:50Z",
+      "observedAt": "2026-01-09T22:55:50Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39563",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39563",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39563#issuecomment-3730853176"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews | Language | API Review for Package | |----------|---------| | Swagger | [Microsoft.ServiceFabric-ServiceFabricManagedClusters](https:",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39563:commit:4b762dcc4f26:spec:github:Azure/azure-rest-api-specs#39563",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-01-09T22:56:16Z",
+      "observedAt": "2026-01-09T22:56:16Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39563",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "iliu816"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39563",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/4b762dcc4f268d70f1237042dae756b89c27b7d2"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39563:commit:7aa27dcd0f1a:spec:github:Azure/azure-rest-api-specs#39563",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-01-09T22:59:15Z",
+      "observedAt": "2026-01-09T22:59:15Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39563",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "iliu816"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39563",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/7aa27dcd0f1a52c5932b68e1df29db12b36bf7d2"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39563:commit:89fb0c394300:spec:github:Azure/azure-rest-api-specs#39563",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-01-14T00:30:50Z",
+      "observedAt": "2026-01-14T00:30:50Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39563",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "iliu816"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39563",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/89fb0c394300675e6185d5a45d47186c868ddf6b"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39563:commit:4a989d426495:spec:github:Azure/azure-rest-api-specs#39563",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-01-14T00:38:51Z",
+      "observedAt": "2026-01-14T00:38:51Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39563",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "iliu816"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39563",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/4a989d426495a23d6bffeaaf9f465c3ab574e6b5"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39563:comment:2691537422:spec:github:Azure/azure-rest-api-specs#39563",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-01-14T18:16:41Z",
+      "observedAt": "2026-01-14T18:16:41Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39563",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "skyiky"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39563",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39563#discussion_r2691537422"
+      },
+      "confidence": "authoritative",
+      "excerpt": "skipManagedNsgAssignment should be under 2026-02-01",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39563:review:3662135804:spec:github:Azure/azure-rest-api-specs#39563",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-01-14T18:16:42Z",
+      "observedAt": "2026-01-14T18:16:42Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39563",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "skyiky"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39563",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39563#pullrequestreview-3662135804"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39563:review:3662138242:spec:github:Azure/azure-rest-api-specs#39563",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-01-14T18:17:19Z",
+      "observedAt": "2026-01-14T18:17:19Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39563",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "skyiky"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39563",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39563#pullrequestreview-3662138242"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39563:comment:2691539278:spec:github:Azure/azure-rest-api-specs#39563",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-01-14T18:17:19Z",
+      "observedAt": "2026-01-14T18:17:19Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39563",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "skyiky"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39563",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39563#discussion_r2691539278"
+      },
+      "confidence": "authoritative",
+      "excerpt": "skipManagedNsgAssignment should be under 2026-02-01",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39563:review:3662139871:spec:github:Azure/azure-rest-api-specs#39563",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-01-14T18:17:45Z",
+      "observedAt": "2026-01-14T18:17:45Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39563",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "iliu816"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39563",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39563#pullrequestreview-3662139871"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39563:comment:2691540531:spec:github:Azure/azure-rest-api-specs#39563",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-01-14T18:17:45Z",
+      "observedAt": "2026-01-14T18:17:45Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39563",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "iliu816"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39563",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39563#discussion_r2691540531"
+      },
+      "confidence": "authoritative",
+      "excerpt": "I think the view you're looking at is outdated, I pushed a commit to fix that yesterday",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39563:commit:4b98fc89a160:spec:github:Azure/azure-rest-api-specs#39563",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-01-14T23:01:29Z",
+      "observedAt": "2026-01-14T23:01:29Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39563",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "iliu816"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39563",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/4b98fc89a1604bd6a4a3afdbd07e10359c319a71"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39563:review:3741977233:spec:github:Azure/azure-rest-api-specs#39563",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-02T22:55:41Z",
+      "observedAt": "2026-02-02T22:55:41Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39563",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "a-santamaria"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39563",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39563#pullrequestreview-3741977233"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39563:review:3843944477:spec:github:Azure/azure-rest-api-specs#39563",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-23T22:52:10Z",
+      "observedAt": "2026-02-23T22:52:10Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39563",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "mentat9"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39563",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39563#pullrequestreview-3843944477"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39563:comment:2843478364:spec:github:Azure/azure-rest-api-specs#39563",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-23T22:52:11Z",
+      "observedAt": "2026-02-23T22:52:11Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39563",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "mentat9"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39563",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39563#discussion_r2843478364"
+      },
+      "confidence": "authoritative",
+      "excerpt": ">skipManagedNsgAssignment?: boolean; [](http://example.com/codeflow?start=2&length=35) Is it possible to add a well-chosen enum instead of adding boolean switches? Generally enums make better properties than booleans. They are more descript",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39563:review:3843945219:spec:github:Azure/azure-rest-api-specs#39563",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-23T22:52:22Z",
+      "observedAt": "2026-02-23T22:52:22Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39563",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "mentat9"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39563",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39563#pullrequestreview-3843945219"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39563:comment:2843479075:spec:github:Azure/azure-rest-api-specs#39563",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-23T22:52:22Z",
+      "observedAt": "2026-02-23T22:52:22Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39563",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "mentat9"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39563",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39563#discussion_r2843479075"
+      },
+      "confidence": "authoritative",
+      "excerpt": ">enableResilientEphemeralOsDisk?: boolean; [](http://example.com/codeflow?start=2&length=41) Similar feedback here. APIs that allow clients to choose behavior based on well-designed enums are better and more extensible than adding boolean f",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39563:review:3844033486:spec:github:Azure/azure-rest-api-specs#39563",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-23T23:13:37Z",
+      "observedAt": "2026-02-23T23:13:37Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39563",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "iliu816"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39563",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39563#pullrequestreview-3844033486"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39563:comment:2843551016:spec:github:Azure/azure-rest-api-specs#39563",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-23T23:13:37Z",
+      "observedAt": "2026-02-23T23:13:37Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39563",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "iliu816"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39563",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39563#discussion_r2843551016"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@mentat9 Hey, these changes are already rolling out because they were approved in the previous ARM review. We were waiting until that rollout completed to complete the spec PR and start SDK generation.",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39563:comment:3947921501:spec:github:Azure/azure-rest-api-specs#39563",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-23T23:28:44Z",
+      "observedAt": "2026-02-23T23:28:44Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39563",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "mentat9"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39563",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39563#issuecomment-3947921501"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@iliu816 - I see that the no-recent-activity action must have removed the ARMSignedOff label. I'll put it back, since your PR already passed review previously. Couple of points: 1. Why are you waiting to merge your PR? There is no reason yo",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39563:comment:3947942211:spec:github:Azure/azure-rest-api-specs#39563",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-23T23:34:59Z",
+      "observedAt": "2026-02-23T23:34:59Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39563",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "iliu816"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39563",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39563#issuecomment-3947942211"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> @iliu816 - I see that the no-recent-activity action must have removed the ARMSignedOff label. I'll put it back, since your PR already passed review previously. > > Couple of points: > > 1. Why are you waiting to merge your PR? There is no",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39563:commit:33b14a3d23bd:spec:github:Azure/azure-rest-api-specs#39563",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-24T01:05:42Z",
+      "observedAt": "2026-02-24T01:05:42Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39563",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "mikeharder"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39563",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/33b14a3d23bdcbcd42a18674f147c4d35e289e73"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#39563:pr.merged:spec:github:Azure/azure-rest-api-specs#39563",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-24T01:19:58Z",
+      "observedAt": "2026-02-24T01:19:58Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39563",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#39563",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/39563"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado:32869:created",
+      "type": "plan.created",
+      "phase": "plan",
+      "occurredAt": "2026-02-24T17:16:47.95Z",
+      "observedAt": "2026-02-24T17:16:47.95Z",
+      "trackId": "plan",
+      "title": "Release Plan created",
+      "confidence": "authoritative",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32869",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32869"
+      },
+      "stack": 0
+    },
+    {
+      "id": "ado:32869:1:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-02-24T17:16:47.95Z",
+      "observedAt": "2026-02-24T17:16:47.95Z",
+      "trackId": "plan",
+      "value": "New",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32869",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32869"
+      },
+      "title": "Plan state changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:32869:1:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-24T17:16:47.95Z",
+      "observedAt": "2026-02-24T17:16:47.95Z",
+      "trackId": "plan",
+      "value": "Not Available",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32869",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32869"
+      },
+      "title": "Spec approval changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:32869:1:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-24T17:16:47.95Z",
+      "observedAt": "2026-02-24T17:16:47.95Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ServiceFabricManagedClusters",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32869",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32869"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32869:1:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-24T17:16:47.95Z",
+      "observedAt": "2026-02-24T17:16:47.95Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicefabricmanagedclusters",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32869",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32869"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32869:1:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-24T17:16:47.95Z",
+      "observedAt": "2026-02-24T17:16:47.95Z",
+      "trackId": "sdk:Python:azure-mgmt-servicefabricmanagedclusters",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32869",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32869"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32869:1:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-24T17:16:47.95Z",
+      "observedAt": "2026-02-24T17:16:47.95Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicefabricmanagedclusters",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32869",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32869"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32869:1:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-24T17:16:47.95Z",
+      "observedAt": "2026-02-24T17:16:47.95Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicefabricmanagedclusters/armservicefabricmanagedclusters",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32869",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32869"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:32869:3:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-02-24T17:28:27.607Z",
+      "observedAt": "2026-02-24T17:28:27.607Z",
+      "trackId": "plan",
+      "value": "In Progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32869",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32869"
+      },
+      "title": "Plan state changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:32870:2:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-24T17:29:31.17Z",
+      "observedAt": "2026-02-24T17:29:31.17Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#39563",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/39563",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32870",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32870"
+      },
+      "title": "Spec PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado:32869:5:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-24T17:29:35.243Z",
+      "observedAt": "2026-02-24T17:29:35.243Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ServiceFabricManagedClusters",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32869",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32869"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:32869:5:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-24T17:29:35.243Z",
+      "observedAt": "2026-02-24T17:29:35.243Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicefabricmanagedclusters",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32869",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32869"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:32869:5:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-24T17:29:35.243Z",
+      "observedAt": "2026-02-24T17:29:35.243Z",
+      "trackId": "sdk:Python:azure-mgmt-servicefabricmanagedclusters",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32869",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32869"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:32869:5:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-24T17:29:35.243Z",
+      "observedAt": "2026-02-24T17:29:35.243Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicefabricmanagedclusters",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32869",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32869"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:32869:5:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-24T17:29:35.243Z",
+      "observedAt": "2026-02-24T17:29:35.243Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicefabricmanagedclusters/armservicefabricmanagedclusters",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32869",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32869"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:32869:6:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-02-24T17:29:43.43Z",
+      "observedAt": "2026-02-24T17:29:43.43Z",
+      "trackId": "plan",
+      "value": "Approved",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32869",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32869"
+      },
+      "title": "Spec approval changed",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:5919242:generation.queued:sdk:Go:sdk/resourcemanager/servicefabricmanagedclusters/armservicefabricmanagedclusters",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-02-24T17:35:51.5697285Z",
+      "observedAt": "2026-02-24T17:45:42.5240183Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicefabricmanagedclusters/armservicefabricmanagedclusters",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5919242",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5919242"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:5919239:generation.queued:sdk:Python:azure-mgmt-servicefabricmanagedclusters",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-02-24T17:35:51.5703617Z",
+      "observedAt": "2026-02-24T17:49:55.1902912Z",
+      "trackId": "sdk:Python:azure-mgmt-servicefabricmanagedclusters",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5919239",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5919239"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:5919240:generation.queued:sdk:.NET:Azure.ResourceManager.ServiceFabricManagedClusters",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-02-24T17:35:51.5813623Z",
+      "observedAt": "2026-02-24T17:46:23.7473118Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ServiceFabricManagedClusters",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5919240",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5919240"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:5919241:generation.queued:sdk:Java:azure-resourcemanager-servicefabricmanagedclusters",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-02-24T17:35:51.5827937Z",
+      "observedAt": "2026-02-24T17:58:21.4319228Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicefabricmanagedclusters",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5919241",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5919241"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:5919238:generation.queued:sdk:JavaScript:@azure/arm-servicefabricmanagedclusters",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-02-24T17:35:51.6788292Z",
+      "observedAt": "2026-02-24T17:49:21.5770402Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicefabricmanagedclusters",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5919238",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5919238"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:32869:20:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-24T17:35:55.43Z",
+      "observedAt": "2026-02-24T17:35:55.43Z",
+      "trackId": "sdk:Python:azure-mgmt-servicefabricmanagedclusters",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32869",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32869"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:32869:21:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-24T17:35:55.573Z",
+      "observedAt": "2026-02-24T17:35:55.573Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ServiceFabricManagedClusters",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32869",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32869"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:32869:22:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-24T17:35:55.82Z",
+      "observedAt": "2026-02-24T17:35:55.82Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicefabricmanagedclusters/armservicefabricmanagedclusters",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32869",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32869"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:32869:23:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-24T17:35:56.737Z",
+      "observedAt": "2026-02-24T17:35:56.737Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicefabricmanagedclusters",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32869",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32869"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:32869:24:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-24T17:35:57.01Z",
+      "observedAt": "2026-02-24T17:35:57.01Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicefabricmanagedclusters",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32869",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32869"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:5919241:generation.started:sdk:Java:azure-resourcemanager-servicefabricmanagedclusters",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-02-24T17:38:13.5865378Z",
+      "observedAt": "2026-02-24T17:58:21.4319228Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicefabricmanagedclusters",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5919241",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5919241"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:5919240:generation.started:sdk:.NET:Azure.ResourceManager.ServiceFabricManagedClusters",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-02-24T17:39:11.1258919Z",
+      "observedAt": "2026-02-24T17:46:23.7473118Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ServiceFabricManagedClusters",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5919240",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5919240"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:5919242:generation.started:sdk:Go:sdk/resourcemanager/servicefabricmanagedclusters/armservicefabricmanagedclusters",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-02-24T17:39:18.6200237Z",
+      "observedAt": "2026-02-24T17:45:42.5240183Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicefabricmanagedclusters/armservicefabricmanagedclusters",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5919242",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5919242"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:5919239:generation.started:sdk:Python:azure-mgmt-servicefabricmanagedclusters",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-02-24T17:39:42.6298798Z",
+      "observedAt": "2026-02-24T17:49:55.1902912Z",
+      "trackId": "sdk:Python:azure-mgmt-servicefabricmanagedclusters",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5919239",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5919239"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:5919238:generation.started:sdk:JavaScript:@azure/arm-servicefabricmanagedclusters",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-02-24T17:40:08.8024097Z",
+      "observedAt": "2026-02-24T17:49:21.5770402Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicefabricmanagedclusters",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5919238",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5919238"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26047:commit:d0d5b8f244ae:sdk:Go:sdk/resourcemanager/servicefabricmanagedclusters/armservicefabricmanagedclusters",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-24T17:44:27Z",
+      "observedAt": "2026-02-24T17:44:27Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicefabricmanagedclusters/armservicefabricmanagedclusters",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26047",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/d0d5b8f244aeb75195afe1155f73c13d44de6f1c"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26047:pr.created:sdk:Go:sdk/resourcemanager/servicefabricmanagedclusters/armservicefabricmanagedclusters",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-24T17:44:31Z",
+      "observedAt": "2026-02-24T17:44:31Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicefabricmanagedclusters/armservicefabricmanagedclusters",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26047",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26047"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:32869:25:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-24T17:44:36.947Z",
+      "observedAt": "2026-02-24T17:44:36.947Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicefabricmanagedclusters/armservicefabricmanagedclusters",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32869",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32869"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:32869:25:Custom.SDKPullRequestForGo",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-02-24T17:44:36.947Z",
+      "observedAt": "2026-02-24T17:44:36.947Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicefabricmanagedclusters/armservicefabricmanagedclusters",
+      "value": "https://github.com/Azure/azure-sdk-for-go/pull/26047",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32869",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32869"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56433:commit:0def9104e877:sdk:.NET:Azure.ResourceManager.ServiceFabricManagedClusters",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-24T17:45:21Z",
+      "observedAt": "2026-02-24T17:45:21Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ServiceFabricManagedClusters",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56433",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/0def9104e877d0d766b45a5fdcc1986089337d73"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56433:pr.created:sdk:.NET:Azure.ResourceManager.ServiceFabricManagedClusters",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-24T17:45:25Z",
+      "observedAt": "2026-02-24T17:45:25Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ServiceFabricManagedClusters",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56433",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56433"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:32869:26:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-24T17:45:32.21Z",
+      "observedAt": "2026-02-24T17:45:32.21Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ServiceFabricManagedClusters",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32869",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32869"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:32869:26:Custom.SDKPullRequestForDotnet",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-02-24T17:45:32.21Z",
+      "observedAt": "2026-02-24T17:45:32.21Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ServiceFabricManagedClusters",
+      "value": "https://github.com/Azure/azure-sdk-for-net/pull/56433",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32869",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32869"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:5919242:generation.completed:sdk:Go:sdk/resourcemanager/servicefabricmanagedclusters/armservicefabricmanagedclusters",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-02-24T17:45:42.5240183Z",
+      "observedAt": "2026-02-24T17:45:42.5240183Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicefabricmanagedclusters/armservicefabricmanagedclusters",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5919242",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5919242"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:5919240:generation.completed:sdk:.NET:Azure.ResourceManager.ServiceFabricManagedClusters",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-02-24T17:46:23.7473118Z",
+      "observedAt": "2026-02-24T17:46:23.7473118Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ServiceFabricManagedClusters",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5919240",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5919240"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48089:commit:b494101d73ec:sdk:Java:azure-resourcemanager-servicefabricmanagedclusters",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-24T17:47:32Z",
+      "observedAt": "2026-02-24T17:47:32Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicefabricmanagedclusters",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48089",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/b494101d73ec408980314aeaec38b082e3eafc3d"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45333:commit:207cb7a6d7b5:sdk:Python:azure-mgmt-servicefabricmanagedclusters",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-24T17:47:36Z",
+      "observedAt": "2026-02-24T17:47:36Z",
+      "trackId": "sdk:Python:azure-mgmt-servicefabricmanagedclusters",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45333",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/207cb7a6d7b5adf0e8f9126eb3a05021f5afa99a"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48089:pr.created:sdk:Java:azure-resourcemanager-servicefabricmanagedclusters",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-24T17:47:36Z",
+      "observedAt": "2026-02-24T17:47:36Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicefabricmanagedclusters",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48089",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48089"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45333:pr.created:sdk:Python:azure-mgmt-servicefabricmanagedclusters",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-24T17:47:40Z",
+      "observedAt": "2026-02-24T17:47:40Z",
+      "trackId": "sdk:Python:azure-mgmt-servicefabricmanagedclusters",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45333",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45333"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:32869:27:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-24T17:47:44.497Z",
+      "observedAt": "2026-02-24T17:47:44.497Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicefabricmanagedclusters",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32869",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32869"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:32869:27:Custom.SDKPullRequestForJava",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-02-24T17:47:44.497Z",
+      "observedAt": "2026-02-24T17:47:44.497Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicefabricmanagedclusters",
+      "value": "https://github.com/Azure/azure-sdk-for-java/pull/48089",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32869",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32869"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "ado:32869:28:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-24T17:47:47.65Z",
+      "observedAt": "2026-02-24T17:47:47.65Z",
+      "trackId": "sdk:Python:azure-mgmt-servicefabricmanagedclusters",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32869",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32869"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:32869:28:Custom.SDKPullRequestForPython",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-02-24T17:47:47.65Z",
+      "observedAt": "2026-02-24T17:47:47.65Z",
+      "trackId": "sdk:Python:azure-mgmt-servicefabricmanagedclusters",
+      "value": "https://github.com/Azure/azure-sdk-for-python/pull/45333",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32869",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32869"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37356:commit:aa827431396b:sdk:JavaScript:@azure/arm-servicefabricmanagedclusters",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-24T17:48:16Z",
+      "observedAt": "2026-02-24T17:48:16Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicefabricmanagedclusters",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37356",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/aa827431396b1bc62a7e0c4896134f8a0bddb4e5"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37356:pr.created:sdk:JavaScript:@azure/arm-servicefabricmanagedclusters",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-24T17:48:20Z",
+      "observedAt": "2026-02-24T17:48:20Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicefabricmanagedclusters",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37356",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37356"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:32869:29:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-02-24T17:48:27.6Z",
+      "observedAt": "2026-02-24T17:48:27.6Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicefabricmanagedclusters",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32869",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32869"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:32869:29:Custom.SDKPullRequestForJavaScript",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-02-24T17:48:27.6Z",
+      "observedAt": "2026-02-24T17:48:27.6Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicefabricmanagedclusters",
+      "value": "https://github.com/Azure/azure-sdk-for-js/pull/37356",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32869",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32869"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:5919238:generation.completed:sdk:JavaScript:@azure/arm-servicefabricmanagedclusters",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-02-24T17:49:21.5770402Z",
+      "observedAt": "2026-02-24T17:49:21.5770402Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicefabricmanagedclusters",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5919238",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5919238"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:5919239:generation.completed:sdk:Python:azure-mgmt-servicefabricmanagedclusters",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-02-24T17:49:55.1902912Z",
+      "observedAt": "2026-02-24T17:49:55.1902912Z",
+      "trackId": "sdk:Python:azure-mgmt-servicefabricmanagedclusters",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5919239",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5919239"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:5919241:generation.completed:sdk:Java:azure-resourcemanager-servicefabricmanagedclusters",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-02-24T17:58:21.4319228Z",
+      "observedAt": "2026-02-24T17:58:21.4319228Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicefabricmanagedclusters",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5919241",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5919241"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26047:review:3850105993:sdk:Go:sdk/resourcemanager/servicefabricmanagedclusters/armservicefabricmanagedclusters",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-24T19:31:03Z",
+      "observedAt": "2026-02-24T19:31:03Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicefabricmanagedclusters/armservicefabricmanagedclusters",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26047",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26047#pullrequestreview-3850105993"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Updates the `armservicefabricmanagedclusters` management-plane Go SDK to the 2026-02-01 (stable) API version generated from the TypeSpec config, including a major version bump to v1.0.0 and associated surface-area c",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26047:comment:2849149211:sdk:Go:sdk/resourcemanager/servicefabricmanagedclusters/armservicefabricmanagedclusters",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-24T19:31:03Z",
+      "observedAt": "2026-02-24T19:31:03Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicefabricmanagedclusters/armservicefabricmanagedclusters",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26047",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26047#discussion_r2849149211"
+      },
+      "confidence": "authoritative",
+      "excerpt": "testdata/_metadata.json switched from a single \"apiVersion\" field to an \"apiVersions\" map. In this repo, other SDK modules' testdata/_metadata.json files consistently use the \"apiVersion\" string schema (e.g., sdk/resourcemanager/agriculture",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45333:comment:2849159792:sdk:Python:azure-mgmt-servicefabricmanagedclusters",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-24T19:33:21Z",
+      "observedAt": "2026-02-24T19:33:21Z",
+      "trackId": "sdk:Python:azure-mgmt-servicefabricmanagedclusters",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45333",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45333#discussion_r2849159792"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The CHANGELOG is missing several breaking changes related to the removal of fault simulation functionality. The following items were removed but are not documented in the Breaking Changes section: - Deleted model `FaultSimulation` - Deleted",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45333:review:3850116778:sdk:Python:azure-mgmt-servicefabricmanagedclusters",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-24T19:33:22Z",
+      "observedAt": "2026-02-24T19:33:22Z",
+      "trackId": "sdk:Python:azure-mgmt-servicefabricmanagedclusters",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45333",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45333#pullrequestreview-3850116778"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This is an auto-generated pull request that updates the Azure Service Fabric Managed Clusters Management SDK from version 2.1.0b5 (beta, API version 2025-10-01-preview) to version 3.0.0 (stable, API version 2026-02-",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45333:comment:2849159849:sdk:Python:azure-mgmt-servicefabricmanagedclusters",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-24T19:33:22Z",
+      "observedAt": "2026-02-24T19:33:22Z",
+      "trackId": "sdk:Python:azure-mgmt-servicefabricmanagedclusters",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45333",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45333#discussion_r2849159849"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The CHANGELOG is missing the following new features that were added in this release: - Model `ManagedClusterProperties` added property `skip_managed_nsg_assignment` - Model `NodeTypeProperties` added property `enable_resilient_ephemeral_os_",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45333:comment:2849159865:sdk:Python:azure-mgmt-servicefabricmanagedclusters",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-24T19:33:22Z",
+      "observedAt": "2026-02-24T19:33:22Z",
+      "trackId": "sdk:Python:azure-mgmt-servicefabricmanagedclusters",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45333",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45333#discussion_r2849159865"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The CHANGELOG should document the breaking change where monitoring policy timeout fields changed from `datetime.timedelta` type to `str` type. This affects the following model properties: - `ClusterMonitoringPolicy`: `health_check_wait_dura",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37356:review:3850121100:sdk:JavaScript:@azure/arm-servicefabricmanagedclusters",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-24T19:34:21Z",
+      "observedAt": "2026-02-24T19:34:21Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicefabricmanagedclusters",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37356",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37356#pullrequestreview-3850121100"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This PR updates the Azure Service Fabric Managed Clusters SDK from version 1.0.0-beta.6 to 1.0.0, transitioning from API version 2025-10-01-preview to 2026-02-01 (stable). The changes are auto-generated from TypeSpe",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48089:review:3850138986:sdk:Java:azure-resourcemanager-servicefabricmanagedclusters",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-24T19:38:33Z",
+      "observedAt": "2026-02-24T19:38:33Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicefabricmanagedclusters",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48089",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48089#pullrequestreview-3850138986"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This is an auto-generated pull request that updates the Azure Resource Manager Service Fabric Managed Clusters SDK from API version 2025-10-01-preview to 2026-02-01 (stable). The changes are generated from TypeSpec ",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56433:comment:3954375679:sdk:.NET:Azure.ResourceManager.ServiceFabricManagedClusters",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-24T19:51:07Z",
+      "observedAt": "2026-02-24T19:51:07Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ServiceFabricManagedClusters",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "iliu816"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56433",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56433#issuecomment-3954375679"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The NodeTypeFaultSimulation namespace is intended to be missing. It was added a part of a preview API/SDK and is not intended to be included in this GA release.",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56433:review:3850205307:sdk:.NET:Azure.ResourceManager.ServiceFabricManagedClusters",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-24T19:53:59Z",
+      "observedAt": "2026-02-24T19:53:59Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ServiceFabricManagedClusters",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56433",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56433#pullrequestreview-3850205307"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This is an automated pull request that updates the Azure.ResourceManager.ServiceFabricManagedClusters SDK from a preview version (2025-10-01-preview) to a stable release (2026-02-01). The changes include API version",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48089:commit:8617c7070634:sdk:Java:azure-resourcemanager-servicefabricmanagedclusters",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-25T03:07:43Z",
+      "observedAt": "2026-02-25T03:07:43Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicefabricmanagedclusters",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48089",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/8617c70706343956a1f1c2ceda83d0ac3f91157c"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48089:comment:2850572509:sdk:Java:azure-resourcemanager-servicefabricmanagedclusters",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-25T03:08:34Z",
+      "observedAt": "2026-02-25T03:08:34Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicefabricmanagedclusters",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48089",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48089#discussion_r2850572509"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This is due to change to `withExistingManagedCluster` (the `C`) Appears acceptable.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48089:review:3851574038:sdk:Java:azure-resourcemanager-servicefabricmanagedclusters",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-25T03:08:43Z",
+      "observedAt": "2026-02-25T03:08:43Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicefabricmanagedclusters",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48089",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48089#pullrequestreview-3851574038"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@XiaofeiCao for review",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48089:review:3851632506:sdk:Java:azure-resourcemanager-servicefabricmanagedclusters",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-25T03:35:53Z",
+      "observedAt": "2026-02-25T03:35:53Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicefabricmanagedclusters",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "XiaofeiCao"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48089",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48089#pullrequestreview-3851632506"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48089:commit:b246b9826bd6:sdk:Java:azure-resourcemanager-servicefabricmanagedclusters",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-26T02:27:01Z",
+      "observedAt": "2026-02-26T02:27:01Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicefabricmanagedclusters",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48089",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/b246b9826bd67a12f878c60f05018dae50405d06"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48089:commit:f6d77cc7a72f:sdk:Java:azure-resourcemanager-servicefabricmanagedclusters",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-26T02:40:16Z",
+      "observedAt": "2026-02-26T02:40:16Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicefabricmanagedclusters",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48089",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/f6d77cc7a72f06474a4f55a4d28c4e8f417cb323"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48089:review:3858097324:sdk:Java:azure-resourcemanager-servicefabricmanagedclusters",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-26T02:42:59Z",
+      "observedAt": "2026-02-26T02:42:59Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicefabricmanagedclusters",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48089",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48089#pullrequestreview-3858097324"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37356:comment:3963783043:sdk:JavaScript:@azure/arm-servicefabricmanagedclusters",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-26T03:45:01Z",
+      "observedAt": "2026-02-26T03:45:01Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicefabricmanagedclusters",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37356",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37356#issuecomment-3963783043"
+      },
+      "confidence": "authoritative",
+      "excerpt": "ci failure is because you need to run the test and push the test recordings see this [guide](https://github.com/Azure/azure-sdk-for-js/blob/main/documentation/Quickstart-on-how-to-write-tests.md#run-tests-in-record-mode) but testing is not ",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26047:review:3858236601:sdk:Go:sdk/resourcemanager/servicefabricmanagedclusters/armservicefabricmanagedclusters",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-26T03:48:05Z",
+      "observedAt": "2026-02-26T03:48:05Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicefabricmanagedclusters/armservicefabricmanagedclusters",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "JiaqiZhang-Dev"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26047",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26047#pullrequestreview-3858236601"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48089:comment:3968292919:sdk:Java:azure-resourcemanager-servicefabricmanagedclusters",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-26T18:05:04Z",
+      "observedAt": "2026-02-26T18:05:04Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicefabricmanagedclusters",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "iliu816"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48089",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48089#issuecomment-3968292919"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@weidongxu-microsoft It seems the revapi-report is still failing with the methods removed so the check enforcer is pending. Is there any action I need to take from my side to resolve this?",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26047:pr.merged:sdk:Go:sdk/resourcemanager/servicefabricmanagedclusters/armservicefabricmanagedclusters",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-26T18:06:16Z",
+      "observedAt": "2026-02-26T18:06:16Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicefabricmanagedclusters/armservicefabricmanagedclusters",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26047",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26047"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37356:commit:54df01eb3e8b:sdk:JavaScript:@azure/arm-servicefabricmanagedclusters",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-26T19:40:47Z",
+      "observedAt": "2026-02-26T19:40:47Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicefabricmanagedclusters",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "iliu816"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37356",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/54df01eb3e8b8ed07015d69a2a9d023bdea037e6"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48089:commit:d5f766eba49e:sdk:Java:azure-resourcemanager-servicefabricmanagedclusters",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-27T02:00:56Z",
+      "observedAt": "2026-02-27T02:00:56Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicefabricmanagedclusters",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48089",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/d5f766eba49e2ce5930ee3992a0161adbc6e42b1"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48089:comment:3970285727:sdk:Java:azure-resourcemanager-servicefabricmanagedclusters",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-27T02:01:38Z",
+      "observedAt": "2026-02-27T02:01:38Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicefabricmanagedclusters",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48089",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48089#issuecomment-3970285727"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@iliu816 Should be good now. Let me know when you plan to merge, so I can ask another dev to approve the PR.",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37356:comment:3970286786:sdk:JavaScript:@azure/arm-servicefabricmanagedclusters",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-27T02:02:01Z",
+      "observedAt": "2026-02-27T02:02:01Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicefabricmanagedclusters",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37356",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37356#issuecomment-3970286786"
+      },
+      "confidence": "authoritative",
+      "excerpt": "LGTM cc @qiaozha",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48089:comment:3970305060:sdk:Java:azure-resourcemanager-servicefabricmanagedclusters",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-27T02:08:37Z",
+      "observedAt": "2026-02-27T02:08:37Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicefabricmanagedclusters",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "iliu816"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48089",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48089#issuecomment-3970305060"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> @iliu816 > > > > Should be good now. Let me know when you plan to merge, so I can ask another dev to approve the PR. I'm fine with merging when the checks pass since the changelog looked fine. I enabled auto merge.",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48089:comment:3970343776:sdk:Java:azure-resourcemanager-servicefabricmanagedclusters",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-27T02:21:10Z",
+      "observedAt": "2026-02-27T02:21:10Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicefabricmanagedclusters",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48089",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48089#issuecomment-3970343776"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@XiaofeiCao for review",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37356:review:3864613238:sdk:JavaScript:@azure/arm-servicefabricmanagedclusters",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-27T03:12:01Z",
+      "observedAt": "2026-02-27T03:12:01Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicefabricmanagedclusters",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "qiaozha"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37356",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37356#pullrequestreview-3864613238"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37356:pr.merged:sdk:JavaScript:@azure/arm-servicefabricmanagedclusters",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-27T03:12:04Z",
+      "observedAt": "2026-02-27T03:12:04Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicefabricmanagedclusters",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37356",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37356"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48089:review:3864690108:sdk:Java:azure-resourcemanager-servicefabricmanagedclusters",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-27T03:41:38Z",
+      "observedAt": "2026-02-27T03:41:38Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicefabricmanagedclusters",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "XiaofeiCao"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48089",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48089#pullrequestreview-3864690108"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48089:pr.merged:sdk:Java:azure-resourcemanager-servicefabricmanagedclusters",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-27T03:41:41Z",
+      "observedAt": "2026-02-27T03:41:41Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicefabricmanagedclusters",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48089",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48089"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45333:comment:3971050010:sdk:Python:azure-mgmt-servicefabricmanagedclusters",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-27T06:22:41Z",
+      "observedAt": "2026-02-27T06:22:41Z",
+      "trackId": "sdk:Python:azure-mgmt-servicefabricmanagedclusters",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45333",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45333#issuecomment-3971050010"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @iliu816, the new api version `2026-02-01` seems not deployed on portal yet, we recommend making sure the api version to be deployed before releasing the SDK, though we won't block the release in self-serve release flow. You can continue",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45333:commit:a5ba777b8c7b:sdk:Python:azure-mgmt-servicefabricmanagedclusters",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-27T06:31:14Z",
+      "observedAt": "2026-02-27T06:31:14Z",
+      "trackId": "sdk:Python:azure-mgmt-servicefabricmanagedclusters",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45333",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/a5ba777b8c7b02d8b309ed97d48a1571b2f2b2ca"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45333:commit:7d357cab1a79:sdk:Python:azure-mgmt-servicefabricmanagedclusters",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-27T09:12:24Z",
+      "observedAt": "2026-02-27T09:12:24Z",
+      "trackId": "sdk:Python:azure-mgmt-servicefabricmanagedclusters",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45333",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/7d357cab1a79369abb98798690525770ddd68019"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45333:review:3868344553:sdk:Python:azure-mgmt-servicefabricmanagedclusters",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-27T18:14:03Z",
+      "observedAt": "2026-02-27T18:14:03Z",
+      "trackId": "sdk:Python:azure-mgmt-servicefabricmanagedclusters",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "iliu816"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45333",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45333#pullrequestreview-3868344553"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45333:comment:2865578612:sdk:Python:azure-mgmt-servicefabricmanagedclusters",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-27T18:14:03Z",
+      "observedAt": "2026-02-27T18:14:03Z",
+      "trackId": "sdk:Python:azure-mgmt-servicefabricmanagedclusters",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "iliu816"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45333",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45333#discussion_r2865578612"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@copilot open a new pull request to apply changes based on [this feedback](https://github.com/Azure/azure-sdk-for-python/pull/45333#discussion_r2849159849)",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45333:review:3868347917:sdk:Python:azure-mgmt-servicefabricmanagedclusters",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-27T18:14:56Z",
+      "observedAt": "2026-02-27T18:14:56Z",
+      "trackId": "sdk:Python:azure-mgmt-servicefabricmanagedclusters",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "iliu816"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45333",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45333#pullrequestreview-3868347917"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45333:comment:2865581726:sdk:Python:azure-mgmt-servicefabricmanagedclusters",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-27T18:14:56Z",
+      "observedAt": "2026-02-27T18:14:56Z",
+      "trackId": "sdk:Python:azure-mgmt-servicefabricmanagedclusters",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "iliu816"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45333",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45333#discussion_r2865581726"
+      },
+      "confidence": "authoritative",
+      "excerpt": "I think this is fine since the changes listed for this release seem to be between GA/stable. Fault simulation was only available in the beta/preview",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45333:commit:5691537b4f05:sdk:Python:azure-mgmt-servicefabricmanagedclusters",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-28T02:43:56Z",
+      "observedAt": "2026-02-28T02:43:56Z",
+      "trackId": "sdk:Python:azure-mgmt-servicefabricmanagedclusters",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45333",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/5691537b4f05f94d2d569b1878bf9c6acfd650a6"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45333:commit:41709cc454b5:sdk:Python:azure-mgmt-servicefabricmanagedclusters",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-28T03:14:10Z",
+      "observedAt": "2026-02-28T03:14:10Z",
+      "trackId": "sdk:Python:azure-mgmt-servicefabricmanagedclusters",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45333",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/41709cc454b5b754e515973cf5893cb1f0fca290"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45333:review:3874460147:sdk:Python:azure-mgmt-servicefabricmanagedclusters",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-02T07:15:42Z",
+      "observedAt": "2026-03-02T07:15:42Z",
+      "trackId": "sdk:Python:azure-mgmt-servicefabricmanagedclusters",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45333",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45333#pullrequestreview-3874460147"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45333:review:3874462048:sdk:Python:azure-mgmt-servicefabricmanagedclusters",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-02T07:16:18Z",
+      "observedAt": "2026-03-02T07:16:18Z",
+      "trackId": "sdk:Python:azure-mgmt-servicefabricmanagedclusters",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45333",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45333#pullrequestreview-3874462048"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45333:comment:3982578197:sdk:Python:azure-mgmt-servicefabricmanagedclusters",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-02T07:16:46Z",
+      "observedAt": "2026-03-02T07:16:46Z",
+      "trackId": "sdk:Python:azure-mgmt-servicefabricmanagedclusters",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45333",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45333#issuecomment-3982578197"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@iliu816, pr ready, feel free to merge and release",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45333:pr.merged:sdk:Python:azure-mgmt-servicefabricmanagedclusters",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-02T17:44:19Z",
+      "observedAt": "2026-03-02T17:44:19Z",
+      "trackId": "sdk:Python:azure-mgmt-servicefabricmanagedclusters",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45333",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45333"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56433:commit:ce37310ca6cb:sdk:.NET:Azure.ResourceManager.ServiceFabricManagedClusters",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-02T17:55:13Z",
+      "observedAt": "2026-03-02T17:55:13Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ServiceFabricManagedClusters",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "iliu816"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56433",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/ce37310ca6cb0e9214c3e29d6c601963e5575321"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56433:comment:3987990275:sdk:.NET:Azure.ResourceManager.ServiceFabricManagedClusters",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-03T01:18:00Z",
+      "observedAt": "2026-03-03T01:18:00Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ServiceFabricManagedClusters",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "live1206"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56433",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56433#issuecomment-3987990275"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## 🔍 CI Failure Analysis for PR #56433 ### Summary | Check | Status | Details | |-------|--------|---------| | `net - pullrequest` | ❌ Failed | [Build #5947616](https://dev.azure.com/azure-sdk/29ec6040-b234-4e31-b139-33dc4287b756/_build/re",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56433:commit:703573517c83:sdk:.NET:Azure.ResourceManager.ServiceFabricManagedClusters",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-03T02:10:26Z",
+      "observedAt": "2026-03-03T02:10:26Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ServiceFabricManagedClusters",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "iliu816"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56433",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/703573517c834f850b339da37d4a2933d71745a9"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56433:commit:c7c806e7c2af:sdk:.NET:Azure.ResourceManager.ServiceFabricManagedClusters",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-03T02:45:23Z",
+      "observedAt": "2026-03-03T02:45:23Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ServiceFabricManagedClusters",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "iliu816"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56433",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/c7c806e7c2af26302eee617be4db93304f6c8b59"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56433:commit:d0b08d4b7c82:sdk:.NET:Azure.ResourceManager.ServiceFabricManagedClusters",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-03T03:38:52Z",
+      "observedAt": "2026-03-03T03:38:52Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ServiceFabricManagedClusters",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "iliu816"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56433",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/d0b08d4b7c82ec5bf82ffed2903cb6eab48e921a"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56433:commit:8156a15965ea:sdk:.NET:Azure.ResourceManager.ServiceFabricManagedClusters",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-05T17:31:39Z",
+      "observedAt": "2026-03-05T17:31:39Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ServiceFabricManagedClusters",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "iliu816"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56433",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/8156a15965ea2d09cb1702477ac3644f665055cd"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56433:commit:e2ad3e217ede:sdk:.NET:Azure.ResourceManager.ServiceFabricManagedClusters",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-09T18:07:37Z",
+      "observedAt": "2026-03-09T18:07:37Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ServiceFabricManagedClusters",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "iliu816"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56433",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/e2ad3e217ede4450c430a8f5694dd1fa24233608"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56433:commit:1606296e446e:sdk:.NET:Azure.ResourceManager.ServiceFabricManagedClusters",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-09T18:13:32Z",
+      "observedAt": "2026-03-09T18:13:32Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ServiceFabricManagedClusters",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "iliu816"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56433",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/1606296e446e86facc230df06a545f5d18f950dc"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56433:commit:0c7875daaa64:sdk:.NET:Azure.ResourceManager.ServiceFabricManagedClusters",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-09T18:30:20Z",
+      "observedAt": "2026-03-09T18:30:20Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ServiceFabricManagedClusters",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "iliu816"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56433",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/0c7875daaa644f60b54e02c777b6ee03735c2de2"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56433:comment:4026447062:sdk:.NET:Azure.ResourceManager.ServiceFabricManagedClusters",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-09T19:56:20Z",
+      "observedAt": "2026-03-09T19:56:20Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ServiceFabricManagedClusters",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "iliu816"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56433",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56433#issuecomment-4026447062"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@ArcturusZhang @ArthurMa1978 Hi, may I get a review for this PR please?",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56433:review:3933162582:sdk:.NET:Azure.ResourceManager.ServiceFabricManagedClusters",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-11T23:56:45Z",
+      "observedAt": "2026-03-11T23:56:45Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ServiceFabricManagedClusters",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56433",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56433#pullrequestreview-3933162582"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56433:comment:2921567600:sdk:.NET:Azure.ResourceManager.ServiceFabricManagedClusters",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-11T23:56:45Z",
+      "observedAt": "2026-03-11T23:56:45Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ServiceFabricManagedClusters",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56433",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56433#discussion_r2921567600"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Please replace Unreleased with the actual release date.",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56433:commit:4418c3e863e0:sdk:.NET:Azure.ResourceManager.ServiceFabricManagedClusters",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-12T00:56:23Z",
+      "observedAt": "2026-03-12T00:56:23Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ServiceFabricManagedClusters",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "iliu816"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56433",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/4418c3e863e02a4362aa736acab379a33a29edbc"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56433:review:3934078336:sdk:.NET:Azure.ResourceManager.ServiceFabricManagedClusters",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-12T05:37:47Z",
+      "observedAt": "2026-03-12T05:37:47Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ServiceFabricManagedClusters",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArthurMa1978"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56433",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56433#pullrequestreview-3934078336"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#56433:pr.merged:sdk:.NET:Azure.ResourceManager.ServiceFabricManagedClusters",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-12T05:37:55Z",
+      "observedAt": "2026-03-12T05:37:55Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ServiceFabricManagedClusters",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#56433",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/56433"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github-release:32869:.NET:Azure.ResourceManager.ServiceFabricManagedClusters_1.3.0",
+      "type": "package.github_release_published",
+      "phase": "release",
+      "occurredAt": "2026-03-12T08:25:03Z",
+      "observedAt": "2026-03-12T08:25:03Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ServiceFabricManagedClusters",
+      "title": "GitHub Release published",
+      "value": "Azure.ResourceManager.ServiceFabricManagedClusters_1.3.0",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "azure-sdk-for-net release Azure.ResourceManager.ServiceFabricManagedClusters_1.3.0",
+        "url": "https://github.com/Azure/azure-sdk-for-net/releases/tag/Azure.ResourceManager.ServiceFabricManagedClusters_1.3.0"
+      },
+      "confidence": "inferred",
+      "stack": 5
+    },
+    {
+      "id": "ado:32869:47:Custom.ReleaseStatusForDotnet",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-03-12T08:34:33.747Z",
+      "observedAt": "2026-03-12T08:34:33.747Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ServiceFabricManagedClusters",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32869",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32869"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "github-release:32869:Go:sdk/resourcemanager/servicefabricmanagedclusters/armservicefabricmanagedclusters/v1.0.0",
+      "type": "package.github_release_published",
+      "phase": "release",
+      "occurredAt": "2026-03-12T21:13:18Z",
+      "observedAt": "2026-03-12T21:13:18Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicefabricmanagedclusters/armservicefabricmanagedclusters",
+      "title": "GitHub Release published",
+      "value": "sdk/resourcemanager/servicefabricmanagedclusters/armservicefabricmanagedclusters/v1.0.0",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "azure-sdk-for-go release sdk/resourcemanager/servicefabricmanagedclusters/armservicefabricmanagedclusters/v1.0.0",
+        "url": "https://github.com/Azure/azure-sdk-for-go/releases/tag/sdk/resourcemanager/servicefabricmanagedclusters/armservicefabricmanagedclusters/v1.0.0"
+      },
+      "confidence": "inferred",
+      "stack": 0
+    },
+    {
+      "id": "ado:32869:48:Custom.ReleaseStatusForGo",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-03-12T21:14:12.137Z",
+      "observedAt": "2026-03-12T21:14:12.137Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicefabricmanagedclusters/armservicefabricmanagedclusters",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32869",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32869"
+      },
+      "title": "Release status changed",
+      "stack": 1
+    },
+    {
+      "id": "github-release:32869:JavaScript:@azure/arm-servicefabricmanagedclusters_1.0.0",
+      "type": "package.github_release_published",
+      "phase": "release",
+      "occurredAt": "2026-03-12T21:56:15Z",
+      "observedAt": "2026-03-12T21:56:15Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicefabricmanagedclusters",
+      "title": "GitHub Release published",
+      "value": "@azure/arm-servicefabricmanagedclusters_1.0.0",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "azure-sdk-for-js release @azure/arm-servicefabricmanagedclusters_1.0.0",
+        "url": "https://github.com/Azure/azure-sdk-for-js/releases/tag/%40azure/arm-servicefabricmanagedclusters_1.0.0"
+      },
+      "confidence": "inferred",
+      "stack": 0
+    },
+    {
+      "id": "github-release:32869:Python:azure-mgmt-servicefabricmanagedclusters_3.0.0",
+      "type": "package.github_release_published",
+      "phase": "release",
+      "occurredAt": "2026-03-12T21:58:03Z",
+      "observedAt": "2026-03-12T21:58:03Z",
+      "trackId": "sdk:Python:azure-mgmt-servicefabricmanagedclusters",
+      "title": "GitHub Release published",
+      "value": "azure-mgmt-servicefabricmanagedclusters_3.0.0",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "azure-sdk-for-python release azure-mgmt-servicefabricmanagedclusters_3.0.0",
+        "url": "https://github.com/Azure/azure-sdk-for-python/releases/tag/azure-mgmt-servicefabricmanagedclusters_3.0.0"
+      },
+      "confidence": "inferred",
+      "stack": 0
+    },
+    {
+      "id": "github-release:32869:Java:com.azure.resourcemanager+azure-resourcemanager-servicefabricmanagedclusters_1.1.0",
+      "type": "package.github_release_published",
+      "phase": "release",
+      "occurredAt": "2026-03-12T21:58:52Z",
+      "observedAt": "2026-03-12T21:58:52Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicefabricmanagedclusters",
+      "title": "GitHub Release published",
+      "value": "com.azure.resourcemanager+azure-resourcemanager-servicefabricmanagedclusters_1.1.0",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "azure-sdk-for-java release com.azure.resourcemanager+azure-resourcemanager-servicefabricmanagedclusters_1.1.0",
+        "url": "https://github.com/Azure/azure-sdk-for-java/releases/tag/com.azure.resourcemanager%2Bazure-resourcemanager-servicefabricmanagedclusters_1.1.0"
+      },
+      "confidence": "inferred",
+      "stack": 0
+    },
+    {
+      "id": "ado:32869:49:Custom.ReleaseStatusForPython",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-03-12T22:11:32.1Z",
+      "observedAt": "2026-03-12T22:11:32.1Z",
+      "trackId": "sdk:Python:azure-mgmt-servicefabricmanagedclusters",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32869",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32869"
+      },
+      "title": "Release status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:32869:50:Custom.ReleaseStatusForJavaScript",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-03-12T22:13:07.63Z",
+      "observedAt": "2026-03-12T22:13:07.63Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicefabricmanagedclusters",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32869",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32869"
+      },
+      "title": "Release status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:32869:51:Custom.ReleaseStatusForJava",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-03-12T22:17:37.347Z",
+      "observedAt": "2026-03-12T22:17:37.347Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicefabricmanagedclusters",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32869",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32869"
+      },
+      "title": "Release status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:32869:52:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-03-12T22:18:38.31Z",
+      "observedAt": "2026-03-12T22:18:38.31Z",
+      "trackId": "plan",
+      "value": "Finished",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:32869",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/32869"
+      },
+      "title": "Plan state changed",
+      "stack": 0
+    }
+  ],
+  "quality": {
+    "warnings": [],
+    "unavailablePullRequests": 0,
+    "unavailablePipelineRuns": 0
+  },
+  "boundaryFacts": {
+    "id": "32869",
+    "state": "finished",
+    "specPrs": [
+      {
+        "id": "github:Azure/azure-rest-api-specs#39563",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#39563",
+        "createdAt": "2026-01-09T22:50:03Z",
+        "mergedAt": "2026-02-24T01:19:58Z",
+        "closedAt": "2026-02-24T01:19:58Z",
+        "available": true
+      }
+    ],
+    "artifacts": [
+      {
+        "language": ".NET",
+        "package": "Azure.ResourceManager.ServiceFabricManagedClusters",
+        "trackId": "sdk:.NET:Azure.ResourceManager.ServiceFabricManagedClusters",
+        "prId": "github:Azure/azure-sdk-for-net#56433",
+        "prCreatedAt": "2026-02-24T17:45:25Z",
+        "prMergedAt": "2026-03-12T05:37:55Z",
+        "prClosedAt": "2026-03-12T05:37:55Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-net#56433",
+            "createdAt": "2026-02-24T17:45:25Z",
+            "mergedAt": "2026-03-12T05:37:55Z",
+            "closedAt": "2026-03-12T05:37:55Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:5919240",
+        "generationStartAt": "2026-02-24T17:39:11.1258919Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-03-12T08:34:33.747Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": null,
+        "releaseBoundaryAt": "2026-03-12T08:25:03Z",
+        "releaseBoundarySource": "github-release",
+        "releaseBoundaryConfidence": "inferred",
+        "releaseBoundaryUrl": "https://github.com/Azure/azure-sdk-for-net/releases/tag/Azure.ResourceManager.ServiceFabricManagedClusters_1.3.0",
+        "releaseTag": "Azure.ResourceManager.ServiceFabricManagedClusters_1.3.0",
+        "releaseMatchMethod": "unique-nearby-release",
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "github-release"
+        }
+      },
+      {
+        "language": "JavaScript",
+        "package": "@azure/arm-servicefabricmanagedclusters",
+        "trackId": "sdk:JavaScript:@azure/arm-servicefabricmanagedclusters",
+        "prId": "github:Azure/azure-sdk-for-js#37356",
+        "prCreatedAt": "2026-02-24T17:48:20Z",
+        "prMergedAt": "2026-02-27T03:12:04Z",
+        "prClosedAt": "2026-02-27T03:12:04Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-js#37356",
+            "createdAt": "2026-02-24T17:48:20Z",
+            "mergedAt": "2026-02-27T03:12:04Z",
+            "closedAt": "2026-02-27T03:12:04Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:5919238",
+        "generationStartAt": "2026-02-24T17:40:08.8024097Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-03-12T22:13:07.63Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": null,
+        "releaseBoundaryAt": "2026-03-12T21:56:15Z",
+        "releaseBoundarySource": "github-release",
+        "releaseBoundaryConfidence": "inferred",
+        "releaseBoundaryUrl": "https://github.com/Azure/azure-sdk-for-js/releases/tag/%40azure/arm-servicefabricmanagedclusters_1.0.0",
+        "releaseTag": "@azure/arm-servicefabricmanagedclusters_1.0.0",
+        "releaseMatchMethod": "unique-nearby-release",
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "github-release"
+        }
+      },
+      {
+        "language": "Python",
+        "package": "azure-mgmt-servicefabricmanagedclusters",
+        "trackId": "sdk:Python:azure-mgmt-servicefabricmanagedclusters",
+        "prId": "github:Azure/azure-sdk-for-python#45333",
+        "prCreatedAt": "2026-02-24T17:47:40Z",
+        "prMergedAt": "2026-03-02T17:44:19Z",
+        "prClosedAt": "2026-03-02T17:44:19Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-python#45333",
+            "createdAt": "2026-02-24T17:47:40Z",
+            "mergedAt": "2026-03-02T17:44:19Z",
+            "closedAt": "2026-03-02T17:44:19Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:5919239",
+        "generationStartAt": "2026-02-24T17:39:42.6298798Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-03-12T22:11:32.1Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": null,
+        "releaseBoundaryAt": "2026-03-12T21:58:03Z",
+        "releaseBoundarySource": "github-release",
+        "releaseBoundaryConfidence": "inferred",
+        "releaseBoundaryUrl": "https://github.com/Azure/azure-sdk-for-python/releases/tag/azure-mgmt-servicefabricmanagedclusters_3.0.0",
+        "releaseTag": "azure-mgmt-servicefabricmanagedclusters_3.0.0",
+        "releaseMatchMethod": "unique-nearby-release",
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "github-release"
+        }
+      },
+      {
+        "language": "Java",
+        "package": "azure-resourcemanager-servicefabricmanagedclusters",
+        "trackId": "sdk:Java:azure-resourcemanager-servicefabricmanagedclusters",
+        "prId": "github:Azure/azure-sdk-for-java#48089",
+        "prCreatedAt": "2026-02-24T17:47:36Z",
+        "prMergedAt": "2026-02-27T03:41:41Z",
+        "prClosedAt": "2026-02-27T03:41:41Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-java#48089",
+            "createdAt": "2026-02-24T17:47:36Z",
+            "mergedAt": "2026-02-27T03:41:41Z",
+            "closedAt": "2026-02-27T03:41:41Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:5919241",
+        "generationStartAt": "2026-02-24T17:38:13.5865378Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-03-12T22:17:37.347Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": null,
+        "releaseBoundaryAt": "2026-03-12T21:58:52Z",
+        "releaseBoundarySource": "github-release",
+        "releaseBoundaryConfidence": "inferred",
+        "releaseBoundaryUrl": "https://github.com/Azure/azure-sdk-for-java/releases/tag/com.azure.resourcemanager%2Bazure-resourcemanager-servicefabricmanagedclusters_1.1.0",
+        "releaseTag": "com.azure.resourcemanager+azure-resourcemanager-servicefabricmanagedclusters_1.1.0",
+        "releaseMatchMethod": "release-index-version",
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "github-release"
+        }
+      },
+      {
+        "language": "Go",
+        "package": "sdk/resourcemanager/servicefabricmanagedclusters/armservicefabricmanagedclusters",
+        "trackId": "sdk:Go:sdk/resourcemanager/servicefabricmanagedclusters/armservicefabricmanagedclusters",
+        "prId": "github:Azure/azure-sdk-for-go#26047",
+        "prCreatedAt": "2026-02-24T17:44:31Z",
+        "prMergedAt": "2026-02-26T18:06:16Z",
+        "prClosedAt": "2026-02-26T18:06:16Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-go#26047",
+            "createdAt": "2026-02-24T17:44:31Z",
+            "mergedAt": "2026-02-26T18:06:16Z",
+            "closedAt": "2026-02-26T18:06:16Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:5919242",
+        "generationStartAt": "2026-02-24T17:39:18.6200237Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-03-12T21:14:12.137Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": null,
+        "releaseBoundaryAt": "2026-03-12T21:13:18Z",
+        "releaseBoundarySource": "github-release",
+        "releaseBoundaryConfidence": "inferred",
+        "releaseBoundaryUrl": "https://github.com/Azure/azure-sdk-for-go/releases/tag/sdk/resourcemanager/servicefabricmanagedclusters/armservicefabricmanagedclusters/v1.0.0",
+        "releaseTag": "sdk/resourcemanager/servicefabricmanagedclusters/armservicefabricmanagedclusters/v1.0.0",
+        "releaseMatchMethod": "unique-nearby-release",
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "github-release"
+        }
+      }
+    ],
+    "cohortPlan": {
+      "id": "32869",
+      "releasePlanId": "2103",
+      "title": "Release Plan - 2103 - GA - Service Fabric",
+      "service": "Service Fabric",
+      "state": "finished"
+    },
+    "quality": {
+      "warnings": [],
+      "unavailablePullRequests": 0,
+      "unavailablePipelineRuns": 0
+    }
+  },
+  "summary": {
+    "durationHours": 389,
+    "pullRequestCount": 6,
+    "humanReviewCount": 19,
+    "humanCommentCount": 23
+  }
+}

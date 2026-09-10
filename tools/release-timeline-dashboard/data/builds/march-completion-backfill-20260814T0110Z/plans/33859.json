@@ -1,0 +1,2576 @@
+{
+  "schemaVersion": 2,
+  "id": "33859",
+  "correlation": {
+    "policyVersion": 1,
+    "preflight": "passed"
+  },
+  "releasePlanId": "1561",
+  "title": "Release Plan - 1561 - Public Preview - Release Planner Test Product",
+  "service": "Contoso.Management",
+  "product": "Release",
+  "path": "specification/contosowidgetmanager/Contoso.Management",
+  "state": "in-progress",
+  "plane": "management",
+  "releaseType": "APEX Public Preview",
+  "intendedMonth": "May 2026",
+  "createdAt": "2026-04-13T16:34:38.1Z",
+  "completedAt": null,
+  "sourceUrl": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33859",
+  "range": {
+    "start": "2025-07-01T03:46:44.000Z",
+    "end": "2026-08-14T00:37:23.589Z"
+  },
+  "intendedArtifacts": [
+    {
+      "prId": "github:Azure/azure-sdk-for-net#58122",
+      "language": ".NET",
+      "package": "Azure.ResourceManager.Contoso",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6193531",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": null,
+      "language": "JavaScript",
+      "package": "@azure/arm-contoso",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6193532",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-python#46285",
+      "language": "Python",
+      "package": "azure-mgmt-contoso",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6193530",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-java#48796",
+      "language": "Java",
+      "package": "com.azure.resourcemanager:azure-resourcemanager-contoso",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6193534",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-go#26648",
+      "language": "Go",
+      "package": "sdk/resourcemanager/contoso/armcontoso",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6193535",
+      "releasePipelineUrl": null
+    }
+  ],
+  "links": [
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#35573",
+      "role": "spec-pr",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/35573",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-net#58122",
+      "role": "sdk-pr",
+      "language": ".NET",
+      "url": "https://github.com/Azure/azure-sdk-for-net/pull/58122",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-python#46285",
+      "role": "sdk-pr",
+      "language": "Python",
+      "url": "https://github.com/Azure/azure-sdk-for-python/pull/46285",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-java#48796",
+      "role": "sdk-pr",
+      "language": "Java",
+      "url": "https://github.com/Azure/azure-sdk-for-java/pull/48796",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-go#26576",
+      "role": "sdk-pr-history",
+      "language": "Go",
+      "url": "https://github.com/Azure/azure-sdk-for-go/pull/26576",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-go#26648",
+      "role": "sdk-pr",
+      "language": "Go",
+      "url": "https://github.com/Azure/azure-sdk-for-go/pull/26648",
+      "releasePlanIds": []
+    }
+  ],
+  "tracks": [
+    {
+      "id": "plan",
+      "kind": "plan",
+      "label": "Release Plan",
+      "detail": "APEX Public Preview"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#35573",
+      "kind": "spec",
+      "label": "Spec PR",
+      "detail": "azure-rest-api-specs #35573",
+      "artifactId": "github:Azure/azure-rest-api-specs#35573",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:.NET:Azure.ResourceManager.Contoso",
+      "kind": "sdk",
+      "label": ".NET",
+      "detail": "Azure.ResourceManager.Contoso",
+      "artifactId": "github:Azure/azure-sdk-for-net#58122",
+      "state": "closed"
+    },
+    {
+      "id": "sdk:JavaScript:@azure/arm-contoso",
+      "kind": "sdk",
+      "label": "JavaScript",
+      "detail": "@azure/arm-contoso",
+      "artifactId": null,
+      "state": "missing"
+    },
+    {
+      "id": "sdk:Python:azure-mgmt-contoso",
+      "kind": "sdk",
+      "label": "Python",
+      "detail": "azure-mgmt-contoso",
+      "artifactId": "github:Azure/azure-sdk-for-python#46285",
+      "state": "closed"
+    },
+    {
+      "id": "sdk:Java:com.azure.resourcemanager:azure-resourcemanager-contoso",
+      "kind": "sdk",
+      "label": "Java",
+      "detail": "com.azure.resourcemanager:azure-resourcemanager-contoso",
+      "artifactId": "github:Azure/azure-sdk-for-java#48796",
+      "state": "closed"
+    },
+    {
+      "id": "sdk:Go:sdk/resourcemanager/contoso/armcontoso",
+      "kind": "sdk",
+      "label": "Go",
+      "detail": "sdk/resourcemanager/contoso/armcontoso",
+      "artifactId": "github:Azure/azure-sdk-for-go#26648",
+      "state": "closed"
+    }
+  ],
+  "events": [
+    {
+      "id": "github:Azure/azure-rest-api-specs#35573:pr.created:spec:github:Azure/azure-rest-api-specs#35573",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-07-01T03:46:44Z",
+      "observedAt": "2025-07-01T03:46:44Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#35573",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "praveenkuttappan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#35573",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/35573"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#35573:comment:3021645829:spec:github:Azure/azure-rest-api-specs#35573",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-07-01T03:46:48Z",
+      "observedAt": "2025-07-01T03:46:48Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#35573",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "openapi-pipeline-app[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#35573",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/35573#issuecomment-3021645829"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>Next steps that must be taken to merge this PR: <br/><ul><li>❌ The required check named <code>Protected Files</code> has failed. Refer to the check in the PR's 'Checks' tab for details on how to fix it and consul",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#35573:comment:3021645840:spec:github:Azure/azure-rest-api-specs#35573",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-07-01T03:46:48Z",
+      "observedAt": "2025-07-01T03:46:48Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#35573",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "openapi-pipeline-app[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#35573",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/35573#issuecomment-3021645840"
+      },
+      "confidence": "authoritative",
+      "excerpt": "PR validation pipeline restarted successfully. If there is ApiView generated, it will be updated in this comment.",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#35573:review:2976358333:spec:github:Azure/azure-rest-api-specs#35573",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2025-07-01T17:20:13Z",
+      "observedAt": "2025-07-01T17:20:13Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#35573",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "maririos"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#35573",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/35573#pullrequestreview-2976358333"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#35573:commit:88a2186b16d3:spec:github:Azure/azure-rest-api-specs#35573",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2025-07-02T02:51:27Z",
+      "observedAt": "2025-07-02T02:51:27Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#35573",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "praveenkuttappan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#35573",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/88a2186b16d3213f98df8705f8192a5bfb34ced7"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#35573:comment:2178903369:spec:github:Azure/azure-rest-api-specs#35573",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-07-02T03:00:51Z",
+      "observedAt": "2025-07-02T03:00:51Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#35573",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "maririos"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#35573",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/35573#discussion_r2178903369"
+      },
+      "confidence": "authoritative",
+      "excerpt": "hahaha love it",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#35573:review:2977476246:spec:github:Azure/azure-rest-api-specs#35573",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2025-07-02T03:00:52Z",
+      "observedAt": "2025-07-02T03:00:52Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#35573",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "maririos"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#35573",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/35573#pullrequestreview-2977476246"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#35573:review:2977479993:spec:github:Azure/azure-rest-api-specs#35573",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2025-07-02T03:02:07Z",
+      "observedAt": "2025-07-02T03:02:07Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#35573",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "maririos"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#35573",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/35573#pullrequestreview-2977479993"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#35573:commit:e87284526ffe:spec:github:Azure/azure-rest-api-specs#35573",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2025-07-02T03:41:53Z",
+      "observedAt": "2025-07-02T03:41:53Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#35573",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "praveenkuttappan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#35573",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/e87284526ffec888402d56b1f0c6ad219308df68"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#35573:commit:5c0e0d53d3b7:spec:github:Azure/azure-rest-api-specs#35573",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2025-07-02T15:38:37Z",
+      "observedAt": "2025-07-02T15:38:37Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#35573",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "praveenkuttappan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#35573",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/5c0e0d53d3b7c7879a0ecbe6c59897d7e30c503c"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#35573:commit:5896c18fd8d3:spec:github:Azure/azure-rest-api-specs#35573",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2025-07-02T15:44:09Z",
+      "observedAt": "2025-07-02T15:44:09Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#35573",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "praveenkuttappan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#35573",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/5896c18fd8d3c6b2334e3e294753f98c4714830a"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#35573:commit:cd0e5a5d273b:spec:github:Azure/azure-rest-api-specs#35573",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2025-07-02T18:51:31Z",
+      "observedAt": "2025-07-02T18:51:31Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#35573",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "praveenkuttappan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#35573",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/cd0e5a5d273bb825044942dc7adc7501a1e8d9cb"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#35573:commit:f6b0acf977df:spec:github:Azure/azure-rest-api-specs#35573",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2025-07-02T20:41:04Z",
+      "observedAt": "2025-07-02T20:41:04Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#35573",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "praveenkuttappan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#35573",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/f6b0acf977dfc90e8f147a4b675ea66b831a2636"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#35573:pr.merged:spec:github:Azure/azure-rest-api-specs#35573",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2025-07-02T20:44:02Z",
+      "observedAt": "2025-07-02T20:44:02Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#35573",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#35573",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/35573"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:33859:created",
+      "type": "plan.created",
+      "phase": "plan",
+      "occurredAt": "2026-04-13T16:34:38.1Z",
+      "observedAt": "2026-04-13T16:34:38.1Z",
+      "trackId": "plan",
+      "title": "Release Plan created",
+      "confidence": "authoritative",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33859"
+      },
+      "stack": 0
+    },
+    {
+      "id": "ado:33859:1:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-04-13T16:34:38.1Z",
+      "observedAt": "2026-04-13T16:34:38.1Z",
+      "trackId": "plan",
+      "value": "New",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33859"
+      },
+      "title": "Plan state changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33859:1:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-13T16:34:38.1Z",
+      "observedAt": "2026-04-13T16:34:38.1Z",
+      "trackId": "plan",
+      "value": "Not Available",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33859"
+      },
+      "title": "Spec approval changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:33859:1:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-13T16:34:38.1Z",
+      "observedAt": "2026-04-13T16:34:38.1Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Contoso",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33859"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33859:1:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-13T16:34:38.1Z",
+      "observedAt": "2026-04-13T16:34:38.1Z",
+      "trackId": "sdk:JavaScript:@azure/arm-contoso",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33859"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33859:1:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-13T16:34:38.1Z",
+      "observedAt": "2026-04-13T16:34:38.1Z",
+      "trackId": "sdk:Python:azure-mgmt-contoso",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33859"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33859:1:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-13T16:34:38.1Z",
+      "observedAt": "2026-04-13T16:34:38.1Z",
+      "trackId": "sdk:Java:com.azure.resourcemanager:azure-resourcemanager-contoso",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33859"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33859:1:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-13T16:34:38.1Z",
+      "observedAt": "2026-04-13T16:34:38.1Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/contoso/armcontoso",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33859"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33859:3:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-04-13T16:41:32.257Z",
+      "observedAt": "2026-04-13T16:41:32.257Z",
+      "trackId": "plan",
+      "value": "In Progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33859"
+      },
+      "title": "Plan state changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:33860:2:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-04-13T16:43:39.003Z",
+      "observedAt": "2026-04-13T16:43:39.003Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#35573",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/35573",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33860",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33860"
+      },
+      "title": "Spec PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado:33859:5:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-13T16:43:44.037Z",
+      "observedAt": "2026-04-13T16:43:44.037Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Contoso",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33859"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33859:5:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-13T16:43:44.037Z",
+      "observedAt": "2026-04-13T16:43:44.037Z",
+      "trackId": "sdk:JavaScript:@azure/arm-contoso",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33859"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33859:5:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-13T16:43:44.037Z",
+      "observedAt": "2026-04-13T16:43:44.037Z",
+      "trackId": "sdk:Python:azure-mgmt-contoso",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33859"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33859:5:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-13T16:43:44.037Z",
+      "observedAt": "2026-04-13T16:43:44.037Z",
+      "trackId": "sdk:Java:com.azure.resourcemanager:azure-resourcemanager-contoso",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33859"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33859:5:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-13T16:43:44.037Z",
+      "observedAt": "2026-04-13T16:43:44.037Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/contoso/armcontoso",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33859"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33859:20:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-13T19:54:09.49Z",
+      "observedAt": "2026-04-13T19:54:09.49Z",
+      "trackId": "sdk:Python:azure-mgmt-contoso",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33859"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:33859:21:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-13T19:54:21.593Z",
+      "observedAt": "2026-04-13T19:54:21.593Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Contoso",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33859"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:33859:22:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-13T19:54:34.487Z",
+      "observedAt": "2026-04-13T19:54:34.487Z",
+      "trackId": "sdk:JavaScript:@azure/arm-contoso",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33859"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:33859:23:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-13T19:54:47.863Z",
+      "observedAt": "2026-04-13T19:54:47.863Z",
+      "trackId": "sdk:Java:com.azure.resourcemanager:azure-resourcemanager-contoso",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33859"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:33859:24:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-13T19:55:00.23Z",
+      "observedAt": "2026-04-13T19:55:00.23Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/contoso/armcontoso",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33859"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46285:commit:754e05e4ba3a:sdk:Python:azure-mgmt-contoso",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-13T19:58:47Z",
+      "observedAt": "2026-04-13T19:58:47Z",
+      "trackId": "sdk:Python:azure-mgmt-contoso",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46285",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/754e05e4ba3a7aa242025db83c0eed5c9273f169"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46285:pr.created:sdk:Python:azure-mgmt-contoso",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-13T19:58:51Z",
+      "observedAt": "2026-04-13T19:58:51Z",
+      "trackId": "sdk:Python:azure-mgmt-contoso",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46285",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46285"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:33859:25:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-13T19:58:57.65Z",
+      "observedAt": "2026-04-13T19:58:57.65Z",
+      "trackId": "sdk:Python:azure-mgmt-contoso",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33859"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:33859:25:Custom.SDKPullRequestForPython",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-04-13T19:58:57.65Z",
+      "observedAt": "2026-04-13T19:58:57.65Z",
+      "trackId": "sdk:Python:azure-mgmt-contoso",
+      "value": "https://github.com/Azure/azure-sdk-for-python/pull/46285",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33859"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58122:commit:5c118da6a524:sdk:.NET:Azure.ResourceManager.Contoso",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-13T19:59:41Z",
+      "observedAt": "2026-04-13T19:59:41Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Contoso",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58122",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/5c118da6a524319b4cf356c6cd5f6117996aa566"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58122:pr.created:sdk:.NET:Azure.ResourceManager.Contoso",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-13T19:59:45Z",
+      "observedAt": "2026-04-13T19:59:45Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Contoso",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58122",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58122"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26576:commit:19aec226741b:sdk:Go:sdk/resourcemanager/contoso/armcontoso",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-13T19:59:48Z",
+      "observedAt": "2026-04-13T19:59:48Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/contoso/armcontoso",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26576",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/19aec226741b4732b76201cc2a3963a1e3f92aab"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26576:pr.created:sdk:Go:sdk/resourcemanager/contoso/armcontoso",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-13T19:59:51Z",
+      "observedAt": "2026-04-13T19:59:51Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/contoso/armcontoso",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26576",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26576"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:33859:26:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-13T19:59:52.363Z",
+      "observedAt": "2026-04-13T19:59:52.363Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Contoso",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33859"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:33859:26:Custom.SDKPullRequestForDotnet",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-04-13T19:59:52.363Z",
+      "observedAt": "2026-04-13T19:59:52.363Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Contoso",
+      "value": "https://github.com/Azure/azure-sdk-for-net/pull/58122",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33859"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado:33859:27:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-13T19:59:58.07Z",
+      "observedAt": "2026-04-13T19:59:58.07Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/contoso/armcontoso",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33859"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:33859:27:Custom.SDKPullRequestForGo",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-04-13T19:59:58.07Z",
+      "observedAt": "2026-04-13T19:59:58.07Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/contoso/armcontoso",
+      "value": "https://github.com/Azure/azure-sdk-for-go/pull/26576",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33859"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado:33859:28:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-13T20:02:11.387Z",
+      "observedAt": "2026-04-13T20:02:11.387Z",
+      "trackId": "sdk:JavaScript:@azure/arm-contoso",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33859"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48796:commit:4c9fa00dd9b1:sdk:Java:com.azure.resourcemanager:azure-resourcemanager-contoso",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-13T20:03:20Z",
+      "observedAt": "2026-04-13T20:03:20Z",
+      "trackId": "sdk:Java:com.azure.resourcemanager:azure-resourcemanager-contoso",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48796",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/4c9fa00dd9b1846a3cfe485a2bd4fb48e369576e"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48796:pr.created:sdk:Java:com.azure.resourcemanager:azure-resourcemanager-contoso",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-13T20:03:24Z",
+      "observedAt": "2026-04-13T20:03:24Z",
+      "trackId": "sdk:Java:com.azure.resourcemanager:azure-resourcemanager-contoso",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48796",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48796"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:33859:29:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-13T20:03:30.833Z",
+      "observedAt": "2026-04-13T20:03:30.833Z",
+      "trackId": "sdk:Java:com.azure.resourcemanager:azure-resourcemanager-contoso",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33859"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:33859:29:Custom.SDKPullRequestForJava",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-04-13T20:03:30.833Z",
+      "observedAt": "2026-04-13T20:03:30.833Z",
+      "trackId": "sdk:Java:com.azure.resourcemanager:azure-resourcemanager-contoso",
+      "value": "https://github.com/Azure/azure-sdk-for-java/pull/48796",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33859"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado:33859:30:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-13T20:47:11.213Z",
+      "observedAt": "2026-04-13T20:47:11.213Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Contoso",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33859"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33859:30:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-13T20:47:11.213Z",
+      "observedAt": "2026-04-13T20:47:11.213Z",
+      "trackId": "sdk:JavaScript:@azure/arm-contoso",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33859"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:33859:30:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-13T20:47:11.213Z",
+      "observedAt": "2026-04-13T20:47:11.213Z",
+      "trackId": "sdk:Python:azure-mgmt-contoso",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33859"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33859:30:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-13T20:47:11.213Z",
+      "observedAt": "2026-04-13T20:47:11.213Z",
+      "trackId": "sdk:Java:com.azure.resourcemanager:azure-resourcemanager-contoso",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33859"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33859:30:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-13T20:47:11.213Z",
+      "observedAt": "2026-04-13T20:47:11.213Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/contoso/armcontoso",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33859"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33859:31:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-13T20:59:23.22Z",
+      "observedAt": "2026-04-13T20:59:23.22Z",
+      "trackId": "sdk:Python:azure-mgmt-contoso",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33859"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:33859:32:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-13T20:59:35.21Z",
+      "observedAt": "2026-04-13T20:59:35.21Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Contoso",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33859"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:33859:33:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-13T20:59:46.35Z",
+      "observedAt": "2026-04-13T20:59:46.35Z",
+      "trackId": "sdk:JavaScript:@azure/arm-contoso",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33859"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:33859:34:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-13T21:00:00.77Z",
+      "observedAt": "2026-04-13T21:00:00.77Z",
+      "trackId": "sdk:Java:com.azure.resourcemanager:azure-resourcemanager-contoso",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33859"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:33859:35:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-13T21:00:12.41Z",
+      "observedAt": "2026-04-13T21:00:12.41Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/contoso/armcontoso",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33859"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:33859:36:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-13T21:04:42.583Z",
+      "observedAt": "2026-04-13T21:04:42.583Z",
+      "trackId": "sdk:Python:azure-mgmt-contoso",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33859"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:33859:37:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-13T21:05:36.37Z",
+      "observedAt": "2026-04-13T21:05:36.37Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Contoso",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33859"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:33859:38:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-13T21:05:51.817Z",
+      "observedAt": "2026-04-13T21:05:51.817Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/contoso/armcontoso",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33859"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48796:commit:584e4495b073:sdk:Java:com.azure.resourcemanager:azure-resourcemanager-contoso",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-13T21:09:05Z",
+      "observedAt": "2026-04-13T21:09:05Z",
+      "trackId": "sdk:Java:com.azure.resourcemanager:azure-resourcemanager-contoso",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48796",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/584e4495b0735aae2bddeccbcb478966fb88c4b0"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado:33859:39:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-13T21:09:05.063Z",
+      "observedAt": "2026-04-13T21:09:05.063Z",
+      "trackId": "sdk:JavaScript:@azure/arm-contoso",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33859"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33859:40:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-13T21:09:14.003Z",
+      "observedAt": "2026-04-13T21:09:14.003Z",
+      "trackId": "sdk:Java:com.azure.resourcemanager:azure-resourcemanager-contoso",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33859"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26576:comment:4240123383:sdk:Go:sdk/resourcemanager/contoso/armcontoso",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-13T22:53:11Z",
+      "observedAt": "2026-04-13T22:53:11Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/contoso/armcontoso",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26576",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26576#issuecomment-4240123383"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews [sdk/resourcemanager/contoso/armcontoso](https://spa.apiview.dev/review/19034274c42f494b900a3f8af06c5461?activeApiRevisionId=1aafc1c21",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48796:comment:4240141989:sdk:Java:com.azure.resourcemanager:azure-resourcemanager-contoso",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-13T22:58:08Z",
+      "observedAt": "2026-04-13T22:58:08Z",
+      "trackId": "sdk:Java:com.azure.resourcemanager:azure-resourcemanager-contoso",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48796",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48796#issuecomment-4240141989"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews [com.azure.resourcemanager:azure-resourcemanager-contoso](https://spa.apiview.dev/review/f958535e0c7e4c1e85a46c1363c6e2bb?activeApiRev",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26576:pr.closed:sdk:Go:sdk/resourcemanager/contoso/armcontoso",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-14T08:35:07Z",
+      "observedAt": "2026-04-14T08:35:07Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/contoso/armcontoso",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26576",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26576"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:33859:46:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-22T18:15:20.523Z",
+      "observedAt": "2026-04-22T18:15:20.523Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Contoso",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33859"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33859:46:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-22T18:15:20.523Z",
+      "observedAt": "2026-04-22T18:15:20.523Z",
+      "trackId": "sdk:JavaScript:@azure/arm-contoso",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33859"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33859:46:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-22T18:15:20.523Z",
+      "observedAt": "2026-04-22T18:15:20.523Z",
+      "trackId": "sdk:Python:azure-mgmt-contoso",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33859"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33859:46:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-22T18:15:20.523Z",
+      "observedAt": "2026-04-22T18:15:20.523Z",
+      "trackId": "sdk:Java:com.azure.resourcemanager:azure-resourcemanager-contoso",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33859"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33859:46:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-22T18:15:20.523Z",
+      "observedAt": "2026-04-22T18:15:20.523Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/contoso/armcontoso",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33859"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6193530:generation.queued:sdk:Python:azure-mgmt-contoso",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-04-22T18:20:18.6540837Z",
+      "observedAt": "2026-04-22T18:26:44.9823567Z",
+      "trackId": "sdk:Python:azure-mgmt-contoso",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6193530",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6193530"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:33859:48:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-22T18:20:23.81Z",
+      "observedAt": "2026-04-22T18:20:23.81Z",
+      "trackId": "sdk:Python:azure-mgmt-contoso",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33859"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6193531:generation.queued:sdk:.NET:Azure.ResourceManager.Contoso",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-04-22T18:20:36.7622655Z",
+      "observedAt": "2026-04-22T18:27:41.4095969Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Contoso",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6193531",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6193531"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:33859:49:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-22T18:20:39.73Z",
+      "observedAt": "2026-04-22T18:20:39.73Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Contoso",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33859"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6193530:generation.started:sdk:Python:azure-mgmt-contoso",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-04-22T18:20:42.0082062Z",
+      "observedAt": "2026-04-22T18:26:44.9823567Z",
+      "trackId": "sdk:Python:azure-mgmt-contoso",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6193530",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6193530"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6193532:generation.queued:sdk:JavaScript:@azure/arm-contoso",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-04-22T18:20:49.9748826Z",
+      "observedAt": "2026-04-22T18:27:56.1106487Z",
+      "trackId": "sdk:JavaScript:@azure/arm-contoso",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6193532",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6193532"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:33859:50:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-22T18:20:53.723Z",
+      "observedAt": "2026-04-22T18:20:53.723Z",
+      "trackId": "sdk:JavaScript:@azure/arm-contoso",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33859"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6193531:generation.started:sdk:.NET:Azure.ResourceManager.Contoso",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-04-22T18:20:57.9799322Z",
+      "observedAt": "2026-04-22T18:27:41.4095969Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Contoso",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6193531",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6193531"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6193534:generation.queued:sdk:Java:com.azure.resourcemanager:azure-resourcemanager-contoso",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-04-22T18:21:03.7089784Z",
+      "observedAt": "2026-04-22T18:40:20.7123202Z",
+      "trackId": "sdk:Java:com.azure.resourcemanager:azure-resourcemanager-contoso",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6193534",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6193534"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:33859:51:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-22T18:21:07.193Z",
+      "observedAt": "2026-04-22T18:21:07.193Z",
+      "trackId": "sdk:Java:com.azure.resourcemanager:azure-resourcemanager-contoso",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33859"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6193532:generation.started:sdk:JavaScript:@azure/arm-contoso",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-04-22T18:21:09.485494Z",
+      "observedAt": "2026-04-22T18:27:56.1106487Z",
+      "trackId": "sdk:JavaScript:@azure/arm-contoso",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6193532",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6193532"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6193535:generation.queued:sdk:Go:sdk/resourcemanager/contoso/armcontoso",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-04-22T18:21:16.6528562Z",
+      "observedAt": "2026-04-22T18:28:18.7116233Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/contoso/armcontoso",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6193535",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6193535"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:33859:52:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-22T18:21:19.473Z",
+      "observedAt": "2026-04-22T18:21:19.473Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/contoso/armcontoso",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33859"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6193534:generation.started:sdk:Java:com.azure.resourcemanager:azure-resourcemanager-contoso",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-04-22T18:21:22.9172157Z",
+      "observedAt": "2026-04-22T18:40:20.7123202Z",
+      "trackId": "sdk:Java:com.azure.resourcemanager:azure-resourcemanager-contoso",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6193534",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6193534"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6193535:generation.started:sdk:Go:sdk/resourcemanager/contoso/armcontoso",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-04-22T18:21:36.1340901Z",
+      "observedAt": "2026-04-22T18:28:18.7116233Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/contoso/armcontoso",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6193535",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6193535"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46285:commit:57a77cc0a623:sdk:Python:azure-mgmt-contoso",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-22T18:25:26Z",
+      "observedAt": "2026-04-22T18:25:26Z",
+      "trackId": "sdk:Python:azure-mgmt-contoso",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46285",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/57a77cc0a6237dac6862ad640e56d94a1200c0c0"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:33859:53:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-22T18:25:34.007Z",
+      "observedAt": "2026-04-22T18:25:34.007Z",
+      "trackId": "sdk:Python:azure-mgmt-contoso",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33859"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:6193532:00be4b52-4a63-5865-8e02-c61723ad0692:sdk:JavaScript:@azure/arm-contoso",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-04-22T18:26:37.68Z",
+      "observedAt": "2026-04-22T18:27:56.1106487Z",
+      "trackId": "sdk:JavaScript:@azure/arm-contoso",
+      "title": "task failed: Generate SDK",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6193532",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6193532"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58122:commit:67bca9b60271:sdk:.NET:Azure.ResourceManager.Contoso",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-22T18:26:44Z",
+      "observedAt": "2026-04-22T18:26:44Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Contoso",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58122",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/67bca9b602711a24e5de5aa224cb83793f7aceb3"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6193530:generation.completed:sdk:Python:azure-mgmt-contoso",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-04-22T18:26:44.9823567Z",
+      "observedAt": "2026-04-22T18:26:44.9823567Z",
+      "trackId": "sdk:Python:azure-mgmt-contoso",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6193530",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6193530"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:33859:54:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-22T18:26:53.2Z",
+      "observedAt": "2026-04-22T18:26:53.2Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Contoso",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33859"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26648:commit:dba0a3f651d5:sdk:Go:sdk/resourcemanager/contoso/armcontoso",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-22T18:27:09Z",
+      "observedAt": "2026-04-22T18:27:09Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/contoso/armcontoso",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26648",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/dba0a3f651d5c4bdb509a32f0ed4e9ef048f924c"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26648:pr.created:sdk:Go:sdk/resourcemanager/contoso/armcontoso",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-22T18:27:13Z",
+      "observedAt": "2026-04-22T18:27:13Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/contoso/armcontoso",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26648",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26648"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:33859:55:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-22T18:27:20.66Z",
+      "observedAt": "2026-04-22T18:27:20.66Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/contoso/armcontoso",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33859"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33859:55:Custom.SDKPullRequestForGo",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-04-22T18:27:20.66Z",
+      "observedAt": "2026-04-22T18:27:20.66Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/contoso/armcontoso",
+      "value": "https://github.com/Azure/azure-sdk-for-go/pull/26648",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33859"
+      },
+      "title": "SDK PR linked",
+      "stack": 1
+    },
+    {
+      "id": "ado:33859:56:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-22T18:27:25.93Z",
+      "observedAt": "2026-04-22T18:27:25.93Z",
+      "trackId": "sdk:JavaScript:@azure/arm-contoso",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33859"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:6193531:generation.completed:sdk:.NET:Azure.ResourceManager.Contoso",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-04-22T18:27:41.4095969Z",
+      "observedAt": "2026-04-22T18:27:41.4095969Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Contoso",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6193531",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6193531"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6193532:83516c17-6666-5250-abde-63983ce72a49:sdk:JavaScript:@azure/arm-contoso",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-04-22T18:27:45.6666667Z",
+      "observedAt": "2026-04-22T18:27:56.1106487Z",
+      "trackId": "sdk:JavaScript:@azure/arm-contoso",
+      "title": "job failed: Job",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6193532",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6193532"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6193532:6884a131-87da-5381-61f3-d7acc3b91d76:sdk:JavaScript:@azure/arm-contoso",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-04-22T18:27:55.73Z",
+      "observedAt": "2026-04-22T18:27:56.1106487Z",
+      "trackId": "sdk:JavaScript:@azure/arm-contoso",
+      "title": "stage failed: SDK Generation",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6193532",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6193532"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6193532:generation.failed:sdk:JavaScript:@azure/arm-contoso",
+      "type": "generation.failed",
+      "phase": "generation",
+      "occurredAt": "2026-04-22T18:27:56.1106487Z",
+      "observedAt": "2026-04-22T18:27:56.1106487Z",
+      "trackId": "sdk:JavaScript:@azure/arm-contoso",
+      "title": "Pipeline failed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6193532",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6193532"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6193535:generation.completed:sdk:Go:sdk/resourcemanager/contoso/armcontoso",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-04-22T18:28:18.7116233Z",
+      "observedAt": "2026-04-22T18:28:18.7116233Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/contoso/armcontoso",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6193535",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6193535"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48796:commit:eedbe60ae6f1:sdk:Java:com.azure.resourcemanager:azure-resourcemanager-contoso",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-22T18:29:28Z",
+      "observedAt": "2026-04-22T18:29:28Z",
+      "trackId": "sdk:Java:com.azure.resourcemanager:azure-resourcemanager-contoso",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48796",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/eedbe60ae6f1ca365e30f835f5fdbfd8938f3e15"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:33859:57:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-22T18:29:36.23Z",
+      "observedAt": "2026-04-22T18:29:36.23Z",
+      "trackId": "sdk:Java:com.azure.resourcemanager:azure-resourcemanager-contoso",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33859",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33859"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:6193534:generation.completed:sdk:Java:com.azure.resourcemanager:azure-resourcemanager-contoso",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-04-22T18:40:20.7123202Z",
+      "observedAt": "2026-04-22T18:40:20.7123202Z",
+      "trackId": "sdk:Java:com.azure.resourcemanager:azure-resourcemanager-contoso",
+      "title": "Pipeline completed with issues",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6193534",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6193534"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26648:pr.closed:sdk:Go:sdk/resourcemanager/contoso/armcontoso",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-28T08:43:38Z",
+      "observedAt": "2026-04-28T08:43:38Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/contoso/armcontoso",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26648",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26648"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46285:comment:4806895735:sdk:Python:azure-mgmt-contoso",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-26T06:20:50Z",
+      "observedAt": "2026-06-26T06:20:50Z",
+      "trackId": "sdk:Python:azure-mgmt-contoso",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46285",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46285#issuecomment-4806895735"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @azure-sdk. Thank you for your interest in helping to improve the Azure SDK experience and for your contribution. We've noticed that there hasn't been recent engagement on this pull request. If this is still an active work stream, please",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48796:comment:4806918725:sdk:Java:com.azure.resourcemanager:azure-resourcemanager-contoso",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-26T06:25:12Z",
+      "observedAt": "2026-06-26T06:25:12Z",
+      "trackId": "sdk:Java:com.azure.resourcemanager:azure-resourcemanager-contoso",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48796",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48796#issuecomment-4806918725"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @azure-sdk. Thank you for your interest in helping to improve the Azure SDK experience and for your contribution. We've noticed that there hasn't been recent engagement on this pull request. If this is still an active work stream, please",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58122:comment:4806924410:sdk:.NET:Azure.ResourceManager.Contoso",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-26T06:26:16Z",
+      "observedAt": "2026-06-26T06:26:16Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Contoso",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58122",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58122#issuecomment-4806924410"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @azure-sdk. Thank you for your interest in helping to improve the Azure SDK experience and for your contribution. We've noticed that there hasn't been recent engagement on this pull request. If this is still an active work stream, please",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58122:comment:4874846903:sdk:.NET:Azure.ResourceManager.Contoso",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-03T09:35:49Z",
+      "observedAt": "2026-07-03T09:35:49Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Contoso",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58122",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58122#issuecomment-4874846903"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @azure-sdk. Thank you for your contribution. Since there hasn't been recent engagement, we're going to close this out. Feel free to respond with a comment containing `/reopen` if you'd like to continue working on these changes. Please be",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58122:pr.closed:sdk:.NET:Azure.ResourceManager.Contoso",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-03T09:35:57Z",
+      "observedAt": "2026-07-03T09:35:57Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Contoso",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58122",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58122"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46285:comment:4874849097:sdk:Python:azure-mgmt-contoso",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-03T09:36:00Z",
+      "observedAt": "2026-07-03T09:36:00Z",
+      "trackId": "sdk:Python:azure-mgmt-contoso",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46285",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46285#issuecomment-4874849097"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @azure-sdk. Thank you for your contribution. Since there hasn't been recent engagement, we're going to close this out. Feel free to respond with a comment containing `/reopen` if you'd like to continue working on these changes. Please be",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#46285:pr.closed:sdk:Python:azure-mgmt-contoso",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-03T09:36:20Z",
+      "observedAt": "2026-07-03T09:36:20Z",
+      "trackId": "sdk:Python:azure-mgmt-contoso",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#46285",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/46285"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48796:comment:4874865997:sdk:Java:com.azure.resourcemanager:azure-resourcemanager-contoso",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-03T09:37:50Z",
+      "observedAt": "2026-07-03T09:37:50Z",
+      "trackId": "sdk:Java:com.azure.resourcemanager:azure-resourcemanager-contoso",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48796",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48796#issuecomment-4874865997"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @azure-sdk. Thank you for your contribution. Since there hasn't been recent engagement, we're going to close this out. Feel free to respond with a comment containing `/reopen` if you'd like to continue working on these changes. Please be",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48796:pr.closed:sdk:Java:com.azure.resourcemanager:azure-resourcemanager-contoso",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-03T09:37:57Z",
+      "observedAt": "2026-07-03T09:37:57Z",
+      "trackId": "sdk:Java:com.azure.resourcemanager:azure-resourcemanager-contoso",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48796",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48796"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    }
+  ],
+  "quality": {
+    "warnings": [
+      "5 historical linked PR(s) closed without merge",
+      "1 superseded SDK PR link(s) retained"
+    ],
+    "unavailablePullRequests": 0,
+    "unavailablePipelineRuns": 0
+  },
+  "boundaryFacts": {
+    "id": "33859",
+    "state": "in-progress",
+    "specPrs": [
+      {
+        "id": "github:Azure/azure-rest-api-specs#35573",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#35573",
+        "createdAt": "2025-07-01T03:46:44Z",
+        "mergedAt": "2025-07-02T20:44:02Z",
+        "closedAt": "2025-07-02T20:44:02Z",
+        "available": true
+      }
+    ],
+    "artifacts": [
+      {
+        "language": ".NET",
+        "package": "Azure.ResourceManager.Contoso",
+        "trackId": "sdk:.NET:Azure.ResourceManager.Contoso",
+        "prId": "github:Azure/azure-sdk-for-net#58122",
+        "prCreatedAt": "2026-04-13T19:59:45Z",
+        "prMergedAt": null,
+        "prClosedAt": "2026-07-03T09:35:57Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-net#58122",
+            "createdAt": "2026-04-13T19:59:45Z",
+            "mergedAt": null,
+            "closedAt": "2026-07-03T09:35:57Z",
+            "state": "closed"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6193531",
+        "generationStartAt": "2026-04-22T18:20:57.9799322Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "JavaScript",
+        "package": "@azure/arm-contoso",
+        "trackId": "sdk:JavaScript:@azure/arm-contoso",
+        "prId": null,
+        "prCreatedAt": null,
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [],
+        "generationRunId": "ado-build:internal:6193532",
+        "generationStartAt": "2026-04-22T18:21:09.485494Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "missing",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Python",
+        "package": "azure-mgmt-contoso",
+        "trackId": "sdk:Python:azure-mgmt-contoso",
+        "prId": "github:Azure/azure-sdk-for-python#46285",
+        "prCreatedAt": "2026-04-13T19:58:51Z",
+        "prMergedAt": null,
+        "prClosedAt": "2026-07-03T09:36:20Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-python#46285",
+            "createdAt": "2026-04-13T19:58:51Z",
+            "mergedAt": null,
+            "closedAt": "2026-07-03T09:36:20Z",
+            "state": "closed"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6193530",
+        "generationStartAt": "2026-04-22T18:20:42.0082062Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Java",
+        "package": "com.azure.resourcemanager:azure-resourcemanager-contoso",
+        "trackId": "sdk:Java:com.azure.resourcemanager:azure-resourcemanager-contoso",
+        "prId": "github:Azure/azure-sdk-for-java#48796",
+        "prCreatedAt": "2026-04-13T20:03:24Z",
+        "prMergedAt": null,
+        "prClosedAt": "2026-07-03T09:37:57Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-java#48796",
+            "createdAt": "2026-04-13T20:03:24Z",
+            "mergedAt": null,
+            "closedAt": "2026-07-03T09:37:57Z",
+            "state": "closed"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6193534",
+        "generationStartAt": "2026-04-22T18:21:22.9172157Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Go",
+        "package": "sdk/resourcemanager/contoso/armcontoso",
+        "trackId": "sdk:Go:sdk/resourcemanager/contoso/armcontoso",
+        "prId": "github:Azure/azure-sdk-for-go#26648",
+        "prCreatedAt": "2026-04-22T18:27:13Z",
+        "prMergedAt": null,
+        "prClosedAt": "2026-04-28T08:43:38Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-go#26576",
+            "createdAt": "2026-04-13T19:59:51Z",
+            "mergedAt": null,
+            "closedAt": "2026-04-14T08:35:07Z",
+            "state": "closed"
+          },
+          {
+            "id": "github:Azure/azure-sdk-for-go#26648",
+            "createdAt": "2026-04-22T18:27:13Z",
+            "mergedAt": null,
+            "closedAt": "2026-04-28T08:43:38Z",
+            "state": "closed"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6193535",
+        "generationStartAt": "2026-04-22T18:21:36.1340901Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      }
+    ],
+    "cohortPlan": {
+      "id": "33859",
+      "releasePlanId": "1561",
+      "title": "Release Plan - 1561 - Public Preview - Release Planner Test Product",
+      "service": "Contoso.Management",
+      "state": "in-progress"
+    },
+    "quality": {
+      "warnings": [
+        "5 historical linked PR(s) closed without merge",
+        "1 superseded SDK PR link(s) retained"
+      ],
+      "unavailablePullRequests": 0,
+      "unavailablePipelineRuns": 0
+    }
+  },
+  "summary": {
+    "durationHours": 2936,
+    "pullRequestCount": 6,
+    "humanReviewCount": 3,
+    "humanCommentCount": 1
+  }
+}

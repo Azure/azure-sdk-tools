@@ -1,0 +1,2514 @@
+{
+  "schemaVersion": 2,
+  "id": "35972",
+  "correlation": {
+    "policyVersion": 1,
+    "preflight": "passed"
+  },
+  "releasePlanId": "35972",
+  "title": "Public Preview release plan for Cloudngfw",
+  "service": "Cloudngfw",
+  "product": "Release",
+  "path": "specification/paloaltonetworks/resource-manager/PaloAltoNetworks.Cloudngfw/Cloudngfw",
+  "state": "in-progress",
+  "plane": "management",
+  "releaseType": "APEX Public Preview",
+  "intendedMonth": "September 2026",
+  "createdAt": "2026-08-10T10:44:10.18Z",
+  "completedAt": null,
+  "sourceUrl": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35972",
+  "range": {
+    "start": "2026-07-30T21:46:48.000Z",
+    "end": "2026-08-14T00:37:23.589Z"
+  },
+  "intendedArtifacts": [
+    {
+      "prId": "github:Azure/azure-sdk-for-net#61867",
+      "language": ".NET",
+      "package": "Azure.ResourceManager.PaloAltoNetworks.Ngfw",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6680035",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-js#39546",
+      "language": "JavaScript",
+      "package": "@azure/arm-paloaltonetworksngfw",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6680037",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-python#48512",
+      "language": "Python",
+      "package": "azure-mgmt-paloaltonetworksngfw",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6680038",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-java#50079",
+      "language": "Java",
+      "package": "azure-resourcemanager-paloaltonetworks-ngfw",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6680036",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-go#27361",
+      "language": "Go",
+      "package": "sdk/resourcemanager/paloaltonetworksngfw/armpanngfw",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6680039",
+      "releasePipelineUrl": null
+    }
+  ],
+  "links": [
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#45152",
+      "role": "spec-pr",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/45152",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-net#61867",
+      "role": "sdk-pr",
+      "language": ".NET",
+      "url": "https://github.com/Azure/azure-sdk-for-net/pull/61867",
+      "releasePlanIds": [
+        "35972"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-js#39546",
+      "role": "sdk-pr",
+      "language": "JavaScript",
+      "url": "https://github.com/Azure/azure-sdk-for-js/pull/39546",
+      "releasePlanIds": [
+        "35972"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-python#48512",
+      "role": "sdk-pr",
+      "language": "Python",
+      "url": "https://github.com/Azure/azure-sdk-for-python/pull/48512",
+      "releasePlanIds": [
+        "35972"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-java#50079",
+      "role": "sdk-pr",
+      "language": "Java",
+      "url": "https://github.com/Azure/azure-sdk-for-java/pull/50079",
+      "releasePlanIds": [
+        "35972"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-go#27361",
+      "role": "sdk-pr",
+      "language": "Go",
+      "url": "https://github.com/Azure/azure-sdk-for-go/pull/27361",
+      "releasePlanIds": [
+        "35972"
+      ]
+    }
+  ],
+  "tracks": [
+    {
+      "id": "plan",
+      "kind": "plan",
+      "label": "Release Plan",
+      "detail": "APEX Public Preview"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#45152",
+      "kind": "spec",
+      "label": "Spec PR",
+      "detail": "azure-rest-api-specs #45152",
+      "artifactId": "github:Azure/azure-rest-api-specs#45152",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:.NET:Azure.ResourceManager.PaloAltoNetworks.Ngfw",
+      "kind": "sdk",
+      "label": ".NET",
+      "detail": "Azure.ResourceManager.PaloAltoNetworks.Ngfw",
+      "artifactId": "github:Azure/azure-sdk-for-net#61867",
+      "state": "open"
+    },
+    {
+      "id": "sdk:JavaScript:@azure/arm-paloaltonetworksngfw",
+      "kind": "sdk",
+      "label": "JavaScript",
+      "detail": "@azure/arm-paloaltonetworksngfw",
+      "artifactId": "github:Azure/azure-sdk-for-js#39546",
+      "state": "open"
+    },
+    {
+      "id": "sdk:Python:azure-mgmt-paloaltonetworksngfw",
+      "kind": "sdk",
+      "label": "Python",
+      "detail": "azure-mgmt-paloaltonetworksngfw",
+      "artifactId": "github:Azure/azure-sdk-for-python#48512",
+      "state": "open"
+    },
+    {
+      "id": "sdk:Java:azure-resourcemanager-paloaltonetworks-ngfw",
+      "kind": "sdk",
+      "label": "Java",
+      "detail": "azure-resourcemanager-paloaltonetworks-ngfw",
+      "artifactId": "github:Azure/azure-sdk-for-java#50079",
+      "state": "open"
+    },
+    {
+      "id": "sdk:Go:sdk/resourcemanager/paloaltonetworksngfw/armpanngfw",
+      "kind": "sdk",
+      "label": "Go",
+      "detail": "sdk/resourcemanager/paloaltonetworksngfw/armpanngfw",
+      "artifactId": "github:Azure/azure-sdk-for-go#27361",
+      "state": "open"
+    }
+  ],
+  "events": [
+    {
+      "id": "github:Azure/azure-rest-api-specs#45152:pr.created:spec:github:Azure/azure-rest-api-specs#45152",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-30T21:46:48Z",
+      "observedAt": "2026-07-30T21:46:48Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#45152",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "rohit4637"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#45152",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/45152"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#45152:comment:5136611402:spec:github:Azure/azure-rest-api-specs#45152",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-30T21:48:13Z",
+      "observedAt": "2026-07-30T21:48:13Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#45152",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#45152",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/45152#issuecomment-5136611402"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>✅ All automated merging requirements have been met! To get your PR merged, see <a href=\"https://aka.ms/azsdk/specreview/merge\">aka.ms/azsdk/specreview/merge</a>.<br /><br />Comment generated by <a href=\"https://g",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#45152:comment:5136619354:spec:github:Azure/azure-rest-api-specs#45152",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-30T21:49:15Z",
+      "observedAt": "2026-07-30T21:49:15Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#45152",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#45152",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/45152#issuecomment-5136619354"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## TypeSpec suppressions requiring review (testing, non-blocking) **Status:** ❌ Approval required (currently under testing, review NOT enforced) — 1 suppression ⚠️ <strong>This check is currently in testing mode and is non-blocking</strong>",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#45152:comment:5136687367:spec:github:Azure/azure-rest-api-specs#45152",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-30T21:57:55Z",
+      "observedAt": "2026-07-30T21:57:55Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#45152",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#45152",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/45152#issuecomment-5136687367"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews | Language | API Review for Package | |----------|---------| | Swagger | [PaloAltoNetworks.Cloudngfw-Cloudngfw](https://apiview.dev/As",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#45152:commit:5dce512d7536:spec:github:Azure/azure-rest-api-specs#45152",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-31T09:19:29Z",
+      "observedAt": "2026-07-31T09:19:29Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#45152",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#45152",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/5dce512d7536b4c1efcd7968d64056aeb27e9347"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#45152:commit:57a3885c2bca:spec:github:Azure/azure-rest-api-specs#45152",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-31T09:21:24Z",
+      "observedAt": "2026-07-31T09:21:24Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#45152",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#45152",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/57a3885c2bca73f667cb8c5899c0953777d715f8"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#45152:comment:5142451292:spec:github:Azure/azure-rest-api-specs#45152",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-31T11:38:52Z",
+      "observedAt": "2026-07-31T11:38:52Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#45152",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "rohit4637"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#45152",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/45152#issuecomment-5142451292"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Running the standard TypeSpec validation pipeline for the Cloudngfw project now. Ran terminal command: npx tsp compile specification/paloaltonetworks/resource-manager/PaloAltoNetworks.Cloudngfw/Cloudngfw --warn-as-error Ran terminal command",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#45152:comment:5142683153:spec:github:Azure/azure-rest-api-specs#45152",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-31T12:07:02Z",
+      "observedAt": "2026-07-31T12:07:02Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#45152",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "rohit4637"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#45152",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/45152#issuecomment-5142683153"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Ran `review_typespec` Completed with input: { \"reviewMode\": \"changes-only\", \"isLiftrPartner\": \"auto\" } Read [](file:///c%3A/Users/rohitkuma/AppData/Roaming/Code/User/workspaceStorage/d22201346492e03914ff321a41eaa21c/GitHub.copilot-chat/chat",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#45152:comment:3718778662:spec:github:Azure/azure-rest-api-specs#45152",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-05T07:34:34Z",
+      "observedAt": "2026-08-05T07:34:34Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#45152",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "nikhgup"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#45152",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/45152#discussion_r3718778662"
+      },
+      "confidence": "authoritative",
+      "excerpt": "any limit on min and max length we can add?",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#45152:comment:3718780210:spec:github:Azure/azure-rest-api-specs#45152",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-05T07:34:52Z",
+      "observedAt": "2026-08-05T07:34:52Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#45152",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "nikhgup"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#45152",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/45152#discussion_r3718780210"
+      },
+      "confidence": "authoritative",
+      "excerpt": "same related to length limit",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#45152:comment:3718783610:spec:github:Azure/azure-rest-api-specs#45152",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-05T07:35:30Z",
+      "observedAt": "2026-08-05T07:35:30Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#45152",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "nikhgup"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#45152",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/45152#discussion_r3718783610"
+      },
+      "confidence": "authoritative",
+      "excerpt": "can this be url instead of string. check review tsp tool comment",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#45152:review:4862094495:spec:github:Azure/azure-rest-api-specs#45152",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-05T07:37:48Z",
+      "observedAt": "2026-08-05T07:37:48Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#45152",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "nikhgup"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#45152",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/45152#pullrequestreview-4862094495"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#45152:comment:3734624541:spec:github:Azure/azure-rest-api-specs#45152",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-07T08:57:53Z",
+      "observedAt": "2026-08-07T08:57:53Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#45152",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "rohit4637"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#45152",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/45152#discussion_r3734624541"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Kept as plain string (no length/pattern) to match Azure's own DCR contract — the source-of-truth API and a consumer both model it unconstrained: Producer Microsoft.Insights/dataCollectionRules → immutableId : type: string, readOnly , no min",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#45152:review:4881406602:spec:github:Azure/azure-rest-api-specs#45152",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-07T08:57:54Z",
+      "observedAt": "2026-08-07T08:57:54Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#45152",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "rohit4637"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#45152",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/45152#pullrequestreview-4881406602"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#45152:commit:6bddb9b98ca8:spec:github:Azure/azure-rest-api-specs#45152",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-07T13:44:30Z",
+      "observedAt": "2026-08-07T13:44:30Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#45152",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#45152",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/6bddb9b98ca890ab23bcf80fd424e9062953c068"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#45152:comment:5217897851:spec:github:Azure/azure-rest-api-specs#45152",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-07T13:50:22Z",
+      "observedAt": "2026-08-07T13:50:22Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#45152",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "rohit4637"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#45152",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/45152#issuecomment-5217897851"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Ran terminal command: npx tsp compile specification/paloaltonetworks/resource-manager/PaloAltoNetworks.Cloudngfw/Cloudngfw --warn-as-error ✅ **TypeSpec validation passed** — `tsp compile --warn-as-error` completed successfully with no error",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#45152:comment:3737340087:spec:github:Azure/azure-rest-api-specs#45152",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-07T16:45:32Z",
+      "observedAt": "2026-08-07T16:45:32Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#45152",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "nikhgup"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#45152",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/45152#discussion_r3737340087"
+      },
+      "confidence": "authoritative",
+      "excerpt": "can we check what all properties will be part of request from newly added models. if those are read only and set by service, make visibility as read for them",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#45152:review:4884834310:spec:github:Azure/azure-rest-api-specs#45152",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-07T16:45:39Z",
+      "observedAt": "2026-08-07T16:45:39Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#45152",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "nikhgup"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#45152",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/45152#pullrequestreview-4884834310"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#45152:commit:46f6d0000a35:spec:github:Azure/azure-rest-api-specs#45152",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-07T17:22:31Z",
+      "observedAt": "2026-08-07T17:22:31Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#45152",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#45152",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/46f6d0000a3565e5039296934eb6b1f0796fb575"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#45152:comment:5220265370:spec:github:Azure/azure-rest-api-specs#45152",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-07T17:44:12Z",
+      "observedAt": "2026-08-07T17:44:12Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#45152",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "rohit4637"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#45152",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/45152#issuecomment-5220265370"
+      },
+      "confidence": "authoritative",
+      "excerpt": "new commit is autogenerated file, the typespec validation was failing previously, PR: https://github.com/Azure/azure-rest-api-specs/pull/44805 The branch's auto-generated service.yaml manifest was stale — it was missing the 2026-07-29-previ",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#45152:review:4895904564:spec:github:Azure/azure-rest-api-specs#45152",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-10T10:40:22Z",
+      "observedAt": "2026-08-10T10:40:22Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#45152",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "nikhgup"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#45152",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/45152#pullrequestreview-4895904564"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#45152:pr.merged:spec:github:Azure/azure-rest-api-specs#45152",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-10T10:40:25Z",
+      "observedAt": "2026-08-10T10:40:25Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#45152",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#45152",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/45152"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:35972:created",
+      "type": "plan.created",
+      "phase": "plan",
+      "occurredAt": "2026-08-10T10:44:10.18Z",
+      "observedAt": "2026-08-10T10:44:10.18Z",
+      "trackId": "plan",
+      "title": "Release Plan created",
+      "confidence": "authoritative",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35972",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35972"
+      },
+      "stack": 0
+    },
+    {
+      "id": "ado:35972:1:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-08-10T10:44:10.18Z",
+      "observedAt": "2026-08-10T10:44:10.18Z",
+      "trackId": "plan",
+      "value": "New",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35972",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35972"
+      },
+      "title": "Plan state changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35972:1:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-10T10:44:10.18Z",
+      "observedAt": "2026-08-10T10:44:10.18Z",
+      "trackId": "plan",
+      "value": "Not Available",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35972",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35972"
+      },
+      "title": "Spec approval changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:35972:1:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-10T10:44:10.18Z",
+      "observedAt": "2026-08-10T10:44:10.18Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.PaloAltoNetworks.Ngfw",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35972",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35972"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35972:1:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-10T10:44:10.18Z",
+      "observedAt": "2026-08-10T10:44:10.18Z",
+      "trackId": "sdk:JavaScript:@azure/arm-paloaltonetworksngfw",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35972",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35972"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35972:1:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-10T10:44:10.18Z",
+      "observedAt": "2026-08-10T10:44:10.18Z",
+      "trackId": "sdk:Python:azure-mgmt-paloaltonetworksngfw",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35972",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35972"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35972:1:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-10T10:44:10.18Z",
+      "observedAt": "2026-08-10T10:44:10.18Z",
+      "trackId": "sdk:Java:azure-resourcemanager-paloaltonetworks-ngfw",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35972",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35972"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35972:1:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-10T10:44:10.18Z",
+      "observedAt": "2026-08-10T10:44:10.18Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/paloaltonetworksngfw/armpanngfw",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35972",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35972"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35973:1:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-10T10:44:10.58Z",
+      "observedAt": "2026-08-10T10:44:10.58Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#45152",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/45152",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35973",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35973"
+      },
+      "title": "Spec PR linked",
+      "stack": 2
+    },
+    {
+      "id": "ado:35972:2:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-08-10T10:44:11.43Z",
+      "observedAt": "2026-08-10T10:44:11.43Z",
+      "trackId": "plan",
+      "value": "In Progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35972",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35972"
+      },
+      "title": "Plan state changed",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#45152:comment:5239105615:spec:github:Azure/azure-rest-api-specs#45152",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-10T10:44:18Z",
+      "observedAt": "2026-08-10T10:44:18Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#45152",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#45152",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/45152#issuecomment-5239105615"
+      },
+      "confidence": "authoritative",
+      "excerpt": "### ✅ Release Plan Created | Field | Value | |-------|-------| | **Release Plan** | [View Release Plan](https://azsdk-releaseplan-dashboard-hveph5aqhhcfhtgu.westus-01.azurewebsites.net/?releaseplan=35972) | | **API Version** | `2026-07-29-p",
+      "stack": 3
+    },
+    {
+      "id": "ado:35972:4:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-08-10T10:44:28.227Z",
+      "observedAt": "2026-08-10T10:44:28.227Z",
+      "trackId": "plan",
+      "value": "Approved",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35972",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35972"
+      },
+      "title": "Spec approval changed",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6680035:generation.queued:sdk:.NET:Azure.ResourceManager.PaloAltoNetworks.Ngfw",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-08-10T10:49:01.9861716Z",
+      "observedAt": "2026-08-10T10:58:09.0198612Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.PaloAltoNetworks.Ngfw",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6680035",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6680035"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:35972:5:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-10T10:49:06.44Z",
+      "observedAt": "2026-08-10T10:49:06.44Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.PaloAltoNetworks.Ngfw",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35972",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35972"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6680036:generation.queued:sdk:Java:azure-resourcemanager-paloaltonetworks-ngfw",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-08-10T10:49:10.840891Z",
+      "observedAt": "2026-08-10T11:09:47.9231441Z",
+      "trackId": "sdk:Java:azure-resourcemanager-paloaltonetworks-ngfw",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6680036",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6680036"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:35972:6:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-10T10:49:16.667Z",
+      "observedAt": "2026-08-10T10:49:16.667Z",
+      "trackId": "sdk:Java:azure-resourcemanager-paloaltonetworks-ngfw",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35972",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35972"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6680037:generation.queued:sdk:JavaScript:@azure/arm-paloaltonetworksngfw",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-08-10T10:49:21.0103488Z",
+      "observedAt": "2026-08-10T10:58:38.2501265Z",
+      "trackId": "sdk:JavaScript:@azure/arm-paloaltonetworksngfw",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6680037",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6680037"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6680035:generation.started:sdk:.NET:Azure.ResourceManager.PaloAltoNetworks.Ngfw",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-08-10T10:49:22.6852421Z",
+      "observedAt": "2026-08-10T10:58:09.0198612Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.PaloAltoNetworks.Ngfw",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6680035",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6680035"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado:35972:7:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-10T10:49:24.323Z",
+      "observedAt": "2026-08-10T10:49:24.323Z",
+      "trackId": "sdk:JavaScript:@azure/arm-paloaltonetworksngfw",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35972",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35972"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6680038:generation.queued:sdk:Python:azure-mgmt-paloaltonetworksngfw",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-08-10T10:49:28.6357318Z",
+      "observedAt": "2026-08-10T10:57:20.6293811Z",
+      "trackId": "sdk:Python:azure-mgmt-paloaltonetworksngfw",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6680038",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6680038"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6680036:generation.started:sdk:Java:azure-resourcemanager-paloaltonetworks-ngfw",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-08-10T10:49:29.5888858Z",
+      "observedAt": "2026-08-10T11:09:47.9231441Z",
+      "trackId": "sdk:Java:azure-resourcemanager-paloaltonetworks-ngfw",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6680036",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6680036"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado:35972:8:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-10T10:49:32.303Z",
+      "observedAt": "2026-08-10T10:49:32.303Z",
+      "trackId": "sdk:Python:azure-mgmt-paloaltonetworksngfw",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35972",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35972"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6680039:generation.queued:sdk:Go:sdk/resourcemanager/paloaltonetworksngfw/armpanngfw",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-08-10T10:49:36.7363284Z",
+      "observedAt": "2026-08-10T10:56:07.248963Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/paloaltonetworksngfw/armpanngfw",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6680039",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6680039"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:35972:9:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-10T10:49:40.25Z",
+      "observedAt": "2026-08-10T10:49:40.25Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/paloaltonetworksngfw/armpanngfw",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35972",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35972"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6680037:generation.started:sdk:JavaScript:@azure/arm-paloaltonetworksngfw",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-08-10T10:49:41.9559672Z",
+      "observedAt": "2026-08-10T10:58:38.2501265Z",
+      "trackId": "sdk:JavaScript:@azure/arm-paloaltonetworksngfw",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6680037",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6680037"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6680038:generation.started:sdk:Python:azure-mgmt-paloaltonetworksngfw",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-08-10T10:49:47.2769804Z",
+      "observedAt": "2026-08-10T10:57:20.6293811Z",
+      "trackId": "sdk:Python:azure-mgmt-paloaltonetworksngfw",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6680038",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6680038"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6680039:generation.started:sdk:Go:sdk/resourcemanager/paloaltonetworksngfw/armpanngfw",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-08-10T10:49:52.3731502Z",
+      "observedAt": "2026-08-10T10:56:07.248963Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/paloaltonetworksngfw/armpanngfw",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6680039",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6680039"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27361:commit:aac57c46b41e:sdk:Go:sdk/resourcemanager/paloaltonetworksngfw/armpanngfw",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-10T10:54:54Z",
+      "observedAt": "2026-08-10T10:54:54Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/paloaltonetworksngfw/armpanngfw",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27361",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/aac57c46b41e04cf83015c8b973531179f7d3c43"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27361:pr.created:sdk:Go:sdk/resourcemanager/paloaltonetworksngfw/armpanngfw",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-10T10:54:59Z",
+      "observedAt": "2026-08-10T10:54:59Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/paloaltonetworksngfw/armpanngfw",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27361",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27361"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:35972:10:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-10T10:55:07.7Z",
+      "observedAt": "2026-08-10T10:55:07.7Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/paloaltonetworksngfw/armpanngfw",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35972",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35972"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35972:10:Custom.SDKPullRequestForGo",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-08-10T10:55:07.7Z",
+      "observedAt": "2026-08-10T10:55:07.7Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/paloaltonetworksngfw/armpanngfw",
+      "value": "https://github.com/Azure/azure-sdk-for-go/pull/27361",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35972",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35972"
+      },
+      "title": "SDK PR linked",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27361:comment:5239204604:sdk:Go:sdk/resourcemanager/paloaltonetworksngfw/armpanngfw",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-10T10:55:30Z",
+      "observedAt": "2026-08-10T10:55:30Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/paloaltonetworksngfw/armpanngfw",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27361",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27361#issuecomment-5239204604"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 6 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48512:commit:1e3d4fd9abcf:sdk:Python:azure-mgmt-paloaltonetworksngfw",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-10T10:56:06Z",
+      "observedAt": "2026-08-10T10:56:06Z",
+      "trackId": "sdk:Python:azure-mgmt-paloaltonetworksngfw",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48512",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/1e3d4fd9abcfb12553f77926ef9b4f87b8ff1dbc"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6680039:generation.completed:sdk:Go:sdk/resourcemanager/paloaltonetworksngfw/armpanngfw",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-08-10T10:56:07.248963Z",
+      "observedAt": "2026-08-10T10:56:07.248963Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/paloaltonetworksngfw/armpanngfw",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6680039",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6680039"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48512:pr.created:sdk:Python:azure-mgmt-paloaltonetworksngfw",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-10T10:56:10Z",
+      "observedAt": "2026-08-10T10:56:10Z",
+      "trackId": "sdk:Python:azure-mgmt-paloaltonetworksngfw",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48512",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48512"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:35972:11:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-10T10:56:18.057Z",
+      "observedAt": "2026-08-10T10:56:18.057Z",
+      "trackId": "sdk:Python:azure-mgmt-paloaltonetworksngfw",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35972",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35972"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35972:11:Custom.SDKPullRequestForPython",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-08-10T10:56:18.057Z",
+      "observedAt": "2026-08-10T10:56:18.057Z",
+      "trackId": "sdk:Python:azure-mgmt-paloaltonetworksngfw",
+      "value": "https://github.com/Azure/azure-sdk-for-python/pull/48512",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35972",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35972"
+      },
+      "title": "SDK PR linked",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27361:comment:3748838358:sdk:Go:sdk/resourcemanager/paloaltonetworksngfw/armpanngfw",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-10T10:56:41Z",
+      "observedAt": "2026-08-10T10:56:41Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/paloaltonetworksngfw/armpanngfw",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27361",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27361#discussion_r3748838358"
+      },
+      "confidence": "authoritative",
+      "excerpt": "New public clients/APIs are being introduced, but there are no corresponding new `*_example_test.go` snippets in this diff to ensure they compile and demonstrate usage (this repo already relies on example tests heavily for generated package",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27361:comment:3748838399:sdk:Go:sdk/resourcemanager/paloaltonetworksngfw/armpanngfw",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-10T10:56:41Z",
+      "observedAt": "2026-08-10T10:56:41Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/paloaltonetworksngfw/armpanngfw",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27361",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27361#discussion_r3748838399"
+      },
+      "confidence": "authoritative",
+      "excerpt": "New public clients/APIs are being introduced, but there are no corresponding new `*_example_test.go` snippets in this diff to ensure they compile and demonstrate usage (this repo already relies on example tests heavily for generated package",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27361:review:4896018974:sdk:Go:sdk/resourcemanager/paloaltonetworksngfw/armpanngfw",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-10T10:56:42Z",
+      "observedAt": "2026-08-10T10:56:42Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/paloaltonetworksngfw/armpanngfw",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27361",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27361#pullrequestreview-4896018974"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview > [!NOTE] > Copilot could not run the full agentic suite for this review because it was automatically requested on a bot-authored pull request. Request a review from Copilot under Reviewers to retry with the full ag",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48512:comment:5239217556:sdk:Python:azure-mgmt-paloaltonetworksngfw",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-10T10:56:52Z",
+      "observedAt": "2026-08-10T10:56:52Z",
+      "trackId": "sdk:Python:azure-mgmt-paloaltonetworksngfw",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48512",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48512#issuecomment-5239217556"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 10 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61867:commit:050e2bcb046d:sdk:.NET:Azure.ResourceManager.PaloAltoNetworks.Ngfw",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-10T10:57:01Z",
+      "observedAt": "2026-08-10T10:57:01Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.PaloAltoNetworks.Ngfw",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61867",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/050e2bcb046df2ebe019d7d15eb5fecb06e36e47"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61867:pr.created:sdk:.NET:Azure.ResourceManager.PaloAltoNetworks.Ngfw",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-10T10:57:06Z",
+      "observedAt": "2026-08-10T10:57:06Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.PaloAltoNetworks.Ngfw",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61867",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61867"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:35972:12:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-10T10:57:13.05Z",
+      "observedAt": "2026-08-10T10:57:13.05Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.PaloAltoNetworks.Ngfw",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35972",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35972"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35972:12:Custom.SDKPullRequestForDotnet",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-08-10T10:57:13.05Z",
+      "observedAt": "2026-08-10T10:57:13.05Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.PaloAltoNetworks.Ngfw",
+      "value": "https://github.com/Azure/azure-sdk-for-net/pull/61867",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35972",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35972"
+      },
+      "title": "SDK PR linked",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6680038:generation.completed:sdk:Python:azure-mgmt-paloaltonetworksngfw",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-08-10T10:57:20.6293811Z",
+      "observedAt": "2026-08-10T10:57:20.6293811Z",
+      "trackId": "sdk:Python:azure-mgmt-paloaltonetworksngfw",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6680038",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6680038"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39546:commit:f4a632a21d0c:sdk:JavaScript:@azure/arm-paloaltonetworksngfw",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-10T10:57:31Z",
+      "observedAt": "2026-08-10T10:57:31Z",
+      "trackId": "sdk:JavaScript:@azure/arm-paloaltonetworksngfw",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39546",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/f4a632a21d0cb8d9b179d201e0f7f0d8d5fae88b"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39546:pr.created:sdk:JavaScript:@azure/arm-paloaltonetworksngfw",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-10T10:57:36Z",
+      "observedAt": "2026-08-10T10:57:36Z",
+      "trackId": "sdk:JavaScript:@azure/arm-paloaltonetworksngfw",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39546",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39546"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39546:review:4896026100:sdk:JavaScript:@azure/arm-paloaltonetworksngfw",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-10T10:57:44Z",
+      "observedAt": "2026-08-10T10:57:44Z",
+      "trackId": "sdk:JavaScript:@azure/arm-paloaltonetworksngfw",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39546",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39546#pullrequestreview-4896026100"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot wasn't able to review this pull request because it exceeds the maximum number of files (300). Try reducing the number of changed files and requesting a review from Copilot again.",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61867:comment:5239225169:sdk:.NET:Azure.ResourceManager.PaloAltoNetworks.Ngfw",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-10T10:57:45Z",
+      "observedAt": "2026-08-10T10:57:45Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.PaloAltoNetworks.Ngfw",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61867",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61867#issuecomment-5239225169"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 11 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 2
+    },
+    {
+      "id": "ado:35972:13:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-10T10:57:45.153Z",
+      "observedAt": "2026-08-10T10:57:45.153Z",
+      "trackId": "sdk:JavaScript:@azure/arm-paloaltonetworksngfw",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35972",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35972"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35972:13:Custom.SDKPullRequestForJavaScript",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-08-10T10:57:45.153Z",
+      "observedAt": "2026-08-10T10:57:45.153Z",
+      "trackId": "sdk:JavaScript:@azure/arm-paloaltonetworksngfw",
+      "value": "https://github.com/Azure/azure-sdk-for-js/pull/39546",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35972",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35972"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6680035:generation.completed:sdk:.NET:Azure.ResourceManager.PaloAltoNetworks.Ngfw",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-08-10T10:58:09.0198612Z",
+      "observedAt": "2026-08-10T10:58:09.0198612Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.PaloAltoNetworks.Ngfw",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6680035",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6680035"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39546:comment:5239229779:sdk:JavaScript:@azure/arm-paloaltonetworksngfw",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-10T10:58:16Z",
+      "observedAt": "2026-08-10T10:58:16Z",
+      "trackId": "sdk:JavaScript:@azure/arm-paloaltonetworksngfw",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39546",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39546#issuecomment-5239229779"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 10 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48512:comment:3748851950:sdk:Python:azure-mgmt-paloaltonetworksngfw",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-10T10:58:33Z",
+      "observedAt": "2026-08-10T10:58:33Z",
+      "trackId": "sdk:Python:azure-mgmt-paloaltonetworksngfw",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48512",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48512#discussion_r3748851950"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`_deserialize_bool_as_str` calls `lower()` on `attr` without verifying it’s a string, which will raise `AttributeError` if the service (or client input) provides a non-string non-bool value (e.g., `None`, `0/1`, etc.). Consider guarding wit",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48512:comment:3748852018:sdk:Python:azure-mgmt-paloaltonetworksngfw",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-10T10:58:33Z",
+      "observedAt": "2026-08-10T10:58:33Z",
+      "trackId": "sdk:Python:azure-mgmt-paloaltonetworksngfw",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48512",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48512#discussion_r3748852018"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This release also changes the client default `api_version` (from `2026-05-11-preview` to `2026-07-29-preview` in both sync and async configurations). That can change wire behavior for existing users who relied on the previous default, so it",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48512:review:4896031704:sdk:Python:azure-mgmt-paloaltonetworksngfw",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-10T10:58:34Z",
+      "observedAt": "2026-08-10T10:58:34Z",
+      "trackId": "sdk:Python:azure-mgmt-paloaltonetworksngfw",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48512",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48512#pullrequestreview-4896031704"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview > [!NOTE] > Copilot could not run the full agentic suite for this review because it was automatically requested on a bot-authored pull request. Request a review from Copilot under Reviewers to retry with the full ag",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6680037:generation.completed:sdk:JavaScript:@azure/arm-paloaltonetworksngfw",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-08-10T10:58:38.2501265Z",
+      "observedAt": "2026-08-10T10:58:38.2501265Z",
+      "trackId": "sdk:JavaScript:@azure/arm-paloaltonetworksngfw",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6680037",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6680037"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50079:commit:295f5a390755:sdk:Java:azure-resourcemanager-paloaltonetworks-ngfw",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-10T10:58:50Z",
+      "observedAt": "2026-08-10T10:58:50Z",
+      "trackId": "sdk:Java:azure-resourcemanager-paloaltonetworks-ngfw",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50079",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/295f5a390755141856aa2f23468d8436e5b2629e"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50079:pr.created:sdk:Java:azure-resourcemanager-paloaltonetworks-ngfw",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-10T10:58:55Z",
+      "observedAt": "2026-08-10T10:58:55Z",
+      "trackId": "sdk:Java:azure-resourcemanager-paloaltonetworks-ngfw",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50079",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/50079"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50079:review:4896035977:sdk:Java:azure-resourcemanager-paloaltonetworks-ngfw",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-10T10:59:02Z",
+      "observedAt": "2026-08-10T10:59:02Z",
+      "trackId": "sdk:Java:azure-resourcemanager-paloaltonetworks-ngfw",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50079",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/50079#pullrequestreview-4896035977"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot wasn't able to review this pull request because it exceeds the maximum number of files (300). Try reducing the number of changed files and requesting a review from Copilot again.",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "ado:35972:14:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-08-10T10:59:02.913Z",
+      "observedAt": "2026-08-10T10:59:02.913Z",
+      "trackId": "sdk:Java:azure-resourcemanager-paloaltonetworks-ngfw",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35972",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35972"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35972:14:Custom.SDKPullRequestForJava",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-08-10T10:59:02.913Z",
+      "observedAt": "2026-08-10T10:59:02.913Z",
+      "trackId": "sdk:Java:azure-resourcemanager-paloaltonetworks-ngfw",
+      "value": "https://github.com/Azure/azure-sdk-for-java/pull/50079",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35972",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35972"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61867:review:4896037101:sdk:.NET:Azure.ResourceManager.PaloAltoNetworks.Ngfw",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-10T10:59:13Z",
+      "observedAt": "2026-08-10T10:59:13Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.PaloAltoNetworks.Ngfw",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61867",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61867#pullrequestreview-4896037101"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview > [!NOTE] > Copilot could not run the full agentic suite for this review because it was automatically requested on a bot-authored pull request. Request a review from Copilot under Reviewers to retry with the full ag",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61867:comment:3748856797:sdk:.NET:Azure.ResourceManager.PaloAltoNetworks.Ngfw",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-10T10:59:13Z",
+      "observedAt": "2026-08-10T10:59:13Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.PaloAltoNetworks.Ngfw",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61867",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61867#discussion_r3748856797"
+      },
+      "confidence": "authoritative",
+      "excerpt": "After `pcapFilter ??=` / `pcapStages ??=`, the subsequent null-coalescing checks are redundant. Simplifying to `pcapFilter.ToList()` and `pcapStages.ToList()` (or similar) reduces noise and makes the factory easier to read/maintain without ",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50079:comment:5239242686:sdk:Java:azure-resourcemanager-paloaltonetworks-ngfw",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-10T10:59:41Z",
+      "observedAt": "2026-08-10T10:59:41Z",
+      "trackId": "sdk:Java:azure-resourcemanager-paloaltonetworks-ngfw",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50079",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/50079#issuecomment-5239242686"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 35 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50079:comment:5239287520:sdk:Java:azure-resourcemanager-paloaltonetworks-ngfw",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-10T11:04:37Z",
+      "observedAt": "2026-08-10T11:04:37Z",
+      "trackId": "sdk:Java:azure-resourcemanager-paloaltonetworks-ngfw",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50079",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/50079#issuecomment-5239287520"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Automated management AutoPR review - Head SHA: `295f5a390755141856aa2f23468d8436e5b2629e` - Package: `azure-resourcemanager-paloaltonetworks-ngfw` - Release type: `beta` - API version: `2026-07-29-preview` - CHANGELOG: `1.4.0-beta.1 (202",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6680036:generation.completed:sdk:Java:azure-resourcemanager-paloaltonetworks-ngfw",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-08-10T11:09:47.9231441Z",
+      "observedAt": "2026-08-10T11:09:47.9231441Z",
+      "trackId": "sdk:Java:azure-resourcemanager-paloaltonetworks-ngfw",
+      "title": "Pipeline completed with issues",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6680036",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6680036"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39546:comment:5239418887:sdk:JavaScript:@azure/arm-paloaltonetworksngfw",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-10T11:17:42Z",
+      "observedAt": "2026-08-10T11:17:42Z",
+      "trackId": "sdk:JavaScript:@azure/arm-paloaltonetworksngfw",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39546",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39546#issuecomment-5239418887"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Next Steps to Merge ✅ All CI checks have passed — this PR is ready for review! The SDK engineer will review this PR shortly. Once it's approved, you can go ahead and merge it. To make things easier, feel free to [enable auto-merge](https",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61867:review:4896299363:sdk:.NET:Azure.ResourceManager.PaloAltoNetworks.Ngfw",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-10T11:37:08Z",
+      "observedAt": "2026-08-10T11:37:08Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.PaloAltoNetworks.Ngfw",
+      "title": "Changes requested",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61867",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61867#pullrequestreview-4896299363"
+      },
+      "confidence": "authoritative",
+      "excerpt": "### Management SDK Review Summary - **Scope**: `Azure.ResourceManager.PaloAltoNetworks.Ngfw` (TypeSpec-backed, beta refresh to `2026-07-29-preview`) - **Versioning**: ✅ Pass — version bumped to `1.3.0-beta.1`, `ApiCompatVersion` = `1.2.1`, ",
+      "reviewState": "changes_requested",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27361:comment:5247852159:sdk:Go:sdk/resourcemanager/paloaltonetworksngfw/armpanngfw",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T01:04:50Z",
+      "observedAt": "2026-08-11T01:04:50Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/paloaltonetworksngfw/armpanngfw",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27361",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27361#issuecomment-5247852159"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## PR is ready to merge",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50079:review:4902308806:sdk:Java:azure-resourcemanager-paloaltonetworks-ngfw",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T01:35:50Z",
+      "observedAt": "2026-08-11T01:35:50Z",
+      "trackId": "sdk:Java:azure-resourcemanager-paloaltonetworks-ngfw",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50079",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/50079#pullrequestreview-4902308806"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27361:review:4902398798:sdk:Go:sdk/resourcemanager/paloaltonetworksngfw/armpanngfw",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T02:01:38Z",
+      "observedAt": "2026-08-11T02:01:38Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/paloaltonetworksngfw/armpanngfw",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "JiaqiZhang-Dev"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27361",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27361#pullrequestreview-4902398798"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48512:comment:5248251342:sdk:Python:azure-mgmt-paloaltonetworksngfw",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T02:15:12Z",
+      "observedAt": "2026-08-11T02:15:12Z",
+      "trackId": "sdk:Python:azure-mgmt-paloaltonetworksngfw",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48512",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48512#issuecomment-5248251342"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi, the new api version `2026-07-29-preview` seems not deployed on portal yet, we recommend making sure the api version to be deployed before releasing the SDK, though we won't block the release in self-serve release flow.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48512:review:4902446947:sdk:Python:azure-mgmt-paloaltonetworksngfw",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T02:15:36Z",
+      "observedAt": "2026-08-11T02:15:36Z",
+      "trackId": "sdk:Python:azure-mgmt-paloaltonetworksngfw",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48512",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48512#pullrequestreview-4902446947"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @rohit4637, we have approved the PR. You can move on to merge and release though the action suggestion in Release Plan.",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48512:comment:5248287987:sdk:Python:azure-mgmt-paloaltonetworksngfw",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T02:21:38Z",
+      "observedAt": "2026-08-11T02:21:38Z",
+      "trackId": "sdk:Python:azure-mgmt-paloaltonetworksngfw",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48512",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48512#issuecomment-5248287987"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Management SDK PR review **Findings:** None. ### Unverified checks **Unverified checks:** None. ### Review summary **Affected package:** `sdk/paloaltonetworks/azure-mgmt-paloaltonetworksngfw` Checks completed: - API version drift: unchan",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#48512:review:4902598511:sdk:Python:azure-mgmt-paloaltonetworksngfw",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T02:58:08Z",
+      "observedAt": "2026-08-11T02:58:08Z",
+      "trackId": "sdk:Python:azure-mgmt-paloaltonetworksngfw",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#48512",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/48512#pullrequestreview-4902598511"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39546:review:4902601576:sdk:JavaScript:@azure/arm-paloaltonetworksngfw",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T02:58:41Z",
+      "observedAt": "2026-08-11T02:58:41Z",
+      "trackId": "sdk:JavaScript:@azure/arm-paloaltonetworksngfw",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39546",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39546#pullrequestreview-4902601576"
+      },
+      "confidence": "authoritative",
+      "excerpt": "No API design or tooling issues found for `@azure/arm-paloaltonetworksngfw` (2.0.0-beta.2). Package version, context file version (2.0.0-beta.2), and CHANGELOG.md are consistent; the new api-version 2026-07-29-preview is strictly newer than",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39546:review:4903391267:sdk:JavaScript:@azure/arm-paloaltonetworksngfw",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T06:09:11Z",
+      "observedAt": "2026-08-11T06:09:11Z",
+      "trackId": "sdk:JavaScript:@azure/arm-paloaltonetworksngfw",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39546",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39546#pullrequestreview-4903391267"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Reviewed `@azure/arm-paloaltonetworksngfw` PR #39546 (2.0.0-beta.2). Package version, context file, and CHANGELOG versions are consistent; the new `api-version` (`2026-07-29-preview`) is strictly newer than the prior `2026-05-11-preview`; n",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39546:comment:3755618527:sdk:JavaScript:@azure/arm-paloaltonetworksngfw",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T06:09:11Z",
+      "observedAt": "2026-08-11T06:09:11Z",
+      "trackId": "sdk:JavaScript:@azure/arm-paloaltonetworksngfw",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39546",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39546#discussion_r3755618527"
+      },
+      "confidence": "authoritative",
+      "excerpt": "🔵 **Suggestion** — `review/arm-paloaltonetworksngfw-node.api.md:1526` `listProductSerialNumberStatus` return type changed from `Promise<ProductSerialNumberStatus | undefined>` to `Promise<ProductSerialNumberStatus | void>`, and this is lis",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39546:comment:5250677600:sdk:JavaScript:@azure/arm-paloaltonetworksngfw",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T08:14:15Z",
+      "observedAt": "2026-08-11T08:14:15Z",
+      "trackId": "sdk:JavaScript:@azure/arm-paloaltonetworksngfw",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39546",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39546#issuecomment-5250677600"
+      },
+      "confidence": "authoritative",
+      "excerpt": "LGTM cc @JialinHuang803",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39546:review:4904418487:sdk:JavaScript:@azure/arm-paloaltonetworksngfw",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T08:43:36Z",
+      "observedAt": "2026-08-11T08:43:36Z",
+      "trackId": "sdk:JavaScript:@azure/arm-paloaltonetworksngfw",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "JialinHuang803"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39546",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39546#pullrequestreview-4904418487"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50079:comment:5269322072:sdk:Java:azure-resourcemanager-paloaltonetworks-ngfw",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T16:06:29Z",
+      "observedAt": "2026-08-12T16:06:29Z",
+      "trackId": "sdk:Java:azure-resourcemanager-paloaltonetworks-ngfw",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50079",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/50079#issuecomment-5269322072"
+      },
+      "confidence": "authoritative",
+      "excerpt": "/azp run java - paloaltonetworks - mgmt - tests",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50079:comment:5269326020:sdk:Java:azure-resourcemanager-paloaltonetworks-ngfw",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T16:06:51Z",
+      "observedAt": "2026-08-12T16:06:51Z",
+      "trackId": "sdk:Java:azure-resourcemanager-paloaltonetworks-ngfw",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50079",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/50079#issuecomment-5269326020"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> </samp>",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#50079:comment:5269657019:sdk:Java:azure-resourcemanager-paloaltonetworks-ngfw",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-12T16:38:59Z",
+      "observedAt": "2026-08-12T16:38:59Z",
+      "trackId": "sdk:Java:azure-resourcemanager-paloaltonetworks-ngfw",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#50079",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/50079#issuecomment-5269657019"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Live test failed due to api-version not in list of supported api-versions.",
+      "stack": 2
+    }
+  ],
+  "quality": {
+    "warnings": [
+      "5 historical linked PR(s) closed without merge"
+    ],
+    "unavailablePullRequests": 0,
+    "unavailablePipelineRuns": 0
+  },
+  "boundaryFacts": {
+    "id": "35972",
+    "state": "in-progress",
+    "specPrs": [
+      {
+        "id": "github:Azure/azure-rest-api-specs#45152",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#45152",
+        "createdAt": "2026-07-30T21:46:48Z",
+        "mergedAt": "2026-08-10T10:40:25Z",
+        "closedAt": "2026-08-10T10:40:25Z",
+        "available": true
+      }
+    ],
+    "artifacts": [
+      {
+        "language": ".NET",
+        "package": "Azure.ResourceManager.PaloAltoNetworks.Ngfw",
+        "trackId": "sdk:.NET:Azure.ResourceManager.PaloAltoNetworks.Ngfw",
+        "prId": "github:Azure/azure-sdk-for-net#61867",
+        "prCreatedAt": "2026-08-10T10:57:06Z",
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-net#61867",
+            "createdAt": "2026-08-10T10:57:06Z",
+            "mergedAt": null,
+            "closedAt": null,
+            "state": "open"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6680035",
+        "generationStartAt": "2026-08-10T10:49:22.6852421Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "JavaScript",
+        "package": "@azure/arm-paloaltonetworksngfw",
+        "trackId": "sdk:JavaScript:@azure/arm-paloaltonetworksngfw",
+        "prId": "github:Azure/azure-sdk-for-js#39546",
+        "prCreatedAt": "2026-08-10T10:57:36Z",
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-js#39546",
+            "createdAt": "2026-08-10T10:57:36Z",
+            "mergedAt": null,
+            "closedAt": null,
+            "state": "open"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6680037",
+        "generationStartAt": "2026-08-10T10:49:41.9559672Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Python",
+        "package": "azure-mgmt-paloaltonetworksngfw",
+        "trackId": "sdk:Python:azure-mgmt-paloaltonetworksngfw",
+        "prId": "github:Azure/azure-sdk-for-python#48512",
+        "prCreatedAt": "2026-08-10T10:56:10Z",
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-python#48512",
+            "createdAt": "2026-08-10T10:56:10Z",
+            "mergedAt": null,
+            "closedAt": null,
+            "state": "open"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6680038",
+        "generationStartAt": "2026-08-10T10:49:47.2769804Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Java",
+        "package": "azure-resourcemanager-paloaltonetworks-ngfw",
+        "trackId": "sdk:Java:azure-resourcemanager-paloaltonetworks-ngfw",
+        "prId": "github:Azure/azure-sdk-for-java#50079",
+        "prCreatedAt": "2026-08-10T10:58:55Z",
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-java#50079",
+            "createdAt": "2026-08-10T10:58:55Z",
+            "mergedAt": null,
+            "closedAt": null,
+            "state": "open"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6680036",
+        "generationStartAt": "2026-08-10T10:49:29.5888858Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Go",
+        "package": "sdk/resourcemanager/paloaltonetworksngfw/armpanngfw",
+        "trackId": "sdk:Go:sdk/resourcemanager/paloaltonetworksngfw/armpanngfw",
+        "prId": "github:Azure/azure-sdk-for-go#27361",
+        "prCreatedAt": "2026-08-10T10:54:59Z",
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-go#27361",
+            "createdAt": "2026-08-10T10:54:59Z",
+            "mergedAt": null,
+            "closedAt": null,
+            "state": "open"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6680039",
+        "generationStartAt": "2026-08-10T10:49:52.3731502Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      }
+    ],
+    "cohortPlan": {
+      "id": "35972",
+      "releasePlanId": "35972",
+      "title": "Public Preview release plan for Cloudngfw",
+      "service": "Cloudngfw",
+      "state": "in-progress"
+    },
+    "quality": {
+      "warnings": [
+        "5 historical linked PR(s) closed without merge"
+      ],
+      "unavailablePullRequests": 0,
+      "unavailablePipelineRuns": 0
+    }
+  },
+  "summary": {
+    "durationHours": 85.9,
+    "pullRequestCount": 6,
+    "humanReviewCount": 9,
+    "humanCommentCount": 13
+  }
+}

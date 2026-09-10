@@ -1,0 +1,4523 @@
+{
+  "schemaVersion": 2,
+  "id": "33630",
+  "correlation": {
+    "policyVersion": 1,
+    "preflight": "passed"
+  },
+  "releasePlanId": "2145",
+  "title": "Release Plan - 2145 - Public Preview - Service Groups",
+  "service": "Service Groups",
+  "product": "Release",
+  "path": "specification/management/resource-manager/Microsoft.Management/ServiceGroups",
+  "state": "finished",
+  "plane": "management",
+  "releaseType": "APEX Public Preview",
+  "intendedMonth": "April 2026",
+  "createdAt": "2026-03-27T16:40:03.973Z",
+  "completedAt": "2026-04-28T14:31:55.657Z",
+  "sourceUrl": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630",
+  "range": {
+    "start": "2026-03-24T08:39:13.000Z",
+    "end": "2026-06-05T09:49:27.000Z"
+  },
+  "intendedArtifacts": [
+    {
+      "prId": "github:Azure/azure-sdk-for-net#58602",
+      "language": ".NET",
+      "package": "Azure.ResourceManager.ServiceGroups",
+      "version": "1.0.0-beta.2",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6199046",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-js#37879",
+      "language": "JavaScript",
+      "package": "@azure/arm-servicegroups",
+      "version": "1.0.0-beta.2",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6199047",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-python#45969",
+      "language": "Python",
+      "package": "azure-mgmt-servicegroups",
+      "version": "1.0.0b1",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6199045",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-java#48613",
+      "language": "Java",
+      "package": "azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "version": "1.0.0-beta.2",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6199048",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-go#26438",
+      "language": "Go",
+      "package": "sdk/resourcemanager/servicegroups/armservicegroups",
+      "version": "0.1.0",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6199049",
+      "releasePipelineUrl": null
+    }
+  ],
+  "links": [
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#41688",
+      "role": "spec-pr",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/41688",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-net#58602",
+      "role": "sdk-pr",
+      "language": ".NET",
+      "url": "https://github.com/Azure/azure-sdk-for-net/pull/58602",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-js#37879",
+      "role": "sdk-pr",
+      "language": "JavaScript",
+      "url": "https://github.com/Azure/azure-sdk-for-js/pull/37879",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-js#38262",
+      "role": "sdk-pr-history",
+      "language": "JavaScript",
+      "url": "https://github.com/Azure/azure-sdk-for-js/pull/38262",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-python#45968",
+      "role": "sdk-pr-history",
+      "language": "Python",
+      "url": "https://github.com/Azure/azure-sdk-for-python/pull/45968",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-python#45969",
+      "role": "sdk-pr",
+      "language": "Python",
+      "url": "https://github.com/Azure/azure-sdk-for-python/pull/45969",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-java#48613",
+      "role": "sdk-pr",
+      "language": "Java",
+      "url": "https://github.com/Azure/azure-sdk-for-java/pull/48613",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-java#48614",
+      "role": "sdk-pr-history",
+      "language": "Java",
+      "url": "https://github.com/Azure/azure-sdk-for-java/pull/48614",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-java#48911",
+      "role": "sdk-pr-history",
+      "language": "Java",
+      "url": "https://github.com/Azure/azure-sdk-for-java/pull/48911",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-go#26438",
+      "role": "sdk-pr",
+      "language": "Go",
+      "url": "https://github.com/Azure/azure-sdk-for-go/pull/26438",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-go#26660",
+      "role": "sdk-pr-history",
+      "language": "Go",
+      "url": "https://github.com/Azure/azure-sdk-for-go/pull/26660",
+      "releasePlanIds": []
+    }
+  ],
+  "tracks": [
+    {
+      "id": "plan",
+      "kind": "plan",
+      "label": "Release Plan",
+      "detail": "APEX Public Preview"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#41688",
+      "kind": "spec",
+      "label": "Spec PR",
+      "detail": "azure-rest-api-specs #41688",
+      "artifactId": "github:Azure/azure-rest-api-specs#41688",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:.NET:Azure.ResourceManager.ServiceGroups",
+      "kind": "sdk",
+      "label": ".NET",
+      "detail": "Azure.ResourceManager.ServiceGroups",
+      "artifactId": "github:Azure/azure-sdk-for-net#58602",
+      "state": "closed"
+    },
+    {
+      "id": "sdk:JavaScript:@azure/arm-servicegroups",
+      "kind": "sdk",
+      "label": "JavaScript",
+      "detail": "@azure/arm-servicegroups",
+      "artifactId": "github:Azure/azure-sdk-for-js#37879",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Python:azure-mgmt-servicegroups",
+      "kind": "sdk",
+      "label": "Python",
+      "detail": "azure-mgmt-servicegroups",
+      "artifactId": "github:Azure/azure-sdk-for-python#45969",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "kind": "sdk",
+      "label": "Java",
+      "detail": "azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "artifactId": "github:Azure/azure-sdk-for-java#48613",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Go:sdk/resourcemanager/servicegroups/armservicegroups",
+      "kind": "sdk",
+      "label": "Go",
+      "detail": "sdk/resourcemanager/servicegroups/armservicegroups",
+      "artifactId": "github:Azure/azure-sdk-for-go#26438",
+      "state": "merged"
+    }
+  ],
+  "events": [
+    {
+      "id": "github:Azure/azure-rest-api-specs#41688:pr.created:spec:github:Azure/azure-rest-api-specs#41688",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-24T08:39:13Z",
+      "observedAt": "2026-03-24T08:39:13Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41688",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "pshao25"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41688",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41688"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41688:comment:4116369095:spec:github:Azure/azure-rest-api-specs#41688",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-24T08:39:49Z",
+      "observedAt": "2026-03-24T08:39:49Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41688",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41688",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41688#issuecomment-4116369095"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>✅ All automated merging requirements have been met! To get your PR merged, see <a href=\"https://aka.ms/azsdk/specreview/merge\">aka.ms/azsdk/specreview/merge</a>.<br /><br />Comment generated by <a href=\"https://g",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41688:commit:792d6a437815:spec:github:Azure/azure-rest-api-specs#41688",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-24T08:44:00Z",
+      "observedAt": "2026-03-24T08:44:00Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41688",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41688",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/792d6a437815747c17dd68129d3063fd545571e3"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41688:commit:886257755bd2:spec:github:Azure/azure-rest-api-specs#41688",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-25T03:34:11Z",
+      "observedAt": "2026-03-25T03:34:11Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41688",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41688",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/886257755bd2bb8e5d02dc65cd8dac2791226f58"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41688:commit:d1a47432006e:spec:github:Azure/azure-rest-api-specs#41688",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-25T05:02:40Z",
+      "observedAt": "2026-03-25T05:02:40Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41688",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "v-huizhu2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41688",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/d1a47432006eb774fa56cd079bf4f044623026dc"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41688:commit:447eaac1e5d6:spec:github:Azure/azure-rest-api-specs#41688",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-25T05:05:35Z",
+      "observedAt": "2026-03-25T05:05:35Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41688",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "v-huizhu2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41688",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/447eaac1e5d6e0d78c5eefae60fc2b20331b737c"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41688:review:4004055587:spec:github:Azure/azure-rest-api-specs#41688",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-25T05:29:32Z",
+      "observedAt": "2026-03-25T05:29:32Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41688",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41688",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41688#pullrequestreview-4004055587"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41688:comment:2985865659:spec:github:Azure/azure-rest-api-specs#41688",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-25T05:29:32Z",
+      "observedAt": "2026-03-25T05:29:32Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41688",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41688",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41688#discussion_r2985865659"
+      },
+      "confidence": "authoritative",
+      "excerpt": "```suggestion ``` `azure-mgmt-servicegroups` is not released so we don't need validate this package. @ChenxiJiang333",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41688:commit:d07a945627dd:spec:github:Azure/azure-rest-api-specs#41688",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-25T05:29:38Z",
+      "observedAt": "2026-03-25T05:29:38Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41688",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41688",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/d07a945627dd71851d6125728022272905bbeb8b"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41688:commit:639a379997d8:spec:github:Azure/azure-rest-api-specs#41688",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-25T05:29:57Z",
+      "observedAt": "2026-03-25T05:29:57Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41688",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41688",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/639a379997d804fbdf55319ca2bccae422e361fc"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41688:commit:7a7b191094f0:spec:github:Azure/azure-rest-api-specs#41688",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-25T05:41:25Z",
+      "observedAt": "2026-03-25T05:41:25Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41688",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41688",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/7a7b191094f0df955862d8a8724e97743bc2c194"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41688:review:4004251674:spec:github:Azure/azure-rest-api-specs#41688",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-25T06:11:04Z",
+      "observedAt": "2026-03-25T06:11:04Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41688",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41688",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41688#pullrequestreview-4004251674"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41688:comment:2986033692:spec:github:Azure/azure-rest-api-specs#41688",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-25T06:11:04Z",
+      "observedAt": "2026-03-25T06:11:04Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41688",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41688",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41688#discussion_r2986033692"
+      },
+      "confidence": "authoritative",
+      "excerpt": "ok, got it",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41688:commit:01d76eb644d5:spec:github:Azure/azure-rest-api-specs#41688",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-25T06:30:27Z",
+      "observedAt": "2026-03-25T06:30:27Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41688",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41688",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/01d76eb644d5dc98b40d1b5d1179d322a48646b6"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41688:commit:d9e3488c9c11:spec:github:Azure/azure-rest-api-specs#41688",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-25T07:58:15Z",
+      "observedAt": "2026-03-25T07:58:15Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41688",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "v-huizhu2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41688",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/d9e3488c9c113d038701a4072bf92bd92d642ce8"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41688:commit:f53005f92913:spec:github:Azure/azure-rest-api-specs#41688",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-25T08:00:57Z",
+      "observedAt": "2026-03-25T08:00:57Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41688",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "v-huizhu2"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41688",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/f53005f92913f95eae3b7fffa2e8ef0fca2a631b"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41688:commit:edd609dab6f3:spec:github:Azure/azure-rest-api-specs#41688",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-25T08:02:51Z",
+      "observedAt": "2026-03-25T08:02:51Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41688",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41688",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/edd609dab6f3e7f160a35d777db10d292e0eacd5"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41688:commit:41e49d16c36c:spec:github:Azure/azure-rest-api-specs#41688",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-25T08:08:18Z",
+      "observedAt": "2026-03-25T08:08:18Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41688",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "unknown",
+        "publicId": null
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41688",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/41e49d16c36c2c6068645f87eeed6da93eb43a1b"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41688:review:4004828013:spec:github:Azure/azure-rest-api-specs#41688",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-25T08:24:02Z",
+      "observedAt": "2026-03-25T08:24:02Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41688",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "XiaofeiCao"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41688",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41688#pullrequestreview-4004828013"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41688:commit:e68960baa125:spec:github:Azure/azure-rest-api-specs#41688",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-25T08:24:33Z",
+      "observedAt": "2026-03-25T08:24:33Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41688",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "pshao25"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41688",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/e68960baa125cec857ba1a1ce0c35847357fc7cf"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41688:comment:2986606018:spec:github:Azure/azure-rest-api-specs#41688",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-25T08:30:59Z",
+      "observedAt": "2026-03-25T08:30:59Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41688",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41688",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41688#discussion_r2986606018"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Swagger this is not a list. Do we want to make it a list now? API name is `list`, response is `model ServiceGroupCollectionResponse is Azure.Core.Page<ServiceGroup>` Just asking...",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41688:review:4004881404:spec:github:Azure/azure-rest-api-specs#41688",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-25T08:31:02Z",
+      "observedAt": "2026-03-25T08:31:02Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41688",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41688",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41688#pullrequestreview-4004881404"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41688:review:4004892369:spec:github:Azure/azure-rest-api-specs#41688",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-25T08:32:37Z",
+      "observedAt": "2026-03-25T08:32:37Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41688",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41688",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41688#pullrequestreview-4004892369"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41688:comment:2986614852:spec:github:Azure/azure-rest-api-specs#41688",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-25T08:32:37Z",
+      "observedAt": "2026-03-25T08:32:37Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41688",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41688",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41688#discussion_r2986614852"
+      },
+      "confidence": "authoritative",
+      "excerpt": "OK, it is a POST. Forget it.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41688:review:4004894312:spec:github:Azure/azure-rest-api-specs#41688",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-25T08:32:53Z",
+      "observedAt": "2026-03-25T08:32:53Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41688",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41688",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41688#pullrequestreview-4004894312"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#41688:pr.merged:spec:github:Azure/azure-rest-api-specs#41688",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-25T08:49:38Z",
+      "observedAt": "2026-03-25T08:49:38Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41688",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#41688",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/41688"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:33630:created",
+      "type": "plan.created",
+      "phase": "plan",
+      "occurredAt": "2026-03-27T16:40:03.973Z",
+      "observedAt": "2026-03-27T16:40:03.973Z",
+      "trackId": "plan",
+      "title": "Release Plan created",
+      "confidence": "authoritative",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "stack": 0
+    },
+    {
+      "id": "ado:33630:1:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-03-27T16:40:03.973Z",
+      "observedAt": "2026-03-27T16:40:03.973Z",
+      "trackId": "plan",
+      "value": "New",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "Plan state changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33630:1:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-27T16:40:03.973Z",
+      "observedAt": "2026-03-27T16:40:03.973Z",
+      "trackId": "plan",
+      "value": "Not Available",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "Spec approval changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:33630:1:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-27T16:40:03.973Z",
+      "observedAt": "2026-03-27T16:40:03.973Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ServiceGroups",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33630:1:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-27T16:40:03.973Z",
+      "observedAt": "2026-03-27T16:40:03.973Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicegroups",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33630:1:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-27T16:40:03.973Z",
+      "observedAt": "2026-03-27T16:40:03.973Z",
+      "trackId": "sdk:Python:azure-mgmt-servicegroups",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33630:1:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-27T16:40:03.973Z",
+      "observedAt": "2026-03-27T16:40:03.973Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33630:1:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-27T16:40:03.973Z",
+      "observedAt": "2026-03-27T16:40:03.973Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicegroups/armservicegroups",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33630:4:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-03-27T16:40:37.76Z",
+      "observedAt": "2026-03-27T16:40:37.76Z",
+      "trackId": "plan",
+      "value": "In Progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "Plan state changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:33631:2:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-27T17:12:01.433Z",
+      "observedAt": "2026-03-27T17:12:01.433Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#41688",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/41688",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33631",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33631"
+      },
+      "title": "Spec PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado:33630:9:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-27T17:12:06.073Z",
+      "observedAt": "2026-03-27T17:12:06.073Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ServiceGroups",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33630:9:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-27T17:12:06.073Z",
+      "observedAt": "2026-03-27T17:12:06.073Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicegroups",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33630:9:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-27T17:12:06.073Z",
+      "observedAt": "2026-03-27T17:12:06.073Z",
+      "trackId": "sdk:Python:azure-mgmt-servicegroups",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33630:9:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-27T17:12:06.073Z",
+      "observedAt": "2026-03-27T17:12:06.073Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33630:9:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-27T17:12:06.073Z",
+      "observedAt": "2026-03-27T17:12:06.073Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicegroups/armservicegroups",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33630:10:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-03-27T17:12:18.69Z",
+      "observedAt": "2026-03-27T17:12:18.69Z",
+      "trackId": "plan",
+      "value": "Approved",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "Spec approval changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:33630:24:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-27T17:31:38.273Z",
+      "observedAt": "2026-03-27T17:31:38.273Z",
+      "trackId": "sdk:Python:azure-mgmt-servicegroups",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:33630:25:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-27T17:31:49.85Z",
+      "observedAt": "2026-03-27T17:31:49.85Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ServiceGroups",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:33630:26:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-27T17:32:01.397Z",
+      "observedAt": "2026-03-27T17:32:01.397Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicegroups",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:33630:27:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-27T17:32:13.78Z",
+      "observedAt": "2026-03-27T17:32:13.78Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:33630:28:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-27T17:32:25.33Z",
+      "observedAt": "2026-03-27T17:32:25.33Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicegroups/armservicegroups",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26438:commit:285efa93f096:sdk:Go:sdk/resourcemanager/servicegroups/armservicegroups",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-27T19:24:14Z",
+      "observedAt": "2026-03-27T19:24:14Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicegroups/armservicegroups",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26438",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/285efa93f096cfe6e42134074e60d4d5a03a3668"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26438:pr.created:sdk:Go:sdk/resourcemanager/servicegroups/armservicegroups",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-27T19:24:17Z",
+      "observedAt": "2026-03-27T19:24:17Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicegroups/armservicegroups",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26438",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26438"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:33630:34:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-27T19:24:24.51Z",
+      "observedAt": "2026-03-27T19:24:24.51Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicegroups/armservicegroups",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:33630:34:Custom.SDKPullRequestForGo",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-03-27T19:24:24.51Z",
+      "observedAt": "2026-03-27T19:24:24.51Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicegroups/armservicegroups",
+      "value": "https://github.com/Azure/azure-sdk-for-go/pull/26438",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37879:commit:dcaa1ccafad9:sdk:JavaScript:@azure/arm-servicegroups",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-27T19:25:08Z",
+      "observedAt": "2026-03-27T19:25:08Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicegroups",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37879",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/dcaa1ccafad9db7781192acf1888dfd77e8937c0"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37879:pr.created:sdk:JavaScript:@azure/arm-servicegroups",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-27T19:25:11Z",
+      "observedAt": "2026-03-27T19:25:11Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicegroups",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37879",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37879"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:33630:35:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-27T19:25:17.907Z",
+      "observedAt": "2026-03-27T19:25:17.907Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicegroups",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:33630:35:Custom.SDKPullRequestForJavaScript",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-03-27T19:25:17.907Z",
+      "observedAt": "2026-03-27T19:25:17.907Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicegroups",
+      "value": "https://github.com/Azure/azure-sdk-for-js/pull/37879",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado:33630:38:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-27T19:25:45.237Z",
+      "observedAt": "2026-03-27T19:25:45.237Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicegroups",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33630:40:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-27T19:26:11.627Z",
+      "observedAt": "2026-03-27T19:26:11.627Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicegroups/armservicegroups",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45968:commit:f460850f6140:sdk:Python:azure-mgmt-servicegroups",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-27T19:26:43Z",
+      "observedAt": "2026-03-27T19:26:43Z",
+      "trackId": "sdk:Python:azure-mgmt-servicegroups",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45968",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/f460850f6140bd69ae58631783e1a3e509bf609f"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45968:pr.created:sdk:Python:azure-mgmt-servicegroups",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-27T19:26:46Z",
+      "observedAt": "2026-03-27T19:26:46Z",
+      "trackId": "sdk:Python:azure-mgmt-servicegroups",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45968",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45968"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:33630:41:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-27T19:26:53.22Z",
+      "observedAt": "2026-03-27T19:26:53.22Z",
+      "trackId": "sdk:Python:azure-mgmt-servicegroups",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:33630:41:Custom.SDKPullRequestForPython",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-03-27T19:26:53.22Z",
+      "observedAt": "2026-03-27T19:26:53.22Z",
+      "trackId": "sdk:Python:azure-mgmt-servicegroups",
+      "value": "https://github.com/Azure/azure-sdk-for-python/pull/45968",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado:33630:42:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-27T19:27:00.383Z",
+      "observedAt": "2026-03-27T19:27:00.383Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ServiceGroups",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48613:commit:30e125661ecc:sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-27T19:29:34Z",
+      "observedAt": "2026-03-27T19:29:34Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48613",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/30e125661ecc7102eae9a3fa6ce09b1e8867662e"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48613:pr.created:sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-27T19:29:38Z",
+      "observedAt": "2026-03-27T19:29:38Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48613",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48613"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:33630:43:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-27T19:29:45.1Z",
+      "observedAt": "2026-03-27T19:29:45.1Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:33630:43:Custom.SDKPullRequestForJava",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-03-27T19:29:45.1Z",
+      "observedAt": "2026-03-27T19:29:45.1Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "value": "https://github.com/Azure/azure-sdk-for-java/pull/48613",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26438:comment:4144790909:sdk:Go:sdk/resourcemanager/servicegroups/armservicegroups",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-27T19:31:27Z",
+      "observedAt": "2026-03-27T19:31:27Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicegroups/armservicegroups",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26438",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26438#issuecomment-4144790909"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews [sdk/resourcemanager/servicegroups/armservicegroups](https://spa.apiview.dev/review/b79691802726441cbdd68a60b3cf104f?activeApiRevision",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45969:commit:541aa092632a:sdk:Python:azure-mgmt-servicegroups",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-27T19:31:45Z",
+      "observedAt": "2026-03-27T19:31:45Z",
+      "trackId": "sdk:Python:azure-mgmt-servicegroups",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45969",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/541aa092632a63ef6745d7950546e5c1fcf0bbc1"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45969:pr.created:sdk:Python:azure-mgmt-servicegroups",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-27T19:31:49Z",
+      "observedAt": "2026-03-27T19:31:49Z",
+      "trackId": "sdk:Python:azure-mgmt-servicegroups",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45969",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45969"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:33630:44:Custom.SDKPullRequestForPython",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-03-27T19:31:55.593Z",
+      "observedAt": "2026-03-27T19:31:55.593Z",
+      "trackId": "sdk:Python:azure-mgmt-servicegroups",
+      "value": "https://github.com/Azure/azure-sdk-for-python/pull/45969",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "SDK PR linked",
+      "stack": 3
+    },
+    {
+      "id": "ado:33630:45:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-27T19:32:41.24Z",
+      "observedAt": "2026-03-27T19:32:41.24Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicegroups",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:33630:46:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-03-27T19:33:26.65Z",
+      "observedAt": "2026-03-27T19:33:26.65Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicegroups/armservicegroups",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37879:comment:4144804158:sdk:JavaScript:@azure/arm-servicegroups",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-27T19:34:15Z",
+      "observedAt": "2026-03-27T19:34:15Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicegroups",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37879",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37879#issuecomment-4144804158"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews [@azure/arm-servicegroups](https://spa.apiview.dev/review/2de7c3c91a08441499906564ec8029cd?activeApiRevisionId=75457bffbe5046108c44f69",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37879:comment:4144804176:sdk:JavaScript:@azure/arm-servicegroups",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-27T19:34:15Z",
+      "observedAt": "2026-03-27T19:34:15Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicegroups",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37879",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37879#issuecomment-4144804176"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews [@azure/arm-servicegroups](https://spa.apiview.dev/review/2de7c3c91a08441499906564ec8029cd?activeApiRevisionId=75457bffbe5046108c44f69",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48614:commit:c8583bc9f334:sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-27T19:35:46Z",
+      "observedAt": "2026-03-27T19:35:46Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48614",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/c8583bc9f3347480d2813e269018a4111f71c8ad"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48614:pr.created:sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-27T19:35:50Z",
+      "observedAt": "2026-03-27T19:35:50Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48614",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48614"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:33630:47:Custom.SDKPullRequestForJava",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-03-27T19:35:57.797Z",
+      "observedAt": "2026-03-27T19:35:57.797Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "value": "https://github.com/Azure/azure-sdk-for-java/pull/48614",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "SDK PR linked",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48613:comment:4144828781:sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-27T19:39:29Z",
+      "observedAt": "2026-03-27T19:39:29Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48613",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48613#issuecomment-4144828781"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews [com.azure.resourcemanager:azure-resourcemanager-servicegroups](https://spa.apiview.dev/review/e41affc17b154aa99d56b6b8159967b6?active",
+      "stack": 4
+    },
+    {
+      "id": "ado:33630:48:Custom.SDKPullRequestForJava",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-03-27T19:44:48.127Z",
+      "observedAt": "2026-03-27T19:44:48.127Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "value": "https://github.com/Azure/azure-sdk-for-java/pull/48613",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado:33630:49:Custom.SDKPullRequestForPython",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-03-27T19:44:49.373Z",
+      "observedAt": "2026-03-27T19:44:49.373Z",
+      "trackId": "sdk:Python:azure-mgmt-servicegroups",
+      "value": "https://github.com/Azure/azure-sdk-for-python/pull/45968",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "SDK PR linked",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48614:comment:4144854552:sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-27T19:45:14Z",
+      "observedAt": "2026-03-27T19:45:14Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48614",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48614#issuecomment-4144854552"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews [com.azure.resourcemanager:azure-resourcemanager-servicegroups](https://spa.apiview.dev/review/e41affc17b154aa99d56b6b8159967b6?active",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26438:comment:3010273454:sdk:Go:sdk/resourcemanager/servicegroups/armservicegroups",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-30T14:41:41Z",
+      "observedAt": "2026-03-30T14:41:41Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicegroups/armservicegroups",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26438",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26438#discussion_r3010273454"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This snippet is invalid Go and will confuse users copying from the README. Replace it with a concrete client creation call (e.g., `client := clientFactory.NewClient()` and/or `mgmtClient := clientFactory.NewManagementClient()`) matching the",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26438:comment:3010273507:sdk:Go:sdk/resourcemanager/servicegroups/armservicegroups",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-30T14:41:41Z",
+      "observedAt": "2026-03-30T14:41:41Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicegroups/armservicegroups",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26438",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26438#discussion_r3010273507"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The commented example response uses pointers (`&armservicegroups.ServiceGroup{...}`) but `ManagementClientCreateOrUpdateServiceGroupResponse` in `responses.go` embeds `ServiceGroup` by value. Update the example to use a value literal (`arms",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26438:comment:3010273543:sdk:Go:sdk/resourcemanager/servicegroups/armservicegroups",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-30T14:41:42Z",
+      "observedAt": "2026-03-30T14:41:42Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicegroups/armservicegroups",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26438",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26438#discussion_r3010273543"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The commented example response uses a pointer for `ServiceGroup`, but `ClientGetResponse` embeds `ServiceGroup` by value. Adjust the example to use a value literal to match the real response type. ```suggestion // ServiceGroup: armservicegr",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26438:comment:3010273573:sdk:Go:sdk/resourcemanager/servicegroups/armservicegroups",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-30T14:41:42Z",
+      "observedAt": "2026-03-30T14:41:42Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicegroups/armservicegroups",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26438",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26438#discussion_r3010273573"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`reflect.ValueOf(v).IsNil()` panics when `v` is not a nil-able kind (e.g., string, bool, int, structs). While current generated models often use pointer/map/slice types, this helper is generic and can break if future specs introduce require",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26438:comment:3010273599:sdk:Go:sdk/resourcemanager/servicegroups/armservicegroups",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-30T14:41:42Z",
+      "observedAt": "2026-03-30T14:41:42Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicegroups/armservicegroups",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26438",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26438#discussion_r3010273599"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This slices using `strings.Index(method, \\\".\\\")` without guarding against `-1`. If a request arrives with an unexpected/malformed `CtxAPINameKey` value (missing a `.`), this will panic. Add an index check and return a non-retriable error wh",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26438:comment:3010273632:sdk:Go:sdk/resourcemanager/servicegroups/armservicegroups",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-30T14:41:42Z",
+      "observedAt": "2026-03-30T14:41:42Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicegroups/armservicegroups",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26438",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26438#discussion_r3010273632"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Like `ServerFactoryTransport`, this slices using `strings.Index(method, \\\".\\\")` without checking for `-1`, which can panic on malformed context values. Guard the index and return a non-retriable error if the method name doesn't include the ",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26438:review:4031117784:sdk:Go:sdk/resourcemanager/servicegroups/armservicegroups",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-30T14:41:43Z",
+      "observedAt": "2026-03-30T14:41:43Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicegroups/armservicegroups",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26438",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26438#pullrequestreview-4031117784"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Adds a newly generated Go ARM management-plane package for Microsoft.Management ServiceGroups (API version `2024-02-01-preview`) including clients, models, examples, and fake servers to support the beta SDK release.",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45969:comment:3010273968:sdk:Python:azure-mgmt-servicegroups",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-30T14:41:46Z",
+      "observedAt": "2026-03-30T14:41:46Z",
+      "trackId": "sdk:Python:azure-mgmt-servicegroups",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45969",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45969#discussion_r3010273968"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The link label \"Search Servicegroups Management\" uses the same inconsistent casing/spelling as earlier in the README. Consider updating to the official service name (e.g., \"Service Groups\") for consistency.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45969:comment:3010274015:sdk:Python:azure-mgmt-servicegroups",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-30T14:41:46Z",
+      "observedAt": "2026-03-30T14:41:46Z",
+      "trackId": "sdk:Python:azure-mgmt-servicegroups",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45969",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45969#discussion_r3010274015"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The README authentication sample passes `subscription_id`, but `ServiceGroupsMgmtClient.__init__` does not accept a `subscription_id` parameter (it only takes `credential` and optional `base_url`). As written, this snippet will raise `TypeE",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45969:comment:3010274049:sdk:Python:azure-mgmt-servicegroups",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-30T14:41:46Z",
+      "observedAt": "2026-03-30T14:41:46Z",
+      "trackId": "sdk:Python:azure-mgmt-servicegroups",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45969",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45969#discussion_r3010274049"
+      },
+      "confidence": "authoritative",
+      "excerpt": "\"Servicegroups\" is inconsistently cased/spelled in the library name. If the service name is \"Service Groups\" (or \"ServiceGroups\"), please update this sentence to use the correct official name for consistency across README/metadata.",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45969:review:4031118326:sdk:Python:azure-mgmt-servicegroups",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-30T14:41:47Z",
+      "observedAt": "2026-03-30T14:41:47Z",
+      "trackId": "sdk:Python:azure-mgmt-servicegroups",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45969",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45969#pullrequestreview-4031118326"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This PR introduces a newly generated **beta** Azure management-plane Python SDK package, **azure-mgmt-servicegroups**, generated from the TypeSpec configuration for `Microsoft.Management/ServiceGroups` API version `",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37879:comment:3010277367:sdk:JavaScript:@azure/arm-servicegroups",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-30T14:42:20Z",
+      "observedAt": "2026-03-30T14:42:20Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicegroups",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37879",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37879#discussion_r3010277367"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`normalizeUnreserved` uses the regex character class `/[.~-]/`, which creates a *range* from `.` to `~` rather than matching only `.`, `~`, and `-`. This will incorrectly treat many reserved characters (e.g. `/`, `?`, `&`) as “unreserved” a",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37879:review:4031121947:sdk:JavaScript:@azure/arm-servicegroups",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-30T14:42:21Z",
+      "observedAt": "2026-03-30T14:42:21Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicegroups",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37879",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37879#pullrequestreview-4031121947"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Adds a newly generated (beta) ARM management package `@azure/arm-servicegroups` for `Microsoft.Management/ServiceGroups` API version `2024-02-01-preview`, including CI wiring, build/test configs, generated client/mo",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37879:comment:3010277407:sdk:JavaScript:@azure/arm-servicegroups",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-30T14:42:21Z",
+      "observedAt": "2026-03-30T14:42:21Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicegroups",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37879",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37879#discussion_r3010277407"
+      },
+      "confidence": "authoritative",
+      "excerpt": "In `getNonExpandedValue`, the `if (value === \"\")` branch uses `if (!ifEmpty) { vals.push(ifEmpty); }`, which is inverted: it will *omit* `=` for query-style operators (`?`/`&`) where `ifEmpty` is `\"=\"`, and instead only pushes when `ifEmpty",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48613:comment:3010283644:sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-30T14:43:24Z",
+      "observedAt": "2026-03-30T14:43:24Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48613",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48613#discussion_r3010283644"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The previous implementation handled `inner == null` by returning `null`; this change will throw a NullPointerException if `serviceClient().getWithResponse(...)` or `listAncestorsWithResponse(...)` ever returns `null`. If `null` is not a val",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48613:comment:3010283711:sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-30T14:43:24Z",
+      "observedAt": "2026-03-30T14:43:24Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48613",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48613#discussion_r3010283711"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The previous implementation handled `inner == null` by returning `null`; this change will throw a NullPointerException if `serviceClient().getWithResponse(...)` or `listAncestorsWithResponse(...)` ever returns `null`. If `null` is not a val",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48613:comment:3010283740:sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-30T14:43:25Z",
+      "observedAt": "2026-03-30T14:43:25Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48613",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48613#discussion_r3010283740"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The explicit parameter validation and descriptive IllegalArgumentExceptions were removed (endpoint and `serviceGroupName`). This can regress developer experience by turning invalid inputs into less actionable failures (e.g., NPEs or proxy-l",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48613:comment:3010283768:sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-30T14:43:25Z",
+      "observedAt": "2026-03-30T14:43:25Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48613",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48613#discussion_r3010283768"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The explicit parameter validation and descriptive IllegalArgumentExceptions were removed (endpoint and `serviceGroupName`). This can regress developer experience by turning invalid inputs into less actionable failures (e.g., NPEs or proxy-l",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48613:comment:3010283803:sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-30T14:43:25Z",
+      "observedAt": "2026-03-30T14:43:25Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48613",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48613#discussion_r3010283803"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The DELETE operations now hardcode headers including `Content-Type: application/json` and an `Accept` value with a quality parameter (`application/json;q=0.9`). `Content-Type` is typically unnecessary for DELETE without a body, and the q-va",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48613:comment:3010283837:sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-30T14:43:26Z",
+      "observedAt": "2026-03-30T14:43:26Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48613",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48613#discussion_r3010283837"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This type is now annotated `@Immutable`, but it still exposes a mutable `List` directly via `value()`, which allows callers to mutate the internal state. If the intent is to make this model immutable from a consumer perspective, consider re",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48613:comment:3010283868:sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-30T14:43:26Z",
+      "observedAt": "2026-03-30T14:43:26Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48613",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48613#discussion_r3010283868"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This type is now annotated `@Immutable`, but it still exposes a mutable `List` directly via `value()`, which allows callers to mutate the internal state. If the intent is to make this model immutable from a consumer perspective, consider re",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48613:comment:3010283893:sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-30T14:43:26Z",
+      "observedAt": "2026-03-30T14:43:26Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48613",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48613#discussion_r3010283893"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This type is now annotated `@Immutable`, but it still exposes a mutable `List` directly via `value()`, which allows callers to mutate the internal state. If the intent is to make this model immutable from a consumer perspective, consider re",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48613:review:4031129200:sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-30T14:43:27Z",
+      "observedAt": "2026-03-30T14:43:27Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48613",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48613#pullrequestreview-4031129200"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Updates the `azure-resourcemanager-servicegroups` Java mgmt SDK to the TypeSpec-generated (2024-02-01-preview) surface, aligning generated code, tests, samples, and metadata with the new pipeline output. **Changes:*",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48613:review:4034222723:sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-31T02:17:51Z",
+      "observedAt": "2026-03-31T02:17:51Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48613",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48613#pullrequestreview-4034222723"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26438:review:4034359090:sdk:Go:sdk/resourcemanager/servicegroups/armservicegroups",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-31T03:07:36Z",
+      "observedAt": "2026-03-31T03:07:36Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicegroups/armservicegroups",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "tadelesh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26438",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26438#pullrequestreview-4034359090"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26438:comment:3013213048:sdk:Go:sdk/resourcemanager/servicegroups/armservicegroups",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-31T03:07:37Z",
+      "observedAt": "2026-03-31T03:07:37Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicegroups/armservicegroups",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "tadelesh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26438",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26438#discussion_r3013213048"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Could you refine all the service names in readme?",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26438:commit:32d7bfd20811:sdk:Go:sdk/resourcemanager/servicegroups/armservicegroups",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-31T03:21:12Z",
+      "observedAt": "2026-03-31T03:21:12Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicegroups/armservicegroups",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "meghanagupta95"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26438",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/32d7bfd20811a287c77197d369909777e62e55c7"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26438:review:4034409638:sdk:Go:sdk/resourcemanager/servicegroups/armservicegroups",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-31T03:22:25Z",
+      "observedAt": "2026-03-31T03:22:25Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicegroups/armservicegroups",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "meghanagupta95"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26438",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26438#pullrequestreview-4034409638"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26438:comment:3013257146:sdk:Go:sdk/resourcemanager/servicegroups/armservicegroups",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-31T03:22:25Z",
+      "observedAt": "2026-03-31T03:22:25Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicegroups/armservicegroups",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "meghanagupta95"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26438",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26438#discussion_r3013257146"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Fixed",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26438:review:4034417140:sdk:Go:sdk/resourcemanager/servicegroups/armservicegroups",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-31T03:24:40Z",
+      "observedAt": "2026-03-31T03:24:40Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicegroups/armservicegroups",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "tadelesh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26438",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26438#pullrequestreview-4034417140"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26438:pr.merged:sdk:Go:sdk/resourcemanager/servicegroups/armservicegroups",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-31T03:40:07Z",
+      "observedAt": "2026-03-31T03:40:07Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicegroups/armservicegroups",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26438",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26438"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48613:pr.merged:sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-31T03:41:43Z",
+      "observedAt": "2026-03-31T03:41:43Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48613",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48613"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45969:commit:e3b723e1b7eb:sdk:Python:azure-mgmt-servicegroups",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-31T03:42:41Z",
+      "observedAt": "2026-03-31T03:42:41Z",
+      "trackId": "sdk:Python:azure-mgmt-servicegroups",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "meghanagupta95"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45969",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/e3b723e1b7ebc930fdde251f4c8cc841c322904c"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45969:commit:d82013c92227:sdk:Python:azure-mgmt-servicegroups",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-31T03:47:48Z",
+      "observedAt": "2026-03-31T03:47:48Z",
+      "trackId": "sdk:Python:azure-mgmt-servicegroups",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "meghanagupta95"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45969",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/d82013c92227f64c9dc638bb8c6f038ba039a9fb"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45969:commit:12eb85448298:sdk:Python:azure-mgmt-servicegroups",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-31T03:50:05Z",
+      "observedAt": "2026-03-31T03:50:05Z",
+      "trackId": "sdk:Python:azure-mgmt-servicegroups",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "meghanagupta95"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45969",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/12eb85448298bd207e59b0eef8a3b7bdead1e814"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45969:commit:d098d4a97242:sdk:Python:azure-mgmt-servicegroups",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-31T04:40:30Z",
+      "observedAt": "2026-03-31T04:40:30Z",
+      "trackId": "sdk:Python:azure-mgmt-servicegroups",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "meghanagupta95"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45969",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/d098d4a97242881377d660821ac8b5f79e6c9514"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45969:commit:98a588864e4e:sdk:Python:azure-mgmt-servicegroups",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-31T06:05:44Z",
+      "observedAt": "2026-03-31T06:05:44Z",
+      "trackId": "sdk:Python:azure-mgmt-servicegroups",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45969",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/98a588864e4e34093c69d01105e2cf9ca35431c3"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45969:review:4034896408:sdk:Python:azure-mgmt-servicegroups",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-31T06:06:38Z",
+      "observedAt": "2026-03-31T06:06:38Z",
+      "trackId": "sdk:Python:azure-mgmt-servicegroups",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45969",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45969#pullrequestreview-4034896408"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45969:comment:4160154679:sdk:Python:azure-mgmt-servicegroups",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-31T06:06:54Z",
+      "observedAt": "2026-03-31T06:06:54Z",
+      "trackId": "sdk:Python:azure-mgmt-servicegroups",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45969",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45969#issuecomment-4160154679"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@msyyc, pr ready, please help review",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45969:commit:62b0aff886a5:sdk:Python:azure-mgmt-servicegroups",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-31T07:39:11Z",
+      "observedAt": "2026-03-31T07:39:11Z",
+      "trackId": "sdk:Python:azure-mgmt-servicegroups",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45969",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/62b0aff886a5c11a2b15b973349ff8f4db5a2fb3"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45969:commit:d3d34f75c29f:sdk:Python:azure-mgmt-servicegroups",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-31T07:47:32Z",
+      "observedAt": "2026-03-31T07:47:32Z",
+      "trackId": "sdk:Python:azure-mgmt-servicegroups",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45969",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/d3d34f75c29f2a5d2947548b9eab6427a33eba05"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45969:commit:030039f3e345:sdk:Python:azure-mgmt-servicegroups",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-31T07:56:00Z",
+      "observedAt": "2026-03-31T07:56:00Z",
+      "trackId": "sdk:Python:azure-mgmt-servicegroups",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45969",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/030039f3e345f114122b956c71ccb728501c4c32"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:33630:61:Custom.SDKPullRequestForPython",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-03-31T07:56:08.597Z",
+      "observedAt": "2026-03-31T07:56:08.597Z",
+      "trackId": "sdk:Python:azure-mgmt-servicegroups",
+      "value": "https://github.com/Azure/azure-sdk-for-python/pull/45969",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45969:commit:813a5f103abb:sdk:Python:azure-mgmt-servicegroups",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-31T07:58:49Z",
+      "observedAt": "2026-03-31T07:58:49Z",
+      "trackId": "sdk:Python:azure-mgmt-servicegroups",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45969",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/813a5f103abb49c3aff7fda72ba87d3f8c3c1e9f"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45969:commit:d8fd5b91c79d:sdk:Python:azure-mgmt-servicegroups",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-31T08:04:35Z",
+      "observedAt": "2026-03-31T08:04:35Z",
+      "trackId": "sdk:Python:azure-mgmt-servicegroups",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45969",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/d8fd5b91c79dee6c70ef166994db771d7ad34d72"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45969:review:4035478468:sdk:Python:azure-mgmt-servicegroups",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-31T08:05:43Z",
+      "observedAt": "2026-03-31T08:05:43Z",
+      "trackId": "sdk:Python:azure-mgmt-servicegroups",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45969",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45969#pullrequestreview-4035478468"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45969:review:4035584959:sdk:Python:azure-mgmt-servicegroups",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-31T08:24:52Z",
+      "observedAt": "2026-03-31T08:24:52Z",
+      "trackId": "sdk:Python:azure-mgmt-servicegroups",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45969",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45969#pullrequestreview-4035584959"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45969:comment:4160824951:sdk:Python:azure-mgmt-servicegroups",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-31T08:25:19Z",
+      "observedAt": "2026-03-31T08:25:19Z",
+      "trackId": "sdk:Python:azure-mgmt-servicegroups",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45969",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45969#issuecomment-4160824951"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@meghanagupta95, pr ready, feel free to merge and release",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37879:review:4035619545:sdk:JavaScript:@azure/arm-servicegroups",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-31T08:31:04Z",
+      "observedAt": "2026-03-31T08:31:04Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicegroups",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37879",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37879#pullrequestreview-4035619545"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37879:comment:3014341464:sdk:JavaScript:@azure/arm-servicegroups",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-31T08:31:04Z",
+      "observedAt": "2026-03-31T08:31:04Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicegroups",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37879",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37879#discussion_r3014341464"
+      },
+      "confidence": "authoritative",
+      "excerpt": "this client name does not make sense, I will create a pr to rename this",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37879:review:4035745445:sdk:JavaScript:@azure/arm-servicegroups",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-31T08:50:57Z",
+      "observedAt": "2026-03-31T08:50:57Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicegroups",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37879",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37879#pullrequestreview-4035745445"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37879:comment:3014450092:sdk:JavaScript:@azure/arm-servicegroups",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-31T08:50:57Z",
+      "observedAt": "2026-03-31T08:50:57Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicegroups",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37879",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37879#discussion_r3014450092"
+      },
+      "confidence": "authoritative",
+      "excerpt": "https://github.com/Azure/azure-rest-api-specs/pull/41951",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45969:pr.merged:sdk:Python:azure-mgmt-servicegroups",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-31T12:15:51Z",
+      "observedAt": "2026-03-31T12:15:51Z",
+      "trackId": "sdk:Python:azure-mgmt-servicegroups",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45969",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45969"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37879:commit:ae815b0d3605:sdk:JavaScript:@azure/arm-servicegroups",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-01T02:35:53Z",
+      "observedAt": "2026-04-01T02:35:53Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicegroups",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37879",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/ae815b0d36055e1147534d341299f1b81ef8e315"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37879:comment:4167064365:sdk:JavaScript:@azure/arm-servicegroups",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-01T02:49:48Z",
+      "observedAt": "2026-04-01T02:49:48Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicegroups",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37879",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37879#issuecomment-4167064365"
+      },
+      "confidence": "authoritative",
+      "excerpt": "ci failure is because of it has conflict in pnpm-lock.yaml. please follow this [doc](https://github.com/Azure/azure-sdk-for-js/blob/main/documentation/steps-after-generations.md#resolve-conflicts-for-pr) to resolve it",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37879:review:4041395326:sdk:JavaScript:@azure/arm-servicegroups",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-01T02:58:49Z",
+      "observedAt": "2026-04-01T02:58:49Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicegroups",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37879",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37879#pullrequestreview-4041395326"
+      },
+      "confidence": "authoritative",
+      "excerpt": "No API design or tooling issues found for this new `@azure/arm-servicegroups` package (v1.0.0-beta.1). All validations passed: - **Versions aligned**: `package.json` (1.0.0-beta.1), context file `serviceGroupsManagementContext.ts` (`azsdk-j",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37879:commit:3b862a5cd362:sdk:JavaScript:@azure/arm-servicegroups",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-01T04:22:08Z",
+      "observedAt": "2026-04-01T04:22:08Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicegroups",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "meghanagupta95"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37879",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/3b862a5cd36264a0228d9c73f6ffa723a8a93fc8"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37879:comment:4167408571:sdk:JavaScript:@azure/arm-servicegroups",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-01T04:42:12Z",
+      "observedAt": "2026-04-01T04:42:12Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicegroups",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "meghanagupta95"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37879",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37879#issuecomment-4167408571"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@MaryGao I've fixed the CI issue. Could you approve if nothing else is required?",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37879:review:4041671764:sdk:JavaScript:@azure/arm-servicegroups",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-01T04:55:32Z",
+      "observedAt": "2026-04-01T04:55:32Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicegroups",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "MaryGao"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37879",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37879#pullrequestreview-4041671764"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37879:pr.merged:sdk:JavaScript:@azure/arm-servicegroups",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-01T04:55:34Z",
+      "observedAt": "2026-04-01T04:55:34Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicegroups",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37879",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37879"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:33630:68:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-23T15:32:42.417Z",
+      "observedAt": "2026-04-23T15:32:42.417Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ServiceGroups",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33630:68:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-23T15:32:42.417Z",
+      "observedAt": "2026-04-23T15:32:42.417Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicegroups",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33630:68:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-23T15:32:42.417Z",
+      "observedAt": "2026-04-23T15:32:42.417Z",
+      "trackId": "sdk:Python:azure-mgmt-servicegroups",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33630:68:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-23T15:32:42.417Z",
+      "observedAt": "2026-04-23T15:32:42.417Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33630:68:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-23T15:32:42.417Z",
+      "observedAt": "2026-04-23T15:32:42.417Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicegroups/armservicegroups",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6199045:generation.queued:sdk:Python:azure-mgmt-servicegroups",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-04-23T15:44:01.2078256Z",
+      "observedAt": "2026-04-23T15:56:31.2731412Z",
+      "trackId": "sdk:Python:azure-mgmt-servicegroups",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6199045",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6199045"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:33630:72:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-23T15:44:07.92Z",
+      "observedAt": "2026-04-23T15:44:07.92Z",
+      "trackId": "sdk:Python:azure-mgmt-servicegroups",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6199046:generation.queued:sdk:.NET:Azure.ResourceManager.ServiceGroups",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-04-23T15:44:24.9005657Z",
+      "observedAt": "2026-04-23T15:54:54.3194725Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ServiceGroups",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6199046",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6199046"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:33630:73:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-23T15:44:27.45Z",
+      "observedAt": "2026-04-23T15:44:27.45Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ServiceGroups",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6199047:generation.queued:sdk:JavaScript:@azure/arm-servicegroups",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-04-23T15:44:44.4462536Z",
+      "observedAt": "2026-04-23T15:54:56.6593422Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicegroups",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6199047",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6199047"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:33630:74:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-23T15:44:48.5Z",
+      "observedAt": "2026-04-23T15:44:48.5Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicegroups",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6199048:generation.queued:sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-04-23T15:44:58.8826702Z",
+      "observedAt": "2026-04-23T16:09:40.6105603Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6199048",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6199048"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:33630:75:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-23T15:45:02.48Z",
+      "observedAt": "2026-04-23T15:45:02.48Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6199049:generation.queued:sdk:Go:sdk/resourcemanager/servicegroups/armservicegroups",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-04-23T15:45:14.1162412Z",
+      "observedAt": "2026-04-23T15:55:58.0282968Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicegroups/armservicegroups",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6199049",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6199049"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:33630:76:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-23T15:45:17.117Z",
+      "observedAt": "2026-04-23T15:45:17.117Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicegroups/armservicegroups",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6199045:generation.started:sdk:Python:azure-mgmt-servicegroups",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-04-23T15:48:00.9416561Z",
+      "observedAt": "2026-04-23T15:56:31.2731412Z",
+      "trackId": "sdk:Python:azure-mgmt-servicegroups",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6199045",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6199045"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6199047:generation.started:sdk:JavaScript:@azure/arm-servicegroups",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-04-23T15:48:04.6603895Z",
+      "observedAt": "2026-04-23T15:54:56.6593422Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicegroups",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6199047",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6199047"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6199046:generation.started:sdk:.NET:Azure.ResourceManager.ServiceGroups",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-04-23T15:48:05.9595074Z",
+      "observedAt": "2026-04-23T15:54:54.3194725Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ServiceGroups",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6199046",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6199046"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6199048:generation.started:sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-04-23T15:48:49.0445737Z",
+      "observedAt": "2026-04-23T16:09:40.6105603Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6199048",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6199048"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6199049:generation.started:sdk:Go:sdk/resourcemanager/servicegroups/armservicegroups",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-04-23T15:49:23.9952643Z",
+      "observedAt": "2026-04-23T15:55:58.0282968Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicegroups/armservicegroups",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6199049",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6199049"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58602:commit:1b6cc1dbc333:sdk:.NET:Azure.ResourceManager.ServiceGroups",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-23T15:53:27Z",
+      "observedAt": "2026-04-23T15:53:27Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ServiceGroups",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58602",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/1b6cc1dbc333671f724492f6774dc33335aad1e6"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58602:pr.created:sdk:.NET:Azure.ResourceManager.ServiceGroups",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-23T15:53:31Z",
+      "observedAt": "2026-04-23T15:53:31Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ServiceGroups",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58602",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58602"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38262:commit:ecb078703ccb:sdk:JavaScript:@azure/arm-servicegroups",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-23T15:53:35Z",
+      "observedAt": "2026-04-23T15:53:35Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicegroups",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38262",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/ecb078703ccba7d107c4a5559d433f9a208b9b6a"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38262:pr.created:sdk:JavaScript:@azure/arm-servicegroups",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-23T15:53:38Z",
+      "observedAt": "2026-04-23T15:53:38Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicegroups",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38262",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38262"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:33630:77:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-23T15:53:39.513Z",
+      "observedAt": "2026-04-23T15:53:39.513Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ServiceGroups",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33630:77:Custom.SDKPullRequestForDotnet",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-04-23T15:53:39.513Z",
+      "observedAt": "2026-04-23T15:53:39.513Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ServiceGroups",
+      "value": "https://github.com/Azure/azure-sdk-for-net/pull/58602",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "SDK PR linked",
+      "stack": 1
+    },
+    {
+      "id": "ado:33630:78:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-23T15:53:45.377Z",
+      "observedAt": "2026-04-23T15:53:45.377Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicegroups",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33630:78:Custom.SDKPullRequestForJavaScript",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-04-23T15:53:45.377Z",
+      "observedAt": "2026-04-23T15:53:45.377Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicegroups",
+      "value": "https://github.com/Azure/azure-sdk-for-js/pull/38262",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "SDK PR linked",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6199045:00be4b52-4a63-5865-8e02-c61723ad0692:sdk:Python:azure-mgmt-servicegroups",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-04-23T15:54:26.9566667Z",
+      "observedAt": "2026-04-23T15:56:31.2731412Z",
+      "trackId": "sdk:Python:azure-mgmt-servicegroups",
+      "title": "task failed: Generate SDK",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6199045",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6199045"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26660:commit:bded86003a6f:sdk:Go:sdk/resourcemanager/servicegroups/armservicegroups",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-23T15:54:44Z",
+      "observedAt": "2026-04-23T15:54:44Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicegroups/armservicegroups",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26660",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/bded86003a6f26cf5d45b88e473802f8db2fc112"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26660:pr.created:sdk:Go:sdk/resourcemanager/servicegroups/armservicegroups",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-23T15:54:48Z",
+      "observedAt": "2026-04-23T15:54:48Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicegroups/armservicegroups",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26660",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26660"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:6199046:generation.completed:sdk:.NET:Azure.ResourceManager.ServiceGroups",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-04-23T15:54:54.3194725Z",
+      "observedAt": "2026-04-23T15:54:54.3194725Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ServiceGroups",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6199046",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6199046"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:33630:79:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-23T15:54:55.117Z",
+      "observedAt": "2026-04-23T15:54:55.117Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicegroups/armservicegroups",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33630:79:Custom.SDKPullRequestForGo",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-04-23T15:54:55.117Z",
+      "observedAt": "2026-04-23T15:54:55.117Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicegroups/armservicegroups",
+      "value": "https://github.com/Azure/azure-sdk-for-go/pull/26660",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "SDK PR linked",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6199047:generation.completed:sdk:JavaScript:@azure/arm-servicegroups",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-04-23T15:54:56.6593422Z",
+      "observedAt": "2026-04-23T15:54:56.6593422Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicegroups",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6199047",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6199047"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6199049:generation.completed:sdk:Go:sdk/resourcemanager/servicegroups/armservicegroups",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-04-23T15:55:58.0282968Z",
+      "observedAt": "2026-04-23T15:55:58.0282968Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicegroups/armservicegroups",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6199049",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6199049"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:33630:80:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-23T15:56:06.103Z",
+      "observedAt": "2026-04-23T15:56:06.103Z",
+      "trackId": "sdk:Python:azure-mgmt-servicegroups",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:6199045:83516c17-6666-5250-abde-63983ce72a49:sdk:Python:azure-mgmt-servicegroups",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-04-23T15:56:25.8666667Z",
+      "observedAt": "2026-04-23T15:56:31.2731412Z",
+      "trackId": "sdk:Python:azure-mgmt-servicegroups",
+      "title": "job failed: Job",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6199045",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6199045"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6199045:6884a131-87da-5381-61f3-d7acc3b91d76:sdk:Python:azure-mgmt-servicegroups",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-04-23T15:56:30.99Z",
+      "observedAt": "2026-04-23T15:56:31.2731412Z",
+      "trackId": "sdk:Python:azure-mgmt-servicegroups",
+      "title": "stage failed: SDK Generation",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6199045",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6199045"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6199045:generation.failed:sdk:Python:azure-mgmt-servicegroups",
+      "type": "generation.failed",
+      "phase": "generation",
+      "occurredAt": "2026-04-23T15:56:31.2731412Z",
+      "observedAt": "2026-04-23T15:56:31.2731412Z",
+      "trackId": "sdk:Python:azure-mgmt-servicegroups",
+      "title": "Pipeline failed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6199045",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6199045"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48911:commit:baf782090213:sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-23T15:58:56Z",
+      "observedAt": "2026-04-23T15:58:56Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48911",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/baf782090213f691b370d5fd01985d2952f39b29"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48911:pr.created:sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-23T15:59:01Z",
+      "observedAt": "2026-04-23T15:59:01Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48911",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48911"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:33630:81:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-04-23T15:59:08.587Z",
+      "observedAt": "2026-04-23T15:59:08.587Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33630:81:Custom.SDKPullRequestForJava",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-04-23T15:59:08.587Z",
+      "observedAt": "2026-04-23T15:59:08.587Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "value": "https://github.com/Azure/azure-sdk-for-java/pull/48911",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "SDK PR linked",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6199048:generation.completed:sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-04-23T16:09:40.6105603Z",
+      "observedAt": "2026-04-23T16:09:40.6105603Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "title": "Pipeline completed with issues",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6199048",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6199048"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38262:pr.closed:sdk:JavaScript:@azure/arm-servicegroups",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-23T16:14:23Z",
+      "observedAt": "2026-04-23T16:14:23Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicegroups",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38262",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38262"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48911:pr.closed:sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-23T16:14:28Z",
+      "observedAt": "2026-04-23T16:14:28Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48911",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48911"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26660:pr.closed:sdk:Go:sdk/resourcemanager/servicegroups/armservicegroups",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-23T16:14:37Z",
+      "observedAt": "2026-04-23T16:14:37Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicegroups/armservicegroups",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26660",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26660"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26438:comment:4317015849:sdk:Go:sdk/resourcemanager/servicegroups/armservicegroups",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-24T23:30:11Z",
+      "observedAt": "2026-04-24T23:30:11Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicegroups/armservicegroups",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "meghanagupta95"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26438",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26438#issuecomment-4317015849"
+      },
+      "confidence": "authoritative",
+      "excerpt": "/azp run prepare-pipelines",
+      "stack": 0
+    },
+    {
+      "id": "ado:33630:83:Custom.ReleaseStatusForJavaScript",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-04-25T00:24:30.38Z",
+      "observedAt": "2026-04-25T00:24:30.38Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicegroups",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#58602:pr.closed:sdk:.NET:Azure.ResourceManager.ServiceGroups",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-25T00:25:10Z",
+      "observedAt": "2026-04-25T00:25:10Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ServiceGroups",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#58602",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/58602"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:33630:84:Custom.ReleaseStatusForPython",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-04-25T04:19:41.82Z",
+      "observedAt": "2026-04-25T04:19:41.82Z",
+      "trackId": "sdk:Python:azure-mgmt-servicegroups",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33630:85:Custom.ReleaseStatusForGo",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-04-27T14:08:44.987Z",
+      "observedAt": "2026-04-27T14:08:44.987Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicegroups/armservicegroups",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33630:86:Custom.ReleaseStatusForDotnet",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-04-28T08:37:42.31Z",
+      "observedAt": "2026-04-28T08:37:42.31Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ServiceGroups",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33630:86:Custom.ReleasedVersionForDotnet",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-04-28T08:37:42.31Z",
+      "observedAt": "2026-04-28T08:37:42.31Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.ServiceGroups",
+      "value": "1.0.0-beta.2",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33630:87:Custom.SDKPullRequestForJava",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-04-28T14:09:30.463Z",
+      "observedAt": "2026-04-28T14:09:30.463Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "value": "https://github.com/Azure/azure-sdk-for-java/pull/48613",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado:33630:88:Custom.SDKPullRequestForJavaScript",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-04-28T14:30:45.227Z",
+      "observedAt": "2026-04-28T14:30:45.227Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicegroups",
+      "value": "https://github.com/Azure/azure-sdk-for-js/pull/37879",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado:33630:88:Custom.ReleasedVersionForJavaScript",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-04-28T14:30:45.227Z",
+      "observedAt": "2026-04-28T14:30:45.227Z",
+      "trackId": "sdk:JavaScript:@azure/arm-servicegroups",
+      "value": "1.0.0-beta.2",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33630:88:Custom.ReleaseStatusForJava",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-04-28T14:30:45.227Z",
+      "observedAt": "2026-04-28T14:30:45.227Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "Release status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:33630:88:Custom.ReleasedVersionForJava",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-04-28T14:30:45.227Z",
+      "observedAt": "2026-04-28T14:30:45.227Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "value": "1.0.0-beta.2",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "Package version observed",
+      "stack": 2
+    },
+    {
+      "id": "ado:33630:88:Custom.SDKPullRequestForGo",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-04-28T14:30:45.227Z",
+      "observedAt": "2026-04-28T14:30:45.227Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicegroups/armservicegroups",
+      "value": "https://github.com/Azure/azure-sdk-for-go/pull/26438",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado:33630:89:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-04-28T14:31:55.657Z",
+      "observedAt": "2026-04-28T14:31:55.657Z",
+      "trackId": "plan",
+      "value": "Finished",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "Plan state changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33630:90:Custom.ReleasedVersionForPython",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-04-28T14:33:27.393Z",
+      "observedAt": "2026-04-28T14:33:27.393Z",
+      "trackId": "sdk:Python:azure-mgmt-servicegroups",
+      "value": "1.0.0b1",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "Package version observed",
+      "stack": 0
+    },
+    {
+      "id": "ado:33630:90:Custom.ReleasedVersionForGo",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-04-28T14:33:27.393Z",
+      "observedAt": "2026-04-28T14:33:27.393Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/servicegroups/armservicegroups",
+      "value": "0.1.0",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:33630",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/33630"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45968:comment:4571478297:sdk:Python:azure-mgmt-servicegroups",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-29T06:24:22Z",
+      "observedAt": "2026-05-29T06:24:22Z",
+      "trackId": "sdk:Python:azure-mgmt-servicegroups",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45968",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45968#issuecomment-4571478297"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @azure-sdk. Thank you for your interest in helping to improve the Azure SDK experience and for your contribution. We've noticed that there hasn't been recent engagement on this pull request. If this is still an active work stream, please",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48614:comment:4571505190:sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-29T06:27:18Z",
+      "observedAt": "2026-05-29T06:27:18Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48614",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48614#issuecomment-4571505190"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @azure-sdk. Thank you for your interest in helping to improve the Azure SDK experience and for your contribution. We've noticed that there hasn't been recent engagement on this pull request. If this is still an active work stream, please",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45968:comment:4630191214:sdk:Python:azure-mgmt-servicegroups",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-05T09:45:47Z",
+      "observedAt": "2026-06-05T09:45:47Z",
+      "trackId": "sdk:Python:azure-mgmt-servicegroups",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45968",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45968#issuecomment-4630191214"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @azure-sdk. Thank you for your contribution. Since there hasn't been recent engagement, we're going to close this out. Feel free to respond with a comment containing `/reopen` if you'd like to continue working on these changes. Please be",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#45968:pr.closed:sdk:Python:azure-mgmt-servicegroups",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-05T09:45:56Z",
+      "observedAt": "2026-06-05T09:45:56Z",
+      "trackId": "sdk:Python:azure-mgmt-servicegroups",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#45968",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/45968"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48614:comment:4630223399:sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-05T09:49:22Z",
+      "observedAt": "2026-06-05T09:49:22Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48614",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48614#issuecomment-4630223399"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @azure-sdk. Thank you for your contribution. Since there hasn't been recent engagement, we're going to close this out. Feel free to respond with a comment containing `/reopen` if you'd like to continue working on these changes. Please be",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#48614:pr.closed:sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-05T09:49:27Z",
+      "observedAt": "2026-06-05T09:49:27Z",
+      "trackId": "sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#48614",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/48614"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    }
+  ],
+  "quality": {
+    "warnings": [
+      "6 historical linked PR(s) closed without merge",
+      "5 superseded SDK PR link(s) retained"
+    ],
+    "unavailablePullRequests": 0,
+    "unavailablePipelineRuns": 0
+  },
+  "boundaryFacts": {
+    "id": "33630",
+    "state": "finished",
+    "specPrs": [
+      {
+        "id": "github:Azure/azure-rest-api-specs#41688",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#41688",
+        "createdAt": "2026-03-24T08:39:13Z",
+        "mergedAt": "2026-03-25T08:49:38Z",
+        "closedAt": "2026-03-25T08:49:38Z",
+        "available": true
+      }
+    ],
+    "artifacts": [
+      {
+        "language": ".NET",
+        "package": "Azure.ResourceManager.ServiceGroups",
+        "trackId": "sdk:.NET:Azure.ResourceManager.ServiceGroups",
+        "prId": "github:Azure/azure-sdk-for-net#58602",
+        "prCreatedAt": "2026-04-23T15:53:31Z",
+        "prMergedAt": null,
+        "prClosedAt": "2026-04-25T00:25:10Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-net#58602",
+            "createdAt": "2026-04-23T15:53:31Z",
+            "mergedAt": null,
+            "closedAt": "2026-04-25T00:25:10Z",
+            "state": "closed"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6199046",
+        "generationStartAt": "2026-04-23T15:48:05.9595074Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-04-28T08:37:42.31Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.0.0-beta.2",
+        "releaseBoundaryAt": "2026-04-28T08:37:42.31Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "JavaScript",
+        "package": "@azure/arm-servicegroups",
+        "trackId": "sdk:JavaScript:@azure/arm-servicegroups",
+        "prId": "github:Azure/azure-sdk-for-js#37879",
+        "prCreatedAt": "2026-03-27T19:25:11Z",
+        "prMergedAt": "2026-04-01T04:55:34Z",
+        "prClosedAt": "2026-04-01T04:55:34Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-js#37879",
+            "createdAt": "2026-03-27T19:25:11Z",
+            "mergedAt": "2026-04-01T04:55:34Z",
+            "closedAt": "2026-04-01T04:55:34Z",
+            "state": "merged"
+          },
+          {
+            "id": "github:Azure/azure-sdk-for-js#38262",
+            "createdAt": "2026-04-23T15:53:38Z",
+            "mergedAt": null,
+            "closedAt": "2026-04-23T16:14:23Z",
+            "state": "closed"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6199047",
+        "generationStartAt": "2026-04-23T15:48:04.6603895Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-04-25T00:24:30.38Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.0.0-beta.2",
+        "releaseBoundaryAt": "2026-04-25T00:24:30.38Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Python",
+        "package": "azure-mgmt-servicegroups",
+        "trackId": "sdk:Python:azure-mgmt-servicegroups",
+        "prId": "github:Azure/azure-sdk-for-python#45969",
+        "prCreatedAt": "2026-03-27T19:31:49Z",
+        "prMergedAt": "2026-03-31T12:15:51Z",
+        "prClosedAt": "2026-03-31T12:15:51Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-python#45968",
+            "createdAt": "2026-03-27T19:26:46Z",
+            "mergedAt": null,
+            "closedAt": "2026-06-05T09:45:56Z",
+            "state": "closed"
+          },
+          {
+            "id": "github:Azure/azure-sdk-for-python#45969",
+            "createdAt": "2026-03-27T19:31:49Z",
+            "mergedAt": "2026-03-31T12:15:51Z",
+            "closedAt": "2026-03-31T12:15:51Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6199045",
+        "generationStartAt": "2026-04-23T15:48:00.9416561Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-04-25T04:19:41.82Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.0.0b1",
+        "releaseBoundaryAt": "2026-04-25T04:19:41.82Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Java",
+        "package": "azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+        "trackId": "sdk:Java:azure-resourcemanager-servicegroups (com.azure.resourcemanager.servicegroups)",
+        "prId": "github:Azure/azure-sdk-for-java#48613",
+        "prCreatedAt": "2026-03-27T19:29:38Z",
+        "prMergedAt": "2026-03-31T03:41:43Z",
+        "prClosedAt": "2026-03-31T03:41:43Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-java#48613",
+            "createdAt": "2026-03-27T19:29:38Z",
+            "mergedAt": "2026-03-31T03:41:43Z",
+            "closedAt": "2026-03-31T03:41:43Z",
+            "state": "merged"
+          },
+          {
+            "id": "github:Azure/azure-sdk-for-java#48614",
+            "createdAt": "2026-03-27T19:35:50Z",
+            "mergedAt": null,
+            "closedAt": "2026-06-05T09:49:27Z",
+            "state": "closed"
+          },
+          {
+            "id": "github:Azure/azure-sdk-for-java#48911",
+            "createdAt": "2026-04-23T15:59:01Z",
+            "mergedAt": null,
+            "closedAt": "2026-04-23T16:14:28Z",
+            "state": "closed"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6199048",
+        "generationStartAt": "2026-04-23T15:48:49.0445737Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-04-28T14:30:45.227Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "1.0.0-beta.2",
+        "releaseBoundaryAt": "2026-04-28T14:30:45.227Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Go",
+        "package": "sdk/resourcemanager/servicegroups/armservicegroups",
+        "trackId": "sdk:Go:sdk/resourcemanager/servicegroups/armservicegroups",
+        "prId": "github:Azure/azure-sdk-for-go#26438",
+        "prCreatedAt": "2026-03-27T19:24:17Z",
+        "prMergedAt": "2026-03-31T03:40:07Z",
+        "prClosedAt": "2026-03-31T03:40:07Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-go#26438",
+            "createdAt": "2026-03-27T19:24:17Z",
+            "mergedAt": "2026-03-31T03:40:07Z",
+            "closedAt": "2026-03-31T03:40:07Z",
+            "state": "merged"
+          },
+          {
+            "id": "github:Azure/azure-sdk-for-go#26660",
+            "createdAt": "2026-04-23T15:54:48Z",
+            "mergedAt": null,
+            "closedAt": "2026-04-23T16:14:37Z",
+            "state": "closed"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6199049",
+        "generationStartAt": "2026-04-23T15:49:23.9952643Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-04-27T14:08:44.987Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "0.1.0",
+        "releaseBoundaryAt": "2026-04-27T14:08:44.987Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      }
+    ],
+    "cohortPlan": {
+      "id": "33630",
+      "releasePlanId": "2145",
+      "title": "Release Plan - 2145 - Public Preview - Service Groups",
+      "service": "Service Groups",
+      "state": "finished"
+    },
+    "quality": {
+      "warnings": [
+        "6 historical linked PR(s) closed without merge",
+        "5 superseded SDK PR link(s) retained"
+      ],
+      "unavailablePullRequests": 0,
+      "unavailablePipelineRuns": 0
+    }
+  },
+  "summary": {
+    "durationHours": 765.9,
+    "pullRequestCount": 11,
+    "humanReviewCount": 16,
+    "humanCommentCount": 13
+  }
+}

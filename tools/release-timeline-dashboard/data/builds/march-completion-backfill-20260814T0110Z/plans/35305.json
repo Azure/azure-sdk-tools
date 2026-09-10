@@ -1,0 +1,2961 @@
+{
+  "schemaVersion": 2,
+  "id": "35305",
+  "correlation": {
+    "policyVersion": 1,
+    "preflight": "passed"
+  },
+  "releasePlanId": "35305",
+  "title": "Public Preview release plan for MachineLearningServices.Management",
+  "service": "MachineLearningServices.Management",
+  "product": "Release",
+  "path": "specification/machinelearningservices/MachineLearningServices.Management",
+  "state": "in-progress",
+  "plane": "management",
+  "releaseType": "APEX Public Preview",
+  "intendedMonth": "August 2026",
+  "createdAt": "2026-07-13T17:50:33.747Z",
+  "completedAt": null,
+  "sourceUrl": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35305",
+  "range": {
+    "start": "2026-05-13T14:22:26.000Z",
+    "end": "2026-08-14T00:37:23.589Z"
+  },
+  "intendedArtifacts": [
+    {
+      "prId": "github:Azure/azure-sdk-for-net#61202",
+      "language": ".NET",
+      "package": "Azure.ResourceManager.MachineLearning",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6635633",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-js#39362",
+      "language": "JavaScript",
+      "package": "@azure/arm-machinelearning",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6635636",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": null,
+      "language": "Python",
+      "package": "azure-ai-ml-_restclient-arm_ml_service",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6635637",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-java#49896",
+      "language": "Java",
+      "package": "azure-resourcemanager-machinelearning",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6635634",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-go#27232",
+      "language": "Go",
+      "package": "sdk/resourcemanager/machinelearning/armmachinelearning",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6635639",
+      "releasePipelineUrl": null
+    }
+  ],
+  "links": [
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#43168",
+      "role": "spec-pr",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/43168",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-net#61202",
+      "role": "sdk-pr",
+      "language": ".NET",
+      "url": "https://github.com/Azure/azure-sdk-for-net/pull/61202",
+      "releasePlanIds": [
+        "35305"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-js#39362",
+      "role": "sdk-pr",
+      "language": "JavaScript",
+      "url": "https://github.com/Azure/azure-sdk-for-js/pull/39362",
+      "releasePlanIds": [
+        "35305"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-java#49896",
+      "role": "sdk-pr",
+      "language": "Java",
+      "url": "https://github.com/Azure/azure-sdk-for-java/pull/49896",
+      "releasePlanIds": [
+        "35305"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-go#27232",
+      "role": "sdk-pr",
+      "language": "Go",
+      "url": "https://github.com/Azure/azure-sdk-for-go/pull/27232",
+      "releasePlanIds": [
+        "35305"
+      ]
+    }
+  ],
+  "tracks": [
+    {
+      "id": "plan",
+      "kind": "plan",
+      "label": "Release Plan",
+      "detail": "APEX Public Preview"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#43168",
+      "kind": "spec",
+      "label": "Spec PR",
+      "detail": "azure-rest-api-specs #43168",
+      "artifactId": "github:Azure/azure-rest-api-specs#43168",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:.NET:Azure.ResourceManager.MachineLearning",
+      "kind": "sdk",
+      "label": ".NET",
+      "detail": "Azure.ResourceManager.MachineLearning",
+      "artifactId": "github:Azure/azure-sdk-for-net#61202",
+      "state": "open"
+    },
+    {
+      "id": "sdk:JavaScript:@azure/arm-machinelearning",
+      "kind": "sdk",
+      "label": "JavaScript",
+      "detail": "@azure/arm-machinelearning",
+      "artifactId": "github:Azure/azure-sdk-for-js#39362",
+      "state": "open"
+    },
+    {
+      "id": "sdk:Python:azure-ai-ml-_restclient-arm_ml_service",
+      "kind": "sdk",
+      "label": "Python",
+      "detail": "azure-ai-ml-_restclient-arm_ml_service",
+      "artifactId": null,
+      "state": "missing"
+    },
+    {
+      "id": "sdk:Java:azure-resourcemanager-machinelearning",
+      "kind": "sdk",
+      "label": "Java",
+      "detail": "azure-resourcemanager-machinelearning",
+      "artifactId": "github:Azure/azure-sdk-for-java#49896",
+      "state": "open"
+    },
+    {
+      "id": "sdk:Go:sdk/resourcemanager/machinelearning/armmachinelearning",
+      "kind": "sdk",
+      "label": "Go",
+      "detail": "sdk/resourcemanager/machinelearning/armmachinelearning",
+      "artifactId": "github:Azure/azure-sdk-for-go#27232",
+      "state": "open"
+    }
+  ],
+  "events": [
+    {
+      "id": "github:Azure/azure-rest-api-specs#43168:pr.created:spec:github:Azure/azure-rest-api-specs#43168",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-13T14:22:26Z",
+      "observedAt": "2026-05-13T14:22:26Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43168",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "fmabroukmsft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43168",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43168"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43168:comment:4441989448:spec:github:Azure/azure-rest-api-specs#43168",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-13T14:23:22Z",
+      "observedAt": "2026-05-13T14:23:22Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43168",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43168",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43168#issuecomment-4441989448"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>✅ All automated merging requirements have been met! To get your PR merged, see <a href=\"https://aka.ms/azsdk/specreview/merge\">aka.ms/azsdk/specreview/merge</a>.<br /><br />Comment generated by <a href=\"https://g",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43168:comment:4442041424:spec:github:Azure/azure-rest-api-specs#43168",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-13T14:29:14Z",
+      "observedAt": "2026-05-13T14:29:14Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43168",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43168",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43168#issuecomment-4442041424"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews | Language | API Review for Package | |----------|---------| | Go | [sdk/resourcemanager/machinelearning/armmachinelearning](https://s",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43168:review:4332593089:spec:github:Azure/azure-rest-api-specs#43168",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-20T22:08:48Z",
+      "observedAt": "2026-05-20T22:08:48Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43168",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43168",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43168#pullrequestreview-4332593089"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot wasn't able to review this pull request because it exceeds the maximum number of files (300). Try reducing the number of changed files and requesting a review from Copilot again.",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43168:comment:4503039693:spec:github:Azure/azure-rest-api-specs#43168",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-20T22:09:24Z",
+      "observedAt": "2026-05-20T22:09:24Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43168",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "mentat9"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43168",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43168#issuecomment-4503039693"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@fmabroukmsft - Please fix/address all required CI checks (Swagger Avocado, Swagger LintDiff, TypeSpec Validation) before ARM review.",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43168:commit:21e1f955b25d:spec:github:Azure/azure-rest-api-specs#43168",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-30T14:53:55Z",
+      "observedAt": "2026-06-30T14:53:55Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43168",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "fmabroukmsft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43168",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/21e1f955b25da52e5ef3111bc0ae2ad71a7f36bc"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43168:commit:a74f14fe995f:spec:github:Azure/azure-rest-api-specs#43168",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-30T15:02:49Z",
+      "observedAt": "2026-06-30T15:02:49Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43168",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "fmabroukmsft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43168",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/a74f14fe995f2c5eeb73aebf84f1114989ca63ad"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43168:commit:0607dd87d7fa:spec:github:Azure/azure-rest-api-specs#43168",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-30T16:50:27Z",
+      "observedAt": "2026-06-30T16:50:27Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43168",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "fmabroukmsft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43168",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/0607dd87d7fa599bac8cd024d881ed9590d09150"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43168:commit:270cc131edd2:spec:github:Azure/azure-rest-api-specs#43168",
+      "type": "commit.pushed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-08T20:37:55Z",
+      "observedAt": "2026-07-08T20:37:55Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43168",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "fmabroukmsft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43168",
+        "url": "https://github.com/Azure/azure-rest-api-specs/commit/270cc131edd2b20e24ba7185022dfd19a646a1e0"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43168:review:4673171013:spec:github:Azure/azure-rest-api-specs#43168",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-10T16:22:20Z",
+      "observedAt": "2026-07-10T16:22:20Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43168",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "ZhidaLiu"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43168",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43168#pullrequestreview-4673171013"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43168:pr.merged:spec:github:Azure/azure-rest-api-specs#43168",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-13T17:44:47Z",
+      "observedAt": "2026-07-13T17:44:47Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43168",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43168",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43168"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:35305:created",
+      "type": "plan.created",
+      "phase": "plan",
+      "occurredAt": "2026-07-13T17:50:33.747Z",
+      "observedAt": "2026-07-13T17:50:33.747Z",
+      "trackId": "plan",
+      "title": "Release Plan created",
+      "confidence": "authoritative",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35305",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35305"
+      },
+      "stack": 0
+    },
+    {
+      "id": "ado:35305:1:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-07-13T17:50:33.747Z",
+      "observedAt": "2026-07-13T17:50:33.747Z",
+      "trackId": "plan",
+      "value": "New",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35305",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35305"
+      },
+      "title": "Plan state changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35305:1:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-13T17:50:33.747Z",
+      "observedAt": "2026-07-13T17:50:33.747Z",
+      "trackId": "plan",
+      "value": "Not Available",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35305",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35305"
+      },
+      "title": "Spec approval changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:35305:1:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-13T17:50:33.747Z",
+      "observedAt": "2026-07-13T17:50:33.747Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MachineLearning",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35305",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35305"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35305:1:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-13T17:50:33.747Z",
+      "observedAt": "2026-07-13T17:50:33.747Z",
+      "trackId": "sdk:JavaScript:@azure/arm-machinelearning",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35305",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35305"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35305:1:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-13T17:50:33.747Z",
+      "observedAt": "2026-07-13T17:50:33.747Z",
+      "trackId": "sdk:Python:azure-ai-ml-_restclient-arm_ml_service",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35305",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35305"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35305:1:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-13T17:50:33.747Z",
+      "observedAt": "2026-07-13T17:50:33.747Z",
+      "trackId": "sdk:Java:azure-resourcemanager-machinelearning",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35305",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35305"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35305:1:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-13T17:50:33.747Z",
+      "observedAt": "2026-07-13T17:50:33.747Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/machinelearning/armmachinelearning",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35305",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35305"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35306:1:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-13T17:50:34.13Z",
+      "observedAt": "2026-07-13T17:50:34.13Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43168",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/43168",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35306",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35306"
+      },
+      "title": "Spec PR linked",
+      "stack": 1
+    },
+    {
+      "id": "ado:35305:2:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-07-13T17:50:35.34Z",
+      "observedAt": "2026-07-13T17:50:35.34Z",
+      "trackId": "plan",
+      "value": "In Progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35305",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35305"
+      },
+      "title": "Plan state changed",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43168:comment:4960948874:spec:github:Azure/azure-rest-api-specs#43168",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-13T17:50:43Z",
+      "observedAt": "2026-07-13T17:50:43Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43168",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43168",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43168#issuecomment-4960948874"
+      },
+      "confidence": "authoritative",
+      "excerpt": "### ✅ Release Plan Created | Field | Value | |-------|-------| | **Release Plan** | [View Release Plan](https://azsdk-releaseplan-dashboard-hveph5aqhhcfhtgu.westus-01.azurewebsites.net/?releaseplan=35305) | | **API Version** | `2026-05-15-p",
+      "stack": 2
+    },
+    {
+      "id": "ado:35305:4:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-07-14T22:26:06.25Z",
+      "observedAt": "2026-07-14T22:26:06.25Z",
+      "trackId": "plan",
+      "value": "Approved",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35305",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35305"
+      },
+      "title": "Spec approval changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35305:5:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-14T22:29:29.753Z",
+      "observedAt": "2026-07-14T22:29:29.753Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MachineLearning",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35305",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35305"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35305:6:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-14T22:29:37.29Z",
+      "observedAt": "2026-07-14T22:29:37.29Z",
+      "trackId": "sdk:Java:azure-resourcemanager-machinelearning",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35305",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35305"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35305:7:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-14T22:29:43.56Z",
+      "observedAt": "2026-07-14T22:29:43.56Z",
+      "trackId": "sdk:JavaScript:@azure/arm-machinelearning",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35305",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35305"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35305:8:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-14T22:29:49.703Z",
+      "observedAt": "2026-07-14T22:29:49.703Z",
+      "trackId": "sdk:Python:azure-ai-ml-_restclient-arm_ml_service",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35305",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35305"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35305:9:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-14T22:29:56.027Z",
+      "observedAt": "2026-07-14T22:29:56.027Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/machinelearning/armmachinelearning",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35305",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35305"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35305:10:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-14T22:32:07.71Z",
+      "observedAt": "2026-07-14T22:32:07.71Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MachineLearning",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35305",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35305"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35305:10:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-14T22:32:07.71Z",
+      "observedAt": "2026-07-14T22:32:07.71Z",
+      "trackId": "sdk:JavaScript:@azure/arm-machinelearning",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35305",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35305"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35305:10:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-14T22:32:07.71Z",
+      "observedAt": "2026-07-14T22:32:07.71Z",
+      "trackId": "sdk:Python:azure-ai-ml-_restclient-arm_ml_service",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35305",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35305"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35305:10:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-14T22:32:07.71Z",
+      "observedAt": "2026-07-14T22:32:07.71Z",
+      "trackId": "sdk:Java:azure-resourcemanager-machinelearning",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35305",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35305"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35305:10:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-14T22:32:07.71Z",
+      "observedAt": "2026-07-14T22:32:07.71Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/machinelearning/armmachinelearning",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35305",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35305"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35305:11:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-22T09:05:13.3Z",
+      "observedAt": "2026-07-22T09:05:13.3Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MachineLearning",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35305",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35305"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35305:12:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-22T09:05:21.743Z",
+      "observedAt": "2026-07-22T09:05:21.743Z",
+      "trackId": "sdk:Java:azure-resourcemanager-machinelearning",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35305",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35305"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35305:13:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-22T09:05:30.603Z",
+      "observedAt": "2026-07-22T09:05:30.603Z",
+      "trackId": "sdk:JavaScript:@azure/arm-machinelearning",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35305",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35305"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35305:14:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-22T09:05:37.78Z",
+      "observedAt": "2026-07-22T09:05:37.78Z",
+      "trackId": "sdk:Python:azure-ai-ml-_restclient-arm_ml_service",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35305",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35305"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:35305:15:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-22T09:05:44.05Z",
+      "observedAt": "2026-07-22T09:05:44.05Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/machinelearning/armmachinelearning",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35305",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35305"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27232:commit:3ba81dc0a713:sdk:Go:sdk/resourcemanager/machinelearning/armmachinelearning",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T09:12:55Z",
+      "observedAt": "2026-07-22T09:12:55Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/machinelearning/armmachinelearning",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27232",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/3ba81dc0a713a293d37d1ec1a31e710b9f5e3bdc"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27232:pr.created:sdk:Go:sdk/resourcemanager/machinelearning/armmachinelearning",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T09:13:00Z",
+      "observedAt": "2026-07-22T09:13:00Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/machinelearning/armmachinelearning",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27232",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27232"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:35305:16:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-22T09:13:08.783Z",
+      "observedAt": "2026-07-22T09:13:08.783Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/machinelearning/armmachinelearning",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35305",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35305"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:35305:16:Custom.SDKPullRequestForGo",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-22T09:13:08.783Z",
+      "observedAt": "2026-07-22T09:13:08.783Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/machinelearning/armmachinelearning",
+      "value": "https://github.com/Azure/azure-sdk-for-go/pull/27232",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35305",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35305"
+      },
+      "title": "SDK PR linked",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27232:comment:5044031241:sdk:Go:sdk/resourcemanager/machinelearning/armmachinelearning",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T09:13:30Z",
+      "observedAt": "2026-07-22T09:13:30Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/machinelearning/armmachinelearning",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27232",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27232#issuecomment-5044031241"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 5 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 5
+    },
+    {
+      "id": "ado:35305:17:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-22T09:14:27.263Z",
+      "observedAt": "2026-07-22T09:14:27.263Z",
+      "trackId": "sdk:Python:azure-ai-ml-_restclient-arm_ml_service",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35305",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35305"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27232:review:4752856482:sdk:Go:sdk/resourcemanager/machinelearning/armmachinelearning",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T09:14:32Z",
+      "observedAt": "2026-07-22T09:14:32Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/machinelearning/armmachinelearning",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27232",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27232#pullrequestreview-4752856482"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview > [!NOTE] > Copilot could not run the full agentic suite for this review because it was automatically requested on a bot-authored pull request. Request a review from Copilot under Reviewers to retry with the full ag",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27232:comment:3629003331:sdk:Go:sdk/resourcemanager/machinelearning/armmachinelearning",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T09:14:32Z",
+      "observedAt": "2026-07-22T09:14:32Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/machinelearning/armmachinelearning",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27232",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27232#discussion_r3629003331"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The new `5.0.0-beta.2` section is empty. Please add a brief bullet list of notable changes included in this release (e.g., API version bump to `2026-05-15-preview`, dependency updates, generator spec commit update) so consumers can understa",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39362:commit:ac02266a7b2e:sdk:JavaScript:@azure/arm-machinelearning",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T09:15:36Z",
+      "observedAt": "2026-07-22T09:15:36Z",
+      "trackId": "sdk:JavaScript:@azure/arm-machinelearning",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39362",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/ac02266a7b2e695f02d3e37af3f917c4e56c21a3"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39362:pr.created:sdk:JavaScript:@azure/arm-machinelearning",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T09:15:42Z",
+      "observedAt": "2026-07-22T09:15:42Z",
+      "trackId": "sdk:JavaScript:@azure/arm-machinelearning",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39362",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39362"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39362:review:4752866683:sdk:JavaScript:@azure/arm-machinelearning",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T09:15:49Z",
+      "observedAt": "2026-07-22T09:15:49Z",
+      "trackId": "sdk:JavaScript:@azure/arm-machinelearning",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39362",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39362#pullrequestreview-4752866683"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot wasn't able to review this pull request because it exceeds the maximum number of files (300). Try reducing the number of changed files and requesting a review from Copilot again.",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "ado:35305:18:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-22T09:15:51.093Z",
+      "observedAt": "2026-07-22T09:15:51.093Z",
+      "trackId": "sdk:JavaScript:@azure/arm-machinelearning",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35305",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35305"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:35305:18:Custom.SDKPullRequestForJavaScript",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-22T09:15:51.093Z",
+      "observedAt": "2026-07-22T09:15:51.093Z",
+      "trackId": "sdk:JavaScript:@azure/arm-machinelearning",
+      "value": "https://github.com/Azure/azure-sdk-for-js/pull/39362",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35305",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35305"
+      },
+      "title": "SDK PR linked",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39362:comment:5044057950:sdk:JavaScript:@azure/arm-machinelearning",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T09:16:25Z",
+      "observedAt": "2026-07-22T09:16:25Z",
+      "trackId": "sdk:JavaScript:@azure/arm-machinelearning",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39362",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39362#issuecomment-5044057950"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 9 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49896:commit:b397b452f783:sdk:Java:azure-resourcemanager-machinelearning",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T09:18:40Z",
+      "observedAt": "2026-07-22T09:18:40Z",
+      "trackId": "sdk:Java:azure-resourcemanager-machinelearning",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49896",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/b397b452f7831720d1d9223044a4db963c797fb4"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49896:pr.created:sdk:Java:azure-resourcemanager-machinelearning",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T09:18:48Z",
+      "observedAt": "2026-07-22T09:18:48Z",
+      "trackId": "sdk:Java:azure-resourcemanager-machinelearning",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49896",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49896"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49896:review:4752890172:sdk:Java:azure-resourcemanager-machinelearning",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T09:18:55Z",
+      "observedAt": "2026-07-22T09:18:55Z",
+      "trackId": "sdk:Java:azure-resourcemanager-machinelearning",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49896",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49896#pullrequestreview-4752890172"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot wasn't able to review this pull request because it exceeds the maximum number of files (300). Try reducing the number of changed files and requesting a review from Copilot again.",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "ado:35305:19:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-22T09:18:56.93Z",
+      "observedAt": "2026-07-22T09:18:56.93Z",
+      "trackId": "sdk:Java:azure-resourcemanager-machinelearning",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35305",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35305"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:35305:19:Custom.SDKPullRequestForJava",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-22T09:18:56.93Z",
+      "observedAt": "2026-07-22T09:18:56.93Z",
+      "trackId": "sdk:Java:azure-resourcemanager-machinelearning",
+      "value": "https://github.com/Azure/azure-sdk-for-java/pull/49896",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35305",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35305"
+      },
+      "title": "SDK PR linked",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49896:comment:5044090364:sdk:Java:azure-resourcemanager-machinelearning",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T09:19:53Z",
+      "observedAt": "2026-07-22T09:19:53Z",
+      "trackId": "sdk:Java:azure-resourcemanager-machinelearning",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49896",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49896#issuecomment-5044090364"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 34 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61202:commit:c7dcb92c0763:sdk:.NET:Azure.ResourceManager.MachineLearning",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T09:20:11Z",
+      "observedAt": "2026-07-22T09:20:11Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MachineLearning",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61202",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/c7dcb92c0763494806d0e9559c0059a063d5994f"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61202:pr.created:sdk:.NET:Azure.ResourceManager.MachineLearning",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T09:20:15Z",
+      "observedAt": "2026-07-22T09:20:15Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MachineLearning",
+      "title": "PR opened",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-sdk-automation[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61202",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61202"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:35305:20:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-22T09:20:23.71Z",
+      "observedAt": "2026-07-22T09:20:23.71Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MachineLearning",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35305",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35305"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:35305:20:Custom.SDKPullRequestForDotnet",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-07-22T09:20:23.71Z",
+      "observedAt": "2026-07-22T09:20:23.71Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MachineLearning",
+      "value": "https://github.com/Azure/azure-sdk-for-net/pull/61202",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35305",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35305"
+      },
+      "title": "SDK PR linked",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61202:comment:5044099000:sdk:.NET:Azure.ResourceManager.MachineLearning",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T09:20:51Z",
+      "observedAt": "2026-07-22T09:20:51Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MachineLearning",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61202",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61202#issuecomment-5044099000"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines:<br> Successfully started running 1 pipeline(s).<br> 10 pipeline(s) were filtered out due to trigger conditions.<br> There may be pipelines that require an authorized user to comment /azp run to run.<br> </samp>",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61202:comment:3629045225:sdk:.NET:Azure.ResourceManager.MachineLearning",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T09:21:20Z",
+      "observedAt": "2026-07-22T09:21:20Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MachineLearning",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61202",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61202#discussion_r3629045225"
+      },
+      "confidence": "authoritative",
+      "excerpt": "`additionalDirectories:` is present but has no value. Many tooling pipelines expect this to be either omitted or an explicit list (e.g., `additionalDirectories: []`), and a null value can cause generation/config parsing failures. Set it to ",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61202:review:4752907179:sdk:.NET:Azure.ResourceManager.MachineLearning",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T09:21:21Z",
+      "observedAt": "2026-07-22T09:21:21Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MachineLearning",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61202",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61202#pullrequestreview-4752907179"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview > [!NOTE] > Copilot could not run the full agentic suite for this review because it was automatically requested on a bot-authored pull request. Request a review from Copilot under Reviewers to retry with the full ag",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61202:comment:3629045253:sdk:.NET:Azure.ResourceManager.MachineLearning",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T09:21:21Z",
+      "observedAt": "2026-07-22T09:21:21Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MachineLearning",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61202",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61202#discussion_r3629045253"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Renaming public extension methods/types from `GetMachineLearninRegistry...` to `GetMachineLearningRegistry...` is a breaking API change for any existing consumers (even if it fixes a typo). If this library has compatibility requirements, co",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61202:comment:5044446922:sdk:.NET:Azure.ResourceManager.MachineLearning",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T09:57:56Z",
+      "observedAt": "2026-07-22T09:57:56Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MachineLearning",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61202",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/61202#issuecomment-5044446922"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## 🔍 CI Failure Analysis for PR #61202 ### Summary | Check | Status | |---|---| | `net - pullrequest` | ❌ Failed | | `Build Analyze PRBatch` | ❌ Failed | | `Build Build PRBatch` | ❌ Failed | | `Build Test *` (multiple) | ❌ Failed | | `lice",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49896:commit:02fb6c261f34:sdk:Java:azure-resourcemanager-machinelearning",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-22T11:16:27Z",
+      "observedAt": "2026-07-22T11:16:27Z",
+      "trackId": "sdk:Java:azure-resourcemanager-machinelearning",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49896",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/02fb6c261f34fbcf919bd7f24edc5b84a3877951"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27232:comment:5053211902:sdk:Go:sdk/resourcemanager/machinelearning/armmachinelearning",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T01:05:42Z",
+      "observedAt": "2026-07-23T01:05:42Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/machinelearning/armmachinelearning",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27232",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27232#issuecomment-5053211902"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Next Steps to Merge Only failed checks and required actions are listed below. - ❌ `go - pullrequest (Build Analyze)`: Verify Changelogs failed — the `## 5.0.0-beta.2 (2026-07-22)` section in `CHANGELOG.md` has `### Other Changes` with no",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49896:commit:1fdd925fc2fb:sdk:Java:azure-resourcemanager-machinelearning",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T02:31:09Z",
+      "observedAt": "2026-07-23T02:31:09Z",
+      "trackId": "sdk:Java:azure-resourcemanager-machinelearning",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49896",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/1fdd925fc2fbc4ea03d002f42c925126c25a662e"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:35305:21:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-23T02:32:08.357Z",
+      "observedAt": "2026-07-23T02:32:08.357Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MachineLearning",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35305",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35305"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado:35305:22:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-23T02:32:16.52Z",
+      "observedAt": "2026-07-23T02:32:16.52Z",
+      "trackId": "sdk:Java:azure-resourcemanager-machinelearning",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35305",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35305"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:35305:23:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-23T02:32:24.597Z",
+      "observedAt": "2026-07-23T02:32:24.597Z",
+      "trackId": "sdk:JavaScript:@azure/arm-machinelearning",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35305",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35305"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:35305:24:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-23T02:32:30.727Z",
+      "observedAt": "2026-07-23T02:32:30.727Z",
+      "trackId": "sdk:Python:azure-ai-ml-_restclient-arm_ml_service",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35305",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35305"
+      },
+      "title": "Generation status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:35305:25:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-23T02:32:38.843Z",
+      "observedAt": "2026-07-23T02:32:38.843Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/machinelearning/armmachinelearning",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35305",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35305"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27232:commit:2fcf49b76b53:sdk:Go:sdk/resourcemanager/machinelearning/armmachinelearning",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T02:41:33Z",
+      "observedAt": "2026-07-23T02:41:33Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/machinelearning/armmachinelearning",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27232",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/2fcf49b76b5369e22632688a1c1f5314fd6c4c0a"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:35305:26:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-23T02:41:44.01Z",
+      "observedAt": "2026-07-23T02:41:44.01Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/machinelearning/armmachinelearning",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35305",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35305"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:35305:27:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-23T02:43:11.8Z",
+      "observedAt": "2026-07-23T02:43:11.8Z",
+      "trackId": "sdk:Python:azure-ai-ml-_restclient-arm_ml_service",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35305",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35305"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27232:comment:3635210682:sdk:Go:sdk/resourcemanager/machinelearning/armmachinelearning",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T02:43:14Z",
+      "observedAt": "2026-07-23T02:43:14Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/machinelearning/armmachinelearning",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27232",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27232#discussion_r3635210682"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The new changelog section for `5.0.0-beta.2` is currently empty. Please either add a brief summary of notable changes (e.g., API version bump to `2026-05-15-preview`, dependency updates, regeneration) or remove the empty subsection to avoid",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27232:review:4760340608:sdk:Go:sdk/resourcemanager/machinelearning/armmachinelearning",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T02:43:15Z",
+      "observedAt": "2026-07-23T02:43:15Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/machinelearning/armmachinelearning",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27232",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27232#pullrequestreview-4760340608"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Copilot reviewed 111 out of 142 changed files in this pull request and generated 1 comment. <details> <summary>Files not reviewed (29)</summary> * **sdk/resourcemanager/machinelearning/armmachinelearning/batchdeploy",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39362:commit:55effa49a998:sdk:JavaScript:@azure/arm-machinelearning",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T02:43:47Z",
+      "observedAt": "2026-07-23T02:43:47Z",
+      "trackId": "sdk:JavaScript:@azure/arm-machinelearning",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39362",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/55effa49a998fb4a5ec3a777d32dc417eb0b40b7"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39362:review:4760343180:sdk:JavaScript:@azure/arm-machinelearning",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T02:43:55Z",
+      "observedAt": "2026-07-23T02:43:55Z",
+      "trackId": "sdk:JavaScript:@azure/arm-machinelearning",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39362",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39362#pullrequestreview-4760343180"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot wasn't able to review this pull request because it exceeds the maximum number of files (300). Try reducing the number of changed files and requesting a review from Copilot again.",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "ado:35305:28:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-23T02:43:58.277Z",
+      "observedAt": "2026-07-23T02:43:58.277Z",
+      "trackId": "sdk:JavaScript:@azure/arm-machinelearning",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35305",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35305"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49896:commit:fe9d2ee1ae36:sdk:Java:azure-resourcemanager-machinelearning",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T02:46:27Z",
+      "observedAt": "2026-07-23T02:46:27Z",
+      "trackId": "sdk:Java:azure-resourcemanager-machinelearning",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49896",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/fe9d2ee1ae36e07266df04612d96aa5f7039c883"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:35305:29:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-23T02:46:38.12Z",
+      "observedAt": "2026-07-23T02:46:38.12Z",
+      "trackId": "sdk:Java:azure-resourcemanager-machinelearning",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35305",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35305"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49896:review:4760359539:sdk:Java:azure-resourcemanager-machinelearning",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T02:47:36Z",
+      "observedAt": "2026-07-23T02:47:36Z",
+      "trackId": "sdk:Java:azure-resourcemanager-machinelearning",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49896",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49896#pullrequestreview-4760359539"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61202:commit:65bfbe1eee6c:sdk:.NET:Azure.ResourceManager.MachineLearning",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T02:48:11Z",
+      "observedAt": "2026-07-23T02:48:11Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MachineLearning",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61202",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/65bfbe1eee6cecb7e2e48fbd51f81fb5b3ba406f"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:35305:30:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-23T02:48:21.403Z",
+      "observedAt": "2026-07-23T02:48:21.403Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MachineLearning",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35305",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35305"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27232:comment:5055304518:sdk:Go:sdk/resourcemanager/machinelearning/armmachinelearning",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T06:44:42Z",
+      "observedAt": "2026-07-23T06:44:42Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/machinelearning/armmachinelearning",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27232",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27232#issuecomment-5055304518"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@fmabroukmsft we found that there's no api changes between 2026-03-15-preview(last released) and 2026-05-15-preview(current pr's api version), from your spec pr https://github.com/Azure/azure-rest-api-specs/pull/43168, it seems your new api",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39362:review:4761440616:sdk:JavaScript:@azure/arm-machinelearning",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T06:45:24Z",
+      "observedAt": "2026-07-23T06:45:24Z",
+      "trackId": "sdk:JavaScript:@azure/arm-machinelearning",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39362",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39362#pullrequestreview-4761440616"
+      },
+      "confidence": "authoritative",
+      "excerpt": "1 tool issue found: the CHANGELOG for `4.0.0-beta.2` uses `Compared with version 3.0.0` as its baseline, but `4.0.0-beta.1` was released on 2026-06-29 and should be the comparison point. The API surface changes (addition of two new `KnownVe",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39362:comment:3636083893:sdk:JavaScript:@azure/arm-machinelearning",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-23T06:45:24Z",
+      "observedAt": "2026-07-23T06:45:24Z",
+      "trackId": "sdk:JavaScript:@azure/arm-machinelearning",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39362",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39362#discussion_r3636083893"
+      },
+      "confidence": "authoritative",
+      "excerpt": "🔴 **Tool Issue** — `CHANGELOG.md:4` `Compared with version 3.0.0` The changelog compares `4.0.0-beta.2` against `3.0.0` (the last stable release), but `4.0.0-beta.1` was already released on 2026-06-29 and is the correct baseline. The diff ",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6635633:generation.queued:sdk:.NET:Azure.ResourceManager.MachineLearning",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-07-29T19:31:48.1178424Z",
+      "observedAt": "2026-07-29T19:44:55.4475667Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MachineLearning",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6635633",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6635633"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:35305:31:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-29T19:31:55.42Z",
+      "observedAt": "2026-07-29T19:31:55.42Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MachineLearning",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35305",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35305"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6635634:generation.queued:sdk:Java:azure-resourcemanager-machinelearning",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-07-29T19:32:01.5457851Z",
+      "observedAt": "2026-07-29T19:55:08.6210302Z",
+      "trackId": "sdk:Java:azure-resourcemanager-machinelearning",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6635634",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6635634"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:35305:32:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-29T19:32:05.5Z",
+      "observedAt": "2026-07-29T19:32:05.5Z",
+      "trackId": "sdk:Java:azure-resourcemanager-machinelearning",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35305",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35305"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6635633:generation.started:sdk:.NET:Azure.ResourceManager.MachineLearning",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-07-29T19:32:11.3078579Z",
+      "observedAt": "2026-07-29T19:44:55.4475667Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MachineLearning",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6635633",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6635633"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6635636:generation.queued:sdk:JavaScript:@azure/arm-machinelearning",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-07-29T19:32:11.4868367Z",
+      "observedAt": "2026-07-29T19:42:13.5215999Z",
+      "trackId": "sdk:JavaScript:@azure/arm-machinelearning",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6635636",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6635636"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:35305:33:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-29T19:32:14.953Z",
+      "observedAt": "2026-07-29T19:32:14.953Z",
+      "trackId": "sdk:JavaScript:@azure/arm-machinelearning",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35305",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35305"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6635637:generation.queued:sdk:Python:azure-ai-ml-_restclient-arm_ml_service",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-07-29T19:32:19.1163068Z",
+      "observedAt": "2026-07-29T19:40:15.180976Z",
+      "trackId": "sdk:Python:azure-ai-ml-_restclient-arm_ml_service",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6635637",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6635637"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:35305:34:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-29T19:32:22.78Z",
+      "observedAt": "2026-07-29T19:32:22.78Z",
+      "trackId": "sdk:Python:azure-ai-ml-_restclient-arm_ml_service",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35305",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35305"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6635634:generation.started:sdk:Java:azure-resourcemanager-machinelearning",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-07-29T19:32:24.1684378Z",
+      "observedAt": "2026-07-29T19:55:08.6210302Z",
+      "trackId": "sdk:Java:azure-resourcemanager-machinelearning",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6635634",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6635634"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6635639:generation.queued:sdk:Go:sdk/resourcemanager/machinelearning/armmachinelearning",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-07-29T19:32:28.2748432Z",
+      "observedAt": "2026-07-29T19:39:35.6002045Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/machinelearning/armmachinelearning",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6635639",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6635639"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:35305:35:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-29T19:32:30.93Z",
+      "observedAt": "2026-07-29T19:32:30.93Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/machinelearning/armmachinelearning",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35305",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35305"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6635637:generation.started:sdk:Python:azure-ai-ml-_restclient-arm_ml_service",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-07-29T19:32:44.7161761Z",
+      "observedAt": "2026-07-29T19:40:15.180976Z",
+      "trackId": "sdk:Python:azure-ai-ml-_restclient-arm_ml_service",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6635637",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6635637"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6635636:generation.started:sdk:JavaScript:@azure/arm-machinelearning",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-07-29T19:32:48.5201923Z",
+      "observedAt": "2026-07-29T19:42:13.5215999Z",
+      "trackId": "sdk:JavaScript:@azure/arm-machinelearning",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6635636",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6635636"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6635639:generation.started:sdk:Go:sdk/resourcemanager/machinelearning/armmachinelearning",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-07-29T19:33:12.8661958Z",
+      "observedAt": "2026-07-29T19:39:35.6002045Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/machinelearning/armmachinelearning",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6635639",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6635639"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27232:commit:058731a285d4:sdk:Go:sdk/resourcemanager/machinelearning/armmachinelearning",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-29T19:38:29Z",
+      "observedAt": "2026-07-29T19:38:29Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/machinelearning/armmachinelearning",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27232",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/058731a285d4d0270bcf2b31188aa47f50672a9e"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado:35305:36:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-29T19:38:40.223Z",
+      "observedAt": "2026-07-29T19:38:40.223Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/machinelearning/armmachinelearning",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35305",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35305"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6635639:generation.completed:sdk:Go:sdk/resourcemanager/machinelearning/armmachinelearning",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-07-29T19:39:35.6002045Z",
+      "observedAt": "2026-07-29T19:39:35.6002045Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/machinelearning/armmachinelearning",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6635639",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6635639"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:6635637:00be4b52-4a63-5865-8e02-c61723ad0692:sdk:Python:azure-ai-ml-_restclient-arm_ml_service",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-07-29T19:39:36.2866667Z",
+      "observedAt": "2026-07-29T19:40:15.180976Z",
+      "trackId": "sdk:Python:azure-ai-ml-_restclient-arm_ml_service",
+      "title": "task failed: Generate SDK",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6635637",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6635637"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 3
+    },
+    {
+      "id": "ado:35305:37:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-29T19:39:44.593Z",
+      "observedAt": "2026-07-29T19:39:44.593Z",
+      "trackId": "sdk:Python:azure-ai-ml-_restclient-arm_ml_service",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35305",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35305"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6635637:83516c17-6666-5250-abde-63983ce72a49:sdk:Python:azure-ai-ml-_restclient-arm_ml_service",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-07-29T19:40:04.1833333Z",
+      "observedAt": "2026-07-29T19:40:15.180976Z",
+      "trackId": "sdk:Python:azure-ai-ml-_restclient-arm_ml_service",
+      "title": "job failed: Job",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6635637",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6635637"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:6635637:6884a131-87da-5381-61f3-d7acc3b91d76:sdk:Python:azure-ai-ml-_restclient-arm_ml_service",
+      "type": "generation.stage_failed",
+      "phase": "generation",
+      "occurredAt": "2026-07-29T19:40:14.3466667Z",
+      "observedAt": "2026-07-29T19:40:15.180976Z",
+      "trackId": "sdk:Python:azure-ai-ml-_restclient-arm_ml_service",
+      "title": "stage failed: SDK Generation",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6635637",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6635637"
+      },
+      "confidence": "authoritative",
+      "value": "failed",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6635637:generation.failed:sdk:Python:azure-ai-ml-_restclient-arm_ml_service",
+      "type": "generation.failed",
+      "phase": "generation",
+      "occurredAt": "2026-07-29T19:40:15.180976Z",
+      "observedAt": "2026-07-29T19:40:15.180976Z",
+      "trackId": "sdk:Python:azure-ai-ml-_restclient-arm_ml_service",
+      "title": "Pipeline failed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6635637",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6635637"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27232:review:4812296482:sdk:Go:sdk/resourcemanager/machinelearning/armmachinelearning",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-29T19:40:38Z",
+      "observedAt": "2026-07-29T19:40:38Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/machinelearning/armmachinelearning",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27232",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27232#pullrequestreview-4812296482"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview Copilot reviewed 112 out of 143 changed files in this pull request and generated no new comments. <details> <summary>Files not reviewed (29)</summary> * **sdk/resourcemanager/machinelearning/armmachinelearning/batch",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39362:commit:26a83da49b2d:sdk:JavaScript:@azure/arm-machinelearning",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-29T19:41:00Z",
+      "observedAt": "2026-07-29T19:41:00Z",
+      "trackId": "sdk:JavaScript:@azure/arm-machinelearning",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39362",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/26a83da49b2d2945d26155c2ce62bcb117a8623a"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39362:review:4812301870:sdk:JavaScript:@azure/arm-machinelearning",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-29T19:41:10Z",
+      "observedAt": "2026-07-29T19:41:10Z",
+      "trackId": "sdk:JavaScript:@azure/arm-machinelearning",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39362",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39362#pullrequestreview-4812301870"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot wasn't able to review this pull request because it exceeds the maximum number of files (300). Try reducing the number of changed files and requesting a review from Copilot again.",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "ado:35305:38:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-29T19:41:10.677Z",
+      "observedAt": "2026-07-29T19:41:10.677Z",
+      "trackId": "sdk:JavaScript:@azure/arm-machinelearning",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35305",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35305"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:6635636:generation.completed:sdk:JavaScript:@azure/arm-machinelearning",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-07-29T19:42:13.5215999Z",
+      "observedAt": "2026-07-29T19:42:13.5215999Z",
+      "trackId": "sdk:JavaScript:@azure/arm-machinelearning",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6635636",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6635636"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#61202:commit:7752342e5a62:sdk:.NET:Azure.ResourceManager.MachineLearning",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-29T19:43:56Z",
+      "observedAt": "2026-07-29T19:43:56Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MachineLearning",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#61202",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/7752342e5a621fa023d2e88dc90381ee74c86ebd"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado:35305:39:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-29T19:44:07.027Z",
+      "observedAt": "2026-07-29T19:44:07.027Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MachineLearning",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35305",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35305"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49896:commit:ed123e79d932:sdk:Java:azure-resourcemanager-machinelearning",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-29T19:44:23Z",
+      "observedAt": "2026-07-29T19:44:23Z",
+      "trackId": "sdk:Java:azure-resourcemanager-machinelearning",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49896",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/ed123e79d9325e464c38714da08247baad0eb13f"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado:35305:40:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-07-29T19:44:35.25Z",
+      "observedAt": "2026-07-29T19:44:35.25Z",
+      "trackId": "sdk:Java:azure-resourcemanager-machinelearning",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:35305",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35305"
+      },
+      "title": "Generation status changed",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6635633:generation.completed:sdk:.NET:Azure.ResourceManager.MachineLearning",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-07-29T19:44:55.4475667Z",
+      "observedAt": "2026-07-29T19:44:55.4475667Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.MachineLearning",
+      "title": "Pipeline completed with issues",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6635633",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6635633"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado-build:internal:6635634:generation.completed:sdk:Java:azure-resourcemanager-machinelearning",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-07-29T19:55:08.6210302Z",
+      "observedAt": "2026-07-29T19:55:08.6210302Z",
+      "trackId": "sdk:Java:azure-resourcemanager-machinelearning",
+      "title": "Pipeline completed with issues",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6635634",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6635634"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39362:comment:5122882934:sdk:JavaScript:@azure/arm-machinelearning",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-29T20:04:16Z",
+      "observedAt": "2026-07-29T20:04:16Z",
+      "trackId": "sdk:JavaScript:@azure/arm-machinelearning",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39362",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39362#issuecomment-5122882934"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Next Steps to Merge Only failed checks and required actions are listed below. - ❌ **UnitTest (ubuntu_24x_node, windows_22x_node, windows_22x_browser, macoslatest_26x_node)**: Stale recordings — `RecorderError: Unable to find a record for",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49896:review:4814411426:sdk:Java:azure-resourcemanager-machinelearning",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-30T01:31:46Z",
+      "observedAt": "2026-07-30T01:31:46Z",
+      "trackId": "sdk:Java:azure-resourcemanager-machinelearning",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49896",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49896#pullrequestreview-4814411426"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#27232:review:4815884593:sdk:Go:sdk/resourcemanager/machinelearning/armmachinelearning",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-30T06:17:34Z",
+      "observedAt": "2026-07-30T06:17:34Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/machinelearning/armmachinelearning",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "tadelesh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#27232",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/27232#pullrequestreview-4815884593"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39362:commit:22cf4aff14af:sdk:JavaScript:@azure/arm-machinelearning",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-07T03:04:37Z",
+      "observedAt": "2026-08-07T03:04:37Z",
+      "trackId": "sdk:JavaScript:@azure/arm-machinelearning",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39362",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/22cf4aff14af982dbe6bfb6e22348e98f8337fdb"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39362:review:4879611027:sdk:JavaScript:@azure/arm-machinelearning",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-07T03:11:17Z",
+      "observedAt": "2026-08-07T03:11:17Z",
+      "trackId": "sdk:JavaScript:@azure/arm-machinelearning",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39362",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39362#pullrequestreview-4879611027"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot wasn't able to review this pull request because it exceeds the maximum number of files (300). Try reducing the number of changed files and requesting a review from Copilot again.",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39362:comment:5212017997:sdk:JavaScript:@azure/arm-machinelearning",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-07T03:39:33Z",
+      "observedAt": "2026-08-07T03:39:33Z",
+      "trackId": "sdk:JavaScript:@azure/arm-machinelearning",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39362",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39362#issuecomment-5212017997"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Next Steps to Merge ✅ All CI checks have passed — this PR is ready for review! The SDK engineer will review this PR shortly. Once it's approved, you can go ahead and merge it. To make things easier, feel free to [enable auto-merge](https",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39362:review:4893462707:sdk:JavaScript:@azure/arm-machinelearning",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-10T03:15:14Z",
+      "observedAt": "2026-08-10T03:15:14Z",
+      "trackId": "sdk:JavaScript:@azure/arm-machinelearning",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39362",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39362#pullrequestreview-4893462707"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Reviewed PR #39362 (`@azure/arm-machinelearning` 4.0.0-beta.2). Tooling checks pass: package.json/CHANGELOG.md versions are consistent (4.0.0-beta.2), no alpha versions used, and the API version was bumped from `2026-03-15-preview` to `2026",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39362:comment:5236892228:sdk:JavaScript:@azure/arm-machinelearning",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-10T06:57:16Z",
+      "observedAt": "2026-08-10T06:57:16Z",
+      "trackId": "sdk:JavaScript:@azure/arm-machinelearning",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39362",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39362#issuecomment-5236892228"
+      },
+      "confidence": "authoritative",
+      "excerpt": "LGTM cc @JialinHuang803",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39362:review:4902518535:sdk:JavaScript:@azure/arm-machinelearning",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T02:37:40Z",
+      "observedAt": "2026-08-11T02:37:40Z",
+      "trackId": "sdk:JavaScript:@azure/arm-machinelearning",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "JialinHuang803"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39362",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39362#pullrequestreview-4902518535"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#39362:review:4902527197:sdk:JavaScript:@azure/arm-machinelearning",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-08-11T02:40:20Z",
+      "observedAt": "2026-08-11T02:40:20Z",
+      "trackId": "sdk:JavaScript:@azure/arm-machinelearning",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "JialinHuang803"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#39362",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/39362#pullrequestreview-4902527197"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 3
+    }
+  ],
+  "quality": {
+    "warnings": [
+      "4 historical linked PR(s) closed without merge"
+    ],
+    "unavailablePullRequests": 0,
+    "unavailablePipelineRuns": 0
+  },
+  "boundaryFacts": {
+    "id": "35305",
+    "state": "in-progress",
+    "specPrs": [
+      {
+        "id": "github:Azure/azure-rest-api-specs#43168",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#43168",
+        "createdAt": "2026-05-13T14:22:26Z",
+        "mergedAt": "2026-07-13T17:44:47Z",
+        "closedAt": "2026-07-13T17:44:47Z",
+        "available": true
+      }
+    ],
+    "artifacts": [
+      {
+        "language": ".NET",
+        "package": "Azure.ResourceManager.MachineLearning",
+        "trackId": "sdk:.NET:Azure.ResourceManager.MachineLearning",
+        "prId": "github:Azure/azure-sdk-for-net#61202",
+        "prCreatedAt": "2026-07-22T09:20:15Z",
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-net#61202",
+            "createdAt": "2026-07-22T09:20:15Z",
+            "mergedAt": null,
+            "closedAt": null,
+            "state": "open"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6635633",
+        "generationStartAt": "2026-07-29T19:32:11.3078579Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "JavaScript",
+        "package": "@azure/arm-machinelearning",
+        "trackId": "sdk:JavaScript:@azure/arm-machinelearning",
+        "prId": "github:Azure/azure-sdk-for-js#39362",
+        "prCreatedAt": "2026-07-22T09:15:42Z",
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-js#39362",
+            "createdAt": "2026-07-22T09:15:42Z",
+            "mergedAt": null,
+            "closedAt": null,
+            "state": "open"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6635636",
+        "generationStartAt": "2026-07-29T19:32:48.5201923Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Python",
+        "package": "azure-ai-ml-_restclient-arm_ml_service",
+        "trackId": "sdk:Python:azure-ai-ml-_restclient-arm_ml_service",
+        "prId": null,
+        "prCreatedAt": null,
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [],
+        "generationRunId": "ado-build:internal:6635637",
+        "generationStartAt": "2026-07-29T19:32:44.7161761Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "missing",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Java",
+        "package": "azure-resourcemanager-machinelearning",
+        "trackId": "sdk:Java:azure-resourcemanager-machinelearning",
+        "prId": "github:Azure/azure-sdk-for-java#49896",
+        "prCreatedAt": "2026-07-22T09:18:48Z",
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-java#49896",
+            "createdAt": "2026-07-22T09:18:48Z",
+            "mergedAt": null,
+            "closedAt": null,
+            "state": "open"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6635634",
+        "generationStartAt": "2026-07-29T19:32:24.1684378Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Go",
+        "package": "sdk/resourcemanager/machinelearning/armmachinelearning",
+        "trackId": "sdk:Go:sdk/resourcemanager/machinelearning/armmachinelearning",
+        "prId": "github:Azure/azure-sdk-for-go#27232",
+        "prCreatedAt": "2026-07-22T09:13:00Z",
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-go#27232",
+            "createdAt": "2026-07-22T09:13:00Z",
+            "mergedAt": null,
+            "closedAt": null,
+            "state": "open"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6635639",
+        "generationStartAt": "2026-07-29T19:33:12.8661958Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      }
+    ],
+    "cohortPlan": {
+      "id": "35305",
+      "releasePlanId": "35305",
+      "title": "Public Preview release plan for MachineLearningServices.Management",
+      "service": "MachineLearningServices.Management",
+      "state": "in-progress"
+    },
+    "quality": {
+      "warnings": [
+        "4 historical linked PR(s) closed without merge"
+      ],
+      "unavailablePullRequests": 0,
+      "unavailablePipelineRuns": 0
+    }
+  },
+  "summary": {
+    "durationHours": 750.8,
+    "pullRequestCount": 5,
+    "humanReviewCount": 6,
+    "humanCommentCount": 3
+  }
+}

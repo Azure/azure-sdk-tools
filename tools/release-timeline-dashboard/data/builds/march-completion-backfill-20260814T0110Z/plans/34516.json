@@ -1,0 +1,2563 @@
+{
+  "schemaVersion": 2,
+  "id": "34516",
+  "correlation": {
+    "policyVersion": 1,
+    "preflight": "passed"
+  },
+  "releasePlanId": "2252",
+  "title": "Release plan - 2252 - Public Preview - Storage",
+  "service": "Storage.Management",
+  "product": "Release",
+  "path": "specification/storage/Storage.Management",
+  "state": "in-progress",
+  "plane": "management",
+  "releaseType": "APEX Public Preview",
+  "intendedMonth": "June 2026",
+  "createdAt": "2026-05-27T06:19:17.737Z",
+  "completedAt": null,
+  "sourceUrl": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34516",
+  "range": {
+    "start": "2026-05-25T08:32:08.000Z",
+    "end": "2026-08-14T00:37:23.589Z"
+  },
+  "intendedArtifacts": [
+    {
+      "prId": "github:Azure/azure-sdk-for-net#59568",
+      "language": ".NET",
+      "package": "Azure.ResourceManager.Storage",
+      "version": null,
+      "outcome": "pending",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6376654",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-js#38755",
+      "language": "JavaScript",
+      "package": "@azure/arm-storage",
+      "version": "20.1.0",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6376655",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-python#47258",
+      "language": "Python",
+      "package": "azure-mgmt-storage",
+      "version": "25.1.0",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6376656",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-java#49331",
+      "language": "Java",
+      "package": "azure-resourcemanager-storage",
+      "version": "2.57.0",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6376658",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-go#26905",
+      "language": "Go",
+      "package": "sdk/resourcemanager/storage/armstorage",
+      "version": "4.1.0",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6376657",
+      "releasePipelineUrl": null
+    }
+  ],
+  "links": [
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#43484",
+      "role": "spec-pr",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/43484",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-net#59568",
+      "role": "sdk-pr",
+      "language": ".NET",
+      "url": "https://github.com/Azure/azure-sdk-for-net/pull/59568",
+      "releasePlanIds": [
+        "2252",
+        "34516"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-js#38755",
+      "role": "sdk-pr",
+      "language": "JavaScript",
+      "url": "https://github.com/Azure/azure-sdk-for-js/pull/38755",
+      "releasePlanIds": [
+        "2252",
+        "34516"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-python#47258",
+      "role": "sdk-pr",
+      "language": "Python",
+      "url": "https://github.com/Azure/azure-sdk-for-python/pull/47258",
+      "releasePlanIds": [
+        "2252",
+        "34516"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-java#49331",
+      "role": "sdk-pr",
+      "language": "Java",
+      "url": "https://github.com/Azure/azure-sdk-for-java/pull/49331",
+      "releasePlanIds": [
+        "2252",
+        "34516"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-go#26905",
+      "role": "sdk-pr",
+      "language": "Go",
+      "url": "https://github.com/Azure/azure-sdk-for-go/pull/26905",
+      "releasePlanIds": [
+        "2252",
+        "34516"
+      ]
+    }
+  ],
+  "tracks": [
+    {
+      "id": "plan",
+      "kind": "plan",
+      "label": "Release Plan",
+      "detail": "APEX Public Preview"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#43484",
+      "kind": "spec",
+      "label": "Spec PR",
+      "detail": "azure-rest-api-specs #43484",
+      "artifactId": "github:Azure/azure-rest-api-specs#43484",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:.NET:Azure.ResourceManager.Storage",
+      "kind": "sdk",
+      "label": ".NET",
+      "detail": "Azure.ResourceManager.Storage",
+      "artifactId": "github:Azure/azure-sdk-for-net#59568",
+      "state": "open"
+    },
+    {
+      "id": "sdk:JavaScript:@azure/arm-storage",
+      "kind": "sdk",
+      "label": "JavaScript",
+      "detail": "@azure/arm-storage",
+      "artifactId": "github:Azure/azure-sdk-for-js#38755",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Python:azure-mgmt-storage",
+      "kind": "sdk",
+      "label": "Python",
+      "detail": "azure-mgmt-storage",
+      "artifactId": "github:Azure/azure-sdk-for-python#47258",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Java:azure-resourcemanager-storage",
+      "kind": "sdk",
+      "label": "Java",
+      "detail": "azure-resourcemanager-storage",
+      "artifactId": "github:Azure/azure-sdk-for-java#49331",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:Go:sdk/resourcemanager/storage/armstorage",
+      "kind": "sdk",
+      "label": "Go",
+      "detail": "sdk/resourcemanager/storage/armstorage",
+      "artifactId": "github:Azure/azure-sdk-for-go#26905",
+      "state": "merged"
+    }
+  ],
+  "events": [
+    {
+      "id": "github:Azure/azure-rest-api-specs#43484:pr.created:spec:github:Azure/azure-rest-api-specs#43484",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-25T08:32:08Z",
+      "observedAt": "2026-05-25T08:32:08Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43484",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "blueww"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43484",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43484"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43484:comment:4532814215:spec:github:Azure/azure-rest-api-specs#43484",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-25T08:32:50Z",
+      "observedAt": "2026-05-25T08:32:50Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43484",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43484",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43484#issuecomment-4532814215"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>✅ All automated merging requirements have been met! To get your PR merged, see <a href=\"https://aka.ms/azsdk/specreview/merge\">aka.ms/azsdk/specreview/merge</a>.<br /><br />Comment generated by <a href=\"https://g",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43484:comment:4532877915:spec:github:Azure/azure-rest-api-specs#43484",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-25T08:41:56Z",
+      "observedAt": "2026-05-25T08:41:56Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43484",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43484",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43484#issuecomment-4532877915"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews | Language | API Review for Package | |----------|---------| | Go | [sdk/resourcemanager/storage/armstorage](https://spa.apiview.dev/r",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43484:review:4369721814:spec:github:Azure/azure-rest-api-specs#43484",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-27T05:49:16Z",
+      "observedAt": "2026-05-27T05:49:16Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43484",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43484",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43484#pullrequestreview-4369721814"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#43484:pr.merged:spec:github:Azure/azure-rest-api-specs#43484",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-27T05:49:19Z",
+      "observedAt": "2026-05-27T05:49:19Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43484",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#43484",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/43484"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:34516:created",
+      "type": "plan.created",
+      "phase": "plan",
+      "occurredAt": "2026-05-27T06:19:17.737Z",
+      "observedAt": "2026-05-27T06:19:17.737Z",
+      "trackId": "plan",
+      "title": "Release Plan created",
+      "confidence": "authoritative",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34516",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34516"
+      },
+      "stack": 0
+    },
+    {
+      "id": "ado:34516:1:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-05-27T06:19:17.737Z",
+      "observedAt": "2026-05-27T06:19:17.737Z",
+      "trackId": "plan",
+      "value": "New",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34516",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34516"
+      },
+      "title": "Plan state changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34516:1:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-27T06:19:17.737Z",
+      "observedAt": "2026-05-27T06:19:17.737Z",
+      "trackId": "plan",
+      "value": "Not Available",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34516",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34516"
+      },
+      "title": "Spec approval changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:34516:1:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-27T06:19:17.737Z",
+      "observedAt": "2026-05-27T06:19:17.737Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Storage",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34516",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34516"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34516:1:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-27T06:19:17.737Z",
+      "observedAt": "2026-05-27T06:19:17.737Z",
+      "trackId": "sdk:JavaScript:@azure/arm-storage",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34516",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34516"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34516:1:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-27T06:19:17.737Z",
+      "observedAt": "2026-05-27T06:19:17.737Z",
+      "trackId": "sdk:Python:azure-mgmt-storage",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34516",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34516"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34516:1:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-27T06:19:17.737Z",
+      "observedAt": "2026-05-27T06:19:17.737Z",
+      "trackId": "sdk:Java:azure-resourcemanager-storage",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34516",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34516"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34516:1:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-05-27T06:19:17.737Z",
+      "observedAt": "2026-05-27T06:19:17.737Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/storage/armstorage",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34516",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34516"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34517:1:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-05-27T06:19:18.19Z",
+      "observedAt": "2026-05-27T06:19:18.19Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#43484",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/43484",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34517",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34517"
+      },
+      "title": "Spec PR linked",
+      "stack": 2
+    },
+    {
+      "id": "ado:34516:2:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-05-27T06:19:19.547Z",
+      "observedAt": "2026-05-27T06:19:19.547Z",
+      "trackId": "plan",
+      "value": "In Progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34516",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34516"
+      },
+      "title": "Plan state changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:34516:6:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-06-01T06:57:43.55Z",
+      "observedAt": "2026-06-01T06:57:43.55Z",
+      "trackId": "plan",
+      "value": "Approved",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34516",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34516"
+      },
+      "title": "Spec approval changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34516:8:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-01T06:59:21.427Z",
+      "observedAt": "2026-06-01T06:59:21.427Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Storage",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34516",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34516"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34516:9:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-01T06:59:21.99Z",
+      "observedAt": "2026-06-01T06:59:21.99Z",
+      "trackId": "sdk:JavaScript:@azure/arm-storage",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34516",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34516"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34516:10:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-01T06:59:22.913Z",
+      "observedAt": "2026-06-01T06:59:22.913Z",
+      "trackId": "sdk:Java:azure-resourcemanager-storage",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34516",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34516"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34516:11:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-01T06:59:23.843Z",
+      "observedAt": "2026-06-01T06:59:23.843Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/storage/armstorage",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34516",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34516"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34516:12:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-01T06:59:24.833Z",
+      "observedAt": "2026-06-01T06:59:24.833Z",
+      "trackId": "sdk:Python:azure-mgmt-storage",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34516",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34516"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34516:25:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-01T07:15:26.397Z",
+      "observedAt": "2026-06-01T07:15:26.397Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Storage",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34516",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34516"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34516:25:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-01T07:15:26.397Z",
+      "observedAt": "2026-06-01T07:15:26.397Z",
+      "trackId": "sdk:JavaScript:@azure/arm-storage",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34516",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34516"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34516:25:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-01T07:15:26.397Z",
+      "observedAt": "2026-06-01T07:15:26.397Z",
+      "trackId": "sdk:Python:azure-mgmt-storage",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34516",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34516"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34516:25:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-01T07:15:26.397Z",
+      "observedAt": "2026-06-01T07:15:26.397Z",
+      "trackId": "sdk:Java:azure-resourcemanager-storage",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34516",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34516"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34516:25:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-01T07:15:26.397Z",
+      "observedAt": "2026-06-01T07:15:26.397Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/storage/armstorage",
+      "value": "Pending",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34516",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34516"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:6376658:generation.queued:sdk:Java:azure-resourcemanager-storage",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-06-01T07:20:25.3208343Z",
+      "observedAt": "2026-06-01T07:43:36.1939326Z",
+      "trackId": "sdk:Java:azure-resourcemanager-storage",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6376658",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6376658"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6376654:generation.queued:sdk:.NET:Azure.ResourceManager.Storage",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-06-01T07:20:25.3411387Z",
+      "observedAt": "2026-06-01T07:35:19.3810057Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Storage",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6376654",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6376654"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6376657:generation.queued:sdk:Go:sdk/resourcemanager/storage/armstorage",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-06-01T07:20:25.3599761Z",
+      "observedAt": "2026-06-01T07:29:43.0740681Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/storage/armstorage",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6376657",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6376657"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6376655:generation.queued:sdk:JavaScript:@azure/arm-storage",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-06-01T07:20:25.5455466Z",
+      "observedAt": "2026-06-01T07:32:36.6529787Z",
+      "trackId": "sdk:JavaScript:@azure/arm-storage",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6376655",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6376655"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6376656:generation.queued:sdk:Python:azure-mgmt-storage",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-06-01T07:20:25.8074228Z",
+      "observedAt": "2026-06-01T07:34:22.464632Z",
+      "trackId": "sdk:Python:azure-mgmt-storage",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6376656",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6376656"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado:34516:26:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-01T07:20:28.953Z",
+      "observedAt": "2026-06-01T07:20:28.953Z",
+      "trackId": "sdk:JavaScript:@azure/arm-storage",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34516",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34516"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:34516:27:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-01T07:20:30.13Z",
+      "observedAt": "2026-06-01T07:20:30.13Z",
+      "trackId": "sdk:Python:azure-mgmt-storage",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34516",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34516"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:34516:28:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-01T07:20:30.683Z",
+      "observedAt": "2026-06-01T07:20:30.683Z",
+      "trackId": "sdk:Java:azure-resourcemanager-storage",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34516",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34516"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:34516:29:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-01T07:20:30.85Z",
+      "observedAt": "2026-06-01T07:20:30.85Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Storage",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34516",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34516"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:34516:30:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-01T07:20:32.6Z",
+      "observedAt": "2026-06-01T07:20:32.6Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/storage/armstorage",
+      "value": "In progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34516",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34516"
+      },
+      "title": "Generation status changed",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6376657:generation.started:sdk:Go:sdk/resourcemanager/storage/armstorage",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-06-01T07:23:24.601663Z",
+      "observedAt": "2026-06-01T07:29:43.0740681Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/storage/armstorage",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6376657",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6376657"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6376655:generation.started:sdk:JavaScript:@azure/arm-storage",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-06-01T07:23:27.9813168Z",
+      "observedAt": "2026-06-01T07:32:36.6529787Z",
+      "trackId": "sdk:JavaScript:@azure/arm-storage",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6376655",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6376655"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6376654:generation.started:sdk:.NET:Azure.ResourceManager.Storage",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-06-01T07:23:28.8465106Z",
+      "observedAt": "2026-06-01T07:35:19.3810057Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Storage",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6376654",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6376654"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6376656:generation.started:sdk:Python:azure-mgmt-storage",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-06-01T07:23:29.8103855Z",
+      "observedAt": "2026-06-01T07:34:22.464632Z",
+      "trackId": "sdk:Python:azure-mgmt-storage",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6376656",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6376656"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado-build:internal:6376658:generation.started:sdk:Java:azure-resourcemanager-storage",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-06-01T07:23:39.6222677Z",
+      "observedAt": "2026-06-01T07:43:36.1939326Z",
+      "trackId": "sdk:Java:azure-resourcemanager-storage",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6376658",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6376658"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26905:commit:672ffaf41b19:sdk:Go:sdk/resourcemanager/storage/armstorage",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-01T07:28:30Z",
+      "observedAt": "2026-06-01T07:28:30Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/storage/armstorage",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26905",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/672ffaf41b19dcda1c21c6ebe40c05bca541a600"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26905:pr.created:sdk:Go:sdk/resourcemanager/storage/armstorage",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-01T07:28:35Z",
+      "observedAt": "2026-06-01T07:28:35Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/storage/armstorage",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26905",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26905"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:34516:31:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-01T07:28:42.427Z",
+      "observedAt": "2026-06-01T07:28:42.427Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/storage/armstorage",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34516",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34516"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34516:31:Custom.SDKPullRequestForGo",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-06-01T07:28:42.427Z",
+      "observedAt": "2026-06-01T07:28:42.427Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/storage/armstorage",
+      "value": "https://github.com/Azure/azure-sdk-for-go/pull/26905",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34516",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34516"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6376657:generation.completed:sdk:Go:sdk/resourcemanager/storage/armstorage",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-06-01T07:29:43.0740681Z",
+      "observedAt": "2026-06-01T07:29:43.0740681Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/storage/armstorage",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6376657",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6376657"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38755:commit:06f19b527ba3:sdk:JavaScript:@azure/arm-storage",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-01T07:31:19Z",
+      "observedAt": "2026-06-01T07:31:19Z",
+      "trackId": "sdk:JavaScript:@azure/arm-storage",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38755",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/06f19b527ba3b1b699190c49b9424d1238c6c230"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38755:pr.created:sdk:JavaScript:@azure/arm-storage",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-01T07:31:24Z",
+      "observedAt": "2026-06-01T07:31:24Z",
+      "trackId": "sdk:JavaScript:@azure/arm-storage",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38755",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38755"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:34516:32:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-01T07:31:32.28Z",
+      "observedAt": "2026-06-01T07:31:32.28Z",
+      "trackId": "sdk:JavaScript:@azure/arm-storage",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34516",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34516"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34516:32:Custom.SDKPullRequestForJavaScript",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-06-01T07:31:32.28Z",
+      "observedAt": "2026-06-01T07:31:32.28Z",
+      "trackId": "sdk:JavaScript:@azure/arm-storage",
+      "value": "https://github.com/Azure/azure-sdk-for-js/pull/38755",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34516",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34516"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38755:review:4399200612:sdk:JavaScript:@azure/arm-storage",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-01T07:31:36Z",
+      "observedAt": "2026-06-01T07:31:36Z",
+      "trackId": "sdk:JavaScript:@azure/arm-storage",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38755",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38755#pullrequestreview-4399200612"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot wasn't able to review this pull request because it exceeds the maximum number of files (300). Try reducing the number of changed files and requesting a review from Copilot again.",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6376655:generation.completed:sdk:JavaScript:@azure/arm-storage",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-06-01T07:32:36.6529787Z",
+      "observedAt": "2026-06-01T07:32:36.6529787Z",
+      "trackId": "sdk:JavaScript:@azure/arm-storage",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6376655",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6376655"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26905:review:4399207432:sdk:Go:sdk/resourcemanager/storage/armstorage",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-01T07:32:37Z",
+      "observedAt": "2026-06-01T07:32:37Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/storage/armstorage",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26905",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26905#pullrequestreview-4399207432"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This PR updates the `armstorage` resource manager SDK (`sdk/resourcemanager/storage/armstorage/v4`) to a newer Storage management API version (2026-04-01) and adds new generated surface area for Advanced Platform Me",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47258:commit:80ebd5bb78cd:sdk:Python:azure-mgmt-storage",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-01T07:32:49Z",
+      "observedAt": "2026-06-01T07:32:49Z",
+      "trackId": "sdk:Python:azure-mgmt-storage",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47258",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/80ebd5bb78cdefecebef8c532e10064f2f09945f"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47258:pr.created:sdk:Python:azure-mgmt-storage",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-01T07:32:53Z",
+      "observedAt": "2026-06-01T07:32:53Z",
+      "trackId": "sdk:Python:azure-mgmt-storage",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47258",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47258"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49331:commit:36c7117f71ab:sdk:Java:azure-resourcemanager-storage",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-01T07:32:53Z",
+      "observedAt": "2026-06-01T07:32:53Z",
+      "trackId": "sdk:Java:azure-resourcemanager-storage",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49331",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/36c7117f71ab2f9665413140568f58ee90043eba"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49331:pr.created:sdk:Java:azure-resourcemanager-storage",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-01T07:32:58Z",
+      "observedAt": "2026-06-01T07:32:58Z",
+      "trackId": "sdk:Java:azure-resourcemanager-storage",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49331",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49331"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:34516:33:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-01T07:33:01.08Z",
+      "observedAt": "2026-06-01T07:33:01.08Z",
+      "trackId": "sdk:Python:azure-mgmt-storage",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34516",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34516"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34516:33:Custom.SDKPullRequestForPython",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-06-01T07:33:01.08Z",
+      "observedAt": "2026-06-01T07:33:01.08Z",
+      "trackId": "sdk:Python:azure-mgmt-storage",
+      "value": "https://github.com/Azure/azure-sdk-for-python/pull/47258",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34516",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34516"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "ado:34516:34:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-01T07:33:06.203Z",
+      "observedAt": "2026-06-01T07:33:06.203Z",
+      "trackId": "sdk:Java:azure-resourcemanager-storage",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34516",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34516"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34516:34:Custom.SDKPullRequestForJava",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-06-01T07:33:06.203Z",
+      "observedAt": "2026-06-01T07:33:06.203Z",
+      "trackId": "sdk:Java:azure-resourcemanager-storage",
+      "value": "https://github.com/Azure/azure-sdk-for-java/pull/49331",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34516",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34516"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59568:commit:f4370364ffb1:sdk:.NET:Azure.ResourceManager.Storage",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-01T07:34:10Z",
+      "observedAt": "2026-06-01T07:34:10Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Storage",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59568",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/f4370364ffb1324fac7735d68e6cc1244c0b3641"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59568:pr.created:sdk:.NET:Azure.ResourceManager.Storage",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-01T07:34:14Z",
+      "observedAt": "2026-06-01T07:34:14Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Storage",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59568",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59568"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:6376656:generation.completed:sdk:Python:azure-mgmt-storage",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-06-01T07:34:22.464632Z",
+      "observedAt": "2026-06-01T07:34:22.464632Z",
+      "trackId": "sdk:Python:azure-mgmt-storage",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6376656",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6376656"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado:34516:35:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-06-01T07:34:22.47Z",
+      "observedAt": "2026-06-01T07:34:22.47Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Storage",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34516",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34516"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34516:35:Custom.SDKPullRequestForDotnet",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-06-01T07:34:22.47Z",
+      "observedAt": "2026-06-01T07:34:22.47Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Storage",
+      "value": "https://github.com/Azure/azure-sdk-for-net/pull/59568",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34516",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34516"
+      },
+      "title": "SDK PR linked",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:6376654:generation.completed:sdk:.NET:Azure.ResourceManager.Storage",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-06-01T07:35:19.3810057Z",
+      "observedAt": "2026-06-01T07:35:19.3810057Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Storage",
+      "title": "Pipeline completed with issues",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6376654",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6376654"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47258:comment:3332390161:sdk:Python:azure-mgmt-storage",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-01T07:37:57Z",
+      "observedAt": "2026-06-01T07:37:57Z",
+      "trackId": "sdk:Python:azure-mgmt-storage",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47258",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47258#discussion_r3332390161"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The `api_version` docstring indicates that the default is `None` and that `None` is a known value, but the configuration defaults to \"2026-04-01\" and the operations support both \"2025-08-01\" and \"2026-04-01\". Please update this docstring to",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47258:comment:3332390238:sdk:Python:azure-mgmt-storage",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-01T07:37:58Z",
+      "observedAt": "2026-06-01T07:37:58Z",
+      "trackId": "sdk:Python:azure-mgmt-storage",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47258",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47258#discussion_r3332390238"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The `api_version` docstring indicates that the default is `None` and that `None` is a known value, but the configuration defaults to \"2026-04-01\" and the operations support both \"2025-08-01\" and \"2026-04-01\". Please update this docstring to",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47258:comment:3332390266:sdk:Python:azure-mgmt-storage",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-01T07:37:58Z",
+      "observedAt": "2026-06-01T07:37:58Z",
+      "trackId": "sdk:Python:azure-mgmt-storage",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47258",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47258#discussion_r3332390266"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The `api_version` docstring indicates that the default is `None` and that `None` is a known value, but the configuration defaults to \"2026-04-01\" and the operations support both \"2025-08-01\" and \"2026-04-01\". Please update this docstring to",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47258:comment:3332390295:sdk:Python:azure-mgmt-storage",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-01T07:37:58Z",
+      "observedAt": "2026-06-01T07:37:58Z",
+      "trackId": "sdk:Python:azure-mgmt-storage",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47258",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47258#discussion_r3332390295"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The `api_version` docstring indicates that the default is `None` and that `None` is a known value, but the configuration defaults to \"2026-04-01\" and the operations support both \"2025-08-01\" and \"2026-04-01\". Please update this docstring to",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47258:review:4399243711:sdk:Python:azure-mgmt-storage",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-01T07:37:59Z",
+      "observedAt": "2026-06-01T07:37:59Z",
+      "trackId": "sdk:Python:azure-mgmt-storage",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47258",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47258#pullrequestreview-4399243711"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This PR is an automated regeneration of `azure-mgmt-storage` from `azure-rest-api-specs` (Storage.Management) for API version **2026-04-01**. It updates the SDK metadata/source to the new spec commit and surfaces ne",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59568:comment:3332403658:sdk:.NET:Azure.ResourceManager.Storage",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-01T07:39:36Z",
+      "observedAt": "2026-06-01T07:39:36Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Storage",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59568",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59568#discussion_r3332403658"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The package version is being promoted to a stable release (1.8.0), but the package CHANGELOG still starts with `## 1.8.0-beta.1 (Unreleased)`. This mismatch can cause confusion for consumers and release tooling. Please update `sdk/storage/A",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59568:review:4399258126:sdk:.NET:Azure.ResourceManager.Storage",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-01T07:39:37Z",
+      "observedAt": "2026-06-01T07:39:37Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Storage",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59568",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59568#pullrequestreview-4399258126"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This AutoPR updates **Azure.ResourceManager.Storage** based on the Storage Management TypeSpec configuration targeting API version **2026-04-01**. It refreshes generated management-plane clients/resources to the new",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49331:review:4399264068:sdk:Java:azure-resourcemanager-storage",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-01T07:40:22Z",
+      "observedAt": "2026-06-01T07:40:22Z",
+      "trackId": "sdk:Java:azure-resourcemanager-storage",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49331",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49331#pullrequestreview-4399264068"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:6376658:generation.completed:sdk:Java:azure-resourcemanager-storage",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-06-01T07:43:36.1939326Z",
+      "observedAt": "2026-06-01T07:43:36.1939326Z",
+      "trackId": "sdk:Java:azure-resourcemanager-storage",
+      "title": "Pipeline completed with issues",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 6376658",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=6376658"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47258:comment:4590599973:sdk:Python:azure-mgmt-storage",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-01T07:54:25Z",
+      "observedAt": "2026-06-01T07:54:25Z",
+      "trackId": "sdk:Python:azure-mgmt-storage",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "blueww"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47258",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47258#issuecomment-4590599973"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This SDK is target 2026-04-01 API version.",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49331:review:4399413867:sdk:Java:azure-resourcemanager-storage",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-01T07:57:34Z",
+      "observedAt": "2026-06-01T07:57:34Z",
+      "trackId": "sdk:Java:azure-resourcemanager-storage",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49331",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49331#pullrequestreview-4399413867"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Copilot encountered an error and was unable to review this pull request. You can try again by re-requesting a review.",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47258:commit:802231671f56:sdk:Python:azure-mgmt-storage",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-01T08:12:54Z",
+      "observedAt": "2026-06-01T08:12:54Z",
+      "trackId": "sdk:Python:azure-mgmt-storage",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47258",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/802231671f56f6755397768f8a6bff54aa544a65"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47258:commit:b06c0e3d365d:sdk:Python:azure-mgmt-storage",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-01T08:16:50Z",
+      "observedAt": "2026-06-01T08:16:50Z",
+      "trackId": "sdk:Python:azure-mgmt-storage",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47258",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/b06c0e3d365da9c6fcca8ead26718cc3454d83bc"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47258:commit:eeb663f0de58:sdk:Python:azure-mgmt-storage",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-01T08:17:02Z",
+      "observedAt": "2026-06-01T08:17:02Z",
+      "trackId": "sdk:Python:azure-mgmt-storage",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47258",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/eeb663f0de58354e69c051e25665e96466c800be"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26905:review:4400159079:sdk:Go:sdk/resourcemanager/storage/armstorage",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-01T09:51:45Z",
+      "observedAt": "2026-06-01T09:51:45Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/storage/armstorage",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "tadelesh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26905",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26905#pullrequestreview-4400159079"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47258:review:4405898038:sdk:Python:azure-mgmt-storage",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-02T02:04:56Z",
+      "observedAt": "2026-06-02T02:04:56Z",
+      "trackId": "sdk:Python:azure-mgmt-storage",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47258",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47258#pullrequestreview-4405898038"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#49331:pr.merged:sdk:Java:azure-resourcemanager-storage",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-02T02:36:48Z",
+      "observedAt": "2026-06-02T02:36:48Z",
+      "trackId": "sdk:Java:azure-resourcemanager-storage",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#49331",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/49331"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26905:pr.merged:sdk:Go:sdk/resourcemanager/storage/armstorage",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-02T03:06:21Z",
+      "observedAt": "2026-06-02T03:06:21Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/storage/armstorage",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26905",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26905"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47258:comment:4599097153:sdk:Python:azure-mgmt-storage",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-02T05:52:33Z",
+      "observedAt": "2026-06-02T05:52:33Z",
+      "trackId": "sdk:Python:azure-mgmt-storage",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47258",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47258#issuecomment-4599097153"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@blueww, pr ready, feel free to merge and release",
+      "stack": 1
+    },
+    {
+      "id": "ado:34516:36:Custom.ReleaseStatusForGo",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-06-02T06:52:07.847Z",
+      "observedAt": "2026-06-02T06:52:07.847Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/storage/armstorage",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34516",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34516"
+      },
+      "title": "Release status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34516:36:Custom.ReleasedVersionForGo",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-06-02T06:52:07.847Z",
+      "observedAt": "2026-06-02T06:52:07.847Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/storage/armstorage",
+      "value": "4.1.0",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34516",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34516"
+      },
+      "title": "Package version observed",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#26905:comment:4599557128:sdk:Go:sdk/resourcemanager/storage/armstorage",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-02T06:57:51Z",
+      "observedAt": "2026-06-02T06:57:51Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/storage/armstorage",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jliusan"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#26905",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/26905#issuecomment-4599557128"
+      },
+      "confidence": "authoritative",
+      "excerpt": "package released:https://pkg.go.dev/github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage/v4@v4.1.0",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38755:comment:4609305220:sdk:JavaScript:@azure/arm-storage",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-03T05:17:15Z",
+      "observedAt": "2026-06-03T05:17:15Z",
+      "trackId": "sdk:JavaScript:@azure/arm-storage",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "blueww"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38755",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38755#issuecomment-4609305220"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@qiaozha Would you please help to review the PR and feel free to let me know if need any action from us to make the PR ready for merge?",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38755:comment:4620649065:sdk:JavaScript:@azure/arm-storage",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-04T09:03:32Z",
+      "observedAt": "2026-06-04T09:03:32Z",
+      "trackId": "sdk:JavaScript:@azure/arm-storage",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38755",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38755#issuecomment-4620649065"
+      },
+      "confidence": "authoritative",
+      "excerpt": "LGTM cc @JialinHuang803",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38755:comment:4620720929:sdk:JavaScript:@azure/arm-storage",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-04T09:13:17Z",
+      "observedAt": "2026-06-04T09:13:17Z",
+      "trackId": "sdk:JavaScript:@azure/arm-storage",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38755",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38755#issuecomment-4620720929"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Next Steps to Merge Only failed checks and required actions are listed below. All CI checks have passed. The PR is awaiting reviewer approvals from the requested reviewers.",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38755:review:4426455962:sdk:JavaScript:@azure/arm-storage",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-04T09:13:20Z",
+      "observedAt": "2026-06-04T09:13:20Z",
+      "trackId": "sdk:JavaScript:@azure/arm-storage",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38755",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38755#pullrequestreview-4426455962"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The public API surface for `@azure/arm-storage` 20.1.0 (API version `2026-04-01`) looks good — no design or tooling issues were found. <details> <summary>📊 Structured Report</summary> ```json {\"agent\":\"mgmt-reviewer\",\"pr\":38755,\"summary\":\"",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38755:commit:2d6e2ef055d6:sdk:JavaScript:@azure/arm-storage",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-04T09:15:05Z",
+      "observedAt": "2026-06-04T09:15:05Z",
+      "trackId": "sdk:JavaScript:@azure/arm-storage",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38755",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/2d6e2ef055d656e98287618c96a417074cff386a"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38755:commit:0d83db86df74:sdk:JavaScript:@azure/arm-storage",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-04T09:19:23Z",
+      "observedAt": "2026-06-04T09:19:23Z",
+      "trackId": "sdk:JavaScript:@azure/arm-storage",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38755",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/0d83db86df745f12d49760ba4531583c233fb329"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38755:commit:b7dde93e1a38:sdk:JavaScript:@azure/arm-storage",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-04T09:31:07Z",
+      "observedAt": "2026-06-04T09:31:07Z",
+      "trackId": "sdk:JavaScript:@azure/arm-storage",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38755",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/b7dde93e1a38a0ea5247603e1c78badd4f55dcb3"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38755:review:4426924510:sdk:JavaScript:@azure/arm-storage",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-04T10:16:25Z",
+      "observedAt": "2026-06-04T10:16:25Z",
+      "trackId": "sdk:JavaScript:@azure/arm-storage",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "JialinHuang803"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38755",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38755#pullrequestreview-4426924510"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#38755:pr.merged:sdk:JavaScript:@azure/arm-storage",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-04T10:16:39Z",
+      "observedAt": "2026-06-04T10:16:39Z",
+      "trackId": "sdk:JavaScript:@azure/arm-storage",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#38755",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/38755"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59568:commit:04188aff7cb6:sdk:.NET:Azure.ResourceManager.Storage",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-15T20:15:04Z",
+      "observedAt": "2026-06-15T20:15:04Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Storage",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "nateprewitt"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59568",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/04188aff7cb69e5fcae7434c0a56d197aa4713cd"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59568:commit:485baede350b:sdk:.NET:Azure.ResourceManager.Storage",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-15T20:30:45Z",
+      "observedAt": "2026-06-15T20:30:45Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Storage",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "nateprewitt"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59568",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/485baede350b191ca9e8385b7c6bed3e36645964"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59568:commit:03fcbe1898f2:sdk:.NET:Azure.ResourceManager.Storage",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-15T20:33:32Z",
+      "observedAt": "2026-06-15T20:33:32Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Storage",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "nateprewitt"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59568",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/03fcbe1898f247db61c031469e1c538295dbec7a"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59568:review:4501035683:sdk:.NET:Azure.ResourceManager.Storage",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-15T20:48:53Z",
+      "observedAt": "2026-06-15T20:48:53Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Storage",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59568",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59568#pullrequestreview-4501035683"
+      },
+      "confidence": "authoritative",
+      "excerpt": "### Management SDK Review Summary - **Scope**: `Azure.ResourceManager.Storage` (1 package) - **Versioning**: ✅ Pass — version correctly promoted from `1.8.0-beta.1` → `1.8.0` stable; `ApiCompatVersion` is `1.7.0` (present) - **API surface**",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59568:comment:3416477537:sdk:.NET:Azure.ResourceManager.Storage",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-15T20:48:53Z",
+      "observedAt": "2026-06-15T20:48:53Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Storage",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59568",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59568#discussion_r3416477537"
+      },
+      "confidence": "authoritative",
+      "excerpt": "**[Contextual Naming]** The name `MetricsEmitted` is too generic. In IntelliSense it lacks RP/service context and could be confused with Azure Monitor or other monitoring frameworks. All 8 new public types were reviewed; this is the one fla",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59568:commit:9848f4fa0799:sdk:.NET:Azure.ResourceManager.Storage",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-15T23:07:37Z",
+      "observedAt": "2026-06-15T23:07:37Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Storage",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "nateprewitt"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59568",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/9848f4fa07996db93de135b5d4217c2972501910"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#59568:review:4502020206:sdk:.NET:Azure.ResourceManager.Storage",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-15T23:27:07Z",
+      "observedAt": "2026-06-15T23:27:07Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.Storage",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#59568",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/59568#pullrequestreview-4502020206"
+      },
+      "confidence": "authoritative",
+      "excerpt": "### Management SDK Review Summary - **Scope**: `Azure.ResourceManager.Storage` (1 package) - **Versioning**: ✅ Pass — version correctly promoted from `1.8.0-beta.1` → `1.8.0` stable; `ApiCompatVersion` is `1.7.0` (present) - **API surface**",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "ado:34516:37:Custom.ReleaseStatusForJavaScript",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-06-29T03:25:58.487Z",
+      "observedAt": "2026-06-29T03:25:58.487Z",
+      "trackId": "sdk:JavaScript:@azure/arm-storage",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34516",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34516"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34516:37:Custom.ReleasedVersionForJavaScript",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-06-29T03:25:58.487Z",
+      "observedAt": "2026-06-29T03:25:58.487Z",
+      "trackId": "sdk:JavaScript:@azure/arm-storage",
+      "value": "20.1.0",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34516",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34516"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "ado:34516:38:Custom.ReleaseStatusForJava",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-07-06T09:05:55.433Z",
+      "observedAt": "2026-07-06T09:05:55.433Z",
+      "trackId": "sdk:Java:azure-resourcemanager-storage",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34516",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34516"
+      },
+      "title": "Release status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:34516:38:Custom.ReleasedVersionForJava",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-07-06T09:05:55.433Z",
+      "observedAt": "2026-07-06T09:05:55.433Z",
+      "trackId": "sdk:Java:azure-resourcemanager-storage",
+      "value": "2.57.0",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34516",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34516"
+      },
+      "title": "Package version observed",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47258:comment:5019033834:sdk:Python:azure-mgmt-storage",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-20T05:20:07Z",
+      "observedAt": "2026-07-20T05:20:07Z",
+      "trackId": "sdk:Python:azure-mgmt-storage",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47258",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47258#issuecomment-5019033834"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Haven't received response over one month so will merge and release automatically.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#47258:pr.merged:sdk:Python:azure-mgmt-storage",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-07-20T05:20:32Z",
+      "observedAt": "2026-07-20T05:20:32Z",
+      "trackId": "sdk:Python:azure-mgmt-storage",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#47258",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/47258"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:34516:39:Custom.ReleaseStatusForPython",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-07-20T06:16:52.65Z",
+      "observedAt": "2026-07-20T06:16:52.65Z",
+      "trackId": "sdk:Python:azure-mgmt-storage",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34516",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34516"
+      },
+      "title": "Release status changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:34516:39:Custom.ReleasedVersionForPython",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-07-20T06:16:52.65Z",
+      "observedAt": "2026-07-20T06:16:52.65Z",
+      "trackId": "sdk:Python:azure-mgmt-storage",
+      "value": "25.1.0",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:34516",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/34516"
+      },
+      "title": "Package version observed",
+      "stack": 3
+    }
+  ],
+  "quality": {
+    "warnings": [
+      "1 historical linked PR(s) closed without merge"
+    ],
+    "unavailablePullRequests": 0,
+    "unavailablePipelineRuns": 0
+  },
+  "boundaryFacts": {
+    "id": "34516",
+    "state": "in-progress",
+    "specPrs": [
+      {
+        "id": "github:Azure/azure-rest-api-specs#43484",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#43484",
+        "createdAt": "2026-05-25T08:32:08Z",
+        "mergedAt": "2026-05-27T05:49:19Z",
+        "closedAt": "2026-05-27T05:49:19Z",
+        "available": true
+      }
+    ],
+    "artifacts": [
+      {
+        "language": ".NET",
+        "package": "Azure.ResourceManager.Storage",
+        "trackId": "sdk:.NET:Azure.ResourceManager.Storage",
+        "prId": "github:Azure/azure-sdk-for-net#59568",
+        "prCreatedAt": "2026-06-01T07:34:14Z",
+        "prMergedAt": null,
+        "prClosedAt": null,
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-net#59568",
+            "createdAt": "2026-06-01T07:34:14Z",
+            "mergedAt": null,
+            "closedAt": null,
+            "state": "open"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6376654",
+        "generationStartAt": "2026-06-01T07:23:28.8465106Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "JavaScript",
+        "package": "@azure/arm-storage",
+        "trackId": "sdk:JavaScript:@azure/arm-storage",
+        "prId": "github:Azure/azure-sdk-for-js#38755",
+        "prCreatedAt": "2026-06-01T07:31:24Z",
+        "prMergedAt": "2026-06-04T10:16:39Z",
+        "prClosedAt": "2026-06-04T10:16:39Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-js#38755",
+            "createdAt": "2026-06-01T07:31:24Z",
+            "mergedAt": "2026-06-04T10:16:39Z",
+            "closedAt": "2026-06-04T10:16:39Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6376655",
+        "generationStartAt": "2026-06-01T07:23:27.9813168Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-06-29T03:25:58.487Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "20.1.0",
+        "releaseBoundaryAt": "2026-06-29T03:25:58.487Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Python",
+        "package": "azure-mgmt-storage",
+        "trackId": "sdk:Python:azure-mgmt-storage",
+        "prId": "github:Azure/azure-sdk-for-python#47258",
+        "prCreatedAt": "2026-06-01T07:32:53Z",
+        "prMergedAt": "2026-07-20T05:20:32Z",
+        "prClosedAt": "2026-07-20T05:20:32Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-python#47258",
+            "createdAt": "2026-06-01T07:32:53Z",
+            "mergedAt": "2026-07-20T05:20:32Z",
+            "closedAt": "2026-07-20T05:20:32Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6376656",
+        "generationStartAt": "2026-06-01T07:23:29.8103855Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-07-20T06:16:52.65Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "25.1.0",
+        "releaseBoundaryAt": "2026-07-20T06:16:52.65Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Java",
+        "package": "azure-resourcemanager-storage",
+        "trackId": "sdk:Java:azure-resourcemanager-storage",
+        "prId": "github:Azure/azure-sdk-for-java#49331",
+        "prCreatedAt": "2026-06-01T07:32:58Z",
+        "prMergedAt": "2026-06-02T02:36:48Z",
+        "prClosedAt": "2026-06-02T02:36:48Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-java#49331",
+            "createdAt": "2026-06-01T07:32:58Z",
+            "mergedAt": "2026-06-02T02:36:48Z",
+            "closedAt": "2026-06-02T02:36:48Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6376658",
+        "generationStartAt": "2026-06-01T07:23:39.6222677Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-07-06T09:05:55.433Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "2.57.0",
+        "releaseBoundaryAt": "2026-07-06T09:05:55.433Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      },
+      {
+        "language": "Go",
+        "package": "sdk/resourcemanager/storage/armstorage",
+        "trackId": "sdk:Go:sdk/resourcemanager/storage/armstorage",
+        "prId": "github:Azure/azure-sdk-for-go#26905",
+        "prCreatedAt": "2026-06-01T07:28:35Z",
+        "prMergedAt": "2026-06-02T03:06:21Z",
+        "prClosedAt": "2026-06-02T03:06:21Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-go#26905",
+            "createdAt": "2026-06-01T07:28:35Z",
+            "mergedAt": "2026-06-02T03:06:21Z",
+            "closedAt": "2026-06-02T03:06:21Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:6376657",
+        "generationStartAt": "2026-06-01T07:23:24.601663Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-06-02T06:52:07.847Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "4.1.0",
+        "releaseBoundaryAt": "2026-06-02T06:52:07.847Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      }
+    ],
+    "cohortPlan": {
+      "id": "34516",
+      "releasePlanId": "2252",
+      "title": "Release plan - 2252 - Public Preview - Storage",
+      "service": "Storage.Management",
+      "state": "in-progress"
+    },
+    "quality": {
+      "warnings": [
+        "1 historical linked PR(s) closed without merge"
+      ],
+      "unavailablePullRequests": 0,
+      "unavailablePipelineRuns": 0
+    }
+  },
+  "summary": {
+    "durationHours": 1890.3,
+    "pullRequestCount": 6,
+    "humanReviewCount": 5,
+    "humanCommentCount": 6
+  }
+}

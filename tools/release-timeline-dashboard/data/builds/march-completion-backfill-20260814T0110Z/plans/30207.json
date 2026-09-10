@@ -1,0 +1,3415 @@
+{
+  "schemaVersion": 2,
+  "id": "30207",
+  "correlation": {
+    "policyVersion": 1,
+    "preflight": "passed"
+  },
+  "releasePlanId": "2051",
+  "title": "Release Plan - 2051 - Public Preview - edge marketplace",
+  "service": "Release Plan - 2051 - Public Preview - edge marketplace",
+  "product": "Release",
+  "path": null,
+  "state": "abandoned",
+  "plane": "management",
+  "releaseType": "APEX Public Preview",
+  "intendedMonth": "January 2026",
+  "createdAt": "2026-01-14T06:32:04.09Z",
+  "completedAt": "2026-06-02T06:07:07.143Z",
+  "sourceUrl": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30207",
+  "range": {
+    "start": "2025-10-13T10:13:00.000Z",
+    "end": "2026-06-02T06:09:47.000Z"
+  },
+  "intendedArtifacts": [
+    {
+      "prId": "github:Azure/azure-sdk-for-net#55050",
+      "language": ".NET",
+      "package": "Azure.ResourceManager.EdgeMarketplace",
+      "version": null,
+      "outcome": "not-released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5761540",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-js#37035",
+      "language": "JavaScript",
+      "package": "@azure/arm-edgemarketplace",
+      "version": null,
+      "outcome": "not-released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5751507",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-python#44654",
+      "language": "Python",
+      "package": "azure-mgmt-edgemarketplace",
+      "version": null,
+      "outcome": "not-released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5751510",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-java#47706",
+      "language": "Java",
+      "package": "azure-resourcemanager-edgemarketplace",
+      "version": null,
+      "outcome": "not-released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5751508",
+      "releasePipelineUrl": null
+    },
+    {
+      "prId": "github:Azure/azure-sdk-for-go#25881",
+      "language": "Go",
+      "package": "sdk/resourcemanager/edgemarketplace/armedgemarketplace",
+      "version": "0.1.0",
+      "outcome": "released",
+      "generationPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5751509",
+      "releasePipelineUrl": null
+    }
+  ],
+  "links": [
+    {
+      "artifactId": "github:Azure/azure-rest-api-specs#38124",
+      "role": "spec-pr",
+      "url": "https://github.com/Azure/azure-rest-api-specs/pull/38124",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-net#55050",
+      "role": "sdk-pr",
+      "language": ".NET",
+      "url": "https://github.com/Azure/azure-sdk-for-net/pull/55050",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-js#37035",
+      "role": "sdk-pr",
+      "language": "JavaScript",
+      "url": "https://github.com/Azure/azure-sdk-for-js/pull/37035",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-python#44654",
+      "role": "sdk-pr",
+      "language": "Python",
+      "url": "https://github.com/Azure/azure-sdk-for-python/pull/44654",
+      "releasePlanIds": []
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-java#47706",
+      "role": "sdk-pr",
+      "language": "Java",
+      "url": "https://github.com/Azure/azure-sdk-for-java/pull/47706",
+      "releasePlanIds": [
+        "2051"
+      ]
+    },
+    {
+      "artifactId": "github:Azure/azure-sdk-for-go#25881",
+      "role": "sdk-pr",
+      "language": "Go",
+      "url": "https://github.com/Azure/azure-sdk-for-go/pull/25881",
+      "releasePlanIds": [
+        "2051"
+      ]
+    }
+  ],
+  "tracks": [
+    {
+      "id": "plan",
+      "kind": "plan",
+      "label": "Release Plan",
+      "detail": "APEX Public Preview"
+    },
+    {
+      "id": "spec:github:Azure/azure-rest-api-specs#38124",
+      "kind": "spec",
+      "label": "Spec PR",
+      "detail": "azure-rest-api-specs #38124",
+      "artifactId": "github:Azure/azure-rest-api-specs#38124",
+      "state": "merged"
+    },
+    {
+      "id": "sdk:.NET:Azure.ResourceManager.EdgeMarketplace",
+      "kind": "sdk",
+      "label": ".NET",
+      "detail": "Azure.ResourceManager.EdgeMarketplace",
+      "artifactId": "github:Azure/azure-sdk-for-net#55050",
+      "state": "closed"
+    },
+    {
+      "id": "sdk:JavaScript:@azure/arm-edgemarketplace",
+      "kind": "sdk",
+      "label": "JavaScript",
+      "detail": "@azure/arm-edgemarketplace",
+      "artifactId": "github:Azure/azure-sdk-for-js#37035",
+      "state": "closed"
+    },
+    {
+      "id": "sdk:Python:azure-mgmt-edgemarketplace",
+      "kind": "sdk",
+      "label": "Python",
+      "detail": "azure-mgmt-edgemarketplace",
+      "artifactId": "github:Azure/azure-sdk-for-python#44654",
+      "state": "closed"
+    },
+    {
+      "id": "sdk:Java:azure-resourcemanager-edgemarketplace",
+      "kind": "sdk",
+      "label": "Java",
+      "detail": "azure-resourcemanager-edgemarketplace",
+      "artifactId": "github:Azure/azure-sdk-for-java#47706",
+      "state": "closed"
+    },
+    {
+      "id": "sdk:Go:sdk/resourcemanager/edgemarketplace/armedgemarketplace",
+      "kind": "sdk",
+      "label": "Go",
+      "detail": "sdk/resourcemanager/edgemarketplace/armedgemarketplace",
+      "artifactId": "github:Azure/azure-sdk-for-go#25881",
+      "state": "merged"
+    }
+  ],
+  "events": [
+    {
+      "id": "github:Azure/azure-rest-api-specs#38124:pr.created:spec:github:Azure/azure-rest-api-specs#38124",
+      "type": "pr.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-13T10:13:00Z",
+      "observedAt": "2025-10-13T10:13:00Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38124",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "aviranjan24"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38124",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/38124"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38124:comment:3396788108:spec:github:Azure/azure-rest-api-specs#38124",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-13T10:13:14Z",
+      "observedAt": "2025-10-13T10:13:14Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38124",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38124",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/38124#issuecomment-3396788108"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<h2>Next Steps to Merge</h2>✅ All automated merging requirements have been met! To get your PR merged, see <a href=\"https://aka.ms/azsdk/specreview/merge\">aka.ms/azsdk/specreview/merge</a>.<br /><br />Comment generated by <a href=\"https://g",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38124:comment:3396820762:spec:github:Azure/azure-rest-api-specs#38124",
+      "type": "comment.created",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-13T10:19:41Z",
+      "observedAt": "2025-10-13T10:19:41Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38124",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38124",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/38124#issuecomment-3396820762"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews | Language | API Review for Package | |----------|---------| | Swagger | [Microsoft.EdgeMarketplace](https://apiview.dev/Assemblies/Re",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38124:review:3385235939:spec:github:Azure/azure-rest-api-specs#38124",
+      "type": "review.submitted",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-27T19:56:54Z",
+      "observedAt": "2025-10-27T19:56:54Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38124",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "aneesh-ponneth"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38124",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/38124#pullrequestreview-3385235939"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-rest-api-specs#38124:pr.merged:spec:github:Azure/azure-rest-api-specs#38124",
+      "type": "pr.merged",
+      "phase": "spec-review",
+      "occurredAt": "2025-10-29T16:14:30Z",
+      "observedAt": "2025-10-29T16:14:30Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38124",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-rest-api-specs#38124",
+        "url": "https://github.com/Azure/azure-rest-api-specs/pull/38124"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado:30207:created",
+      "type": "plan.created",
+      "phase": "plan",
+      "occurredAt": "2026-01-14T06:32:04.09Z",
+      "observedAt": "2026-01-14T06:32:04.09Z",
+      "trackId": "plan",
+      "title": "Release Plan created",
+      "confidence": "authoritative",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30207",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30207"
+      },
+      "stack": 0
+    },
+    {
+      "id": "ado:30207:1:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-01-14T06:32:04.09Z",
+      "observedAt": "2026-01-14T06:32:04.09Z",
+      "trackId": "plan",
+      "value": "New",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30207",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30207"
+      },
+      "title": "Plan state changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:30207:1:Custom.APISpecApprovalStatus",
+      "type": "spec.approval_changed",
+      "phase": "spec-review",
+      "occurredAt": "2026-01-14T06:32:04.09Z",
+      "observedAt": "2026-01-14T06:32:04.09Z",
+      "trackId": "plan",
+      "value": "Not Available",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30207",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30207"
+      },
+      "title": "Spec approval changed",
+      "stack": 2
+    },
+    {
+      "id": "ado:30207:1:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-01-14T06:32:04.09Z",
+      "observedAt": "2026-01-14T06:32:04.09Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.EdgeMarketplace",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30207",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30207"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:30207:1:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-01-14T06:32:04.09Z",
+      "observedAt": "2026-01-14T06:32:04.09Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgemarketplace",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30207",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30207"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:30207:1:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-01-14T06:32:04.09Z",
+      "observedAt": "2026-01-14T06:32:04.09Z",
+      "trackId": "sdk:Python:azure-mgmt-edgemarketplace",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30207",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30207"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:30207:1:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-01-14T06:32:04.09Z",
+      "observedAt": "2026-01-14T06:32:04.09Z",
+      "trackId": "sdk:Java:azure-resourcemanager-edgemarketplace",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30207",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30207"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:30207:1:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-01-14T06:32:04.09Z",
+      "observedAt": "2026-01-14T06:32:04.09Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/edgemarketplace/armedgemarketplace",
+      "value": "Not applicable",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30207",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30207"
+      },
+      "title": "Generation status changed",
+      "stack": 0
+    },
+    {
+      "id": "ado:30207:3:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-01-14T06:41:42.127Z",
+      "observedAt": "2026-01-14T06:41:42.127Z",
+      "trackId": "plan",
+      "value": "In Progress",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30207",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30207"
+      },
+      "title": "Plan state changed",
+      "stack": 3
+    },
+    {
+      "id": "ado:30208:2:Custom.ActiveSpecPullRequestUrl",
+      "type": "spec.pr_linked",
+      "phase": "spec-review",
+      "occurredAt": "2026-01-14T08:51:10.743Z",
+      "observedAt": "2026-01-14T08:51:10.743Z",
+      "trackId": "spec:github:Azure/azure-rest-api-specs#38124",
+      "value": "https://github.com/Azure/azure-rest-api-specs/pull/38124",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30208",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30208"
+      },
+      "title": "Spec PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:5751507:generation.queued:sdk:JavaScript:@azure/arm-edgemarketplace",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-01-14T09:03:24.404061Z",
+      "observedAt": "2026-01-14T09:14:00.8188199Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgemarketplace",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5751507",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5751507"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:5751509:generation.queued:sdk:Go:sdk/resourcemanager/edgemarketplace/armedgemarketplace",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-01-14T09:03:41.686974Z",
+      "observedAt": "2026-01-14T09:12:26.5634984Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/edgemarketplace/armedgemarketplace",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5751509",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5751509"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:5751508:generation.queued:sdk:Java:azure-resourcemanager-edgemarketplace",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-01-14T09:03:41.6920694Z",
+      "observedAt": "2026-01-14T09:17:54.7036432Z",
+      "trackId": "sdk:Java:azure-resourcemanager-edgemarketplace",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5751508",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5751508"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:5751510:generation.queued:sdk:Python:azure-mgmt-edgemarketplace",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-01-14T09:03:41.8057704Z",
+      "observedAt": "2026-01-14T09:13:17.2323631Z",
+      "trackId": "sdk:Python:azure-mgmt-edgemarketplace",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5751510",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5751510"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "ado-build:internal:5751507:generation.started:sdk:JavaScript:@azure/arm-edgemarketplace",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-01-14T09:06:47.9709818Z",
+      "observedAt": "2026-01-14T09:14:00.8188199Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgemarketplace",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5751507",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5751507"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:5751508:generation.started:sdk:Java:azure-resourcemanager-edgemarketplace",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-01-14T09:06:48.7069487Z",
+      "observedAt": "2026-01-14T09:17:54.7036432Z",
+      "trackId": "sdk:Java:azure-resourcemanager-edgemarketplace",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5751508",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5751508"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:5751510:generation.started:sdk:Python:azure-mgmt-edgemarketplace",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-01-14T09:06:52.5001407Z",
+      "observedAt": "2026-01-14T09:13:17.2323631Z",
+      "trackId": "sdk:Python:azure-mgmt-edgemarketplace",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5751510",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5751510"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:5751509:generation.started:sdk:Go:sdk/resourcemanager/edgemarketplace/armedgemarketplace",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-01-14T09:06:55.8983144Z",
+      "observedAt": "2026-01-14T09:12:26.5634984Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/edgemarketplace/armedgemarketplace",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5751509",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5751509"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#25881:commit:3b25009f4a14:sdk:Go:sdk/resourcemanager/edgemarketplace/armedgemarketplace",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-14T09:11:22Z",
+      "observedAt": "2026-01-14T09:11:22Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/edgemarketplace/armedgemarketplace",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#25881",
+        "url": "https://github.com/Azure/azure-sdk-for-go/commit/3b25009f4a142f7c9ca1bf9c9aa8bee47d6a8e5a"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#25881:pr.created:sdk:Go:sdk/resourcemanager/edgemarketplace/armedgemarketplace",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-14T09:11:27Z",
+      "observedAt": "2026-01-14T09:11:27Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/edgemarketplace/armedgemarketplace",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#25881",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/25881"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:30207:29:Custom.GenerationStatusForGo",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-01-14T09:11:33.747Z",
+      "observedAt": "2026-01-14T09:11:33.747Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/edgemarketplace/armedgemarketplace",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30207",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30207"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:30207:29:Custom.SDKPullRequestForGo",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-01-14T09:11:33.747Z",
+      "observedAt": "2026-01-14T09:11:33.747Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/edgemarketplace/armedgemarketplace",
+      "value": "https://github.com/Azure/azure-sdk-for-go/pull/25881",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30207",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30207"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado:30207:30:Custom.GenerationStatusForDotnet",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-01-14T09:11:45.17Z",
+      "observedAt": "2026-01-14T09:11:45.17Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.EdgeMarketplace",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30207",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30207"
+      },
+      "title": "Generation status changed",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#44654:commit:1b49cba3ab1c:sdk:Python:azure-mgmt-edgemarketplace",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-14T09:11:57Z",
+      "observedAt": "2026-01-14T09:11:57Z",
+      "trackId": "sdk:Python:azure-mgmt-edgemarketplace",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#44654",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/1b49cba3ab1c0b53543e6e379b3c17e24075ccde"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#44654:pr.created:sdk:Python:azure-mgmt-edgemarketplace",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-14T09:12:00Z",
+      "observedAt": "2026-01-14T09:12:00Z",
+      "trackId": "sdk:Python:azure-mgmt-edgemarketplace",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#44654",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/44654"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:30207:31:Custom.GenerationStatusForPython",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-01-14T09:12:06.577Z",
+      "observedAt": "2026-01-14T09:12:06.577Z",
+      "trackId": "sdk:Python:azure-mgmt-edgemarketplace",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30207",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30207"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:30207:31:Custom.SDKPullRequestForPython",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-01-14T09:12:06.577Z",
+      "observedAt": "2026-01-14T09:12:06.577Z",
+      "trackId": "sdk:Python:azure-mgmt-edgemarketplace",
+      "value": "https://github.com/Azure/azure-sdk-for-python/pull/44654",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30207",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30207"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:5751509:generation.completed:sdk:Go:sdk/resourcemanager/edgemarketplace/armedgemarketplace",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-01-14T09:12:26.5634984Z",
+      "observedAt": "2026-01-14T09:12:26.5634984Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/edgemarketplace/armedgemarketplace",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5751509",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5751509"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37035:commit:eab0199c95f2:sdk:JavaScript:@azure/arm-edgemarketplace",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-14T09:12:47Z",
+      "observedAt": "2026-01-14T09:12:47Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgemarketplace",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37035",
+        "url": "https://github.com/Azure/azure-sdk-for-js/commit/eab0199c95f2123429849c62168323f6e65cd5cd"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37035:pr.created:sdk:JavaScript:@azure/arm-edgemarketplace",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-14T09:12:51Z",
+      "observedAt": "2026-01-14T09:12:51Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgemarketplace",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37035",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37035"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:30207:32:Custom.GenerationStatusForJavaScript",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-01-14T09:12:57.797Z",
+      "observedAt": "2026-01-14T09:12:57.797Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgemarketplace",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30207",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30207"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:30207:32:Custom.SDKPullRequestForJavaScript",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-01-14T09:12:57.797Z",
+      "observedAt": "2026-01-14T09:12:57.797Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgemarketplace",
+      "value": "https://github.com/Azure/azure-sdk-for-js/pull/37035",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30207",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30207"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:5751510:generation.completed:sdk:Python:azure-mgmt-edgemarketplace",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-01-14T09:13:17.2323631Z",
+      "observedAt": "2026-01-14T09:13:17.2323631Z",
+      "trackId": "sdk:Python:azure-mgmt-edgemarketplace",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5751510",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5751510"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#47706:commit:a2568891559a:sdk:Java:azure-resourcemanager-edgemarketplace",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-14T09:13:59Z",
+      "observedAt": "2026-01-14T09:13:59Z",
+      "trackId": "sdk:Java:azure-resourcemanager-edgemarketplace",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#47706",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/a2568891559a405e705d1c5dba41abfab7638479"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "ado-build:internal:5751507:generation.completed:sdk:JavaScript:@azure/arm-edgemarketplace",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-01-14T09:14:00.8188199Z",
+      "observedAt": "2026-01-14T09:14:00.8188199Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgemarketplace",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5751507",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5751507"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#47706:pr.created:sdk:Java:azure-resourcemanager-edgemarketplace",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-14T09:14:02Z",
+      "observedAt": "2026-01-14T09:14:02Z",
+      "trackId": "sdk:Java:azure-resourcemanager-edgemarketplace",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#47706",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/47706"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "ado:30207:33:Custom.GenerationStatusForJava",
+      "type": "generation.status_changed",
+      "phase": "generation",
+      "occurredAt": "2026-01-14T09:14:08.54Z",
+      "observedAt": "2026-01-14T09:14:08.54Z",
+      "trackId": "sdk:Java:azure-resourcemanager-edgemarketplace",
+      "value": "Completed",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30207",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30207"
+      },
+      "title": "Generation status changed",
+      "stack": 5
+    },
+    {
+      "id": "ado:30207:33:Custom.SDKPullRequestForJava",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-01-14T09:14:08.54Z",
+      "observedAt": "2026-01-14T09:14:08.54Z",
+      "trackId": "sdk:Java:azure-resourcemanager-edgemarketplace",
+      "value": "https://github.com/Azure/azure-sdk-for-java/pull/47706",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30207",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30207"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:5751508:generation.completed:sdk:Java:azure-resourcemanager-edgemarketplace",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-01-14T09:17:54.7036432Z",
+      "observedAt": "2026-01-14T09:17:54.7036432Z",
+      "trackId": "sdk:Java:azure-resourcemanager-edgemarketplace",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5751508",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5751508"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#25881:comment:3748568419:sdk:Go:sdk/resourcemanager/edgemarketplace/armedgemarketplace",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-14T09:18:03Z",
+      "observedAt": "2026-01-14T09:18:03Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/edgemarketplace/armedgemarketplace",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#25881",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/25881#issuecomment-3748568419"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews [sdk/resourcemanager/edgemarketplace/armedgemarketplace](https://spa.apiview.dev/review/0847d6ff3e534afc8cac979d73f34ba2?activeApiRevi",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37035:comment:3748577446:sdk:JavaScript:@azure/arm-edgemarketplace",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-14T09:20:29Z",
+      "observedAt": "2026-01-14T09:20:29Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgemarketplace",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37035",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37035#issuecomment-3748577446"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews [@azure/arm-edgemarketplace](https://spa.apiview.dev/review/6c7e1024d44b48ebb65be6ab5a27fe66?activeApiRevisionId=8118a28fd09040cfb63c1",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#47706:comment:3748578865:sdk:Java:azure-resourcemanager-edgemarketplace",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-14T09:20:52Z",
+      "observedAt": "2026-01-14T09:20:52Z",
+      "trackId": "sdk:Java:azure-resourcemanager-edgemarketplace",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#47706",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/47706#issuecomment-3748578865"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## API Change Check APIView identified API level changes in this PR and created the following API reviews [com.azure.resourcemanager:azure-resourcemanager-edgemarketplace](https://spa.apiview.dev/review/3e5bf941f6f14d17b54feca547021669?acti",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:5761540:generation.queued:sdk:.NET:Azure.ResourceManager.EdgeMarketplace",
+      "type": "generation.queued",
+      "phase": "generation",
+      "occurredAt": "2026-01-16T06:23:42.7738542Z",
+      "observedAt": "2026-01-16T06:33:30.993978Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.EdgeMarketplace",
+      "title": "Pipeline queued",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5761540",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5761540"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "ado-build:internal:5761540:generation.started:sdk:.NET:Azure.ResourceManager.EdgeMarketplace",
+      "type": "generation.started",
+      "phase": "generation",
+      "occurredAt": "2026-01-16T06:27:11.0315027Z",
+      "observedAt": "2026-01-16T06:33:30.993978Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.EdgeMarketplace",
+      "title": "Pipeline started",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5761540",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5761540"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#55050:commit:abd9925ec573:sdk:.NET:Azure.ResourceManager.EdgeMarketplace",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-16T06:32:00Z",
+      "observedAt": "2026-01-16T06:32:00Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.EdgeMarketplace",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#55050",
+        "url": "https://github.com/Azure/azure-sdk-for-net/commit/abd9925ec573d65302ab931178e382c301ff75f2"
+      },
+      "confidence": "authoritative",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#55050:pr.created:sdk:.NET:Azure.ResourceManager.EdgeMarketplace",
+      "type": "pr.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-16T06:32:03Z",
+      "observedAt": "2026-01-16T06:32:03Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.EdgeMarketplace",
+      "title": "PR opened",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#55050",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/55050"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "ado:30207:40:Custom.SDKPullRequestForDotnet",
+      "type": "sdk.pr_linked",
+      "phase": "generation",
+      "occurredAt": "2026-01-16T06:32:10.06Z",
+      "observedAt": "2026-01-16T06:32:10.06Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.EdgeMarketplace",
+      "value": "https://github.com/Azure/azure-sdk-for-net/pull/55050",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30207",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30207"
+      },
+      "title": "SDK PR linked",
+      "stack": 0
+    },
+    {
+      "id": "ado-build:internal:5761540:generation.completed:sdk:.NET:Azure.ResourceManager.EdgeMarketplace",
+      "type": "generation.completed",
+      "phase": "generation",
+      "occurredAt": "2026-01-16T06:33:30.993978Z",
+      "observedAt": "2026-01-16T06:33:30.993978Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.EdgeMarketplace",
+      "title": "Pipeline completed",
+      "actor": {
+        "kind": "service",
+        "publicId": null
+      },
+      "source": {
+        "system": "azure-pipelines",
+        "entity": "internal build 5761540",
+        "url": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5761540"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#47706:comment:3758527071:sdk:Java:azure-resourcemanager-edgemarketplace",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-16T07:20:54Z",
+      "observedAt": "2026-01-16T07:20:54Z",
+      "trackId": "sdk:Java:azure-resourcemanager-edgemarketplace",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#47706",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/47706#issuecomment-3758527071"
+      },
+      "confidence": "authoritative",
+      "excerpt": "namespace review https://github.com/Azure/azure-sdk-pr/issues/2400",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#47706:comment:3758527380:sdk:Java:azure-resourcemanager-edgemarketplace",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-16T07:21:02Z",
+      "observedAt": "2026-01-16T07:21:02Z",
+      "trackId": "sdk:Java:azure-resourcemanager-edgemarketplace",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#47706",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/47706#issuecomment-3758527380"
+      },
+      "confidence": "authoritative",
+      "excerpt": "/azp run prepare-pipelines",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#47706:comment:3758527849:sdk:Java:azure-resourcemanager-edgemarketplace",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-16T07:21:13Z",
+      "observedAt": "2026-01-16T07:21:13Z",
+      "trackId": "sdk:Java:azure-resourcemanager-edgemarketplace",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "azure-pipelines[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#47706",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/47706#issuecomment-3758527849"
+      },
+      "confidence": "authoritative",
+      "excerpt": "<samp> Azure Pipelines successfully started running 1 pipeline(s).<br> </samp>",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#47706:review:3669312317:sdk:Java:azure-resourcemanager-edgemarketplace",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-16T07:23:28Z",
+      "observedAt": "2026-01-16T07:23:28Z",
+      "trackId": "sdk:Java:azure-resourcemanager-edgemarketplace",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#47706",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/47706#pullrequestreview-3669312317"
+      },
+      "confidence": "authoritative",
+      "excerpt": "To service dev: Please approve to signal that service is good with this PR.",
+      "reviewState": "approved",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37035:review:3669316810:sdk:JavaScript:@azure/arm-edgemarketplace",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-16T07:25:08Z",
+      "observedAt": "2026-01-16T07:25:08Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgemarketplace",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37035",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37035#pullrequestreview-3669316810"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This pull request introduces a new auto-generated SDK package `@azure/arm-edgemarketplace` for the Azure Edge Marketplace service, generated from TypeSpec definitions for API version 2025-10-01-preview. **Changes:**",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37035:comment:2697307392:sdk:JavaScript:@azure/arm-edgemarketplace",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-16T07:25:08Z",
+      "observedAt": "2026-01-16T07:25:08Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgemarketplace",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37035",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37035#discussion_r2697307392"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The API version \"2024-10-01\" appears to be in the past, but according to the PR description, the API version should be \"2025-10-01-preview\". The KnownVersions enum includes \"2024-10-01\" which may not be the correct version for this new SDK.",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37035:comment:2697307412:sdk:JavaScript:@azure/arm-edgemarketplace",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-16T07:25:08Z",
+      "observedAt": "2026-01-16T07:25:08Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgemarketplace",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37035",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37035#discussion_r2697307412"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The property name \"egeMarketPlaceResourceId\" appears to have a typo - it should likely be \"edgeMarketPlaceResourceId\" (with \"dge\" not \"ge\"). This inconsistency exists while the correct spelling \"edgeMarketPlaceRegion\" is used on line 638.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#47706:review:3669317339:sdk:Java:azure-resourcemanager-edgemarketplace",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-16T07:25:20Z",
+      "observedAt": "2026-01-16T07:25:20Z",
+      "trackId": "sdk:Java:azure-resourcemanager-edgemarketplace",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#47706",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/47706#pullrequestreview-3669317339"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This pull request introduces a new automatically-generated Azure Resource Manager client library for the Edge Marketplace service. **Changes:** - New SDK package for Azure Edge Marketplace Management with API versio",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#55050:comment:2697308034:sdk:.NET:Azure.ResourceManager.EdgeMarketplace",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-16T07:25:22Z",
+      "observedAt": "2026-01-16T07:25:22Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.EdgeMarketplace",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#55050",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/55050#discussion_r2697308034"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The documentation comment states \"The region where the disk will be created\" but this property is named \"EgeMarketPlaceResourceId\", suggesting it's a resource ID rather than a region. The documentation should accurately describe what this p",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#55050:review:3669317428:sdk:.NET:Azure.ResourceManager.EdgeMarketplace",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-16T07:25:23Z",
+      "observedAt": "2026-01-16T07:25:23Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.EdgeMarketplace",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#55050",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/55050#pullrequestreview-3669317428"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This PR introduces automatically generated SDK code for Azure.ResourceManager.EdgeMarketplace based on TypeSpec specification version 2025-10-01-preview. The SDK provides client libraries for managing Edge Marketpla",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#55050:comment:2697308051:sdk:.NET:Azure.ResourceManager.EdgeMarketplace",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-16T07:25:23Z",
+      "observedAt": "2026-01-16T07:25:23Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.EdgeMarketplace",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#55050",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/55050#discussion_r2697308051"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The property name \"EgeMarketPlaceResourceId\" appears to be a typo. Based on the context and similar property \"EdgeMarketPlaceRegion\", this should likely be \"EdgeMarketPlaceResourceId\" (with 'dge' instead of 'ge').",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#55050:comment:2697308061:sdk:.NET:Azure.ResourceManager.EdgeMarketplace",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-16T07:25:23Z",
+      "observedAt": "2026-01-16T07:25:23Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.EdgeMarketplace",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#55050",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/55050#discussion_r2697308061"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The documentation comment states \"The name of the publisher\" but the parameter is named \"requestId\", which suggests it's a request identifier rather than a publisher name. The documentation should accurately describe that this is a request ",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#25881:review:3669318538:sdk:Go:sdk/resourcemanager/edgemarketplace/armedgemarketplace",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-16T07:25:50Z",
+      "observedAt": "2026-01-16T07:25:50Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/edgemarketplace/armedgemarketplace",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#25881",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/25881#pullrequestreview-3669318538"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This pull request introduces a new Azure SDK module for Edge Marketplace management operations, auto-generated from TypeSpec definitions for API version 2025-10-01-preview. **Changes:** - Adds a new Go SDK module `a",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#44654:review:3669318763:sdk:Python:azure-mgmt-edgemarketplace",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-16T07:25:57Z",
+      "observedAt": "2026-01-16T07:25:57Z",
+      "trackId": "sdk:Python:azure-mgmt-edgemarketplace",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "bot",
+        "publicId": "copilot-pull-request-reviewer[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#44654",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/44654#pullrequestreview-3669318763"
+      },
+      "confidence": "authoritative",
+      "excerpt": "## Pull request overview This PR introduces the initial beta release (1.0.0b1) of the Azure EdgeMarketplace Management SDK for Python, auto-generated from TypeSpec specifications. The SDK provides management capabilities for Azure Edge Mark",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#44654:comment:2697309272:sdk:Python:azure-mgmt-edgemarketplace",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-16T07:25:57Z",
+      "observedAt": "2026-01-16T07:25:57Z",
+      "trackId": "sdk:Python:azure-mgmt-edgemarketplace",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#44654",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/44654#discussion_r2697309272"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The documentation for `request_id` incorrectly states 'The name of the publisher'. Based on the class name `AccessTokenReadRequest` and the field name `request_id`, this should describe a request identifier for accessing tokens, not a publi",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#44654:comment:2697309283:sdk:Python:azure-mgmt-edgemarketplace",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-16T07:25:57Z",
+      "observedAt": "2026-01-16T07:25:57Z",
+      "trackId": "sdk:Python:azure-mgmt-edgemarketplace",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#44654",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/44654#discussion_r2697309283"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Corrected spelling of 'ege_market_place_resource_id' to 'edge_market_place_resource_id'",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#44654:comment:2697309296:sdk:Python:azure-mgmt-edgemarketplace",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-16T07:25:57Z",
+      "observedAt": "2026-01-16T07:25:57Z",
+      "trackId": "sdk:Python:azure-mgmt-edgemarketplace",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "Copilot"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#44654",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/44654#discussion_r2697309296"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The documentation for `ege_market_place_resource_id` incorrectly states 'The region where the disk will be created', which is the same as `edge_market_place_region` on line 53. This field should describe a resource ID, not a region.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#55050:review:3669550186:sdk:.NET:Azure.ResourceManager.EdgeMarketplace",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-16T08:34:05Z",
+      "observedAt": "2026-01-16T08:34:05Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.EdgeMarketplace",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#55050",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/55050#pullrequestreview-3669550186"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#55050:comment:2697488515:sdk:.NET:Azure.ResourceManager.EdgeMarketplace",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-16T08:34:05Z",
+      "observedAt": "2026-01-16T08:34:05Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.EdgeMarketplace",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#55050",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/55050#discussion_r2697488515"
+      },
+      "confidence": "authoritative",
+      "excerpt": "please add `clientName` decorator in your spec to rename this type. this type violates .net naming requirement, it should not end with `Request`, you could change it to `Content`. also this name is quite generic, you could consider to add y",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#55050:review:3669551342:sdk:.NET:Azure.ResourceManager.EdgeMarketplace",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-16T08:34:25Z",
+      "observedAt": "2026-01-16T08:34:25Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.EdgeMarketplace",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#55050",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/55050#pullrequestreview-3669551342"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#55050:comment:2697489387:sdk:.NET:Azure.ResourceManager.EdgeMarketplace",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-16T08:34:25Z",
+      "observedAt": "2026-01-16T08:34:25Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.EdgeMarketplace",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ArcturusZhang"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#55050",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/55050#discussion_r2697489387"
+      },
+      "confidence": "authoritative",
+      "excerpt": "similar comment to https://github.com/Azure/azure-sdk-for-net/pull/55050/changes#r2697488515",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#47706:commit:640092b53e52:sdk:Java:azure-resourcemanager-edgemarketplace",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-19T02:02:37Z",
+      "observedAt": "2026-01-19T02:02:37Z",
+      "trackId": "sdk:Java:azure-resourcemanager-edgemarketplace",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#47706",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/640092b53e52c30a5fb660919afd404cc5971554"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#47706:commit:0c5c15f144a6:sdk:Java:azure-resourcemanager-edgemarketplace",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-19T02:07:20Z",
+      "observedAt": "2026-01-19T02:07:20Z",
+      "trackId": "sdk:Java:azure-resourcemanager-edgemarketplace",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#47706",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/0c5c15f144a65efddac1a101827de36813358647"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#44654:review:3676051050:sdk:Python:azure-mgmt-edgemarketplace",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-19T02:33:09Z",
+      "observedAt": "2026-01-19T02:33:09Z",
+      "trackId": "sdk:Python:azure-mgmt-edgemarketplace",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#44654",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/44654#pullrequestreview-3676051050"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#44654:comment:2703028555:sdk:Python:azure-mgmt-edgemarketplace",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-19T02:33:09Z",
+      "observedAt": "2026-01-19T02:33:09Z",
+      "trackId": "sdk:Python:azure-mgmt-edgemarketplace",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "msyyc"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#44654",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/44654#discussion_r2703028555"
+      },
+      "confidence": "authoritative",
+      "excerpt": "pls manually update `EdgeMarketplaceClient` to `EdgeMarketplaceMgmtClient` before regenerate on this PR. @ChenxiJiang333",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#47706:commit:dbbb0dd579ac:sdk:Java:azure-resourcemanager-edgemarketplace",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-19T02:35:02Z",
+      "observedAt": "2026-01-19T02:35:02Z",
+      "trackId": "sdk:Java:azure-resourcemanager-edgemarketplace",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#47706",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/dbbb0dd579ac2ba0a87379e412f7c0fe95c438a0"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#44654:commit:d7054a0cab6f:sdk:Python:azure-mgmt-edgemarketplace",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-19T02:35:26Z",
+      "observedAt": "2026-01-19T02:35:26Z",
+      "trackId": "sdk:Python:azure-mgmt-edgemarketplace",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#44654",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/d7054a0cab6f8b44821a3f143719ac2f0cd5ee83"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#44654:review:3676054198:sdk:Python:azure-mgmt-edgemarketplace",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-19T02:35:59Z",
+      "observedAt": "2026-01-19T02:35:59Z",
+      "trackId": "sdk:Python:azure-mgmt-edgemarketplace",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#44654",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/44654#pullrequestreview-3676054198"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#44654:comment:2703032115:sdk:Python:azure-mgmt-edgemarketplace",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-19T02:35:59Z",
+      "observedAt": "2026-01-19T02:35:59Z",
+      "trackId": "sdk:Python:azure-mgmt-edgemarketplace",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#44654",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/44654#discussion_r2703032115"
+      },
+      "confidence": "authoritative",
+      "excerpt": "updated",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#44654:commit:96cb62ca5fb2:sdk:Python:azure-mgmt-edgemarketplace",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-19T02:41:49Z",
+      "observedAt": "2026-01-19T02:41:49Z",
+      "trackId": "sdk:Python:azure-mgmt-edgemarketplace",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#44654",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/96cb62ca5fb2446494225b6d2332ca9c27eab6ee"
+      },
+      "confidence": "authoritative",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37035:review:3676065229:sdk:JavaScript:@azure/arm-edgemarketplace",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-19T02:44:29Z",
+      "observedAt": "2026-01-19T02:44:29Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgemarketplace",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37035",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37035#pullrequestreview-3676065229"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37035:comment:2703042746:sdk:JavaScript:@azure/arm-edgemarketplace",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-19T02:44:29Z",
+      "observedAt": "2026-01-19T02:44:29Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgemarketplace",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37035",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37035#discussion_r2703042746"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This is a new package, of cause the npm link can't be access. Don't know why this npm link will fail the [`Link verification check`](https://dev.azure.com/azure-sdk/public/public%20Team/_build/results?buildId=5751529&view=logs&j=b70e5e73-bb",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#44654:commit:acc036dfb166:sdk:Python:azure-mgmt-edgemarketplace",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-19T02:52:27Z",
+      "observedAt": "2026-01-19T02:52:27Z",
+      "trackId": "sdk:Python:azure-mgmt-edgemarketplace",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#44654",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/acc036dfb166ab0217106ce5a30b4c7f1cd9cdcb"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#44654:comment:3766178980:sdk:Python:azure-mgmt-edgemarketplace",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-19T03:00:14Z",
+      "observedAt": "2026-01-19T03:00:14Z",
+      "trackId": "sdk:Python:azure-mgmt-edgemarketplace",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#44654",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/44654#issuecomment-3766178980"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @aviranjan24 The new api version `2025-10-01-preview` seems not deployed on portal yet, we recommend making sure the api version to be deployed before releasing the SDK, though we won't block the release in self-serve release flow. You c",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#47706:commit:6b65c8ef8850:sdk:Java:azure-resourcemanager-edgemarketplace",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-19T03:04:13Z",
+      "observedAt": "2026-01-19T03:04:13Z",
+      "trackId": "sdk:Java:azure-resourcemanager-edgemarketplace",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#47706",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/6b65c8ef8850a0dd58049ce0fa5233fe5cb3d812"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#44654:commit:12e629a36952:sdk:Python:azure-mgmt-edgemarketplace",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-19T04:42:36Z",
+      "observedAt": "2026-01-19T04:42:36Z",
+      "trackId": "sdk:Python:azure-mgmt-edgemarketplace",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#44654",
+        "url": "https://github.com/Azure/azure-sdk-for-python/commit/12e629a3695232eaee5363d43e6f5b85312cd376"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37035:comment:3766410485:sdk:JavaScript:@azure/arm-edgemarketplace",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-19T04:59:12Z",
+      "observedAt": "2026-01-19T04:59:12Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgemarketplace",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "aviranjan24"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37035",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37035#issuecomment-3766410485"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hello, we kindly request that you hold off on reviewing this PR until we provide further updates from our business side approval. Thank you for your patience.",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#44654:comment:3766431530:sdk:Python:azure-mgmt-edgemarketplace",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-19T05:10:39Z",
+      "observedAt": "2026-01-19T05:10:39Z",
+      "trackId": "sdk:Python:azure-mgmt-edgemarketplace",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "aviranjan24"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#44654",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/44654#issuecomment-3766431530"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hello, please wait for updates from our side as I can see there is one typo in one of the model attributes before reviewing this PR.",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#47706:comment:3766433342:sdk:Java:azure-resourcemanager-edgemarketplace",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-19T05:11:26Z",
+      "observedAt": "2026-01-19T05:11:26Z",
+      "trackId": "sdk:Java:azure-resourcemanager-edgemarketplace",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "aviranjan24"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#47706",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/47706#issuecomment-3766433342"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hello, please wait for updates from our side as I can see there is one typo in one of the model attributes before reviewing this PR",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#55050:comment:3766438168:sdk:.NET:Azure.ResourceManager.EdgeMarketplace",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-19T05:13:54Z",
+      "observedAt": "2026-01-19T05:13:54Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.EdgeMarketplace",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "aviranjan24"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#55050",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/55050#issuecomment-3766438168"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hello, we kindly request that you hold off on reviewing this PR until we provide further updates from our business side approval. Thank you for your patience.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#25881:comment:3766438658:sdk:Go:sdk/resourcemanager/edgemarketplace/armedgemarketplace",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-19T05:14:09Z",
+      "observedAt": "2026-01-19T05:14:09Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/edgemarketplace/armedgemarketplace",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "aviranjan24"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#25881",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/25881#issuecomment-3766438658"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hello, we kindly request that you hold off on reviewing this PR until we provide further updates from our business side approval. Thank you for your patience.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#47706:comment:3766510723:sdk:Java:azure-resourcemanager-edgemarketplace",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-19T05:47:12Z",
+      "observedAt": "2026-01-19T05:47:12Z",
+      "trackId": "sdk:Java:azure-resourcemanager-edgemarketplace",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#47706",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/47706#issuecomment-3766510723"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> Hello, please wait for updates from our side as I can see there is one typo in one of the model attributes before reviewing this PR Sure, we won't merge without approval from service",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#44654:comment:3766562862:sdk:Python:azure-mgmt-edgemarketplace",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-19T06:07:24Z",
+      "observedAt": "2026-01-19T06:07:24Z",
+      "trackId": "sdk:Python:azure-mgmt-edgemarketplace",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "ChenxiJiang333"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#44654",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/44654#issuecomment-3766562862"
+      },
+      "confidence": "authoritative",
+      "excerpt": "> Hello, please wait for updates from our side as I can see there is one typo in one of the model attributes before reviewing this PR got it, please ping us to regenerate the package once you have updated the specification.",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37035:review:3683440541:sdk:JavaScript:@azure/arm-edgemarketplace",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-20T17:34:07Z",
+      "observedAt": "2026-01-20T17:34:07Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgemarketplace",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "jeremymeng"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37035",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37035#pullrequestreview-3683440541"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37035:comment:2709390112:sdk:JavaScript:@azure/arm-edgemarketplace",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-20T17:34:07Z",
+      "observedAt": "2026-01-20T17:34:07Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgemarketplace",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jeremymeng"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37035",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37035#discussion_r2709390112"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Is this a new failure happening recently? It's possible that we didn't verify npmjs links before. @weshaggard are you aware of any related changes in link verification? We probably need a way to skip the check for the unpublished packages.",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37035:review:3683716056:sdk:JavaScript:@azure/arm-edgemarketplace",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-20T18:33:52Z",
+      "observedAt": "2026-01-20T18:33:52Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgemarketplace",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "weshaggard"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37035",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37035#pullrequestreview-3683716056"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37035:comment:2709605810:sdk:JavaScript:@azure/arm-edgemarketplace",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-20T18:33:52Z",
+      "observedAt": "2026-01-20T18:33:52Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgemarketplace",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "weshaggard"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37035",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37035#discussion_r2709605810"
+      },
+      "confidence": "authoritative",
+      "excerpt": "This is not a new issue. Most folks initially have to add the links to the [ignore-links.txt](https://github.com/Azure/azure-sdk-for-js/blob/main/eng/ignore-links.txt) file until publishing is done.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37035:comment:2709650860:sdk:JavaScript:@azure/arm-edgemarketplace",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-20T18:46:01Z",
+      "observedAt": "2026-01-20T18:46:01Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgemarketplace",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jeremymeng"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37035",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37035#discussion_r2709650860"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Yes, we have been using ignore-links.txt, but so far mostly for the doc site urls like `https://learn.microsoft.com/javascript/api/@azure/arm-domainregistration?view=azure-node-preview`. This is the first time I've seen failure for a npmjs ",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37035:review:3683774053:sdk:JavaScript:@azure/arm-edgemarketplace",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-20T18:46:02Z",
+      "observedAt": "2026-01-20T18:46:02Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgemarketplace",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "jeremymeng"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37035",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37035#pullrequestreview-3683774053"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37035:comment:2715040889:sdk:JavaScript:@azure/arm-edgemarketplace",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-22T02:09:03Z",
+      "observedAt": "2026-01-22T02:09:03Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgemarketplace",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37035",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37035#discussion_r2715040889"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Another two PRs failed on the same issue: https://github.com/Azure/azure-sdk-for-js/pull/37048 https://github.com/Azure/azure-sdk-for-js/pull/37095",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37035:review:3690246395:sdk:JavaScript:@azure/arm-edgemarketplace",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-22T02:09:04Z",
+      "observedAt": "2026-01-22T02:09:04Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgemarketplace",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37035",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37035#pullrequestreview-3690246395"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#47706:commit:651c2b33ea07:sdk:Java:azure-resourcemanager-edgemarketplace",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-22T02:19:39Z",
+      "observedAt": "2026-01-22T02:19:39Z",
+      "trackId": "sdk:Java:azure-resourcemanager-edgemarketplace",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#47706",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/651c2b33ea07d92d4277011507cac0bde12bc537"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#47706:commit:d447e91a494a:sdk:Java:azure-resourcemanager-edgemarketplace",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-22T02:29:09Z",
+      "observedAt": "2026-01-22T02:29:09Z",
+      "trackId": "sdk:Java:azure-resourcemanager-edgemarketplace",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "azure-sdk"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#47706",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/d447e91a494a85b1f7898cb3ab7bbec1bc719a0c"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#47706:review:3690290227:sdk:Java:azure-resourcemanager-edgemarketplace",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-22T02:30:32Z",
+      "observedAt": "2026-01-22T02:30:32Z",
+      "trackId": "sdk:Java:azure-resourcemanager-edgemarketplace",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#47706",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/47706#pullrequestreview-3690290227"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#47706:commit:e82e4e19c01e:sdk:Java:azure-resourcemanager-edgemarketplace",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-22T03:31:13Z",
+      "observedAt": "2026-01-22T03:31:13Z",
+      "trackId": "sdk:Java:azure-resourcemanager-edgemarketplace",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#47706",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/e82e4e19c01e6625561e41a6067d328c3a81f407"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37035:review:3693829470:sdk:JavaScript:@azure/arm-edgemarketplace",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-22T18:02:42Z",
+      "observedAt": "2026-01-22T18:02:42Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgemarketplace",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "jeremymeng"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37035",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37035#pullrequestreview-3693829470"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37035:comment:2718020312:sdk:JavaScript:@azure/arm-edgemarketplace",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-22T18:02:42Z",
+      "observedAt": "2026-01-22T18:02:42Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgemarketplace",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "jeremymeng"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37035",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37035#discussion_r2718020312"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@weshaggard so the recommendation is to do the same for npmjs links, adding them to ignore-links.txt and remove after packages are available? I feel that we need to have a process to clean up the `ignore-links.txt` file.",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37035:review:3694295812:sdk:JavaScript:@azure/arm-edgemarketplace",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-22T19:52:51Z",
+      "observedAt": "2026-01-22T19:52:51Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgemarketplace",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "weshaggard"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37035",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37035#pullrequestreview-3694295812"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37035:comment:2718390956:sdk:JavaScript:@azure/arm-edgemarketplace",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-22T19:52:51Z",
+      "observedAt": "2026-01-22T19:52:51Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgemarketplace",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "weshaggard"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37035",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37035#discussion_r2718390956"
+      },
+      "confidence": "authoritative",
+      "excerpt": "My general guidance is to not expose links until they exist, so maybe comment them out and go back and update them after release if they are needed. See https://github.com/Azure/azure-sdk/blob/b4d778ef3da072cc6ff53b77b884470e0105c841/docs/p",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37035:comment:2735281368:sdk:JavaScript:@azure/arm-edgemarketplace",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-28T07:45:08Z",
+      "observedAt": "2026-01-28T07:45:08Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgemarketplace",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "qiaozha"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37035",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37035#discussion_r2735281368"
+      },
+      "confidence": "authoritative",
+      "excerpt": "we will need to add the npm link in ignore-links.txt as if the package is released, we will not be able to update the readme.md in npmjs.",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37035:review:3715069547:sdk:JavaScript:@azure/arm-edgemarketplace",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-01-28T07:45:09Z",
+      "observedAt": "2026-01-28T07:45:09Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgemarketplace",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "qiaozha"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37035",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37035#pullrequestreview-3715069547"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#47706:commit:d65302bdc714:sdk:Java:azure-resourcemanager-edgemarketplace",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-10T05:35:12Z",
+      "observedAt": "2026-02-10T05:35:12Z",
+      "trackId": "sdk:Java:azure-resourcemanager-edgemarketplace",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#47706",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/d65302bdc7145e61d9b0764ae586ca864672c44b"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37035:review:3777106532:sdk:JavaScript:@azure/arm-edgemarketplace",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-10T07:09:04Z",
+      "observedAt": "2026-02-10T07:09:04Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgemarketplace",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "MaryGao"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37035",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37035#pullrequestreview-3777106532"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37035:comment:2786180581:sdk:JavaScript:@azure/arm-edgemarketplace",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-10T07:09:04Z",
+      "observedAt": "2026-02-10T07:09:04Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgemarketplace",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "MaryGao"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37035",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37035#discussion_r2786180581"
+      },
+      "confidence": "authoritative",
+      "excerpt": "@kazrael2119 could you find the original spec pr and comment the typo issue here?",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37035:review:3777110257:sdk:JavaScript:@azure/arm-edgemarketplace",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-10T07:10:17Z",
+      "observedAt": "2026-02-10T07:10:17Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgemarketplace",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "MaryGao"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37035",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37035#pullrequestreview-3777110257"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37035:comment:2786184270:sdk:JavaScript:@azure/arm-edgemarketplace",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-10T07:10:17Z",
+      "observedAt": "2026-02-10T07:10:17Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgemarketplace",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "MaryGao"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37035",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37035#discussion_r2786184270"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The KnownVersions enum would contain existing api-versions so 2024-10-01 would be included.",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37035:review:3777255686:sdk:JavaScript:@azure/arm-edgemarketplace",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-10T07:46:31Z",
+      "observedAt": "2026-02-10T07:46:31Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgemarketplace",
+      "title": "Review submitted",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37035",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37035#pullrequestreview-3777255686"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "commented",
+      "stack": 4
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37035:comment:2786327480:sdk:JavaScript:@azure/arm-edgemarketplace",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-10T07:46:31Z",
+      "observedAt": "2026-02-10T07:46:31Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgemarketplace",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "kazrael2119"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37035",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37035#discussion_r2786327480"
+      },
+      "confidence": "authoritative",
+      "excerpt": "https://github.com/Azure/azure-rest-api-specs/pull/37786/changes#diff-597eb6e39132c8b7843ec7e5c732c99e6d0b6447aae5f3e3518fdbf98a313df1R260 @aviranjan24 could you help confirm if here is a typo issue?",
+      "stack": 5
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#47706:commit:54aecec842e3:sdk:Java:azure-resourcemanager-edgemarketplace",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-13T08:30:53Z",
+      "observedAt": "2026-02-13T08:30:53Z",
+      "trackId": "sdk:Java:azure-resourcemanager-edgemarketplace",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#47706",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/54aecec842e3b512bccdeab78e8418a046244fcf"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#47706:commit:e6c72badc990:sdk:Java:azure-resourcemanager-edgemarketplace",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-14T02:40:49Z",
+      "observedAt": "2026-02-14T02:40:49Z",
+      "trackId": "sdk:Java:azure-resourcemanager-edgemarketplace",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#47706",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/e6c72badc990b80cdba8f4eec8e44f1e377a60f5"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#47706:review:3800567655:sdk:Java:azure-resourcemanager-edgemarketplace",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-02-14T03:15:41Z",
+      "observedAt": "2026-02-14T03:15:41Z",
+      "trackId": "sdk:Java:azure-resourcemanager-edgemarketplace",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "XiaofeiCao"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#47706",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/47706#pullrequestreview-3800567655"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#47706:commit:4c26f34fe451:sdk:Java:azure-resourcemanager-edgemarketplace",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-09T06:33:46Z",
+      "observedAt": "2026-03-09T06:33:46Z",
+      "trackId": "sdk:Java:azure-resourcemanager-edgemarketplace",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#47706",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/4c26f34fe451b919561ed838dfd15c06046ad0d4"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#44654:comment:4140303742:sdk:Python:azure-mgmt-edgemarketplace",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-27T05:30:04Z",
+      "observedAt": "2026-03-27T05:30:04Z",
+      "trackId": "sdk:Python:azure-mgmt-edgemarketplace",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#44654",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/44654#issuecomment-4140303742"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @azure-sdk. Thank you for your interest in helping to improve the Azure SDK experience and for your contribution. We've noticed that there hasn't been recent engagement on this pull request. If this is still an active work stream, please",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#25881:comment:4140316079:sdk:Go:sdk/resourcemanager/edgemarketplace/armedgemarketplace",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-27T05:33:58Z",
+      "observedAt": "2026-03-27T05:33:58Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/edgemarketplace/armedgemarketplace",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#25881",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/25881#issuecomment-4140316079"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @azure-sdk. Thank you for your interest in helping to improve the Azure SDK experience and for your contribution. We've noticed that there hasn't been recent engagement on this pull request. If this is still an active work stream, please",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#55050:comment:4140323385:sdk:.NET:Azure.ResourceManager.EdgeMarketplace",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-27T05:36:25Z",
+      "observedAt": "2026-03-27T05:36:25Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.EdgeMarketplace",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#55050",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/55050#issuecomment-4140323385"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @azure-sdk. Thank you for your interest in helping to improve the Azure SDK experience and for your contribution. We've noticed that there hasn't been recent engagement on this pull request. If this is still an active work stream, please",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#47706:commit:712fb7671ba2:sdk:Java:azure-resourcemanager-edgemarketplace",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-03-31T14:20:13Z",
+      "observedAt": "2026-03-31T14:20:13Z",
+      "trackId": "sdk:Java:azure-resourcemanager-edgemarketplace",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#47706",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/712fb7671ba27efac57d49d2dc32e52d2f1fbe30"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#55050:comment:4182579936:sdk:.NET:Azure.ResourceManager.EdgeMarketplace",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-03T08:45:16Z",
+      "observedAt": "2026-04-03T08:45:16Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.EdgeMarketplace",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#55050",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/55050#issuecomment-4182579936"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @azure-sdk. Thank you for your contribution. Since there hasn't been recent engagement, we're going to close this out. Feel free to respond with a comment containing `/reopen` if you'd like to continue working on these changes. Please be",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-net#55050:pr.closed:sdk:.NET:Azure.ResourceManager.EdgeMarketplace",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-03T08:45:20Z",
+      "observedAt": "2026-04-03T08:45:20Z",
+      "trackId": "sdk:.NET:Azure.ResourceManager.EdgeMarketplace",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-net#55050",
+        "url": "https://github.com/Azure/azure-sdk-for-net/pull/55050"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#44654:comment:4182581699:sdk:Python:azure-mgmt-edgemarketplace",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-03T08:45:46Z",
+      "observedAt": "2026-04-03T08:45:46Z",
+      "trackId": "sdk:Python:azure-mgmt-edgemarketplace",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#44654",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/44654#issuecomment-4182581699"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @azure-sdk. Thank you for your contribution. Since there hasn't been recent engagement, we're going to close this out. Feel free to respond with a comment containing `/reopen` if you'd like to continue working on these changes. Please be",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-python#44654:pr.closed:sdk:Python:azure-mgmt-edgemarketplace",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-03T08:45:57Z",
+      "observedAt": "2026-04-03T08:45:57Z",
+      "trackId": "sdk:Python:azure-mgmt-edgemarketplace",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-python#44654",
+        "url": "https://github.com/Azure/azure-sdk-for-python/pull/44654"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#25881:review:4104562631:sdk:Go:sdk/resourcemanager/edgemarketplace/armedgemarketplace",
+      "type": "review.submitted",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-14T08:48:13Z",
+      "observedAt": "2026-04-14T08:48:13Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/edgemarketplace/armedgemarketplace",
+      "title": "Review approved",
+      "actor": {
+        "kind": "human",
+        "publicId": "tadelesh"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#25881",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/25881#pullrequestreview-4104562631"
+      },
+      "confidence": "authoritative",
+      "excerpt": "",
+      "reviewState": "approved",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37035:comment:4265731321:sdk:JavaScript:@azure/arm-edgemarketplace",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-17T05:44:07Z",
+      "observedAt": "2026-04-17T05:44:07Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgemarketplace",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37035",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37035#issuecomment-4265731321"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @azure-sdk. Thank you for your interest in helping to improve the Azure SDK experience and for your contribution. We've noticed that there hasn't been recent engagement on this pull request. If this is still an active work stream, please",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#47706:commit:2fc25bfa8664:sdk:Java:azure-resourcemanager-edgemarketplace",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-17T08:55:35Z",
+      "observedAt": "2026-04-17T08:55:35Z",
+      "trackId": "sdk:Java:azure-resourcemanager-edgemarketplace",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#47706",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/2fc25bfa8664f54f193545702f38307363930c67"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#47706:commit:bb84384f7f9b:sdk:Java:azure-resourcemanager-edgemarketplace",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-17T09:25:12Z",
+      "observedAt": "2026-04-17T09:25:12Z",
+      "trackId": "sdk:Java:azure-resourcemanager-edgemarketplace",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#47706",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/bb84384f7f9b989a93bfe6f462ab46387da9400e"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#47706:commit:ad5225e3c3c1:sdk:Java:azure-resourcemanager-edgemarketplace",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-20T05:30:23Z",
+      "observedAt": "2026-04-20T05:30:23Z",
+      "trackId": "sdk:Java:azure-resourcemanager-edgemarketplace",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#47706",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/ad5225e3c3c11909c77cc85417f8721a3ce82995"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37035:comment:4311983142:sdk:JavaScript:@azure/arm-edgemarketplace",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-24T09:11:05Z",
+      "observedAt": "2026-04-24T09:11:05Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgemarketplace",
+      "title": "Comment",
+      "actor": {
+        "kind": "bot",
+        "publicId": "github-actions[bot]"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37035",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37035#issuecomment-4311983142"
+      },
+      "confidence": "authoritative",
+      "excerpt": "Hi @azure-sdk. Thank you for your contribution. Since there hasn't been recent engagement, we're going to close this out. Feel free to respond with a comment containing `/reopen` if you'd like to continue working on these changes. Please be",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-js#37035:pr.closed:sdk:JavaScript:@azure/arm-edgemarketplace",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-04-24T09:11:11Z",
+      "observedAt": "2026-04-24T09:11:11Z",
+      "trackId": "sdk:JavaScript:@azure/arm-edgemarketplace",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-js#37035",
+        "url": "https://github.com/Azure/azure-sdk-for-js/pull/37035"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#47706:commit:e22b06710ef1:sdk:Java:azure-resourcemanager-edgemarketplace",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-14T01:41:34Z",
+      "observedAt": "2026-05-14T01:41:34Z",
+      "trackId": "sdk:Java:azure-resourcemanager-edgemarketplace",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#47706",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/e22b06710ef124d2c93c3a9c987448afd1af328e"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#47706:commit:ba420c27f8da:sdk:Java:azure-resourcemanager-edgemarketplace",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-14T01:45:05Z",
+      "observedAt": "2026-05-14T01:45:05Z",
+      "trackId": "sdk:Java:azure-resourcemanager-edgemarketplace",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#47706",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/ba420c27f8da0337d9a34ec4fed68b1a958862c2"
+      },
+      "confidence": "authoritative",
+      "stack": 1
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#47706:commit:f9d7d04d512a:sdk:Java:azure-resourcemanager-edgemarketplace",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-14T02:53:08Z",
+      "observedAt": "2026-05-14T02:53:08Z",
+      "trackId": "sdk:Java:azure-resourcemanager-edgemarketplace",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#47706",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/f9d7d04d512a7b057829bdade4a1c516f38f7e0e"
+      },
+      "confidence": "authoritative",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#47706:commit:0ecc2e215a15:sdk:Java:azure-resourcemanager-edgemarketplace",
+      "type": "commit.pushed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-14T02:54:19Z",
+      "observedAt": "2026-05-14T02:54:19Z",
+      "trackId": "sdk:Java:azure-resourcemanager-edgemarketplace",
+      "title": "Commit pushed",
+      "actor": {
+        "kind": "human",
+        "publicId": "weidongxu-microsoft"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#47706",
+        "url": "https://github.com/Azure/azure-sdk-for-java/commit/0ecc2e215a1578cac0f57f27bf98aa4a3d8f0dd5"
+      },
+      "confidence": "authoritative",
+      "stack": 3
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#25881:pr.merged:sdk:Go:sdk/resourcemanager/edgemarketplace/armedgemarketplace",
+      "type": "pr.merged",
+      "phase": "sdk-review",
+      "occurredAt": "2026-05-27T03:00:15Z",
+      "observedAt": "2026-05-27T03:00:15Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/edgemarketplace/armedgemarketplace",
+      "title": "PR merged",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#25881",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/25881"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "ado:30207:68:Custom.ReleaseStatusForGo",
+      "type": "release.status_changed",
+      "phase": "release",
+      "occurredAt": "2026-05-27T05:18:05.86Z",
+      "observedAt": "2026-05-27T05:18:05.86Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/edgemarketplace/armedgemarketplace",
+      "value": "Released",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30207",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30207"
+      },
+      "title": "Release status changed",
+      "stack": 1
+    },
+    {
+      "id": "ado:30207:68:Custom.ReleasedVersionForGo",
+      "type": "package.version_observed",
+      "phase": "release",
+      "occurredAt": "2026-05-27T05:18:05.86Z",
+      "observedAt": "2026-05-27T05:18:05.86Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/edgemarketplace/armedgemarketplace",
+      "value": "0.1.0",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30207",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30207"
+      },
+      "title": "Package version observed",
+      "stack": 2
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#47706:pr.closed:sdk:Java:azure-resourcemanager-edgemarketplace",
+      "type": "pr.closed",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-02T03:17:45Z",
+      "observedAt": "2026-06-02T03:17:45Z",
+      "trackId": "sdk:Java:azure-resourcemanager-edgemarketplace",
+      "title": "PR closed",
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#47706",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/47706"
+      },
+      "confidence": "authoritative",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-java#47706:comment:4598406737:sdk:Java:azure-resourcemanager-edgemarketplace",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-02T03:17:45Z",
+      "observedAt": "2026-06-02T03:17:45Z",
+      "trackId": "sdk:Java:azure-resourcemanager-edgemarketplace",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "josefree"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-java#47706",
+        "url": "https://github.com/Azure/azure-sdk-for-java/pull/47706#issuecomment-4598406737"
+      },
+      "confidence": "authoritative",
+      "excerpt": "close the pull request for no action over 3 months.",
+      "stack": 1
+    },
+    {
+      "id": "ado:30207:69:System.State",
+      "type": "plan.state_changed",
+      "phase": "plan",
+      "occurredAt": "2026-06-02T06:07:07.143Z",
+      "observedAt": "2026-06-02T06:07:07.143Z",
+      "trackId": "plan",
+      "value": "Abandoned",
+      "confidence": "observed",
+      "source": {
+        "system": "azure-devops",
+        "entity": "work-item:30207",
+        "url": "https://dev.azure.com/azure-sdk/Release/_workitems/edit/30207"
+      },
+      "title": "Plan state changed",
+      "stack": 0
+    },
+    {
+      "id": "github:Azure/azure-sdk-for-go#25881:comment:4599201564:sdk:Go:sdk/resourcemanager/edgemarketplace/armedgemarketplace",
+      "type": "comment.created",
+      "phase": "sdk-review",
+      "occurredAt": "2026-06-02T06:09:47Z",
+      "observedAt": "2026-06-02T06:09:47Z",
+      "trackId": "sdk:Go:sdk/resourcemanager/edgemarketplace/armedgemarketplace",
+      "title": "Comment",
+      "actor": {
+        "kind": "human",
+        "publicId": "josefree"
+      },
+      "source": {
+        "system": "github",
+        "entity": "Azure/azure-sdk-for-go#25881",
+        "url": "https://github.com/Azure/azure-sdk-for-go/pull/25881#issuecomment-4599201564"
+      },
+      "confidence": "authoritative",
+      "excerpt": "The released SDK package should be called back. I am marking the release plan abandoned for inactive over 3 months.",
+      "stack": 0
+    }
+  ],
+  "quality": {
+    "warnings": [
+      "API specification path is missing",
+      "4 historical linked PR(s) closed without merge"
+    ],
+    "unavailablePullRequests": 0,
+    "unavailablePipelineRuns": 0
+  },
+  "boundaryFacts": {
+    "id": "30207",
+    "state": "abandoned",
+    "specPrs": [
+      {
+        "id": "github:Azure/azure-rest-api-specs#38124",
+        "trackId": "spec:github:Azure/azure-rest-api-specs#38124",
+        "createdAt": "2025-10-13T10:13:00Z",
+        "mergedAt": "2025-10-29T16:14:30Z",
+        "closedAt": "2025-10-29T16:14:31Z",
+        "available": true
+      }
+    ],
+    "artifacts": [
+      {
+        "language": ".NET",
+        "package": "Azure.ResourceManager.EdgeMarketplace",
+        "trackId": "sdk:.NET:Azure.ResourceManager.EdgeMarketplace",
+        "prId": "github:Azure/azure-sdk-for-net#55050",
+        "prCreatedAt": "2026-01-16T06:32:03Z",
+        "prMergedAt": null,
+        "prClosedAt": "2026-04-03T08:45:20Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-net#55050",
+            "createdAt": "2026-01-16T06:32:03Z",
+            "mergedAt": null,
+            "closedAt": "2026-04-03T08:45:20Z",
+            "state": "closed"
+          }
+        ],
+        "generationRunId": "ado-build:internal:5761540",
+        "generationStartAt": "2026-01-16T06:27:11.0315027Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "JavaScript",
+        "package": "@azure/arm-edgemarketplace",
+        "trackId": "sdk:JavaScript:@azure/arm-edgemarketplace",
+        "prId": "github:Azure/azure-sdk-for-js#37035",
+        "prCreatedAt": "2026-01-14T09:12:51Z",
+        "prMergedAt": null,
+        "prClosedAt": "2026-04-24T09:11:11Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-js#37035",
+            "createdAt": "2026-01-14T09:12:51Z",
+            "mergedAt": null,
+            "closedAt": "2026-04-24T09:11:11Z",
+            "state": "closed"
+          }
+        ],
+        "generationRunId": "ado-build:internal:5751507",
+        "generationStartAt": "2026-01-14T09:06:47.9709818Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Python",
+        "package": "azure-mgmt-edgemarketplace",
+        "trackId": "sdk:Python:azure-mgmt-edgemarketplace",
+        "prId": "github:Azure/azure-sdk-for-python#44654",
+        "prCreatedAt": "2026-01-14T09:12:00Z",
+        "prMergedAt": null,
+        "prClosedAt": "2026-04-03T08:45:57Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-python#44654",
+            "createdAt": "2026-01-14T09:12:00Z",
+            "mergedAt": null,
+            "closedAt": "2026-04-03T08:45:57Z",
+            "state": "closed"
+          }
+        ],
+        "generationRunId": "ado-build:internal:5751510",
+        "generationStartAt": "2026-01-14T09:06:52.5001407Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Java",
+        "package": "azure-resourcemanager-edgemarketplace",
+        "trackId": "sdk:Java:azure-resourcemanager-edgemarketplace",
+        "prId": "github:Azure/azure-sdk-for-java#47706",
+        "prCreatedAt": "2026-01-14T09:14:02Z",
+        "prMergedAt": null,
+        "prClosedAt": "2026-06-02T03:17:45Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-java#47706",
+            "createdAt": "2026-01-14T09:14:02Z",
+            "mergedAt": null,
+            "closedAt": "2026-06-02T03:17:45Z",
+            "state": "closed"
+          }
+        ],
+        "generationRunId": "ado-build:internal:5751508",
+        "generationStartAt": "2026-01-14T09:06:48.7069487Z",
+        "releaseEvents": [],
+        "releasedVersion": null,
+        "releaseBoundaryAt": null,
+        "releaseBoundarySource": "missing",
+        "releaseBoundaryConfidence": "missing",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "missing"
+        }
+      },
+      {
+        "language": "Go",
+        "package": "sdk/resourcemanager/edgemarketplace/armedgemarketplace",
+        "trackId": "sdk:Go:sdk/resourcemanager/edgemarketplace/armedgemarketplace",
+        "prId": "github:Azure/azure-sdk-for-go#25881",
+        "prCreatedAt": "2026-01-14T09:11:27Z",
+        "prMergedAt": "2026-05-27T03:00:15Z",
+        "prClosedAt": "2026-05-27T03:00:15Z",
+        "prAttempts": [
+          {
+            "id": "github:Azure/azure-sdk-for-go#25881",
+            "createdAt": "2026-01-14T09:11:27Z",
+            "mergedAt": "2026-05-27T03:00:15Z",
+            "closedAt": "2026-05-27T03:00:15Z",
+            "state": "merged"
+          }
+        ],
+        "generationRunId": "ado-build:internal:5751509",
+        "generationStartAt": "2026-01-14T09:06:55.8983144Z",
+        "releaseEvents": [
+          {
+            "occurredAt": "2026-05-27T05:18:05.86Z",
+            "value": "Released"
+          }
+        ],
+        "releasedVersion": "0.1.0",
+        "releaseBoundaryAt": "2026-05-27T05:18:05.86Z",
+        "releaseBoundarySource": "release-plan",
+        "releaseBoundaryConfidence": "observed",
+        "releaseBoundaryUrl": null,
+        "releaseTag": null,
+        "releaseMatchMethod": null,
+        "provenance": {
+          "pr": "exact",
+          "generation": "exact",
+          "release": "release-plan"
+        }
+      }
+    ],
+    "cohortPlan": {
+      "id": "30207",
+      "releasePlanId": "2051",
+      "title": "Release Plan - 2051 - Public Preview - edge marketplace",
+      "service": "Release Plan - 2051 - Public Preview - edge marketplace",
+      "state": "abandoned"
+    },
+    "quality": {
+      "warnings": [
+        "API specification path is missing",
+        "4 historical linked PR(s) closed without merge"
+      ],
+      "unavailablePullRequests": 0,
+      "unavailablePipelineRuns": 0
+    }
+  },
+  "summary": {
+    "durationHours": 3335.6,
+    "pullRequestCount": 6,
+    "humanReviewCount": 20,
+    "humanCommentCount": 27
+  }
+}

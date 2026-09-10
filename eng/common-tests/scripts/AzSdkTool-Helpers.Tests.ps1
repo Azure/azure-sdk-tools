@@ -7,7 +7,12 @@ BeforeAll {
 Describe "Get-GitHubApiHeaders" -Tag "UnitTest", "AzSdkTool-Helpers" {
     It "prefers GitHub CLI authentication over GITHUB_TOKEN" {
         $originalToken = $env:GITHUB_TOKEN
+        $lastExitCodeWasSet = Test-Path variable:global:LASTEXITCODE
+        if ($lastExitCodeWasSet) {
+            $originalLastExitCode = $global:LASTEXITCODE
+        }
         $env:GITHUB_TOKEN = "environment-token"
+        $global:LASTEXITCODE = 0
         function global:gh {
             return "cli-token"
         }
@@ -17,22 +22,31 @@ Describe "Get-GitHubApiHeaders" -Tag "UnitTest", "AzSdkTool-Helpers" {
         }
         finally {
             $env:GITHUB_TOKEN = $originalToken
+            if ($lastExitCodeWasSet) {
+                $global:LASTEXITCODE = $originalLastExitCode
+            }
+            else {
+                Remove-Variable -Scope Global -Name LASTEXITCODE -ErrorAction SilentlyContinue
+            }
             Remove-Item -Path function:global:gh
         }
 
         $headers.Authorization | Should -Be ("Bearer " + "cli-token")
     }
 
-    It "uses GITHUB_TOKEN when GitHub CLI authentication is unavailable" {
+    It "uses GITHUB_TOKEN when GitHub CLI authentication fails" {
         $originalToken = $env:GITHUB_TOKEN
         $env:GITHUB_TOKEN = "environment-token"
-        Mock Get-Command { $null } -ParameterFilter { $Name -eq "gh" }
+        function global:gh {
+            throw "GitHub CLI authentication is unavailable."
+        }
 
         try {
             $headers = Get-GitHubApiHeaders
         }
         finally {
             $env:GITHUB_TOKEN = $originalToken
+            Remove-Item -Path function:global:gh
         }
 
         $headers.Authorization | Should -Be ("Bearer " + "environment-token")

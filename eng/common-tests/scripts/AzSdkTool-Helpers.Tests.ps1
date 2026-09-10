@@ -51,6 +51,24 @@ Describe "Get-GitHubApiHeaders" -Tag "UnitTest", "AzSdkTool-Helpers" {
 
         $headers.Authorization | Should -Be ("Bearer " + "environment-token")
     }
+
+    It "returns null when no authentication token is available" {
+        $originalToken = $env:GITHUB_TOKEN
+        Remove-Item -Path Env:GITHUB_TOKEN -ErrorAction SilentlyContinue
+        function global:gh {
+            throw "GitHub CLI authentication is unavailable."
+        }
+
+        try {
+            $headers = Get-GitHubApiHeaders
+        }
+        finally {
+            $env:GITHUB_TOKEN = $originalToken
+            Remove-Item -Path function:global:gh
+        }
+
+        $headers | Should -BeNullOrEmpty
+    }
 }
 
 Describe "Install-Standalone-Tool" -Tag "UnitTest", "AzSdkTool-Helpers" {

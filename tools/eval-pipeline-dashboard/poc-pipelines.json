@@ -1,0 +1,67 @@
+{
+  "adoProject": "internal",
+  "sources": {
+    "markdown": "artifacts/vally-local/markdown-token-optimizer/2026-07-17T18-39-00-974Z/results.jsonl",
+    "sensei": "artifacts/vally-local/sensei/2026-07-17T18-40-03-118Z/results.jsonl",
+    "authoring": "artifacts/vally-local/skill-authoring/2026-07-17T18-42-13-812Z/results.jsonl",
+    "release2": "artifacts/vally-results/sdk-release-trigger-fix2/2026-07-16T04-59-04-330Z/results.jsonl",
+    "release3": "artifacts/vally-results/sdk-release-trigger-fix3/2026-07-16T05-00-08-306Z/results.jsonl",
+    "config": "artifacts/vally-results/_cfgcheck/2026-06-17T23-50-06-549Z/results.jsonl"
+  },
+  "pipelines": [
+    {
+      "repository": "azure-sdk-tools",
+      "pipeline": "skill-eval",
+      "pipelineDefinitionId": "8178",
+      "resultSources": ["authoring", "markdown"]
+    },
+    {
+      "repository": "azure-sdk-tools",
+      "pipeline": "workflow-eval",
+      "pipelineDefinitionId": "8210",
+      "resultSources": ["sensei", "config"]
+    },
+    {
+      "repository": "azure-sdk",
+      "pipeline": "skill-eval",
+      "pipelineDefinitionId": "9101",
+      "resultSources": ["authoring", "markdown"]
+    },
+    {
+      "repository": "azure-sdk-for-java",
+      "pipeline": "skill-eval",
+      "pipelineDefinitionId": "9102",
+      "resultSources": ["sensei", "config"]
+    },
+    {
+      "repository": "azure-sdk-for-js",
+      "pipeline": "skill-eval",
+      "pipelineDefinitionId": "9103",
+      "resultSources": ["release2", "release3"]
+    },
+    {
+      "repository": "azure-sdk-for-net",
+      "pipeline": "skill-eval",
+      "pipelineDefinitionId": "9104",
+      "resultSources": ["markdown", "sensei"]
+    },
+    {
+      "repository": "azure-rest-api-specs",
+      "pipeline": "skill-eval",
+      "pipelineDefinitionId": "9105",
+      "resultSources": ["release2", "release3"]
+    },
+    {
+      "repository": "azure-rest-api-specs",
+      "pipeline": "arm-api-review-eval",
+      "pipelineDefinitionId": "9106",
+      "resultSources": ["markdown", "sensei"]
+    },
+    {
+      "repository": "azure-sdk-for-python",
+      "pipeline": "skill-eval",
+      "pipelineDefinitionId": "9107",
+      "resultSources": ["authoring", "config"]
+    }
+  ]
+}

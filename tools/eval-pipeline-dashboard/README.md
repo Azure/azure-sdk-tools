@@ -138,6 +138,32 @@ Vally results to exercise multi-repository routing; repository and pipeline
 labels are test metadata rather than proof that those production pipelines
 already exist.
 
+### Configure the POC pipeline catalog
+
+The sample repositories and pipelines live in `poc-pipelines.json`, not in the
+dashboard source. Add a pipeline entry there to include it in the next
+`npm run poc:seed`, for example:
+
+```json
+{
+  "repository": "azure-sdk-for-go",
+  "pipeline": "language-eval",
+  "pipelineDefinitionId": "9321",
+  "resultSources": ["authoring", "markdown"]
+}
+```
+
+Each `resultSources` value references a key in the file's top-level `sources`
+object. A pipeline may override the top-level `adoProject` value. To use a
+catalog outside this checkout, set `POC_PIPELINE_CONFIG` to its JSON path before
+running `npm run poc:seed`.
+
+This catalog is only demo input. The running dashboard has no repository or
+pipeline allowlist: in production, the first valid bundle whose manifest
+contains a new `repo`, `pipeline`, and `pipelineDefinitionId` automatically adds
+that pipeline to the landing page. Onboarding a language pipeline therefore
+changes its shared publishing-template configuration, not dashboard code.
+
 ### Publish a new run while the service is running
 
 In another terminal:
@@ -280,6 +306,7 @@ host-header protection enabled.
 | `VALLY_STAGING_ROOT` | `./.blob-staging` | Temporary download/extraction directory. |
 | `VALLY_BLOB_POLL_MS` | `30000` | Fake Blob polling interval. The POC uses 2000 ms. |
 | `POC_VALLY_SOURCE_ROOT` | this repository's root | Source of sample Vally results for both seed and publish commands. |
+| `POC_PIPELINE_CONFIG` | `./poc-pipelines.json` | Optional external POC repository/pipeline catalog. |
 
 When `VALLY_LOCAL_BLOB_ROOT` is set, fake Blob polling takes precedence over
 legacy `VALLY_RESULTS` folder watching.
@@ -321,6 +348,7 @@ operation; adding this file does not create one.
 | `lib/local-pipeline-publisher.js` | Simulated pipeline Summary publisher. |
 | `lib/artifact-sync.js` | Poll, deduplicate, download, ingest, record metadata, and clean up. |
 | `lib/run-metadata.js` | Manifest normalization and `run_metadata` SQLite schema/queries. |
+| `poc-pipelines.json` | Configurable repositories, pipelines, and fixture sources for POC seeding. |
 | `scripts/seed-poc.mjs` | Seeds future-run history through the publisher. |
 | `scripts/publish-poc-run.mjs` | Publishes one new fake pipeline run. |
 | `scripts/start-poc.mjs` | Starts the service with POC paths and polling settings. |

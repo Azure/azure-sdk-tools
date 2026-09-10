@@ -6,7 +6,36 @@ import { initializeDatabase } from "@microsoft/vally-server";
 import { syncArtifactRuns } from "../lib/artifact-sync.js";
 import { createDashboardBundle } from "../lib/dashboard-bundle.js";
 import { getLocalBlobPath, publishLocalBlob } from "../lib/local-blob-store.js";
-import { initializeRunMetadata } from "../lib/run-metadata.js";
+import { parsePocPipelineConfig } from "../lib/poc-pipeline-config.js";
+import {
+  getPipelineRuns,
+  getPipelineSummaries,
+  initializeRunMetadata,
+} from "../lib/run-metadata.js";
+
+test("loads pipeline definitions from configuration", () => {
+  assert.deepEqual(
+    parsePocPipelineConfig({
+      adoProject: "internal",
+      sources: { go: "artifacts/go/results.jsonl" },
+      pipelines: [{
+        repository: "azure-sdk-for-go",
+        pipeline: "language-eval",
+        pipelineDefinitionId: "9321",
+        resultSources: ["go"],
+      }],
+    }),
+    {
+      pipelines: [{
+        adoProject: "internal",
+        repository: "azure-sdk-for-go",
+        pipeline: "language-eval",
+        pipelineDefinitionId: "9321",
+        resultSources: ["artifacts/go/results.jsonl"],
+      }],
+    }
+  );
+});
 
 test("downloads and ingests each immutable bundle once", async (context) => {
   const root = await context.mock.method(process, "cwd")() || process.cwd();
@@ -19,9 +48,9 @@ test("downloads and ingests each immutable bundle once", async (context) => {
   const manifest = {
     schemaVersion: 1,
     adoProject: "internal",
-    repo: "azure-sdk-tools",
-    pipeline: "skill-eval",
-    pipelineDefinitionId: "8178",
+    repo: "azure-sdk-for-go",
+    pipeline: "language-eval",
+    pipelineDefinitionId: "9321",
     buildId: "1001",
     summaryAttempt: 1,
     runId: "test-run-1001",
@@ -74,6 +103,15 @@ test("downloads and ingests each immutable bundle once", async (context) => {
     });
     assert.equal(db.prepare("SELECT COUNT(*) AS count FROM runs").get().count, 1);
     assert.equal(db.prepare("SELECT COUNT(*) AS count FROM run_metadata").get().count, 1);
+    assert.deepEqual(
+      getPipelineSummaries(db).map(({ repository, pipeline, run_count }) => ({
+        repository,
+        pipeline,
+        run_count,
+      })),
+      [{ repository: "azure-sdk-for-go", pipeline: "language-eval", run_count: 1 }]
+    );
+    assert.equal(getPipelineRuns(db, "azure-sdk-for-go", "language-eval").length, 1);
     const metadata = db
       .prepare("SELECT blob_name, blob_etag FROM run_metadata")
       .get();

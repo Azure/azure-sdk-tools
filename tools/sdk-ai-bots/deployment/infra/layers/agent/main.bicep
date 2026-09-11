@@ -410,6 +410,9 @@ output AI_RESOURCE_NAME string = account.name
 @description('Azure AI project name.')
 output AI_PROJECT_NAME string = project.name
 
+@description('Full ARM resource ID of the Azure AI Foundry project required by the azd agent extension.')
+output AZURE_AI_PROJECT_ID string = project.id
+
 @description('Azure AI Foundry project REST API endpoint.')
 output FOUNDRY_PROJECT_ENDPOINT string = 'https://${account.name}.services.ai.azure.com/api/projects/${project.name}'
 

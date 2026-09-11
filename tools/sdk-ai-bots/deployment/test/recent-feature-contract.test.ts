@@ -101,6 +101,12 @@ test("deploys the image tag selected by the pipeline", () => {
   assert.match(localSync, /buildAzdEnvironmentValues/);
 });
 
+test("exports the Foundry project ID required by the agent extension", () => {
+  const agent = read("infra/layers/agent/main.bicep");
+
+  assert.match(agent, /output AZURE_AI_PROJECT_ID string = project\.id/);
+});
+
 test("runs hooks with the package-local TypeScript runtime", () => {
   const project = read("../azure.yaml");
 

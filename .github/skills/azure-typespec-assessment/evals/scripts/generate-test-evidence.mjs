@@ -275,7 +275,7 @@ function buildAssessment(item) {
       azureCompliance: {
         status: "not-assessed",
         reason:
-          "Historical fixture predates documentation-grounded compliance evidence.",
+          "Historical fixture predates documentation-grounded Azure Guidelines evidence.",
         documents: [],
         findings: [],
       },

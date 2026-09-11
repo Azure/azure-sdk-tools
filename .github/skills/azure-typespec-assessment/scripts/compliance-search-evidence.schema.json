@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "TypeSpec Compliance Search Evidence",
+  "title": "TypeSpec Azure Guidelines Search Evidence",
   "type": "object",
   "additionalProperties": false,
   "required": ["schemaVersion", "intents", "inputAccounting"],

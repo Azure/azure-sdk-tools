@@ -120,7 +120,11 @@ export function replayCase(testCase, options = {}) {
     assertEqual(actualCounts[name], expected, `PR ${testCase.pr} ${name}`);
   }
 
-  const html = renderAssessmentHtml(assessment);
+  const downstreamInputPath = join(canonicalRoot, "downstream-input.json");
+  const downstreamInput = existsSync(downstreamInputPath)
+    ? JSON.parse(readFileSync(downstreamInputPath, "utf8"))
+    : undefined;
+  const html = renderAssessmentHtml(assessment, { downstreamInput });
   assertMajorReportPoints(html, assessment, `PR ${testCase.pr} HTML`);
   if (options.checkCanonicalHtml !== false && existsSync(htmlPath)) {
     const acceptedHtml = readFileSync(htmlPath, "utf8");
@@ -144,6 +148,12 @@ export function replayCase(testCase, options = {}) {
     `${JSON.stringify(assessment, null, 2)}\n`,
   );
   writeFileSync(join(caseOutput, "assessment.html"), html);
+  if (downstreamInput) {
+    writeFileSync(
+      join(caseOutput, "downstream-input.json"),
+      `${JSON.stringify(downstreamInput, null, 2)}\n`,
+    );
+  }
   const elapsedMs = Math.round(
     Number(process.hrtime.bigint() - startedAt) / 1_000_000,
   );

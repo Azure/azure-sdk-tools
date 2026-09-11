@@ -1,11 +1,11 @@
 # Output Contract
 
-## Compliance search evidence
+## Azure Guidelines search evidence
 
 Write `compliance-search-evidence.json` conforming to
 `scripts\compliance-search-evidence.schema.json`. There must be one entry per
 `complianceSearchRequests` item. Resolve the complete request from the
-referenced compliance request artifact. Each entry preserves its unchanged
+referenced Azure Guidelines request artifact. Each entry preserves its unchanged
 query profile, the complete scored catalog ranking, four fetched catalog documents
 or an explicit catalog-exhaustion blocker, score components, retrieval
 provenance, declaration applicability, relevant guidance, and failed
@@ -80,11 +80,11 @@ Write one `assessment-judgment.json` conforming to `scripts\assessment-judgment.
 
 Coverage must be exact: one concise semantic result per supplied review unit,
 one decision per supplied deterministic or inferred REST/downstream candidate,
-and one Compliance decision per Semantic intent. Applicable Compliance
+and one Azure Guidelines decision per Semantic intent. Applicable Azure Guidelines
 decisions cite fetched guidance sections and synthesize their expected pattern.
 Use `no-applicable-guidance` when search completed but no fetched section
 governs the intent; use `not-assessed` only for incomplete or blocked
-Compliance.
+the Azure Guidelines assessment.
 All IDs and URLs must come from the bounded inputs or validated inference
 output. Every `applicable-fail` decision must also provide a concise finding
 title and `high`, `medium`, or `low` severity for structured assessment data.
@@ -98,8 +98,12 @@ Every confirmed REST finding must contain actual and expected behavior, rational
 Downstream SDK method and SDK type cards must not repeat `Changed TypeSpec`
 source links. Keep that evidence in `assessment.json`, Semantic intents, and
 the appendix; retain only related Semantic intent links in the cards.
-Their `SDK method` and `SDK type` tags must use the blue informational tag
-style; red is reserved for REST-breaking tags and failure indicators.
+Method cards use direct, mixed, or indirect cause labels. Red impact links
+are reserved for confirmed REST/downstream impacts; guideline links are separate.
+Downstream data and cards must not contain affected REST operations, HTTP
+routes, REST-derived counts, or REST/downstream suppression records. Direct
+method findings are assembled into `methodGroups`; type findings are assembled
+into `typeImpacts` with deterministic TCGC `affectedMethods`.
 
 HTML finding cards must not display `high`, `medium`, or `low` severity labels
 or severity-colored borders. Severity remains available in `assessment.json`
@@ -109,36 +113,37 @@ Dimension statuses are derived, not authored:
 
 - semantic: `assessed` or `not-assessed`;
 - REST/downstream: `passed`, `failed`, or `not-assessed`;
-- Azure Compliance: `passed`, `failed`, or `not-assessed`, derived from
+- Azure Guidelines: `passed`, `failed`, or `not-assessed`, derived from
   Semantic intent coverage and applicable fetched guidance;
 - Document Quality and Agent Friendliness: `not-assessed` with
   `Document Quality and Agent Friendliness is not assessed.`;
-- safety scope: `rest-and-downstream-only`, never compliance or document quality.
+- safety scope: `rest-and-downstream-only`, never Azure Guidelines or document quality.
 
 A blocked implemented dimension cannot pass. Document Quality and Agent
 Friendliness cannot pass or report zero findings as if assessed; it remains
 explicitly `not-assessed`.
-A completed Compliance search with no governing guidance is represented by an
+A completed Azure Guidelines search with no governing guidance is represented by an
 intent-level `no-applicable-guidance` decision. It counts as assessed and does
 not create a blocker. `not-assessed` is reserved for missing evidence,
 retrieval failures, blocked Semantic analysis, or otherwise incomplete
-Compliance.
+the Azure Guidelines assessment.
 
 ## HTML
 
 `assessment.html` must show comparison identity, overall code quality as
 `passed|failed|not-assessed`, REST/downstream code-safety findings, semantic
-intents, active Compliance status
-and coverage, four ranked documents per intent, fetched guidance beside changed
-TypeSpec, expanded failures, collapsed passes, retrieval blockers, explicit
+intents, active Azure Guidelines status
+and coverage, retained document evidence, fetched guidance and changed
+TypeSpec, collapsed finding cards, retrieval blockers, explicit
 not-assessed Document Quality and Agent Friendliness, and complete provenance.
 After overall code quality, summary cards and main sections must order the five
 dimensions as REST breaking changes, downstream breaking changes, Azure
 Guidelines, Document Quality and Agent Friendliness, and Semantic intents. The
 Azure Guidelines card uses its distinct visual guideline-issue count as the
 primary numeric value; status remains represented by its icon and color.
-The numbered Azure Guidelines section and summary card count distinct visual
-guideline issues. HTML may present multiple findings in one guideline-issue
+The Azure Guidelines summary card counts distinct visual guideline issues;
+the section metadata retains the underlying finding count.
+HTML may present multiple findings in one guideline-issue
 card only when their canonical guidance document-section sets and normalized
 expected behavior are identical. Grouping is presentation-only: JSON findings
 and stable finding anchors remain unchanged, shared expected behavior and
@@ -157,11 +162,15 @@ must include a clickable pull request link when a PR number is available,
 deriving the URL from `repository.remoteUrl` when no dedicated pull-request URL
 is present. Escape all source- and Agent-controlled text.
 
-REST breaking findings must use the shared contract-card hierarchy: contract
-identity and `REST contract` tag in the summary; a styled
+All five dimensions share a heading, description, and right-aligned metadata.
+Finding and intent cards share typography, right-aligned status/cause labels,
+and collapsed-by-default summaries.
+
+REST breaking findings are operation-first: operation identity, HTTP method,
+path, version, and human-readable affected-intent links in the summary; a styled
 `Contract area | Before | After` table; a highlighted
-`Why this is breaking` callout; a nested affected-operation list collapsed by
-default; and human-readable Semantic intent links in the footer. Do not render
+`Why this is breaking` callout. Preserve findings with unavailable operation
+mapping in explicit fallback cards. Do not render
 severity labels, severity-colored borders, or Changed TypeSpec links in these
 cards.
 Semantic operation cards use the same `Contract area | Before | After` table
@@ -172,19 +181,40 @@ operation facts and render the narrowest changed parameter, request schema,
 response status/body/header, paging, LRO, method, or path areas. Do not render
 identical top-level summaries when a deeper changed path is available. If the
 normalized comparison produces no changed contract row, omit the table and
-render `HTTP signature and represented payload contract unchanged.` as both
-the operation statement and change outcome.
+render the unchanged outcome without a redundant duplicate statement.
 
 All REST, Semantic operation, SDK method, and SDK type contract tables use the
 same two-line contract-area cell: a human-readable area kind above the concrete
-member name or path. SDK rows derive concise before/after values from retained
-TCGC facts and use related operation evidence for wire origin only when
-unambiguous. SDK property location is member-level: label a body property only
-when the concrete property is present in the normalized body schema, label a
-property mapped to a response header as `Response header property`, and
-otherwise fall back to `Model property`. Containing-type reachability alone
-must not classify every property as a body property. Do not render a
+member name or path. SDK rows derive concise before/after values and location
+from retained TCGC facts and method-to-type reference paths. Allowed SDK
+locations are `(path)`, `(query)`, `(header)`, and `(body input)` beside
+numbered caller inputs, with a `Return type (body output)` row. Constant headers
+appear in a note, not the numbered caller inputs. Missing facts and locations
+must be labeled unavailable, never inferred from a root-wide location union.
+Do not render a
 `model-property-removed` row when downstream judgment concludes that the member
-was compatibly preserved by an explicit response model. Do not render internal rule identifiers such as
-`model-property-removed` as members or use full finding sentences as contract
-values.
+was compatibly preserved by an explicit response model. Prefer concrete members
+and concise recorded contract values; retain expected/actual prose when no
+structured value is available.
+
+Downstream cards are method-first, merging direct method changes with indirect
+type causes, using target normalized method names. Show representative graph
+paths with baseline/target roles only when verified raw evidence is explicitly
+supplied. Keep unmapped confirmed types visible. Do not add enum-specific or
+shared-cause banners; enum transitions remain in per-method evidence.
+
+Semantic summaries expose static `Impacts (N)` links, counting only REST and
+downstream targets. Guideline links are separate. Relationship labels and
+backgrounds do not toggle the card; anchors reveal their target's enclosing
+details. On expansion, complete Changed TypeSpec source appears first and is
+expanded. Affected operations follow in a collapsed group: at most ten operation
+cards, followed by compact descriptions retaining every remaining operation ID,
+HTTP method, version, and path.
+
+Azure Guidelines summaries retain the gap and affected-intent links. The body
+contains two full-width sections: Expected (distinct expected text and official
+references/examples) and Actual (each finding's recorded diff once, source
+links, and non-duplicate actual explanation). Grouped findings retain per-intent
+anchors. Do not duplicate these sections with a comparison table or a second
+source-evidence block. Preserve pass/fail/not-assessed and no-applicable-guidance
+states without severity labels.

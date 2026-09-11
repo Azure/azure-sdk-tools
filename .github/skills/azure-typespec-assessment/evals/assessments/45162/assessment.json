@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-04T02:04:19.341Z",
+  "generatedAt": "2026-09-11T04:21:43.077Z",
   "title": "TypeSpec assessment: specification/confidentialledger/data-plane/ConfidentialLedger",
   "repository": {
     "root": "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\.workspaces\\45162\\head",
@@ -13756,7 +13756,7 @@
           "relatedFindings": {
             "rest": [],
             "downstream": [],
-            "sharedTypeImpact": []
+            "typeImpact": []
           }
         },
         {
@@ -16363,7 +16363,7 @@
           "relatedFindings": {
             "rest": [],
             "downstream": [],
-            "sharedTypeImpact": []
+            "typeImpact": []
           }
         }
       ],
@@ -16385,36 +16385,50 @@
     "downstream": {
       "status": "passed",
       "findings": [],
-      "operationGroups": [],
-      "sharedTypeImpacts": [],
+      "methodGroups": [],
+      "typeImpacts": [],
       "rootCauses": [
         {
-          "id": "downstream-root-cause-ea7a0b3ba14bdad8",
+          "id": "downstream-root-cause-416c54dc2f7bb3c0",
           "kind": "method-return-propagation",
           "directCandidateIds": [
             "downstream-6bcd2ee7c060757b"
           ],
-          "propagatedCandidateIds": [
-            "downstream-c806ee9b3d6e5ab1",
-            "downstream-de03a1e305b0fe20"
-          ],
-          "operationFactIds": [
-            "sdk-fact-63d34c6573fe93f0",
-            "sdk-fact-e994c21d5c5aa508"
-          ],
+          "propagatedCandidateIds": [],
           "methodFactIds": [
             "sdk-fact-63d34c6573fe93f0",
             "sdk-fact-e994c21d5c5aa508"
+          ],
+          "typeFactIds": [],
+          "referenceEvidence": [],
+          "rootKey": "project-819de5ecc40e:ConfidentialLedger.createLedgerEntry"
+        },
+        {
+          "id": "downstream-root-cause-55831e1c4fc5077e",
+          "kind": "type-contract-propagation",
+          "directCandidateIds": [
+            "downstream-c806ee9b3d6e5ab1",
+            "downstream-de03a1e305b0fe20"
+          ],
+          "propagatedCandidateIds": [],
+          "methodFactIds": [
+            "sdk-fact-63d34c6573fe93f0"
           ],
           "typeFactIds": [
             "sdk-fact-4739320f7e27467a",
             "sdk-fact-c6135e6010b68166"
           ],
-          "referenceEvidence": [],
+          "referenceEvidence": [
+            {
+              "fromFactId": "sdk-fact-63d34c6573fe93f0",
+              "toFactId": "sdk-fact-4739320f7e27467a",
+              "kind": "response",
+              "location": "response-body"
+            }
+          ],
           "rootKey": "project-819de5ecc40e:ConfidentialLedger.LedgerWriteResult"
         }
       ],
-      "impliedByRest": [],
       "rejectedCandidateCount": 3,
       "blockers": []
     },
@@ -17958,18 +17972,18 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\45162\\deterministic-analysis\\worktrees\\current\\specification\\confidentialledger\\data-plane\\ConfidentialLedger",
+                "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\45162\\worktrees\\current\\specification\\confidentialledger\\data-plane\\ConfidentialLedger",
                 "--emit=@azure-tools/typespec-autorest",
-                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\45162\\deterministic-analysis\\projects\\project-819de5ecc40e\\baseline\\autorest",
+                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\45162\\projects\\project-819de5ecc40e\\baseline\\autorest",
                 "--warn-as-error",
                 "--option=@azure-tools/typespec-autorest.version=2026-02-23"
               ]
             },
             "exitCode": 0,
-            "durationMs": 8029,
-            "configPath": "worktrees\\current\\specification\\confidentialledger\\data-plane\\ConfidentialLedger\\tspconfig.yaml",
+            "durationMs": 5782,
+            "configPath": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\45162\\worktrees\\current\\specification\\confidentialledger\\data-plane\\ConfidentialLedger\\tspconfig.yaml",
             "configHash": "e0a5b7000b65fc2cac1b7f739170a719b82d3c432ba145381504babe23876cbf",
-            "logPath": "logs\\project-819de5ecc40e-baseline-autorest.log",
+            "logPath": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\45162\\logs\\project-819de5ecc40e-baseline-autorest.log",
             "comparisonRole": "baseline",
             "sourceRevision": "current",
             "sourceCommit": "31a6e2baccd0c4f42d10e66df95c1706fc97cc25",
@@ -17977,7 +17991,7 @@
             "format": "swagger-2.0",
             "files": [
               {
-                "path": "projects\\project-819de5ecc40e\\baseline\\autorest\\stable\\2026-02-23\\confidentialledger.json",
+                "path": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\45162\\projects\\project-819de5ecc40e\\baseline\\autorest\\stable\\2026-02-23\\confidentialledger.json",
                 "apiVersion": "2026-02-23",
                 "documentRole": "feature",
                 "contentHash": "e40c4d76caa42bd5f55fefbe63022d639b1639808b3de99233aaabf1621f1692"
@@ -17990,19 +18004,19 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\45162\\deterministic-analysis\\worktrees\\current\\specification\\confidentialledger\\data-plane\\ConfidentialLedger",
+                "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\45162\\worktrees\\current\\specification\\confidentialledger\\data-plane\\ConfidentialLedger",
                 "--emit=@azure-tools/typespec-client-generator-core",
-                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\45162\\deterministic-analysis\\projects\\project-819de5ecc40e\\baseline\\tcgc",
+                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\45162\\projects\\project-819de5ecc40e\\baseline\\tcgc",
                 "--warn-as-error",
-                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\45162\\deterministic-analysis\\inputs\\empty-examples",
+                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\45162\\inputs\\empty-examples",
                 "--option=@azure-tools/typespec-client-generator-core.api-version=2026-02-23"
               ]
             },
             "exitCode": 0,
-            "durationMs": 4590,
-            "configPath": "worktrees\\current\\specification\\confidentialledger\\data-plane\\ConfidentialLedger\\tspconfig.yaml",
+            "durationMs": 4258,
+            "configPath": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\45162\\worktrees\\current\\specification\\confidentialledger\\data-plane\\ConfidentialLedger\\tspconfig.yaml",
             "configHash": "e0a5b7000b65fc2cac1b7f739170a719b82d3c432ba145381504babe23876cbf",
-            "logPath": "logs\\project-819de5ecc40e-baseline-tcgc.log",
+            "logPath": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\45162\\logs\\project-819de5ecc40e-baseline-tcgc.log",
             "comparisonRole": "baseline",
             "sourceRevision": "current",
             "sourceCommit": "31a6e2baccd0c4f42d10e66df95c1706fc97cc25",
@@ -18010,7 +18024,7 @@
             "format": "tcgc-yaml",
             "files": [
               {
-                "path": "projects\\project-819de5ecc40e\\baseline\\tcgc\\tcgc-output.yaml",
+                "path": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\45162\\projects\\project-819de5ecc40e\\baseline\\tcgc\\tcgc-output.yaml",
                 "contentHash": "49d9026b7cd466362970a6b56ab992cd8980b30aff93f38acba7d224a75bdadd"
               }
             ]
@@ -18027,18 +18041,18 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\45162\\deterministic-analysis\\worktrees\\current\\specification\\confidentialledger\\data-plane\\ConfidentialLedger",
+                "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\45162\\worktrees\\current\\specification\\confidentialledger\\data-plane\\ConfidentialLedger",
                 "--emit=@azure-tools/typespec-autorest",
-                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\45162\\deterministic-analysis\\projects\\project-819de5ecc40e\\target\\autorest",
+                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\45162\\projects\\project-819de5ecc40e\\target\\autorest",
                 "--warn-as-error",
                 "--option=@azure-tools/typespec-autorest.version=2026-07-31-preview"
               ]
             },
             "exitCode": 0,
-            "durationMs": 4938,
-            "configPath": "worktrees\\current\\specification\\confidentialledger\\data-plane\\ConfidentialLedger\\tspconfig.yaml",
+            "durationMs": 4642,
+            "configPath": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\45162\\worktrees\\current\\specification\\confidentialledger\\data-plane\\ConfidentialLedger\\tspconfig.yaml",
             "configHash": "e0a5b7000b65fc2cac1b7f739170a719b82d3c432ba145381504babe23876cbf",
-            "logPath": "logs\\project-819de5ecc40e-target-autorest.log",
+            "logPath": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\45162\\logs\\project-819de5ecc40e-target-autorest.log",
             "comparisonRole": "target",
             "sourceRevision": "current",
             "sourceCommit": "31a6e2baccd0c4f42d10e66df95c1706fc97cc25",
@@ -18046,7 +18060,7 @@
             "format": "swagger-2.0",
             "files": [
               {
-                "path": "projects\\project-819de5ecc40e\\target\\autorest\\preview\\2026-07-31-preview\\confidentialledger.json",
+                "path": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\45162\\projects\\project-819de5ecc40e\\target\\autorest\\preview\\2026-07-31-preview\\confidentialledger.json",
                 "apiVersion": "2026-07-31-preview",
                 "documentRole": "feature",
                 "contentHash": "9650cf78fd730d21bcc9d6a5762404584440c1b295e0a8db93bdb6248aa2e105"
@@ -18059,19 +18073,19 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\45162\\deterministic-analysis\\worktrees\\current\\specification\\confidentialledger\\data-plane\\ConfidentialLedger",
+                "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\45162\\worktrees\\current\\specification\\confidentialledger\\data-plane\\ConfidentialLedger",
                 "--emit=@azure-tools/typespec-client-generator-core",
-                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\45162\\deterministic-analysis\\projects\\project-819de5ecc40e\\target\\tcgc",
+                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\45162\\projects\\project-819de5ecc40e\\target\\tcgc",
                 "--warn-as-error",
-                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\45162\\deterministic-analysis\\inputs\\empty-examples",
+                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\45162\\inputs\\empty-examples",
                 "--option=@azure-tools/typespec-client-generator-core.api-version=2026-07-31-preview"
               ]
             },
             "exitCode": 0,
-            "durationMs": 4818,
-            "configPath": "worktrees\\current\\specification\\confidentialledger\\data-plane\\ConfidentialLedger\\tspconfig.yaml",
+            "durationMs": 4170,
+            "configPath": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\45162\\worktrees\\current\\specification\\confidentialledger\\data-plane\\ConfidentialLedger\\tspconfig.yaml",
             "configHash": "e0a5b7000b65fc2cac1b7f739170a719b82d3c432ba145381504babe23876cbf",
-            "logPath": "logs\\project-819de5ecc40e-target-tcgc.log",
+            "logPath": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\45162\\logs\\project-819de5ecc40e-target-tcgc.log",
             "comparisonRole": "target",
             "sourceRevision": "current",
             "sourceCommit": "31a6e2baccd0c4f42d10e66df95c1706fc97cc25",
@@ -18079,7 +18093,7 @@
             "format": "tcgc-yaml",
             "files": [
               {
-                "path": "projects\\project-819de5ecc40e\\target\\tcgc\\tcgc-output.yaml",
+                "path": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\45162\\projects\\project-819de5ecc40e\\target\\tcgc\\tcgc-output.yaml",
                 "contentHash": "d9b0e3ba95d418e6db7db7a7dc8848a00953fff5d2d3cb1238f8cee1977bda85"
               }
             ]
@@ -18152,15 +18166,15 @@
   "inputAccounting": {
     "budgetTier": "small",
     "budgetBytes": 131072,
-    "bytes": 111505,
-    "estimatedTokens": 27877,
+    "bytes": 112003,
+    "estimatedTokens": 28001,
     "retained": {
       "evidenceSets": 6,
       "facts": 70,
       "semanticReviewUnits": 2,
       "restCandidates": 0,
       "downstreamCandidates": 3,
-      "downstreamRootCauses": 1,
+      "downstreamRootCauses": 2,
       "complianceSearchRequests": 2,
       "inferenceRequests": 3
     },
@@ -18169,6 +18183,7 @@
       "compilerLogs": true,
       "unchangedInventories": true,
       "unreferencedFacts": true,
+      "unreferencedDeterministicFacts": true,
       "sourceChanges": true,
       "repeatedDeclarationIds": true,
       "repeatedReviewUnitEvidence": true
@@ -18188,14 +18203,8 @@
     }
   },
   "timings": {
-    "totalMs": 39005,
-    "semanticAnalysisMs": 92,
-    "restAnalysisMs": 33,
-    "downstreamAnalysisMs": 773
+    "downstreamAnalysisMs": 440,
+    "buildModelInputMs": 7
   },
-  "pr": 45162,
-  "pullRequest": {
-    "number": 45162,
-    "url": "https://github.com/Azure/azure-rest-api-specs/pull/45162"
-  }
+  "pr": 45162
 }

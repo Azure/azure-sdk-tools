@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-04T02:04:08.805Z",
+  "generatedAt": "2026-09-11T04:09:58.427Z",
   "title": "TypeSpec assessment: specification/recoveryservices/resource-manager/Microsoft.RecoveryServices/RecoveryServices, specification/recoveryservicesbackup/resource-manager/Microsoft.RecoveryServices/RecoveryServicesBackup",
   "repository": {
     "root": "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\.workspaces\\42853\\head",
@@ -402,7 +402,7 @@
           "relatedFindings": {
             "rest": [],
             "downstream": [],
-            "sharedTypeImpact": []
+            "typeImpact": []
           }
         },
         {
@@ -568,7 +568,7 @@
           "relatedFindings": {
             "rest": [],
             "downstream": [],
-            "sharedTypeImpact": []
+            "typeImpact": []
           }
         },
         {
@@ -21942,7 +21942,7 @@
           "relatedFindings": {
             "rest": [],
             "downstream": [],
-            "sharedTypeImpact": []
+            "typeImpact": []
           }
         }
       ],
@@ -21990,10 +21990,9 @@
     "downstream": {
       "status": "passed",
       "findings": [],
-      "operationGroups": [],
-      "sharedTypeImpacts": [],
+      "methodGroups": [],
+      "typeImpacts": [],
       "rootCauses": [],
-      "impliedByRest": [],
       "rejectedCandidateCount": 0,
       "blockers": []
     },
@@ -24591,18 +24590,18 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\42853\\deterministic-analysis\\worktrees\\current\\specification\\recoveryservices\\resource-manager\\Microsoft.RecoveryServices\\RecoveryServices",
+                "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\42853\\worktrees\\current\\specification\\recoveryservices\\resource-manager\\Microsoft.RecoveryServices\\RecoveryServices",
                 "--emit=@azure-tools/typespec-autorest",
-                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\42853\\deterministic-analysis\\projects\\project-551502b046ca\\baseline\\autorest",
+                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\42853\\projects\\project-551502b046ca\\baseline\\autorest",
                 "--warn-as-error",
                 "--option=@azure-tools/typespec-autorest.version=2026-01-01"
               ]
             },
             "exitCode": 0,
-            "durationMs": 10681,
-            "configPath": "worktrees\\current\\specification\\recoveryservices\\resource-manager\\Microsoft.RecoveryServices\\RecoveryServices\\tspconfig.yaml",
+            "durationMs": 7456,
+            "configPath": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\42853\\worktrees\\current\\specification\\recoveryservices\\resource-manager\\Microsoft.RecoveryServices\\RecoveryServices\\tspconfig.yaml",
             "configHash": "b433d779ef0a2d3c86be6759a103453ce41299b15ea203920f5e7c2fd361e3f3",
-            "logPath": "logs\\project-551502b046ca-baseline-autorest.log",
+            "logPath": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\42853\\logs\\project-551502b046ca-baseline-autorest.log",
             "comparisonRole": "baseline",
             "sourceRevision": "current",
             "sourceCommit": "efe76fb07ac03d9c54e2c64de15ef3ff90fc4030",
@@ -24610,7 +24609,7 @@
             "format": "swagger-2.0",
             "files": [
               {
-                "path": "projects\\project-551502b046ca\\baseline\\autorest\\stable\\2026-01-01\\openapi.json",
+                "path": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\42853\\projects\\project-551502b046ca\\baseline\\autorest\\stable\\2026-01-01\\openapi.json",
                 "apiVersion": "2026-01-01",
                 "documentRole": "primary",
                 "contentHash": "fd26ae8b0d0c3a65a4aaccead4fd3e5b48d4af805fe0540d11dc4779f5e15783"
@@ -24623,19 +24622,19 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\42853\\deterministic-analysis\\worktrees\\current\\specification\\recoveryservices\\resource-manager\\Microsoft.RecoveryServices\\RecoveryServices",
+                "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\42853\\worktrees\\current\\specification\\recoveryservices\\resource-manager\\Microsoft.RecoveryServices\\RecoveryServices",
                 "--emit=@azure-tools/typespec-client-generator-core",
-                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\42853\\deterministic-analysis\\projects\\project-551502b046ca\\baseline\\tcgc",
+                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\42853\\projects\\project-551502b046ca\\baseline\\tcgc",
                 "--warn-as-error",
-                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\42853\\deterministic-analysis\\inputs\\empty-examples",
+                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\42853\\inputs\\empty-examples",
                 "--option=@azure-tools/typespec-client-generator-core.api-version=2026-01-01"
               ]
             },
             "exitCode": 0,
-            "durationMs": 8461,
-            "configPath": "worktrees\\current\\specification\\recoveryservices\\resource-manager\\Microsoft.RecoveryServices\\RecoveryServices\\tspconfig.yaml",
+            "durationMs": 6456,
+            "configPath": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\42853\\worktrees\\current\\specification\\recoveryservices\\resource-manager\\Microsoft.RecoveryServices\\RecoveryServices\\tspconfig.yaml",
             "configHash": "b433d779ef0a2d3c86be6759a103453ce41299b15ea203920f5e7c2fd361e3f3",
-            "logPath": "logs\\project-551502b046ca-baseline-tcgc.log",
+            "logPath": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\42853\\logs\\project-551502b046ca-baseline-tcgc.log",
             "comparisonRole": "baseline",
             "sourceRevision": "current",
             "sourceCommit": "efe76fb07ac03d9c54e2c64de15ef3ff90fc4030",
@@ -24643,7 +24642,7 @@
             "format": "tcgc-yaml",
             "files": [
               {
-                "path": "projects\\project-551502b046ca\\baseline\\tcgc\\tcgc-output.yaml",
+                "path": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\42853\\projects\\project-551502b046ca\\baseline\\tcgc\\tcgc-output.yaml",
                 "contentHash": "ae24d6db94a8917635e8040b60d5427020ca719105ea0653370cabfcc70a3309"
               }
             ]
@@ -24660,18 +24659,18 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\42853\\deterministic-analysis\\worktrees\\current\\specification\\recoveryservices\\resource-manager\\Microsoft.RecoveryServices\\RecoveryServices",
+                "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\42853\\worktrees\\current\\specification\\recoveryservices\\resource-manager\\Microsoft.RecoveryServices\\RecoveryServices",
                 "--emit=@azure-tools/typespec-autorest",
-                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\42853\\deterministic-analysis\\projects\\project-551502b046ca\\target\\autorest",
+                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\42853\\projects\\project-551502b046ca\\target\\autorest",
                 "--warn-as-error",
                 "--option=@azure-tools/typespec-autorest.version=2026-02-01"
               ]
             },
             "exitCode": 0,
-            "durationMs": 8370,
-            "configPath": "worktrees\\current\\specification\\recoveryservices\\resource-manager\\Microsoft.RecoveryServices\\RecoveryServices\\tspconfig.yaml",
+            "durationMs": 6034,
+            "configPath": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\42853\\worktrees\\current\\specification\\recoveryservices\\resource-manager\\Microsoft.RecoveryServices\\RecoveryServices\\tspconfig.yaml",
             "configHash": "b433d779ef0a2d3c86be6759a103453ce41299b15ea203920f5e7c2fd361e3f3",
-            "logPath": "logs\\project-551502b046ca-target-autorest.log",
+            "logPath": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\42853\\logs\\project-551502b046ca-target-autorest.log",
             "comparisonRole": "target",
             "sourceRevision": "current",
             "sourceCommit": "efe76fb07ac03d9c54e2c64de15ef3ff90fc4030",
@@ -24679,7 +24678,7 @@
             "format": "swagger-2.0",
             "files": [
               {
-                "path": "projects\\project-551502b046ca\\target\\autorest\\stable\\2026-02-01\\openapi.json",
+                "path": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\42853\\projects\\project-551502b046ca\\target\\autorest\\stable\\2026-02-01\\openapi.json",
                 "apiVersion": "2026-02-01",
                 "documentRole": "primary",
                 "contentHash": "0179c6fa4527c6699ef5f6a32983a7040f8e58e6c4b23529ffa6528b8cc1e421"
@@ -24692,19 +24691,19 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\42853\\deterministic-analysis\\worktrees\\current\\specification\\recoveryservices\\resource-manager\\Microsoft.RecoveryServices\\RecoveryServices",
+                "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\42853\\worktrees\\current\\specification\\recoveryservices\\resource-manager\\Microsoft.RecoveryServices\\RecoveryServices",
                 "--emit=@azure-tools/typespec-client-generator-core",
-                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\42853\\deterministic-analysis\\projects\\project-551502b046ca\\target\\tcgc",
+                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\42853\\projects\\project-551502b046ca\\target\\tcgc",
                 "--warn-as-error",
-                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\42853\\deterministic-analysis\\inputs\\empty-examples",
+                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\42853\\inputs\\empty-examples",
                 "--option=@azure-tools/typespec-client-generator-core.api-version=2026-02-01"
               ]
             },
             "exitCode": 0,
-            "durationMs": 7795,
-            "configPath": "worktrees\\current\\specification\\recoveryservices\\resource-manager\\Microsoft.RecoveryServices\\RecoveryServices\\tspconfig.yaml",
+            "durationMs": 6138,
+            "configPath": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\42853\\worktrees\\current\\specification\\recoveryservices\\resource-manager\\Microsoft.RecoveryServices\\RecoveryServices\\tspconfig.yaml",
             "configHash": "b433d779ef0a2d3c86be6759a103453ce41299b15ea203920f5e7c2fd361e3f3",
-            "logPath": "logs\\project-551502b046ca-target-tcgc.log",
+            "logPath": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\42853\\logs\\project-551502b046ca-target-tcgc.log",
             "comparisonRole": "target",
             "sourceRevision": "current",
             "sourceCommit": "efe76fb07ac03d9c54e2c64de15ef3ff90fc4030",
@@ -24712,7 +24711,7 @@
             "format": "tcgc-yaml",
             "files": [
               {
-                "path": "projects\\project-551502b046ca\\target\\tcgc\\tcgc-output.yaml",
+                "path": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\42853\\projects\\project-551502b046ca\\target\\tcgc\\tcgc-output.yaml",
                 "contentHash": "fa1c5bc64242ca7faa78a6a7b973c3c59fb8aaf90a3dc6c566ab01729c16fcc4"
               }
             ]
@@ -24798,18 +24797,18 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\42853\\deterministic-analysis\\worktrees\\current\\specification\\recoveryservicesbackup\\resource-manager\\Microsoft.RecoveryServices\\RecoveryServicesBackup",
+                "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\42853\\worktrees\\current\\specification\\recoveryservicesbackup\\resource-manager\\Microsoft.RecoveryServices\\RecoveryServicesBackup",
                 "--emit=@azure-tools/typespec-autorest",
-                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\42853\\deterministic-analysis\\projects\\project-05203fab0aa5\\baseline\\autorest",
+                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\42853\\projects\\project-05203fab0aa5\\baseline\\autorest",
                 "--warn-as-error",
                 "--option=@azure-tools/typespec-autorest.version=2026-01-01"
               ]
             },
             "exitCode": 0,
-            "durationMs": 9976,
-            "configPath": "worktrees\\current\\specification\\recoveryservicesbackup\\resource-manager\\Microsoft.RecoveryServices\\RecoveryServicesBackup\\tspconfig.yaml",
+            "durationMs": 7712,
+            "configPath": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\42853\\worktrees\\current\\specification\\recoveryservicesbackup\\resource-manager\\Microsoft.RecoveryServices\\RecoveryServicesBackup\\tspconfig.yaml",
             "configHash": "7c5c397acdc36faadc5b45f6f6790543be3a844e24e1c1e25e921dd908ff69bb",
-            "logPath": "logs\\project-05203fab0aa5-baseline-autorest.log",
+            "logPath": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\42853\\logs\\project-05203fab0aa5-baseline-autorest.log",
             "comparisonRole": "baseline",
             "sourceRevision": "current",
             "sourceCommit": "efe76fb07ac03d9c54e2c64de15ef3ff90fc4030",
@@ -24817,7 +24816,7 @@
             "format": "swagger-2.0",
             "files": [
               {
-                "path": "projects\\project-05203fab0aa5\\baseline\\autorest\\stable\\2026-01-01\\bms.json",
+                "path": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\42853\\projects\\project-05203fab0aa5\\baseline\\autorest\\stable\\2026-01-01\\bms.json",
                 "apiVersion": "2026-01-01",
                 "documentRole": "feature",
                 "contentHash": "4adcbb0c02a5e30bbb563804a7a1a5feaf53282d12bbd2ea4c8e6e5ecc513eee"
@@ -24830,19 +24829,19 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\42853\\deterministic-analysis\\worktrees\\current\\specification\\recoveryservicesbackup\\resource-manager\\Microsoft.RecoveryServices\\RecoveryServicesBackup",
+                "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\42853\\worktrees\\current\\specification\\recoveryservicesbackup\\resource-manager\\Microsoft.RecoveryServices\\RecoveryServicesBackup",
                 "--emit=@azure-tools/typespec-client-generator-core",
-                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\42853\\deterministic-analysis\\projects\\project-05203fab0aa5\\baseline\\tcgc",
+                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\42853\\projects\\project-05203fab0aa5\\baseline\\tcgc",
                 "--warn-as-error",
-                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\42853\\deterministic-analysis\\inputs\\empty-examples",
+                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\42853\\inputs\\empty-examples",
                 "--option=@azure-tools/typespec-client-generator-core.api-version=2026-01-01"
               ]
             },
             "exitCode": 0,
-            "durationMs": 10238,
-            "configPath": "worktrees\\current\\specification\\recoveryservicesbackup\\resource-manager\\Microsoft.RecoveryServices\\RecoveryServicesBackup\\tspconfig.yaml",
+            "durationMs": 8010,
+            "configPath": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\42853\\worktrees\\current\\specification\\recoveryservicesbackup\\resource-manager\\Microsoft.RecoveryServices\\RecoveryServicesBackup\\tspconfig.yaml",
             "configHash": "7c5c397acdc36faadc5b45f6f6790543be3a844e24e1c1e25e921dd908ff69bb",
-            "logPath": "logs\\project-05203fab0aa5-baseline-tcgc.log",
+            "logPath": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\42853\\logs\\project-05203fab0aa5-baseline-tcgc.log",
             "comparisonRole": "baseline",
             "sourceRevision": "current",
             "sourceCommit": "efe76fb07ac03d9c54e2c64de15ef3ff90fc4030",
@@ -24850,7 +24849,7 @@
             "format": "tcgc-yaml",
             "files": [
               {
-                "path": "projects\\project-05203fab0aa5\\baseline\\tcgc\\tcgc-output.yaml",
+                "path": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\42853\\projects\\project-05203fab0aa5\\baseline\\tcgc\\tcgc-output.yaml",
                 "contentHash": "1ae61a223f40da0ca179b2ef1012e2e4fdf2204680648d53b03f647f4ea9664c"
               }
             ]
@@ -24867,18 +24866,18 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\42853\\deterministic-analysis\\worktrees\\current\\specification\\recoveryservicesbackup\\resource-manager\\Microsoft.RecoveryServices\\RecoveryServicesBackup",
+                "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\42853\\worktrees\\current\\specification\\recoveryservicesbackup\\resource-manager\\Microsoft.RecoveryServices\\RecoveryServicesBackup",
                 "--emit=@azure-tools/typespec-autorest",
-                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\42853\\deterministic-analysis\\projects\\project-05203fab0aa5\\target\\autorest",
+                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\42853\\projects\\project-05203fab0aa5\\target\\autorest",
                 "--warn-as-error",
                 "--option=@azure-tools/typespec-autorest.version=2026-02-01"
               ]
             },
             "exitCode": 0,
-            "durationMs": 9857,
-            "configPath": "worktrees\\current\\specification\\recoveryservicesbackup\\resource-manager\\Microsoft.RecoveryServices\\RecoveryServicesBackup\\tspconfig.yaml",
+            "durationMs": 7634,
+            "configPath": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\42853\\worktrees\\current\\specification\\recoveryservicesbackup\\resource-manager\\Microsoft.RecoveryServices\\RecoveryServicesBackup\\tspconfig.yaml",
             "configHash": "7c5c397acdc36faadc5b45f6f6790543be3a844e24e1c1e25e921dd908ff69bb",
-            "logPath": "logs\\project-05203fab0aa5-target-autorest.log",
+            "logPath": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\42853\\logs\\project-05203fab0aa5-target-autorest.log",
             "comparisonRole": "target",
             "sourceRevision": "current",
             "sourceCommit": "efe76fb07ac03d9c54e2c64de15ef3ff90fc4030",
@@ -24886,7 +24885,7 @@
             "format": "swagger-2.0",
             "files": [
               {
-                "path": "projects\\project-05203fab0aa5\\target\\autorest\\stable\\2026-02-01\\bms.json",
+                "path": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\42853\\projects\\project-05203fab0aa5\\target\\autorest\\stable\\2026-02-01\\bms.json",
                 "apiVersion": "2026-02-01",
                 "documentRole": "feature",
                 "contentHash": "6518e434342059767f7b77474610e0b926d22b04a3b1d368f5c38d3812cc41ff"
@@ -24899,19 +24898,19 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\42853\\deterministic-analysis\\worktrees\\current\\specification\\recoveryservicesbackup\\resource-manager\\Microsoft.RecoveryServices\\RecoveryServicesBackup",
+                "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\42853\\worktrees\\current\\specification\\recoveryservicesbackup\\resource-manager\\Microsoft.RecoveryServices\\RecoveryServicesBackup",
                 "--emit=@azure-tools/typespec-client-generator-core",
-                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\42853\\deterministic-analysis\\projects\\project-05203fab0aa5\\target\\tcgc",
+                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\42853\\projects\\project-05203fab0aa5\\target\\tcgc",
                 "--warn-as-error",
-                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\42853\\deterministic-analysis\\inputs\\empty-examples",
+                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\42853\\inputs\\empty-examples",
                 "--option=@azure-tools/typespec-client-generator-core.api-version=2026-02-01"
               ]
             },
             "exitCode": 0,
-            "durationMs": 10108,
-            "configPath": "worktrees\\current\\specification\\recoveryservicesbackup\\resource-manager\\Microsoft.RecoveryServices\\RecoveryServicesBackup\\tspconfig.yaml",
+            "durationMs": 7839,
+            "configPath": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\42853\\worktrees\\current\\specification\\recoveryservicesbackup\\resource-manager\\Microsoft.RecoveryServices\\RecoveryServicesBackup\\tspconfig.yaml",
             "configHash": "7c5c397acdc36faadc5b45f6f6790543be3a844e24e1c1e25e921dd908ff69bb",
-            "logPath": "logs\\project-05203fab0aa5-target-tcgc.log",
+            "logPath": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\42853\\logs\\project-05203fab0aa5-target-tcgc.log",
             "comparisonRole": "target",
             "sourceRevision": "current",
             "sourceCommit": "efe76fb07ac03d9c54e2c64de15ef3ff90fc4030",
@@ -24919,7 +24918,7 @@
             "format": "tcgc-yaml",
             "files": [
               {
-                "path": "projects\\project-05203fab0aa5\\target\\tcgc\\tcgc-output.yaml",
+                "path": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\42853\\projects\\project-05203fab0aa5\\target\\tcgc\\tcgc-output.yaml",
                 "contentHash": "48023f8089b8a4e4453d7fb7db45bdadf80d10e1fb653eb266aa40ee9bfbc3c8"
               }
             ]
@@ -25000,8 +24999,8 @@
   "inputAccounting": {
     "budgetTier": "small",
     "budgetBytes": 131072,
-    "bytes": 26526,
-    "estimatedTokens": 6632,
+    "bytes": 26564,
+    "estimatedTokens": 6641,
     "retained": {
       "evidenceSets": 5,
       "facts": 0,
@@ -25017,6 +25016,7 @@
       "compilerLogs": true,
       "unchangedInventories": true,
       "unreferencedFacts": true,
+      "unreferencedDeterministicFacts": true,
       "sourceChanges": true,
       "repeatedDeclarationIds": true,
       "repeatedReviewUnitEvidence": true
@@ -25036,14 +25036,8 @@
     }
   },
   "timings": {
-    "totalMs": 173919,
-    "semanticAnalysisMs": 284,
-    "restAnalysisMs": 151,
-    "downstreamAnalysisMs": 6372
+    "downstreamAnalysisMs": 5587,
+    "buildModelInputMs": 6
   },
-  "pr": 42853,
-  "pullRequest": {
-    "number": 42853,
-    "url": "https://github.com/Azure/azure-rest-api-specs/pull/42853"
-  }
+  "pr": 42853
 }

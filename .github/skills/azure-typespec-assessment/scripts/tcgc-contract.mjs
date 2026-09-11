@@ -455,6 +455,9 @@ function normalizeHttpResponse(raw, context, location, exception) {
   return {
     statusCodes: normalizeStatusCodes(raw.statusCodes, exception, `${location}.statusCodes`),
     type: raw.type ? normalizeType(raw.type, context, `${location}.type`) : undefined,
+    headers: array(raw.headers, `${location}.headers`).map((item, index) =>
+      normalizeParameter(item, context, `${location}.headers[${index}]`, index),
+    ),
     contentTypes: raw.contentTypes ?? [],
     defaultContentType: raw.defaultContentType,
   };

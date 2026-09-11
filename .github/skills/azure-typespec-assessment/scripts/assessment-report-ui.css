@@ -1,9 +1,3 @@
-.summary-value{white-space:nowrap}
-.summary-heading{display:flex;align-items:flex-start;gap:8px}
-.summary-heading .summary-value{flex:none;font-size:20px;line-height:1.4}
-.summary-heading .summary-label{min-width:0;margin-top:0;line-height:1.4}
-.summary-heading .info{color:#dbeafe}
-@media(min-width:1051px){.summary-grid{grid-template-columns:repeat(5,minmax(0,1fr))}}
 .report-section-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin:0 0 14px}
 .report-section-head>div:first-child{min-width:0;flex:1}
 .report-section-head h2{margin:0}
@@ -44,7 +38,7 @@
 .report-link:hover,.report-link:focus-visible{text-decoration:underline;outline-offset:2px}
 .report-intent-relations{margin-top:12px;cursor:default}
 .report-relation-label{display:block;color:var(--muted);font-size:11px;font-weight:700;cursor:text}
-.report-link.impact,.report-link[href^="#compliance-finding-"]{color:#b91c1c;border-color:#fecaca;background:#fff1f2}
+.report-link.impact{color:#b91c1c;border-color:#fecaca;background:#fff1f2}
 .report-reference-paths{display:grid;gap:6px;margin:9px 0}
 .report-reference-path{display:grid;grid-template-columns:minmax(100px,.35fr) minmax(180px,1fr) max-content;gap:10px;align-items:baseline;padding:7px 10px;border-radius:6px;background:color-mix(in srgb,var(--panel) 92%,var(--accent));font-size:12px}
 .report-reference-path>span{color:var(--muted)}
@@ -54,43 +48,6 @@
 .report-guideline-section{min-width:0;overflow-wrap:anywhere}
 .report-guideline-section h3{margin:0 0 10px;font-size:16px}
 .report-guideline-section+.report-guideline-section{margin-top:20px;padding-top:20px;border-top:1px solid var(--line)}
-.report-document-snapshots{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
-.report-document-snapshots.single-snapshot{grid-template-columns:minmax(0,1fr)}
-.report-document-context{min-width:0}
-.report-document-related{margin-top:20px;padding-top:14px;border-top:1px solid var(--line)}
-.report-document-related-type>h5{font-size:13px;margin:15px 0 8px;overflow-wrap:anywhere}
-.report-document-related pre{max-height:400px;overflow:auto}
-.report-document-snapshot{min-width:0}
-.report-document-snapshot h4,.report-document-snapshot h5{margin:12px 0 6px}
-.document-quality-check pre{margin:0;padding:12px;border:1px solid var(--line);border-radius:8px;background:color-mix(in srgb,var(--panel) 94%,var(--accent));white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.5 ui-monospace,Consolas,monospace}
-.report-document-rationale{margin-top:20px;padding-top:16px;border-top:1px solid var(--line)}
-.report-document-rationale p{margin:5px 0 0}
-.document-quality-scope{margin-top:14px}
-.document-quality-intent-link{margin-bottom:12px}
-.document-quality-file{margin:10px 0;padding:12px;border:1px solid var(--line);border-radius:8px}
-.document-quality-file-count{font-weight:400;color:var(--muted)}
-.document-quality-list{max-height:300px;overflow:auto;margin-top:10px;overscroll-behavior:contain}
-.document-quality-row,.document-quality-document>summary{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:11px 4px;border-bottom:1px solid var(--line);font-size:13px}
-.document-quality-document>summary{cursor:pointer}
-.document-quality-document>summary:before{content:"+";color:var(--accent)}
-.document-quality-document[open]>summary:before{content:"-"}
-.document-quality-document>summary>span:first-of-type{flex:1}
-.document-quality-document>summary>span:first-child,.document-quality-row>a{min-width:0;overflow-wrap:anywhere}
-.document-quality-document>summary>.report-badge,.document-quality-row>.report-badge{flex:none}
-.document-quality-document-body{padding:12px}
-.document-quality-document-body h4{font-size:13px;margin:0 0 8px}
-.document-quality-document-body blockquote{margin:0 0 15px;padding:10px 14px;border-left:3px solid var(--accent);background:color-mix(in srgb,var(--panel) 94%,var(--accent));font-size:13px;white-space:pre-wrap;overflow-wrap:anywhere}
-.document-quality-current{padding:0}
-.document-quality-description-heading{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:10px}
-.document-quality-description-heading h3,.document-quality-explanation h3,.document-quality-suggestion h3{margin:0;font-size:15px}
-.document-quality-current mark{background:var(--remove-bg);color:var(--remove-text);padding:1px 3px;border-radius:3px}
-.document-quality-explanation p,.document-quality-suggestion p{margin:8px 0;font-size:13px}
-.document-quality-check .document-quality-source{margin-top:16px}
-.document-quality-source pre{white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.5 ui-monospace,Consolas,monospace}
-.report-badge.neutral{background:color-mix(in srgb,var(--panel) 85%,var(--muted));color:var(--muted)}
-.document-quality-neutral>summary{padding:12px 18px}
-.document-quality-neutral .report-card-title strong{font-size:13px}
-.document-quality-list:focus-visible,.document-quality-file>summary:focus-visible,.document-quality-document>summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .report-source{margin-bottom:16px}
 .report-source>summary,.report-subdetails>summary{cursor:pointer;color:var(--accent);font-size:13px;font-weight:700}
 .report-http{color:#075cab;font:800 12px ui-monospace,monospace}
@@ -106,7 +63,6 @@ body{overflow-wrap:anywhere}
 #appendix pre{white-space:pre-wrap;overflow-wrap:anywhere}
 #appendix table{display:block;overflow-x:auto}
 @media(max-width:760px){
-  .report-document-snapshots{grid-template-columns:1fr}
   .report-section-head{display:block}
   .report-section-meta{justify-content:flex-start;margin-top:8px}
   .report-card>summary{flex-wrap:wrap}
@@ -125,6 +81,6 @@ body{overflow-wrap:anywhere}
   .report-table th{background:#202d45;color:#cbd5e1}
   .report-table td:nth-child(2){background:#431f29}
   .report-table td:nth-child(3){background:#15382b}
-  .report-link.impact,.report-link[href^="#compliance-finding-"]{color:#fecaca;border-color:#7f1d1d;background:#431f29}
+  .report-link.impact{color:#fecaca;border-color:#7f1d1d;background:#431f29}
   .report-http{color:#93c5fd}
 }

@@ -272,7 +272,7 @@ export function assembleCompliance({
     !Array.isArray(evidence.intents)
   ) {
     throw new Error(
-      "Compliance search evidence is missing or has an unsupported schema.",
+      "Azure Guidelines search evidence is missing or has an unsupported schema.",
     );
   }
   if (!Array.isArray(decisions)) {
@@ -286,7 +286,7 @@ export function assembleCompliance({
   exactCoverage(
     requests.map((item) => item.reviewUnitId),
     evidence.intents.map((item) => item.reviewUnitId),
-    "Compliance intent",
+    "Azure Guidelines intent",
   );
 
   const sourceMap = new Map(sourceChanges.map((item) => [item.id, item]));
@@ -311,13 +311,13 @@ export function assembleCompliance({
         "retrievalAttempts",
         "blockers",
       ],
-      `Compliance intent ${intent.reviewUnitId}`,
+      `Azure Guidelines intent ${intent.reviewUnitId}`,
     );
     if (
       canonicalJson(intent.queryProfile) !== canonicalJson(request.queryProfile)
     ) {
       throw new Error(
-        `Compliance intent ${intent.reviewUnitId} changed its query profile.`,
+        `Azure Guidelines intent ${intent.reviewUnitId} changed its query profile.`,
       );
     }
     if (
@@ -327,7 +327,7 @@ export function assembleCompliance({
       !Array.isArray(intent.blockers)
     ) {
       throw new Error(
-        `Compliance intent ${intent.reviewUnitId} has invalid evidence arrays.`,
+        `Azure Guidelines intent ${intent.reviewUnitId} has invalid evidence arrays.`,
       );
     }
     const hasCatalogExhaustion = intent.blockers.some((item) =>
@@ -335,37 +335,37 @@ export function assembleCompliance({
     );
     if (intent.rankedDocuments.length !== 4 && !hasCatalogExhaustion) {
       throw new Error(
-        `Compliance intent ${intent.reviewUnitId} requires four documents or catalog exhaustion.`,
+        `Azure Guidelines intent ${intent.reviewUnitId} requires four documents or catalog exhaustion.`,
       );
     }
     const urls = intent.rankedDocuments.map((item) => item.canonicalUrl);
     const ranks = intent.rankedDocuments.map((item) => item.rank);
     if (duplicates(urls).length) {
       throw new Error(
-        `Compliance intent ${intent.reviewUnitId} selected duplicate documents.`,
+        `Azure Guidelines intent ${intent.reviewUnitId} selected duplicate documents.`,
       );
     }
     if (urls.some((url) => !catalogByUrl.has(url))) {
       throw new Error(
-        `Compliance intent ${intent.reviewUnitId} uses an uncataloged URL.`,
+        `Azure Guidelines intent ${intent.reviewUnitId} uses an uncataloged URL.`,
       );
     }
     if (duplicates(ranks).length) {
       throw new Error(
-        `Compliance intent ${intent.reviewUnitId} selected duplicate ranks.`,
+        `Azure Guidelines intent ${intent.reviewUnitId} selected duplicate ranks.`,
       );
     }
     exactCoverage(
       catalog.map((item) => item.canonicalUrl),
       intent.catalogRanking.map((item) => item.canonicalUrl),
-      `Compliance catalog ranking ${intent.reviewUnitId}`,
+      `Azure Guidelines catalog ranking ${intent.reviewUnitId}`,
     );
     intent.catalogRanking.forEach((entry, index) =>
       validateRankingEntry(
         entry,
         catalogByUrl,
         index + 1,
-        `Compliance ranking ${intent.reviewUnitId}[${index}]`,
+        `Azure Guidelines ranking ${intent.reviewUnitId}[${index}]`,
       ),
     );
     const orderedRanking = [...intent.catalogRanking].sort(
@@ -378,7 +378,7 @@ export function assembleCompliance({
       canonicalJson(intent.catalogRanking.map((item) => item.canonicalUrl))
     ) {
       throw new Error(
-        `Compliance intent ${intent.reviewUnitId} catalog is not score ordered.`,
+        `Azure Guidelines intent ${intent.reviewUnitId} catalog is not score ordered.`,
       );
     }
     for (const attempt of intent.retrievalAttempts) {
@@ -388,7 +388,7 @@ export function assembleCompliance({
         !attempt.error?.trim()
       ) {
         throw new Error(
-          `Compliance intent ${intent.reviewUnitId} has an invalid retrieval attempt.`,
+          `Azure Guidelines intent ${intent.reviewUnitId} has an invalid retrieval attempt.`,
         );
       }
       retrievalFailures.push({ reviewUnitId: intent.reviewUnitId, ...attempt });
@@ -404,7 +404,7 @@ export function assembleCompliance({
       canonicalJson(urls)
     ) {
       throw new Error(
-        `Compliance intent ${intent.reviewUnitId} did not select the first four retrievable documents.`,
+        `Azure Guidelines intent ${intent.reviewUnitId} did not select the first four retrievable documents.`,
       );
     }
     intent.rankedDocuments.forEach((document, index) => {
@@ -412,7 +412,7 @@ export function assembleCompliance({
         document,
         catalogByUrl,
         request.declarationIds,
-        `Compliance document ${intent.reviewUnitId}[${index}]`,
+        `Azure Guidelines document ${intent.reviewUnitId}[${index}]`,
       );
       const ranking = expectedDocuments[index];
       for (const field of [
@@ -425,7 +425,7 @@ export function assembleCompliance({
       ]) {
         if (canonicalJson(document[field]) !== canonicalJson(ranking[field])) {
           throw new Error(
-            `Compliance document ${intent.reviewUnitId}[${index}] differs from its ranking.`,
+            `Azure Guidelines document ${intent.reviewUnitId}[${index}] differs from its ranking.`,
           );
         }
       }
@@ -456,7 +456,7 @@ export function assembleCompliance({
   exactCoverage(
     requests.map((item) => item.reviewUnitId),
     decisions.map((item) => item.reviewUnitId),
-    "Compliance decision",
+    "Azure Guidelines decision",
   );
   const selectedDocumentCount = [...documentsByIntent.values()].reduce(
     (total, documents) => total + documents.length,
@@ -473,7 +473,7 @@ export function assembleCompliance({
     !Number.isInteger(accounting.guidanceExcerptBytesRetained) ||
     accounting.guidanceExcerptBytesRetained < 0
   ) {
-    throw new Error("Compliance search input accounting is inconsistent.");
+    throw new Error("Azure Guidelines search input accounting is inconsistent.");
   }
 
   const decisionsByIntent = new Map();
@@ -494,7 +494,7 @@ export function assembleCompliance({
         "actual",
         "rationale",
       ],
-      `Compliance decision ${decision.reviewUnitId}`,
+      `Azure Guidelines decision ${decision.reviewUnitId}`,
     );
     if (
       !DECISIONS.includes(decision.decision) ||
@@ -506,7 +506,7 @@ export function assembleCompliance({
       !decision.rationale?.trim()
     ) {
       throw new Error(
-        `Compliance decision ${decision.reviewUnitId} is incomplete.`,
+        `Azure Guidelines decision ${decision.reviewUnitId} is incomplete.`,
       );
     }
     if (
@@ -515,7 +515,7 @@ export function assembleCompliance({
         !["high", "medium", "low"].includes(decision.severity))
     ) {
       throw new Error(
-        `Compliance decision ${decision.reviewUnitId} lacks finding presentation.`,
+        `Azure Guidelines decision ${decision.reviewUnitId} lacks finding presentation.`,
       );
     }
     if (
@@ -524,7 +524,7 @@ export function assembleCompliance({
         blockersByIntent.get(decision.reviewUnitId).length)
     ) {
       throw new Error(
-        `Compliance decision ${decision.reviewUnitId} cannot use no-applicable-guidance with applicable guidance or blockers.`,
+        `Azure Guidelines decision ${decision.reviewUnitId} cannot use no-applicable-guidance with applicable guidance or blockers.`,
       );
     }
     const request = requestMap.get(decision.reviewUnitId);
@@ -537,7 +537,7 @@ export function assembleCompliance({
       !subset(decision.declarationIds, request.declarationIds)
     ) {
       throw new Error(
-        `Compliance decision ${decision.reviewUnitId} has incorrect source evidence.`,
+        `Azure Guidelines decision ${decision.reviewUnitId} has incorrect source evidence.`,
       );
     }
     if (
@@ -549,14 +549,14 @@ export function assembleCompliance({
         !decision.declarationIds.length)
     ) {
       throw new Error(
-        `Compliance decision ${decision.reviewUnitId} lacks applicable evidence.`,
+        `Azure Guidelines decision ${decision.reviewUnitId} lacks applicable evidence.`,
       );
     }
     for (const applicable of decision.applicableGuidance) {
       assertKeys(
         applicable,
         ["canonicalDocumentUrl", "guidanceSection"],
-        `Compliance guidance ${decision.reviewUnitId}`,
+        `Azure Guidelines guidance ${decision.reviewUnitId}`,
       );
       const document = documentsByIntent
         .get(decision.reviewUnitId)
@@ -570,7 +570,7 @@ export function assembleCompliance({
       );
       if (!guidance) {
         throw new Error(
-          `Compliance decision ${decision.reviewUnitId} uses unfetched guidance.`,
+          `Azure Guidelines decision ${decision.reviewUnitId} uses unfetched guidance.`,
         );
       }
     }
@@ -650,12 +650,12 @@ export function assembleCompliance({
     status,
     summary:
       status === "failed"
-        ? `${findings.length} documentation-grounded compliance finding(s).`
+        ? `${findings.length} documentation-grounded Azure Guidelines finding(s).`
         : status === "passed"
           ? decisions.some((item) => item.decision === "no-applicable-guidance")
             ? "All Semantic intents were assessed; no applicable guidance was found for one or more intents."
             : "All Semantic intents match applicable fetched guidance."
-          : "Compliance evidence or Semantic intent coverage is incomplete.",
+          : "Azure Guidelines evidence or Semantic intent coverage is incomplete.",
     coverage: {
       semanticIntentCount: requests.length,
       assessedIntentCount: assessedIntentIds.length,

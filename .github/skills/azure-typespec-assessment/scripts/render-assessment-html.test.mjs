@@ -6,7 +6,6 @@ import {
   downstreamTypeCards,
   escapeHtml,
   operationContractRows,
-  relatedImpactOperations,
   renderAssessmentHtml,
   restContractCards,
   representativeSource,
@@ -17,7 +16,7 @@ import { readComplianceCatalog } from "./compliance-assessment.mjs";
 function notAssessedCompliance() {
   return {
     status: "not-assessed",
-    summary: "Compliance evidence is unavailable.",
+    summary: "Azure Guidelines evidence is unavailable.",
     coverage: {
       semanticIntentCount: 0,
       assessedIntentCount: 0,
@@ -36,10 +35,9 @@ function notAssessedCompliance() {
   };
 }
 
-test("shows confirmed type impacts without operation reachability", () => {
+test("shows confirmed type impacts without method reachability", () => {
   const impact = {
     findingIds: ["downstream-1"],
-    affectedOperationCount: 0,
     affectedMethodCount: 0,
   };
   assert.deepEqual(visibleSharedTypeImpacts([impact]), [impact]);
@@ -47,25 +45,10 @@ test("shows confirmed type impacts without operation reachability", () => {
     visibleSharedTypeImpacts([
       {
         findingIds: [],
-        affectedOperationCount: 0,
         affectedMethodCount: 0,
       },
     ]),
     [],
-  );
-  assert.deepEqual(
-    relatedImpactOperations({ relatedSemanticIntents: ["semantic-1"] }, [
-      {
-        id: "semantic-1",
-        operations: [
-          {
-            operationId: "Widgets_Get",
-            apiVersion: "v1",
-          },
-        ],
-      },
-    ]).map(({ operationId }) => operationId),
-    ["Widgets_Get"],
   );
 });
 
@@ -92,13 +75,21 @@ test("renders one collapsed downstream card per SDK type", () => {
   ];
   const cards = downstreamTypeCards({
     findings,
-    sharedTypeImpacts: [
+    typeImpacts: [
       {
         id: "shared-1",
-        rootCauseId: "root-1",
+        rootCauseIds: ["root-1"],
         summary: "Shared change.",
-        findingIds: findings.map((finding) => finding.id),
-        types: ["Contoso.Widget", "Contoso.Gadget"],
+        findingIds: ["downstream-1", "downstream-2"],
+        type: "Contoso.Widget",
+        affectedMethods: [],
+      },
+      {
+        id: "shared-2",
+        rootCauseIds: ["root-2"],
+        summary: "Shared change.",
+        findingIds: ["downstream-3"],
+        type: "Contoso.Gadget",
         affectedMethods: [],
       },
     ],
@@ -110,10 +101,10 @@ test("renders one collapsed downstream card per SDK type", () => {
   );
   assert.equal(cards[1].findings.length, 2);
   assert.deepEqual(cards[1].relatedSemanticIntents, ["semantic-1"]);
-  assert.deepEqual(cards[0].legacyImpactIds, ["shared-1"]);
+  assert.deepEqual(cards[0].legacyImpactIds, ["shared-2"]);
 });
 
-test("renders SDK contract changes with collapsed affected operations", () => {
+test("renders SDK contract changes without REST operation association", () => {
   const source = {
     id: "source-enum",
     path: "specification/hardwaresecuritymodules/models.tsp",
@@ -169,7 +160,7 @@ test("renders SDK contract changes with collapsed affected operations", () => {
             operations,
             relatedFindings: {
               downstream: [],
-              sharedTypeImpact: ["shared-enum"],
+              typeImpact: ["shared-enum"],
             },
           },
         ],
@@ -212,18 +203,23 @@ test("renders SDK contract changes with collapsed affected operations", () => {
             relatedSemanticIntents: ["semantic-enum"],
           },
         ],
-        operationGroups: [],
-        sharedTypeImpacts: [
+        methodGroups: [],
+        typeImpacts: [
           {
             id: "shared-enum",
-            rootCauseId: "root-enum",
+            rootCauseIds: ["root-enum"],
             summary: "The public SDK enum member changed.",
             findingIds: ["downstream-enum"],
-            types: ["Microsoft.HardwareSecurityModules.CloudHsmClusterSkuName"],
-            typeCount: 1,
-            affectedMethods: [],
-            affectedMethodCount: 0,
-            affectedOperationCount: 0,
+            type: "Microsoft.HardwareSecurityModules.CloudHsmClusterSkuName",
+            locations: ["response-body"],
+            affectedMethods: [
+              {
+                symbol: "Microsoft.HardwareSecurityModules.CloudHsmClusters.get",
+                locations: ["response-body"],
+                referenceFactIds: ["method-1", "type-1"],
+              },
+            ],
+            affectedMethodCount: 1,
             relatedSemanticIntents: ["semantic-enum"],
           },
         ],
@@ -242,7 +238,7 @@ test("renders SDK contract changes with collapsed affected operations", () => {
 
   assert.match(
     html,
-    /<strong>CloudHsmClusterSkuName<\/strong><span class="contract-tag">SDK type<\/span><\/summary>/,
+    /<strong>CloudHsmClusters\.get<\/strong>/,
   );
   assert.match(html, /\.contract-tag\{background:#dbeafe;color:#1e40af\}/);
   assert.doesNotMatch(
@@ -253,7 +249,7 @@ test("renders SDK contract changes with collapsed affected operations", () => {
   assert.doesNotMatch(html, /Root-cause provenance/);
   assert.match(
     html,
-    /fixed enum changed to an extensible enum, with 1 generated member renamed/,
+    /Fixed enum[\s\S]*Extensible enum/,
   );
   assert.match(html, /Contract area<\/th><th>Before<\/th><th>After/);
   assert.match(
@@ -262,18 +258,23 @@ test("renders SDK contract changes with collapsed affected operations", () => {
   );
   assert.match(html, /CloudHsmClusterSkuName\.Standard B10/);
   assert.match(html, /StandardB10/);
-  assert.match(
-    html,
-    /<details class="affected-operations"><summary><strong>Affected REST operations \(3\)<\/strong><\/summary>/,
-  );
-  assert.doesNotMatch(html, /<details class="affected-operations" open>/);
-  assert.match(html, /CloudHsmClusters_CreateOrUpdate/);
-  assert.match(html, /class="http-method">PUT/);
   const downstream = html.match(
     /<section id="downstream-breaking">([\s\S]*?)<\/section>/,
   )[1];
+  assert.doesNotMatch(downstream, /Affected REST operations/);
+  assert.match(downstream, /1 mapped methods/);
+  assert.match(
+    downstream,
+    /Microsoft\.HardwareSecurityModules\.CloudHsmClusters\.get/,
+  );
+  assert.match(html, /Impacts \(1\)/);
+  assert.match(
+    html,
+    /class="report-link impact"[^>]*>Downstream: CloudHsmClusters\.get<\/a>/,
+  );
+  assert.doesNotMatch(downstream, /CloudHsmClusters_CreateOrUpdate/);
   assert.doesNotMatch(downstream, /Changed TypeSpec:/);
-  assert.match(downstream, /Related semantic intents:/);
+  assert.match(downstream, /Affected intents \(1\)/);
 });
 
 test("groups REST contract deltas by schema identity and retains affected operations", () => {
@@ -338,7 +339,7 @@ test("groups REST contract deltas by schema identity and retains affected operat
   assert.equal(cards[0].findings[0].contractDelta.after, "removed");
 });
 
-test("renderer shows fetched Compliance guidance and expands failures", () => {
+test("renderer shows fetched Azure Guidelines guidance and expands failures", () => {
   const catalog = readComplianceCatalog();
   const scores = [10, 9, 8, 7];
   const catalogRanking = catalog.map((item, index) => ({
@@ -529,7 +530,7 @@ test("renderer shows fetched Compliance guidance and expands failures", () => {
       },
       compliance: {
         status: "failed",
-        summary: "1 documentation-grounded compliance finding.",
+        summary: "1 documentation-grounded Azure Guidelines finding.",
         coverage: {
           semanticIntentCount: 1,
           assessedIntentCount: 1,
@@ -562,7 +563,7 @@ test("renderer shows fetched Compliance guidance and expands failures", () => {
   assert.match(html, /Azure Guidelines/);
   assert.match(
     html,
-    /<section id="azure-compliance"><h2>Azure Guidelines \(1\)<\/h2>/,
+    /<section id="azure-compliance"><div class="report-section-head"><div><h2>Azure Guidelines<\/h2>/,
   );
   assert.doesNotMatch(html, /class="panel compliance-summary/);
   assert.doesNotMatch(
@@ -604,21 +605,18 @@ test("renderer shows fetched Compliance guidance and expands failures", () => {
   );
   assert.match(
     html,
-    /<details class="intent" id="intent-semantic-1"><summary>/,
+    /<details class="report-card intent" id="intent-semantic-1"><summary>/,
   );
   assert.match(
     html,
-    /class="intent-finding-badge rest" href="#finding-rest-1">REST breaking changes<\/a>/,
+    /class="report-link impact" href="#(?:finding-rest-1|rest-operation-[^"]+)">REST:/,
   );
   assert.match(
     html,
-    /class="intent-finding-badge compliance" href="#compliance-finding-compliance-1">Azure Guidelines<\/a>/,
+    /class="report-link" href="#compliance-finding-compliance-1">Azure Guidelines<\/a>/,
   );
-  assert.match(
-    html,
-    /id="related-findings-semantic-1"><strong>Related findings:<\/strong> <a href="#finding-rest-1">rest-1<\/a>, <a href="#compliance-finding-compliance-1">compliance-1<\/a>/,
-  );
-  assert.doesNotMatch(html, /View compliance assessment/);
+  assert.doesNotMatch(html, /Related findings:/);
+  assert.doesNotMatch(html, /View Azure Guidelines assessment/);
   assert.match(
     html,
     /if \(element\.tagName === "DETAILS"\) element\.open = true/,
@@ -627,18 +625,18 @@ test("renderer shows fetched Compliance guidance and expands failures", () => {
   assert.match(html, /Child does not use the documented resource template/);
   assert.doesNotMatch(html, /class="severity/);
   assert.doesNotMatch(html, />medium<\/span>/);
-  assert.match(html, /<strong>Gap:<\/strong>/);
-  assert.match(html, /<strong>Expected<\/strong>/);
+  assert.match(html, /<small>The changed intent does not use the documented template/);
+  assert.match(html, /<h3>Expected<\/h3>/);
   assert.match(html, /Documented TypeSpec example/);
-  assert.match(html, /<strong>Actual<\/strong>/);
-  assert.match(html, /<h4>TypeSpec code<\/h4>/);
+  assert.match(html, /<h3>Actual<\/h3>/);
+  assert.match(html, /class="diff"/);
   const findingHtml = html.slice(
     html.indexOf('id="compliance-finding-compliance-1"'),
     html.indexOf('<section id="document-quality">'),
   );
   assert.doesNotMatch(findingHtml, /TypeSpec source:/);
-  assert.doesNotMatch(findingHtml, /v2026_01_01/);
-  assert.doesNotMatch(
+  assert.match(findingHtml, /v2026_01_01/);
+  assert.match(
     findingHtml,
     /The intent introduces a child resource using LegacyResource/,
   );
@@ -653,7 +651,7 @@ test("escapeHtml escapes Agent and source text", () => {
   );
 });
 
-test("renderer labels active Compliance and scoped safety", () => {
+test("renderer labels active Azure Guidelines and scoped safety", () => {
   const html = renderAssessmentHtml({
     schemaVersion: 1,
     pullRequest: {
@@ -772,7 +770,7 @@ test("renderer labels active Compliance and scoped safety", () => {
   );
   assert.match(
     html,
-    /<section id="document-quality"><h2>Document Quality and Agent Friendliness<\/h2><div class="panel not-assessed"><strong>Not assessed<\/strong>/,
+    /<section id="document-quality"><div class="report-section-head"><div><h2>Document Quality and Agent Friendliness<\/h2>[\s\S]*?not assessed/,
   );
   assert.match(
     html,
@@ -910,13 +908,10 @@ test("renderer shows expandable REST operations and aggregated downstream method
             semanticMatchBasis: "http-method-path",
           },
         ],
-        operationGroups: [
+        methodGroups: [
           {
             id: "downstream-group-1",
-            operationId: "Widgets_Get",
             symbol: "Contoso.Widgets.get",
-            method: "get",
-            path: "/widgets",
             parametersUnchanged: false,
             deltas: [
               {
@@ -972,7 +967,7 @@ test("renderer shows expandable REST operations and aggregated downstream method
     provenance: {},
   });
 
-  assert.match(html, /Affected REST operations \(1\)/);
+  assert.match(html, /Affected operations \(1\)/);
   assert.match(
     html,
     /HTTP signature and represented payload contract unchanged/,
@@ -980,18 +975,18 @@ test("renderer shows expandable REST operations and aggregated downstream method
   assert.match(html, /Contoso\.Widgets\.get/);
   assert.match(
     html,
-    /<strong>Widgets_Get<\/strong><span class="contract-tag">SDK method<\/span>/,
+    /<strong>Widgets\.get<\/strong>/,
   );
   assert.match(html, /\.contract-tag\{background:#dbeafe;color:#1e40af\}/);
-  assert.match(html, /2 SDK contract changes/);
+  assert.doesNotMatch(html, /2 SDK contract changes/);
   assert.match(html, /Contract area<\/th><th>Before<\/th><th>After/);
   assert.match(
     html,
-    /<span class="contract-area-kind">Method parameter<\/span><code>afcManagedSync<\/code>/,
+    /<span class="contract-area-kind">Method parameter<\/span><strong>afcManagedSync<\/strong>/,
   );
-  assert.match(html, /Parameters:<\/strong> 1 added, 3 unchanged/);
+  assert.match(html, /afcManagedSync\? \(location unknown\): boolean/);
   assert.match(html, /afcManagedSync/);
-  assert.match(html, /boolean\?/);
+  assert.match(html, /location unknown/);
   assert.match(html, /not present/);
   assert.match(html, /Method kind/);
   assert.match(html, /Why this is breaking/);
@@ -999,7 +994,7 @@ test("renderer shows expandable REST operations and aggregated downstream method
     /<section id="downstream-breaking">([\s\S]*?)<\/section>/,
   )[1];
   assert.doesNotMatch(downstream, /Changed TypeSpec:/);
-  assert.match(downstream, /Related semantic intents:/);
+  assert.match(downstream, /Affected intents \(1\)/);
   assert.match(
     html,
     /<a class="summary-card" href="#downstream-breaking"><div class="summary-value"><span class="fail">×<\/span> 1/,
@@ -1011,26 +1006,23 @@ test("renderer shows expandable REST operations and aggregated downstream method
   assert.doesNotMatch(html, /method-parameters-changed/);
   assert.doesNotMatch(html, /&quot;name&quot;:&quot;afcManagedSync&quot;/);
   assert.match(html, /get is Lro/);
-  assert.match(html, /Representative TypeSpec example/);
+  assert.match(html, /Changed TypeSpec source/);
   assert.doesNotMatch(html, /Complete TypeSpec source evidence/);
   assert.doesNotMatch(html, /complete-typespec-evidence/);
   assert.match(
     html,
-    /<details class="intent" id="intent-semantic-1"><summary>/,
+    /<details class="report-card intent" id="intent-semantic-1"><summary>/,
   );
   assert.match(
     html,
-    /class="intent-finding-badge downstream" href="#downstream-downstream-group-1">Downstream breaking changes<\/a>/,
+    /class="report-link impact"[^>]*>Downstream: Widgets\.get<\/a>/,
   );
-  assert.match(
-    html,
-    /id="related-findings-semantic-1"><strong>Related findings:<\/strong> <a href="#downstream-downstream-group-1">downstream-group-1<\/a>/,
-  );
-  assert.doesNotMatch(html, /<details class="intent"[^>]* open/);
-  assert.match(html, /<details class="representative-example"><summary>/);
+  assert.doesNotMatch(html, /Related findings:/);
+  assert.doesNotMatch(html, /<details class="report-card intent"[^>]* open/);
+  assert.match(html, /<details class="report-source" open><summary>/);
   assert.doesNotMatch(
     html,
-    /<details class="representative-example"[^>]* open/,
+    /<details class="report-subdetails"[^>]* open/,
   );
   const operationCards =
     html.match(/<details class="operation">.*?<\/details>/gs) ?? [];
@@ -1086,11 +1078,9 @@ test("renderer reports operations omitted from large semantic intents", () => {
     provenance: {},
   });
 
-  assert.match(
-    html,
-    /3 representative operation\(s\) are shown below and 13 are omitted from HTML/,
-  );
-  assert.doesNotMatch(html, /Widgets_Operation03/);
+  assert.equal((html.match(/<details class="operation">/g) ?? []).length, 10);
+  assert.match(html, /Other affected operations \(6\)/);
+  for (const operation of operations) assert.ok(html.includes(operation.operationId));
 });
 
 test("representative source prefers operation evidence and stable ordering", () => {
@@ -1166,7 +1156,7 @@ test("representative source uses hunk position before hunk ID", () => {
   assert.equal(selected.hunks[0].id, "hunk-z");
 });
 
-test("renderer shows one representative intent example without duplicating source evidence", () => {
+test("renderer shows complete changed intent source once and expanded", () => {
   const sources = [
     {
       id: "source-1",
@@ -1229,14 +1219,11 @@ test("renderer shows one representative intent example without duplicating sourc
   });
 
   assert.equal(
-    (html.match(/<details class="representative-example">/g) ?? []).length,
+    (html.match(/<details class="report-source" open>/g) ?? []).length,
     1,
   );
-  assert.match(
-    html,
-    /Deterministic coverage:<\/strong> 1 of 2 changed hunks classified\. AI inference used for 1 request\./,
-  );
-  assert.equal((html.match(/class="diff"/g) ?? []).length, 1);
+  assert.doesNotMatch(html, /Deterministic coverage:/);
+  assert.equal((html.match(/class="diff"/g) ?? []).length, 2);
   assert.doesNotMatch(html, /complete-typespec-evidence/);
 });
 
@@ -1261,23 +1248,26 @@ test("refreshed baseline preserves semantic and REST-derived downstream links", 
   );
   assert.ok(html.includes(`href="#intent-${complianceIntent.id}"`));
 
-  assert.match(html, /Semantic intents \(4\)/);
+  assert.match(html, /4 intents ·/);
   assert.match(
     html,
     /<strong>Pull request:<\/strong> <a href="https:\/\/github\.com\/Azure\/azure-rest-api-specs\/pull\/44742">#44742<\/a>/,
   );
-  assert.match(html, /Remove specialized NFS item models and file fields/);
+  for (const intent of assessment.dimensions.semantic.items) {
+    assert.ok(html.includes(`id="intent-${intent.id}"`));
+    assert.ok(html.includes(intent.title));
+  }
   const restHtml = html.slice(
     html.indexOf('<section id="rest-breaking">'),
     html.indexOf('<section id="downstream-breaking">'),
   );
-  assert.match(restHtml, /class="finding rest-contract-card"/);
-  assert.match(restHtml, /<span class="contract-tag">REST contract<\/span>/);
+  assert.match(restHtml, /class="report-card rest-contract-card"/);
+  assert.match(restHtml, /class="report-http"/);
   assert.match(restHtml, /Contract area<\/th><th>Before<\/th><th>After/);
   assert.match(restHtml, /class="breaking-rationale"/);
   assert.match(
     restHtml,
-    /<details class="affected-operations"><summary><strong>Affected REST operations \(\d+\)<\/strong><\/summary>/,
+    /id="rest-operation-[^"]+"/,
   );
   assert.doesNotMatch(restHtml, /<details class="affected-operations" open>/);
   assert.ok(
@@ -1290,10 +1280,14 @@ test("refreshed baseline preserves semantic and REST-derived downstream links", 
     html,
     /REST contract changes require generated-client updates/,
   );
-  assert.match(html, /Downstream breaking changes \(17\)/);
-  assert.match(html, /6 from REST breaking/);
-  assert.match(
-    html,
+  assert.match(html, /<h2>Downstream breaking changes<\/h2>/);
+  assert.doesNotMatch(html, /from REST breaking/);
+  const downstreamHtml = html.slice(
+    html.indexOf('<section id="downstream-breaking">'),
+    html.indexOf('<section id="azure-compliance">'),
+  );
+  assert.doesNotMatch(
+    downstreamHtml,
     /<span class="origin-tag rest-breaking-tag">REST breaking<\/span>/,
   );
   assert.doesNotMatch(html, /REST-compatible downstream changes/);
@@ -1331,23 +1325,23 @@ test("counts repeated Azure guideline findings as one visible issue", () => {
     html,
     /<span class="fail">×<\/span> 1<\/div><div class="summary-label">Azure Guidelines<\/div><div class="summary-detail">1 guideline issue<br>4\/4 intents assessed/,
   );
-  assert.match(complianceHtml, /<h2>Azure Guidelines \(1\)<\/h2>/);
+  assert.match(complianceHtml, /<h2>Azure Guidelines<\/h2>/);
   assert.equal(
-    (complianceHtml.match(/class="finding compliance-finding /g) ?? []).length,
+    (complianceHtml.match(/class="report-card compliance-finding /g) ?? []).length,
     1,
   );
   assert.match(
     complianceHtml,
-    /class="finding-summary">4 affected intents<\/span>/,
+    /class="report-relation-label">Affected intents \(4\)<\/span>/,
   );
   assert.equal(
-    (complianceHtml.match(/class="compliance-affected-intent"/g) ?? []).length,
+    (complianceHtml.match(/id="compliance-finding-/g) ?? []).length,
     4,
   );
   assert.equal(
     (
       complianceHtml.match(
-        /<summary><strong>Expected<\/strong><\/summary>/g,
+        /<h3>Expected<\/h3>/g,
       ) ?? []
     ).length,
     1,
@@ -1376,7 +1370,7 @@ test("counts repeated Azure guideline findings as one visible issue", () => {
   }
 });
 
-test("uses the same contract-area rows in semantic operations and REST findings", () => {
+test("keeps REST location labels out of SDK type rows without TCGC paths", () => {
   const assessment = JSON.parse(
     readFileSync(
       new URL("../evals/assessments/44742/assessment.json", import.meta.url),
@@ -1413,23 +1407,23 @@ test("uses the same contract-area rows in semantic operations and REST findings"
   );
   assert.match(
     semanticHtml,
-    /<table class="contract-change-table"><thead><tr><th>Contract area<\/th><th>Before<\/th><th>After<\/th>/,
+    /<table class="report-table"><thead><tr><th>Contract area<\/th><th>Before<\/th><th>After<\/th>/,
   );
   assert.match(
     semanticHtml,
-    /<td class="contract-member"><span class="contract-area-kind">Response body property<\/span><code>200 · segment\.fileItems\[\]\.fileType<\/code><\/td>/,
+    /Response body property<\/span><strong>200 · segment\.fileItems\[\]\.fileType/,
   );
   assert.match(
     semanticHtml,
-    /<td class="contract-before"><code class="contract-value before">/,
+    /<td><pre>/,
   );
   assert.match(
     semanticHtml,
-    /<td class="contract-after"><code class="contract-value after">/,
+    /<\/pre><\/td><td><pre>/,
   );
   assert.match(
     html,
-    /<span class="contract-area-kind">Response body property<\/span><code>socketItems<\/code><\/td><td class="contract-before"><code class="contract-value before">SocketItem\[\]\?<\/code>/,
+    /<span class="contract-area-kind">SDK type member<\/span><strong>socketItems<\/strong><\/td><td><pre>SocketItem\[\]\?<\/pre>/,
   );
   assert.doesNotMatch(
     html,
@@ -1437,7 +1431,7 @@ test("uses the same contract-area rows in semantic operations and REST findings"
   );
 });
 
-test("labels SDK method parameters with their REST wire origin", () => {
+test("labels SDK method parameters with normalized TCGC locations", () => {
   const assessment = JSON.parse(
     readFileSync(
       new URL("../evals/assessments/44988/assessment.json", import.meta.url),
@@ -1448,11 +1442,11 @@ test("labels SDK method parameters with their REST wire origin", () => {
 
   assert.match(
     html,
-    /<span class="contract-area-kind">Method parameter · query<\/span><code>afcManagedSync<\/code>/,
+    /afcManagedSync\? \(query\): boolean/,
   );
   assert.match(
     html,
-    /<span class="contract-area-kind">Query parameter<\/span><code>afcManagedSync<\/code>/,
+    /<span class="contract-area-kind">Query parameter<\/span><strong>afcManagedSync<\/strong>/,
   );
 });
 
@@ -1467,7 +1461,7 @@ test("labels response header contract rows consistently", () => {
 
   assert.match(
     html,
-    /<span class="contract-area-kind">Response header<\/span><code>202 · Location<\/code>/,
+    /<span class="contract-area-kind">Response header<\/span><strong>202 · Location<\/strong>/,
   );
 });
 
@@ -1625,7 +1619,7 @@ test("renders version-reference-only operation changes as unchanged", () => {
   const unchanged =
     "HTTP signature and represented payload contract unchanged.";
 
-  assert.equal((card.match(new RegExp(unchanged, "g")) ?? []).length, 2);
+  assert.equal((card.match(new RegExp(unchanged, "g")) ?? []).length, 1);
   assert.doesNotMatch(card, /contract-change-table/);
   assert.doesNotMatch(card, /REST contract changed: responses/);
 });
@@ -1688,7 +1682,7 @@ test("renderer links assessed intents with no applicable guidance by title", () 
   );
   assert.ok(
     complianceHtml.includes(
-      `Azure Guidelines were assessed. They passed for the other intents, and no applicable guideline was found for intent <a href="#intent-${intent.id}">${intent.title}</a>.`,
+      `No applicable guideline was found for: <a class="report-link" href="#intent-${intent.id}">${intent.title}</a>.`,
     ),
   );
   assert.doesNotMatch(complianceHtml, /Unassessed intents/);
@@ -1710,21 +1704,21 @@ test("renderer links assessed intents with no applicable guidance by title", () 
   );
   assert.match(
     multipleComplianceHtml,
-    /no applicable guideline was found for intents /,
+    /No applicable guideline was found for: /,
   );
   assert.ok(
     multipleComplianceHtml.includes(
-      `<a href="#intent-${intent.id}">${intent.title}</a>`,
+      `<a class="report-link" href="#intent-${intent.id}">${intent.title}</a>`,
     ),
   );
   assert.ok(
     multipleComplianceHtml.includes(
-      `<a href="#intent-${anotherIntent.id}">${anotherIntent.title}</a>`,
+      `<a class="report-link" href="#intent-${anotherIntent.id}">${anotherIntent.title}</a>`,
     ),
   );
 });
 
-test("downstream section lists and links REST breaking changes without duplicating details", () => {
+test("downstream section excludes REST breaking changes", () => {
   const assessment = JSON.parse(
     readFileSync(
       new URL("../evals/assessments/44742/assessment.json", import.meta.url),
@@ -1734,25 +1728,25 @@ test("downstream section lists and links REST breaking changes without duplicati
   const html = renderAssessmentHtml(assessment);
   assert.match(
     html,
-    /<div class="rest-operation-line"><strong><code>Directory_ListFilesAndDirectoriesSegment<\/code><\/strong><span>2026-12-06<\/span><code>GET \?restype=directory&amp;comp=list<\/code><\/div>/,
+    /<strong>Directory_ListFilesAndDirectoriesSegment<\/strong><small><span class="report-http">GET<\/span> <code>\?restype=directory&amp;comp=list<\/code> · 2026-12-06/,
   );
-  assert.match(html, /1 contract change — 1 affected REST operation/);
+  assert.match(html, /operations · \d+ findings/);
   assert.doesNotMatch(html, /contract\(s\)|Compared REST operation:/);
   const downstream = html.slice(
     html.indexOf('<section id="downstream-breaking">'),
     html.indexOf('<section id="azure-compliance">'),
   );
 
-  assert.match(downstream, /<h2>Downstream breaking changes \(17\)<\/h2>/);
+  assert.match(downstream, /<h2>Downstream breaking changes<\/h2>/);
   assert.equal(
     (
       downstream.match(
         /class="origin-tag rest-breaking-tag">REST breaking<\/span>/g,
       ) ?? []
     ).length,
-    6,
+    0,
   );
-  assert.equal((downstream.match(/href="#rest-contract-/g) ?? []).length, 6);
+  assert.equal((downstream.match(/href="#rest-contract-/g) ?? []).length, 0);
   assert.doesNotMatch(downstream, /Approved REST finding/);
   assert.doesNotMatch(downstream, /REST-compatible downstream changes/);
 });
@@ -1822,7 +1816,7 @@ test("renderer derives overall code quality from assessed dimensions", () => {
   );
   const compliance = mediumAssessment.dimensions.compliance;
   compliance.status = "not-assessed";
-  compliance.summary = "Compliance evidence is incomplete.";
+  compliance.summary = "Azure Guidelines evidence is incomplete.";
   compliance.coverage.assessedIntentCount = 0;
   compliance.coverage.unassessedIntentIds = compliance.intentAssessments.map(
     (item) => item.semanticIntentId,

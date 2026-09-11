@@ -133,7 +133,7 @@ function validateJudgment(answer) {
         "actual",
         "rationale",
       ],
-      `Compliance decision ${decision.reviewUnitId ?? "<unknown>"}`,
+      `Azure Guidelines decision ${decision.reviewUnitId ?? "<unknown>"}`,
     );
   }
 }
@@ -632,15 +632,6 @@ function findingRelations(restFindings, downstreamFindings, semanticItems) {
       : undefined;
   }
   for (const finding of downstreamFindings) {
-    const match =
-      methodFacts(finding).before || methodFacts(finding).after
-        ? matchMethodOperation(finding, semanticOperations)
-        : undefined;
-    if (match) {
-      finding.relatedSemanticIntents = [match.intent.id];
-      finding.semanticMatchBasis = "http-method-path";
-      continue;
-    }
     const declarationMatches = matchTypeFindingIntents(finding, semanticItems);
     if (declarationMatches.length) {
       finding.relatedSemanticIntents = declarationMatches.map(
@@ -662,18 +653,9 @@ function findingRelations(restFindings, downstreamFindings, semanticItems) {
 
 function downstreamGroups(
   downstreamFindings,
-  restFindings,
-  semanticItems,
   rootCauses = [],
+  facts = {},
 ) {
-  const semanticOperations = semanticOperationIndex(semanticItems);
-  const restBreakingOperations = new Set(
-    restFindings.flatMap((finding) =>
-      (finding.operationIds ?? []).map(
-        (operationId) => `${finding.projectId ?? ""}:${operationId}`,
-      ),
-    ),
-  );
   const byMethod = new Map();
   const typeFindings = [];
   for (const finding of downstreamFindings) {
@@ -698,22 +680,12 @@ function downstreamGroups(
     group.findings.push(finding);
     byMethod.set(key, group);
   }
-  const impliedByRest = [];
-  const operationGroups = [...byMethod.values()]
+  const methodGroups = [...byMethod.values()]
     .map((group) => {
       const representative = group.findings[0];
-      const match = matchMethodOperation(representative, semanticOperations);
-      const operationId = match?.operation.operationId;
-      const value = {
+      return {
         ...group,
-        operationId,
-        method:
-          match?.operation.method ??
-          (group.after ?? group.before)?.operation?.verb,
-        path:
-          match?.operation.path ??
-          (group.after ?? group.before)?.operation?.path,
-        apiVersion: match?.operation.apiVersion,
+        apiVersion: (group.after ?? group.before)?.apiVersion,
         parametersUnchanged:
           canonicalJson(publicParameterContract(group.before?.parameters)) ===
           canonicalJson(publicParameterContract(group.after?.parameters)),
@@ -746,120 +718,101 @@ function downstreamGroups(
         ].sort(),
         relatedSemanticIntents: representative.relatedSemanticIntents ?? [],
       };
-      if (
-        operationId &&
-        restBreakingOperations.has(`${group.projectId ?? ""}:${operationId}`)
-      ) {
-        impliedByRest.push(value);
-      }
-      return value;
     })
-    .filter((group) => !impliedByRest.includes(group));
-  operationGroups.sort((left, right) =>
-    `${left.operationId ?? ""}:${left.symbol}`.localeCompare(
-      `${right.operationId ?? ""}:${right.symbol}`,
-    ),
-  );
-  const typeRootGroups = new Map();
+    .sort((left, right) => left.symbol.localeCompare(right.symbol));
+  const rootCauseById = new Map(rootCauses.map((item) => [item.id, item]));
+  const typeGroups = new Map();
   for (const finding of typeFindings) {
-    const { before, after } = {
-      before: finding.evidence.find(
-        (fact) =>
-          (fact.comparisonRole ??
-            (fact.revision === "base" ? "baseline" : undefined)) === "baseline",
-      ),
-      after: finding.evidence.find(
-        (fact) =>
-          (fact.comparisonRole ??
-            (fact.revision === "current" ? "target" : undefined)) === "target",
-      ),
+    const type = finding.crossLanguageDefinitionId ?? finding.symbol;
+    const projectId = finding.evidence.find((fact) => fact.projectId)?.projectId;
+    const key = `${projectId ?? ""}:${type}`;
+    const group = typeGroups.get(key) ?? {
+      projectId,
+      type,
+      findings: [],
+      rootCauseIds: new Set(),
     };
-    const changed = changedFields(before, after, [
-      "access",
-      "usage",
-      "reachable",
-    ]);
-    const ids = finding.rootCauseIds?.length
-      ? finding.rootCauseIds
-      : [`unresolved:${finding.rule}:${changed.join(",") || "contract"}`];
-    for (const rootCauseId of ids) {
-      const rootCause = rootCauses.find((item) => item.id === rootCauseId);
-      const group = typeRootGroups.get(rootCauseId) ?? {
-        rootCauseId,
-        rootCause: rootCause?.kind ?? rootCauseId,
-        findings: [],
-      };
-      group.findings.push(finding);
-      typeRootGroups.set(rootCauseId, group);
-    }
+    group.findings.push(finding);
+    for (const id of finding.rootCauseIds ?? []) group.rootCauseIds.add(id);
+    typeGroups.set(key, group);
   }
-  const sharedTypeImpacts = [...typeRootGroups.values()]
+  const typeImpacts = [...typeGroups.values()]
     .map((group) => {
       const findingIds = group.findings.map((finding) => finding.id).sort();
-      const projectIds = new Set(
-        group.findings.flatMap((finding) =>
-          finding.evidence.map((fact) => fact.projectId).filter(Boolean),
-        ),
-      );
-      const affectedMethods = operationGroups
-        .filter(
-          (item) =>
-            item.rootCauseIds?.includes(group.rootCauseId) ||
-            (!group.rootCauseId.startsWith("downstream-root-cause-") &&
-              (!projectIds.size || projectIds.has(item.projectId))),
-        )
-        .map((item) => ({
-          operationId: item.operationId,
-          symbol: item.symbol,
-          method: item.method,
-          path: item.path,
-        }));
-      const types = [
-        ...new Set(
-          group.findings.map(
-            (finding) => finding.crossLanguageDefinitionId ?? finding.symbol,
+      const roots = [...group.rootCauseIds]
+        .map((id) => rootCauseById.get(id))
+        .filter(Boolean);
+      const affectedMethods = new Map();
+      for (const root of roots) {
+        const locations = [
+          ...new Set(
+            (root.referenceEvidence ?? [])
+              .map((edge) => edge.location)
+              .filter(Boolean),
           ),
-        ),
+        ].sort();
+        const referenceFactIds = [
+          ...new Set(
+            (root.referenceEvidence ?? []).flatMap((edge) => [
+              edge.fromFactId,
+              edge.toFactId,
+            ]),
+          ),
+        ].sort();
+        for (const methodFactId of root.methodFactIds ?? []) {
+          const method = facts[methodFactId];
+          if (!method || method.factKind !== "method") continue;
+          const symbol =
+            method.crossLanguageDefinitionId ?? method.identity ?? method.name;
+          const current = affectedMethods.get(symbol) ?? {
+            symbol,
+            locations: new Set(),
+            referenceFactIds: new Set(),
+          };
+          locations.forEach((location) => current.locations.add(location));
+          referenceFactIds.forEach((id) => current.referenceFactIds.add(id));
+          affectedMethods.set(symbol, current);
+        }
+      }
+      const methods = [...affectedMethods.values()]
+        .map((method) => ({
+          symbol: method.symbol,
+          locations: [...method.locations].sort(),
+          referenceFactIds: [...method.referenceFactIds].sort(),
+        }))
+        .sort((left, right) => left.symbol.localeCompare(right.symbol));
+      const locations = [
+        ...new Set(methods.flatMap((method) => method.locations)),
       ].sort();
       const relatedSemanticIntents = [
-        ...new Set([
-          ...group.findings.flatMap(
+        ...new Set(
+          group.findings.flatMap(
             (finding) => finding.relatedSemanticIntents ?? [],
           ),
-          ...affectedMethods.flatMap(
-            (method) =>
-              operationGroups.find((item) => item.symbol === method.symbol)
-                ?.relatedSemanticIntents ?? [],
-          ),
-        ]),
+        ),
       ].sort();
       return {
-        id: stableId("shared-type-impact", {
-          rootCauseId: group.rootCauseId,
+        id: stableId("sdk-type-impact", {
+          projectId: group.projectId,
+          type: group.type,
           findingIds,
         }),
-        rootCauseId: group.rootCauseId,
-        rootCause: group.rootCause,
-        summary:
-          group.rootCause === "method-return-propagation"
-            ? "These public types gained additional SDK usage because affected methods now return them."
-            : "These SDK types share the same generated public-surface change.",
+        projectId: group.projectId,
+        type: group.type,
+        locations,
+        rootCauseIds: [...group.rootCauseIds].sort(),
+        summary: "This generated SDK type has a confirmed public contract change.",
         findingIds,
-        typeCount: types.length,
-        types,
-        sampleTypes: types.slice(0, 3),
-        affectedOperationCount: new Set(
-          affectedMethods.map((item) => item.operationId).filter(Boolean),
-        ).size,
-        affectedMethodCount: new Set(affectedMethods.map((item) => item.symbol))
-          .size,
-        affectedMethods,
-        sampleMethods: affectedMethods.slice(0, 3),
+        affectedMethodCount: methods.length,
+        affectedMethods: methods,
         relatedSemanticIntents,
+        unresolvedRelationshipReason: methods.length
+          ? null
+          : "No public SDK method reference path was deterministically established.",
       };
     })
     .sort((left, right) => left.id.localeCompare(right.id));
-  return { operationGroups, sharedTypeImpacts, impliedByRest };
+  return { methodGroups, typeImpacts };
 }
 
 function addReciprocalRelations(semanticItems, restFindings, downstream) {
@@ -871,11 +824,11 @@ function addReciprocalRelations(semanticItems, restFindings, downstream) {
         )
         .map((finding) => finding.id)
         .sort(),
-      downstream: downstream.operationGroups
+      downstream: downstream.methodGroups
         .filter((group) => group.relatedSemanticIntents.includes(intent.id))
         .map((group) => group.id)
         .sort(),
-      sharedTypeImpact: downstream.sharedTypeImpacts
+      typeImpact: downstream.typeImpacts
         .filter((group) => group.relatedSemanticIntents.includes(intent.id))
         .map((group) => group.id)
         .sort(),
@@ -984,7 +937,7 @@ export function assembleAssessment({ work, judgment }) {
     exactCoverage(
       modelInput.complianceSearchRequests.map((item) => item.requestId),
       complianceRequests.map((item) => item.requestId),
-      "Compliance search request",
+      "Azure Guidelines search request",
     );
   }
   if (hasComplianceInput && !fs.existsSync(complianceEvidencePath)) {
@@ -1118,9 +1071,8 @@ export function assembleAssessment({ work, judgment }) {
   findingRelations(restFindings, downstreamFindings, semanticItems);
   const downstreamAggregation = downstreamGroups(
     downstreamFindings,
-    restFindings,
-    semanticItems,
     downstream.rootCauses,
+    { ...modelInput.facts, ...downstream.facts },
   );
   addReciprocalRelations(semanticItems, restFindings, downstreamAggregation);
   const restDimension = {
@@ -1151,10 +1103,9 @@ export function assembleAssessment({ work, judgment }) {
       downstreamFindings,
     ),
     findings: downstreamFindings,
-    operationGroups: downstreamAggregation.operationGroups,
-    sharedTypeImpacts: downstreamAggregation.sharedTypeImpacts,
+    methodGroups: downstreamAggregation.methodGroups,
+    typeImpacts: downstreamAggregation.typeImpacts,
     rootCauses: downstream.rootCauses ?? [],
-    impliedByRest: downstreamAggregation.impliedByRest,
     rejectedCandidateCount: answer.downstreamDecisions.filter(
       (item) => item.decision === "reject",
     ).length,
@@ -1176,13 +1127,13 @@ export function assembleAssessment({ work, judgment }) {
             ? semantic.blockers.length
               ? semantic.blockers
               : [
-                  "semantic-analysis-blocked: Compliance requires Semantic intents.",
+                  "semantic-analysis-blocked: Azure Guidelines requires Semantic intents.",
                 ]
             : [],
       })
     : {
         status: "not-assessed",
-        summary: "Compliance search input was not available.",
+        summary: "Azure Guidelines search input was not available.",
         coverage: {
           semanticIntentCount: 0,
           assessedIntentCount: 0,

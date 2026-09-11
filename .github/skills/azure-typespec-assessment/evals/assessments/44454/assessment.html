@@ -8,13 +8,102 @@
 .rest-contract-card .contract-tag{background:#fee2e2;color:#991b1b}.rest-contract-card .rest-operation-list{margin-top:10px}
 .notice{padding:0}.notice>summary{display:flex;min-height:46px;align-items:center;gap:10px;padding:8px 0;cursor:pointer;list-style:none}.notice>summary::-webkit-details-marker{display:none}.notice>summary::before{content:"▸";flex:none;color:#b45309;font-size:15px;font-weight:900;transition:transform .15s ease}.notice[open]>summary::before{transform:rotate(90deg)}.notice-title{flex:none;font-size:14px;font-weight:800}.notice-summary{overflow:hidden;color:color-mix(in srgb,currentColor 78%,var(--muted));font-size:12.5px;text-overflow:ellipsis;white-space:nowrap}.notice-body{display:grid;grid-template-columns:1fr 1fr;gap:24px;padding:0 0 12px 25px;font-size:12.5px;line-height:1.4}.notice-body p{margin:0}@media(max-width:700px){.notice-summary{display:none}.notice-body{grid-template-columns:1fr;gap:6px}}@media(prefers-color-scheme:dark){.notice>summary::before{color:#fbbf24}}
 .compliance-finding-group>summary{flex-wrap:wrap}.compliance-affected-intents{display:grid;gap:12px}.compliance-affected-intent{margin:0;padding:14px 16px;border:1px solid var(--line);border-radius:10px}.compliance-affected-intent h4{margin:0 0 8px}.compliance-affected-intent h5{margin:14px 0 6px}
+.intent-finding-badge{font:inherit;font-size:13px;cursor:pointer}.intent-impact-trigger{position:relative}.intent-impact-popover{position:absolute;z-index:20;top:calc(100% + 8px);right:0;display:none;width:min(480px,88vw);overflow:hidden;border:1px solid var(--line);border-radius:10px;background:var(--panel);box-shadow:0 14px 34px rgb(31 42 68 / 18%)}.intent-impact-trigger.open .intent-impact-popover{display:grid}.intent-impact-popover a{display:grid;grid-template-columns:minmax(240px,1fr) auto;gap:12px;align-items:center;padding:12px 14px;border-top:1px solid var(--line);color:var(--text)!important;text-decoration:none}.intent-impact-popover a:first-child{border-top:0}.intent-impact-popover a:hover,.intent-impact-popover a:focus-visible{background:color-mix(in srgb,var(--panel) 92%,var(--accent))}.intent-impact-popover a span{color:var(--muted);font-size:13px}.intent h3,.representative-example>summary{font-size:17px;font-weight:750;line-height:1.35}.impact-highlight{outline:3px solid #ef4444;outline-offset:3px}
+.affected-methods{margin:20px 0}.affected-methods>summary{font-size:18px}.affected-method-list{display:grid;gap:7px;margin-top:10px}.affected-method{display:grid;grid-template-columns:minmax(180px,.6fr) minmax(280px,1.4fr);align-items:center;gap:12px;padding:9px 12px;border:1px solid var(--line);border-radius:8px}@media(max-width:700px){.affected-method{grid-template-columns:1fr}}
+.report-section-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin:0 0 14px}
+.report-section-head>div:first-child{min-width:0;flex:1}
+.report-section-head h2{margin:0}
+.report-section-head p{margin:4px 0 0;color:var(--muted)}
+.report-section-meta{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:8px}
+.report-count{flex:none;padding:4px 10px;border-radius:999px;background:#eaf0f9;color:#334155;font-size:12px;font-weight:800}
+.report-empty{padding:18px;border:1px dashed var(--line);border-radius:10px;background:var(--panel);color:var(--muted)}
+.report-card{margin:10px 0;padding:0;border:1px solid var(--line);border-radius:11px;background:var(--panel);overflow:hidden}
+.report-card>summary{display:flex;align-items:flex-start;gap:12px;padding:16px 18px;cursor:pointer;list-style:none}
+.report-card>summary::-webkit-details-marker{display:none}
+.report-card>summary:before{content:"+";width:16px;flex:none;color:var(--accent);font-size:19px;line-height:1.2}
+.report-card[open]>summary:before{content:"−"}
+.report-card-title{min-width:0;flex:1}
+.report-card-title strong{display:block;font-size:16px;overflow-wrap:anywhere}
+.report-card-title small{display:block;margin-top:4px;color:var(--muted);font-size:13px;font-weight:500}
+.report-card-body{padding:16px 20px 20px;border-top:1px solid var(--line)}
+.report-badges{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.report-badge{display:inline-block;border-radius:999px;padding:3px 9px;font-size:11px;font-weight:800}
+.report-badge.add{background:#dcfce7;color:#166534}
+.report-badge.modify,.report-badge.direct{background:#dbeafe;color:#1e40af}
+.report-badge.remove{background:#fee2e2;color:#991b1b}
+.report-badge.indirect{background:#ede9fe;color:#6b21a8}
+.report-badge.mixed{background:#d1fae5;color:#065f46}
+.report-badge.unknown{background:#fef3c7;color:#92400e}
+.report-table-wrap{max-width:100%;overflow-x:auto;border:1px solid var(--line);border-radius:8px}
+.report-table{width:100%;border-collapse:collapse;font-size:13px}
+.report-table th{background:#f2f5fa;color:#53637a;font-size:11px;letter-spacing:.04em}
+.report-table th,.report-table td{padding:11px 12px;vertical-align:top;border-bottom:1px solid var(--line)}
+.report-table tr:last-child td{border-bottom:0}
+.report-table td:first-child{width:29%;min-width:145px}
+.report-table td:nth-child(2),.report-table td:nth-child(3){width:35.5%;min-width:170px}
+.report-table td:nth-child(2){background:#fff5f4}
+.report-table td:nth-child(3){background:#f0faf5}
+.report-table pre{margin:0;white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.5 ui-monospace,Consolas,monospace}
+.report-detail,.report-small{display:block;margin-top:5px;color:var(--muted);font-size:12px}
+.report-link-row{display:flex;gap:7px;flex-wrap:wrap;margin:5px 0 0}
+.report-link{display:inline-block;max-width:100%;overflow-wrap:anywhere;border:1px solid var(--line);border-radius:999px;padding:3px 9px;color:var(--accent);font-size:12px;font-weight:750;text-decoration:none}
+.report-link:hover,.report-link:focus-visible{text-decoration:underline;outline-offset:2px}
+.report-intent-relations{margin-top:12px;cursor:default}
+.report-relation-label{display:block;color:var(--muted);font-size:11px;font-weight:700;cursor:text}
+.report-link.impact{color:#b91c1c;border-color:#fecaca;background:#fff1f2}
+.report-reference-paths{display:grid;gap:6px;margin:9px 0}
+.report-reference-path{display:grid;grid-template-columns:minmax(100px,.35fr) minmax(180px,1fr) max-content;gap:10px;align-items:baseline;padding:7px 10px;border-radius:6px;background:color-mix(in srgb,var(--panel) 92%,var(--accent));font-size:12px}
+.report-reference-path>span{color:var(--muted)}
+.report-type-impact{padding:13px 0;border-top:1px solid var(--line)}
+.report-type-impact:first-child{border-top:0}
+.report-type-impact h4{margin:0 0 5px}
+.report-guideline-section{min-width:0;overflow-wrap:anywhere}
+.report-guideline-section h3{margin:0 0 10px;font-size:16px}
+.report-guideline-section+.report-guideline-section{margin-top:20px;padding-top:20px;border-top:1px solid var(--line)}
+.report-source{margin-bottom:16px}
+.report-source>summary,.report-subdetails>summary{cursor:pointer;color:var(--accent);font-size:13px;font-weight:700}
+.report-http{color:#075cab;font:800 12px ui-monospace,monospace}
+.report-card .operation summary{display:grid;grid-template-columns:minmax(0,1fr) max-content;align-items:baseline}
+.report-card .operation summary>strong{min-width:0;overflow-wrap:anywhere}
+.report-card .operation summary>code{grid-column:1/-1}
+.report-card .operation summary>span{margin-left:0;justify-self:start}
+.report-operation-remainder{font-size:12px;color:var(--muted);overflow-wrap:anywhere;line-height:1.7}
+.container,.report-card-body,.report-card,.report-guideline-section,.report-source,.operation{min-width:0}
+body{overflow-wrap:anywhere}
+.diff,.report-table-wrap,#appendix .panel{max-width:100%;overflow-x:auto}
+.diff-path{overflow-wrap:anywhere}
+#appendix pre{white-space:pre-wrap;overflow-wrap:anywhere}
+#appendix table{display:block;overflow-x:auto}
+@media(max-width:760px){
+  .report-section-head{display:block}
+  .report-section-meta{justify-content:flex-start;margin-top:8px}
+  .report-card>summary{flex-wrap:wrap}
+  .report-card>summary>.report-badges{margin-left:28px}
+  .report-reference-path{grid-template-columns:1fr}
+  .report-count{max-width:100%}
+}
+@media(prefers-color-scheme:dark){
+  .report-count{background:#26344d;color:#cbd5e1}
+  .report-badge.indirect{background:#3b2852;color:#e9d5ff}
+  .report-badge.mixed{background:#143d34;color:#a7f3d0}
+  .report-badge.add{background:#123d2a;color:#bbf7d0}
+  .report-badge.modify,.report-badge.direct{background:#202d45;color:#dbeafe}
+  .report-badge.remove{background:#431f29;color:#fecaca}
+  .report-badge.unknown{background:#422006;color:#fde68a}
+  .report-table th{background:#202d45;color:#cbd5e1}
+  .report-table td:nth-child(2){background:#431f29}
+  .report-table td:nth-child(3){background:#15382b}
+  .report-link.impact{color:#fecaca;border-color:#7f1d1d;background:#431f29}
+  .report-http{color:#93c5fd}
+}
+
 </style></head><body>
 <header class="hero"><div class="container"><div class="eyebrow">TypeSpec Assessment</div><h1>2 TypeSpec changes for Elastic.Management</h1>
 <p class="hero-meta">TypeSpec source diff: <code>e8420e45fdaf12e2c72417d379c454f1fc8ce1e6</code> → <code>b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2</code></p>
 <div class="summary-grid">
 <a class="summary-card" href="#rest-breaking"><div class="summary-value"><span class="pass">✓</span> Passed</div><div class="summary-label">Overall code quality</div><div class="summary-detail">REST, downstream, and Azure Guidelines</div></a>
 <a class="summary-card" href="#rest-breaking"><div class="summary-value"><span class="pass">✓</span> 0</div><div class="summary-label">REST breaking changes</div></a>
-<a class="summary-card" href="#downstream-breaking"><div class="summary-value"><span class="pass">✓</span> 0</div><div class="summary-label">Downstream breaking changes</div><div class="summary-detail">0 direct · 0 from REST breaking</div></a>
+<a class="summary-card" href="#downstream-breaking"><div class="summary-value"><span class="pass">✓</span> 0</div><div class="summary-label">Downstream breaking changes</div><div class="summary-detail">Generated SDK contract changes</div></a>
 <a class="summary-card" href="#azure-compliance"><div class="summary-value"><span class="pass">✓</span> 0</div><div class="summary-label">Azure Guidelines</div><div class="summary-detail">0 guideline issues<br>2/2 intents assessed</div></a>
 <a class="summary-card" href="#document-quality"><div class="summary-value"><span>i</span> Not assessed</div><div class="summary-label">Document Quality and Agent Friendliness</div><div class="summary-detail">Document Quality and Agent Friendliness is not assessed.</div></a>
 <a class="summary-card" href="#semantic-intents"><div class="summary-value"><span>i</span> 2</div><div class="summary-label">Semantic intents</div><div class="summary-detail">0 operations<br>0 Added, 2 Modified, 0 Removed</div></a>
@@ -23,16 +112,11 @@
 <div class="container notice-body"><p>The TypeSpec Assessment Assistant is currently in preview. Its goal is to help service developers build confidence earlier in the TypeSpec authoring workflow by providing contextual analysis, risk identification, and guidance on potential downstream impacts.</p>
 <p>This report is intended as a review reference and learning aid only. It does not replace official ARM API, Azure API Stewardship, Azure Breaking Change reviews, and should not be treated as authoritative review feedback or approval for specification changes. Official validation tools, generated artifacts, and reviewer feedback remain the source of truth for merge and release decisions.</p></div></details>
 <main class="container">
-<section id="rest-breaking"><h2>REST breaking changes (0)</h2><p class="empty good">No breaking changes detected.</p></section>
-<section id="downstream-breaking"><h2>Downstream breaking changes (0)</h2><p class="empty good">No downstream breaking changes detected.</p></section>
-<section id="azure-compliance"><h2>Azure Guidelines (0)</h2><p class="empty good">Azure Guidelines were assessed. No applicable guideline was found for intents <a href="#intent-semantic-3d8a84ab0984f292">Preserve Python casing for traffic and IP filter operation groups</a>, <a href="#intent-semantic-a3ce2a2ef2e5fba3">Preserve Python casing for private-link filter operation group</a>.</p>
-</section>
-<section id="document-quality"><h2>Document Quality and Agent Friendliness</h2><div class="panel not-assessed"><strong>Not assessed</strong> — Document Quality and Agent Friendliness is not assessed.</div></section>
-<section id="semantic-intents"><h2>Semantic intents (2)</h2><details class="intent" id="intent-semantic-3d8a84ab0984f292"><summary><strong><span class="action">modify</span> Preserve Python casing for traffic and IP filter operation groups</strong></summary><div class="intent-body">
-<p>Modify client-location augment decorators so Python uses PascalCase operation-group locations for listing associated traffic filters and creating/associating IP filters, while the existing lower-camel locations remain in effect for other targeted languages. The wire API is unchanged.</p>
-<p><strong>Deterministic coverage:</strong> 0 of 1 changed hunks classified. AI inference used for 1 request.</p>
-<details class="representative-example"><summary><strong>Representative TypeSpec example</strong></summary>
-<div class="diff"><div class="diff-path">specification/elastic/Elastic.Management/back-compatible.tsp</div><pre><span class="context"> @@clientLocation(</span>
+<section id="rest-breaking"><div class="report-section-head"><div><h2>REST breaking changes</h2><p>Operation impact and affected intents at a glance; expand for before/after evidence.</p></div><div class="report-section-meta"><span class="report-badge add">passed</span><span class="report-count">0 operations · 0 findings</span></div></div><div class="report-empty">No confirmed REST breaking changes.</div></section>
+<section id="downstream-breaking"><div class="report-section-head"><div><h2>Downstream breaking changes</h2><p>Method impact and affected intents at a glance; expand for before/after evidence.</p></div><div class="report-section-meta"><span class="report-badge add">passed</span><span class="report-count">0 mapped methods · 0 changed types</span></div></div><div class="report-empty">No downstream breaking changes detected.</div></section>
+<section id="azure-compliance"><div class="report-section-head"><div><h2>Azure Guidelines</h2><p>Findings and affected intents at a glance; expand for expected guidance and actual changes.</p></div><div class="report-section-meta"><span class="report-badge add">passed</span><span class="report-count">0 findings</span></div></div><p class="report-small">2 of 2 semantic intents assessed · 8 documents selected</p><div class="report-empty">No Azure Guidelines findings.</div><p class="report-small">No applicable guideline was found for: <a class="report-link" href="#intent-semantic-3d8a84ab0984f292">Preserve Python casing for traffic and IP filter operation groups</a><a class="report-link" href="#intent-semantic-a3ce2a2ef2e5fba3">Preserve Python casing for private-link filter operation group</a>.</p></section>
+<section id="document-quality"><div class="report-section-head"><div><h2>Document Quality and Agent Friendliness</h2><p>Documentation assessment status.</p></div><div class="report-section-meta"><span class="report-badge unknown">not assessed</span></div></div><div class="report-empty">Document Quality and Agent Friendliness is not assessed.</div></section>
+<section id="semantic-intents"><div class="report-section-head"><div><h2>Semantic intents</h2><p>Impact links are visible at a glance; expand for changed TypeSpec source, followed by affected operations.</p></div><div class="report-section-meta"><span class="report-count">2 intents · 0 added · 2 modified · 0 removed</span></div></div><details class="report-card intent" id="intent-semantic-3d8a84ab0984f292"><summary><div class="report-card-title"><strong>Preserve Python casing for traffic and IP filter operation groups</strong><small>Modify client-location augment decorators so Python uses PascalCase operation-group locations for listing associated traffic filters and creating/associating IP filters, while the existing lower-camel locations remain in effect for other targeted languages. The wire API is unchanged.</small></div><div class="report-badges"><span class="report-badge modify">modify</span></div></summary><div class="report-card-body"><details class="report-source" open><summary>Changed TypeSpec source (1)</summary><div class="diff"><div class="diff-path">specification/elastic/Elastic.Management/back-compatible.tsp</div><pre><span class="context"> @@clientLocation(</span>
 <span class="context">   ElasticMonitorResources.listAssociatedTrafficFiltersList,</span>
 <span class="context">   &quot;listAssociatedTrafficFilters&quot;,</span>
 <span class="remove">-  &quot;!csharp&quot;</span>
@@ -56,17 +140,7 @@
 <span class="add">+  &quot;python&quot;</span>
 <span class="context"> );</span>
 <span class="context"> @@clientName(</span>
-<span class="context">   ElasticMonitorResources.createAndAssociateIPFilterCreate,</span></pre></div>
-<p class="sources"><strong>Source:</strong> <code>specification/elastic/Elastic.Management/back-compatible.tsp</code>.</p></details>
-<h4>Affected REST operations (0)</h4>
-<p class="empty">No directly affected REST operation.</p>
-<p id="related-findings-semantic-3d8a84ab0984f292"><strong>Related findings:</strong> None</p>
-</div></details>
-<details class="intent" id="intent-semantic-a3ce2a2ef2e5fba3"><summary><strong><span class="action">modify</span> Preserve Python casing for private-link filter operation group</strong></summary><div class="intent-body">
-<p>Modify the private-link filter create-and-associate client location so Python uses the PascalCase operation-group location while non-Python generators retain the existing lower-camel location. The wire API is unchanged.</p>
-<p><strong>Deterministic coverage:</strong> 0 of 1 changed hunks classified. AI inference used for 1 request.</p>
-<details class="representative-example"><summary><strong>Representative TypeSpec example</strong></summary>
-<div class="diff"><div class="diff-path">specification/elastic/Elastic.Management/back-compatible.tsp</div><pre><span class="context"> @@clientLocation(</span>
+<span class="context">   ElasticMonitorResources.createAndAssociateIPFilterCreate,</span></pre></div><p class="sources"><code>specification/elastic/Elastic.Management/back-compatible.tsp</code></p></details><details class="report-subdetails" id="intent-semantic-3d8a84ab0984f292-operations"><summary>Affected operations (0)</summary><p class="report-empty">No directly affected REST operation.</p></details></div></details><details class="report-card intent" id="intent-semantic-a3ce2a2ef2e5fba3"><summary><div class="report-card-title"><strong>Preserve Python casing for private-link filter operation group</strong><small>Modify the private-link filter create-and-associate client location so Python uses the PascalCase operation-group location while non-Python generators retain the existing lower-camel location. The wire API is unchanged.</small></div><div class="report-badges"><span class="report-badge modify">modify</span></div></summary><div class="report-card-body"><details class="report-source" open><summary>Changed TypeSpec source (1)</summary><div class="diff"><div class="diff-path">specification/elastic/Elastic.Management/back-compatible.tsp</div><pre><span class="context"> @@clientLocation(</span>
 <span class="context">   ElasticMonitorResources.createAndAssociatePLFilterCreate,</span>
 <span class="context">   &quot;createAndAssociatePLFilter&quot;,</span>
 <span class="remove">-  &quot;!csharp&quot;</span>
@@ -79,30 +153,1093 @@
 <span class="context"> );</span>
 <span class="context"> @@clientName(</span>
 <span class="context">   ElasticMonitorResources.createAndAssociatePLFilterCreate,</span>
-<span class="context"></span></pre></div>
-<p class="sources"><strong>Source:</strong> <code>specification/elastic/Elastic.Management/back-compatible.tsp</code>.</p></details>
-<h4>Affected REST operations (0)</h4>
-<p class="empty">No directly affected REST operation.</p>
-<p id="related-findings-semantic-a3ce2a2ef2e5fba3"><strong>Related findings:</strong> None</p>
-</div></details></section>
+<span class="context"></span></pre></div><p class="sources"><code>specification/elastic/Elastic.Management/back-compatible.tsp</code></p></details><details class="report-subdetails" id="intent-semantic-a3ce2a2ef2e5fba3-operations"><summary>Affected operations (0)</summary><p class="report-empty">No directly affected REST operation.</p></details></div></details></section>
 <section id="appendix"><details class="dimension-details"><summary><h2>Appendix</h2></summary><div class="panel"><h3 id="potential-limits">Potential limits</h3><p>None</p>
 <h3 id="projects-and-compiler-status">Projects and compiler status</h3><table><thead><tr><th>Project</th><th>Mode</th><th>Baseline commit@version</th><th>Target commit@version</th><th>Baseline AutoRest / TCGC</th><th>Target AutoRest / TCGC</th></tr></thead><tbody><tr><td><code>specification/elastic/Elastic.Management</code></td><td>existing-api-version</td><td><code>e8420e45fdaf12e2c72417d379c454f1fc8ce1e6@2025-06-01</code><br><small>base · affected-existing-version</small></td><td><code>b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2@2025-06-01</code><br><small>current · affected-existing-version</small></td><td>succeeded / succeeded</td><td>succeeded / succeeded</td></tr></tbody></table>
 <p><strong>Pull request:</strong> <a href="https://github.com/Azure/azure-rest-api-specs/pull/44454">#44454</a></p>
 <h3 id="compliance-search-evidence">Guidance fetched</h3>
-<ul class="guidance-document-list"><li><a href="https://typespec.io/docs/language-basics/decorators/">Decorators</a></li><li><a href="https://typespec.io/docs/standard-library/built-in-decorators/">Built-in decorators</a></li><li><a href="https://typespec.io/docs/libraries/openapi/reference/decorators/">OpenAPI decorators</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/">Evolving APIs</a></li></ul>
+<ul class="guidance-document-list"><li><a href="https://typespec.io/docs/language-basics/decorators/">Decorators</a></li><li><a href="https://typespec.io/docs/standard-library/built-in-decorators/">Built-in decorators</a></li><li><a href="https://typespec.io/docs/libraries/openapi/reference/decorators/">OpenAPI decorators</a></li><li><a href="https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/">Evolving APIs</a></li></ul><details class="guidance-coverage"><summary>Guidance coverage and retrieval evidence</summary><pre>{
+  &quot;status&quot;: &quot;passed&quot;,
+  &quot;coverage&quot;: {
+    &quot;semanticIntentCount&quot;: 2,
+    &quot;assessedIntentCount&quot;: 2,
+    &quot;selectedDocumentCount&quot;: 8,
+    &quot;unassessedIntentIds&quot;: []
+  },
+  &quot;intentAssessments&quot;: [
+    {
+      &quot;semanticIntentId&quot;: &quot;semantic-3d8a84ab0984f292&quot;,
+      &quot;decision&quot;: &quot;no-applicable-guidance&quot;,
+      &quot;catalogRanking&quot;: [
+        {
+          &quot;rank&quot;: 1,
+          &quot;catalogOrder&quot;: 26,
+          &quot;title&quot;: &quot;Decorators&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://typespec.io/docs/language-basics/decorators/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 4,
+            &quot;patternCategory&quot;: 3,
+            &quot;servicePlane&quot;: 2,
+            &quot;changeContext&quot;: 1,
+            &quot;total&quot;: 10
+          },
+          &quot;selectionRationale&quot;: &quot;Names augment decorators, the exact TypeSpec construct used by the changed @@clientLocation statements.&quot;
+        },
+        {
+          &quot;rank&quot;: 2,
+          &quot;catalogOrder&quot;: 27,
+          &quot;title&quot;: &quot;Built-in decorators&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://typespec.io/docs/standard-library/built-in-decorators/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 3,
+            &quot;servicePlane&quot;: 2,
+            &quot;changeContext&quot;: 0,
+            &quot;total&quot;: 5
+          },
+          &quot;selectionRationale&quot;: &quot;Matches the decorator category but does not document the clientLocation customization decorator.&quot;
+        },
+        {
+          &quot;rank&quot;: 3,
+          &quot;catalogOrder&quot;: 28,
+          &quot;title&quot;: &quot;OpenAPI decorators&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://typespec.io/docs/libraries/openapi/reference/decorators/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 3,
+            &quot;servicePlane&quot;: 2,
+            &quot;changeContext&quot;: 0,
+            &quot;total&quot;: 5
+          },
+          &quot;selectionRationale&quot;: &quot;Matches the decorator category but does not document the clientLocation customization decorator.&quot;
+        },
+        {
+          &quot;rank&quot;: 4,
+          &quot;catalogOrder&quot;: 16,
+          &quot;title&quot;: &quot;Evolving APIs&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 0,
+            &quot;servicePlane&quot;: 2,
+            &quot;changeContext&quot;: 1,
+            &quot;total&quot;: 3
+          },
+          &quot;selectionRationale&quot;: &quot;Covers modification and compatibility across API evolution, but not language-specific client-location wrappers.&quot;
+        },
+        {
+          &quot;rank&quot;: 5,
+          &quot;catalogOrder&quot;: 9,
+          &quot;title&quot;: &quot;Azure.Core operation interfaces&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/getstarted/azure-core/step05/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 0,
+            &quot;servicePlane&quot;: 2,
+            &quot;changeContext&quot;: 0,
+            &quot;total&quot;: 2
+          },
+          &quot;selectionRationale&quot;: &quot;Applies to data-plane or general TypeSpec authoring, with no direct client-location guidance.&quot;
+        },
+        {
+          &quot;rank&quot;: 6,
+          &quot;catalogOrder&quot;: 10,
+          &quot;title&quot;: &quot;Azure.Core interface reference&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/libraries/azure-core/reference/interfaces/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 0,
+            &quot;servicePlane&quot;: 2,
+            &quot;changeContext&quot;: 0,
+            &quot;total&quot;: 2
+          },
+          &quot;selectionRationale&quot;: &quot;Applies to data-plane or general TypeSpec authoring, with no direct client-location guidance.&quot;
+        },
+        {
+          &quot;rank&quot;: 7,
+          &quot;catalogOrder&quot;: 18,
+          &quot;title&quot;: &quot;Azure.Core long-running operations&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/azure-core/long-running-operations/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 0,
+            &quot;servicePlane&quot;: 2,
+            &quot;changeContext&quot;: 0,
+            &quot;total&quot;: 2
+          },
+          &quot;selectionRationale&quot;: &quot;Applies to data-plane or general TypeSpec authoring, with no direct client-location guidance.&quot;
+        },
+        {
+          &quot;rank&quot;: 8,
+          &quot;catalogOrder&quot;: 19,
+          &quot;title&quot;: &quot;TypeSpec pagination&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://typespec.io/docs/standard-library/pagination/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 0,
+            &quot;servicePlane&quot;: 2,
+            &quot;changeContext&quot;: 0,
+            &quot;total&quot;: 2
+          },
+          &quot;selectionRationale&quot;: &quot;Applies to data-plane or general TypeSpec authoring, with no direct client-location guidance.&quot;
+        },
+        {
+          &quot;rank&quot;: 9,
+          &quot;catalogOrder&quot;: 23,
+          &quot;title&quot;: &quot;Models&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://typespec.io/docs/language-basics/models/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 0,
+            &quot;servicePlane&quot;: 2,
+            &quot;changeContext&quot;: 0,
+            &quot;total&quot;: 2
+          },
+          &quot;selectionRationale&quot;: &quot;Applies to data-plane or general TypeSpec authoring, with no direct client-location guidance.&quot;
+        },
+        {
+          &quot;rank&quot;: 10,
+          &quot;catalogOrder&quot;: 24,
+          &quot;title&quot;: &quot;Enums&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://typespec.io/docs/language-basics/enums/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 0,
+            &quot;servicePlane&quot;: 2,
+            &quot;changeContext&quot;: 0,
+            &quot;total&quot;: 2
+          },
+          &quot;selectionRationale&quot;: &quot;Applies to data-plane or general TypeSpec authoring, with no direct client-location guidance.&quot;
+        },
+        {
+          &quot;rank&quot;: 11,
+          &quot;catalogOrder&quot;: 25,
+          &quot;title&quot;: &quot;Scalars&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://typespec.io/docs/language-basics/scalars/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 0,
+            &quot;servicePlane&quot;: 2,
+            &quot;changeContext&quot;: 0,
+            &quot;total&quot;: 2
+          },
+          &quot;selectionRationale&quot;: &quot;Applies to data-plane or general TypeSpec authoring, with no direct client-location guidance.&quot;
+        },
+        {
+          &quot;rank&quot;: 12,
+          &quot;catalogOrder&quot;: 31,
+          &quot;title&quot;: &quot;Content negotiation&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/azure-core/content-negotiation/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 0,
+            &quot;servicePlane&quot;: 2,
+            &quot;changeContext&quot;: 0,
+            &quot;total&quot;: 2
+          },
+          &quot;selectionRationale&quot;: &quot;Applies to data-plane or general TypeSpec authoring, with no direct client-location guidance.&quot;
+        },
+        {
+          &quot;rank&quot;: 13,
+          &quot;catalogOrder&quot;: 32,
+          &quot;title&quot;: &quot;Directives&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://typespec.io/docs/language-basics/directives/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 0,
+            &quot;servicePlane&quot;: 2,
+            &quot;changeContext&quot;: 0,
+            &quot;total&quot;: 2
+          },
+          &quot;selectionRationale&quot;: &quot;Applies to data-plane or general TypeSpec authoring, with no direct client-location guidance.&quot;
+        },
+        {
+          &quot;rank&quot;: 14,
+          &quot;catalogOrder&quot;: 33,
+          &quot;title&quot;: &quot;Azure Core `no-openapi` rule&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/no-openapi/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 0,
+            &quot;servicePlane&quot;: 2,
+            &quot;changeContext&quot;: 0,
+            &quot;total&quot;: 2
+          },
+          &quot;selectionRationale&quot;: &quot;Applies to data-plane or general TypeSpec authoring, with no direct client-location guidance.&quot;
+        },
+        {
+          &quot;rank&quot;: 15,
+          &quot;catalogOrder&quot;: 1,
+          &quot;title&quot;: &quot;ARM resource types and modeling&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/arm/resource-type/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 0,
+            &quot;servicePlane&quot;: 0,
+            &quot;changeContext&quot;: 0,
+            &quot;total&quot;: 0
+          },
+          &quot;selectionRationale&quot;: &quot;Does not match the data-plane client-customization decorator change.&quot;
+        },
+        {
+          &quot;rank&quot;: 16,
+          &quot;catalogOrder&quot;: 2,
+          &quot;title&quot;: &quot;Specific extension resource sample&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/samples/resource-manager/resource-types/specific-extension/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 0,
+            &quot;servicePlane&quot;: 0,
+            &quot;changeContext&quot;: 0,
+            &quot;total&quot;: 0
+          },
+          &quot;selectionRationale&quot;: &quot;Does not match the data-plane client-customization decorator change.&quot;
+        },
+        {
+          &quot;rank&quot;: 17,
+          &quot;catalogOrder&quot;: 3,
+          &quot;title&quot;: &quot;Agent base type&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/arm/agent-base-type/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 0,
+            &quot;servicePlane&quot;: 0,
+            &quot;changeContext&quot;: 0,
+            &quot;total&quot;: 0
+          },
+          &quot;selectionRationale&quot;: &quot;Does not match the data-plane client-customization decorator change.&quot;
+        },
+        {
+          &quot;rank&quot;: 18,
+          &quot;catalogOrder&quot;: 4,
+          &quot;title&quot;: &quot;Private endpoints&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/arm/private-endpoints/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 0,
+            &quot;servicePlane&quot;: 0,
+            &quot;changeContext&quot;: 0,
+            &quot;total&quot;: 0
+          },
+          &quot;selectionRationale&quot;: &quot;Does not match the data-plane client-customization decorator change.&quot;
+        },
+        {
+          &quot;rank&quot;: 19,
+          &quot;catalogOrder&quot;: 5,
+          &quot;title&quot;: &quot;Private links&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/arm/private-links/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 0,
+            &quot;servicePlane&quot;: 0,
+            &quot;changeContext&quot;: 0,
+            &quot;total&quot;: 0
+          },
+          &quot;selectionRationale&quot;: &quot;Does not match the data-plane client-customization decorator change.&quot;
+        },
+        {
+          &quot;rank&quot;: 20,
+          &quot;catalogOrder&quot;: 6,
+          &quot;title&quot;: &quot;Network security perimeter&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/arm/network-security-perimeter/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 0,
+            &quot;servicePlane&quot;: 0,
+            &quot;changeContext&quot;: 0,
+            &quot;total&quot;: 0
+          },
+          &quot;selectionRationale&quot;: &quot;Does not match the data-plane client-customization decorator change.&quot;
+        },
+        {
+          &quot;rank&quot;: 21,
+          &quot;catalogOrder&quot;: 7,
+          &quot;title&quot;: &quot;ARM resource operations&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/arm/resource-operations/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 0,
+            &quot;servicePlane&quot;: 0,
+            &quot;changeContext&quot;: 0,
+            &quot;total&quot;: 0
+          },
+          &quot;selectionRationale&quot;: &quot;Does not match the data-plane client-customization decorator change.&quot;
+        },
+        {
+          &quot;rank&quot;: 22,
+          &quot;catalogOrder&quot;: 8,
+          &quot;title&quot;: &quot;Azure.ResourceManager interface reference&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/interfaces/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 0,
+            &quot;servicePlane&quot;: 0,
+            &quot;changeContext&quot;: 0,
+            &quot;total&quot;: 0
+          },
+          &quot;selectionRationale&quot;: &quot;Does not match the data-plane client-customization decorator change.&quot;
+        },
+        {
+          &quot;rank&quot;: 23,
+          &quot;catalogOrder&quot;: 11,
+          &quot;title&quot;: &quot;Versioning overview&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 0,
+            &quot;servicePlane&quot;: 0,
+            &quot;changeContext&quot;: 0,
+            &quot;total&quot;: 0
+          },
+          &quot;selectionRationale&quot;: &quot;Does not match the data-plane client-customization decorator change.&quot;
+        },
+        {
+          &quot;rank&quot;: 24,
+          &quot;catalogOrder&quot;: 12,
+          &quot;title&quot;: &quot;Add preview after preview&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/versioning/02-preview-after-preview/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 0,
+            &quot;servicePlane&quot;: 0,
+            &quot;changeContext&quot;: 0,
+            &quot;total&quot;: 0
+          },
+          &quot;selectionRationale&quot;: &quot;Does not match the data-plane client-customization decorator change.&quot;
+        },
+        {
+          &quot;rank&quot;: 25,
+          &quot;catalogOrder&quot;: 13,
+          &quot;title&quot;: &quot;Add stable after preview&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 0,
+            &quot;servicePlane&quot;: 0,
+            &quot;changeContext&quot;: 0,
+            &quot;total&quot;: 0
+          },
+          &quot;selectionRationale&quot;: &quot;Does not match the data-plane client-customization decorator change.&quot;
+        },
+        {
+          &quot;rank&quot;: 26,
+          &quot;catalogOrder&quot;: 14,
+          &quot;title&quot;: &quot;Add preview after stable&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/versioning/04-preview-after-stable/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 0,
+            &quot;servicePlane&quot;: 0,
+            &quot;changeContext&quot;: 0,
+            &quot;total&quot;: 0
+          },
+          &quot;selectionRationale&quot;: &quot;Does not match the data-plane client-customization decorator change.&quot;
+        },
+        {
+          &quot;rank&quot;: 27,
+          &quot;catalogOrder&quot;: 15,
+          &quot;title&quot;: &quot;Add stable after stable&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/versioning/05-stable-after-stable/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 0,
+            &quot;servicePlane&quot;: 0,
+            &quot;changeContext&quot;: 0,
+            &quot;total&quot;: 0
+          },
+          &quot;selectionRationale&quot;: &quot;Does not match the data-plane client-customization decorator change.&quot;
+        },
+        {
+          &quot;rank&quot;: 28,
+          &quot;catalogOrder&quot;: 17,
+          &quot;title&quot;: &quot;ARM long-running operations&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/arm/long-running-operations/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 0,
+            &quot;servicePlane&quot;: 0,
+            &quot;changeContext&quot;: 0,
+            &quot;total&quot;: 0
+          },
+          &quot;selectionRationale&quot;: &quot;Does not match the data-plane client-customization decorator change.&quot;
+        },
+        {
+          &quot;rank&quot;: 29,
+          &quot;catalogOrder&quot;: 20,
+          &quot;title&quot;: &quot;Azure.ResourceManager data types&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/data-types/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 0,
+            &quot;servicePlane&quot;: 0,
+            &quot;changeContext&quot;: 0,
+            &quot;total&quot;: 0
+          },
+          &quot;selectionRationale&quot;: &quot;Does not match the data-plane client-customization decorator change.&quot;
+        },
+        {
+          &quot;rank&quot;: 30,
+          &quot;catalogOrder&quot;: 22,
+          &quot;title&quot;: &quot;ARM common types&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/arm/add-common-types/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 0,
+            &quot;servicePlane&quot;: 0,
+            &quot;changeContext&quot;: 0,
+            &quot;total&quot;: 0
+          },
+          &quot;selectionRationale&quot;: &quot;Does not match the data-plane client-customization decorator change.&quot;
+        },
+        {
+          &quot;rank&quot;: 31,
+          &quot;catalogOrder&quot;: 29,
+          &quot;title&quot;: &quot;Change provider namespace&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/arm/change-provider-namespace/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 0,
+            &quot;servicePlane&quot;: 0,
+            &quot;changeContext&quot;: 0,
+            &quot;total&quot;: 0
+          },
+          &quot;selectionRationale&quot;: &quot;Does not match the data-plane client-customization decorator change.&quot;
+        },
+        {
+          &quot;rank&quot;: 32,
+          &quot;catalogOrder&quot;: 30,
+          &quot;title&quot;: &quot;Azure Portal default experiences&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/azure-portal/default-experiences/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 0,
+            &quot;servicePlane&quot;: 0,
+            &quot;changeContext&quot;: 0,
+            &quot;total&quot;: 0
+          },
+          &quot;selectionRationale&quot;: &quot;Does not match the data-plane client-customization decorator change.&quot;
+        }
+      ],
+      &quot;documents&quot;: [
+        {
+          &quot;rank&quot;: 1,
+          &quot;catalogOrder&quot;: 26,
+          &quot;title&quot;: &quot;Decorators&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://typespec.io/docs/language-basics/decorators/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 4,
+            &quot;patternCategory&quot;: 3,
+            &quot;servicePlane&quot;: 2,
+            &quot;changeContext&quot;: 1,
+            &quot;total&quot;: 10
+          },
+          &quot;selectionRationale&quot;: &quot;Names augment decorators, the exact TypeSpec construct used by the changed @@clientLocation statements.&quot;,
+          &quot;guidance&quot;: [],
+          &quot;noRelevantGuidance&quot;: true,
+          &quot;retrievedAt&quot;: &quot;2026-09-03T08:16:52.630351Z&quot;,
+          &quot;contentHash&quot;: &quot;sha256:335d58dcbcd275f7d7f1ff2be526ef3b95536632184bf9fe403a4f7c2458afa2&quot;
+        },
+        {
+          &quot;rank&quot;: 2,
+          &quot;catalogOrder&quot;: 27,
+          &quot;title&quot;: &quot;Built-in decorators&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://typespec.io/docs/standard-library/built-in-decorators/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 3,
+            &quot;servicePlane&quot;: 2,
+            &quot;changeContext&quot;: 0,
+            &quot;total&quot;: 5
+          },
+          &quot;selectionRationale&quot;: &quot;Matches the decorator category but does not document the clientLocation customization decorator.&quot;,
+          &quot;guidance&quot;: [],
+          &quot;noRelevantGuidance&quot;: true,
+          &quot;retrievedAt&quot;: &quot;2026-09-03T08:16:52.630351Z&quot;,
+          &quot;contentHash&quot;: &quot;sha256:2f84fe7fa088000ecd815fac3c46c6fe06d7632e22547b2a9a13db8060df04ad&quot;
+        },
+        {
+          &quot;rank&quot;: 3,
+          &quot;catalogOrder&quot;: 28,
+          &quot;title&quot;: &quot;OpenAPI decorators&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://typespec.io/docs/libraries/openapi/reference/decorators/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 3,
+            &quot;servicePlane&quot;: 2,
+            &quot;changeContext&quot;: 0,
+            &quot;total&quot;: 5
+          },
+          &quot;selectionRationale&quot;: &quot;Matches the decorator category but does not document the clientLocation customization decorator.&quot;,
+          &quot;guidance&quot;: [],
+          &quot;noRelevantGuidance&quot;: true,
+          &quot;retrievedAt&quot;: &quot;2026-09-03T08:16:52.630351Z&quot;,
+          &quot;contentHash&quot;: &quot;sha256:ea84f899c9929478eacf9bd7aa1b5523d0ab258779a2a064c84a6a8f4331174e&quot;
+        },
+        {
+          &quot;rank&quot;: 4,
+          &quot;catalogOrder&quot;: 16,
+          &quot;title&quot;: &quot;Evolving APIs&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 0,
+            &quot;servicePlane&quot;: 2,
+            &quot;changeContext&quot;: 1,
+            &quot;total&quot;: 3
+          },
+          &quot;selectionRationale&quot;: &quot;Covers modification and compatibility across API evolution, but not language-specific client-location wrappers.&quot;,
+          &quot;guidance&quot;: [],
+          &quot;noRelevantGuidance&quot;: true,
+          &quot;retrievedAt&quot;: &quot;2026-09-03T08:16:52.630351Z&quot;,
+          &quot;contentHash&quot;: &quot;sha256:447166793fe09d9330e5f3660076b9f23627c8a24e63081cbb4ef36ad2d18d83&quot;
+        }
+      ],
+      &quot;blockers&quot;: []
+    },
+    {
+      &quot;semanticIntentId&quot;: &quot;semantic-a3ce2a2ef2e5fba3&quot;,
+      &quot;decision&quot;: &quot;no-applicable-guidance&quot;,
+      &quot;catalogRanking&quot;: [
+        {
+          &quot;rank&quot;: 1,
+          &quot;catalogOrder&quot;: 26,
+          &quot;title&quot;: &quot;Decorators&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://typespec.io/docs/language-basics/decorators/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 4,
+            &quot;patternCategory&quot;: 3,
+            &quot;servicePlane&quot;: 2,
+            &quot;changeContext&quot;: 1,
+            &quot;total&quot;: 10
+          },
+          &quot;selectionRationale&quot;: &quot;Names augment decorators, the exact TypeSpec construct used by the changed @@clientLocation statements.&quot;
+        },
+        {
+          &quot;rank&quot;: 2,
+          &quot;catalogOrder&quot;: 27,
+          &quot;title&quot;: &quot;Built-in decorators&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://typespec.io/docs/standard-library/built-in-decorators/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 3,
+            &quot;servicePlane&quot;: 2,
+            &quot;changeContext&quot;: 0,
+            &quot;total&quot;: 5
+          },
+          &quot;selectionRationale&quot;: &quot;Matches the decorator category but does not document the clientLocation customization decorator.&quot;
+        },
+        {
+          &quot;rank&quot;: 3,
+          &quot;catalogOrder&quot;: 28,
+          &quot;title&quot;: &quot;OpenAPI decorators&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://typespec.io/docs/libraries/openapi/reference/decorators/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 3,
+            &quot;servicePlane&quot;: 2,
+            &quot;changeContext&quot;: 0,
+            &quot;total&quot;: 5
+          },
+          &quot;selectionRationale&quot;: &quot;Matches the decorator category but does not document the clientLocation customization decorator.&quot;
+        },
+        {
+          &quot;rank&quot;: 4,
+          &quot;catalogOrder&quot;: 16,
+          &quot;title&quot;: &quot;Evolving APIs&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 0,
+            &quot;servicePlane&quot;: 2,
+            &quot;changeContext&quot;: 1,
+            &quot;total&quot;: 3
+          },
+          &quot;selectionRationale&quot;: &quot;Covers modification and compatibility across API evolution, but not language-specific client-location wrappers.&quot;
+        },
+        {
+          &quot;rank&quot;: 5,
+          &quot;catalogOrder&quot;: 9,
+          &quot;title&quot;: &quot;Azure.Core operation interfaces&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/getstarted/azure-core/step05/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 0,
+            &quot;servicePlane&quot;: 2,
+            &quot;changeContext&quot;: 0,
+            &quot;total&quot;: 2
+          },
+          &quot;selectionRationale&quot;: &quot;Applies to data-plane or general TypeSpec authoring, with no direct client-location guidance.&quot;
+        },
+        {
+          &quot;rank&quot;: 6,
+          &quot;catalogOrder&quot;: 10,
+          &quot;title&quot;: &quot;Azure.Core interface reference&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/libraries/azure-core/reference/interfaces/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 0,
+            &quot;servicePlane&quot;: 2,
+            &quot;changeContext&quot;: 0,
+            &quot;total&quot;: 2
+          },
+          &quot;selectionRationale&quot;: &quot;Applies to data-plane or general TypeSpec authoring, with no direct client-location guidance.&quot;
+        },
+        {
+          &quot;rank&quot;: 7,
+          &quot;catalogOrder&quot;: 18,
+          &quot;title&quot;: &quot;Azure.Core long-running operations&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/azure-core/long-running-operations/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 0,
+            &quot;servicePlane&quot;: 2,
+            &quot;changeContext&quot;: 0,
+            &quot;total&quot;: 2
+          },
+          &quot;selectionRationale&quot;: &quot;Applies to data-plane or general TypeSpec authoring, with no direct client-location guidance.&quot;
+        },
+        {
+          &quot;rank&quot;: 8,
+          &quot;catalogOrder&quot;: 19,
+          &quot;title&quot;: &quot;TypeSpec pagination&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://typespec.io/docs/standard-library/pagination/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 0,
+            &quot;servicePlane&quot;: 2,
+            &quot;changeContext&quot;: 0,
+            &quot;total&quot;: 2
+          },
+          &quot;selectionRationale&quot;: &quot;Applies to data-plane or general TypeSpec authoring, with no direct client-location guidance.&quot;
+        },
+        {
+          &quot;rank&quot;: 9,
+          &quot;catalogOrder&quot;: 23,
+          &quot;title&quot;: &quot;Models&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://typespec.io/docs/language-basics/models/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 0,
+            &quot;servicePlane&quot;: 2,
+            &quot;changeContext&quot;: 0,
+            &quot;total&quot;: 2
+          },
+          &quot;selectionRationale&quot;: &quot;Applies to data-plane or general TypeSpec authoring, with no direct client-location guidance.&quot;
+        },
+        {
+          &quot;rank&quot;: 10,
+          &quot;catalogOrder&quot;: 24,
+          &quot;title&quot;: &quot;Enums&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://typespec.io/docs/language-basics/enums/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 0,
+            &quot;servicePlane&quot;: 2,
+            &quot;changeContext&quot;: 0,
+            &quot;total&quot;: 2
+          },
+          &quot;selectionRationale&quot;: &quot;Applies to data-plane or general TypeSpec authoring, with no direct client-location guidance.&quot;
+        },
+        {
+          &quot;rank&quot;: 11,
+          &quot;catalogOrder&quot;: 25,
+          &quot;title&quot;: &quot;Scalars&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://typespec.io/docs/language-basics/scalars/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 0,
+            &quot;servicePlane&quot;: 2,
+            &quot;changeContext&quot;: 0,
+            &quot;total&quot;: 2
+          },
+          &quot;selectionRationale&quot;: &quot;Applies to data-plane or general TypeSpec authoring, with no direct client-location guidance.&quot;
+        },
+        {
+          &quot;rank&quot;: 12,
+          &quot;catalogOrder&quot;: 31,
+          &quot;title&quot;: &quot;Content negotiation&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/azure-core/content-negotiation/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 0,
+            &quot;servicePlane&quot;: 2,
+            &quot;changeContext&quot;: 0,
+            &quot;total&quot;: 2
+          },
+          &quot;selectionRationale&quot;: &quot;Applies to data-plane or general TypeSpec authoring, with no direct client-location guidance.&quot;
+        },
+        {
+          &quot;rank&quot;: 13,
+          &quot;catalogOrder&quot;: 32,
+          &quot;title&quot;: &quot;Directives&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://typespec.io/docs/language-basics/directives/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 0,
+            &quot;servicePlane&quot;: 2,
+            &quot;changeContext&quot;: 0,
+            &quot;total&quot;: 2
+          },
+          &quot;selectionRationale&quot;: &quot;Applies to data-plane or general TypeSpec authoring, with no direct client-location guidance.&quot;
+        },
+        {
+          &quot;rank&quot;: 14,
+          &quot;catalogOrder&quot;: 33,
+          &quot;title&quot;: &quot;Azure Core `no-openapi` rule&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/no-openapi/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 0,
+            &quot;servicePlane&quot;: 2,
+            &quot;changeContext&quot;: 0,
+            &quot;total&quot;: 2
+          },
+          &quot;selectionRationale&quot;: &quot;Applies to data-plane or general TypeSpec authoring, with no direct client-location guidance.&quot;
+        },
+        {
+          &quot;rank&quot;: 15,
+          &quot;catalogOrder&quot;: 1,
+          &quot;title&quot;: &quot;ARM resource types and modeling&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/arm/resource-type/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 0,
+            &quot;servicePlane&quot;: 0,
+            &quot;changeContext&quot;: 0,
+            &quot;total&quot;: 0
+          },
+          &quot;selectionRationale&quot;: &quot;Does not match the data-plane client-customization decorator change.&quot;
+        },
+        {
+          &quot;rank&quot;: 16,
+          &quot;catalogOrder&quot;: 2,
+          &quot;title&quot;: &quot;Specific extension resource sample&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/samples/resource-manager/resource-types/specific-extension/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 0,
+            &quot;servicePlane&quot;: 0,
+            &quot;changeContext&quot;: 0,
+            &quot;total&quot;: 0
+          },
+          &quot;selectionRationale&quot;: &quot;Does not match the data-plane client-customization decorator change.&quot;
+        },
+        {
+          &quot;rank&quot;: 17,
+          &quot;catalogOrder&quot;: 3,
+          &quot;title&quot;: &quot;Agent base type&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/arm/agent-base-type/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 0,
+            &quot;servicePlane&quot;: 0,
+            &quot;changeContext&quot;: 0,
+            &quot;total&quot;: 0
+          },
+          &quot;selectionRationale&quot;: &quot;Does not match the data-plane client-customization decorator change.&quot;
+        },
+        {
+          &quot;rank&quot;: 18,
+          &quot;catalogOrder&quot;: 4,
+          &quot;title&quot;: &quot;Private endpoints&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/arm/private-endpoints/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 0,
+            &quot;servicePlane&quot;: 0,
+            &quot;changeContext&quot;: 0,
+            &quot;total&quot;: 0
+          },
+          &quot;selectionRationale&quot;: &quot;Does not match the data-plane client-customization decorator change.&quot;
+        },
+        {
+          &quot;rank&quot;: 19,
+          &quot;catalogOrder&quot;: 5,
+          &quot;title&quot;: &quot;Private links&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/arm/private-links/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 0,
+            &quot;servicePlane&quot;: 0,
+            &quot;changeContext&quot;: 0,
+            &quot;total&quot;: 0
+          },
+          &quot;selectionRationale&quot;: &quot;Does not match the data-plane client-customization decorator change.&quot;
+        },
+        {
+          &quot;rank&quot;: 20,
+          &quot;catalogOrder&quot;: 6,
+          &quot;title&quot;: &quot;Network security perimeter&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/arm/network-security-perimeter/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 0,
+            &quot;servicePlane&quot;: 0,
+            &quot;changeContext&quot;: 0,
+            &quot;total&quot;: 0
+          },
+          &quot;selectionRationale&quot;: &quot;Does not match the data-plane client-customization decorator change.&quot;
+        },
+        {
+          &quot;rank&quot;: 21,
+          &quot;catalogOrder&quot;: 7,
+          &quot;title&quot;: &quot;ARM resource operations&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/arm/resource-operations/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 0,
+            &quot;servicePlane&quot;: 0,
+            &quot;changeContext&quot;: 0,
+            &quot;total&quot;: 0
+          },
+          &quot;selectionRationale&quot;: &quot;Does not match the data-plane client-customization decorator change.&quot;
+        },
+        {
+          &quot;rank&quot;: 22,
+          &quot;catalogOrder&quot;: 8,
+          &quot;title&quot;: &quot;Azure.ResourceManager interface reference&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/interfaces/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 0,
+            &quot;servicePlane&quot;: 0,
+            &quot;changeContext&quot;: 0,
+            &quot;total&quot;: 0
+          },
+          &quot;selectionRationale&quot;: &quot;Does not match the data-plane client-customization decorator change.&quot;
+        },
+        {
+          &quot;rank&quot;: 23,
+          &quot;catalogOrder&quot;: 11,
+          &quot;title&quot;: &quot;Versioning overview&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/versioning/01-about-versioning/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 0,
+            &quot;servicePlane&quot;: 0,
+            &quot;changeContext&quot;: 0,
+            &quot;total&quot;: 0
+          },
+          &quot;selectionRationale&quot;: &quot;Does not match the data-plane client-customization decorator change.&quot;
+        },
+        {
+          &quot;rank&quot;: 24,
+          &quot;catalogOrder&quot;: 12,
+          &quot;title&quot;: &quot;Add preview after preview&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/versioning/02-preview-after-preview/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 0,
+            &quot;servicePlane&quot;: 0,
+            &quot;changeContext&quot;: 0,
+            &quot;total&quot;: 0
+          },
+          &quot;selectionRationale&quot;: &quot;Does not match the data-plane client-customization decorator change.&quot;
+        },
+        {
+          &quot;rank&quot;: 25,
+          &quot;catalogOrder&quot;: 13,
+          &quot;title&quot;: &quot;Add stable after preview&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/versioning/03-stable-after-preview/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 0,
+            &quot;servicePlane&quot;: 0,
+            &quot;changeContext&quot;: 0,
+            &quot;total&quot;: 0
+          },
+          &quot;selectionRationale&quot;: &quot;Does not match the data-plane client-customization decorator change.&quot;
+        },
+        {
+          &quot;rank&quot;: 26,
+          &quot;catalogOrder&quot;: 14,
+          &quot;title&quot;: &quot;Add preview after stable&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/versioning/04-preview-after-stable/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 0,
+            &quot;servicePlane&quot;: 0,
+            &quot;changeContext&quot;: 0,
+            &quot;total&quot;: 0
+          },
+          &quot;selectionRationale&quot;: &quot;Does not match the data-plane client-customization decorator change.&quot;
+        },
+        {
+          &quot;rank&quot;: 27,
+          &quot;catalogOrder&quot;: 15,
+          &quot;title&quot;: &quot;Add stable after stable&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/versioning/05-stable-after-stable/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 0,
+            &quot;servicePlane&quot;: 0,
+            &quot;changeContext&quot;: 0,
+            &quot;total&quot;: 0
+          },
+          &quot;selectionRationale&quot;: &quot;Does not match the data-plane client-customization decorator change.&quot;
+        },
+        {
+          &quot;rank&quot;: 28,
+          &quot;catalogOrder&quot;: 17,
+          &quot;title&quot;: &quot;ARM long-running operations&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/arm/long-running-operations/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 0,
+            &quot;servicePlane&quot;: 0,
+            &quot;changeContext&quot;: 0,
+            &quot;total&quot;: 0
+          },
+          &quot;selectionRationale&quot;: &quot;Does not match the data-plane client-customization decorator change.&quot;
+        },
+        {
+          &quot;rank&quot;: 29,
+          &quot;catalogOrder&quot;: 20,
+          &quot;title&quot;: &quot;Azure.ResourceManager data types&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/data-types/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 0,
+            &quot;servicePlane&quot;: 0,
+            &quot;changeContext&quot;: 0,
+            &quot;total&quot;: 0
+          },
+          &quot;selectionRationale&quot;: &quot;Does not match the data-plane client-customization decorator change.&quot;
+        },
+        {
+          &quot;rank&quot;: 30,
+          &quot;catalogOrder&quot;: 22,
+          &quot;title&quot;: &quot;ARM common types&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/arm/add-common-types/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 0,
+            &quot;servicePlane&quot;: 0,
+            &quot;changeContext&quot;: 0,
+            &quot;total&quot;: 0
+          },
+          &quot;selectionRationale&quot;: &quot;Does not match the data-plane client-customization decorator change.&quot;
+        },
+        {
+          &quot;rank&quot;: 31,
+          &quot;catalogOrder&quot;: 29,
+          &quot;title&quot;: &quot;Change provider namespace&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/arm/change-provider-namespace/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 0,
+            &quot;servicePlane&quot;: 0,
+            &quot;changeContext&quot;: 0,
+            &quot;total&quot;: 0
+          },
+          &quot;selectionRationale&quot;: &quot;Does not match the data-plane client-customization decorator change.&quot;
+        },
+        {
+          &quot;rank&quot;: 32,
+          &quot;catalogOrder&quot;: 30,
+          &quot;title&quot;: &quot;Azure Portal default experiences&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/azure-portal/default-experiences/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 0,
+            &quot;servicePlane&quot;: 0,
+            &quot;changeContext&quot;: 0,
+            &quot;total&quot;: 0
+          },
+          &quot;selectionRationale&quot;: &quot;Does not match the data-plane client-customization decorator change.&quot;
+        }
+      ],
+      &quot;documents&quot;: [
+        {
+          &quot;rank&quot;: 1,
+          &quot;catalogOrder&quot;: 26,
+          &quot;title&quot;: &quot;Decorators&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://typespec.io/docs/language-basics/decorators/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 4,
+            &quot;patternCategory&quot;: 3,
+            &quot;servicePlane&quot;: 2,
+            &quot;changeContext&quot;: 1,
+            &quot;total&quot;: 10
+          },
+          &quot;selectionRationale&quot;: &quot;Names augment decorators, the exact TypeSpec construct used by the changed @@clientLocation statements.&quot;,
+          &quot;guidance&quot;: [],
+          &quot;noRelevantGuidance&quot;: true,
+          &quot;retrievedAt&quot;: &quot;2026-09-03T08:16:52.630351Z&quot;,
+          &quot;contentHash&quot;: &quot;sha256:335d58dcbcd275f7d7f1ff2be526ef3b95536632184bf9fe403a4f7c2458afa2&quot;
+        },
+        {
+          &quot;rank&quot;: 2,
+          &quot;catalogOrder&quot;: 27,
+          &quot;title&quot;: &quot;Built-in decorators&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://typespec.io/docs/standard-library/built-in-decorators/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 3,
+            &quot;servicePlane&quot;: 2,
+            &quot;changeContext&quot;: 0,
+            &quot;total&quot;: 5
+          },
+          &quot;selectionRationale&quot;: &quot;Matches the decorator category but does not document the clientLocation customization decorator.&quot;,
+          &quot;guidance&quot;: [],
+          &quot;noRelevantGuidance&quot;: true,
+          &quot;retrievedAt&quot;: &quot;2026-09-03T08:16:52.630351Z&quot;,
+          &quot;contentHash&quot;: &quot;sha256:2f84fe7fa088000ecd815fac3c46c6fe06d7632e22547b2a9a13db8060df04ad&quot;
+        },
+        {
+          &quot;rank&quot;: 3,
+          &quot;catalogOrder&quot;: 28,
+          &quot;title&quot;: &quot;OpenAPI decorators&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://typespec.io/docs/libraries/openapi/reference/decorators/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 3,
+            &quot;servicePlane&quot;: 2,
+            &quot;changeContext&quot;: 0,
+            &quot;total&quot;: 5
+          },
+          &quot;selectionRationale&quot;: &quot;Matches the decorator category but does not document the clientLocation customization decorator.&quot;,
+          &quot;guidance&quot;: [],
+          &quot;noRelevantGuidance&quot;: true,
+          &quot;retrievedAt&quot;: &quot;2026-09-03T08:16:52.630351Z&quot;,
+          &quot;contentHash&quot;: &quot;sha256:ea84f899c9929478eacf9bd7aa1b5523d0ab258779a2a064c84a6a8f4331174e&quot;
+        },
+        {
+          &quot;rank&quot;: 4,
+          &quot;catalogOrder&quot;: 16,
+          &quot;title&quot;: &quot;Evolving APIs&quot;,
+          &quot;canonicalUrl&quot;: &quot;https://azure.github.io/typespec-azure/docs/howtos/versioning/06-evolving-apis/&quot;,
+          &quot;score&quot;: {
+            &quot;exactSymbol&quot;: 0,
+            &quot;patternCategory&quot;: 0,
+            &quot;servicePlane&quot;: 2,
+            &quot;changeContext&quot;: 1,
+            &quot;total&quot;: 3
+          },
+          &quot;selectionRationale&quot;: &quot;Covers modification and compatibility across API evolution, but not language-specific client-location wrappers.&quot;,
+          &quot;guidance&quot;: [],
+          &quot;noRelevantGuidance&quot;: true,
+          &quot;retrievedAt&quot;: &quot;2026-09-03T08:16:52.630351Z&quot;,
+          &quot;contentHash&quot;: &quot;sha256:447166793fe09d9330e5f3660076b9f23627c8a24e63081cbb4ef36ad2d18d83&quot;
+        }
+      ],
+      &quot;blockers&quot;: []
+    }
+  ],
+  &quot;retrievalFailures&quot;: [],
+  &quot;blockers&quot;: []
+}</pre></details>
 <h3>Changed files</h3><ul><li><code>specification/elastic/Elastic.Management/back-compatible.tsp</code> (committed)</li></ul>
 <h3>Timing and model input</h3><pre>{
   &quot;timings&quot;: {
-    &quot;totalMs&quot;: 54778,
-    &quot;semanticAnalysisMs&quot;: 44,
-    &quot;restAnalysisMs&quot;: 46,
-    &quot;downstreamAnalysisMs&quot;: 1726
+    &quot;downstreamAnalysisMs&quot;: 1401,
+    &quot;buildModelInputMs&quot;: 1
   },
   &quot;inputAccounting&quot;: {
     &quot;budgetTier&quot;: &quot;small&quot;,
     &quot;budgetBytes&quot;: 131072,
-    &quot;bytes&quot;: 8344,
-    &quot;estimatedTokens&quot;: 2086,
+    &quot;bytes&quot;: 8382,
+    &quot;estimatedTokens&quot;: 2096,
     &quot;retained&quot;: {
       &quot;evidenceSets&quot;: 2,
       &quot;facts&quot;: 0,
@@ -118,6 +1255,7 @@
       &quot;compilerLogs&quot;: true,
       &quot;unchangedInventories&quot;: true,
       &quot;unreferencedFacts&quot;: true,
+      &quot;unreferencedDeterministicFacts&quot;: true,
       &quot;sourceChanges&quot;: true,
       &quot;repeatedDeclarationIds&quot;: true,
       &quot;repeatedReviewUnitEvidence&quot;: true
@@ -150,7 +1288,18 @@ function revealHashTarget() {
 }
 window.addEventListener("hashchange", revealHashTarget);
 document.addEventListener("click", (event) => {
-  if (event.target instanceof Element && event.target.closest('a[href^="#"]')) {
+  if (event.target instanceof Element &&
+      event.target.closest(".report-card > summary .report-intent-relations") &&
+      !event.target.closest("a")) {
+    event.preventDefault();
+    return;
+  }
+  const link = event.target instanceof Element
+    ? event.target.closest('a[href^="#"]')
+    : null;
+  if (link) {
+    event.preventDefault();
+    location.hash = link.getAttribute("href");
     window.setTimeout(revealHashTarget);
   }
 });

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-04T02:04:17.181Z",
+  "generatedAt": "2026-09-11T04:09:59.356Z",
   "title": "TypeSpec assessment: specification/newrelic/NewRelicObservability.Management",
   "repository": {
     "root": "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\.workspaces\\44882\\head",
@@ -17803,7 +17803,7 @@
           "relatedFindings": {
             "rest": [],
             "downstream": [],
-            "sharedTypeImpact": []
+            "typeImpact": []
           }
         }
       ],
@@ -17823,10 +17823,9 @@
     "downstream": {
       "status": "passed",
       "findings": [],
-      "operationGroups": [],
-      "sharedTypeImpacts": [],
+      "methodGroups": [],
+      "typeImpacts": [],
       "rootCauses": [],
-      "impliedByRest": [],
       "rejectedCandidateCount": 0,
       "blockers": []
     },
@@ -18567,18 +18566,18 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\44882\\deterministic-analysis\\worktrees\\current\\specification\\newrelic\\NewRelicObservability.Management",
+                "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44882\\worktrees\\current\\specification\\newrelic\\NewRelicObservability.Management",
                 "--emit=@azure-tools/typespec-autorest",
-                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\44882\\deterministic-analysis\\projects\\project-7270f17ca191\\baseline\\autorest",
+                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44882\\projects\\project-7270f17ca191\\baseline\\autorest",
                 "--warn-as-error",
                 "--option=@azure-tools/typespec-autorest.version=2025-05-01-preview"
               ]
             },
             "exitCode": 0,
-            "durationMs": 9232,
-            "configPath": "worktrees\\current\\specification\\newrelic\\NewRelicObservability.Management\\tspconfig.yaml",
+            "durationMs": 6982,
+            "configPath": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44882\\worktrees\\current\\specification\\newrelic\\NewRelicObservability.Management\\tspconfig.yaml",
             "configHash": "df88bb65192f85ee896743283d1543c7d2ffd7ceec3b59950f659a3c10584c21",
-            "logPath": "logs\\project-7270f17ca191-baseline-autorest.log",
+            "logPath": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44882\\logs\\project-7270f17ca191-baseline-autorest.log",
             "comparisonRole": "baseline",
             "sourceRevision": "current",
             "sourceCommit": "22bc88578fb1f253688e8a5bf127ef3a4502745a",
@@ -18586,7 +18585,7 @@
             "format": "swagger-2.0",
             "files": [
               {
-                "path": "projects\\project-7270f17ca191\\baseline\\autorest\\resource-manager\\NewRelic.Observability\\preview\\2025-05-01-preview\\NewRelic.json",
+                "path": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44882\\projects\\project-7270f17ca191\\baseline\\autorest\\resource-manager\\NewRelic.Observability\\preview\\2025-05-01-preview\\NewRelic.json",
                 "apiVersion": "2025-05-01-preview",
                 "documentRole": "feature",
                 "contentHash": "eb17061fb0b6507f9bd591e02275c8c2b2357f301fcae5bc83dbff33942307e9"
@@ -18599,19 +18598,19 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\44882\\deterministic-analysis\\worktrees\\current\\specification\\newrelic\\NewRelicObservability.Management",
+                "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44882\\worktrees\\current\\specification\\newrelic\\NewRelicObservability.Management",
                 "--emit=@azure-tools/typespec-client-generator-core",
-                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\44882\\deterministic-analysis\\projects\\project-7270f17ca191\\baseline\\tcgc",
+                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44882\\projects\\project-7270f17ca191\\baseline\\tcgc",
                 "--warn-as-error",
-                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\44882\\deterministic-analysis\\inputs\\empty-examples",
+                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44882\\inputs\\empty-examples",
                 "--option=@azure-tools/typespec-client-generator-core.api-version=2025-05-01-preview"
               ]
             },
             "exitCode": 0,
-            "durationMs": 7615,
-            "configPath": "worktrees\\current\\specification\\newrelic\\NewRelicObservability.Management\\tspconfig.yaml",
+            "durationMs": 6303,
+            "configPath": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44882\\worktrees\\current\\specification\\newrelic\\NewRelicObservability.Management\\tspconfig.yaml",
             "configHash": "df88bb65192f85ee896743283d1543c7d2ffd7ceec3b59950f659a3c10584c21",
-            "logPath": "logs\\project-7270f17ca191-baseline-tcgc.log",
+            "logPath": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44882\\logs\\project-7270f17ca191-baseline-tcgc.log",
             "comparisonRole": "baseline",
             "sourceRevision": "current",
             "sourceCommit": "22bc88578fb1f253688e8a5bf127ef3a4502745a",
@@ -18619,7 +18618,7 @@
             "format": "tcgc-yaml",
             "files": [
               {
-                "path": "projects\\project-7270f17ca191\\baseline\\tcgc\\tcgc-output.yaml",
+                "path": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44882\\projects\\project-7270f17ca191\\baseline\\tcgc\\tcgc-output.yaml",
                 "contentHash": "3f932d12814d6c6c23753eaea362ae89bf029de7e10d9e67f1292846783c9bbd"
               }
             ]
@@ -18636,18 +18635,18 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\44882\\deterministic-analysis\\worktrees\\current\\specification\\newrelic\\NewRelicObservability.Management",
+                "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44882\\worktrees\\current\\specification\\newrelic\\NewRelicObservability.Management",
                 "--emit=@azure-tools/typespec-autorest",
-                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\44882\\deterministic-analysis\\projects\\project-7270f17ca191\\target\\autorest",
+                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44882\\projects\\project-7270f17ca191\\target\\autorest",
                 "--warn-as-error",
                 "--option=@azure-tools/typespec-autorest.version=2026-06-01"
               ]
             },
             "exitCode": 0,
-            "durationMs": 7148,
-            "configPath": "worktrees\\current\\specification\\newrelic\\NewRelicObservability.Management\\tspconfig.yaml",
+            "durationMs": 6276,
+            "configPath": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44882\\worktrees\\current\\specification\\newrelic\\NewRelicObservability.Management\\tspconfig.yaml",
             "configHash": "df88bb65192f85ee896743283d1543c7d2ffd7ceec3b59950f659a3c10584c21",
-            "logPath": "logs\\project-7270f17ca191-target-autorest.log",
+            "logPath": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44882\\logs\\project-7270f17ca191-target-autorest.log",
             "comparisonRole": "target",
             "sourceRevision": "current",
             "sourceCommit": "22bc88578fb1f253688e8a5bf127ef3a4502745a",
@@ -18655,7 +18654,7 @@
             "format": "swagger-2.0",
             "files": [
               {
-                "path": "projects\\project-7270f17ca191\\target\\autorest\\resource-manager\\NewRelic.Observability\\stable\\2026-06-01\\NewRelic.json",
+                "path": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44882\\projects\\project-7270f17ca191\\target\\autorest\\resource-manager\\NewRelic.Observability\\stable\\2026-06-01\\NewRelic.json",
                 "apiVersion": "2026-06-01",
                 "documentRole": "feature",
                 "contentHash": "b005f6d2034f33bc88d74b0077e210edc537008511d140de298cee4b138d24e9"
@@ -18668,19 +18667,19 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\44882\\deterministic-analysis\\worktrees\\current\\specification\\newrelic\\NewRelicObservability.Management",
+                "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44882\\worktrees\\current\\specification\\newrelic\\NewRelicObservability.Management",
                 "--emit=@azure-tools/typespec-client-generator-core",
-                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\44882\\deterministic-analysis\\projects\\project-7270f17ca191\\target\\tcgc",
+                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44882\\projects\\project-7270f17ca191\\target\\tcgc",
                 "--warn-as-error",
-                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\44882\\deterministic-analysis\\inputs\\empty-examples",
+                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44882\\inputs\\empty-examples",
                 "--option=@azure-tools/typespec-client-generator-core.api-version=2026-06-01"
               ]
             },
             "exitCode": 0,
-            "durationMs": 7144,
-            "configPath": "worktrees\\current\\specification\\newrelic\\NewRelicObservability.Management\\tspconfig.yaml",
+            "durationMs": 6189,
+            "configPath": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44882\\worktrees\\current\\specification\\newrelic\\NewRelicObservability.Management\\tspconfig.yaml",
             "configHash": "df88bb65192f85ee896743283d1543c7d2ffd7ceec3b59950f659a3c10584c21",
-            "logPath": "logs\\project-7270f17ca191-target-tcgc.log",
+            "logPath": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44882\\logs\\project-7270f17ca191-target-tcgc.log",
             "comparisonRole": "target",
             "sourceRevision": "current",
             "sourceCommit": "22bc88578fb1f253688e8a5bf127ef3a4502745a",
@@ -18688,7 +18687,7 @@
             "format": "tcgc-yaml",
             "files": [
               {
-                "path": "projects\\project-7270f17ca191\\target\\tcgc\\tcgc-output.yaml",
+                "path": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44882\\projects\\project-7270f17ca191\\target\\tcgc\\tcgc-output.yaml",
                 "contentHash": "09e1735f7836da287b8e99d457ac435ba1ebafa7cd34d33c6e930dfafcd135c4"
               }
             ]
@@ -18756,8 +18755,8 @@
   "inputAccounting": {
     "budgetTier": "small",
     "budgetBytes": 131072,
-    "bytes": 7437,
-    "estimatedTokens": 1860,
+    "bytes": 7475,
+    "estimatedTokens": 1869,
     "retained": {
       "evidenceSets": 2,
       "facts": 0,
@@ -18773,6 +18772,7 @@
       "compilerLogs": true,
       "unchangedInventories": true,
       "unreferencedFacts": true,
+      "unreferencedDeterministicFacts": true,
       "sourceChanges": true,
       "repeatedDeclarationIds": true,
       "repeatedReviewUnitEvidence": true
@@ -18786,14 +18786,8 @@
     }
   },
   "timings": {
-    "totalMs": 51871,
-    "semanticAnalysisMs": 136,
-    "restAnalysisMs": 57,
-    "downstreamAnalysisMs": 1536
+    "downstreamAnalysisMs": 1090,
+    "buildModelInputMs": 1
   },
-  "pr": 44882,
-  "pullRequest": {
-    "number": 44882,
-    "url": "https://github.com/Azure/azure-rest-api-specs/pull/44882"
-  }
+  "pr": 44882
 }

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-04T02:04:10.044Z",
+  "generatedAt": "2026-09-11T04:20:44.114Z",
   "title": "TypeSpec assessment: specification/chaos/resource-manager/Microsoft.Chaos/Chaos",
   "repository": {
     "root": "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\.workspaces\\43308\\head",
@@ -1241,7 +1241,7 @@
           "relatedFindings": {
             "rest": [],
             "downstream": [],
-            "sharedTypeImpact": []
+            "typeImpact": []
           }
         },
         {
@@ -1416,7 +1416,7 @@
           "relatedFindings": {
             "rest": [],
             "downstream": [],
-            "sharedTypeImpact": []
+            "typeImpact": []
           }
         },
         {
@@ -5981,7 +5981,7 @@
               "downstream-group-b3fd338076b896e8",
               "downstream-group-e5c51b2794bebaf5"
             ],
-            "sharedTypeImpact": []
+            "typeImpact": []
           }
         }
       ],
@@ -6104,10 +6104,10 @@
           ],
           "reviewRequired": true,
           "rootCauseIds": [
-            "downstream-root-cause-e44fb6393b44ae55"
+            "downstream-root-cause-ca4a7eaf2a8e9a65"
           ],
           "severity": "high",
-          "rationale": "The public SDK method changes from a basic call to an LRO poller pattern, requiring existing SDK callers to use different invocation and completion handling.",
+          "rationale": "ScenarioConfigurations.execute becomes a long-running operation. Callers must wait for final completion rather than treating the initial response as completion.",
           "evidence": [
             {
               "projectId": "project-a3a154cb066a",
@@ -6352,6 +6352,44 @@
                 "responses": [
                   {
                     "statusCodes": 202,
+                    "headers": [
+                      {
+                        "position": 0,
+                        "name": "location",
+                        "serializedName": "Location",
+                        "kind": "responseheader",
+                        "type": {
+                          "kind": "string"
+                        },
+                        "optional": true,
+                        "onClient": false,
+                        "isApiVersionParam": false,
+                        "access": "public",
+                        "flatten": false,
+                        "crossLanguageDefinitionId": "Azure.ResourceManager.ArmAcceptedLroResponse.location",
+                        "serialization": {
+                          "serializedName": "Location"
+                        }
+                      },
+                      {
+                        "position": 1,
+                        "name": "retryAfter",
+                        "serializedName": "Retry-After",
+                        "kind": "responseheader",
+                        "type": {
+                          "kind": "int32"
+                        },
+                        "optional": true,
+                        "onClient": false,
+                        "isApiVersionParam": false,
+                        "access": "public",
+                        "flatten": false,
+                        "crossLanguageDefinitionId": "Azure.ResourceManager.ArmAcceptedLroResponse.retryAfter",
+                        "serialization": {
+                          "serializedName": "Retry-After"
+                        }
+                      }
+                    ],
                     "contentTypes": []
                   }
                 ],
@@ -6363,6 +6401,7 @@
                       "id": "Azure.ResourceManager.CommonTypes.ErrorResponse",
                       "name": "ErrorResponse"
                     },
+                    "headers": [],
                     "contentTypes": [
                       "application/json"
                     ],
@@ -6619,6 +6658,44 @@
                 "responses": [
                   {
                     "statusCodes": 202,
+                    "headers": [
+                      {
+                        "position": 0,
+                        "name": "location",
+                        "serializedName": "Location",
+                        "kind": "responseheader",
+                        "type": {
+                          "kind": "string"
+                        },
+                        "optional": true,
+                        "onClient": false,
+                        "isApiVersionParam": false,
+                        "access": "public",
+                        "flatten": false,
+                        "crossLanguageDefinitionId": "Azure.ResourceManager.ArmAcceptedLroResponse.location",
+                        "serialization": {
+                          "serializedName": "Location"
+                        }
+                      },
+                      {
+                        "position": 1,
+                        "name": "retryAfter",
+                        "serializedName": "Retry-After",
+                        "kind": "responseheader",
+                        "type": {
+                          "kind": "int32"
+                        },
+                        "optional": true,
+                        "onClient": false,
+                        "isApiVersionParam": false,
+                        "access": "public",
+                        "flatten": false,
+                        "crossLanguageDefinitionId": "Azure.ResourceManager.ArmAcceptedLroResponse.retryAfter",
+                        "serialization": {
+                          "serializedName": "Retry-After"
+                        }
+                      }
+                    ],
                     "contentTypes": []
                   }
                 ],
@@ -6630,6 +6707,7 @@
                       "id": "Azure.ResourceManager.CommonTypes.ErrorResponse",
                       "name": "ErrorResponse"
                     },
+                    "headers": [],
                     "contentTypes": [
                       "application/json"
                     ],
@@ -10112,10 +10190,10 @@
           ],
           "reviewRequired": true,
           "rootCauseIds": [
-            "downstream-root-cause-e44fb6393b44ae55"
+            "downstream-root-cause-ca4a7eaf2a8e9a65"
           ],
-          "severity": "high",
-          "rationale": "The public SDK method gains ScenarioRun as its response type, changing generated signatures and result handling for existing callers.",
+          "severity": "medium",
+          "rationale": "ScenarioConfigurations.execute now produces ScenarioRun after long-running completion instead of no result. Code tied to its previous no-result completion contract must adapt; callers that discard results are less affected.",
           "evidence": [
             {
               "projectId": "project-a3a154cb066a",
@@ -10360,6 +10438,44 @@
                 "responses": [
                   {
                     "statusCodes": 202,
+                    "headers": [
+                      {
+                        "position": 0,
+                        "name": "location",
+                        "serializedName": "Location",
+                        "kind": "responseheader",
+                        "type": {
+                          "kind": "string"
+                        },
+                        "optional": true,
+                        "onClient": false,
+                        "isApiVersionParam": false,
+                        "access": "public",
+                        "flatten": false,
+                        "crossLanguageDefinitionId": "Azure.ResourceManager.ArmAcceptedLroResponse.location",
+                        "serialization": {
+                          "serializedName": "Location"
+                        }
+                      },
+                      {
+                        "position": 1,
+                        "name": "retryAfter",
+                        "serializedName": "Retry-After",
+                        "kind": "responseheader",
+                        "type": {
+                          "kind": "int32"
+                        },
+                        "optional": true,
+                        "onClient": false,
+                        "isApiVersionParam": false,
+                        "access": "public",
+                        "flatten": false,
+                        "crossLanguageDefinitionId": "Azure.ResourceManager.ArmAcceptedLroResponse.retryAfter",
+                        "serialization": {
+                          "serializedName": "Retry-After"
+                        }
+                      }
+                    ],
                     "contentTypes": []
                   }
                 ],
@@ -10371,6 +10487,7 @@
                       "id": "Azure.ResourceManager.CommonTypes.ErrorResponse",
                       "name": "ErrorResponse"
                     },
+                    "headers": [],
                     "contentTypes": [
                       "application/json"
                     ],
@@ -10627,6 +10744,44 @@
                 "responses": [
                   {
                     "statusCodes": 202,
+                    "headers": [
+                      {
+                        "position": 0,
+                        "name": "location",
+                        "serializedName": "Location",
+                        "kind": "responseheader",
+                        "type": {
+                          "kind": "string"
+                        },
+                        "optional": true,
+                        "onClient": false,
+                        "isApiVersionParam": false,
+                        "access": "public",
+                        "flatten": false,
+                        "crossLanguageDefinitionId": "Azure.ResourceManager.ArmAcceptedLroResponse.location",
+                        "serialization": {
+                          "serializedName": "Location"
+                        }
+                      },
+                      {
+                        "position": 1,
+                        "name": "retryAfter",
+                        "serializedName": "Retry-After",
+                        "kind": "responseheader",
+                        "type": {
+                          "kind": "int32"
+                        },
+                        "optional": true,
+                        "onClient": false,
+                        "isApiVersionParam": false,
+                        "access": "public",
+                        "flatten": false,
+                        "crossLanguageDefinitionId": "Azure.ResourceManager.ArmAcceptedLroResponse.retryAfter",
+                        "serialization": {
+                          "serializedName": "Retry-After"
+                        }
+                      }
+                    ],
                     "contentTypes": []
                   }
                 ],
@@ -10638,6 +10793,7 @@
                       "id": "Azure.ResourceManager.CommonTypes.ErrorResponse",
                       "name": "ErrorResponse"
                     },
+                    "headers": [],
                     "contentTypes": [
                       "application/json"
                     ],
@@ -14120,10 +14276,10 @@
           ],
           "reviewRequired": true,
           "rootCauseIds": [
-            "downstream-root-cause-e44fb6393b44ae55"
+            "downstream-root-cause-6e1641ccb25a583b"
           ],
-          "severity": "high",
-          "rationale": "The public SDK method gains ScenarioRun as its response type, changing generated signatures and result handling for existing callers.",
+          "severity": "medium",
+          "rationale": "ScenarioRuns.cancel now produces ScenarioRun after long-running completion instead of no result. Code tied to its previous no-result completion contract must adapt; callers that discard results are less affected.",
           "evidence": [
             {
               "projectId": "project-a3a154cb066a",
@@ -14368,6 +14524,44 @@
                 "responses": [
                   {
                     "statusCodes": 202,
+                    "headers": [
+                      {
+                        "position": 0,
+                        "name": "location",
+                        "serializedName": "Location",
+                        "kind": "responseheader",
+                        "type": {
+                          "kind": "string"
+                        },
+                        "optional": true,
+                        "onClient": false,
+                        "isApiVersionParam": false,
+                        "access": "public",
+                        "flatten": false,
+                        "crossLanguageDefinitionId": "Azure.ResourceManager.ArmAcceptedLroResponse.location",
+                        "serialization": {
+                          "serializedName": "Location"
+                        }
+                      },
+                      {
+                        "position": 1,
+                        "name": "retryAfter",
+                        "serializedName": "Retry-After",
+                        "kind": "responseheader",
+                        "type": {
+                          "kind": "int32"
+                        },
+                        "optional": true,
+                        "onClient": false,
+                        "isApiVersionParam": false,
+                        "access": "public",
+                        "flatten": false,
+                        "crossLanguageDefinitionId": "Azure.ResourceManager.ArmAcceptedLroResponse.retryAfter",
+                        "serialization": {
+                          "serializedName": "Retry-After"
+                        }
+                      }
+                    ],
                     "contentTypes": []
                   }
                 ],
@@ -14379,6 +14573,7 @@
                       "id": "Azure.ResourceManager.CommonTypes.ErrorResponse",
                       "name": "ErrorResponse"
                     },
+                    "headers": [],
                     "contentTypes": [
                       "application/json"
                     ],
@@ -14635,6 +14830,44 @@
                 "responses": [
                   {
                     "statusCodes": 202,
+                    "headers": [
+                      {
+                        "position": 0,
+                        "name": "location",
+                        "serializedName": "Location",
+                        "kind": "responseheader",
+                        "type": {
+                          "kind": "string"
+                        },
+                        "optional": true,
+                        "onClient": false,
+                        "isApiVersionParam": false,
+                        "access": "public",
+                        "flatten": false,
+                        "crossLanguageDefinitionId": "Azure.ResourceManager.ArmAcceptedLroResponse.location",
+                        "serialization": {
+                          "serializedName": "Location"
+                        }
+                      },
+                      {
+                        "position": 1,
+                        "name": "retryAfter",
+                        "serializedName": "Retry-After",
+                        "kind": "responseheader",
+                        "type": {
+                          "kind": "int32"
+                        },
+                        "optional": true,
+                        "onClient": false,
+                        "isApiVersionParam": false,
+                        "access": "public",
+                        "flatten": false,
+                        "crossLanguageDefinitionId": "Azure.ResourceManager.ArmAcceptedLroResponse.retryAfter",
+                        "serialization": {
+                          "serializedName": "Retry-After"
+                        }
+                      }
+                    ],
                     "contentTypes": []
                   }
                 ],
@@ -14646,6 +14879,7 @@
                       "id": "Azure.ResourceManager.CommonTypes.ErrorResponse",
                       "name": "ErrorResponse"
                     },
+                    "headers": [],
                     "contentTypes": [
                       "application/json"
                     ],
@@ -18128,10 +18362,10 @@
           ],
           "reviewRequired": true,
           "rootCauseIds": [
-            "downstream-root-cause-e44fb6393b44ae55"
+            "downstream-root-cause-6e1641ccb25a583b"
           ],
           "severity": "medium",
-          "rationale": "Location-based polling metadata and a final ScenarioRun result change generated poller behavior for existing SDK callers.",
+          "rationale": "ScenarioRuns.cancel now requires status polling and a final-result request. Callers must follow this completion process instead of treating the initial cancellation response as final.",
           "evidence": [
             {
               "projectId": "project-a3a154cb066a",
@@ -18376,6 +18610,44 @@
                 "responses": [
                   {
                     "statusCodes": 202,
+                    "headers": [
+                      {
+                        "position": 0,
+                        "name": "location",
+                        "serializedName": "Location",
+                        "kind": "responseheader",
+                        "type": {
+                          "kind": "string"
+                        },
+                        "optional": true,
+                        "onClient": false,
+                        "isApiVersionParam": false,
+                        "access": "public",
+                        "flatten": false,
+                        "crossLanguageDefinitionId": "Azure.ResourceManager.ArmAcceptedLroResponse.location",
+                        "serialization": {
+                          "serializedName": "Location"
+                        }
+                      },
+                      {
+                        "position": 1,
+                        "name": "retryAfter",
+                        "serializedName": "Retry-After",
+                        "kind": "responseheader",
+                        "type": {
+                          "kind": "int32"
+                        },
+                        "optional": true,
+                        "onClient": false,
+                        "isApiVersionParam": false,
+                        "access": "public",
+                        "flatten": false,
+                        "crossLanguageDefinitionId": "Azure.ResourceManager.ArmAcceptedLroResponse.retryAfter",
+                        "serialization": {
+                          "serializedName": "Retry-After"
+                        }
+                      }
+                    ],
                     "contentTypes": []
                   }
                 ],
@@ -18387,6 +18659,7 @@
                       "id": "Azure.ResourceManager.CommonTypes.ErrorResponse",
                       "name": "ErrorResponse"
                     },
+                    "headers": [],
                     "contentTypes": [
                       "application/json"
                     ],
@@ -18643,6 +18916,44 @@
                 "responses": [
                   {
                     "statusCodes": 202,
+                    "headers": [
+                      {
+                        "position": 0,
+                        "name": "location",
+                        "serializedName": "Location",
+                        "kind": "responseheader",
+                        "type": {
+                          "kind": "string"
+                        },
+                        "optional": true,
+                        "onClient": false,
+                        "isApiVersionParam": false,
+                        "access": "public",
+                        "flatten": false,
+                        "crossLanguageDefinitionId": "Azure.ResourceManager.ArmAcceptedLroResponse.location",
+                        "serialization": {
+                          "serializedName": "Location"
+                        }
+                      },
+                      {
+                        "position": 1,
+                        "name": "retryAfter",
+                        "serializedName": "Retry-After",
+                        "kind": "responseheader",
+                        "type": {
+                          "kind": "int32"
+                        },
+                        "optional": true,
+                        "onClient": false,
+                        "isApiVersionParam": false,
+                        "access": "public",
+                        "flatten": false,
+                        "crossLanguageDefinitionId": "Azure.ResourceManager.ArmAcceptedLroResponse.retryAfter",
+                        "serialization": {
+                          "serializedName": "Retry-After"
+                        }
+                      }
+                    ],
                     "contentTypes": []
                   }
                 ],
@@ -18654,6 +18965,7 @@
                       "id": "Azure.ResourceManager.CommonTypes.ErrorResponse",
                       "name": "ErrorResponse"
                     },
+                    "headers": [],
                     "contentTypes": [
                       "application/json"
                     ],
@@ -22136,10 +22448,10 @@
           ],
           "reviewRequired": true,
           "rootCauseIds": [
-            "downstream-root-cause-e44fb6393b44ae55"
+            "downstream-root-cause-6e1641ccb25a583b"
           ],
           "severity": "high",
-          "rationale": "The public SDK method changes from a basic call to an LRO poller pattern, requiring existing SDK callers to use different invocation and completion handling.",
+          "rationale": "ScenarioRuns.cancel becomes a long-running operation. Callers must wait for final completion rather than treating the initial response as completion.",
           "evidence": [
             {
               "projectId": "project-a3a154cb066a",
@@ -22384,6 +22696,44 @@
                 "responses": [
                   {
                     "statusCodes": 202,
+                    "headers": [
+                      {
+                        "position": 0,
+                        "name": "location",
+                        "serializedName": "Location",
+                        "kind": "responseheader",
+                        "type": {
+                          "kind": "string"
+                        },
+                        "optional": true,
+                        "onClient": false,
+                        "isApiVersionParam": false,
+                        "access": "public",
+                        "flatten": false,
+                        "crossLanguageDefinitionId": "Azure.ResourceManager.ArmAcceptedLroResponse.location",
+                        "serialization": {
+                          "serializedName": "Location"
+                        }
+                      },
+                      {
+                        "position": 1,
+                        "name": "retryAfter",
+                        "serializedName": "Retry-After",
+                        "kind": "responseheader",
+                        "type": {
+                          "kind": "int32"
+                        },
+                        "optional": true,
+                        "onClient": false,
+                        "isApiVersionParam": false,
+                        "access": "public",
+                        "flatten": false,
+                        "crossLanguageDefinitionId": "Azure.ResourceManager.ArmAcceptedLroResponse.retryAfter",
+                        "serialization": {
+                          "serializedName": "Retry-After"
+                        }
+                      }
+                    ],
                     "contentTypes": []
                   }
                 ],
@@ -22395,6 +22745,7 @@
                       "id": "Azure.ResourceManager.CommonTypes.ErrorResponse",
                       "name": "ErrorResponse"
                     },
+                    "headers": [],
                     "contentTypes": [
                       "application/json"
                     ],
@@ -22651,6 +23002,44 @@
                 "responses": [
                   {
                     "statusCodes": 202,
+                    "headers": [
+                      {
+                        "position": 0,
+                        "name": "location",
+                        "serializedName": "Location",
+                        "kind": "responseheader",
+                        "type": {
+                          "kind": "string"
+                        },
+                        "optional": true,
+                        "onClient": false,
+                        "isApiVersionParam": false,
+                        "access": "public",
+                        "flatten": false,
+                        "crossLanguageDefinitionId": "Azure.ResourceManager.ArmAcceptedLroResponse.location",
+                        "serialization": {
+                          "serializedName": "Location"
+                        }
+                      },
+                      {
+                        "position": 1,
+                        "name": "retryAfter",
+                        "serializedName": "Retry-After",
+                        "kind": "responseheader",
+                        "type": {
+                          "kind": "int32"
+                        },
+                        "optional": true,
+                        "onClient": false,
+                        "isApiVersionParam": false,
+                        "access": "public",
+                        "flatten": false,
+                        "crossLanguageDefinitionId": "Azure.ResourceManager.ArmAcceptedLroResponse.retryAfter",
+                        "serialization": {
+                          "serializedName": "Retry-After"
+                        }
+                      }
+                    ],
                     "contentTypes": []
                   }
                 ],
@@ -22662,6 +23051,7 @@
                       "id": "Azure.ResourceManager.CommonTypes.ErrorResponse",
                       "name": "ErrorResponse"
                     },
+                    "headers": [],
                     "contentTypes": [
                       "application/json"
                     ],
@@ -26144,10 +26534,10 @@
           ],
           "reviewRequired": true,
           "rootCauseIds": [
-            "downstream-root-cause-e44fb6393b44ae55"
+            "downstream-root-cause-ca4a7eaf2a8e9a65"
           ],
           "severity": "medium",
-          "rationale": "Location-based polling metadata and a final ScenarioRun result change generated poller behavior for existing SDK callers.",
+          "rationale": "ScenarioConfigurations.execute now requires status polling and a final-result request. Callers must follow this completion process instead of treating the initial execution response as final.",
           "evidence": [
             {
               "projectId": "project-a3a154cb066a",
@@ -26392,6 +26782,44 @@
                 "responses": [
                   {
                     "statusCodes": 202,
+                    "headers": [
+                      {
+                        "position": 0,
+                        "name": "location",
+                        "serializedName": "Location",
+                        "kind": "responseheader",
+                        "type": {
+                          "kind": "string"
+                        },
+                        "optional": true,
+                        "onClient": false,
+                        "isApiVersionParam": false,
+                        "access": "public",
+                        "flatten": false,
+                        "crossLanguageDefinitionId": "Azure.ResourceManager.ArmAcceptedLroResponse.location",
+                        "serialization": {
+                          "serializedName": "Location"
+                        }
+                      },
+                      {
+                        "position": 1,
+                        "name": "retryAfter",
+                        "serializedName": "Retry-After",
+                        "kind": "responseheader",
+                        "type": {
+                          "kind": "int32"
+                        },
+                        "optional": true,
+                        "onClient": false,
+                        "isApiVersionParam": false,
+                        "access": "public",
+                        "flatten": false,
+                        "crossLanguageDefinitionId": "Azure.ResourceManager.ArmAcceptedLroResponse.retryAfter",
+                        "serialization": {
+                          "serializedName": "Retry-After"
+                        }
+                      }
+                    ],
                     "contentTypes": []
                   }
                 ],
@@ -26403,6 +26831,7 @@
                       "id": "Azure.ResourceManager.CommonTypes.ErrorResponse",
                       "name": "ErrorResponse"
                     },
+                    "headers": [],
                     "contentTypes": [
                       "application/json"
                     ],
@@ -26659,6 +27088,44 @@
                 "responses": [
                   {
                     "statusCodes": 202,
+                    "headers": [
+                      {
+                        "position": 0,
+                        "name": "location",
+                        "serializedName": "Location",
+                        "kind": "responseheader",
+                        "type": {
+                          "kind": "string"
+                        },
+                        "optional": true,
+                        "onClient": false,
+                        "isApiVersionParam": false,
+                        "access": "public",
+                        "flatten": false,
+                        "crossLanguageDefinitionId": "Azure.ResourceManager.ArmAcceptedLroResponse.location",
+                        "serialization": {
+                          "serializedName": "Location"
+                        }
+                      },
+                      {
+                        "position": 1,
+                        "name": "retryAfter",
+                        "serializedName": "Retry-After",
+                        "kind": "responseheader",
+                        "type": {
+                          "kind": "int32"
+                        },
+                        "optional": true,
+                        "onClient": false,
+                        "isApiVersionParam": false,
+                        "access": "public",
+                        "flatten": false,
+                        "crossLanguageDefinitionId": "Azure.ResourceManager.ArmAcceptedLroResponse.retryAfter",
+                        "serialization": {
+                          "serializedName": "Retry-After"
+                        }
+                      }
+                    ],
                     "contentTypes": []
                   }
                 ],
@@ -26670,6 +27137,7 @@
                       "id": "Azure.ResourceManager.CommonTypes.ErrorResponse",
                       "name": "ErrorResponse"
                     },
+                    "headers": [],
                     "contentTypes": [
                       "application/json"
                     ],
@@ -30067,7 +30535,7 @@
           "semanticMatchBasis": "declaration-identity"
         }
       ],
-      "operationGroups": [
+      "methodGroups": [
         {
           "id": "downstream-group-b3fd338076b896e8",
           "projectId": "project-a3a154cb066a",
@@ -30315,6 +30783,44 @@
               "responses": [
                 {
                   "statusCodes": 202,
+                  "headers": [
+                    {
+                      "position": 0,
+                      "name": "location",
+                      "serializedName": "Location",
+                      "kind": "responseheader",
+                      "type": {
+                        "kind": "string"
+                      },
+                      "optional": true,
+                      "onClient": false,
+                      "isApiVersionParam": false,
+                      "access": "public",
+                      "flatten": false,
+                      "crossLanguageDefinitionId": "Azure.ResourceManager.ArmAcceptedLroResponse.location",
+                      "serialization": {
+                        "serializedName": "Location"
+                      }
+                    },
+                    {
+                      "position": 1,
+                      "name": "retryAfter",
+                      "serializedName": "Retry-After",
+                      "kind": "responseheader",
+                      "type": {
+                        "kind": "int32"
+                      },
+                      "optional": true,
+                      "onClient": false,
+                      "isApiVersionParam": false,
+                      "access": "public",
+                      "flatten": false,
+                      "crossLanguageDefinitionId": "Azure.ResourceManager.ArmAcceptedLroResponse.retryAfter",
+                      "serialization": {
+                        "serializedName": "Retry-After"
+                      }
+                    }
+                  ],
                   "contentTypes": []
                 }
               ],
@@ -30326,6 +30832,7 @@
                     "id": "Azure.ResourceManager.CommonTypes.ErrorResponse",
                     "name": "ErrorResponse"
                   },
+                  "headers": [],
                   "contentTypes": [
                     "application/json"
                   ],
@@ -30582,6 +31089,44 @@
               "responses": [
                 {
                   "statusCodes": 202,
+                  "headers": [
+                    {
+                      "position": 0,
+                      "name": "location",
+                      "serializedName": "Location",
+                      "kind": "responseheader",
+                      "type": {
+                        "kind": "string"
+                      },
+                      "optional": true,
+                      "onClient": false,
+                      "isApiVersionParam": false,
+                      "access": "public",
+                      "flatten": false,
+                      "crossLanguageDefinitionId": "Azure.ResourceManager.ArmAcceptedLroResponse.location",
+                      "serialization": {
+                        "serializedName": "Location"
+                      }
+                    },
+                    {
+                      "position": 1,
+                      "name": "retryAfter",
+                      "serializedName": "Retry-After",
+                      "kind": "responseheader",
+                      "type": {
+                        "kind": "int32"
+                      },
+                      "optional": true,
+                      "onClient": false,
+                      "isApiVersionParam": false,
+                      "access": "public",
+                      "flatten": false,
+                      "crossLanguageDefinitionId": "Azure.ResourceManager.ArmAcceptedLroResponse.retryAfter",
+                      "serialization": {
+                        "serializedName": "Retry-After"
+                      }
+                    }
+                  ],
                   "contentTypes": []
                 }
               ],
@@ -30593,6 +31138,7 @@
                     "id": "Azure.ResourceManager.CommonTypes.ErrorResponse",
                     "name": "ErrorResponse"
                   },
+                  "headers": [],
                   "contentTypes": [
                     "application/json"
                   ],
@@ -30774,10 +31320,10 @@
               ],
               "reviewRequired": true,
               "rootCauseIds": [
-                "downstream-root-cause-e44fb6393b44ae55"
+                "downstream-root-cause-ca4a7eaf2a8e9a65"
               ],
               "severity": "high",
-              "rationale": "The public SDK method changes from a basic call to an LRO poller pattern, requiring existing SDK callers to use different invocation and completion handling.",
+              "rationale": "ScenarioConfigurations.execute becomes a long-running operation. Callers must wait for final completion rather than treating the initial response as completion.",
               "evidence": [
                 {
                   "projectId": "project-a3a154cb066a",
@@ -31022,6 +31568,44 @@
                     "responses": [
                       {
                         "statusCodes": 202,
+                        "headers": [
+                          {
+                            "position": 0,
+                            "name": "location",
+                            "serializedName": "Location",
+                            "kind": "responseheader",
+                            "type": {
+                              "kind": "string"
+                            },
+                            "optional": true,
+                            "onClient": false,
+                            "isApiVersionParam": false,
+                            "access": "public",
+                            "flatten": false,
+                            "crossLanguageDefinitionId": "Azure.ResourceManager.ArmAcceptedLroResponse.location",
+                            "serialization": {
+                              "serializedName": "Location"
+                            }
+                          },
+                          {
+                            "position": 1,
+                            "name": "retryAfter",
+                            "serializedName": "Retry-After",
+                            "kind": "responseheader",
+                            "type": {
+                              "kind": "int32"
+                            },
+                            "optional": true,
+                            "onClient": false,
+                            "isApiVersionParam": false,
+                            "access": "public",
+                            "flatten": false,
+                            "crossLanguageDefinitionId": "Azure.ResourceManager.ArmAcceptedLroResponse.retryAfter",
+                            "serialization": {
+                              "serializedName": "Retry-After"
+                            }
+                          }
+                        ],
                         "contentTypes": []
                       }
                     ],
@@ -31033,6 +31617,7 @@
                           "id": "Azure.ResourceManager.CommonTypes.ErrorResponse",
                           "name": "ErrorResponse"
                         },
+                        "headers": [],
                         "contentTypes": [
                           "application/json"
                         ],
@@ -31289,6 +31874,44 @@
                     "responses": [
                       {
                         "statusCodes": 202,
+                        "headers": [
+                          {
+                            "position": 0,
+                            "name": "location",
+                            "serializedName": "Location",
+                            "kind": "responseheader",
+                            "type": {
+                              "kind": "string"
+                            },
+                            "optional": true,
+                            "onClient": false,
+                            "isApiVersionParam": false,
+                            "access": "public",
+                            "flatten": false,
+                            "crossLanguageDefinitionId": "Azure.ResourceManager.ArmAcceptedLroResponse.location",
+                            "serialization": {
+                              "serializedName": "Location"
+                            }
+                          },
+                          {
+                            "position": 1,
+                            "name": "retryAfter",
+                            "serializedName": "Retry-After",
+                            "kind": "responseheader",
+                            "type": {
+                              "kind": "int32"
+                            },
+                            "optional": true,
+                            "onClient": false,
+                            "isApiVersionParam": false,
+                            "access": "public",
+                            "flatten": false,
+                            "crossLanguageDefinitionId": "Azure.ResourceManager.ArmAcceptedLroResponse.retryAfter",
+                            "serialization": {
+                              "serializedName": "Retry-After"
+                            }
+                          }
+                        ],
                         "contentTypes": []
                       }
                     ],
@@ -31300,6 +31923,7 @@
                           "id": "Azure.ResourceManager.CommonTypes.ErrorResponse",
                           "name": "ErrorResponse"
                         },
+                        "headers": [],
                         "contentTypes": [
                           "application/json"
                         ],
@@ -34782,10 +35406,10 @@
               ],
               "reviewRequired": true,
               "rootCauseIds": [
-                "downstream-root-cause-e44fb6393b44ae55"
+                "downstream-root-cause-ca4a7eaf2a8e9a65"
               ],
-              "severity": "high",
-              "rationale": "The public SDK method gains ScenarioRun as its response type, changing generated signatures and result handling for existing callers.",
+              "severity": "medium",
+              "rationale": "ScenarioConfigurations.execute now produces ScenarioRun after long-running completion instead of no result. Code tied to its previous no-result completion contract must adapt; callers that discard results are less affected.",
               "evidence": [
                 {
                   "projectId": "project-a3a154cb066a",
@@ -35030,6 +35654,44 @@
                     "responses": [
                       {
                         "statusCodes": 202,
+                        "headers": [
+                          {
+                            "position": 0,
+                            "name": "location",
+                            "serializedName": "Location",
+                            "kind": "responseheader",
+                            "type": {
+                              "kind": "string"
+                            },
+                            "optional": true,
+                            "onClient": false,
+                            "isApiVersionParam": false,
+                            "access": "public",
+                            "flatten": false,
+                            "crossLanguageDefinitionId": "Azure.ResourceManager.ArmAcceptedLroResponse.location",
+                            "serialization": {
+                              "serializedName": "Location"
+                            }
+                          },
+                          {
+                            "position": 1,
+                            "name": "retryAfter",
+                            "serializedName": "Retry-After",
+                            "kind": "responseheader",
+                            "type": {
+                              "kind": "int32"
+                            },
+                            "optional": true,
+                            "onClient": false,
+                            "isApiVersionParam": false,
+                            "access": "public",
+                            "flatten": false,
+                            "crossLanguageDefinitionId": "Azure.ResourceManager.ArmAcceptedLroResponse.retryAfter",
+                            "serialization": {
+                              "serializedName": "Retry-After"
+                            }
+                          }
+                        ],
                         "contentTypes": []
                       }
                     ],
@@ -35041,6 +35703,7 @@
                           "id": "Azure.ResourceManager.CommonTypes.ErrorResponse",
                           "name": "ErrorResponse"
                         },
+                        "headers": [],
                         "contentTypes": [
                           "application/json"
                         ],
@@ -35297,6 +35960,44 @@
                     "responses": [
                       {
                         "statusCodes": 202,
+                        "headers": [
+                          {
+                            "position": 0,
+                            "name": "location",
+                            "serializedName": "Location",
+                            "kind": "responseheader",
+                            "type": {
+                              "kind": "string"
+                            },
+                            "optional": true,
+                            "onClient": false,
+                            "isApiVersionParam": false,
+                            "access": "public",
+                            "flatten": false,
+                            "crossLanguageDefinitionId": "Azure.ResourceManager.ArmAcceptedLroResponse.location",
+                            "serialization": {
+                              "serializedName": "Location"
+                            }
+                          },
+                          {
+                            "position": 1,
+                            "name": "retryAfter",
+                            "serializedName": "Retry-After",
+                            "kind": "responseheader",
+                            "type": {
+                              "kind": "int32"
+                            },
+                            "optional": true,
+                            "onClient": false,
+                            "isApiVersionParam": false,
+                            "access": "public",
+                            "flatten": false,
+                            "crossLanguageDefinitionId": "Azure.ResourceManager.ArmAcceptedLroResponse.retryAfter",
+                            "serialization": {
+                              "serializedName": "Retry-After"
+                            }
+                          }
+                        ],
                         "contentTypes": []
                       }
                     ],
@@ -35308,6 +36009,7 @@
                           "id": "Azure.ResourceManager.CommonTypes.ErrorResponse",
                           "name": "ErrorResponse"
                         },
+                        "headers": [],
                         "contentTypes": [
                           "application/json"
                         ],
@@ -38790,10 +39492,10 @@
               ],
               "reviewRequired": true,
               "rootCauseIds": [
-                "downstream-root-cause-e44fb6393b44ae55"
+                "downstream-root-cause-ca4a7eaf2a8e9a65"
               ],
               "severity": "medium",
-              "rationale": "Location-based polling metadata and a final ScenarioRun result change generated poller behavior for existing SDK callers.",
+              "rationale": "ScenarioConfigurations.execute now requires status polling and a final-result request. Callers must follow this completion process instead of treating the initial execution response as final.",
               "evidence": [
                 {
                   "projectId": "project-a3a154cb066a",
@@ -39038,6 +39740,44 @@
                     "responses": [
                       {
                         "statusCodes": 202,
+                        "headers": [
+                          {
+                            "position": 0,
+                            "name": "location",
+                            "serializedName": "Location",
+                            "kind": "responseheader",
+                            "type": {
+                              "kind": "string"
+                            },
+                            "optional": true,
+                            "onClient": false,
+                            "isApiVersionParam": false,
+                            "access": "public",
+                            "flatten": false,
+                            "crossLanguageDefinitionId": "Azure.ResourceManager.ArmAcceptedLroResponse.location",
+                            "serialization": {
+                              "serializedName": "Location"
+                            }
+                          },
+                          {
+                            "position": 1,
+                            "name": "retryAfter",
+                            "serializedName": "Retry-After",
+                            "kind": "responseheader",
+                            "type": {
+                              "kind": "int32"
+                            },
+                            "optional": true,
+                            "onClient": false,
+                            "isApiVersionParam": false,
+                            "access": "public",
+                            "flatten": false,
+                            "crossLanguageDefinitionId": "Azure.ResourceManager.ArmAcceptedLroResponse.retryAfter",
+                            "serialization": {
+                              "serializedName": "Retry-After"
+                            }
+                          }
+                        ],
                         "contentTypes": []
                       }
                     ],
@@ -39049,6 +39789,7 @@
                           "id": "Azure.ResourceManager.CommonTypes.ErrorResponse",
                           "name": "ErrorResponse"
                         },
+                        "headers": [],
                         "contentTypes": [
                           "application/json"
                         ],
@@ -39305,6 +40046,44 @@
                     "responses": [
                       {
                         "statusCodes": 202,
+                        "headers": [
+                          {
+                            "position": 0,
+                            "name": "location",
+                            "serializedName": "Location",
+                            "kind": "responseheader",
+                            "type": {
+                              "kind": "string"
+                            },
+                            "optional": true,
+                            "onClient": false,
+                            "isApiVersionParam": false,
+                            "access": "public",
+                            "flatten": false,
+                            "crossLanguageDefinitionId": "Azure.ResourceManager.ArmAcceptedLroResponse.location",
+                            "serialization": {
+                              "serializedName": "Location"
+                            }
+                          },
+                          {
+                            "position": 1,
+                            "name": "retryAfter",
+                            "serializedName": "Retry-After",
+                            "kind": "responseheader",
+                            "type": {
+                              "kind": "int32"
+                            },
+                            "optional": true,
+                            "onClient": false,
+                            "isApiVersionParam": false,
+                            "access": "public",
+                            "flatten": false,
+                            "crossLanguageDefinitionId": "Azure.ResourceManager.ArmAcceptedLroResponse.retryAfter",
+                            "serialization": {
+                              "serializedName": "Retry-After"
+                            }
+                          }
+                        ],
                         "contentTypes": []
                       }
                     ],
@@ -39316,6 +40095,7 @@
                           "id": "Azure.ResourceManager.CommonTypes.ErrorResponse",
                           "name": "ErrorResponse"
                         },
+                        "headers": [],
                         "contentTypes": [
                           "application/json"
                         ],
@@ -42713,8 +43493,7 @@
               "semanticMatchBasis": "declaration-identity"
             }
           ],
-          "method": "post",
-          "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Chaos/workspaces/{workspaceName}/scenarios/{scenarioName}/configurations/{scenarioConfigurationName}/execute",
+          "apiVersion": "2026-05-01-preview",
           "parametersUnchanged": true,
           "deltas": [
             {
@@ -42724,7 +43503,7 @@
               "severity": "high",
               "actual": "Microsoft.Chaos.ScenarioConfigurations.execute changed method kind from basic to lro.",
               "expected": "Microsoft.Chaos.ScenarioConfigurations.execute preserves its existing language-neutral generated SDK contract.",
-              "rationale": "The public SDK method changes from a basic call to an LRO poller pattern, requiring existing SDK callers to use different invocation and completion handling.",
+              "rationale": "ScenarioConfigurations.execute becomes a long-running operation. Callers must wait for final completion rather than treating the initial response as completion.",
               "before": "basic",
               "after": "lro"
             },
@@ -42732,10 +43511,10 @@
               "findingId": "downstream-1da83823ff97a8a6",
               "rule": "method-response-changed",
               "field": "responseType",
-              "severity": "high",
+              "severity": "medium",
               "actual": "Microsoft.Chaos.ScenarioConfigurations.execute has a different response type.",
               "expected": "Microsoft.Chaos.ScenarioConfigurations.execute preserves its existing language-neutral generated SDK contract.",
-              "rationale": "The public SDK method gains ScenarioRun as its response type, changing generated signatures and result handling for existing callers.",
+              "rationale": "ScenarioConfigurations.execute now produces ScenarioRun after long-running completion instead of no result. Code tied to its previous no-result completion contract must adapt; callers that discard results are less affected.",
               "before": "void",
               "after": "Microsoft.Chaos.ScenarioRun"
             },
@@ -42746,7 +43525,7 @@
               "severity": "medium",
               "actual": "Microsoft.Chaos.ScenarioConfigurations.execute changed long-running behavior.",
               "expected": "Microsoft.Chaos.ScenarioConfigurations.execute preserves its existing language-neutral generated SDK contract.",
-              "rationale": "Location-based polling metadata and a final ScenarioRun result change generated poller behavior for existing SDK callers.",
+              "rationale": "ScenarioConfigurations.execute now requires status polling and a final-result request. Callers must follow this completion process instead of treating the initial execution response as final.",
               "before": "none",
               "after": {
                 "finalStateVia": "location",
@@ -42758,7 +43537,7 @@
             }
           ],
           "rootCauseIds": [
-            "downstream-root-cause-e44fb6393b44ae55"
+            "downstream-root-cause-ca4a7eaf2a8e9a65"
           ],
           "relatedSemanticIntents": [
             "semantic-c7e95ecf235ee418"
@@ -43011,6 +43790,44 @@
               "responses": [
                 {
                   "statusCodes": 202,
+                  "headers": [
+                    {
+                      "position": 0,
+                      "name": "location",
+                      "serializedName": "Location",
+                      "kind": "responseheader",
+                      "type": {
+                        "kind": "string"
+                      },
+                      "optional": true,
+                      "onClient": false,
+                      "isApiVersionParam": false,
+                      "access": "public",
+                      "flatten": false,
+                      "crossLanguageDefinitionId": "Azure.ResourceManager.ArmAcceptedLroResponse.location",
+                      "serialization": {
+                        "serializedName": "Location"
+                      }
+                    },
+                    {
+                      "position": 1,
+                      "name": "retryAfter",
+                      "serializedName": "Retry-After",
+                      "kind": "responseheader",
+                      "type": {
+                        "kind": "int32"
+                      },
+                      "optional": true,
+                      "onClient": false,
+                      "isApiVersionParam": false,
+                      "access": "public",
+                      "flatten": false,
+                      "crossLanguageDefinitionId": "Azure.ResourceManager.ArmAcceptedLroResponse.retryAfter",
+                      "serialization": {
+                        "serializedName": "Retry-After"
+                      }
+                    }
+                  ],
                   "contentTypes": []
                 }
               ],
@@ -43022,6 +43839,7 @@
                     "id": "Azure.ResourceManager.CommonTypes.ErrorResponse",
                     "name": "ErrorResponse"
                   },
+                  "headers": [],
                   "contentTypes": [
                     "application/json"
                   ],
@@ -43278,6 +44096,44 @@
               "responses": [
                 {
                   "statusCodes": 202,
+                  "headers": [
+                    {
+                      "position": 0,
+                      "name": "location",
+                      "serializedName": "Location",
+                      "kind": "responseheader",
+                      "type": {
+                        "kind": "string"
+                      },
+                      "optional": true,
+                      "onClient": false,
+                      "isApiVersionParam": false,
+                      "access": "public",
+                      "flatten": false,
+                      "crossLanguageDefinitionId": "Azure.ResourceManager.ArmAcceptedLroResponse.location",
+                      "serialization": {
+                        "serializedName": "Location"
+                      }
+                    },
+                    {
+                      "position": 1,
+                      "name": "retryAfter",
+                      "serializedName": "Retry-After",
+                      "kind": "responseheader",
+                      "type": {
+                        "kind": "int32"
+                      },
+                      "optional": true,
+                      "onClient": false,
+                      "isApiVersionParam": false,
+                      "access": "public",
+                      "flatten": false,
+                      "crossLanguageDefinitionId": "Azure.ResourceManager.ArmAcceptedLroResponse.retryAfter",
+                      "serialization": {
+                        "serializedName": "Retry-After"
+                      }
+                    }
+                  ],
                   "contentTypes": []
                 }
               ],
@@ -43289,6 +44145,7 @@
                     "id": "Azure.ResourceManager.CommonTypes.ErrorResponse",
                     "name": "ErrorResponse"
                   },
+                  "headers": [],
                   "contentTypes": [
                     "application/json"
                   ],
@@ -43470,10 +44327,10 @@
               ],
               "reviewRequired": true,
               "rootCauseIds": [
-                "downstream-root-cause-e44fb6393b44ae55"
+                "downstream-root-cause-6e1641ccb25a583b"
               ],
-              "severity": "high",
-              "rationale": "The public SDK method gains ScenarioRun as its response type, changing generated signatures and result handling for existing callers.",
+              "severity": "medium",
+              "rationale": "ScenarioRuns.cancel now produces ScenarioRun after long-running completion instead of no result. Code tied to its previous no-result completion contract must adapt; callers that discard results are less affected.",
               "evidence": [
                 {
                   "projectId": "project-a3a154cb066a",
@@ -43718,6 +44575,44 @@
                     "responses": [
                       {
                         "statusCodes": 202,
+                        "headers": [
+                          {
+                            "position": 0,
+                            "name": "location",
+                            "serializedName": "Location",
+                            "kind": "responseheader",
+                            "type": {
+                              "kind": "string"
+                            },
+                            "optional": true,
+                            "onClient": false,
+                            "isApiVersionParam": false,
+                            "access": "public",
+                            "flatten": false,
+                            "crossLanguageDefinitionId": "Azure.ResourceManager.ArmAcceptedLroResponse.location",
+                            "serialization": {
+                              "serializedName": "Location"
+                            }
+                          },
+                          {
+                            "position": 1,
+                            "name": "retryAfter",
+                            "serializedName": "Retry-After",
+                            "kind": "responseheader",
+                            "type": {
+                              "kind": "int32"
+                            },
+                            "optional": true,
+                            "onClient": false,
+                            "isApiVersionParam": false,
+                            "access": "public",
+                            "flatten": false,
+                            "crossLanguageDefinitionId": "Azure.ResourceManager.ArmAcceptedLroResponse.retryAfter",
+                            "serialization": {
+                              "serializedName": "Retry-After"
+                            }
+                          }
+                        ],
                         "contentTypes": []
                       }
                     ],
@@ -43729,6 +44624,7 @@
                           "id": "Azure.ResourceManager.CommonTypes.ErrorResponse",
                           "name": "ErrorResponse"
                         },
+                        "headers": [],
                         "contentTypes": [
                           "application/json"
                         ],
@@ -43985,6 +44881,44 @@
                     "responses": [
                       {
                         "statusCodes": 202,
+                        "headers": [
+                          {
+                            "position": 0,
+                            "name": "location",
+                            "serializedName": "Location",
+                            "kind": "responseheader",
+                            "type": {
+                              "kind": "string"
+                            },
+                            "optional": true,
+                            "onClient": false,
+                            "isApiVersionParam": false,
+                            "access": "public",
+                            "flatten": false,
+                            "crossLanguageDefinitionId": "Azure.ResourceManager.ArmAcceptedLroResponse.location",
+                            "serialization": {
+                              "serializedName": "Location"
+                            }
+                          },
+                          {
+                            "position": 1,
+                            "name": "retryAfter",
+                            "serializedName": "Retry-After",
+                            "kind": "responseheader",
+                            "type": {
+                              "kind": "int32"
+                            },
+                            "optional": true,
+                            "onClient": false,
+                            "isApiVersionParam": false,
+                            "access": "public",
+                            "flatten": false,
+                            "crossLanguageDefinitionId": "Azure.ResourceManager.ArmAcceptedLroResponse.retryAfter",
+                            "serialization": {
+                              "serializedName": "Retry-After"
+                            }
+                          }
+                        ],
                         "contentTypes": []
                       }
                     ],
@@ -43996,6 +44930,7 @@
                           "id": "Azure.ResourceManager.CommonTypes.ErrorResponse",
                           "name": "ErrorResponse"
                         },
+                        "headers": [],
                         "contentTypes": [
                           "application/json"
                         ],
@@ -47478,10 +48413,10 @@
               ],
               "reviewRequired": true,
               "rootCauseIds": [
-                "downstream-root-cause-e44fb6393b44ae55"
+                "downstream-root-cause-6e1641ccb25a583b"
               ],
               "severity": "medium",
-              "rationale": "Location-based polling metadata and a final ScenarioRun result change generated poller behavior for existing SDK callers.",
+              "rationale": "ScenarioRuns.cancel now requires status polling and a final-result request. Callers must follow this completion process instead of treating the initial cancellation response as final.",
               "evidence": [
                 {
                   "projectId": "project-a3a154cb066a",
@@ -47726,6 +48661,44 @@
                     "responses": [
                       {
                         "statusCodes": 202,
+                        "headers": [
+                          {
+                            "position": 0,
+                            "name": "location",
+                            "serializedName": "Location",
+                            "kind": "responseheader",
+                            "type": {
+                              "kind": "string"
+                            },
+                            "optional": true,
+                            "onClient": false,
+                            "isApiVersionParam": false,
+                            "access": "public",
+                            "flatten": false,
+                            "crossLanguageDefinitionId": "Azure.ResourceManager.ArmAcceptedLroResponse.location",
+                            "serialization": {
+                              "serializedName": "Location"
+                            }
+                          },
+                          {
+                            "position": 1,
+                            "name": "retryAfter",
+                            "serializedName": "Retry-After",
+                            "kind": "responseheader",
+                            "type": {
+                              "kind": "int32"
+                            },
+                            "optional": true,
+                            "onClient": false,
+                            "isApiVersionParam": false,
+                            "access": "public",
+                            "flatten": false,
+                            "crossLanguageDefinitionId": "Azure.ResourceManager.ArmAcceptedLroResponse.retryAfter",
+                            "serialization": {
+                              "serializedName": "Retry-After"
+                            }
+                          }
+                        ],
                         "contentTypes": []
                       }
                     ],
@@ -47737,6 +48710,7 @@
                           "id": "Azure.ResourceManager.CommonTypes.ErrorResponse",
                           "name": "ErrorResponse"
                         },
+                        "headers": [],
                         "contentTypes": [
                           "application/json"
                         ],
@@ -47993,6 +48967,44 @@
                     "responses": [
                       {
                         "statusCodes": 202,
+                        "headers": [
+                          {
+                            "position": 0,
+                            "name": "location",
+                            "serializedName": "Location",
+                            "kind": "responseheader",
+                            "type": {
+                              "kind": "string"
+                            },
+                            "optional": true,
+                            "onClient": false,
+                            "isApiVersionParam": false,
+                            "access": "public",
+                            "flatten": false,
+                            "crossLanguageDefinitionId": "Azure.ResourceManager.ArmAcceptedLroResponse.location",
+                            "serialization": {
+                              "serializedName": "Location"
+                            }
+                          },
+                          {
+                            "position": 1,
+                            "name": "retryAfter",
+                            "serializedName": "Retry-After",
+                            "kind": "responseheader",
+                            "type": {
+                              "kind": "int32"
+                            },
+                            "optional": true,
+                            "onClient": false,
+                            "isApiVersionParam": false,
+                            "access": "public",
+                            "flatten": false,
+                            "crossLanguageDefinitionId": "Azure.ResourceManager.ArmAcceptedLroResponse.retryAfter",
+                            "serialization": {
+                              "serializedName": "Retry-After"
+                            }
+                          }
+                        ],
                         "contentTypes": []
                       }
                     ],
@@ -48004,6 +49016,7 @@
                           "id": "Azure.ResourceManager.CommonTypes.ErrorResponse",
                           "name": "ErrorResponse"
                         },
+                        "headers": [],
                         "contentTypes": [
                           "application/json"
                         ],
@@ -51486,10 +52499,10 @@
               ],
               "reviewRequired": true,
               "rootCauseIds": [
-                "downstream-root-cause-e44fb6393b44ae55"
+                "downstream-root-cause-6e1641ccb25a583b"
               ],
               "severity": "high",
-              "rationale": "The public SDK method changes from a basic call to an LRO poller pattern, requiring existing SDK callers to use different invocation and completion handling.",
+              "rationale": "ScenarioRuns.cancel becomes a long-running operation. Callers must wait for final completion rather than treating the initial response as completion.",
               "evidence": [
                 {
                   "projectId": "project-a3a154cb066a",
@@ -51734,6 +52747,44 @@
                     "responses": [
                       {
                         "statusCodes": 202,
+                        "headers": [
+                          {
+                            "position": 0,
+                            "name": "location",
+                            "serializedName": "Location",
+                            "kind": "responseheader",
+                            "type": {
+                              "kind": "string"
+                            },
+                            "optional": true,
+                            "onClient": false,
+                            "isApiVersionParam": false,
+                            "access": "public",
+                            "flatten": false,
+                            "crossLanguageDefinitionId": "Azure.ResourceManager.ArmAcceptedLroResponse.location",
+                            "serialization": {
+                              "serializedName": "Location"
+                            }
+                          },
+                          {
+                            "position": 1,
+                            "name": "retryAfter",
+                            "serializedName": "Retry-After",
+                            "kind": "responseheader",
+                            "type": {
+                              "kind": "int32"
+                            },
+                            "optional": true,
+                            "onClient": false,
+                            "isApiVersionParam": false,
+                            "access": "public",
+                            "flatten": false,
+                            "crossLanguageDefinitionId": "Azure.ResourceManager.ArmAcceptedLroResponse.retryAfter",
+                            "serialization": {
+                              "serializedName": "Retry-After"
+                            }
+                          }
+                        ],
                         "contentTypes": []
                       }
                     ],
@@ -51745,6 +52796,7 @@
                           "id": "Azure.ResourceManager.CommonTypes.ErrorResponse",
                           "name": "ErrorResponse"
                         },
+                        "headers": [],
                         "contentTypes": [
                           "application/json"
                         ],
@@ -52001,6 +53053,44 @@
                     "responses": [
                       {
                         "statusCodes": 202,
+                        "headers": [
+                          {
+                            "position": 0,
+                            "name": "location",
+                            "serializedName": "Location",
+                            "kind": "responseheader",
+                            "type": {
+                              "kind": "string"
+                            },
+                            "optional": true,
+                            "onClient": false,
+                            "isApiVersionParam": false,
+                            "access": "public",
+                            "flatten": false,
+                            "crossLanguageDefinitionId": "Azure.ResourceManager.ArmAcceptedLroResponse.location",
+                            "serialization": {
+                              "serializedName": "Location"
+                            }
+                          },
+                          {
+                            "position": 1,
+                            "name": "retryAfter",
+                            "serializedName": "Retry-After",
+                            "kind": "responseheader",
+                            "type": {
+                              "kind": "int32"
+                            },
+                            "optional": true,
+                            "onClient": false,
+                            "isApiVersionParam": false,
+                            "access": "public",
+                            "flatten": false,
+                            "crossLanguageDefinitionId": "Azure.ResourceManager.ArmAcceptedLroResponse.retryAfter",
+                            "serialization": {
+                              "serializedName": "Retry-After"
+                            }
+                          }
+                        ],
                         "contentTypes": []
                       }
                     ],
@@ -52012,6 +53102,7 @@
                           "id": "Azure.ResourceManager.CommonTypes.ErrorResponse",
                           "name": "ErrorResponse"
                         },
+                        "headers": [],
                         "contentTypes": [
                           "application/json"
                         ],
@@ -55409,18 +56500,17 @@
               "semanticMatchBasis": "declaration-identity"
             }
           ],
-          "method": "post",
-          "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Chaos/workspaces/{workspaceName}/scenarios/{scenarioName}/runs/{runId}/cancel",
+          "apiVersion": "2026-05-01-preview",
           "parametersUnchanged": true,
           "deltas": [
             {
               "findingId": "downstream-21eed4dcd37aaa7b",
               "rule": "method-response-changed",
               "field": "responseType",
-              "severity": "high",
+              "severity": "medium",
               "actual": "Microsoft.Chaos.ScenarioRuns.cancel has a different response type.",
               "expected": "Microsoft.Chaos.ScenarioRuns.cancel preserves its existing language-neutral generated SDK contract.",
-              "rationale": "The public SDK method gains ScenarioRun as its response type, changing generated signatures and result handling for existing callers.",
+              "rationale": "ScenarioRuns.cancel now produces ScenarioRun after long-running completion instead of no result. Code tied to its previous no-result completion contract must adapt; callers that discard results are less affected.",
               "before": "void",
               "after": "Microsoft.Chaos.ScenarioRun"
             },
@@ -55431,7 +56521,7 @@
               "severity": "medium",
               "actual": "Microsoft.Chaos.ScenarioRuns.cancel changed long-running behavior.",
               "expected": "Microsoft.Chaos.ScenarioRuns.cancel preserves its existing language-neutral generated SDK contract.",
-              "rationale": "Location-based polling metadata and a final ScenarioRun result change generated poller behavior for existing SDK callers.",
+              "rationale": "ScenarioRuns.cancel now requires status polling and a final-result request. Callers must follow this completion process instead of treating the initial cancellation response as final.",
               "before": "none",
               "after": {
                 "finalStateVia": "location",
@@ -55448,83 +56538,682 @@
               "severity": "high",
               "actual": "Microsoft.Chaos.ScenarioRuns.cancel changed method kind from basic to lro.",
               "expected": "Microsoft.Chaos.ScenarioRuns.cancel preserves its existing language-neutral generated SDK contract.",
-              "rationale": "The public SDK method changes from a basic call to an LRO poller pattern, requiring existing SDK callers to use different invocation and completion handling.",
+              "rationale": "ScenarioRuns.cancel becomes a long-running operation. Callers must wait for final completion rather than treating the initial response as completion.",
               "before": "basic",
               "after": "lro"
             }
           ],
           "rootCauseIds": [
-            "downstream-root-cause-e44fb6393b44ae55"
+            "downstream-root-cause-6e1641ccb25a583b"
           ],
           "relatedSemanticIntents": [
             "semantic-c7e95ecf235ee418"
           ]
         }
       ],
-      "sharedTypeImpacts": [],
+      "typeImpacts": [],
       "rootCauses": [
         {
-          "id": "downstream-root-cause-e44fb6393b44ae55",
+          "id": "downstream-root-cause-0ac79a11d1c41925",
+          "kind": "type-contract-propagation",
+          "directCandidateIds": [
+            "downstream-7c1b2442ed3c2eae"
+          ],
+          "propagatedCandidateIds": [],
+          "methodFactIds": [
+            "sdk-fact-0dcf1a5632b9d3ed",
+            "sdk-fact-488479da4e903256",
+            "sdk-fact-8271389654333ec8",
+            "sdk-fact-f03d7b437510cd88"
+          ],
+          "typeFactIds": [
+            "sdk-fact-00890c7ca373465c",
+            "sdk-fact-13159139ece430f6",
+            "sdk-fact-59d9c373aeaf2cef",
+            "sdk-fact-88dfbaaa85376ce1"
+          ],
+          "referenceEvidence": [
+            {
+              "fromFactId": "sdk-fact-8271389654333ec8",
+              "toFactId": "sdk-fact-88dfbaaa85376ce1",
+              "kind": "response",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-88dfbaaa85376ce1",
+              "toFactId": "sdk-fact-13159139ece430f6",
+              "kind": "property",
+              "memberName": "properties",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-13159139ece430f6",
+              "toFactId": "sdk-fact-59d9c373aeaf2cef",
+              "kind": "property",
+              "memberName": "zoneResolution",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-488479da4e903256",
+              "toFactId": "sdk-fact-88dfbaaa85376ce1",
+              "kind": "response",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-0dcf1a5632b9d3ed",
+              "toFactId": "sdk-fact-88dfbaaa85376ce1",
+              "kind": "response",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-f03d7b437510cd88",
+              "toFactId": "sdk-fact-88dfbaaa85376ce1",
+              "kind": "response",
+              "location": "response-body"
+            }
+          ],
+          "rootKey": "project-a3a154cb066a:Microsoft.Chaos.ZoneResolutionInfo"
+        },
+        {
+          "id": "downstream-root-cause-1f7fd9fde21a1b46",
+          "kind": "type-contract-propagation",
+          "directCandidateIds": [
+            "downstream-143654701d5c0daf"
+          ],
+          "propagatedCandidateIds": [],
+          "methodFactIds": [
+            "sdk-fact-0dcf1a5632b9d3ed",
+            "sdk-fact-488479da4e903256",
+            "sdk-fact-8271389654333ec8",
+            "sdk-fact-f03d7b437510cd88"
+          ],
+          "typeFactIds": [
+            "sdk-fact-13159139ece430f6",
+            "sdk-fact-598654bb6421cdc1",
+            "sdk-fact-88dfbaaa85376ce1",
+            "sdk-fact-ee6e65e9dc73c608"
+          ],
+          "referenceEvidence": [
+            {
+              "fromFactId": "sdk-fact-8271389654333ec8",
+              "toFactId": "sdk-fact-88dfbaaa85376ce1",
+              "kind": "response",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-88dfbaaa85376ce1",
+              "toFactId": "sdk-fact-13159139ece430f6",
+              "kind": "property",
+              "memberName": "properties",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-13159139ece430f6",
+              "toFactId": "sdk-fact-598654bb6421cdc1",
+              "kind": "property",
+              "memberName": "resources",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-488479da4e903256",
+              "toFactId": "sdk-fact-88dfbaaa85376ce1",
+              "kind": "response",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-0dcf1a5632b9d3ed",
+              "toFactId": "sdk-fact-88dfbaaa85376ce1",
+              "kind": "response",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-f03d7b437510cd88",
+              "toFactId": "sdk-fact-88dfbaaa85376ce1",
+              "kind": "response",
+              "location": "response-body"
+            }
+          ],
+          "rootKey": "project-a3a154cb066a:Microsoft.Chaos.ScenarioRunResource"
+        },
+        {
+          "id": "downstream-root-cause-6dc691a0733c59be",
+          "kind": "type-contract-propagation",
+          "directCandidateIds": [
+            "downstream-2d0b0f248bdc24b0"
+          ],
+          "propagatedCandidateIds": [],
+          "methodFactIds": [
+            "sdk-fact-0dcf1a5632b9d3ed",
+            "sdk-fact-488479da4e903256",
+            "sdk-fact-8271389654333ec8",
+            "sdk-fact-f03d7b437510cd88"
+          ],
+          "typeFactIds": [
+            "sdk-fact-26bbb46321ed7de7",
+            "sdk-fact-88dfbaaa85376ce1"
+          ],
+          "referenceEvidence": [
+            {
+              "fromFactId": "sdk-fact-8271389654333ec8",
+              "toFactId": "sdk-fact-88dfbaaa85376ce1",
+              "kind": "response",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-488479da4e903256",
+              "toFactId": "sdk-fact-88dfbaaa85376ce1",
+              "kind": "response",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-0dcf1a5632b9d3ed",
+              "toFactId": "sdk-fact-88dfbaaa85376ce1",
+              "kind": "response",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-f03d7b437510cd88",
+              "toFactId": "sdk-fact-88dfbaaa85376ce1",
+              "kind": "response",
+              "location": "response-body"
+            }
+          ],
+          "rootKey": "project-a3a154cb066a:Microsoft.Chaos.ScenarioRun"
+        },
+        {
+          "id": "downstream-root-cause-6e1641ccb25a583b",
+          "kind": "method-return-propagation",
+          "directCandidateIds": [
+            "downstream-21eed4dcd37aaa7b",
+            "downstream-578996bf97a09e93",
+            "downstream-a8f727287fb9c61e"
+          ],
+          "propagatedCandidateIds": [],
+          "methodFactIds": [
+            "sdk-fact-488479da4e903256",
+            "sdk-fact-4cd3bc3c5af58f2f"
+          ],
+          "typeFactIds": [],
+          "referenceEvidence": [],
+          "rootKey": "project-a3a154cb066a:Microsoft.Chaos.ScenarioRuns.cancel"
+        },
+        {
+          "id": "downstream-root-cause-7d2b86cad03078c9",
+          "kind": "type-contract-propagation",
+          "directCandidateIds": [
+            "downstream-9bbeb20b9fdce39a"
+          ],
+          "propagatedCandidateIds": [],
+          "methodFactIds": [
+            "sdk-fact-0dcf1a5632b9d3ed",
+            "sdk-fact-488479da4e903256",
+            "sdk-fact-8271389654333ec8",
+            "sdk-fact-f03d7b437510cd88"
+          ],
+          "typeFactIds": [
+            "sdk-fact-13159139ece430f6",
+            "sdk-fact-1cef00ee079f2a94",
+            "sdk-fact-4c92f08cec9c015f",
+            "sdk-fact-59d9c373aeaf2cef",
+            "sdk-fact-747cad2e3a6e7bd3",
+            "sdk-fact-88dfbaaa85376ce1"
+          ],
+          "referenceEvidence": [
+            {
+              "fromFactId": "sdk-fact-8271389654333ec8",
+              "toFactId": "sdk-fact-88dfbaaa85376ce1",
+              "kind": "response",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-88dfbaaa85376ce1",
+              "toFactId": "sdk-fact-13159139ece430f6",
+              "kind": "property",
+              "memberName": "properties",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-13159139ece430f6",
+              "toFactId": "sdk-fact-59d9c373aeaf2cef",
+              "kind": "property",
+              "memberName": "zoneResolution",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-59d9c373aeaf2cef",
+              "toFactId": "sdk-fact-747cad2e3a6e7bd3",
+              "kind": "property",
+              "memberName": "subscriptionZoneMappings",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-747cad2e3a6e7bd3",
+              "toFactId": "sdk-fact-4c92f08cec9c015f",
+              "kind": "property",
+              "memberName": "zoneMappings",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-488479da4e903256",
+              "toFactId": "sdk-fact-88dfbaaa85376ce1",
+              "kind": "response",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-0dcf1a5632b9d3ed",
+              "toFactId": "sdk-fact-88dfbaaa85376ce1",
+              "kind": "response",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-f03d7b437510cd88",
+              "toFactId": "sdk-fact-88dfbaaa85376ce1",
+              "kind": "response",
+              "location": "response-body"
+            }
+          ],
+          "rootKey": "project-a3a154cb066a:Microsoft.Chaos.PhysicalToLogicalZoneMapping"
+        },
+        {
+          "id": "downstream-root-cause-89d3eb45bbec3625",
+          "kind": "enum-union-propagation",
+          "directCandidateIds": [
+            "downstream-425a635d16e94c7f"
+          ],
+          "propagatedCandidateIds": [],
+          "methodFactIds": [
+            "sdk-fact-0dcf1a5632b9d3ed",
+            "sdk-fact-488479da4e903256",
+            "sdk-fact-8271389654333ec8",
+            "sdk-fact-f03d7b437510cd88"
+          ],
+          "typeFactIds": [
+            "sdk-fact-13159139ece430f6",
+            "sdk-fact-2e4690abec7a008d",
+            "sdk-fact-59d9c373aeaf2cef",
+            "sdk-fact-88dfbaaa85376ce1",
+            "sdk-fact-e77592777f786b15"
+          ],
+          "referenceEvidence": [
+            {
+              "fromFactId": "sdk-fact-8271389654333ec8",
+              "toFactId": "sdk-fact-88dfbaaa85376ce1",
+              "kind": "response",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-88dfbaaa85376ce1",
+              "toFactId": "sdk-fact-13159139ece430f6",
+              "kind": "property",
+              "memberName": "properties",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-13159139ece430f6",
+              "toFactId": "sdk-fact-59d9c373aeaf2cef",
+              "kind": "property",
+              "memberName": "zoneResolution",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-59d9c373aeaf2cef",
+              "toFactId": "sdk-fact-2e4690abec7a008d",
+              "kind": "property",
+              "memberName": "mode",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-488479da4e903256",
+              "toFactId": "sdk-fact-88dfbaaa85376ce1",
+              "kind": "response",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-0dcf1a5632b9d3ed",
+              "toFactId": "sdk-fact-88dfbaaa85376ce1",
+              "kind": "response",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-f03d7b437510cd88",
+              "toFactId": "sdk-fact-88dfbaaa85376ce1",
+              "kind": "response",
+              "location": "response-body"
+            }
+          ],
+          "rootKey": "project-a3a154cb066a:Microsoft.Chaos.ZoneResolutionMode"
+        },
+        {
+          "id": "downstream-root-cause-9bcbe0d1479ceed6",
+          "kind": "type-contract-propagation",
+          "directCandidateIds": [
+            "downstream-2399aac417993d67"
+          ],
+          "propagatedCandidateIds": [],
+          "methodFactIds": [
+            "sdk-fact-0dcf1a5632b9d3ed",
+            "sdk-fact-488479da4e903256",
+            "sdk-fact-8271389654333ec8",
+            "sdk-fact-f03d7b437510cd88"
+          ],
+          "typeFactIds": [
+            "sdk-fact-13159139ece430f6",
+            "sdk-fact-2994323d2a702f52",
+            "sdk-fact-88dfbaaa85376ce1",
+            "sdk-fact-ca750b0f9a7fbd0d"
+          ],
+          "referenceEvidence": [
+            {
+              "fromFactId": "sdk-fact-8271389654333ec8",
+              "toFactId": "sdk-fact-88dfbaaa85376ce1",
+              "kind": "response",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-88dfbaaa85376ce1",
+              "toFactId": "sdk-fact-13159139ece430f6",
+              "kind": "property",
+              "memberName": "properties",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-13159139ece430f6",
+              "toFactId": "sdk-fact-2994323d2a702f52",
+              "kind": "property",
+              "memberName": "scenarioRunSummary",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-488479da4e903256",
+              "toFactId": "sdk-fact-88dfbaaa85376ce1",
+              "kind": "response",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-0dcf1a5632b9d3ed",
+              "toFactId": "sdk-fact-88dfbaaa85376ce1",
+              "kind": "response",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-f03d7b437510cd88",
+              "toFactId": "sdk-fact-88dfbaaa85376ce1",
+              "kind": "response",
+              "location": "response-body"
+            }
+          ],
+          "rootKey": "project-a3a154cb066a:Microsoft.Chaos.ScenarioRunSummaryAction"
+        },
+        {
+          "id": "downstream-root-cause-a31846a1da1895ad",
+          "kind": "type-contract-propagation",
+          "directCandidateIds": [
+            "downstream-1407409f46849b43"
+          ],
+          "propagatedCandidateIds": [],
+          "methodFactIds": [
+            "sdk-fact-0dcf1a5632b9d3ed",
+            "sdk-fact-488479da4e903256",
+            "sdk-fact-8271389654333ec8",
+            "sdk-fact-f03d7b437510cd88"
+          ],
+          "typeFactIds": [
+            "sdk-fact-13159139ece430f6",
+            "sdk-fact-59d9c373aeaf2cef",
+            "sdk-fact-747cad2e3a6e7bd3",
+            "sdk-fact-88dfbaaa85376ce1",
+            "sdk-fact-e5a6271a0d825188"
+          ],
+          "referenceEvidence": [
+            {
+              "fromFactId": "sdk-fact-8271389654333ec8",
+              "toFactId": "sdk-fact-88dfbaaa85376ce1",
+              "kind": "response",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-88dfbaaa85376ce1",
+              "toFactId": "sdk-fact-13159139ece430f6",
+              "kind": "property",
+              "memberName": "properties",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-13159139ece430f6",
+              "toFactId": "sdk-fact-59d9c373aeaf2cef",
+              "kind": "property",
+              "memberName": "zoneResolution",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-59d9c373aeaf2cef",
+              "toFactId": "sdk-fact-747cad2e3a6e7bd3",
+              "kind": "property",
+              "memberName": "subscriptionZoneMappings",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-488479da4e903256",
+              "toFactId": "sdk-fact-88dfbaaa85376ce1",
+              "kind": "response",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-0dcf1a5632b9d3ed",
+              "toFactId": "sdk-fact-88dfbaaa85376ce1",
+              "kind": "response",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-f03d7b437510cd88",
+              "toFactId": "sdk-fact-88dfbaaa85376ce1",
+              "kind": "response",
+              "location": "response-body"
+            }
+          ],
+          "rootKey": "project-a3a154cb066a:Microsoft.Chaos.ZoneResolutionMapping"
+        },
+        {
+          "id": "downstream-root-cause-b00c26c597e2651a",
+          "kind": "enum-union-propagation",
+          "directCandidateIds": [
+            "downstream-8eef355f44afbf17"
+          ],
+          "propagatedCandidateIds": [],
+          "methodFactIds": [
+            "sdk-fact-0dcf1a5632b9d3ed",
+            "sdk-fact-488479da4e903256",
+            "sdk-fact-8271389654333ec8",
+            "sdk-fact-f03d7b437510cd88"
+          ],
+          "typeFactIds": [
+            "sdk-fact-13159139ece430f6",
+            "sdk-fact-2994323d2a702f52",
+            "sdk-fact-48c1de226aa4f6db",
+            "sdk-fact-88dfbaaa85376ce1",
+            "sdk-fact-923f320ed8db1ac3"
+          ],
+          "referenceEvidence": [
+            {
+              "fromFactId": "sdk-fact-8271389654333ec8",
+              "toFactId": "sdk-fact-88dfbaaa85376ce1",
+              "kind": "response",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-88dfbaaa85376ce1",
+              "toFactId": "sdk-fact-13159139ece430f6",
+              "kind": "property",
+              "memberName": "properties",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-13159139ece430f6",
+              "toFactId": "sdk-fact-2994323d2a702f52",
+              "kind": "property",
+              "memberName": "scenarioRunSummary",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-2994323d2a702f52",
+              "toFactId": "sdk-fact-48c1de226aa4f6db",
+              "kind": "property",
+              "memberName": "state",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-488479da4e903256",
+              "toFactId": "sdk-fact-88dfbaaa85376ce1",
+              "kind": "response",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-0dcf1a5632b9d3ed",
+              "toFactId": "sdk-fact-88dfbaaa85376ce1",
+              "kind": "response",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-f03d7b437510cd88",
+              "toFactId": "sdk-fact-88dfbaaa85376ce1",
+              "kind": "response",
+              "location": "response-body"
+            }
+          ],
+          "rootKey": "project-a3a154cb066a:Microsoft.Chaos.ScenarioSummaryState"
+        },
+        {
+          "id": "downstream-root-cause-c004f40a22f248cf",
+          "kind": "type-contract-propagation",
+          "directCandidateIds": [
+            "downstream-7fa8bea079d1ccb3"
+          ],
+          "propagatedCandidateIds": [],
+          "methodFactIds": [
+            "sdk-fact-0dcf1a5632b9d3ed",
+            "sdk-fact-488479da4e903256",
+            "sdk-fact-8271389654333ec8",
+            "sdk-fact-f03d7b437510cd88"
+          ],
+          "typeFactIds": [
+            "sdk-fact-13159139ece430f6",
+            "sdk-fact-88dfbaaa85376ce1",
+            "sdk-fact-f788ae60691aeb5d"
+          ],
+          "referenceEvidence": [
+            {
+              "fromFactId": "sdk-fact-8271389654333ec8",
+              "toFactId": "sdk-fact-88dfbaaa85376ce1",
+              "kind": "response",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-88dfbaaa85376ce1",
+              "toFactId": "sdk-fact-13159139ece430f6",
+              "kind": "property",
+              "memberName": "properties",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-488479da4e903256",
+              "toFactId": "sdk-fact-88dfbaaa85376ce1",
+              "kind": "response",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-0dcf1a5632b9d3ed",
+              "toFactId": "sdk-fact-88dfbaaa85376ce1",
+              "kind": "response",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-f03d7b437510cd88",
+              "toFactId": "sdk-fact-88dfbaaa85376ce1",
+              "kind": "response",
+              "location": "response-body"
+            }
+          ],
+          "rootKey": "project-a3a154cb066a:Microsoft.Chaos.ScenarioRunProperties"
+        },
+        {
+          "id": "downstream-root-cause-c60edf4b0d999cab",
+          "kind": "enum-union-propagation",
+          "directCandidateIds": [
+            "downstream-bf883ad01e97a8e6"
+          ],
+          "propagatedCandidateIds": [],
+          "methodFactIds": [
+            "sdk-fact-0dcf1a5632b9d3ed",
+            "sdk-fact-488479da4e903256",
+            "sdk-fact-8271389654333ec8",
+            "sdk-fact-f03d7b437510cd88"
+          ],
+          "typeFactIds": [
+            "sdk-fact-108297307b4342d9",
+            "sdk-fact-13159139ece430f6",
+            "sdk-fact-88dfbaaa85376ce1",
+            "sdk-fact-b97ca30d6163b5e3"
+          ],
+          "referenceEvidence": [
+            {
+              "fromFactId": "sdk-fact-8271389654333ec8",
+              "toFactId": "sdk-fact-88dfbaaa85376ce1",
+              "kind": "response",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-88dfbaaa85376ce1",
+              "toFactId": "sdk-fact-13159139ece430f6",
+              "kind": "property",
+              "memberName": "properties",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-13159139ece430f6",
+              "toFactId": "sdk-fact-b97ca30d6163b5e3",
+              "kind": "property",
+              "memberName": "status",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-488479da4e903256",
+              "toFactId": "sdk-fact-88dfbaaa85376ce1",
+              "kind": "response",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-0dcf1a5632b9d3ed",
+              "toFactId": "sdk-fact-88dfbaaa85376ce1",
+              "kind": "response",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-f03d7b437510cd88",
+              "toFactId": "sdk-fact-88dfbaaa85376ce1",
+              "kind": "response",
+              "location": "response-body"
+            }
+          ],
+          "rootKey": "project-a3a154cb066a:Microsoft.Chaos.ScenarioRunState"
+        },
+        {
+          "id": "downstream-root-cause-ca4a7eaf2a8e9a65",
           "kind": "method-return-propagation",
           "directCandidateIds": [
             "downstream-0f8ea9813cabb7c3",
             "downstream-1da83823ff97a8a6",
-            "downstream-21eed4dcd37aaa7b",
-            "downstream-578996bf97a09e93",
-            "downstream-a8f727287fb9c61e",
             "downstream-d8a42c8eb28f141c"
           ],
-          "propagatedCandidateIds": [
-            "downstream-1407409f46849b43",
-            "downstream-143654701d5c0daf",
-            "downstream-2399aac417993d67",
-            "downstream-2d0b0f248bdc24b0",
-            "downstream-425a635d16e94c7f",
-            "downstream-7c1b2442ed3c2eae",
-            "downstream-7fa8bea079d1ccb3",
-            "downstream-8eef355f44afbf17",
-            "downstream-9bbeb20b9fdce39a",
-            "downstream-bf883ad01e97a8e6"
-          ],
-          "operationFactIds": [
-            "sdk-fact-2dff398c94231f21",
-            "sdk-fact-488479da4e903256",
-            "sdk-fact-4cd3bc3c5af58f2f",
-            "sdk-fact-8271389654333ec8"
-          ],
+          "propagatedCandidateIds": [],
           "methodFactIds": [
             "sdk-fact-2dff398c94231f21",
-            "sdk-fact-488479da4e903256",
-            "sdk-fact-4cd3bc3c5af58f2f",
             "sdk-fact-8271389654333ec8"
           ],
-          "typeFactIds": [
-            "sdk-fact-00890c7ca373465c",
-            "sdk-fact-108297307b4342d9",
-            "sdk-fact-13159139ece430f6",
-            "sdk-fact-1cef00ee079f2a94",
-            "sdk-fact-26bbb46321ed7de7",
-            "sdk-fact-2994323d2a702f52",
-            "sdk-fact-2e4690abec7a008d",
-            "sdk-fact-48c1de226aa4f6db",
-            "sdk-fact-4c92f08cec9c015f",
-            "sdk-fact-598654bb6421cdc1",
-            "sdk-fact-59d9c373aeaf2cef",
-            "sdk-fact-747cad2e3a6e7bd3",
-            "sdk-fact-88dfbaaa85376ce1",
-            "sdk-fact-923f320ed8db1ac3",
-            "sdk-fact-b97ca30d6163b5e3",
-            "sdk-fact-ca750b0f9a7fbd0d",
-            "sdk-fact-e5a6271a0d825188",
-            "sdk-fact-e77592777f786b15",
-            "sdk-fact-ee6e65e9dc73c608",
-            "sdk-fact-f788ae60691aeb5d"
-          ],
+          "typeFactIds": [],
           "referenceEvidence": [],
-          "rootKey": "project-a3a154cb066a:Microsoft.Chaos.ScenarioRun"
+          "rootKey": "project-a3a154cb066a:Microsoft.Chaos.ScenarioConfigurations.execute"
         }
       ],
-      "impliedByRest": [],
       "rejectedCandidateCount": 10,
       "blockers": []
     },
@@ -57874,18 +59563,18 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\43308\\deterministic-analysis\\worktrees\\base\\specification\\chaos\\resource-manager\\Microsoft.Chaos\\Chaos",
+                "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\43308\\worktrees\\base\\specification\\chaos\\resource-manager\\Microsoft.Chaos\\Chaos",
                 "--emit=@azure-tools/typespec-autorest",
-                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\43308\\deterministic-analysis\\projects\\project-a3a154cb066a\\baseline\\autorest",
+                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\43308\\projects\\project-a3a154cb066a\\baseline\\autorest",
                 "--warn-as-error",
                 "--option=@azure-tools/typespec-autorest.version=2026-05-01-preview"
               ]
             },
             "exitCode": 0,
-            "durationMs": 23080,
-            "configPath": "worktrees\\base\\specification\\chaos\\resource-manager\\Microsoft.Chaos\\Chaos\\tspconfig.yaml",
+            "durationMs": 10859,
+            "configPath": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\43308\\worktrees\\base\\specification\\chaos\\resource-manager\\Microsoft.Chaos\\Chaos\\tspconfig.yaml",
             "configHash": "b3e307f2f956192b98886b1ed18b1b1d81bbadf32bcd5df0c2de2d21227a76bb",
-            "logPath": "logs\\project-a3a154cb066a-baseline-autorest.log",
+            "logPath": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\43308\\logs\\project-a3a154cb066a-baseline-autorest.log",
             "comparisonRole": "baseline",
             "sourceRevision": "base",
             "sourceCommit": "232dfa71843fd574be49ba91a918ee7d3e7bfec3",
@@ -57893,7 +59582,7 @@
             "format": "swagger-2.0",
             "files": [
               {
-                "path": "projects\\project-a3a154cb066a\\baseline\\autorest\\preview\\2026-05-01-preview\\openapi.json",
+                "path": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\43308\\projects\\project-a3a154cb066a\\baseline\\autorest\\preview\\2026-05-01-preview\\openapi.json",
                 "apiVersion": "2026-05-01-preview",
                 "documentRole": "primary",
                 "contentHash": "1aa59c4badaa9341c5ddaa99d57072d6f4a668972ada5bf3e21ed4bc6af778e5"
@@ -57906,19 +59595,19 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\43308\\deterministic-analysis\\worktrees\\base\\specification\\chaos\\resource-manager\\Microsoft.Chaos\\Chaos",
+                "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\43308\\worktrees\\base\\specification\\chaos\\resource-manager\\Microsoft.Chaos\\Chaos",
                 "--emit=@azure-tools/typespec-client-generator-core",
-                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\43308\\deterministic-analysis\\projects\\project-a3a154cb066a\\baseline\\tcgc",
+                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\43308\\projects\\project-a3a154cb066a\\baseline\\tcgc",
                 "--warn-as-error",
-                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\43308\\deterministic-analysis\\inputs\\empty-examples",
+                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\43308\\inputs\\empty-examples",
                 "--option=@azure-tools/typespec-client-generator-core.api-version=2026-05-01-preview"
               ]
             },
             "exitCode": 0,
-            "durationMs": 10947,
-            "configPath": "worktrees\\base\\specification\\chaos\\resource-manager\\Microsoft.Chaos\\Chaos\\tspconfig.yaml",
+            "durationMs": 9215,
+            "configPath": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\43308\\worktrees\\base\\specification\\chaos\\resource-manager\\Microsoft.Chaos\\Chaos\\tspconfig.yaml",
             "configHash": "b3e307f2f956192b98886b1ed18b1b1d81bbadf32bcd5df0c2de2d21227a76bb",
-            "logPath": "logs\\project-a3a154cb066a-baseline-tcgc.log",
+            "logPath": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\43308\\logs\\project-a3a154cb066a-baseline-tcgc.log",
             "comparisonRole": "baseline",
             "sourceRevision": "base",
             "sourceCommit": "232dfa71843fd574be49ba91a918ee7d3e7bfec3",
@@ -57926,7 +59615,7 @@
             "format": "tcgc-yaml",
             "files": [
               {
-                "path": "projects\\project-a3a154cb066a\\baseline\\tcgc\\tcgc-output.yaml",
+                "path": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\43308\\projects\\project-a3a154cb066a\\baseline\\tcgc\\tcgc-output.yaml",
                 "contentHash": "4c11a4d98eb5f60d7f87d270517b7bbdc840f83b90742bdc34f7c4fa35c10682"
               }
             ]
@@ -57943,18 +59632,18 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\43308\\deterministic-analysis\\worktrees\\current\\specification\\chaos\\resource-manager\\Microsoft.Chaos\\Chaos",
+                "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\43308\\worktrees\\current\\specification\\chaos\\resource-manager\\Microsoft.Chaos\\Chaos",
                 "--emit=@azure-tools/typespec-autorest",
-                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\43308\\deterministic-analysis\\projects\\project-a3a154cb066a\\target\\autorest",
+                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\43308\\projects\\project-a3a154cb066a\\target\\autorest",
                 "--warn-as-error",
                 "--option=@azure-tools/typespec-autorest.version=2026-05-01-preview"
               ]
             },
             "exitCode": 0,
-            "durationMs": 11682,
-            "configPath": "worktrees\\current\\specification\\chaos\\resource-manager\\Microsoft.Chaos\\Chaos\\tspconfig.yaml",
+            "durationMs": 8995,
+            "configPath": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\43308\\worktrees\\current\\specification\\chaos\\resource-manager\\Microsoft.Chaos\\Chaos\\tspconfig.yaml",
             "configHash": "b3e307f2f956192b98886b1ed18b1b1d81bbadf32bcd5df0c2de2d21227a76bb",
-            "logPath": "logs\\project-a3a154cb066a-target-autorest.log",
+            "logPath": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\43308\\logs\\project-a3a154cb066a-target-autorest.log",
             "comparisonRole": "target",
             "sourceRevision": "current",
             "sourceCommit": "a3b8933eb6ce030faa6abc6d354fc97e30f02e96",
@@ -57962,7 +59651,7 @@
             "format": "swagger-2.0",
             "files": [
               {
-                "path": "projects\\project-a3a154cb066a\\target\\autorest\\preview\\2026-05-01-preview\\openapi.json",
+                "path": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\43308\\projects\\project-a3a154cb066a\\target\\autorest\\preview\\2026-05-01-preview\\openapi.json",
                 "apiVersion": "2026-05-01-preview",
                 "documentRole": "primary",
                 "contentHash": "6a15063452f1dcf16617bca10dd5ba7fbc70d154c42a6ebf2ef62898543a6b9f"
@@ -57975,19 +59664,19 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\43308\\deterministic-analysis\\worktrees\\current\\specification\\chaos\\resource-manager\\Microsoft.Chaos\\Chaos",
+                "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\43308\\worktrees\\current\\specification\\chaos\\resource-manager\\Microsoft.Chaos\\Chaos",
                 "--emit=@azure-tools/typespec-client-generator-core",
-                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\43308\\deterministic-analysis\\projects\\project-a3a154cb066a\\target\\tcgc",
+                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\43308\\projects\\project-a3a154cb066a\\target\\tcgc",
                 "--warn-as-error",
-                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\43308\\deterministic-analysis\\inputs\\empty-examples",
+                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\43308\\inputs\\empty-examples",
                 "--option=@azure-tools/typespec-client-generator-core.api-version=2026-05-01-preview"
               ]
             },
             "exitCode": 0,
-            "durationMs": 12084,
-            "configPath": "worktrees\\current\\specification\\chaos\\resource-manager\\Microsoft.Chaos\\Chaos\\tspconfig.yaml",
+            "durationMs": 9296,
+            "configPath": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\43308\\worktrees\\current\\specification\\chaos\\resource-manager\\Microsoft.Chaos\\Chaos\\tspconfig.yaml",
             "configHash": "b3e307f2f956192b98886b1ed18b1b1d81bbadf32bcd5df0c2de2d21227a76bb",
-            "logPath": "logs\\project-a3a154cb066a-target-tcgc.log",
+            "logPath": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\43308\\logs\\project-a3a154cb066a-target-tcgc.log",
             "comparisonRole": "target",
             "sourceRevision": "current",
             "sourceCommit": "a3b8933eb6ce030faa6abc6d354fc97e30f02e96",
@@ -57995,7 +59684,7 @@
             "format": "tcgc-yaml",
             "files": [
               {
-                "path": "projects\\project-a3a154cb066a\\target\\tcgc\\tcgc-output.yaml",
+                "path": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\43308\\projects\\project-a3a154cb066a\\target\\tcgc\\tcgc-output.yaml",
                 "contentHash": "a42ed0ec349e1486efabc6c4e00b4d8e600915285c29efbb3761271d9cf50124"
               }
             ]
@@ -58062,15 +59751,15 @@
   "inputAccounting": {
     "budgetTier": "small",
     "budgetBytes": 131072,
-    "bytes": 67763,
-    "estimatedTokens": 16941,
+    "bytes": 84418,
+    "estimatedTokens": 21105,
     "retained": {
       "evidenceSets": 17,
-      "facts": 24,
+      "facts": 26,
       "semanticReviewUnits": 3,
       "restCandidates": 0,
       "downstreamCandidates": 16,
-      "downstreamRootCauses": 1,
+      "downstreamRootCauses": 12,
       "complianceSearchRequests": 3,
       "inferenceRequests": 2
     },
@@ -58079,6 +59768,7 @@
       "compilerLogs": true,
       "unchangedInventories": true,
       "unreferencedFacts": true,
+      "unreferencedDeterministicFacts": true,
       "sourceChanges": true,
       "repeatedDeclarationIds": true,
       "repeatedReviewUnitEvidence": true
@@ -58098,14 +59788,8 @@
     }
   },
   "timings": {
-    "totalMs": 130992,
-    "semanticAnalysisMs": 146,
-    "restAnalysisMs": 63,
-    "downstreamAnalysisMs": 2832
+    "downstreamAnalysisMs": 2039,
+    "buildModelInputMs": 10
   },
-  "pr": 43308,
-  "pullRequest": {
-    "number": 43308,
-    "url": "https://github.com/Azure/azure-rest-api-specs/pull/43308"
-  }
+  "pr": 43308
 }

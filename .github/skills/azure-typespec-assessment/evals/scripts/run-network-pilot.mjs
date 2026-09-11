@@ -452,8 +452,8 @@ function prepareAgentWorkItem(
       "Review every bounded item in model-input.json using the azure-typespec-assessment classification rules.",
       "Resolve evidenceSetId and evidenceRef values through model-input.json artifactReferences; paths are relative to the deterministic-analysis directory.",
       "As the first Agent action, run the start-agent phase for this pilot.",
-      "Run the bounded Compliance search and write compliance-search-evidence.json in the deterministic-analysis directory.",
-      "Write assessment-judgment.json with exact Compliance tuple coverage and materialization-assessment.json using the skill schemas and output contract.",
+      "Run the bounded Azure Guidelines search and write compliance-search-evidence.json in the deterministic-analysis directory.",
+      "Write assessment-judgment.json with exact Azure Guidelines tuple coverage and materialization-assessment.json using the skill schemas and output contract.",
       "Assemble and validate the final assessment only after Agent judgment; this coordinator does not invoke an LLM.",
     ],
   };
@@ -511,7 +511,7 @@ function finalizeAssessment(
     );
   }
   for (const [path, description] of [
-    [paths.complianceSearchEvidence, "Agent Compliance search evidence"],
+    [paths.complianceSearchEvidence, "Agent Azure Guidelines search evidence"],
     [paths.assessmentJudgment, "Agent assessment judgment"],
     [paths.materializationAssessment, "Agent materialization assessment"],
   ]) {

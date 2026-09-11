@@ -5,7 +5,7 @@
 - **Semantic intent** — action, changed constructs, up to three representative
   source excerpts, aggregate operation counts, and up to three representative
   operation IDs from `model-input.json`.
-- **Compliance goal** — compare the changed TypeSpec with applicable official
+- **Azure Guidelines goal** — compare the changed TypeSpec with applicable official
   guidance without inventing requirements.
 
 ## Procedure
@@ -28,7 +28,7 @@
 5. **Compare once** — synthesize applicable fetched guidance and compare it
    with the Semantic intent as one assessment unit. Do not assess each affected
    operation or build a document-by-declaration matrix. Catalog descriptions
-   select documents; they are not compliance evidence.
+   select documents; they are not Azure Guidelines evidence.
 6. **Write search evidence** — write
    `compliance-search-evidence.json` with the unchanged query profile, complete
    catalog ranking, four fetched documents, failed attempts, score components,
@@ -43,7 +43,7 @@
    they contribute to the decision. When the search completes but no fetched
    guidance governs the changed behavior, return `no-applicable-guidance` with
    changed-code evidence and a clear rationale. Reserve `not-assessed` for
-   incomplete or blocked Compliance.
+   an incomplete or blocked Azure Guidelines assessment.
    Every `applicable-fail` also supplies a concise finding title and `high`,
    `medium`, or `low` severity.
    Never synthesize a requirement or recommended code example.

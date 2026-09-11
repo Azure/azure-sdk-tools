@@ -1,0 +1,783 @@
+{
+  "generatedAt": "2026-09-11T04:26:21.244Z",
+  "scope": "Fresh downstream analysis and judgment; other dimensions reused after identity/coverage validation.",
+  "caseCount": 12,
+  "cases": [
+    {
+      "pr": 42435,
+      "before": {
+        "semanticIntents": 1,
+        "restBreakingFindings": 0,
+        "downstreamFindings": 2,
+        "complianceFindings": 0
+      },
+      "after": {
+        "semanticIntents": 1,
+        "restBreakingFindings": 0,
+        "downstreamFindings": 3,
+        "complianceFindings": 0
+      },
+      "safetyBefore": "failed",
+      "safetyAfter": "failed",
+      "candidateCount": 3,
+      "approvedCount": 3,
+      "rejectedCount": 0,
+      "addedFindingIds": [
+        "downstream-7a1abbfd0db76351"
+      ],
+      "removedFindingIds": [],
+      "source": "C:\\workspace\\azure-sdk-tools\\result\\downstream-reassessment-20260911\\42435",
+      "inputHash": "34230a852c41bde8900307af47fc82b5690d2242253cf6c473116acecff08329",
+      "instructionHashes": [
+        {
+          "file": "downstream-breaking-cases.md",
+          "sha256": "5871784f21862350271afbc893bd20012a34130ba54c0d84038a6dfbfe15e28a"
+        },
+        {
+          "file": "downstream-candidate-rules.md",
+          "sha256": "b42f0097fd51667016eeeb8d45843c8b0a4b174082044a657d27ba5638a1690c"
+        }
+      ],
+      "timings": {
+        "preparation": {
+          "artifactIdentityAndHashVerificationMs": 40,
+          "downstreamAnalysisMs": 5975,
+          "buildModelInputMs": 6,
+          "nonDownstreamReuseValidationMs": 33,
+          "writeCanonicalInputsMs": 26,
+          "canonicalReuseValidationMs": 27,
+          "totalPreparationMs": 6213
+        },
+        "agentJudgment": {
+          "startUtc": "2026-09-11T04:17:26.3318468Z",
+          "endUtc": "2026-09-11T04:18:44.2047087Z",
+          "elapsedSeconds": 77.8728619
+        },
+        "assemblyValidationRenderingMs": 119
+      },
+      "reused": [
+        "compiler artifacts",
+        "source index",
+        "semantic and REST inputs/judgments",
+        "validated inference where present",
+        "Azure Guidelines evidence/judgments"
+      ],
+      "warnings": []
+    },
+    {
+      "pr": 42853,
+      "before": {
+        "semanticIntents": 3,
+        "restBreakingFindings": 0,
+        "downstreamFindings": 0,
+        "complianceFindings": 0
+      },
+      "after": {
+        "semanticIntents": 3,
+        "restBreakingFindings": 0,
+        "downstreamFindings": 0,
+        "complianceFindings": 0
+      },
+      "safetyBefore": "passed",
+      "safetyAfter": "passed",
+      "candidateCount": 0,
+      "approvedCount": 0,
+      "rejectedCount": 0,
+      "addedFindingIds": [],
+      "removedFindingIds": [],
+      "source": "C:\\workspace\\azure-sdk-tools\\result\\downstream-reassessment-20260911\\42853",
+      "inputHash": "45d948fe1f2d33bee5e1a190059e60cec95601f07f83d6a63d091d5b66925d69",
+      "instructionHashes": [
+        {
+          "file": "downstream-breaking-cases.md",
+          "sha256": "5871784f21862350271afbc893bd20012a34130ba54c0d84038a6dfbfe15e28a"
+        },
+        {
+          "file": "downstream-candidate-rules.md",
+          "sha256": "b42f0097fd51667016eeeb8d45843c8b0a4b174082044a657d27ba5638a1690c"
+        }
+      ],
+      "timings": {
+        "preparation": {
+          "artifactIdentityAndHashVerificationMs": 75,
+          "downstreamAnalysisMs": 5587,
+          "buildModelInputMs": 6,
+          "nonDownstreamReuseValidationMs": 49,
+          "writeCanonicalInputsMs": 26,
+          "canonicalReuseValidationMs": 220,
+          "totalPreparationMs": 6056
+        },
+        "agentJudgment": {
+          "status": "not-required",
+          "reason": "No deterministic or reused inferred downstream candidates; empty coverage confirmed."
+        },
+        "assemblyValidationRenderingMs": 66
+      },
+      "reused": [
+        "compiler artifacts",
+        "source index",
+        "semantic and REST inputs/judgments",
+        "validated inference where present",
+        "Azure Guidelines evidence/judgments"
+      ],
+      "warnings": [
+        "Historical supplemental referencedDeclarations differ; changed source/hunks/declarations and complete semantic/REST inputs are identical. New work uses the matching v3 source index."
+      ]
+    },
+    {
+      "pr": 43308,
+      "before": {
+        "semanticIntents": 3,
+        "restBreakingFindings": 0,
+        "downstreamFindings": 6,
+        "complianceFindings": 0
+      },
+      "after": {
+        "semanticIntents": 3,
+        "restBreakingFindings": 0,
+        "downstreamFindings": 6,
+        "complianceFindings": 0
+      },
+      "safetyBefore": "failed",
+      "safetyAfter": "failed",
+      "candidateCount": 16,
+      "approvedCount": 6,
+      "rejectedCount": 10,
+      "addedFindingIds": [],
+      "removedFindingIds": [],
+      "source": "C:\\workspace\\azure-sdk-tools\\result\\downstream-reassessment-20260911\\43308",
+      "inputHash": "cd1f8cf4fa32f4d1f35f272cd59ca7137623ed2e67cd24849153187ef52144e0",
+      "instructionHashes": [
+        {
+          "file": "downstream-breaking-cases.md",
+          "sha256": "5871784f21862350271afbc893bd20012a34130ba54c0d84038a6dfbfe15e28a"
+        },
+        {
+          "file": "downstream-candidate-rules.md",
+          "sha256": "b42f0097fd51667016eeeb8d45843c8b0a4b174082044a657d27ba5638a1690c"
+        }
+      ],
+      "timings": {
+        "preparation": {
+          "artifactIdentityAndHashVerificationMs": 255,
+          "downstreamAnalysisMs": 2039,
+          "buildModelInputMs": 10,
+          "nonDownstreamReuseValidationMs": 37,
+          "writeCanonicalInputsMs": 29,
+          "canonicalReuseValidationMs": 26,
+          "totalPreparationMs": 2469
+        },
+        "agentJudgment": {
+          "startUtc": "2026-09-11T04:18:53.4991149Z",
+          "endUtc": "2026-09-11T04:20:43.3319810Z",
+          "elapsedSeconds": 109.8328661
+        },
+        "assemblyValidationRenderingMs": 98
+      },
+      "reused": [
+        "compiler artifacts",
+        "source index",
+        "semantic and REST inputs/judgments",
+        "validated inference where present",
+        "Azure Guidelines evidence/judgments"
+      ],
+      "warnings": [
+        "Historical supplemental referencedDeclarations differ; changed source/hunks/declarations and complete semantic/REST inputs are identical. New work uses the matching v3 source index."
+      ]
+    },
+    {
+      "pr": 43745,
+      "before": {
+        "semanticIntents": 1,
+        "restBreakingFindings": 0,
+        "downstreamFindings": 2,
+        "complianceFindings": 0
+      },
+      "after": {
+        "semanticIntents": 1,
+        "restBreakingFindings": 0,
+        "downstreamFindings": 2,
+        "complianceFindings": 0
+      },
+      "safetyBefore": "failed",
+      "safetyAfter": "failed",
+      "candidateCount": 2,
+      "approvedCount": 2,
+      "rejectedCount": 0,
+      "addedFindingIds": [],
+      "removedFindingIds": [],
+      "source": "C:\\workspace\\azure-sdk-tools\\result\\downstream-reassessment-20260911\\43745",
+      "inputHash": "facbdd89e599b02fb3fafb4f61a35ab4ab36be11b12c2fca529561a0bf775849",
+      "instructionHashes": [
+        {
+          "file": "downstream-breaking-cases.md",
+          "sha256": "5871784f21862350271afbc893bd20012a34130ba54c0d84038a6dfbfe15e28a"
+        },
+        {
+          "file": "downstream-candidate-rules.md",
+          "sha256": "b42f0097fd51667016eeeb8d45843c8b0a4b174082044a657d27ba5638a1690c"
+        }
+      ],
+      "timings": {
+        "preparation": {
+          "artifactIdentityAndHashVerificationMs": 40,
+          "downstreamAnalysisMs": 845,
+          "buildModelInputMs": 1,
+          "nonDownstreamReuseValidationMs": 32,
+          "writeCanonicalInputsMs": 23,
+          "canonicalReuseValidationMs": 22,
+          "totalPreparationMs": 1024
+        },
+        "agentJudgment": {
+          "startUtc": "2026-09-11T04:17:26.4593601+00:00",
+          "endUtc": "2026-09-11T04:18:37.8498848Z",
+          "elapsedSeconds": 71.3905247
+        },
+        "assemblyValidationRenderingMs": 56
+      },
+      "reused": [
+        "compiler artifacts",
+        "source index",
+        "semantic and REST inputs/judgments",
+        "validated inference where present",
+        "Azure Guidelines evidence/judgments"
+      ],
+      "warnings": [
+        "Historical supplemental referencedDeclarations differ; changed source/hunks/declarations and complete semantic/REST inputs are identical. New work uses the matching v3 source index."
+      ]
+    },
+    {
+      "pr": 44200,
+      "before": {
+        "semanticIntents": 2,
+        "restBreakingFindings": 0,
+        "downstreamFindings": 0,
+        "complianceFindings": 1
+      },
+      "after": {
+        "semanticIntents": 2,
+        "restBreakingFindings": 0,
+        "downstreamFindings": 0,
+        "complianceFindings": 1
+      },
+      "safetyBefore": "passed",
+      "safetyAfter": "passed",
+      "candidateCount": 1,
+      "approvedCount": 0,
+      "rejectedCount": 1,
+      "addedFindingIds": [],
+      "removedFindingIds": [],
+      "source": "C:\\workspace\\azure-sdk-tools\\result\\downstream-reassessment-20260911\\44200",
+      "inputHash": "276a3ae9e48537663200c03391d9efda6cfff81102208c604c46f1b62943295f",
+      "instructionHashes": [
+        {
+          "file": "downstream-breaking-cases.md",
+          "sha256": "5871784f21862350271afbc893bd20012a34130ba54c0d84038a6dfbfe15e28a"
+        },
+        {
+          "file": "downstream-candidate-rules.md",
+          "sha256": "b42f0097fd51667016eeeb8d45843c8b0a4b174082044a657d27ba5638a1690c"
+        }
+      ],
+      "timings": {
+        "preparation": {
+          "artifactIdentityAndHashVerificationMs": 19,
+          "downstreamAnalysisMs": 769,
+          "buildModelInputMs": 5,
+          "nonDownstreamReuseValidationMs": 34,
+          "writeCanonicalInputsMs": 24,
+          "canonicalReuseValidationMs": 25,
+          "totalPreparationMs": 951
+        },
+        "agentJudgment": {
+          "startUtc": "2026-09-11T04:18:47.6726773+00:00",
+          "endUtc": "2026-09-11T04:19:18.9556275Z",
+          "elapsedSeconds": 31.2829502
+        },
+        "assemblyValidationRenderingMs": 99
+      },
+      "reused": [
+        "compiler artifacts",
+        "source index",
+        "semantic and REST inputs/judgments",
+        "validated inference where present",
+        "Azure Guidelines evidence/judgments"
+      ],
+      "warnings": [
+        "Historical supplemental referencedDeclarations differ; changed source/hunks/declarations and complete semantic/REST inputs are identical. New work uses the matching v3 source index."
+      ]
+    },
+    {
+      "pr": 44454,
+      "before": {
+        "semanticIntents": 2,
+        "restBreakingFindings": 0,
+        "downstreamFindings": 0,
+        "complianceFindings": 0
+      },
+      "after": {
+        "semanticIntents": 2,
+        "restBreakingFindings": 0,
+        "downstreamFindings": 0,
+        "complianceFindings": 0
+      },
+      "safetyBefore": "passed",
+      "safetyAfter": "passed",
+      "candidateCount": 0,
+      "approvedCount": 0,
+      "rejectedCount": 0,
+      "addedFindingIds": [],
+      "removedFindingIds": [],
+      "source": "C:\\workspace\\azure-sdk-tools\\result\\downstream-reassessment-20260911\\44454",
+      "inputHash": "4da9ab28db0d0b1252ed551af9a852fc88e5554436971b29561f986011254414",
+      "instructionHashes": [
+        {
+          "file": "downstream-breaking-cases.md",
+          "sha256": "5871784f21862350271afbc893bd20012a34130ba54c0d84038a6dfbfe15e28a"
+        },
+        {
+          "file": "downstream-candidate-rules.md",
+          "sha256": "b42f0097fd51667016eeeb8d45843c8b0a4b174082044a657d27ba5638a1690c"
+        }
+      ],
+      "timings": {
+        "preparation": {
+          "artifactIdentityAndHashVerificationMs": 23,
+          "downstreamAnalysisMs": 1401,
+          "buildModelInputMs": 1,
+          "nonDownstreamReuseValidationMs": 27,
+          "writeCanonicalInputsMs": 298,
+          "canonicalReuseValidationMs": 17,
+          "totalPreparationMs": 1834
+        },
+        "agentJudgment": {
+          "status": "not-required",
+          "reason": "No deterministic or reused inferred downstream candidates; empty coverage confirmed."
+        },
+        "assemblyValidationRenderingMs": 35
+      },
+      "reused": [
+        "compiler artifacts",
+        "source index",
+        "semantic and REST inputs/judgments",
+        "validated inference where present",
+        "Azure Guidelines evidence/judgments"
+      ],
+      "warnings": []
+    },
+    {
+      "pr": 44742,
+      "before": {
+        "semanticIntents": 4,
+        "restBreakingFindings": 22,
+        "downstreamFindings": 19,
+        "complianceFindings": 4
+      },
+      "after": {
+        "semanticIntents": 4,
+        "restBreakingFindings": 22,
+        "downstreamFindings": 18,
+        "complianceFindings": 4
+      },
+      "safetyBefore": "failed",
+      "safetyAfter": "failed",
+      "candidateCount": 19,
+      "approvedCount": 18,
+      "rejectedCount": 1,
+      "addedFindingIds": [],
+      "removedFindingIds": [
+        "downstream-630a2a23c2940472"
+      ],
+      "source": "C:\\workspace\\azure-sdk-tools\\result\\downstream-reassessment-20260911\\44742",
+      "inputHash": "b844399a8debd8701e2eed3194a8dfd01531dfff4f34294786da870a32c602bc",
+      "instructionHashes": [
+        {
+          "file": "downstream-breaking-cases.md",
+          "sha256": "5871784f21862350271afbc893bd20012a34130ba54c0d84038a6dfbfe15e28a"
+        },
+        {
+          "file": "downstream-candidate-rules.md",
+          "sha256": "b42f0097fd51667016eeeb8d45843c8b0a4b174082044a657d27ba5638a1690c"
+        }
+      ],
+      "timings": {
+        "preparation": {
+          "artifactIdentityAndHashVerificationMs": 32,
+          "downstreamAnalysisMs": 2394,
+          "buildModelInputMs": 8,
+          "nonDownstreamReuseValidationMs": 168,
+          "writeCanonicalInputsMs": 68,
+          "canonicalReuseValidationMs": 52,
+          "totalPreparationMs": 2801
+        },
+        "agentJudgment": {
+          "pr": 44742,
+          "startUtc": "2026-09-11T04:17:27.2053782Z",
+          "endUtc": "2026-09-11T04:20:11.0154118Z",
+          "durationSeconds": 163.8015688,
+          "activeElapsedSeconds": 163.8015688,
+          "queueDurationSeconds": null,
+          "timingMethod": "Get-Date UTC boundaries and Stopwatch monotonic timestamps",
+          "scope": "Agent execution from first timing call through finalizer completion, including tool waits; pre-execution queue not measured",
+          "finalizerStatus": "passed"
+        },
+        "assemblyValidationRenderingMs": 491
+      },
+      "reused": [
+        "compiler artifacts",
+        "source index",
+        "semantic and REST inputs/judgments",
+        "validated inference where present",
+        "Azure Guidelines evidence/judgments"
+      ],
+      "complianceReuseOverride": {
+        "reason": "Use newer validated compliance decisions instead of the older preparation seed; downstream decisions unchanged.",
+        "sourceJudgment": {
+          "path": "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\44742\\assessment-judgment.json",
+          "sha256": "6f047af6221d544ff71c58237c94655e6a5525420ecb5fee7c8787af4ceeafaa",
+          "bytes": 20497
+        },
+        "matchingSearchEvidence": {
+          "path": "C:\\workspace\\azure-sdk-tools\\result\\downstream-reassessment-20260911\\44742\\compliance-search-evidence.json",
+          "sha256": "d50969119d71cf8ded8c59f5cba0e6c754d1194384d8235339d8ed23e362f681",
+          "bytes": 110604
+        },
+        "acceptedComplianceExactlyPreserved": true,
+        "originalSeedPreserved": "C:\\workspace\\azure-sdk-tools\\result\\downstream-reassessment-20260911\\44742\\assessment-judgment.seed.json"
+      },
+      "warnings": []
+    },
+    {
+      "pr": 44882,
+      "before": {
+        "semanticIntents": 1,
+        "restBreakingFindings": 0,
+        "downstreamFindings": 0,
+        "complianceFindings": 0
+      },
+      "after": {
+        "semanticIntents": 1,
+        "restBreakingFindings": 0,
+        "downstreamFindings": 0,
+        "complianceFindings": 0
+      },
+      "safetyBefore": "passed",
+      "safetyAfter": "passed",
+      "candidateCount": 0,
+      "approvedCount": 0,
+      "rejectedCount": 0,
+      "addedFindingIds": [],
+      "removedFindingIds": [],
+      "source": "C:\\workspace\\azure-sdk-tools\\result\\downstream-reassessment-20260911\\44882",
+      "inputHash": "199496cf8621403b1bad644c77e02acb0006a657cff6b0eab38b5177113c235d",
+      "instructionHashes": [
+        {
+          "file": "downstream-breaking-cases.md",
+          "sha256": "5871784f21862350271afbc893bd20012a34130ba54c0d84038a6dfbfe15e28a"
+        },
+        {
+          "file": "downstream-candidate-rules.md",
+          "sha256": "b42f0097fd51667016eeeb8d45843c8b0a4b174082044a657d27ba5638a1690c"
+        }
+      ],
+      "timings": {
+        "preparation": {
+          "artifactIdentityAndHashVerificationMs": 20,
+          "downstreamAnalysisMs": 1090,
+          "buildModelInputMs": 1,
+          "nonDownstreamReuseValidationMs": 35,
+          "writeCanonicalInputsMs": 27,
+          "canonicalReuseValidationMs": 26,
+          "totalPreparationMs": 1260
+        },
+        "agentJudgment": {
+          "status": "not-required",
+          "reason": "No deterministic or reused inferred downstream candidates; empty coverage confirmed."
+        },
+        "assemblyValidationRenderingMs": 52
+      },
+      "reused": [
+        "compiler artifacts",
+        "source index",
+        "semantic and REST inputs/judgments",
+        "validated inference where present",
+        "Azure Guidelines evidence/judgments"
+      ],
+      "warnings": [
+        "Historical supplemental referencedDeclarations differ; changed source/hunks/declarations and complete semantic/REST inputs are identical. New work uses the matching v3 source index."
+      ]
+    },
+    {
+      "pr": 44988,
+      "before": {
+        "semanticIntents": 11,
+        "restBreakingFindings": 0,
+        "downstreamFindings": 7,
+        "complianceFindings": 3
+      },
+      "after": {
+        "semanticIntents": 11,
+        "restBreakingFindings": 0,
+        "downstreamFindings": 7,
+        "complianceFindings": 3
+      },
+      "safetyBefore": "failed",
+      "safetyAfter": "failed",
+      "candidateCount": 10,
+      "approvedCount": 7,
+      "rejectedCount": 3,
+      "addedFindingIds": [],
+      "removedFindingIds": [],
+      "source": "C:\\workspace\\azure-sdk-tools\\result\\downstream-reassessment-20260911\\44988",
+      "inputHash": "24cc8c61aefe649fb48cdfa7a86a863793f9d816e1ea365dfe68435e71ed3f3b",
+      "instructionHashes": [
+        {
+          "file": "downstream-breaking-cases.md",
+          "sha256": "5871784f21862350271afbc893bd20012a34130ba54c0d84038a6dfbfe15e28a"
+        },
+        {
+          "file": "downstream-candidate-rules.md",
+          "sha256": "b42f0097fd51667016eeeb8d45843c8b0a4b174082044a657d27ba5638a1690c"
+        }
+      ],
+      "timings": {
+        "preparation": {
+          "artifactIdentityAndHashVerificationMs": 479,
+          "downstreamAnalysisMs": 103768,
+          "buildModelInputMs": 114,
+          "nonDownstreamReuseValidationMs": 305,
+          "writeCanonicalInputsMs": 79,
+          "canonicalReuseValidationMs": 182,
+          "totalPreparationMs": 105075
+        },
+        "agentJudgment": {
+          "startUtc": "2026-09-11T04:19:25.6959616+00:00",
+          "endUtc": "2026-09-11T04:20:36.9782402Z",
+          "elapsedSeconds": 71.2822786
+        },
+        "assemblyValidationRenderingMs": 2838
+      },
+      "reused": [
+        "compiler artifacts",
+        "source index",
+        "semantic and REST inputs/judgments",
+        "validated inference where present",
+        "Azure Guidelines evidence/judgments"
+      ],
+      "complianceReuseOverride": {
+        "reason": "Preserve the latest accepted Azure Guidelines using its matching cached decisions and search evidence; fresh downstream decisions unchanged.",
+        "sourceJudgment": {
+          "path": "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\network-pilot\\44988-optimized\\assessment-judgment.json",
+          "sha256": "12b82641b123bb9fc3b030203dd2fc006da31c28e20aab8cce83fd4f511c0d1f",
+          "bytes": 22497
+        },
+        "sourceSearchEvidence": {
+          "path": "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\network-pilot\\44988-optimized\\deterministic-analysis\\compliance-search-evidence.json",
+          "sha256": "c97d2cb687bb1b09a6a96f92968d4a2a251eb93f411a9dba3ddc5b182daea956",
+          "bytes": 468535
+        },
+        "matchingSearchEvidence": {
+          "path": "C:\\workspace\\azure-sdk-tools\\result\\downstream-reassessment-20260911\\44988\\compliance-search-evidence.json",
+          "sha256": "c97d2cb687bb1b09a6a96f92968d4a2a251eb93f411a9dba3ddc5b182daea956",
+          "bytes": 468535
+        },
+        "acceptedComplianceExactlyPreserved": true,
+        "originalSeedPreserved": "C:\\workspace\\azure-sdk-tools\\result\\downstream-reassessment-20260911\\44988\\assessment-judgment.seed.json",
+        "originalSearchEvidencePreserved": {
+          "path": "C:\\workspace\\azure-sdk-tools\\result\\downstream-reassessment-20260911\\44988\\before-compliance-reuse-compliance-search-evidence.json",
+          "sha256": "3cd524a6244f42ee5ea1819824223cc1a3047f96ffcf66d3a018a68ffe4bbf41",
+          "bytes": 698194
+        }
+      },
+      "warnings": [
+        "Historical supplemental referencedDeclarations differ; changed source/hunks/declarations and complete semantic/REST inputs are identical. New work uses the matching v3 source index."
+      ]
+    },
+    {
+      "pr": 45162,
+      "before": {
+        "semanticIntents": 2,
+        "restBreakingFindings": 0,
+        "downstreamFindings": 0,
+        "complianceFindings": 0
+      },
+      "after": {
+        "semanticIntents": 2,
+        "restBreakingFindings": 0,
+        "downstreamFindings": 0,
+        "complianceFindings": 0
+      },
+      "safetyBefore": "passed",
+      "safetyAfter": "passed",
+      "candidateCount": 3,
+      "approvedCount": 0,
+      "rejectedCount": 3,
+      "addedFindingIds": [],
+      "removedFindingIds": [],
+      "source": "C:\\workspace\\azure-sdk-tools\\result\\downstream-reassessment-20260911\\45162",
+      "inputHash": "445486d2099ac95cdd17d6e01ee9249684de6325679bc93f4cd551eb2b2cdf84",
+      "instructionHashes": [
+        {
+          "file": "downstream-breaking-cases.md",
+          "sha256": "5871784f21862350271afbc893bd20012a34130ba54c0d84038a6dfbfe15e28a"
+        },
+        {
+          "file": "downstream-candidate-rules.md",
+          "sha256": "b42f0097fd51667016eeeb8d45843c8b0a4b174082044a657d27ba5638a1690c"
+        }
+      ],
+      "timings": {
+        "preparation": {
+          "artifactIdentityAndHashVerificationMs": 17,
+          "downstreamAnalysisMs": 440,
+          "buildModelInputMs": 7,
+          "nonDownstreamReuseValidationMs": 31,
+          "writeCanonicalInputsMs": 24,
+          "canonicalReuseValidationMs": 24,
+          "totalPreparationMs": 612
+        },
+        "agentJudgment": {
+          "startUtc": "2026-09-11T04:20:44.8097260+00:00",
+          "endUtc": "2026-09-11T04:21:42.5101387Z",
+          "elapsedSeconds": 57.7004127
+        },
+        "assemblyValidationRenderingMs": 76
+      },
+      "reused": [
+        "compiler artifacts",
+        "source index",
+        "semantic and REST inputs/judgments",
+        "validated inference where present",
+        "Azure Guidelines evidence/judgments"
+      ],
+      "warnings": [
+        "Historical supplemental referencedDeclarations differ; changed source/hunks/declarations and complete semantic/REST inputs are identical. New work uses the matching v3 source index."
+      ]
+    },
+    {
+      "pr": 45348,
+      "before": {
+        "semanticIntents": 1,
+        "restBreakingFindings": 0,
+        "downstreamFindings": 0,
+        "complianceFindings": 0
+      },
+      "after": {
+        "semanticIntents": 1,
+        "restBreakingFindings": 0,
+        "downstreamFindings": 0,
+        "complianceFindings": 0
+      },
+      "safetyBefore": "passed",
+      "safetyAfter": "passed",
+      "candidateCount": 0,
+      "approvedCount": 0,
+      "rejectedCount": 0,
+      "addedFindingIds": [],
+      "removedFindingIds": [],
+      "source": "C:\\workspace\\azure-sdk-tools\\result\\downstream-reassessment-20260911\\45348",
+      "inputHash": "c1b88df5a7008d355d9cf34a255745b23214e661745ecf12bb902c7c16ca9df1",
+      "instructionHashes": [
+        {
+          "file": "downstream-breaking-cases.md",
+          "sha256": "5871784f21862350271afbc893bd20012a34130ba54c0d84038a6dfbfe15e28a"
+        },
+        {
+          "file": "downstream-candidate-rules.md",
+          "sha256": "b42f0097fd51667016eeeb8d45843c8b0a4b174082044a657d27ba5638a1690c"
+        }
+      ],
+      "timings": {
+        "preparation": {
+          "artifactIdentityAndHashVerificationMs": 38,
+          "downstreamAnalysisMs": 5360,
+          "buildModelInputMs": 69,
+          "nonDownstreamReuseValidationMs": 113,
+          "writeCanonicalInputsMs": 56,
+          "canonicalReuseValidationMs": 77,
+          "totalPreparationMs": 5810
+        },
+        "agentJudgment": {
+          "status": "not-required",
+          "reason": "No deterministic or reused inferred downstream candidates; empty coverage confirmed."
+        },
+        "assemblyValidationRenderingMs": 246
+      },
+      "reused": [
+        "compiler artifacts",
+        "source index",
+        "semantic and REST inputs/judgments",
+        "validated inference where present",
+        "Azure Guidelines evidence/judgments"
+      ],
+      "warnings": []
+    },
+    {
+      "pr": 45536,
+      "before": {
+        "semanticIntents": 1,
+        "restBreakingFindings": 0,
+        "downstreamFindings": 0,
+        "complianceFindings": 0
+      },
+      "after": {
+        "semanticIntents": 1,
+        "restBreakingFindings": 0,
+        "downstreamFindings": 0,
+        "complianceFindings": 0
+      },
+      "safetyBefore": "passed",
+      "safetyAfter": "passed",
+      "candidateCount": 0,
+      "approvedCount": 0,
+      "rejectedCount": 0,
+      "addedFindingIds": [],
+      "removedFindingIds": [],
+      "source": "C:\\workspace\\azure-sdk-tools\\result\\downstream-reassessment-20260911\\45536",
+      "inputHash": "ef37451b3de4f50fcab469755cc85ee83e9ee96c4ea0394958c17100d754f6d0",
+      "instructionHashes": [
+        {
+          "file": "downstream-breaking-cases.md",
+          "sha256": "5871784f21862350271afbc893bd20012a34130ba54c0d84038a6dfbfe15e28a"
+        },
+        {
+          "file": "downstream-candidate-rules.md",
+          "sha256": "b42f0097fd51667016eeeb8d45843c8b0a4b174082044a657d27ba5638a1690c"
+        }
+      ],
+      "timings": {
+        "preparation": {
+          "artifactIdentityAndHashVerificationMs": 23,
+          "downstreamAnalysisMs": 1388,
+          "buildModelInputMs": 0,
+          "nonDownstreamReuseValidationMs": 29,
+          "writeCanonicalInputsMs": 24,
+          "canonicalReuseValidationMs": 24,
+          "totalPreparationMs": 1557
+        },
+        "agentJudgment": {
+          "status": "not-required",
+          "reason": "No deterministic or reused inferred downstream candidates; empty coverage confirmed."
+        },
+        "assemblyValidationRenderingMs": 38
+      },
+      "reused": [
+        "compiler artifacts",
+        "source index",
+        "semantic and REST inputs/judgments",
+        "validated inference where present",
+        "Azure Guidelines evidence/judgments"
+      ],
+      "warnings": []
+    }
+  ],
+  "explanationRefinement": {
+    "changedAt": "2026-09-11T05:03:25.887Z",
+    "scope": "Editorial shortening of 36 approved downstream rationales; no reassessment or decision changes. Original judgment timings and instruction hashes describe the original run.",
+    "instructions": {
+      "path": "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\references\\downstream-breaking-cases.md",
+      "sha256": "00dafcd4af0d0e01df528f61660c7bd7d31091bb23c424ebd83403ae73405ca9",
+      "bytes": 4987
+    }
+  }
+}

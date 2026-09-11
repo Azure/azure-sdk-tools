@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-04T02:04:14.729Z",
+  "generatedAt": "2026-09-11T04:09:58.823Z",
   "title": "TypeSpec assessment: specification/elastic/Elastic.Management",
   "repository": {
     "root": "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\.workspaces\\44454\\head",
@@ -181,7 +181,7 @@
           "relatedFindings": {
             "rest": [],
             "downstream": [],
-            "sharedTypeImpact": []
+            "typeImpact": []
           }
         },
         {
@@ -298,7 +298,7 @@
           "relatedFindings": {
             "rest": [],
             "downstream": [],
-            "sharedTypeImpact": []
+            "typeImpact": []
           }
         }
       ],
@@ -317,10 +317,9 @@
     "downstream": {
       "status": "passed",
       "findings": [],
-      "operationGroups": [],
-      "sharedTypeImpacts": [],
+      "methodGroups": [],
+      "typeImpacts": [],
       "rootCauses": [],
-      "impliedByRest": [],
       "rejectedCandidateCount": 0,
       "blockers": []
     },
@@ -1492,18 +1491,18 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\44454\\deterministic-analysis\\worktrees\\base\\specification\\elastic\\Elastic.Management",
+                "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44454\\worktrees\\base\\specification\\elastic\\Elastic.Management",
                 "--emit=@azure-tools/typespec-autorest",
-                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\44454\\deterministic-analysis\\projects\\project-77e02a92a87a\\baseline\\autorest",
+                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44454\\projects\\project-77e02a92a87a\\baseline\\autorest",
                 "--warn-as-error",
                 "--option=@azure-tools/typespec-autorest.version=2025-06-01"
               ]
             },
             "exitCode": 0,
-            "durationMs": 8863,
-            "configPath": "worktrees\\base\\specification\\elastic\\Elastic.Management\\tspconfig.yaml",
+            "durationMs": 7475,
+            "configPath": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44454\\worktrees\\base\\specification\\elastic\\Elastic.Management\\tspconfig.yaml",
             "configHash": "9ad8d081215a7660812a81582ba9e4eec3fc61b557f6ce08f067eda80b2781a7",
-            "logPath": "logs\\project-77e02a92a87a-baseline-autorest.log",
+            "logPath": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44454\\logs\\project-77e02a92a87a-baseline-autorest.log",
             "comparisonRole": "baseline",
             "sourceRevision": "base",
             "sourceCommit": "e8420e45fdaf12e2c72417d379c454f1fc8ce1e6",
@@ -1511,7 +1510,7 @@
             "format": "swagger-2.0",
             "files": [
               {
-                "path": "projects\\project-77e02a92a87a\\baseline\\autorest\\resource-manager\\Microsoft.Elastic\\stable\\2025-06-01\\elastic.json",
+                "path": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44454\\projects\\project-77e02a92a87a\\baseline\\autorest\\resource-manager\\Microsoft.Elastic\\stable\\2025-06-01\\elastic.json",
                 "apiVersion": "2025-06-01",
                 "documentRole": "feature",
                 "contentHash": "ae7b5085060b034e1b0de10ef4c0b52f282299f4ab6a659c9dfbabb6f86dac94"
@@ -1524,19 +1523,19 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\44454\\deterministic-analysis\\worktrees\\base\\specification\\elastic\\Elastic.Management",
+                "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44454\\worktrees\\base\\specification\\elastic\\Elastic.Management",
                 "--emit=@azure-tools/typespec-client-generator-core",
-                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\44454\\deterministic-analysis\\projects\\project-77e02a92a87a\\baseline\\tcgc",
+                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44454\\projects\\project-77e02a92a87a\\baseline\\tcgc",
                 "--warn-as-error",
-                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\44454\\deterministic-analysis\\inputs\\empty-examples",
+                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44454\\inputs\\empty-examples",
                 "--option=@azure-tools/typespec-client-generator-core.api-version=2025-06-01"
               ]
             },
             "exitCode": 0,
-            "durationMs": 7933,
-            "configPath": "worktrees\\base\\specification\\elastic\\Elastic.Management\\tspconfig.yaml",
+            "durationMs": 6412,
+            "configPath": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44454\\worktrees\\base\\specification\\elastic\\Elastic.Management\\tspconfig.yaml",
             "configHash": "9ad8d081215a7660812a81582ba9e4eec3fc61b557f6ce08f067eda80b2781a7",
-            "logPath": "logs\\project-77e02a92a87a-baseline-tcgc.log",
+            "logPath": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44454\\logs\\project-77e02a92a87a-baseline-tcgc.log",
             "comparisonRole": "baseline",
             "sourceRevision": "base",
             "sourceCommit": "e8420e45fdaf12e2c72417d379c454f1fc8ce1e6",
@@ -1544,7 +1543,7 @@
             "format": "tcgc-yaml",
             "files": [
               {
-                "path": "projects\\project-77e02a92a87a\\baseline\\tcgc\\tcgc-output.yaml",
+                "path": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44454\\projects\\project-77e02a92a87a\\baseline\\tcgc\\tcgc-output.yaml",
                 "contentHash": "4ed7c1311d456fc25c27df26fab1e54b0576070fb66279b3c78914aba26fc07a"
               }
             ]
@@ -1561,18 +1560,18 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\44454\\deterministic-analysis\\worktrees\\current\\specification\\elastic\\Elastic.Management",
+                "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44454\\worktrees\\current\\specification\\elastic\\Elastic.Management",
                 "--emit=@azure-tools/typespec-autorest",
-                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\44454\\deterministic-analysis\\projects\\project-77e02a92a87a\\target\\autorest",
+                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44454\\projects\\project-77e02a92a87a\\target\\autorest",
                 "--warn-as-error",
                 "--option=@azure-tools/typespec-autorest.version=2025-06-01"
               ]
             },
             "exitCode": 0,
-            "durationMs": 7980,
-            "configPath": "worktrees\\current\\specification\\elastic\\Elastic.Management\\tspconfig.yaml",
+            "durationMs": 6186,
+            "configPath": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44454\\worktrees\\current\\specification\\elastic\\Elastic.Management\\tspconfig.yaml",
             "configHash": "9ad8d081215a7660812a81582ba9e4eec3fc61b557f6ce08f067eda80b2781a7",
-            "logPath": "logs\\project-77e02a92a87a-target-autorest.log",
+            "logPath": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44454\\logs\\project-77e02a92a87a-target-autorest.log",
             "comparisonRole": "target",
             "sourceRevision": "current",
             "sourceCommit": "b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2",
@@ -1580,7 +1579,7 @@
             "format": "swagger-2.0",
             "files": [
               {
-                "path": "projects\\project-77e02a92a87a\\target\\autorest\\resource-manager\\Microsoft.Elastic\\stable\\2025-06-01\\elastic.json",
+                "path": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44454\\projects\\project-77e02a92a87a\\target\\autorest\\resource-manager\\Microsoft.Elastic\\stable\\2025-06-01\\elastic.json",
                 "apiVersion": "2025-06-01",
                 "documentRole": "feature",
                 "contentHash": "399b9bd5a7e4394a5aaf3b851570200a112fd63b94f1a25847c151746213c0dc"
@@ -1593,19 +1592,19 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\44454\\deterministic-analysis\\worktrees\\current\\specification\\elastic\\Elastic.Management",
+                "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44454\\worktrees\\current\\specification\\elastic\\Elastic.Management",
                 "--emit=@azure-tools/typespec-client-generator-core",
-                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\44454\\deterministic-analysis\\projects\\project-77e02a92a87a\\target\\tcgc",
+                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44454\\projects\\project-77e02a92a87a\\target\\tcgc",
                 "--warn-as-error",
-                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\44454\\deterministic-analysis\\inputs\\empty-examples",
+                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44454\\inputs\\empty-examples",
                 "--option=@azure-tools/typespec-client-generator-core.api-version=2025-06-01"
               ]
             },
             "exitCode": 0,
-            "durationMs": 7789,
-            "configPath": "worktrees\\current\\specification\\elastic\\Elastic.Management\\tspconfig.yaml",
+            "durationMs": 6493,
+            "configPath": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44454\\worktrees\\current\\specification\\elastic\\Elastic.Management\\tspconfig.yaml",
             "configHash": "9ad8d081215a7660812a81582ba9e4eec3fc61b557f6ce08f067eda80b2781a7",
-            "logPath": "logs\\project-77e02a92a87a-target-tcgc.log",
+            "logPath": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44454\\logs\\project-77e02a92a87a-target-tcgc.log",
             "comparisonRole": "target",
             "sourceRevision": "current",
             "sourceCommit": "b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2",
@@ -1613,7 +1612,7 @@
             "format": "tcgc-yaml",
             "files": [
               {
-                "path": "projects\\project-77e02a92a87a\\target\\tcgc\\tcgc-output.yaml",
+                "path": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44454\\projects\\project-77e02a92a87a\\target\\tcgc\\tcgc-output.yaml",
                 "contentHash": "65be1e9869fb08661e212de75d2f81da42ef74527787a9d1a7dccd6723e05067"
               }
             ]
@@ -1676,8 +1675,8 @@
   "inputAccounting": {
     "budgetTier": "small",
     "budgetBytes": 131072,
-    "bytes": 8344,
-    "estimatedTokens": 2086,
+    "bytes": 8382,
+    "estimatedTokens": 2096,
     "retained": {
       "evidenceSets": 2,
       "facts": 0,
@@ -1693,6 +1692,7 @@
       "compilerLogs": true,
       "unchangedInventories": true,
       "unreferencedFacts": true,
+      "unreferencedDeterministicFacts": true,
       "sourceChanges": true,
       "repeatedDeclarationIds": true,
       "repeatedReviewUnitEvidence": true
@@ -1712,14 +1712,8 @@
     }
   },
   "timings": {
-    "totalMs": 54778,
-    "semanticAnalysisMs": 44,
-    "restAnalysisMs": 46,
-    "downstreamAnalysisMs": 1726
+    "downstreamAnalysisMs": 1401,
+    "buildModelInputMs": 1
   },
-  "pr": 44454,
-  "pullRequest": {
-    "number": 44454,
-    "url": "https://github.com/Azure/azure-rest-api-specs/pull/44454"
-  }
+  "pr": 44454
 }

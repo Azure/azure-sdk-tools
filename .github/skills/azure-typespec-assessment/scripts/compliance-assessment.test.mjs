@@ -159,7 +159,7 @@ function fixture() {
   return { source, requests, evidence, decisions };
 }
 
-test("builds a bounded Compliance query profile from Semantic intent evidence", () => {
+test("builds a bounded Azure Guidelines query profile from Semantic intent evidence", () => {
   const { requests } = fixture();
   assert.equal(requests.length, 1);
   assert.equal(requests[0].queryProfile.servicePlane, "resource-manager");
@@ -171,7 +171,7 @@ test("builds a bounded Compliance query profile from Semantic intent evidence", 
   assert.equal(requests[0].queryProfile.affectedOperationCount, 0);
 });
 
-test("assembles one Compliance finding and coverage per Semantic intent", () => {
+test("assembles one Azure Guidelines finding and coverage per Semantic intent", () => {
   const { source, requests, evidence, decisions } = fixture();
   const compliance = assembleCompliance({
     requests,
@@ -191,7 +191,7 @@ test("assembles one Compliance finding and coverage per Semantic intent", () => 
   ]);
 });
 
-test("rejects uncataloged Compliance evidence", () => {
+test("rejects uncataloged Azure Guidelines evidence", () => {
   const { source, requests, evidence, decisions } = fixture();
   evidence.intents[0].rankedDocuments[0].canonicalUrl =
     "https://example.test/invented";
@@ -272,7 +272,7 @@ test("counts completed searches with no governing guidance as assessed", () => {
   assert.equal(compliance.intentAssessments[0].sourceLinks.length, 1);
 });
 
-test("does not pass Compliance when Semantic analysis is blocked", () => {
+test("does not pass Azure Guidelines when Semantic analysis is blocked", () => {
   const compliance = assembleCompliance({
     requests: [],
     evidence: {

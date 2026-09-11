@@ -58,7 +58,7 @@ export function buildCompliance(assessment, specification) {
       sourceReferences: selectedSources(
         assessment,
         document,
-        `Compliance document ${index + 1}`,
+        `Azure Guidelines document ${index + 1}`,
       ),
     };
   });
@@ -87,7 +87,7 @@ export function buildCompliance(assessment, specification) {
           : selectedSources(
               assessment,
               finding,
-              `Compliance finding ${index + 1}`,
+              `Azure Guidelines finding ${index + 1}`,
             );
       for (const snippet of codeSnippets ?? []) {
         const reference = sourceReferences.find(

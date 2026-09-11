@@ -220,7 +220,7 @@ test("model input requests inference only for unknown hunks", () => {
   ]);
 });
 
-test("model input bounds repeated review evidence and candidate declarations", () => {
+test("model input bounds repeated review evidence and retains downstream facts", () => {
   const declarationIds = Array.from(
     { length: 100 },
     (_, index) => `declaration-${index}`,
@@ -304,12 +304,98 @@ test("model input bounds repeated review evidence and candidate declarations", (
   assert.equal(input.semanticReviewUnits[0].changedConstructs.length, 40);
   assert.equal(input.semanticReviewUnits[0].changedConstructCount, 100);
   assert.equal(input.downstreamCandidates[0].declarationIds, undefined);
-  assert.deepEqual(Object.keys(input.facts), []);
+  assert.deepEqual(Object.keys(input.facts), ["sdk-fact-1"]);
   assert.ok(input.downstreamCandidates[0].evidenceSetId);
   assert.equal(
     input.evidenceSets[input.downstreamCandidates[0].evidenceSetId]
       .declarationCount,
     100,
+  );
+});
+
+test("model input retains downstream method and bridge path facts", () => {
+  const facts = Object.fromEntries(
+    ["method", "wrapper", "type"].map((name) => [
+      `sdk-${name}`,
+      {
+        id: `sdk-${name}`,
+        projectId: "p",
+        comparisonRole: "target",
+        factKind: name === "method" ? "method" : "model",
+        identity: `Contoso.${name}`,
+        crossLanguageDefinitionId: `Contoso.${name}`,
+      },
+    ]),
+  );
+  const input = buildModelInput({
+    manifest: {
+      comparison: {
+        mergeBaseCommit: "base",
+        headCommit: "head",
+        baseRef: "origin/main",
+        workingTree: {},
+      },
+      projects: [{ id: "p", path: "specification/widget" }],
+      blockers: [],
+    },
+    sourceIndex: { sourceChanges: [] },
+    semantic: { status: "ready", facts: {}, reviewUnits: [], blockers: [] },
+    rest: { status: "ready", facts: {}, candidates: [], blockers: [] },
+    downstream: {
+      status: "ready",
+      facts,
+      candidates: [
+        {
+          id: "downstream-1",
+          rule: "model-property-removed",
+          actual: "Changed",
+          expected: "Stable",
+          sourceChangeIds: [],
+          hunkIds: [],
+          declarationIds: [],
+          evidenceFactIds: ["sdk-type"],
+          rootCauseIds: ["root-1"],
+          reviewRequired: true,
+        },
+      ],
+      rootCauses: [
+        {
+          id: "root-1",
+          kind: "type-contract-propagation",
+          directCandidateIds: ["downstream-1"],
+          propagatedCandidateIds: [],
+          methodFactIds: ["sdk-method"],
+          typeFactIds: ["sdk-wrapper", "sdk-type"],
+          referenceEvidence: [
+            {
+              fromFactId: "sdk-method",
+              toFactId: "sdk-wrapper",
+              kind: "response",
+              location: "response-body",
+            },
+            {
+              fromFactId: "sdk-wrapper",
+              toFactId: "sdk-type",
+              kind: "property",
+              memberName: "value",
+              location: "response-body",
+            },
+          ],
+        },
+      ],
+      blockers: [],
+    },
+  });
+
+  assert.deepEqual(Object.keys(input.facts), [
+    "sdk-method",
+    "sdk-type",
+    "sdk-wrapper",
+  ]);
+  assert.ok(
+    input.downstreamRootCauses[0].referenceEvidence.every(
+      (edge) => input.facts[edge.fromFactId] && input.facts[edge.toFactId],
+    ),
   );
 });
 

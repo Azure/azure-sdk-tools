@@ -44,7 +44,23 @@ function addFact(facts, projectId, comparisonRole, kind, value, artifactComparis
     factKind: kind,
     ...value,
   };
-  const id = stableId("sdk-fact", fact);
+  // Response headers are new graph evidence, not part of the established fact identity.
+  const identityFact =
+    kind === "method" && fact.operation
+      ? {
+          ...fact,
+          operation: {
+            ...fact.operation,
+            responses: (fact.operation.responses ?? []).map(
+              ({ headers: _headers, ...response }) => response,
+            ),
+            exceptions: (fact.operation.exceptions ?? []).map(
+              ({ headers: _headers, ...response }) => response,
+            ),
+          },
+        }
+      : fact;
+  const id = stableId("sdk-fact", identityFact);
   facts[id] = { ...fact, id };
   return id;
 }
@@ -360,72 +376,262 @@ function referencedTypeNames(value, names = new Set(), seen = new WeakSet()) {
   return names;
 }
 
-function buildRootCauses(candidates, facts) {
-  const afterFact = (candidate) => candidate.evidenceFactIds
-    .map((id) => facts[id])
-    .find((fact) => factRole(fact) === "target");
-  const methodCandidates = candidates.filter((candidate) => candidate.rule.startsWith("method-"));
-  const typeCandidates = candidates.filter((candidate) =>
-    ["model", "enum", "union"].includes(afterFact(candidate)?.factKind));
-  const methodGroups = new Map();
-  for (const candidate of methodCandidates) {
-    const fact = afterFact(candidate);
-    const response = typeIdentity(fact?.responseType) ?? typeIdentity(fact?.lro?.logicalResult);
-    const key = response
-      ? `${candidate.projectId ?? fact?.projectId}:${response}`
-      : `${fact?.projectId}:${candidate.crossLanguageDefinitionId}`;
-    const group = methodGroups.get(key) ?? [];
-    group.push(candidate);
-    methodGroups.set(key, group);
+function parameterLocation(method, parameter) {
+  const protocolParameters = [
+    ...(method.operation?.parameters ?? []),
+    ...(method.operation?.bodyParam ? [method.operation.bodyParam] : []),
+  ];
+  const matches = protocolParameters.filter((item) => {
+    const segments = (item.methodParameterSegments ?? []).flat(Infinity).map(String);
+    return item.name === parameter.name ||
+      item.crossLanguageDefinitionId === parameter.crossLanguageDefinitionId ||
+      segments.includes(parameter.name) ||
+      (parameter.crossLanguageDefinitionId &&
+        segments.includes(parameter.crossLanguageDefinitionId));
+  });
+  const kinds = new Set(matches.map((item) => item.kind));
+  if (kinds.size !== 1) return undefined;
+  const [kind] = kinds;
+  return ["path", "query", "header", "body"].includes(kind)
+    ? `request-${kind}`
+    : undefined;
+}
+
+function buildReferenceGraph(projectId, comparisonRole, contract, source, facts) {
+  const nodes = new Map();
+  const reverse = new Map();
+  const reverseKeys = new Map();
+  const addNode = (key, factKind, value) => {
+    nodes.set(key, { key, factKind, value, factId: undefined });
+  };
+  for (const method of contract.methods.filter((item) => item.access === "public")) {
+    addNode(`method:${method.identity}`, "method", method);
   }
-  const roots = [];
-  const coveredTypes = new Set();
-  for (const [key, direct] of methodGroups) {
-    const reachable = new Set();
-    const queue = direct
-      .map(afterFact)
-      .flatMap((fact) => [fact?.responseType, fact?.lro?.logicalResult])
-      .filter(Boolean);
-    while (queue.length) {
-      const value = queue.shift();
-      const identity = typeIdentity(value);
-      if (!identity || reachable.has(identity)) continue;
-      reachable.add(identity);
-      for (const candidate of typeCandidates) {
-        const fact = afterFact(candidate);
-        if (typeIdentity(fact) !== identity) continue;
-        for (const reference of referencedTypeNames(fact)) {
-          if (!reachable.has(reference)) queue.push({ identity: reference });
-        }
+  for (const [factKind, values] of [
+    ["model", contract.models],
+    ["enum", contract.enums],
+    ["union", contract.unions],
+  ]) {
+    for (const value of values) addNode(`type:${value.identity}`, factKind, value);
+  }
+  const addEdge = (from, targetIdentity, detail) => {
+    const to = `type:${targetIdentity}`;
+    if (!nodes.has(from) || !nodes.has(to)) return;
+    const edge = { from, to, ...detail };
+    const values = reverse.get(to) ?? [];
+    const keys = reverseKeys.get(to) ?? new Set();
+    const edgeKey = canonicalJson(edge);
+    if (!keys.has(edgeKey)) {
+      keys.add(edgeKey);
+      values.push(edge);
+      reverse.set(to, values);
+      reverseKeys.set(to, keys);
+    }
+  };
+  const addTypeEdges = (from, value, detail) => {
+    for (const identity of referencedTypeNames(value)) {
+      addEdge(from, identity, detail);
+    }
+  };
+  for (const method of contract.methods.filter((item) => item.access === "public")) {
+    const from = `method:${method.identity}`;
+    for (const parameter of method.parameters) {
+      addTypeEdges(from, parameter.type, {
+        kind: "parameter",
+        memberName: parameter.name,
+        location: parameterLocation(method, parameter),
+      });
+    }
+    addTypeEdges(from, method.responseType, {
+      kind: "response",
+      location: "response-body",
+    });
+    addTypeEdges(from, method.paging, {
+      kind: "paging-item",
+      location: "response-body",
+    });
+    addTypeEdges(from, method.lro, {
+      kind: "lro-result",
+      location: "response-body",
+    });
+    for (const response of method.operation?.responses ?? []) {
+      for (const header of response.headers ?? []) {
+        addTypeEdges(from, header.type, {
+          kind: "response-header",
+          memberName: header.serializedName ?? header.name,
+          location: "response-header",
+        });
       }
     }
-    const propagated = typeCandidates.filter((candidate) => {
-      const identity = typeIdentity(afterFact(candidate));
-      return identity && reachable.has(identity);
+  }
+  for (const model of contract.models) {
+    const from = `type:${model.identity}`;
+    for (const property of model.properties) {
+      addTypeEdges(from, property.type, {
+        kind: "property",
+        memberName: property.name,
+      });
+    }
+    if (model.baseModel) addEdge(from, model.baseModel, { kind: "base-model" });
+    addTypeEdges(from, model.additionalProperties, {
+      kind: "additional-properties",
     });
-    propagated.forEach((candidate) => coveredTypes.add(candidate.id));
+    for (const subtype of model.discriminatedSubtypes ?? []) {
+      addEdge(from, subtype.type, {
+        kind: "discriminated-subtype",
+        memberName: subtype.name,
+      });
+    }
+  }
+  for (const item of contract.enums) {
+    addTypeEdges(`type:${item.identity}`, item.valueType, {
+      kind: "enum-value-type",
+    });
+  }
+  for (const item of contract.unions) {
+    const from = `type:${item.identity}`;
+    addTypeEdges(from, item.type, { kind: "union-value" });
+    addTypeEdges(from, item.variantTypes, { kind: "union-variant" });
+    addTypeEdges(from, item.discriminatedOptions, {
+      kind: "union-variant",
+    });
+  }
+  const ensureFact = (key) => {
+    const node = nodes.get(key);
+    if (!node) return undefined;
+    node.factId ??= addFact(
+      facts,
+      projectId,
+      comparisonRole,
+      node.factKind,
+      node.value,
+      source.artifactComparison,
+    );
+    return node.factId;
+  };
+  return { projectId, comparisonRole, nodes, reverse, ensureFact };
+}
+
+function shortestMethodPaths(graph, typeName) {
+  const start = `type:${typeName}`;
+  if (!graph.nodes.has(start)) return [];
+  const queue = [{ key: start, path: [] }];
+  const visited = new Set([start]);
+  const results = [];
+  for (let index = 0; index < queue.length; index += 1) {
+    const current = queue[index];
+    for (const edge of graph.reverse.get(current.key) ?? []) {
+      const path = [edge, ...current.path];
+      if (edge.from.startsWith("method:")) {
+        const location = path.find((item) => item.location)?.location;
+        results.push({
+          methodKey: edge.from,
+          location,
+          path: path.map((item) => ({
+            ...item,
+            location: item.location ?? location,
+          })),
+        });
+        continue;
+      }
+      if (visited.has(edge.from)) continue;
+      visited.add(edge.from);
+      queue.push({ key: edge.from, path });
+    }
+  }
+  return results;
+}
+
+function buildRootCauses(candidates, facts, graphs) {
+  const candidateFact = (candidate, role) => candidate.evidenceFactIds
+    .map((id) => facts[id])
+    .find((fact) => factRole(fact) === role);
+  const methodCandidates = candidates.filter((candidate) =>
+    ["method", "client", "customization"].includes(
+      (candidateFact(candidate, "target") ?? candidateFact(candidate, "baseline"))?.factKind,
+    ));
+  const typeCandidates = candidates.filter((candidate) =>
+    ["model", "enum", "union"].includes(
+      (candidateFact(candidate, "target") ?? candidateFact(candidate, "baseline"))?.factKind,
+    ));
+  const roots = [];
+  const byMethod = new Map();
+  for (const candidate of methodCandidates) {
+    const fact = candidateFact(candidate, "target") ?? candidateFact(candidate, "baseline");
+    const key = `${fact?.projectId ?? ""}:${candidate.crossLanguageDefinitionId}`;
+    const values = byMethod.get(key) ?? [];
+    values.push(candidate);
+    byMethod.set(key, values);
+  }
+  for (const [rootKey, direct] of byMethod) {
     const root = {
       kind: "method-return-propagation",
       directCandidateIds: unique(direct.map((item) => item.id)),
-      propagatedCandidateIds: unique(propagated.map((item) => item.id)),
-      operationFactIds: unique(direct.flatMap((item) => item.evidenceFactIds)),
+      propagatedCandidateIds: [],
       methodFactIds: unique(direct.flatMap((item) => item.evidenceFactIds)),
-      typeFactIds: unique(propagated.flatMap((item) => item.evidenceFactIds)),
+      typeFactIds: [],
       referenceEvidence: [],
-      rootKey: key,
+      rootKey,
     };
     roots.push({ id: stableId("downstream-root-cause", root), ...root });
   }
-  const unresolved = typeCandidates.filter((candidate) => !coveredTypes.has(candidate.id));
-  if (unresolved.length) {
+  const byType = new Map();
+  for (const candidate of typeCandidates) {
+    const fact = candidateFact(candidate, "target") ?? candidateFact(candidate, "baseline");
+    const identity = typeIdentity(fact);
+    const key = `${fact?.projectId ?? ""}:${identity}`;
+    const values = byType.get(key) ?? [];
+    values.push(candidate);
+    byType.set(key, values);
+  }
+  for (const [rootKey, direct] of byType) {
+    const fact = candidateFact(direct[0], "target") ?? candidateFact(direct[0], "baseline");
+    const identity = typeIdentity(fact);
+    const projectGraphs = graphs.filter((graph) => graph.projectId === fact?.projectId);
+    const pathsByMethod = new Map();
+    for (const graph of projectGraphs.sort((left, right) =>
+      right.comparisonRole.localeCompare(left.comparisonRole))) {
+      for (const result of shortestMethodPaths(graph, identity)) {
+        const method = graph.nodes.get(result.methodKey)?.value;
+        const methodIdentity = method?.crossLanguageDefinitionId ?? method?.identity;
+        const key = `${methodIdentity}:${result.location ?? ""}`;
+        if (!pathsByMethod.has(key)) pathsByMethod.set(key, { graph, result, methodIdentity });
+      }
+    }
+    const methodFactIds = [];
+    const typeFactIds = direct.flatMap((item) => item.evidenceFactIds);
+    const referenceEvidence = [];
+    for (const { graph, result } of pathsByMethod.values()) {
+      const methodFactId = graph.ensureFact(result.methodKey);
+      methodFactIds.push(methodFactId);
+      for (const edge of result.path) {
+        const fromFactId = graph.ensureFact(edge.from);
+        const toFactId = graph.ensureFact(edge.to);
+        if (edge.to.startsWith("type:")) typeFactIds.push(toFactId);
+        referenceEvidence.push({
+          fromFactId,
+          toFactId,
+          kind: edge.kind,
+          ...(edge.memberName ? { memberName: edge.memberName } : {}),
+          ...(edge.location ? { location: edge.location } : {}),
+        });
+      }
+    }
+    const kind = fact?.factKind === "model"
+      ? "type-contract-propagation"
+      : "enum-union-propagation";
     const root = {
-      kind: "unresolved",
-      directCandidateIds: [],
-      propagatedCandidateIds: unique(unresolved.map((item) => item.id)),
-      operationFactIds: [],
-      methodFactIds: [],
-      typeFactIds: unique(unresolved.flatMap((item) => item.evidenceFactIds)),
-      referenceEvidence: [],
+      kind: methodFactIds.length ? kind : "unresolved",
+      directCandidateIds: unique(direct.map((item) => item.id)),
+      propagatedCandidateIds: [],
+      methodFactIds: unique(methodFactIds),
+      typeFactIds: unique(typeFactIds),
+      referenceEvidence: [
+        ...new Map(
+          referenceEvidence.map((item) => [canonicalJson(item), item]),
+        ).values(),
+      ],
+      rootKey,
     };
     roots.push({ id: stableId("downstream-root-cause", root), ...root });
   }
@@ -443,6 +649,7 @@ export function analyzeDownstreamBreaking(options) {
   const { workRoot, manifest, sourceIndex } = loadInputs(options);
   const facts = {};
   const candidates = [];
+  const graphs = [];
   const blockers = [];
   let analyzedProjects = 0;
   for (const project of [...(manifest.projects ?? [])].sort((left, right) => left.id.localeCompare(right.id))) {
@@ -461,12 +668,26 @@ export function analyzeDownstreamBreaking(options) {
       const current = normalizeTcgcContract({ workRoot, artifact: currentArtifact });
       const source = evidence(project, sourceIndex);
       source.artifactComparison = project.artifactComparison;
+      const candidateStart = candidates.length;
       compareMethods(project.id, base, current, source, facts, candidates);
       compareModels(project.id, base, current, source, facts, candidates);
       compareEnums(project.id, base, current, source, facts, candidates);
       compareUnions(project.id, base, current, source, facts, candidates);
       compareClients(project.id, base, current, source, facts, candidates);
       compareCustomizations(project.id, source, facts, candidates);
+      const requiresTypeReachability = candidates
+        .slice(candidateStart)
+        .some((candidate) =>
+          candidate.evidenceFactIds.some((id) =>
+            ["model", "enum", "union"].includes(facts[id]?.factKind),
+          ),
+        );
+      if (requiresTypeReachability) {
+        graphs.push(
+          buildReferenceGraph(project.id, "baseline", base, source, facts),
+          buildReferenceGraph(project.id, "target", current, source, facts),
+        );
+      }
       analyzedProjects += 1;
     } catch (error) {
       blockers.push({ code: "tcgc-contract-unsupported", projectId: project.id, message: error.message });
@@ -475,7 +696,7 @@ export function analyzeDownstreamBreaking(options) {
   const uniqueCandidates = new Map(candidates.map((item) => [item.id, item]));
   const normalizedCandidates = [...uniqueCandidates.values()]
     .sort((left, right) => left.id.localeCompare(right.id));
-  const rootCauses = buildRootCauses(normalizedCandidates, facts);
+  const rootCauses = buildRootCauses(normalizedCandidates, facts, graphs);
   const result = {
     schemaVersion: 1,
     status: analyzedProjects ? "ready" : "blocked",

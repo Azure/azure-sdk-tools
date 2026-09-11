@@ -524,7 +524,7 @@ test("blocked inference makes scoped safety not assessed", () => {
   assert.deepEqual(validateAssessment(assessment), []);
 });
 
-test("assembler requires and joins active Compliance evidence", () => {
+test("assembler requires and joins active Azure Guidelines evidence", () => {
   const work = fixture();
   const complianceDecisions = addComplianceInput(work);
   const assessment = assembleAssessment({
@@ -629,12 +629,12 @@ test("assembler treats no applicable guidance as assessed and links its intent",
   );
   assert.match(
     complianceHtml,
-    /Azure Guidelines were assessed\. No applicable guideline was found for intent <a href="#intent-semantic-1">Change Widget SDK customization<\/a>\./,
+    /No applicable guideline was found for: <a class="report-link" href="#intent-semantic-1">Change Widget SDK customization<\/a>\./,
   );
   assert.doesNotMatch(complianceHtml, /<code>semantic-1<\/code>/);
 });
 
-test("aggregates direct SDK deltas by method and links them to semantic REST operations", () => {
+test("aggregates direct SDK deltas by method without REST operation links", () => {
   const work = fixture();
   const before = {
     id: "sdk-before",
@@ -723,30 +723,26 @@ test("aggregates direct SDK deltas by method and links them to semantic REST ope
     },
   });
 
-  assert.equal(assessment.dimensions.downstream.operationGroups.length, 1);
+  assert.equal(assessment.dimensions.downstream.methodGroups.length, 1);
   assert.equal(
-    assessment.dimensions.downstream.operationGroups[0].deltas.length,
+    assessment.dimensions.downstream.methodGroups[0].deltas.length,
     3,
   );
   assert.equal(
-    assessment.dimensions.downstream.operationGroups[0].operationId,
-    "Widgets_Get",
-  );
-  assert.equal(
-    assessment.dimensions.downstream.operationGroups[0].parametersUnchanged,
+    assessment.dimensions.downstream.methodGroups[0].parametersUnchanged,
     true,
   );
   assert.equal(
-    assessment.dimensions.downstream.operationGroups[0].deltas[0].before,
+    assessment.dimensions.downstream.methodGroups[0].deltas[0].before,
     "basic",
   );
   assert.equal(
-    assessment.dimensions.downstream.operationGroups[0].deltas[0].after,
+    assessment.dimensions.downstream.methodGroups[0].deltas[0].after,
     "lro",
   );
   assert.deepEqual(
     assessment.dimensions.semantic.items[0].relatedFindings.downstream,
-    [assessment.dimensions.downstream.operationGroups[0].id],
+    [assessment.dimensions.downstream.methodGroups[0].id],
   );
   assert.deepEqual(validateAssessment(assessment), []);
 });
@@ -857,7 +853,7 @@ test("assembles changed-only parameters and suppresses URI-template-only LRO del
     },
   });
 
-  const group = assessment.dimensions.downstream.operationGroups[0];
+  const group = assessment.dimensions.downstream.methodGroups[0];
   assert.equal(assessment.dimensions.downstream.findings.length, 1);
   assert.equal(group.deltas.length, 1);
   assert.equal(group.deltas[0].field, "parameters");
@@ -876,6 +872,123 @@ test("assembles changed-only parameters and suppresses URI-template-only LRO del
     ],
   );
   assert.equal(group.deltas[0].changes.unchangedCount, 3);
+  assert.deepEqual(validateAssessment(assessment), []);
+});
+
+test("assembles SDK type impacts from deterministic method paths", () => {
+  const work = fixture();
+  const before = {
+    id: "sdk-type-before",
+    projectId: "project-1",
+    comparisonRole: "baseline",
+    factKind: "model",
+    identity: "Contoso.Widget",
+    crossLanguageDefinitionId: "Contoso.Widget",
+    properties: [
+      {
+        name: "legacy",
+        optional: true,
+        type: { kind: "string" },
+      },
+    ],
+  };
+  const after = {
+    ...before,
+    id: "sdk-type-after",
+    comparisonRole: "target",
+    properties: [],
+  };
+  const method = {
+    id: "sdk-method-current",
+    projectId: "project-1",
+    comparisonRole: "target",
+    factKind: "method",
+    identity: "Contoso.Widgets.get",
+    crossLanguageDefinitionId: "Contoso.Widgets.get",
+  };
+  writeJson(path.join(work, "dimensions", "downstream-breaking-input.json"), {
+    status: "ready",
+    facts: {
+      [before.id]: before,
+      [after.id]: after,
+      [method.id]: method,
+    },
+    candidates: [
+      {
+        id: "downstream-widget-property",
+        rule: "model-property-removed",
+        actual: "Contoso.Widget no longer exposes property legacy.",
+        expected: "Contoso.Widget preserves its SDK contract.",
+        crossLanguageDefinitionId: "Contoso.Widget",
+        sourceChangeIds: ["source-1"],
+        evidenceFactIds: [before.id, after.id],
+        rootCauseIds: ["root-widget"],
+      },
+    ],
+    rootCauses: [
+      {
+        id: "root-widget",
+        kind: "type-contract-propagation",
+        directCandidateIds: ["downstream-widget-property"],
+        propagatedCandidateIds: [],
+        methodFactIds: [method.id],
+        typeFactIds: [before.id, after.id],
+        referenceEvidence: [
+          {
+            fromFactId: method.id,
+            toFactId: after.id,
+            kind: "response",
+            location: "response-body",
+          },
+        ],
+      },
+    ],
+    blockers: [],
+  });
+  const assessment = assembleAssessment({
+    work,
+    judgment: {
+      schemaVersion: 1,
+      semanticIntents: [
+        {
+          reviewUnitId: "semantic-1",
+          title: "Remove Widget legacy property",
+          summary: "Remove the generated legacy response property.",
+        },
+      ],
+      restDecisions: [
+        {
+          candidateId: "rest-1",
+          decision: "reject",
+          rationale: "REST remains compatible.",
+        },
+      ],
+      downstreamDecisions: [
+        {
+          candidateId: "downstream-widget-property",
+          decision: "approve",
+          severity: "high",
+          rationale: "Existing SDK consumers can read this property.",
+        },
+      ],
+      complianceDecisions: [],
+      overallConfidence: "high",
+      blockers: [],
+    },
+  });
+
+  assert.equal(assessment.dimensions.downstream.typeImpacts.length, 1);
+  const impact = assessment.dimensions.downstream.typeImpacts[0];
+  assert.equal(impact.type, "Contoso.Widget");
+  assert.deepEqual(impact.locations, ["response-body"]);
+  assert.deepEqual(
+    impact.affectedMethods.map((item) => item.symbol),
+    ["Contoso.Widgets.get"],
+  );
+  assert.deepEqual(
+    assessment.dimensions.semantic.items[0].relatedFindings.typeImpact,
+    [impact.id],
+  );
   assert.deepEqual(validateAssessment(assessment), []);
 });
 

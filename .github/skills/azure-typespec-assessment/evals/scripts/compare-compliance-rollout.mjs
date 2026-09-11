@@ -123,11 +123,11 @@ export function compareComplianceRollout(options = {}) {
       replayTiming:
         "Schema validation plus HTML rendering only; excludes compilation and Agent work.",
       historicalTiming:
-        "Preserved full assessment and Compliance timings from fixtures/execution-time-breakdowns.json.",
+        "Preserved full assessment and Azure Guidelines timings from fixtures/execution-time-breakdowns.json.",
       previousFastTiming:
         "Previous impact-only end-to-end and documentation-evidence timings from fast-assessment-execution-times.json.",
       comparisonScope:
-        "The source assessment data is unchanged; the current renderer activates the preserved Compliance evidence.",
+        "The source assessment data is unchanged; the current renderer activates the preserved Azure Guidelines evidence.",
       contractCoverage:
         "The 11-PR replay covers validation/rendering compatibility. Active four-document-per-intent search, tuple coverage, assembly, and rejection paths are covered by focused tests.",
     },

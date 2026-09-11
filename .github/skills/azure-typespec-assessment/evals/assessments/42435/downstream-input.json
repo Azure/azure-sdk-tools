@@ -1,0 +1,1108 @@
+{
+  "facts": {
+    "sdk-fact-159c8719ed484bcc": {
+      "projectId": "project-37d12681d7d3",
+      "comparisonRole": "baseline",
+      "sourceRevision": "base",
+      "sourceCommit": "2ddde2a55d4c8eb6d0bdf22592dfb7c849dfd904",
+      "apiVersion": "2026-03-01",
+      "factKind": "method",
+      "id": "sdk-fact-159c8719ed484bcc",
+      "identity": "Microsoft.CognitiveServices.ManagedNetworkSettingsPropertiesBasicResources.post",
+      "crossLanguageDefinitionId": "Microsoft.CognitiveServices.ManagedNetworkSettingsPropertiesBasicResources.post",
+      "client": "Microsoft.CognitiveServices.OutboundRules",
+      "clientName": "OutboundRules",
+      "name": "post",
+      "kind": "lro",
+      "access": "public",
+      "parameters": [
+        {
+          "position": 0,
+          "name": "resourceGroupName",
+          "kind": "method",
+          "type": {
+            "kind": "string"
+          },
+          "optional": false,
+          "onClient": false,
+          "isApiVersionParam": false,
+          "access": "public",
+          "flatten": false,
+          "crossLanguageDefinitionId": "Microsoft.CognitiveServices.ManagedNetworkSettingsPropertiesBasicResources.post.resourceGroupName"
+        },
+        {
+          "position": 1,
+          "name": "accountName",
+          "kind": "method",
+          "type": {
+            "kind": "string"
+          },
+          "optional": false,
+          "onClient": false,
+          "isApiVersionParam": false,
+          "access": "public",
+          "flatten": false,
+          "crossLanguageDefinitionId": "Microsoft.CognitiveServices.ManagedNetworkSettingsPropertiesBasicResources.post.accountName"
+        },
+        {
+          "position": 2,
+          "name": "managedNetworkName",
+          "kind": "method",
+          "type": {
+            "kind": "string"
+          },
+          "optional": false,
+          "onClient": false,
+          "isApiVersionParam": false,
+          "access": "public",
+          "flatten": false,
+          "crossLanguageDefinitionId": "Microsoft.CognitiveServices.ManagedNetworkSettingsPropertiesBasicResources.post.managedNetworkName"
+        },
+        {
+          "position": 3,
+          "name": "body",
+          "kind": "method",
+          "type": {
+            "kind": "model",
+            "id": "Microsoft.CognitiveServices.ManagedNetworkSettingsBasicResource",
+            "name": "ManagedNetworkSettingsBasicResource"
+          },
+          "optional": false,
+          "onClient": false,
+          "isApiVersionParam": false,
+          "access": "public",
+          "flatten": false,
+          "crossLanguageDefinitionId": "Microsoft.CognitiveServices.ManagedNetworkSettingsPropertiesBasicResources.post.body"
+        },
+        {
+          "position": 4,
+          "name": "contentType",
+          "kind": "method",
+          "type": {
+            "kind": "constant",
+            "value": "application/json",
+            "valueType": {
+              "kind": "string"
+            }
+          },
+          "optional": false,
+          "onClient": false,
+          "isApiVersionParam": false,
+          "access": "public",
+          "flatten": false,
+          "crossLanguageDefinitionId": "Microsoft.CognitiveServices.ManagedNetworkSettingsPropertiesBasicResources.post.contentType"
+        },
+        {
+          "position": 5,
+          "name": "accept",
+          "kind": "method",
+          "type": {
+            "kind": "constant",
+            "value": "application/json",
+            "valueType": {
+              "kind": "string"
+            }
+          },
+          "optional": false,
+          "onClient": false,
+          "isApiVersionParam": false,
+          "access": "public",
+          "flatten": false,
+          "crossLanguageDefinitionId": "Microsoft.CognitiveServices.ManagedNetworkSettingsPropertiesBasicResources.post.accept"
+        }
+      ],
+      "responseType": {
+        "kind": "model",
+        "id": "Microsoft.CognitiveServices.OutboundRuleListResult",
+        "name": "OutboundRuleListResult"
+      },
+      "apiVersions": [
+        "2025-10-01-preview",
+        "2025-12-01",
+        "2026-01-15-preview",
+        "2026-03-01"
+      ],
+      "generateConvenient": true,
+      "generateProtocol": true,
+      "isOverride": false,
+      "operation": {
+        "kind": "http",
+        "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CognitiveServices/accounts/{accountName}/managedNetworks/{managedNetworkName}/batchOutboundRules",
+        "uriTemplate": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CognitiveServices/accounts/{accountName}/managedNetworks/{managedNetworkName}/batchOutboundRules{?api%2Dversion}",
+        "verb": "post",
+        "parameters": [
+          {
+            "position": 0,
+            "name": "apiVersion",
+            "serializedName": "api-version",
+            "kind": "query",
+            "type": {
+              "kind": "string"
+            },
+            "optional": false,
+            "onClient": true,
+            "isApiVersionParam": true,
+            "access": "public",
+            "flatten": false,
+            "crossLanguageDefinitionId": "Microsoft.CognitiveServices.ManagedNetworkSettingsPropertiesBasicResources.post.apiVersion",
+            "serialization": {
+              "serializedName": "api-version"
+            },
+            "methodParameterSegments": [
+              [
+                "Microsoft.CognitiveServices.checkSkuAvailability.apiVersion"
+              ]
+            ],
+            "explode": false
+          },
+          {
+            "position": 1,
+            "name": "subscriptionId",
+            "serializedName": "subscriptionId",
+            "kind": "path",
+            "type": {
+              "kind": "string"
+            },
+            "optional": false,
+            "onClient": true,
+            "isApiVersionParam": false,
+            "access": "public",
+            "flatten": false,
+            "crossLanguageDefinitionId": "Microsoft.CognitiveServices.ManagedNetworkSettingsPropertiesBasicResources.post.subscriptionId",
+            "serialization": {
+              "serializedName": "subscriptionId"
+            },
+            "methodParameterSegments": [
+              [
+                "Microsoft.CognitiveServices.checkSkuAvailability.subscriptionId"
+              ]
+            ],
+            "explode": false,
+            "style": "simple",
+            "allowReserved": false
+          },
+          {
+            "position": 2,
+            "name": "resourceGroupName",
+            "serializedName": "resourceGroupName",
+            "kind": "path",
+            "type": {
+              "kind": "string"
+            },
+            "optional": false,
+            "onClient": false,
+            "isApiVersionParam": false,
+            "access": "public",
+            "flatten": false,
+            "crossLanguageDefinitionId": "Microsoft.CognitiveServices.ManagedNetworkSettingsPropertiesBasicResources.post.resourceGroupName",
+            "serialization": {
+              "serializedName": "resourceGroupName"
+            },
+            "methodParameterSegments": [
+              [
+                "Microsoft.CognitiveServices.ManagedNetworkSettingsPropertiesBasicResources.post.resourceGroupName"
+              ]
+            ],
+            "explode": false,
+            "style": "simple",
+            "allowReserved": false
+          },
+          {
+            "position": 3,
+            "name": "accountName",
+            "serializedName": "accountName",
+            "kind": "path",
+            "type": {
+              "kind": "string"
+            },
+            "optional": false,
+            "onClient": false,
+            "isApiVersionParam": false,
+            "access": "public",
+            "flatten": false,
+            "crossLanguageDefinitionId": "Microsoft.CognitiveServices.ManagedNetworkSettingsPropertiesBasicResources.post.accountName",
+            "serialization": {
+              "serializedName": "accountName"
+            },
+            "methodParameterSegments": [
+              [
+                "Microsoft.CognitiveServices.ManagedNetworkSettingsPropertiesBasicResources.post.accountName"
+              ]
+            ],
+            "explode": false,
+            "style": "simple",
+            "allowReserved": false
+          },
+          {
+            "position": 4,
+            "name": "managedNetworkName",
+            "serializedName": "managedNetworkName",
+            "kind": "path",
+            "type": {
+              "kind": "string"
+            },
+            "optional": false,
+            "onClient": false,
+            "isApiVersionParam": false,
+            "access": "public",
+            "flatten": false,
+            "crossLanguageDefinitionId": "Microsoft.CognitiveServices.ManagedNetworkSettingsPropertiesBasicResources.post.managedNetworkName",
+            "serialization": {
+              "serializedName": "managedNetworkName"
+            },
+            "methodParameterSegments": [
+              [
+                "Microsoft.CognitiveServices.ManagedNetworkSettingsPropertiesBasicResources.post.managedNetworkName"
+              ]
+            ],
+            "explode": false,
+            "style": "simple",
+            "allowReserved": false
+          },
+          {
+            "position": 5,
+            "name": "contentType",
+            "serializedName": "Content-Type",
+            "kind": "header",
+            "type": {
+              "kind": "constant",
+              "value": "application/json",
+              "valueType": {
+                "kind": "string"
+              }
+            },
+            "optional": false,
+            "onClient": false,
+            "isApiVersionParam": false,
+            "access": "public",
+            "flatten": false,
+            "crossLanguageDefinitionId": "Microsoft.CognitiveServices.ManagedNetworkSettingsPropertiesBasicResources.post.contentType",
+            "serialization": {
+              "serializedName": "Content-Type"
+            },
+            "methodParameterSegments": [
+              [
+                "Microsoft.CognitiveServices.ManagedNetworkSettingsPropertiesBasicResources.post.contentType"
+              ]
+            ]
+          },
+          {
+            "position": 6,
+            "name": "accept",
+            "serializedName": "Accept",
+            "kind": "header",
+            "type": {
+              "kind": "constant",
+              "value": "application/json",
+              "valueType": {
+                "kind": "string"
+              }
+            },
+            "optional": false,
+            "onClient": false,
+            "isApiVersionParam": false,
+            "access": "public",
+            "flatten": false,
+            "crossLanguageDefinitionId": "Microsoft.CognitiveServices.ManagedNetworkSettingsPropertiesBasicResources.post.accept",
+            "serialization": {
+              "serializedName": "Accept"
+            },
+            "methodParameterSegments": [
+              [
+                "Microsoft.CognitiveServices.ManagedNetworkSettingsPropertiesBasicResources.post.accept"
+              ]
+            ]
+          }
+        ],
+        "bodyParam": {
+          "position": 0,
+          "name": "body",
+          "serializedName": "body",
+          "kind": "body",
+          "type": {
+            "kind": "model",
+            "id": "Microsoft.CognitiveServices.ManagedNetworkSettingsBasicResource",
+            "name": "ManagedNetworkSettingsBasicResource"
+          },
+          "optional": false,
+          "onClient": false,
+          "isApiVersionParam": false,
+          "access": "public",
+          "flatten": false,
+          "crossLanguageDefinitionId": "Microsoft.CognitiveServices.ManagedNetworkSettingsPropertiesBasicResources.post.body",
+          "serialization": {},
+          "methodParameterSegments": [
+            [
+              "Microsoft.CognitiveServices.ManagedNetworkSettingsPropertiesBasicResources.post.body"
+            ]
+          ]
+        },
+        "responses": [
+          {
+            "statusCodes": 202,
+            "headers": [
+              {
+                "position": 0,
+                "name": "location",
+                "serializedName": "location",
+                "kind": "responseheader",
+                "type": {
+                  "kind": "string"
+                },
+                "optional": true,
+                "onClient": false,
+                "isApiVersionParam": false,
+                "access": "public",
+                "flatten": false,
+                "crossLanguageDefinitionId": "Azure.ResourceManager.ArmAcceptedLroResponse.location",
+                "serialization": {
+                  "serializedName": "location"
+                }
+              },
+              {
+                "position": 1,
+                "name": "retryAfter",
+                "serializedName": "Retry-After",
+                "kind": "responseheader",
+                "type": {
+                  "kind": "int32"
+                },
+                "optional": true,
+                "onClient": false,
+                "isApiVersionParam": false,
+                "access": "public",
+                "flatten": false,
+                "crossLanguageDefinitionId": "Azure.ResourceManager.ArmAcceptedLroResponse.retryAfter",
+                "serialization": {
+                  "serializedName": "Retry-After"
+                }
+              }
+            ],
+            "contentTypes": []
+          },
+          {
+            "statusCodes": 200,
+            "type": {
+              "kind": "model",
+              "id": "Microsoft.CognitiveServices.OutboundRuleListResult",
+              "name": "OutboundRuleListResult"
+            },
+            "headers": [],
+            "contentTypes": [
+              "application/json"
+            ],
+            "defaultContentType": "application/json"
+          }
+        ],
+        "exceptions": [
+          {
+            "statusCodes": "*",
+            "type": {
+              "kind": "model",
+              "id": "Azure.ResourceManager.CommonTypes.ErrorResponse",
+              "name": "ErrorResponse"
+            },
+            "headers": [],
+            "contentTypes": [
+              "application/json"
+            ],
+            "defaultContentType": "application/json"
+          }
+        ]
+      },
+      "lro": {
+        "finalStateVia": "location",
+        "pollingStep": {
+          "responseBody": {
+            "kind": "model",
+            "id": "Azure.ResourceManager.ArmOperationStatus",
+            "name": "ArmOperationStatusResourceProvisioningState"
+          }
+        },
+        "finalStep": {
+          "kind": "finalOperationLink",
+          "target": {
+            "kind": "link",
+            "location": "ResponseHeader",
+            "property": "Azure.ResourceManager.ArmAcceptedLroResponse.location"
+          }
+        },
+        "statusMonitorStep": {
+          "kind": "nextOperationLink",
+          "responseModel": {
+            "kind": "model",
+            "id": "Azure.ResourceManager.ArmOperationStatus",
+            "name": "ArmOperationStatusResourceProvisioningState"
+          },
+          "target": {
+            "kind": "link",
+            "location": "ResponseHeader",
+            "property": "Azure.ResourceManager.ArmAcceptedLroResponse.location"
+          }
+        },
+        "operation": {
+          "kind": "http",
+          "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CognitiveServices/accounts/{accountName}/managedNetworks/{managedNetworkName}/batchOutboundRules",
+          "verb": "post",
+          "uriTemplate": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CognitiveServices/accounts/{accountName}/managedNetworks/{managedNetworkName}/batchOutboundRules{?api%2Dversion}"
+        },
+        "logicalResult": {
+          "kind": "model",
+          "id": "Microsoft.CognitiveServices.OutboundRuleListResult",
+          "name": "OutboundRuleListResult"
+        },
+        "pollingInfo": {
+          "kind": "pollingOperationStep",
+          "responseModel": {
+            "kind": "model",
+            "id": "Azure.ResourceManager.ArmOperationStatus",
+            "name": "ArmOperationStatusResourceProvisioningState"
+          },
+          "terminationStatus": {
+            "kind": "model-property",
+            "property": "Azure.ResourceManager.ArmOperationStatus.status",
+            "succeededState": [
+              "Succeeded"
+            ],
+            "failedState": [
+              "Failed"
+            ],
+            "canceledState": [
+              "Canceled"
+            ]
+          },
+          "errorProperty": "Azure.ResourceManager.ArmOperationStatus.error"
+        },
+        "envelopeResult": {
+          "kind": "model",
+          "id": "Azure.ResourceManager.ArmOperationStatus",
+          "name": "ArmOperationStatusResourceProvisioningState"
+        },
+        "finalEnvelopeResult": {
+          "kind": "model",
+          "id": "Microsoft.CognitiveServices.OutboundRuleListResult",
+          "name": "OutboundRuleListResult"
+        },
+        "finalResponse": {
+          "envelopeResult": {
+            "kind": "model",
+            "id": "Microsoft.CognitiveServices.OutboundRuleListResult",
+            "name": "OutboundRuleListResult"
+          },
+          "result": {
+            "kind": "model",
+            "id": "Microsoft.CognitiveServices.OutboundRuleListResult",
+            "name": "OutboundRuleListResult"
+          }
+        }
+      }
+    },
+    "sdk-fact-5ad7866f833927da": {
+      "projectId": "project-37d12681d7d3",
+      "comparisonRole": "target",
+      "sourceRevision": "current",
+      "sourceCommit": "96eae0e7d5c7ede040ee0cc646d397e5d8375912",
+      "apiVersion": "2026-03-01",
+      "factKind": "method",
+      "id": "sdk-fact-5ad7866f833927da",
+      "identity": "Microsoft.CognitiveServices.ManagedNetworkSettingsPropertiesBasicResources.post",
+      "crossLanguageDefinitionId": "Microsoft.CognitiveServices.ManagedNetworkSettingsPropertiesBasicResources.post",
+      "client": "Microsoft.CognitiveServices.OutboundRules",
+      "clientName": "OutboundRules",
+      "name": "post",
+      "kind": "lropaging",
+      "access": "public",
+      "parameters": [
+        {
+          "position": 0,
+          "name": "resourceGroupName",
+          "kind": "method",
+          "type": {
+            "kind": "string"
+          },
+          "optional": false,
+          "onClient": false,
+          "isApiVersionParam": false,
+          "access": "public",
+          "flatten": false,
+          "crossLanguageDefinitionId": "Microsoft.CognitiveServices.ManagedNetworkSettingsPropertiesBasicResources.post.resourceGroupName"
+        },
+        {
+          "position": 1,
+          "name": "accountName",
+          "kind": "method",
+          "type": {
+            "kind": "string"
+          },
+          "optional": false,
+          "onClient": false,
+          "isApiVersionParam": false,
+          "access": "public",
+          "flatten": false,
+          "crossLanguageDefinitionId": "Microsoft.CognitiveServices.ManagedNetworkSettingsPropertiesBasicResources.post.accountName"
+        },
+        {
+          "position": 2,
+          "name": "managedNetworkName",
+          "kind": "method",
+          "type": {
+            "kind": "string"
+          },
+          "optional": false,
+          "onClient": false,
+          "isApiVersionParam": false,
+          "access": "public",
+          "flatten": false,
+          "crossLanguageDefinitionId": "Microsoft.CognitiveServices.ManagedNetworkSettingsPropertiesBasicResources.post.managedNetworkName"
+        },
+        {
+          "position": 3,
+          "name": "body",
+          "kind": "method",
+          "type": {
+            "kind": "model",
+            "id": "Microsoft.CognitiveServices.ManagedNetworkSettingsBasicResource",
+            "name": "ManagedNetworkSettingsBasicResource"
+          },
+          "optional": false,
+          "onClient": false,
+          "isApiVersionParam": false,
+          "access": "public",
+          "flatten": false,
+          "crossLanguageDefinitionId": "Microsoft.CognitiveServices.ManagedNetworkSettingsPropertiesBasicResources.post.body"
+        },
+        {
+          "position": 4,
+          "name": "contentType",
+          "kind": "method",
+          "type": {
+            "kind": "constant",
+            "value": "application/json",
+            "valueType": {
+              "kind": "string"
+            }
+          },
+          "optional": false,
+          "onClient": false,
+          "isApiVersionParam": false,
+          "access": "public",
+          "flatten": false,
+          "crossLanguageDefinitionId": "Microsoft.CognitiveServices.ManagedNetworkSettingsPropertiesBasicResources.post.contentType"
+        },
+        {
+          "position": 5,
+          "name": "accept",
+          "kind": "method",
+          "type": {
+            "kind": "constant",
+            "value": "application/json",
+            "valueType": {
+              "kind": "string"
+            }
+          },
+          "optional": false,
+          "onClient": false,
+          "isApiVersionParam": false,
+          "access": "public",
+          "flatten": false,
+          "crossLanguageDefinitionId": "Microsoft.CognitiveServices.ManagedNetworkSettingsPropertiesBasicResources.post.accept"
+        }
+      ],
+      "responseType": {
+        "kind": "array",
+        "valueType": {
+          "kind": "model",
+          "id": "Microsoft.CognitiveServices.OutboundRuleBasicResource",
+          "name": "OutboundRuleBasicResource"
+        }
+      },
+      "apiVersions": [
+        "2025-10-01-preview",
+        "2025-12-01",
+        "2026-01-15-preview",
+        "2026-03-01"
+      ],
+      "generateConvenient": true,
+      "generateProtocol": true,
+      "isOverride": false,
+      "operation": {
+        "kind": "http",
+        "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CognitiveServices/accounts/{accountName}/managedNetworks/{managedNetworkName}/batchOutboundRules",
+        "uriTemplate": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CognitiveServices/accounts/{accountName}/managedNetworks/{managedNetworkName}/batchOutboundRules{?api%2Dversion}",
+        "verb": "post",
+        "parameters": [
+          {
+            "position": 0,
+            "name": "apiVersion",
+            "serializedName": "api-version",
+            "kind": "query",
+            "type": {
+              "kind": "string"
+            },
+            "optional": false,
+            "onClient": true,
+            "isApiVersionParam": true,
+            "access": "public",
+            "flatten": false,
+            "crossLanguageDefinitionId": "Microsoft.CognitiveServices.ManagedNetworkSettingsPropertiesBasicResources.post.apiVersion",
+            "serialization": {
+              "serializedName": "api-version"
+            },
+            "methodParameterSegments": [
+              [
+                "Microsoft.CognitiveServices.checkSkuAvailability.apiVersion"
+              ]
+            ],
+            "explode": false
+          },
+          {
+            "position": 1,
+            "name": "subscriptionId",
+            "serializedName": "subscriptionId",
+            "kind": "path",
+            "type": {
+              "kind": "string"
+            },
+            "optional": false,
+            "onClient": true,
+            "isApiVersionParam": false,
+            "access": "public",
+            "flatten": false,
+            "crossLanguageDefinitionId": "Microsoft.CognitiveServices.ManagedNetworkSettingsPropertiesBasicResources.post.subscriptionId",
+            "serialization": {
+              "serializedName": "subscriptionId"
+            },
+            "methodParameterSegments": [
+              [
+                "Microsoft.CognitiveServices.checkSkuAvailability.subscriptionId"
+              ]
+            ],
+            "explode": false,
+            "style": "simple",
+            "allowReserved": false
+          },
+          {
+            "position": 2,
+            "name": "resourceGroupName",
+            "serializedName": "resourceGroupName",
+            "kind": "path",
+            "type": {
+              "kind": "string"
+            },
+            "optional": false,
+            "onClient": false,
+            "isApiVersionParam": false,
+            "access": "public",
+            "flatten": false,
+            "crossLanguageDefinitionId": "Microsoft.CognitiveServices.ManagedNetworkSettingsPropertiesBasicResources.post.resourceGroupName",
+            "serialization": {
+              "serializedName": "resourceGroupName"
+            },
+            "methodParameterSegments": [
+              [
+                "Microsoft.CognitiveServices.ManagedNetworkSettingsPropertiesBasicResources.post.resourceGroupName"
+              ]
+            ],
+            "explode": false,
+            "style": "simple",
+            "allowReserved": false
+          },
+          {
+            "position": 3,
+            "name": "accountName",
+            "serializedName": "accountName",
+            "kind": "path",
+            "type": {
+              "kind": "string"
+            },
+            "optional": false,
+            "onClient": false,
+            "isApiVersionParam": false,
+            "access": "public",
+            "flatten": false,
+            "crossLanguageDefinitionId": "Microsoft.CognitiveServices.ManagedNetworkSettingsPropertiesBasicResources.post.accountName",
+            "serialization": {
+              "serializedName": "accountName"
+            },
+            "methodParameterSegments": [
+              [
+                "Microsoft.CognitiveServices.ManagedNetworkSettingsPropertiesBasicResources.post.accountName"
+              ]
+            ],
+            "explode": false,
+            "style": "simple",
+            "allowReserved": false
+          },
+          {
+            "position": 4,
+            "name": "managedNetworkName",
+            "serializedName": "managedNetworkName",
+            "kind": "path",
+            "type": {
+              "kind": "string"
+            },
+            "optional": false,
+            "onClient": false,
+            "isApiVersionParam": false,
+            "access": "public",
+            "flatten": false,
+            "crossLanguageDefinitionId": "Microsoft.CognitiveServices.ManagedNetworkSettingsPropertiesBasicResources.post.managedNetworkName",
+            "serialization": {
+              "serializedName": "managedNetworkName"
+            },
+            "methodParameterSegments": [
+              [
+                "Microsoft.CognitiveServices.ManagedNetworkSettingsPropertiesBasicResources.post.managedNetworkName"
+              ]
+            ],
+            "explode": false,
+            "style": "simple",
+            "allowReserved": false
+          },
+          {
+            "position": 5,
+            "name": "contentType",
+            "serializedName": "Content-Type",
+            "kind": "header",
+            "type": {
+              "kind": "constant",
+              "value": "application/json",
+              "valueType": {
+                "kind": "string"
+              }
+            },
+            "optional": false,
+            "onClient": false,
+            "isApiVersionParam": false,
+            "access": "public",
+            "flatten": false,
+            "crossLanguageDefinitionId": "Microsoft.CognitiveServices.ManagedNetworkSettingsPropertiesBasicResources.post.contentType",
+            "serialization": {
+              "serializedName": "Content-Type"
+            },
+            "methodParameterSegments": [
+              [
+                "Microsoft.CognitiveServices.ManagedNetworkSettingsPropertiesBasicResources.post.contentType"
+              ]
+            ]
+          },
+          {
+            "position": 6,
+            "name": "accept",
+            "serializedName": "Accept",
+            "kind": "header",
+            "type": {
+              "kind": "constant",
+              "value": "application/json",
+              "valueType": {
+                "kind": "string"
+              }
+            },
+            "optional": false,
+            "onClient": false,
+            "isApiVersionParam": false,
+            "access": "public",
+            "flatten": false,
+            "crossLanguageDefinitionId": "Microsoft.CognitiveServices.ManagedNetworkSettingsPropertiesBasicResources.post.accept",
+            "serialization": {
+              "serializedName": "Accept"
+            },
+            "methodParameterSegments": [
+              [
+                "Microsoft.CognitiveServices.ManagedNetworkSettingsPropertiesBasicResources.post.accept"
+              ]
+            ]
+          }
+        ],
+        "bodyParam": {
+          "position": 0,
+          "name": "body",
+          "serializedName": "body",
+          "kind": "body",
+          "type": {
+            "kind": "model",
+            "id": "Microsoft.CognitiveServices.ManagedNetworkSettingsBasicResource",
+            "name": "ManagedNetworkSettingsBasicResource"
+          },
+          "optional": false,
+          "onClient": false,
+          "isApiVersionParam": false,
+          "access": "public",
+          "flatten": false,
+          "crossLanguageDefinitionId": "Microsoft.CognitiveServices.ManagedNetworkSettingsPropertiesBasicResources.post.body",
+          "serialization": {},
+          "methodParameterSegments": [
+            [
+              "Microsoft.CognitiveServices.ManagedNetworkSettingsPropertiesBasicResources.post.body"
+            ]
+          ]
+        },
+        "responses": [
+          {
+            "statusCodes": 202,
+            "headers": [
+              {
+                "position": 0,
+                "name": "location",
+                "serializedName": "location",
+                "kind": "responseheader",
+                "type": {
+                  "kind": "string"
+                },
+                "optional": true,
+                "onClient": false,
+                "isApiVersionParam": false,
+                "access": "public",
+                "flatten": false,
+                "crossLanguageDefinitionId": "Azure.ResourceManager.ArmAcceptedLroResponse.location",
+                "serialization": {
+                  "serializedName": "location"
+                }
+              },
+              {
+                "position": 1,
+                "name": "retryAfter",
+                "serializedName": "Retry-After",
+                "kind": "responseheader",
+                "type": {
+                  "kind": "int32"
+                },
+                "optional": true,
+                "onClient": false,
+                "isApiVersionParam": false,
+                "access": "public",
+                "flatten": false,
+                "crossLanguageDefinitionId": "Azure.ResourceManager.ArmAcceptedLroResponse.retryAfter",
+                "serialization": {
+                  "serializedName": "Retry-After"
+                }
+              }
+            ],
+            "contentTypes": []
+          },
+          {
+            "statusCodes": 200,
+            "type": {
+              "kind": "model",
+              "id": "Microsoft.CognitiveServices.OutboundRuleListResult",
+              "name": "OutboundRuleListResult"
+            },
+            "headers": [],
+            "contentTypes": [
+              "application/json"
+            ],
+            "defaultContentType": "application/json"
+          }
+        ],
+        "exceptions": [
+          {
+            "statusCodes": "*",
+            "type": {
+              "kind": "model",
+              "id": "Azure.ResourceManager.CommonTypes.ErrorResponse",
+              "name": "ErrorResponse"
+            },
+            "headers": [],
+            "contentTypes": [
+              "application/json"
+            ],
+            "defaultContentType": "application/json"
+          }
+        ]
+      },
+      "paging": {
+        "pageItemsSegments": [
+          "Microsoft.CognitiveServices.OutboundRuleListResult.value"
+        ],
+        "nextLinkSegments": [
+          "Microsoft.CognitiveServices.OutboundRuleListResult.nextLink"
+        ],
+        "pageSizeParameterSegments": [],
+        "nextLinkReInjectedParametersSegments": [],
+        "nextLinkVerb": "GET"
+      },
+      "lro": {
+        "finalStateVia": "location",
+        "pollingStep": {
+          "responseBody": {
+            "kind": "model",
+            "id": "Azure.ResourceManager.ArmOperationStatus",
+            "name": "ArmOperationStatusResourceProvisioningState"
+          }
+        },
+        "finalStep": {
+          "kind": "finalOperationLink",
+          "target": {
+            "kind": "link",
+            "location": "ResponseHeader",
+            "property": "Azure.ResourceManager.ArmAcceptedLroResponse.location"
+          }
+        },
+        "statusMonitorStep": {
+          "kind": "nextOperationLink",
+          "responseModel": {
+            "kind": "model",
+            "id": "Azure.ResourceManager.ArmOperationStatus",
+            "name": "ArmOperationStatusResourceProvisioningState"
+          },
+          "target": {
+            "kind": "link",
+            "location": "ResponseHeader",
+            "property": "Azure.ResourceManager.ArmAcceptedLroResponse.location"
+          }
+        },
+        "operation": {
+          "kind": "http",
+          "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CognitiveServices/accounts/{accountName}/managedNetworks/{managedNetworkName}/batchOutboundRules",
+          "verb": "post",
+          "uriTemplate": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CognitiveServices/accounts/{accountName}/managedNetworks/{managedNetworkName}/batchOutboundRules{?api%2Dversion}"
+        },
+        "logicalResult": {
+          "kind": "model",
+          "id": "Microsoft.CognitiveServices.OutboundRuleListResult",
+          "name": "OutboundRuleListResult"
+        },
+        "pollingInfo": {
+          "kind": "pollingOperationStep",
+          "responseModel": {
+            "kind": "model",
+            "id": "Azure.ResourceManager.ArmOperationStatus",
+            "name": "ArmOperationStatusResourceProvisioningState"
+          },
+          "terminationStatus": {
+            "kind": "model-property",
+            "property": "Azure.ResourceManager.ArmOperationStatus.status",
+            "succeededState": [
+              "Succeeded"
+            ],
+            "failedState": [
+              "Failed"
+            ],
+            "canceledState": [
+              "Canceled"
+            ]
+          },
+          "errorProperty": "Azure.ResourceManager.ArmOperationStatus.error"
+        },
+        "envelopeResult": {
+          "kind": "model",
+          "id": "Azure.ResourceManager.ArmOperationStatus",
+          "name": "ArmOperationStatusResourceProvisioningState"
+        },
+        "finalEnvelopeResult": {
+          "kind": "model",
+          "id": "Microsoft.CognitiveServices.OutboundRuleListResult",
+          "name": "OutboundRuleListResult"
+        },
+        "finalResponse": {
+          "envelopeResult": {
+            "kind": "model",
+            "id": "Microsoft.CognitiveServices.OutboundRuleListResult",
+            "name": "OutboundRuleListResult"
+          },
+          "result": {
+            "kind": "model",
+            "id": "Microsoft.CognitiveServices.OutboundRuleListResult",
+            "name": "OutboundRuleListResult"
+          }
+        }
+      }
+    }
+  },
+  "candidates": [
+    {
+      "id": "downstream-14526f8120d34ecd",
+      "rule": "method-paging-changed",
+      "defaultSeverity": "medium",
+      "actual": "Microsoft.CognitiveServices.ManagedNetworkSettingsPropertiesBasicResources.post changed paging behavior.",
+      "expected": "Microsoft.CognitiveServices.ManagedNetworkSettingsPropertiesBasicResources.post preserves its existing language-neutral generated SDK contract.",
+      "crossLanguageDefinitionId": "Microsoft.CognitiveServices.ManagedNetworkSettingsPropertiesBasicResources.post",
+      "sourceChangeIds": [
+        "source-dd5d3368a3071e94"
+      ],
+      "declarationIds": [
+        "declaration-0219a32726f5ea2e",
+        "declaration-6ab6c44b437678cb",
+        "declaration-d4d7348e90a9bf1c",
+        "declaration-e54c2e2399e5428a"
+      ],
+      "evidenceFactIds": [
+        "sdk-fact-159c8719ed484bcc",
+        "sdk-fact-5ad7866f833927da"
+      ],
+      "reviewRequired": true,
+      "rootCauseIds": [
+        "downstream-root-cause-3b4a11fe8e727bb3"
+      ]
+    },
+    {
+      "id": "downstream-7a1abbfd0db76351",
+      "rule": "method-response-changed",
+      "defaultSeverity": "high",
+      "actual": "Microsoft.CognitiveServices.ManagedNetworkSettingsPropertiesBasicResources.post has a different response type.",
+      "expected": "Microsoft.CognitiveServices.ManagedNetworkSettingsPropertiesBasicResources.post preserves its existing language-neutral generated SDK contract.",
+      "crossLanguageDefinitionId": "Microsoft.CognitiveServices.ManagedNetworkSettingsPropertiesBasicResources.post",
+      "sourceChangeIds": [
+        "source-dd5d3368a3071e94"
+      ],
+      "declarationIds": [
+        "declaration-0219a32726f5ea2e",
+        "declaration-6ab6c44b437678cb",
+        "declaration-d4d7348e90a9bf1c",
+        "declaration-e54c2e2399e5428a"
+      ],
+      "evidenceFactIds": [
+        "sdk-fact-159c8719ed484bcc",
+        "sdk-fact-5ad7866f833927da"
+      ],
+      "reviewRequired": true,
+      "rootCauseIds": [
+        "downstream-root-cause-3b4a11fe8e727bb3"
+      ]
+    },
+    {
+      "id": "downstream-ca97936fe9a11510",
+      "rule": "method-kind-changed",
+      "defaultSeverity": "high",
+      "actual": "Microsoft.CognitiveServices.ManagedNetworkSettingsPropertiesBasicResources.post changed method kind from lro to lropaging.",
+      "expected": "Microsoft.CognitiveServices.ManagedNetworkSettingsPropertiesBasicResources.post preserves its existing language-neutral generated SDK contract.",
+      "crossLanguageDefinitionId": "Microsoft.CognitiveServices.ManagedNetworkSettingsPropertiesBasicResources.post",
+      "sourceChangeIds": [
+        "source-dd5d3368a3071e94"
+      ],
+      "declarationIds": [
+        "declaration-0219a32726f5ea2e",
+        "declaration-6ab6c44b437678cb",
+        "declaration-d4d7348e90a9bf1c",
+        "declaration-e54c2e2399e5428a"
+      ],
+      "evidenceFactIds": [
+        "sdk-fact-159c8719ed484bcc",
+        "sdk-fact-5ad7866f833927da"
+      ],
+      "reviewRequired": true,
+      "rootCauseIds": [
+        "downstream-root-cause-3b4a11fe8e727bb3"
+      ]
+    }
+  ],
+  "rootCauses": [
+    {
+      "id": "downstream-root-cause-3b4a11fe8e727bb3",
+      "kind": "method-return-propagation",
+      "directCandidateIds": [
+        "downstream-14526f8120d34ecd",
+        "downstream-7a1abbfd0db76351",
+        "downstream-ca97936fe9a11510"
+      ],
+      "propagatedCandidateIds": [],
+      "methodFactIds": [
+        "sdk-fact-159c8719ed484bcc",
+        "sdk-fact-5ad7866f833927da"
+      ],
+      "typeFactIds": [],
+      "referenceEvidence": [],
+      "rootKey": "project-37d12681d7d3:Microsoft.CognitiveServices.ManagedNetworkSettingsPropertiesBasicResources.post"
+    }
+  ]
+}

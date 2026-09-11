@@ -28,7 +28,7 @@ node (Join-Path $Skill "scripts\run-assessment-analysis.mjs") `
 
 Do not replace this with a full checkout or run the dimension analyzers against different inputs. If there is no changed TypeSpec in scope, stop with the coordinator's no-change result. If every active dimension is blocked, skip Agent judgment and preserve the blocked, `not-assessed` result. If only some dimensions are blocked, judge only the ready items and retain all blocker reasons.
 
-## Optional inference, Compliance search, and final Agent judgment
+## Optional inference, Azure Guidelines search, and final Agent judgment
 
 Read only:
 
@@ -37,7 +37,7 @@ Read only:
   `model-input.json.artifactReferences`, resolving paths relative to the work
   directory and reading only entries named by `evidenceSetId` or
   `evidenceRef`;
-- [classification guidance](classification.md), including [downstream cases](downstream-breaking-cases.md);
+- [classification guidance](classification.md), including [downstream cases](downstream-breaking-cases.md) and [candidate rules](downstream-candidate-rules.md);
 - the [agentic search procedure](agentic-search.md);
 - the [official document catalog](reference-document-links.md);
 - `scripts\inference.schema.json`;
@@ -62,7 +62,7 @@ and `compliance-assessment.mjs` later consumes and validates the evidence.
 
 Then write `<work-directory>\assessment-judgment.json` with one concise result
 per supplied Semantic review unit, exact deterministic and inferred
-REST/downstream candidate coverage, and one Compliance decision per Semantic
+REST/downstream candidate coverage, and one Azure Guidelines decision per Semantic
 intent. Do not read raw
 AutoRest/TCGC output, compiler logs, unchanged source, prior answers, or use
 catalog descriptions as guidance. Candidate and review-unit evidence omitted
@@ -84,6 +84,28 @@ node (Join-Path $Skill "scripts\render-assessment-html.mjs") `
   (Join-Path $Work "assessment.json") `
   (Join-Path $Work "assessment.html")
 ```
+
+Rendering accepts an optional, explicitly selected matching graph artifact:
+append `--downstream-input (Join-Path $Work "dimensions\downstream-breaking-input.json")`
+to the renderer command. The JavaScript API is
+`renderAssessmentHtml(assessment, { downstreamInput })`, where `downstreamInput`
+is the parsed JSON object. Existing one-argument callers remain supported.
+The renderer checks root associations and exact recorded evidence facts before
+using raw method-to-type paths, and rejects mismatched snapshots. It does not
+discover adjacent inputs or modify assessment data. Without verified raw input,
+recorded method associations remain visible with precise paths, locations, and
+comparison roles explicitly unavailable; aggregate root locations are not
+presented as per-method evidence.
+
+For a verified replay whose reconstructed root IDs differ, additionally pass
+`--downstream-assessment <matching-replay-assessment.json>` (API option
+`downstreamAssessment`, the parsed object). This requires exact repository and
+comparison equality and the same complete downstream findings, deeply equal
+except for `rootCauseIds`. The renderer bridges only root associations, verifies
+candidate membership and exact raw evidence facts, and keeps authoritative
+judgments, method contracts, grouping, and semantic relationships unchanged.
+Persist both explicitly selected sidecars with a rendered report if
+reproducibility requires them; neither sidecar is discovered automatically.
 
 If assembly rejects schema or coverage, send only its compact errors to the
 same Agent for **one correction turn**. Correct

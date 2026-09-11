@@ -1,0 +1,21 @@
+{
+  "tenantId": "72f988bf-86f1-41af-91ab-2d7cd011db47",
+  "maxPages": 1000,
+  "routine": {
+    "name": "teams-channel-collection",
+    "cron": "0 * * * *",
+    "timeZone": "UTC"
+  },
+  "channels": [
+    {
+      "teamId": "7ccc31f0-b371-450b-a73c-48f5a31a9b96",
+      "channelId": "19:3iefzURPmxhDZJJTtwePbdO1EdI5T0hfK9UFK_59Sbk1@thread.tacv2",
+      "startTime": null
+    },
+    {
+      "teamId": "7ccc31f0-b371-450b-a73c-48f5a31a9b96",
+      "channelId": "19:43d25834bb394e0fa9a3b316ce5a2ea4@thread.tacv2",
+      "startTime": null
+    }
+  ]
+}

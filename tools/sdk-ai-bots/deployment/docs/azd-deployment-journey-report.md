@@ -156,8 +156,9 @@ The active pipeline follows this sequence:
 4. Refresh prior layer outputs and run `azd provision --preview`.
 5. Present the preview at a manual approval gate.
 6. Apply the seven dependency-ordered infrastructure layers.
-7. Deploy agent server, Function App, chat agent, the production-only evolution
-   agent, and frontend in dependency order.
+7. Deploy Function App and chat agent in parallel, then fan out chat-agent
+   completion to agent server and the production-only evolution agent; deploy
+   frontend after the authenticated agent-server readiness probe succeeds.
 8. Reconcile App Configuration, Key Vault, Search, Teams, Foundry RBAC and
    settings, and the Logic App workflow through hooks.
 

@@ -167,7 +167,7 @@ environments:
         localDeployAllowed: false
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Component health endpoints used by local smoke tests.
+# Component health endpoints used by deployment readiness and local smoke tests.
 # ─────────────────────────────────────────────────────────────────────────────
 components:
     frontend:

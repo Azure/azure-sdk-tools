@@ -79,14 +79,24 @@ flowchart LR
     DEPLOY --> VERIFY[Operator verification]
 ```
 
-The full-stack deployment stage runs application code in this order:
+Application deployment follows a separate runtime dependency graph after the
+infrastructure apply:
 
-1. `agent-server`
-2. production stabilization wait when `environment=prod`
-3. `function-app`
-4. `agent`
-5. evolution agent when `environment=prod`
-6. `frontend`
+```mermaid
+flowchart LR
+  APPLY[Provision applied] --> FUNCTION[Function App]
+  APPLY --> AGENT[Chat agent]
+  AGENT --> SERVER[Agent server]
+  AGENT --> EVOLUTION[Evolution agent, prod only]
+  SERVER --> READY[Authenticated /ping readiness]
+  READY --> FRONTEND[Frontend]
+```
+
+Function App and chat-agent deployment can run in parallel. Agent-server waits
+for the chat agent it invokes, while frontend waits for agent-server readiness.
+The readiness gate retries the Easy Auth-protected `/ping` endpoint before the
+frontend rollout proceeds. The production-only evolution branch does not gate
+frontend deployment.
 
 `qa-bot-deploy.yml` defaults to `component=all`. Selecting `agent-server`,
 `function-app`, `agent`, or `frontend` provisions that layer and its

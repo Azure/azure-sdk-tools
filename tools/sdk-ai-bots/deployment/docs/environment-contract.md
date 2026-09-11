@@ -59,9 +59,10 @@ components:
 
 Subscription IDs, names, locations, routing, identity overrides, and feature
 flags actively drive provisioning and deployment. Approval is expressed by the
-pipeline stage graph. Production's agent-server stabilization window is an
-explicit orchestrator parameter, and release health follows the verification
-steps in the [deploy runbook](runbook-deploy.md).
+pipeline stage graph. Component health paths drive local smoke tests, and the
+full-stack pipeline gates frontend deployment on the agent-server readiness
+probe. Release health follows the verification steps in the
+[deploy runbook](runbook-deploy.md).
 
 ## Validation
 

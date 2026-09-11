@@ -42,8 +42,6 @@ extends:
                         environment: ${{ parameters.environment }}
                         imageTag: ${{ parameters.imageTag }}
                         dependsOn: Provision
-                        ${{ if eq(parameters.environment, 'prod') }}:
-                            stabilizationSeconds: 600
 
             - ${{ if eq(parameters.component, 'shared-resources') }}:
                   - template: /tools/sdk-ai-bots/deployment/pipelines/templates/layer-provision-stage.yml

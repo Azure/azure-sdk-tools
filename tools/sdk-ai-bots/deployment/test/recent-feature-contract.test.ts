@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { parse } from "yaml";
 
 const deploymentRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -17,11 +18,35 @@ test("provisions the chatbot evolution status container", () => {
   assert.match(bicep, /paths:\s*\[\s*'\/tenant_id'/);
 });
 
-test("deploys the evolution agent in the production full-stack chain", () => {
+test("deploys application services according to runtime dependencies", () => {
+  const orchestrator = read("pipelines/orchestrators/qa-bot-deploy.yml");
   const stages = read("pipelines/templates/deploy-stage.yml");
+  assert.doesNotThrow(() => parse(stages));
 
-  assert.match(stages, /evolution-agent-deploy-stage\.yml/);
-  assert.match(stages, /dependsOn: DeployEvolutionAgent/);
+  const stageInvocation = (stageName: string): string => {
+    const start = stages.indexOf(`stageName: ${stageName}`);
+    assert.notEqual(start, -1, `${stageName} stage is missing`);
+    const next = stages.indexOf("\n    - ", start);
+    return stages.slice(start, next === -1 ? undefined : next);
+  };
+
+  const functionApp = stageInvocation("DeployFunctionApp");
+  const agent = stageInvocation("DeployAgent");
+  const agentServer = stageInvocation("DeployAgentServer");
+  const frontend = stageInvocation("DeployFrontend");
+
+  assert.match(functionApp, /dependsOn: \$\{\{ parameters\.dependsOn \}\}/);
+  assert.match(agent, /dependsOn: \$\{\{ parameters\.dependsOn \}\}/);
+  assert.match(agentServer, /dependsOn: DeployAgent/);
+  assert.match(stages, /stage: VerifyAgentServer[\s\S]*?dependsOn: DeployAgentServer/);
+  assert.match(stages, /template: .*\/smoke-test\.yml/);
+  assert.match(stages, /appName: '\$\(AGENT_SERVER_SITE_NAME\)'/);
+  assert.match(stages, /healthPath: '\$\(AGENT_SERVER_HEALTH_PATH\)'/);
+  assert.match(stages, /easyAuthAudience: '\$\(SERVER_APPLICATION_ID_URI\)'/);
+  assert.match(stages, /evolution-agent-deploy-stage\.yml[\s\S]*?dependsOn: DeployAgent/);
+  assert.match(frontend, /dependsOn: VerifyAgentServer/);
+  assert.doesNotMatch(frontend, /dependsOn: DeployEvolutionAgent/);
+  assert.doesNotMatch(`${orchestrator}\n${stages}`, /stabilizationSeconds|\bsleep\b/);
 });
 
 test("exports the deployment principal for targeted layer provisioning", () => {
@@ -142,6 +167,7 @@ test("keeps rollout configuration limited to active behavior", () => {
   assert.doesNotMatch(suite, /rolloutStrategy|slot-swap|slot: 'staging'/);
   assert.doesNotMatch(suite, /minSuccessRate|latencyP95Ms|stabilizationWindowMinutes/);
   assert.doesNotMatch(loader, /ROLLOUT_STRATEGY/);
+  assert.match(loader, /AGENT_SERVER_HEALTH_PATH\s+'.components\."agent-server"\.healthPath'/);
   assert.match(smokeTest, /frontendSiteName/);
   assert.match(smokeTest, /resourceGroupPrefix/);
   assert.match(smokeTest, /healthPath/);

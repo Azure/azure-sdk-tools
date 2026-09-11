@@ -18,6 +18,7 @@
 #   CANDIDATE_AZURE_RESOURCE_GROUP, CANDIDATE_APP_CONFIG_NAME,
 #   CANDIDATE_APPCONFIG_ENDPOINT,
 #   FRONTEND_SITE_NAME, AGENT_SERVER_SITE_NAME, FUNCTION_APP_NAME,
+#   FRONTEND_HEALTH_PATH, AGENT_SERVER_HEALTH_PATH, FUNCTION_APP_HEALTH_PATH,
 #   *_IMAGE_REPOSITORY, TEAMS_GROUP_ID, TEAMS_CHANNEL_IDS, bicepOverrides,
 #   CHATBOT_EVOLUTION_AGENT_ENABLED, MANAGE_AUTHORIZATION_RESOURCES
 #
@@ -138,6 +139,9 @@ steps:
           export_var AGENT_SERVER_SITE_NAME_OVERRIDE ".environments.${ENV}.agentServerSiteName" AGENT_SERVER_SITE_NAME
           export_var FUNCTION_APP_NAME              ".environments.${ENV}.functionAppName" FUNCTION_APP_NAME_OVERRIDE
           export_var FUNCTION_APP_NAME_OVERRIDE     ".environments.${ENV}.functionAppName" FUNCTION_APP_NAME
+          export_var FRONTEND_HEALTH_PATH           '.components.frontend.healthPath'
+          export_var AGENT_SERVER_HEALTH_PATH       '.components."agent-server".healthPath'
+          export_var FUNCTION_APP_HEALTH_PATH       '.components."function-app".healthPath'
           export_image_repository AGENT_IMAGE_REPOSITORY agent
           export_image_repository FRONTEND_IMAGE_REPOSITORY frontend
           export_image_repository AGENT_SERVER_IMAGE_REPOSITORY agent-server

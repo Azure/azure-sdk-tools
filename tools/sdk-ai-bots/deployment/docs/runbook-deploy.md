@@ -69,14 +69,10 @@ completed.
 
 After apply, `qa-bot-deploy.yml` deploys the selected application service.
 `shared-resources` and `logic-app` stop after provisioning. With `component=all`,
-the pipeline runs:
-
-1. agent-server;
-2. a 10-minute agent-server stabilization wait in production;
-3. Function App;
-4. chat agent;
-5. production evolution agent and scoped RBAC;
-6. frontend.
+Function App and chat-agent deployment begin in parallel. Agent-server and the
+production-only evolution agent then follow the chat agent on independent
+branches. Before frontend deployment, the pipeline acquires an Easy Auth token
+and retries agent-server `/ping`; a failed readiness probe stops the rollout.
 
 Each service uses an `azd` native remote build. The Function App postdeploy hook
 then installs the final Logic App workflow. The frontend postdeploy hook

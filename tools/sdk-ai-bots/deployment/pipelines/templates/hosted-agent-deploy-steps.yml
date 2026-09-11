@@ -7,7 +7,7 @@ parameters:
     values: [dev, preview, prod]
   - name: imageTag
     type: string
-    default: ''
+    default: auto
   - name: workingDirectory
     type: string
     default: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-agent'
@@ -27,6 +27,9 @@ steps:
 
   - bash: |
       set -euo pipefail
+      if [ "$REQUESTED_IMAGE_TAG" = "auto" ]; then
+        REQUESTED_IMAGE_TAG=""
+      fi
       IMAGE_VERSION="${REQUESTED_IMAGE_TAG:-$(Build.BuildId)}"
       if [[ ! "$IMAGE_VERSION" =~ ^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$ ]]; then
         echo "##[error]Invalid image tag: $IMAGE_VERSION"

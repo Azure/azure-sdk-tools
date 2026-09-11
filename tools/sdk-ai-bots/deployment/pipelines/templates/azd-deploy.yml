@@ -9,7 +9,7 @@ parameters:
       type: string # frontend | function-app | agent | agent-server
     - name: imageTag
       type: string
-      default: ''
+      default: auto
     - name: timeoutSeconds
       type: number
       default: 1200
@@ -46,6 +46,9 @@ steps:
                 agent) IMAGE_REPOSITORY="$AGENT_IMAGE_REPOSITORY" ;;
               esac
 
+              if [ "$REQUESTED_IMAGE_TAG" = "auto" ]; then
+                REQUESTED_IMAGE_TAG=""
+              fi
               if [ -n "$REQUESTED_IMAGE_TAG" ]; then
                 IMAGE_VERSION="$REQUESTED_IMAGE_TAG"
               elif [ '${{ parameters.service }}' = 'frontend' ] || [ '${{ parameters.service }}' = 'function-app' ]; then

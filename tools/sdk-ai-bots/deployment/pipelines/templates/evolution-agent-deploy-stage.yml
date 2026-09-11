@@ -4,7 +4,7 @@ parameters:
     values: [prod]
   - name: imageTag
     type: string
-    default: ''
+    default: auto
   - name: dependsOn
     type: string
     default: DeployAgent

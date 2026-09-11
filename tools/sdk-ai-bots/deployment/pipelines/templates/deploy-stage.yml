@@ -13,7 +13,7 @@ parameters:
       values: [dev, preview, prod]
     - name: imageTag
       type: string
-      default: ''
+      default: auto
     - name: stabilizationSeconds
       type: number
       default: 0

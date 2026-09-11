@@ -74,12 +74,19 @@ test("reports the selected image version before each azd deployment", () => {
   assert.notEqual(deployPosition, -1);
   assert.ok(showVersionPosition < deployPosition);
   assert.match(orchestrator, /- name: imageTag/);
+  assert.match(orchestrator, /displayName: Image tag override \(optional\)/);
+  assert.match(orchestrator, /default: auto/);
+  for (const template of [orchestrator, fullStack, targeted, component, evolution, deploy, hostedAgent]) {
+    assert.match(template, /- name: imageTag[\s\S]*?default: auto/);
+  }
   for (const template of [orchestrator, fullStack, targeted, component, evolution]) {
     assert.match(template, /imageTag: \$\{\{ parameters\.imageTag \}\}/);
   }
   assert.match(deploy, /REQUESTED_IMAGE_TAG/);
+  assert.match(deploy, /REQUESTED_IMAGE_TAG" = "auto"/);
   assert.match(deploy, /variable=AZD_IMAGE_TAG/);
   assert.match(deploy, /azd env set AZD_IMAGE_TAG/);
+  assert.match(hostedAgent, /REQUESTED_IMAGE_TAG" = "auto"/);
   assert.match(hostedAgent, /--tag '\$\(AZD_IMAGE_TAG\)'/);
 });
 

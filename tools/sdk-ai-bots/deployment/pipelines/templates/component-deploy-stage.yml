@@ -9,7 +9,7 @@ parameters:
       values: [dev, preview, prod]
     - name: imageTag
       type: string
-      default: ''
+      default: auto
     - name: stageName
       type: string
       default: DeployComponent

@@ -14,10 +14,12 @@ parameters:
       type: string
       default: dev
       values: [dev, preview, prod]
+    # Azure DevOps runtime parameters are non-nullable. `auto` means no
+    # operator override and is normalized by each image-tag selector.
     - name: imageTag
-      displayName: Image tag
+      displayName: Image tag override (optional)
       type: string
-      default: ''
+      default: auto
 
 variables:
     - template: /eng/pipelines/templates/variables/globals.yml

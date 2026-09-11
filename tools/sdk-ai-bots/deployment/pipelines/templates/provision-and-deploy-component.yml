@@ -14,7 +14,7 @@ parameters:
       values: [dev, preview, prod]
     - name: imageTag
       type: string
-      default: ''
+      default: auto
 
 stages:
     - template: /tools/sdk-ai-bots/deployment/pipelines/templates/provision-with-approval.yml

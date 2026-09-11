@@ -293,9 +293,10 @@ it only against an intended environment.
 
 ## Image Version Flow
 
-`qa-bot-deploy.yml` exposes `imageTag`. An empty value keeps automatic tagging;
-a non-empty value is validated and used by every selected application image.
-The `Show image version` step runs before the build or deployment.
+`qa-bot-deploy.yml` exposes `imageTag` as an optional override. Its default,
+`auto`, selects the component's automatic tag strategy; any other value is
+validated and used by every selected application image. The `Show image
+version` step runs before the build or deployment.
 
 The handoff is:
 

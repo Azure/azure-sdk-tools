@@ -2,19 +2,32 @@
 
 ## Inputs
 
-Obtain the baseline ref and specification/project root once. Default the repository to the current Git root and the baseline to `origin/main` only when appropriate. Use a work directory that is not assessed source.
+Resolve the baseline ref and specification/project root once. Default the repository to the current Git root. Use a work directory that is not assessed source.
 
-The coordinator captures committed, staged, unstaged, and relevant untracked TypeSpec changes; creates service-scoped sparse base/current worktrees; selects one API version per side; compiles each affected project independently with AutoRest and TCGC using that same version pair; runs all three analyzers; calculates deterministic hunk coverage; and writes the bounded `model-input.json` once.
+For local assessment, use an explicitly supplied baseline ref or commit ID
+without asking again. If none is supplied, ask the user to confirm `origin/main`
+(recommended) or provide another ref/commit ID before preparation. Use the
+host's user-question tool when available, and wait for confirmation rather than
+silently accepting the script's default. This is a gate before preflight,
+merge-base commands, work-directory creation, or analysis, not a notification
+that accompanies starting the run. Approval to perform a read-only assessment
+does not confirm its baseline. If the selected baseline cannot be
+resolved, ask for a valid ref. If confirmation cannot be obtained, stop with a
+clear blocker; never silently substitute a different baseline.
+For PR assessment, resolve the PR's actual target baseline rather than applying
+the local `origin/main` recommendation.
+
+The coordinator captures committed, staged, unstaged, and relevant untracked TypeSpec changes; creates service-scoped sparse base/current worktrees; selects one API version per side; compiles each affected project independently with AutoRest and TCGC using that same version pair; runs the analyzers; collects source-only documentation evidence; calculates deterministic hunk coverage; and writes the bounded `model-input.json` once.
 
 For the head, select the newest newly added API version when one exists; otherwise select its latest API version. When the PR adds no version and that head version exists in base, compile both sides with that same version. When head adds a version, select base's latest stable version, or its latest preview when no stable version exists. Record the pair and selection reasons in the manifest and report.
 
 ## Deterministic analysis
 
-Set concrete values, then run:
+Set concrete values using the baseline resolved above, then run:
 
 ```powershell
 $Repo = (git rev-parse --show-toplevel)
-$Base = "origin/main"
+$Base = "<resolved-baseline-ref-or-commit>"
 $Specification = "<project-or-spec-root>"
 $Work = "<work-directory>"
 $Skill = Join-Path $Repo ".github\skills\azure-typespec-assessment"
@@ -40,6 +53,7 @@ Read only:
 - [classification guidance](classification.md), including [downstream cases](downstream-breaking-cases.md) and [candidate rules](downstream-candidate-rules.md);
 - the [agentic search procedure](agentic-search.md);
 - the [official document catalog](reference-document-links.md);
+- the [documentation checks](document-quality.md);
 - `scripts\inference.schema.json`;
 - `scripts\compliance-search-evidence.schema.json`;
 - `scripts\assessment-judgment.schema.json`.
@@ -60,11 +74,19 @@ The main Agent writes this file directly; no Node.js script produces it.
 `compliance-search-request.mjs` only creates the requests in `model-input.json`,
 and `compliance-assessment.mjs` later consumes and validates the evidence.
 
+For every `documentQualityReviewUnits` entry, resolve its canonical unit in
+`dimensions/document-quality-input.json` through the declared evidence set.
+For each document in a `ready` unit, judge Correctness and Meaning exactly
+once. Use only its `@doc` and associated baseline/target declaration source;
+no additional searches or generated descriptions. Retain blocked reasons and
+do not assess absent/empty/deleted documentation. These checks run even when
+the hunk has no REST/downstream impact and inference is unnecessary.
+
 Then write `<work-directory>\assessment-judgment.json` with one concise result
 per supplied Semantic review unit, exact deterministic and inferred
 REST/downstream candidate coverage, and one Azure Guidelines decision per Semantic
-intent. Do not read raw
-AutoRest/TCGC output, compiler logs, unchanged source, prior answers, or use
+intent, plus the required `documentQualityDecisions`. Do not read raw
+AutoRest/TCGC output, compiler logs, unrelated unchanged source, prior answers, or use
 catalog descriptions as guidance. Candidate and review-unit evidence omitted
 from the bounded file remains available only through the declared canonical
 artifact references; do not scan unrelated artifact entries.

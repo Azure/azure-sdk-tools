@@ -2,8 +2,8 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import vm from "node:vm";
-import { downstreamMethodData, downstreamPresentationDimension, sdkTypeName } from "./assessment-report-ui.mjs";
-import { renderAssessmentHtml } from "./render-assessment-html.mjs";
+import { documentQualitySummary, downstreamMethodData, downstreamPresentationDimension, renderReportSections, sdkTypeName } from "./assessment-report-ui.mjs";
+import { escapeHtml, renderAssessmentHtml } from "./render-assessment-html.mjs";
 
 function fixture() {
   const typeFact = (role) => ({
@@ -300,6 +300,9 @@ test("guideline cards retain every recorded diff once with distinct expected and
   assert.doesNotMatch(firstBody, /<p>-/);
   assert.equal((firstBody.match(/class="diff"/g) ?? []).length, first.codeSnippets.length);
   const semantic = html.slice(html.indexOf('<section id="semantic-intents">'), html.indexOf('<section id="appendix">'));
+  assert.match(semantic, /class="report-link" href="#compliance-finding-[^"]+">Azure Guidelines/);
+  assert.ok(html.includes('.report-link.impact,.report-link[href^="#compliance-finding-"]{color:#b91c1c;border-color:#fecaca;background:#fff1f2}'));
+  assert.ok(html.includes('.report-link.impact,.report-link[href^="#compliance-finding-"]{color:#fecaca;border-color:#7f1d1d;background:#431f29}'));
   for (const [, header] of semantic.matchAll(/<details class="report-card intent"[^>]*>(<summary>[\s\S]*?<\/summary>)/g)) {
     const impacts = Number(header.match(/Impacts \((\d+)\)/)?.[1] ?? 0);
     assert.equal(impacts, (header.match(/class="report-link impact"/g) ?? []).length);
@@ -372,4 +375,191 @@ test("explicit provenance sidecar bridges only root IDs and never changes author
   missingFinding.dimensions.downstream.findings.pop();
   assert.throws(() => downstreamPresentationDimension(input, { downstreamInput: raw, downstreamAssessment: missingFinding }), /finding coverage/);
   assert.throws(() => downstreamPresentationDimension(input, { downstreamAssessment: replay }), /requires downstreamInput/);
+});
+
+function documentDimension(decision = "fail") {
+  const document = {
+    id: "doc-widget", sourceChangeId: "source-widget", qualifiedName: "Contoso.Widget.count", kind: "property",
+    before: { doc: "The number of widgets.", declaration: '@doc("The number of widgets.")\ncount: int32;', source: { path: "models.tsp", revision: "base", startLine: 4, endLine: 5 } },
+    after: { doc: "The number of widgets.", declaration: '@doc("The number of widgets.")\n@minValue(1)\ncount: int32;', source: { path: "models.tsp", revision: "current", startLine: 4, endLine: 6 } },
+  };
+  const check = {
+    reviewUnitId: "semantic-1", documentId: document.id, check: "meaning", decision,
+    title: "Widget count documentation omits the positive-only constraint",
+    expected: "Describe the count as a positive integer.", rationale: "The declaration now excludes zero; the doc does not explain this constraint.", docQuote: "The number of widgets.",
+  };
+  const status = decision === "pass" ? "passed" : decision === "fail" ? "failed" : "not-assessed";
+  return {
+    status, summary: "Recorded @doc meaning assessment.",
+    coverage: { semanticIntentCount: 1, assessedIntentCount: decision === "not-assessed" ? 0 : 1, documentCount: 1, assessedDocumentCount: decision === "not-assessed" ? 0 : 1, checkCount: 1, assessedCheckCount: decision === "not-assessed" ? 0 : 1, unassessedIntentIds: decision === "not-assessed" ? ["semantic-1"] : [], notApplicableIntentIds: [] },
+    intentAssessments: [{ reviewUnitId: "semantic-1", status, documents: [document], checks: [check] }],
+    findings: decision === "fail" ? [{ ...check, id: "document-finding-widget", actual: document.after.doc, document, semanticIntentIds: ["semantic-1"], sources: [] }] : [],
+    blockers: [],
+  };
+}
+
+function presentationWithDocuments(dimension, downstream) {
+  const input = assessment(downstream);
+  input.dimensions.documentQuality = dimension;
+  return renderReportSections(input, {
+    escapeHtml, operationContractRows: () => [], complianceFindingGroups: () => [],
+    renderSourceHunks: () => "", sourceLinks: () => "", directLegacyDownstreamFindings: () => [],
+  }).html;
+}
+
+test("document issues use collapsed Expected/Actual cards and readable bidirectional intent links", () => {
+  const dimension = documentDimension();
+  const original = structuredClone(dimension);
+  const html = presentationWithDocuments(dimension);
+  const quality = html.slice(html.indexOf('<section id="document-quality">'), html.indexOf('<section id="semantic-intents">'));
+  const header = quality.match(/<details class="report-card document-quality-check"[^>]*>(<summary>[\s\S]*?<\/summary>)/)[1];
+  assert.match(header, /Widget count documentation omits the positive-only constraint/);
+  assert.match(header, /Affected intents \(1\)/);
+  assert.match(header, /href="#intent-semantic-1">Change the widget contract/);
+  assert.doesNotMatch(header, /<pre>|Expected|<table|>semantic-1</);
+  assert.match(quality, /<h3>Expected<\/h3><p>Describe the count as a positive integer\./);
+  assert.match(quality, /<h3>Actual<\/h3>/);
+  for (const side of ["before", "after"]) {
+    const value = dimension.findings[0].document[side];
+    assert.ok(quality.includes(`<code>${escapeHtml(value.declaration)}</code>`));
+    assert.ok(quality.includes(`models.tsp:4-${value.source.endLine} (${value.source.revision})`));
+  }
+  assert.match(quality, /Assessment rationale/);
+  assert.equal((quality.match(/<pre><code>/g) ?? []).length, 2);
+  assert.doesNotMatch(quality, /Recorded @doc text/);
+  assert.doesNotMatch(quality, /<table|class="severity|>high<|>medium<|>low<|document-quality-check"[^>]* open/);
+  const semantic = html.slice(html.indexOf('<section id="semantic-intents">'));
+  assert.match(semantic, /aria-label="Document quality findings"/);
+  assert.match(semantic, /Document Quality: Widget count documentation/);
+  assert.doesNotMatch(semantic, /Impacts \(|class="report-link impact"/);
+  const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map((match) => match[1]);
+  assert.equal(ids.length, new Set(ids).size);
+  for (const [, id] of html.matchAll(/href="#([^"]+)"/g)) assert.ok(ids.includes(id), `Missing document relation ${id}`);
+  assert.deepEqual(dimension, original);
+});
+
+test("document coverage distinguishes passed checks, no applicable docs, and legacy not-assessed", () => {
+  const passed = documentDimension("pass");
+  passed.intentAssessments[0].checks[0].title = "Widget count meaning is accurate";
+  const passedHtml = presentationWithDocuments(passed);
+  assert.match(passedHtml, /1\/1 checks assessed/);
+  assert.match(passedHtml, /1\/1 @doc documents assessed/);
+  assert.match(passedHtml, /report-badge add">passed/);
+  assert.equal(documentQualitySummary(passed).label, "Passed");
+  const noDocs = {
+    status: "passed", summary: "No applicable @doc on this changed declaration.",
+    coverage: { semanticIntentCount: 1, assessedIntentCount: 1, documentCount: 0, assessedDocumentCount: 0, checkCount: 0, assessedCheckCount: 0, unassessedIntentIds: [], notApplicableIntentIds: ["semantic-1"] },
+    intentAssessments: [{ reviewUnitId: "semantic-1", status: "not-applicable", reason: "No @doc is attached to the changed declaration.", documents: [], checks: [] }], findings: [], blockers: [],
+  };
+  const noDocsHtml = presentationWithDocuments(noDocs);
+  assert.match(noDocsHtml, /0\/0 checks assessed/);
+  assert.match(noDocsHtml, /1 intents with no applicable @doc/);
+  assert.match(noDocsHtml, /not applicable/);
+  assert.match(noDocsHtml, /No @doc is attached to the changed declaration/);
+  assert.equal(documentQualitySummary(noDocs).label, "Passed");
+  assert.doesNotMatch(noDocsHtml, /Document Quality and Agent Friendliness is not assessed/);
+  const legacy = presentationWithDocuments({ status: "not-assessed", summary: "Historical documentation evidence unavailable." });
+  const legacyQuality = legacy.slice(legacy.indexOf('<section id="document-quality">'), legacy.indexOf('<section id="semantic-intents">'));
+  assert.match(legacyQuality, /Historical documentation evidence unavailable/);
+  assert.doesNotMatch(legacyQuality, /0 findings|checks assessed|passed/);
+  assert.equal(documentQualitySummary().label, "Not assessed");
+});
+
+test("incomplete doc evidence renders recorded checks and blocked reasons without fabricating source", () => {
+  const dimension = documentDimension("not-assessed");
+  dimension.intentAssessments[0].documents[0].before = null;
+  dimension.intentAssessments[0].reason = "Baseline declaration evidence unavailable.";
+  dimension.intentAssessments[0].checks[0].rationale = "Meaning cannot be confirmed without the old contract.";
+  delete dimension.intentAssessments[0].checks[0].expected;
+  dimension.blockers = [{ reason: "Baseline @doc could not be read." }];
+  const html = presentationWithDocuments(dimension);
+  assert.match(html, /0\/1 checks assessed/);
+  assert.doesNotMatch(html, /report-document-snapshot/);
+  assert.match(html, /Baseline declaration evidence unavailable/);
+  assert.match(html, /Meaning cannot be confirmed without the old contract/);
+  assert.doesNotMatch(html, /Expected meaning or contract was not recorded|<h3>Expected<\/h3>/);
+  assert.match(html, /Assessment blocked/);
+  assert.match(html, /Baseline @doc could not be read/);
+  assert.match(html, /Examples, external documentation, and agent execution are not assessed/);
+  assert.equal(documentQualitySummary(dimension).label, "Not assessed");
+});
+
+test("every recorded doc, declaration, issue, rationale and source label is HTML escaped", () => {
+  const dimension = documentDimension();
+  const attack = '</code><img src=x onerror="alert(1)">&\'';
+  const finding = dimension.findings[0];
+  finding.title = finding.expected = finding.rationale = finding.actual = attack;
+  finding.document.qualifiedName = attack;
+  finding.document.after.doc = finding.document.after.declaration = attack;
+  finding.document.after.source.path = attack;
+  dimension.summary = attack;
+  dimension.blockers = [{ message: attack }];
+  const html = presentationWithDocuments(dimension);
+  assert.doesNotMatch(html, /<img src=x|onerror="alert/);
+  assert.ok(html.includes(escapeHtml(attack)));
+  assert.ok(html.includes(`<code>${escapeHtml(attack)}</code>`));
+  assert.ok(html.includes(`<strong>${escapeHtml(attack)}</strong>`));
+});
+
+test("document links do not change REST and downstream impact counts", () => {
+  const { dimension } = fixture();
+  const html = presentationWithDocuments(documentDimension(), dimension);
+  const semantic = html.slice(html.indexOf('<section id="semantic-intents">'));
+  const header = semantic.match(/<details class="report-card intent"[^>]*>(<summary>[\s\S]*?<\/summary>)/)[1];
+  assert.match(header, /Impacts \(2\)/);
+  assert.equal((header.match(/class="report-link impact"/g) ?? []).length, 2);
+  assert.match(header, /aria-label="Document quality findings"/);
+  assert.doesNotMatch(header, /class="report-link impact"[^>]*>Document Quality/);
+});
+
+test("failed doc findings retain incomplete-check coverage and blocked intent reasons", () => {
+  const dimension = documentDimension();
+  const intent = dimension.intentAssessments[0];
+  intent.reason = "The meaning review is blocked by missing evidence.";
+  intent.checks.push({ reviewUnitId: intent.reviewUnitId, documentId: intent.documents[0].id, check: "correctness", decision: "not-assessed", rationale: "The full contract is unavailable." });
+  Object.assign(dimension.coverage, { checkCount: 2, assessedCheckCount: 1, assessedIntentCount: 0, assessedDocumentCount: 0, unassessedIntentIds: [intent.reviewUnitId] });
+  const html = presentationWithDocuments(dimension);
+  assert.equal(documentQualitySummary(dimension).label, "Failed");
+  assert.match(html, /1\/2 checks assessed/);
+  assert.match(html, /0\/1 intents assessed/);
+  assert.match(html, /meaning review is blocked by missing evidence/);
+  assert.match(html, /Documentation not assessed for:/);
+  assert.match(html, /The full contract is unavailable/);
+});
+
+test("document snapshots show exact declaration source once when leading decorators already include @doc", () => {
+  for (const declaration of [
+    '@doc("The number of widgets.")\ncount: int32;',
+    '/* source context */\n@extension("literal @doc(\\"unrelated\\")")\n@TypeSpec . doc("""\n  The number of widgets.\n  """)\ncount: int32;',
+    '@extension(fn("nested"), { value: ")" })\n// context\n@doc ("The number of widgets.")\ncount: int32;',
+  ]) {
+    const dimension = documentDimension();
+    dimension.findings[0].document.after.declaration = declaration;
+    const html = presentationWithDocuments(dimension);
+    const quality = html.slice(html.indexOf('<section id="document-quality">'), html.indexOf('<section id="semantic-intents">'));
+    assert.equal((quality.match(/<pre><code>/g) ?? []).length, 2);
+    assert.equal(quality.split(`<code>${escapeHtml(declaration)}</code>`).length - 1, declaration === dimension.findings[0].document.before.declaration ? 2 : 1);
+    assert.doesNotMatch(quality, /Recorded @doc text/);
+  }
+});
+
+test("declarations without their own @doc retain separately recorded doc text without source reconstruction", () => {
+  for (const declaration of [
+    "count: int32;",
+    '/* @doc("comment, not evidence") */\ncount: int32;',
+    '@extension("literal @doc(\\"not evidence\\")")\ncount: int32;',
+    'model Widget {\n  @doc("Nested property documentation.")\n  count: int32;\n}',
+  ]) {
+    const dimension = documentDimension();
+    const after = dimension.findings[0].document.after;
+    after.doc = 'Augmented documentation with <markup> & "quotes".';
+    after.declaration = declaration;
+    const html = presentationWithDocuments(dimension);
+    const quality = html.slice(html.indexOf('<section id="document-quality">'), html.indexOf('<section id="semantic-intents">'));
+    assert.match(quality, /Recorded @doc text/);
+    assert.ok(quality.includes(`<code>${escapeHtml(after.doc)}</code>`));
+    assert.ok(quality.includes(`<code>${escapeHtml(declaration)}</code>`));
+    assert.equal((quality.match(/<pre><code>/g) ?? []).length, 3);
+    assert.doesNotMatch(quality, /<markup>/);
+  }
 });

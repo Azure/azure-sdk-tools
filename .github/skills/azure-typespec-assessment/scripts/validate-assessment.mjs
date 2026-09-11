@@ -2,6 +2,7 @@ import path from "node:path";
 import { isMain, readJson, runMain } from "./cli.mjs";
 import { deriveSafety, dimensionStatus } from "./assessment-display.mjs";
 import { readComplianceCatalog } from "./compliance-assessment.mjs";
+import { DOCUMENT_QUALITY_ARTIFACT, validateDocumentQualityDimension } from "./document-quality-assessment.mjs";
 
 function uniqueIds(items, pathName, errors) {
   const seen = new Set();
@@ -469,10 +470,15 @@ export function validateAssessment(assessment) {
   ]) {
     if (!dimensions[name]) errors.push(`dimensions.${name} is required.`);
   }
-  if (dimensions.documentQuality?.status !== "not-assessed") {
-    errors.push(
-      "Document Quality and Agent Friendliness must remain not-assessed.",
-    );
+  errors.push(...validateDocumentQualityDimension(
+    dimensions.documentQuality,
+    dimensions.semantic?.items ?? [],
+    dimensions.semantic?.status === "assessed" ? "ready" : "blocked",
+  ));
+  if (assessment.provenance?.documentQuality !== undefined &&
+      (assessment.provenance.documentQuality !== DOCUMENT_QUALITY_ARTIFACT ||
+       dimensions.documentQuality?.coverage === undefined)) {
+    errors.push("Document Quality canonical provenance requires the complete assessed dimension shape.");
   }
   uniqueIds(dimensions.semantic?.items ?? [], "semantic items", errors);
   uniqueIds(dimensions.rest?.findings ?? [], "REST findings", errors);

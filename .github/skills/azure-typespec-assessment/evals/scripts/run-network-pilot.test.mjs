@@ -219,6 +219,10 @@ test("coordinates deterministic analysis and prepares an Agent work item", () =>
     assert.equal(workItem.boundary.coordinatorInvokesLlm, false);
     assert.equal(workItem.boundary.handoffReadyAt, "1970-01-01T00:00:01.000Z");
     assert.equal(workItem.fullEndToEndComplete, false);
+    assert.ok(workItem.instructions.some((instruction) =>
+      instruction.includes("documentQualityDecisions") &&
+      instruction.includes("canonical @doc") &&
+      instruction.includes("Correctness and Meaning")));
     assert.ok(existsSync(workItem.inputs.sharedNodeModules));
     assert.equal(
       realpathSync.native(join(base, "node_modules")),

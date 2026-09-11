@@ -50,7 +50,7 @@
 .report-link:hover,.report-link:focus-visible{text-decoration:underline;outline-offset:2px}
 .report-intent-relations{margin-top:12px;cursor:default}
 .report-relation-label{display:block;color:var(--muted);font-size:11px;font-weight:700;cursor:text}
-.report-link.impact{color:#b91c1c;border-color:#fecaca;background:#fff1f2}
+.report-link.impact,.report-link[href^="#compliance-finding-"]{color:#b91c1c;border-color:#fecaca;background:#fff1f2}
 .report-reference-paths{display:grid;gap:6px;margin:9px 0}
 .report-reference-path{display:grid;grid-template-columns:minmax(100px,.35fr) minmax(180px,1fr) max-content;gap:10px;align-items:baseline;padding:7px 10px;border-radius:6px;background:color-mix(in srgb,var(--panel) 92%,var(--accent));font-size:12px}
 .report-reference-path>span{color:var(--muted)}
@@ -93,7 +93,7 @@ body{overflow-wrap:anywhere}
   .report-table th{background:#202d45;color:#cbd5e1}
   .report-table td:nth-child(2){background:#431f29}
   .report-table td:nth-child(3){background:#15382b}
-  .report-link.impact{color:#fecaca;border-color:#7f1d1d;background:#431f29}
+  .report-link.impact,.report-link[href^="#compliance-finding-"]{color:#fecaca;border-color:#7f1d1d;background:#431f29}
   .report-http{color:#93c5fd}
 }
 

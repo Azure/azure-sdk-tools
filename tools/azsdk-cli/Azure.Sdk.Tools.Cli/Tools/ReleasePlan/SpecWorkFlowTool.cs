@@ -16,6 +16,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
     [Description("This type contains the MCP tool to run SDK generation using pipeline, check SDK generation pipeline status and to get generated SDK pull request details.")]
     [McpServerToolType]
     public class SpecWorkflowTool(IGitHubService githubService,
+        IGitHelper gitHelper,
         IDevOpsService devopsService,
         ITypeSpecHelper typespecHelper,
         ILogger<SpecWorkflowTool> logger,
@@ -345,7 +346,25 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 }
 
                 string apiSpecBranchRef = "main";
-                if (pullRequestNumber > 0)
+                var hasValidSpecCommitSha = false;
+                var hasSpecCommitSha = !string.IsNullOrWhiteSpace(releasePlan!.SpecCommitSHA);
+                if (hasSpecCommitSha)
+                {
+                    try
+                    {
+                        hasValidSpecCommitSha = await gitHelper.IsValidCommitAsync(typespecProjectRoot, releasePlan.SpecCommitSHA, ct);
+                    }
+                    catch (InvalidOperationException ex)
+                    {
+                        logger.LogWarning(ex, "Could not validate spec commit SHA {SpecCommitSHA}; using main for SDK generation.", releasePlan.SpecCommitSHA);
+                    }
+                }
+
+                if (hasValidSpecCommitSha)
+                {
+                    apiSpecBranchRef = releasePlan.SpecCommitSHA;
+                }
+                else if (!hasSpecCommitSha && pullRequestNumber > 0)
                 {
                     var pullRequest = await githubService.GetPullRequestAsync(REPO_OWNER, PUBLIC_SPECS_REPO, pullRequestNumber, ct);
                     apiSpecBranchRef = (pullRequest?.Merged ?? false) ? pullRequest.Base.Ref : $"refs/pull/{pullRequestNumber}/merge";

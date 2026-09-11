@@ -137,6 +137,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             DefaultValueFactory = _ => false,
         };
 
+        private readonly Option<string> specCommitShaOpt = new("--spec-commit-sha")
+        {
+            Description = "Spec repository commit SHA",
+            Required = false,
+            DefaultValueFactory = _ => string.Empty,
+        };
+
         private readonly Option<string> namespaceApprovalIssueOpt = new("--namespace-approval-issue")
         {
             Description = "Namespace approval issue URL",
@@ -298,6 +305,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 productTreeIdOpt,
                 optionalPullRequestOpt,
                 isTestReleasePlanOpt,
+                specCommitShaOpt,
             },
             new McpCommand(linkNamespaceApprovalIssueCommandName, "Link namespace approval issue to release plan", LinkNamespaceApprovalToolName) { workItemIdOpt, namespaceApprovalIssueOpt, },
             new McpCommand(checkApiReadinessCommandName, "Check if API spec is ready to generate SDK", CheckApiSpecReadyToolName) { typeSpecProjectPathOpt, pullRequestNumberOpt, workItemIdOpt, },
@@ -316,6 +324,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 optionalServiceTreeIdOpt,
                 optionalProductTreeIdOpt,
                 productTypeOpt,
+                specCommitShaOpt,
             },
             new McpCommand(updateReleasePlanTargetCommandName, "Update the SDK release target month on an existing release plan", UpdateReleasePlanTargetToolName) { workItemIdOpt, targetReleaseOpt, },
         ];
@@ -342,6 +351,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     var specPullRequestUrl = commandParser.GetValue(optionalPullRequestOpt);
                     var apiReleaseType = commandParser.GetValue(apiReleaseTypeOpt);
                     var isTestReleasePlan = commandParser.GetValue(isTestReleasePlanOpt);
+                    var specCommitSha = commandParser.GetValue(specCommitShaOpt);
                     return await CreateReleasePlan(
                         null,
                         typeSpecProjectPath,
@@ -351,6 +361,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                         serviceTreeId: serviceTreeId,
                         productTreeId: productTreeId,
                         isTestReleasePlan: isTestReleasePlan,
+                        specCommitSha: specCommitSha,
                         ct: ct
                     );
 
@@ -386,6 +397,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                         serviceTreeId: commandParser.GetValue(optionalServiceTreeIdOpt),
                         productTreeId: commandParser.GetValue(optionalProductTreeIdOpt),
                         productType: commandParser.GetValue(productTypeOpt),
+                        specCommitSha: commandParser.GetValue(specCommitShaOpt),
                         ct: ct
                     );
 
@@ -575,6 +587,19 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         {
             try
             {
+                return await UpdateReleasePlan(typeSpecProjectPath, specPullRequestUrl, sdkReleaseType, workItemId, serviceTreeId, productTreeId, productType, string.Empty, ct);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to update release plan");
+                return new ReleasePlanResponse { ResponseError = $"Failed to update release plan: {ex.Message}" };
+            }
+        }
+
+        private async Task<ReleasePlanResponse> UpdateReleasePlan(string typeSpecProjectPath, string specPullRequestUrl, string sdkReleaseType, int workItemId, string serviceTreeId, string productTreeId, ProductType productType, string specCommitSha, CancellationToken ct = default)
+        {
+            try
+            {
                 sdkReleaseType = sdkReleaseType?.ToLower() ?? "";
 
                 var sdkReleaseTypeMappings = new Dictionary<string, string>
@@ -681,6 +706,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     { "Custom.SDKtypetobereleased", sdkReleaseType },
                     { "Custom.ApiSpecProjectPath", specProject },
                 };
+
+                if (!string.IsNullOrWhiteSpace(specCommitSha))
+                {
+                    fieldsToUpdate["Custom.SpecCommitSHA"] = specCommitSha;
+                }
 
                 if (!string.IsNullOrEmpty(serviceTreeId))
                 {
@@ -962,6 +992,19 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         public async Task<ReleasePlanResponse> CreateReleasePlan(IProgress<ProgressNotificationValue>? progress, string typeSpecProjectPath, string targetReleaseMonthYear, string apiReleaseType, string specPullRequestUrl = "", string serviceTreeId = "", string productTreeId = "", bool isTestReleasePlan = false, CancellationToken ct = default)
         {
             try
+            {
+                return await CreateReleasePlan(progress, typeSpecProjectPath, targetReleaseMonthYear, apiReleaseType, specPullRequestUrl, serviceTreeId, productTreeId, isTestReleasePlan, string.Empty, ct);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to create release plan");
+                return new ReleasePlanResponse { ResponseError = $"Failed to create release plan: {ex.Message}" };
+            }
+        }
+
+        private async Task<ReleasePlanResponse> CreateReleasePlan(IProgress<ProgressNotificationValue>? progress, string typeSpecProjectPath, string targetReleaseMonthYear, string apiReleaseType, string specPullRequestUrl, string serviceTreeId, string productTreeId, bool isTestReleasePlan, string specCommitSha, CancellationToken ct = default)
+        {
+            try
             {         
                 // Validate and map API release type
                 if (!ApiReleaseTypeExtensions.TryParseFromUserInput(apiReleaseType, out var parsedApiReleaseType))
@@ -1165,7 +1208,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     ProductType = productType,
                     ProductLifecycle = productLifecycle,
                     ApiReleaseType = parsedApiReleaseType,
-                    SpecAPIVersion = apiVersion
+                    SpecAPIVersion = apiVersion,
+                    SpecCommitSHA = specCommitSha ?? string.Empty
                 };
 
                 var reporter = new ProgressReporter(progress, logger, totalSteps: 2, outputHelper);
@@ -2285,4 +2329,3 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         }
     }
 }
-

@@ -175,11 +175,27 @@
                         ]
                       }
                     },
-                    "Resolved_message_details": {
-                      "type": "Compose",
-                      "inputs": "@body('Resolve_forwarded_message_content')",
+                    "Include_post_title_in_message_content": {
+                      "type": "JavaScriptCode",
+                      "inputs": {
+                        "code": "var message=workflowContext.actions.Resolve_forwarded_message_content.outputs.body;\nif(!message||!message.body)return message;\nif(typeof message.subject==='string'&&message.subject.trim().length>0){\n  message.body.content='title: '+message.subject.trim()+'\\n\\n'+(message.body.content||'');\n}\nreturn message;",
+                        "explicitDependencies": {
+                          "actions": [
+                            "Resolve_forwarded_message_content"
+                          ]
+                        }
+                      },
                       "runAfter": {
                         "Resolve_forwarded_message_content": [
+                          "Succeeded"
+                        ]
+                      }
+                    },
+                    "Resolved_message_details": {
+                      "type": "Compose",
+                      "inputs": "@body('Include_post_title_in_message_content')",
+                      "runAfter": {
+                        "Include_post_title_in_message_content": [
                           "Succeeded"
                         ]
                       }

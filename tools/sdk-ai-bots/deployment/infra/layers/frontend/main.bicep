@@ -39,6 +39,9 @@ param frontendHealthCheckAlertNameOverride string = ''
 @description('Name of the delete lock guarding the frontend resource group.')
 param frontendDeleteLockNameOverride string = ''
 
+@description('Whether this deployment manages Azure RBAC assignments and resource locks. Disable only when an existing environment has equivalent resources managed outside this deployment.')
+param manageAuthorizationResources bool = true
+
 @description('Azure Table Storage table name that stores per-conversation Bot Framework state. Read by the frontend at startup — MUST be non-empty or the container crashes on `ConversationHandler` initialization (Table Storage returns 400 InvalidInput for empty names).')
 param azureTableNameForConversation string
 
@@ -107,7 +110,7 @@ resource component 'Microsoft.Insights/components@2020-02-02' = {
 
 var monitoringMetricsPublisherRoleDefinitionId = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '3913510d-42f4-4e42-8a64-420c390055eb')
 
-resource monitoringMetricsPublisherRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+resource monitoringMetricsPublisherRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (manageAuthorizationResources) {
   scope: component
   name: guid(component.id, userAssignedIdentity.id, monitoringMetricsPublisherRoleDefinitionId)
   properties: {
@@ -154,7 +157,7 @@ resource sharedRegistry 'Microsoft.ContainerRegistry/registries@2026-01-01-previ
 
 var acrPullRoleDefinitionId = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '7f951dda-4ed3-4680-a7ca-43fe172d538d')
 
-resource acrPullRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+resource acrPullRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (manageAuthorizationResources) {
   scope: sharedRegistry
   name: guid(sharedRegistry.id, userAssignedIdentity.id, acrPullRoleDefinitionId)
   properties: {
@@ -456,7 +459,7 @@ resource metricAlert2 'Microsoft.Insights/metricAlerts@2024-03-01-preview' = {
   }
 }
 
-resource lock 'Microsoft.Authorization/locks@2020-05-01' = {
+resource lock 'Microsoft.Authorization/locks@2020-05-01' = if (manageAuthorizationResources) {
   name: frontendDeleteLockName
   properties: {
     level: 'CanNotDelete'
@@ -473,7 +476,7 @@ var storageRoleDefinitionIds = [
   subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3')
 ]
 
-resource storageRoleAssignments 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for roleDefinitionId in storageRoleDefinitionIds: {
+resource storageRoleAssignments 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for roleDefinitionId in storageRoleDefinitionIds: if (manageAuthorizationResources) {
   scope: storageAccount
   name: guid(storageAccount.id, userAssignedIdentity.id, roleDefinitionId)
   properties: {

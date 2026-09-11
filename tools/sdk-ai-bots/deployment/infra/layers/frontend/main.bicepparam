@@ -18,6 +18,7 @@ param frontendHealthTestNameOverride = readEnvironmentVariable('FRONTEND_HEALTH_
 param frontendServerErrorsAlertNameOverride = readEnvironmentVariable('FRONTEND_SERVER_ERRORS_ALERT_NAME', '')
 param frontendHealthCheckAlertNameOverride = readEnvironmentVariable('FRONTEND_HEALTH_CHECK_ALERT_NAME', '')
 param frontendDeleteLockNameOverride = readEnvironmentVariable('FRONTEND_DELETE_LOCK_NAME', '')
+param manageAuthorizationResources = readEnvironmentVariable('MANAGE_AUTHORIZATION_RESOURCES', 'true') == 'true'
 param azureTableNameForConversation = !empty(tableNameOverride) ? tableNameOverride : 'TeamsChannelConversations${envSuffixTitleCase}'
 param ragServiceScope = '${serverApplicationIdUri}/.default'
 param teamsBotFullDisplayName = !empty(displayNameOverride) ? displayNameOverride : (env == 'prod' ? 'Azure SDK Q&A Bot' : 'Azure SDK Q&A Bot ${env}')

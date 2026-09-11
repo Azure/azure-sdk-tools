@@ -156,6 +156,19 @@ test("declares principal-aware frontend role assignments in Bicep", () => {
   assert.doesNotMatch(hook, /ensureFrontendRoleAssignments/);
 });
 
+test("can reuse pre-authorized environments without privileged ARM writes", () => {
+  const suite = read("infra/environments/environment-suite.yaml");
+  const postprovision = read("hooks/postprovision.ts");
+
+  assert.match(suite, /dev:[\s\S]*manageAuthorizationResources: false[\s\S]*localDeployAllowed: true/);
+  for (const layer of ["shared-resources", "agent", "frontend"]) {
+    const bicep = read(`infra/layers/${layer}/main.bicep`);
+    assert.match(bicep, /param manageAuthorizationResources bool = true/);
+    assert.match(bicep, /if \(manageAuthorizationResources/);
+  }
+  assert.match(postprovision, /skipping privileged data-plane reconciliation/);
+});
+
 test("uses BOT_ID as the single frontend identity client ID", () => {
   const frontend = read("infra/layers/frontend/main.bicep");
   const agentServerParameters = read("infra/layers/agent-server/main.bicepparam");

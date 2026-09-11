@@ -16,7 +16,7 @@
  * fresh environments (creates it) and dirty ones (reuses the existing grant).
  */
 
-import { execSync } from "child_process";
+import { execFileSync } from "child_process";
 
 export interface EnsureRoleAssignmentOptions {
   /** Object (principal) ID of the assignee. */
@@ -48,11 +48,54 @@ export function ensureRoleAssignment(options: EnsureRoleAssignmentOptions): bool
   }
 
   try {
-    execSync(
-      `az role assignment create --assignee-object-id "${principalId}" ` +
-        `--assignee-principal-type ${principalType} ` +
-        `--role "${roleDefinitionId}" --scope "${scope}"`,
-      { stdio: "pipe", encoding: "utf8" }
+    const assignments = JSON.parse(
+      execFileSync(
+        "az",
+        [
+          "role",
+          "assignment",
+          "list",
+          "--assignee-object-id",
+          principalId,
+          "--scope",
+          scope,
+          "--include-inherited",
+          "--output",
+          "json",
+        ],
+        { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
+      ),
+    ) as Array<{ roleDefinitionId?: string; roleDefinitionName?: string }>;
+    const expectedRole = roleDefinitionId.toLowerCase();
+    const exists = assignments.some((assignment) => {
+      const assignedRoleId = assignment.roleDefinitionId?.split("/").pop()?.toLowerCase();
+      return assignedRoleId === expectedRole || assignment.roleDefinitionName?.toLowerCase() === expectedRole;
+    });
+    if (exists) {
+      log(`  ✓ role assignment already exists (${roleDefinitionId})`);
+      return true;
+    }
+  } catch {
+    log("  – could not query existing role assignments; attempting creation");
+  }
+
+  try {
+    execFileSync(
+      "az",
+      [
+        "role",
+        "assignment",
+        "create",
+        "--assignee-object-id",
+        principalId,
+        "--assignee-principal-type",
+        principalType,
+        "--role",
+        roleDefinitionId,
+        "--scope",
+        scope,
+      ],
+      { stdio: ["ignore", "pipe", "pipe"], encoding: "utf8" },
     );
     log(`  ✓ created role assignment (${roleDefinitionId})`);
     return true;

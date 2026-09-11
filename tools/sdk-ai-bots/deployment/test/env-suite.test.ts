@@ -35,7 +35,8 @@ test("builds the complete local azd environment mapping", () => {
   assert.equal(values.AZURE_SUBSCRIPTION_ID, suite.environments.dev.subscriptionId);
   assert.equal(values.AZURE_LOCATION, "centralus");
   assert.equal(values.AZURE_AI_LOCATION, suite.environments.dev.aiLocation);
-    assert.equal(values.AGENT_IMAGE_REPOSITORY, "sdk-ai-bots/agent-dev");
+  assert.equal(values.MANAGE_AUTHORIZATION_RESOURCES, "false");
+  assert.equal(values.AGENT_IMAGE_REPOSITORY, "sdk-ai-bots/agent-dev");
   assert.equal(values.AZURE_AI_DEPLOYMENTS_LOCATION, undefined);
   assert.equal(values.ACR_NAME, undefined);
   assert.equal(
@@ -49,6 +50,10 @@ test("builds the complete local azd environment mapping", () => {
   assert.equal(values.FUNCTION_IMAGE_REPOSITORY, "azure-sdk-qa-bot-function:dev");
   assert.equal(values.BOT_SERVICE_NAME, "azsdkqabot-dev-20260826-federated");
   assert.equal(values.AI_RESOURCE_RESTORE, "false");
+  assert.equal(
+    buildAzdEnvironmentValues(suite, "prod").MANAGE_AUTHORIZATION_RESOURCES,
+    "true",
+  );
 });
 
 test("applies production overrides and candidate configuration", () => {

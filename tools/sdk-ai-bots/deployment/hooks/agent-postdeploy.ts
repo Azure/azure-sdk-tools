@@ -21,6 +21,7 @@
 
 import { execSync } from "child_process";
 
+import { ensureRoleAssignment } from "./lib/ensure-role-assignment.js";
 import { resolveAgentTargetImage } from "./lib/resolve-agent-image.js";
 
 const AGENT_BASE_URL = process.env.AGENT_BASE_URL ?? "";
@@ -109,23 +110,13 @@ async function getAgentIdentityPrincipalId(): Promise<string | undefined> {
  * Returns true on success (including when the assignment already exists).
  */
 function grantRole(principalId: string, role: string, scope: string): boolean {
-  try {
-    execSync(
-      `az role assignment create --assignee-object-id "${principalId}" ` +
-        `--assignee-principal-type ServicePrincipal --role "${role}" --scope "${scope}"`,
-      { stdio: "pipe", encoding: "utf8" }
-    );
-    log(`  ✓ granted "${role}"`);
-    return true;
-  } catch (err) {
-    const msg = err instanceof Error && "stderr" in err ? String((err as { stderr?: unknown }).stderr ?? err.message) : String(err);
-    if (/RoleAssignmentExists|already exists/i.test(msg)) {
-      log(`  ✓ "${role}" already assigned`);
-      return true;
-    }
-    log(`  ✗ failed to grant "${role}": ${msg.split("\n")[0]}`);
-    return false;
-  }
+  return ensureRoleAssignment({
+    principalId,
+    roleDefinitionId: role,
+    scope,
+    principalType: "ServicePrincipal",
+    log,
+  });
 }
 
 /**

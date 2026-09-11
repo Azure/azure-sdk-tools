@@ -6,6 +6,7 @@ param developerGroupObjectId = readEnvironmentVariable('DEVELOPER_PRINCIPAL_ID',
 param developerPrincipalType = readEnvironmentVariable('DEVELOPER_PRINCIPAL_TYPE', 'User')
 param deploymentPrincipalObjectId = readEnvironmentVariable('DEPLOYMENT_PRINCIPAL_ID', '')
 param deploymentPrincipalType = readEnvironmentVariable('DEPLOYMENT_PRINCIPAL_TYPE', 'ServicePrincipal')
+param manageAuthorizationResources = readEnvironmentVariable('MANAGE_AUTHORIZATION_RESOURCES', 'true') == 'true'
 param managedIdentityNameOverride = readEnvironmentVariable('MANAGED_IDENTITY_NAME_OVERRIDE', '')
 param actionGroupNameOverride = readEnvironmentVariable('ACTION_GROUP_NAME_OVERRIDE', '')
 param keyVaultNameOverride = readEnvironmentVariable('KEY_VAULT_NAME_OVERRIDE', '')

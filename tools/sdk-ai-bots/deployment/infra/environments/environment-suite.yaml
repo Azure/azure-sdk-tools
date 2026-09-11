@@ -66,6 +66,10 @@ environments:
             # Set to 'true' for one provision only when recovering a soft-deleted
             # AIServices account, then reset to 'false' after recovery succeeds.
             AI_RESOURCE_RESTORE: 'false'
+        # This existing environment already has the required RBAC assignments
+        # and delete lock. Local developers hold Contributor, which cannot PUT
+        # Microsoft.Authorization resources or run privileged data seeding.
+        manageAuthorizationResources: false
         localDeployAllowed: true
 
     preview:
@@ -90,6 +94,7 @@ environments:
         aiLocation: 'westus2'
         cosmosDbLocation: 'westus2'
         chatbotEvolutionAgentEnabled: false
+        manageAuthorizationResources: true
         localDeployAllowed: false
 
     prod:
@@ -158,6 +163,7 @@ environments:
             DOCUMENT_DB_CONNECTION_NAME: 'documentdb'
             LOGIC_APP_WORKFLOW_NAME: 'azuresdkqabot-logicapp'
             LOGIC_APP_ALERT_NAME: 'azuresdkqabot-logicapp-alert'
+        manageAuthorizationResources: true
         localDeployAllowed: false
 
 # ─────────────────────────────────────────────────────────────────────────────

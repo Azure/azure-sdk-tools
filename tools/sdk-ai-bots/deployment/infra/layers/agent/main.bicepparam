@@ -10,6 +10,7 @@ param developerGroupObjectId = readEnvironmentVariable('DEVELOPER_PRINCIPAL_ID',
 param developerPrincipalType = readEnvironmentVariable('DEVELOPER_PRINCIPAL_TYPE', 'User')
 param deploymentPrincipalObjectId = readEnvironmentVariable('DEPLOYMENT_PRINCIPAL_ID', '')
 param deploymentPrincipalType = readEnvironmentVariable('DEPLOYMENT_PRINCIPAL_TYPE', 'ServicePrincipal')
+param manageAuthorizationResources = readEnvironmentVariable('MANAGE_AUTHORIZATION_RESOURCES', 'true') == 'true'
 param aiResourceNameOverride = readEnvironmentVariable('AI_RESOURCE_NAME_OVERRIDE', '')
 param restoreAiResource = readEnvironmentVariable('AI_RESOURCE_RESTORE', 'false') == 'true'
 param aiProjectNameOverride = readEnvironmentVariable('AI_PROJECT_NAME_OVERRIDE', '')

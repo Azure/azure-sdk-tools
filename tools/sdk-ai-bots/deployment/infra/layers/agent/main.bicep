@@ -45,6 +45,9 @@ param deploymentPrincipalObjectId string = ''
 @description('Principal type for deployment automation: User, Group, or ServicePrincipal.')
 param deploymentPrincipalType string = 'ServicePrincipal'
 
+@description('Whether this deployment manages Azure RBAC assignments. Disable only when an existing environment has equivalent assignments managed outside this deployment.')
+param manageAuthorizationResources bool = true
+
 var suffix = substring(uniqueString(resourceGroup().id), 0, 6)
 var agentLogWorkspaceName = !empty(agentLogWorkspaceNameOverride) ? agentLogWorkspaceNameOverride : 'qabot-agent-log-${suffix}'
 var agentAppInsightsName = !empty(agentAppInsightsNameOverride) ? agentAppInsightsNameOverride : 'qabot-agent-${suffix}'
@@ -287,7 +290,7 @@ resource appInsightsConnection 'Microsoft.CognitiveServices/accounts/projects/co
 
 // Cognitive Services OpenAI User grant for qabot-identity, scoped to the AI
 // account created above so the backend can call the model deployments via MSI.
-resource openAiUserRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+resource openAiUserRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (manageAuthorizationResources) {
   scope: account
   name: guid(account.id, managedIdentityPrincipalId, subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd'))
   properties: {
@@ -299,7 +302,7 @@ resource openAiUserRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-
 
 // Search uses its system-assigned identity for integrated vectorization and
 // knowledge-base model calls.
-resource searchCognitiveServicesUserRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+resource searchCognitiveServicesUserRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (manageAuthorizationResources) {
   scope: account
   name: guid(account.id, searchServicePrincipalId, subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'a97b65f3-24c7-4388-baec-2e87135dc908'))
   properties: {
@@ -329,7 +332,7 @@ resource searchCognitiveServicesUserRoleAssignment 'Microsoft.Authorization/role
 // var developerGroupObjectId = '2efb50ed-0ca9-4cf1-b43b-9b31a87e08f5'  ← moved to param above
 
 // Cognitive Services OpenAI User grant for the developer principal.
-resource developerOpenAiUserRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!empty(developerGroupObjectId)) {
+resource developerOpenAiUserRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (manageAuthorizationResources && !empty(developerGroupObjectId)) {
   scope: account
   name: guid(account.id, developerGroupObjectId, subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd'))
   properties: {
@@ -348,7 +351,7 @@ resource developerOpenAiUserRoleAssignment 'Microsoft.Authorization/roleAssignme
 // AIServices/agents action) and "Cognitive Services Contributor" (whose
 // CognitiveServices/* wildcard this role already includes), so neither of those
 // is assigned here.
-resource developerFoundryProjectManagerRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!empty(developerGroupObjectId)) {
+resource developerFoundryProjectManagerRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (manageAuthorizationResources && !empty(developerGroupObjectId)) {
   scope: account
   name: guid(account.id, developerGroupObjectId, subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'eadc314b-1a2d-4efa-be10-5d325db5065e'))
   properties: {
@@ -360,7 +363,7 @@ resource developerFoundryProjectManagerRoleAssignment 'Microsoft.Authorization/r
 
 var hasDistinctDeploymentPrincipal = !empty(deploymentPrincipalObjectId) && deploymentPrincipalObjectId != developerGroupObjectId
 
-resource deploymentOpenAiUserRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (hasDistinctDeploymentPrincipal) {
+resource deploymentOpenAiUserRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (manageAuthorizationResources && hasDistinctDeploymentPrincipal) {
   scope: account
   name: guid(account.id, deploymentPrincipalObjectId, subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd'))
   properties: {
@@ -370,7 +373,7 @@ resource deploymentOpenAiUserRoleAssignment 'Microsoft.Authorization/roleAssignm
   }
 }
 
-resource deploymentFoundryProjectManagerRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (hasDistinctDeploymentPrincipal) {
+resource deploymentFoundryProjectManagerRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (manageAuthorizationResources && hasDistinctDeploymentPrincipal) {
   scope: account
   name: guid(account.id, deploymentPrincipalObjectId, subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'eadc314b-1a2d-4efa-be10-5d325db5065e'))
   properties: {
@@ -390,7 +393,7 @@ resource registry 'Microsoft.ContainerRegistry/registries@2026-01-01-preview' ex
   name: containerRegistryName
 }
 
-resource projectAcrPull 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+resource projectAcrPull 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (manageAuthorizationResources) {
   scope: registry
   name: guid(registry.id, project.id, subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '7f951dda-4ed3-4680-a7ca-43fe172d538d'))
   properties: {

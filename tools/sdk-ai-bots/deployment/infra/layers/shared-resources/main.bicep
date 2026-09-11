@@ -48,6 +48,9 @@ param deploymentPrincipalObjectId string = ''
 @description('Principal type for deployment automation: User, Group, or ServicePrincipal.')
 param deploymentPrincipalType string = 'ServicePrincipal'
 
+@description('Whether this deployment manages Azure RBAC assignments. Disable only when an existing environment has equivalent assignments managed outside this deployment.')
+param manageAuthorizationResources bool = true
+
 var suffix = substring(uniqueString(resourceGroup().id), 0, 6)
 var managedIdentityName = !empty(managedIdentityNameOverride) ? managedIdentityNameOverride : 'qabot-identity-${suffix}'
 var actionGroupName = !empty(actionGroupNameOverride) ? actionGroupNameOverride : 'qabot-alert-${suffix}'
@@ -547,7 +550,7 @@ var roleIds = {
 // --- Managed identity (qabot-identity) ------------------------------------
 
 // Blob read/write/delete for app runtime data.
-resource identityStorageBlobOwner 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+resource identityStorageBlobOwner 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (manageAuthorizationResources) {
   name: guid(storageAccount.id, userAssignedIdentity.id, roleIds.storageBlobDataOwner)
   scope: storageAccount
   properties: {
@@ -558,7 +561,7 @@ resource identityStorageBlobOwner 'Microsoft.Authorization/roleAssignments@2022-
 }
 
 // Read source documents through ResourceId-based Search data sources.
-resource searchStorageBlobDataReader 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+resource searchStorageBlobDataReader 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (manageAuthorizationResources) {
   name: guid(storageAccount.id, searchService.id, roleIds.storageBlobDataReader)
   scope: storageAccount
   properties: {
@@ -569,7 +572,7 @@ resource searchStorageBlobDataReader 'Microsoft.Authorization/roleAssignments@20
 }
 
 // Queue access for app runtime.
-resource identityStorageQueueContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+resource identityStorageQueueContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (manageAuthorizationResources) {
   name: guid(storageAccount.id, userAssignedIdentity.id, roleIds.storageQueueDataContributor)
   scope: storageAccount
   properties: {
@@ -580,7 +583,7 @@ resource identityStorageQueueContributor 'Microsoft.Authorization/roleAssignment
 }
 
 // Table access for Teams channel conversation tables.
-resource identityStorageTableContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+resource identityStorageTableContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (manageAuthorizationResources) {
   name: guid(storageAccount.id, userAssignedIdentity.id, roleIds.storageTableDataContributor)
   scope: storageAccount
   properties: {
@@ -591,7 +594,7 @@ resource identityStorageTableContributor 'Microsoft.Authorization/roleAssignment
 }
 
 // Read secrets from Key Vault at runtime.
-resource identityKeyVaultSecretsUser 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+resource identityKeyVaultSecretsUser 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (manageAuthorizationResources) {
   name: guid(vault.id, userAssignedIdentity.id, roleIds.keyVaultSecretsUser)
   scope: vault
   properties: {
@@ -606,7 +609,7 @@ resource identityKeyVaultSecretsUser 'Microsoft.Authorization/roleAssignments@20
 // which requires write access. "Secrets User" above only grants read, so
 // without this the function fails with 403 and the 'ado-token' secret is never
 // created (the agent then logs "SecretNotFound: ado-token").
-resource identityKeyVaultSecretsOfficer 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+resource identityKeyVaultSecretsOfficer 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (manageAuthorizationResources) {
   name: guid(vault.id, userAssignedIdentity.id, roleIds.keyVaultSecretsOfficer)
   scope: vault
   properties: {
@@ -617,7 +620,7 @@ resource identityKeyVaultSecretsOfficer 'Microsoft.Authorization/roleAssignments
 }
 
 // Read configuration values from App Configuration.
-resource identityAppConfigDataReader 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+resource identityAppConfigDataReader 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (manageAuthorizationResources) {
   name: guid(configurationStore.id, userAssignedIdentity.id, roleIds.appConfigurationDataReader)
   scope: configurationStore
   properties: {
@@ -628,7 +631,7 @@ resource identityAppConfigDataReader 'Microsoft.Authorization/roleAssignments@20
 }
 
 // Read/write the search index.
-resource identitySearchIndexContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+resource identitySearchIndexContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (manageAuthorizationResources) {
   name: guid(searchService.id, userAssignedIdentity.id, roleIds.searchIndexDataContributor)
   scope: searchService
   properties: {
@@ -639,7 +642,7 @@ resource identitySearchIndexContributor 'Microsoft.Authorization/roleAssignments
 }
 
 // Manage the container registry (push/pull/admin).
-resource identityAcrContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+resource identityAcrContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (manageAuthorizationResources) {
   name: guid(registry.id, userAssignedIdentity.id, roleIds.contributor)
   scope: registry
   properties: {
@@ -654,7 +657,7 @@ resource identityAcrContributor 'Microsoft.Authorization/roleAssignments@2022-04
 // registries/pull/read` data action, so an explicit AcrPull is required for
 // managed-identity image pulls (e.g. the Function App container). Without it
 // the container fails to start and the Functions host returns 503.
-resource identityAcrPull 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+resource identityAcrPull 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (manageAuthorizationResources) {
   name: guid(registry.id, userAssignedIdentity.id, roleIds.acrPull)
   scope: registry
   properties: {
@@ -678,7 +681,7 @@ resource sqlRoleAssignment2 'Microsoft.DocumentDB/databaseAccounts/sqlRoleAssign
 // --- AzureSDKChatBot_Developer group ----------------------------------------
 
 // Blob read/write for developers.
-resource developerStorageBlobContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!empty(developerGroupObjectId)) {
+resource developerStorageBlobContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (manageAuthorizationResources && !empty(developerGroupObjectId)) {
   name: guid(storageAccount.id, developerGroupObjectId, roleIds.storageBlobDataContributor)
   scope: storageAccount
   properties: {
@@ -691,7 +694,7 @@ resource developerStorageBlobContributor 'Microsoft.Authorization/roleAssignment
 // Read configuration values from App Configuration. (Write access needed for
 // the postprovision seeding is granted to the actual deployer principal by the
 // seed-app-config hook, so developers keep read-only here.)
-resource developerAppConfigDataReader 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!empty(developerGroupObjectId)) {
+resource developerAppConfigDataReader 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (manageAuthorizationResources && !empty(developerGroupObjectId)) {
   name: guid(configurationStore.id, developerGroupObjectId, roleIds.appConfigurationDataReader)
   scope: configurationStore
   properties: {
@@ -702,7 +705,7 @@ resource developerAppConfigDataReader 'Microsoft.Authorization/roleAssignments@2
 }
 
 // Manage Key Vault secrets for developers.
-resource developerKeyVaultSecretsOfficer 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!empty(developerGroupObjectId)) {
+resource developerKeyVaultSecretsOfficer 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (manageAuthorizationResources && !empty(developerGroupObjectId)) {
   name: guid(vault.id, developerGroupObjectId, roleIds.keyVaultSecretsOfficer)
   scope: vault
   properties: {
@@ -713,7 +716,7 @@ resource developerKeyVaultSecretsOfficer 'Microsoft.Authorization/roleAssignment
 }
 
 // Manage the container registry for developers.
-resource developerAcrContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!empty(developerGroupObjectId)) {
+resource developerAcrContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (manageAuthorizationResources && !empty(developerGroupObjectId)) {
   name: guid(registry.id, developerGroupObjectId, roleIds.contributor)
   scope: registry
   properties: {
@@ -738,7 +741,7 @@ resource sqlRoleAssignment 'Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignm
 
 var hasDistinctDeploymentPrincipal = !empty(deploymentPrincipalObjectId) && deploymentPrincipalObjectId != developerGroupObjectId
 
-resource deploymentStorageBlobContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (hasDistinctDeploymentPrincipal) {
+resource deploymentStorageBlobContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (manageAuthorizationResources && hasDistinctDeploymentPrincipal) {
   name: guid(storageAccount.id, deploymentPrincipalObjectId, roleIds.storageBlobDataContributor)
   scope: storageAccount
   properties: {
@@ -748,7 +751,7 @@ resource deploymentStorageBlobContributor 'Microsoft.Authorization/roleAssignmen
   }
 }
 
-resource deploymentAppConfigDataReader 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (hasDistinctDeploymentPrincipal) {
+resource deploymentAppConfigDataReader 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (manageAuthorizationResources && hasDistinctDeploymentPrincipal) {
   name: guid(configurationStore.id, deploymentPrincipalObjectId, roleIds.appConfigurationDataReader)
   scope: configurationStore
   properties: {
@@ -758,7 +761,7 @@ resource deploymentAppConfigDataReader 'Microsoft.Authorization/roleAssignments@
   }
 }
 
-resource deploymentKeyVaultSecretsUser 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (hasDistinctDeploymentPrincipal) {
+resource deploymentKeyVaultSecretsUser 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (manageAuthorizationResources && hasDistinctDeploymentPrincipal) {
   name: guid(vault.id, deploymentPrincipalObjectId, roleIds.keyVaultSecretsUser)
   scope: vault
   properties: {
@@ -768,7 +771,7 @@ resource deploymentKeyVaultSecretsUser 'Microsoft.Authorization/roleAssignments@
   }
 }
 
-resource deploymentAcrContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (hasDistinctDeploymentPrincipal) {
+resource deploymentAcrContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (manageAuthorizationResources && hasDistinctDeploymentPrincipal) {
   name: guid(registry.id, deploymentPrincipalObjectId, roleIds.contributor)
   scope: registry
   properties: {
@@ -778,7 +781,7 @@ resource deploymentAcrContributor 'Microsoft.Authorization/roleAssignments@2022-
   }
 }
 
-resource developerSearchServiceContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!empty(developerGroupObjectId)) {
+resource developerSearchServiceContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (manageAuthorizationResources && !empty(developerGroupObjectId)) {
   name: guid(searchService.id, developerGroupObjectId, roleIds.searchServiceContributor)
   scope: searchService
   properties: {
@@ -788,7 +791,7 @@ resource developerSearchServiceContributor 'Microsoft.Authorization/roleAssignme
   }
 }
 
-resource deploymentSearchServiceContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (hasDistinctDeploymentPrincipal) {
+resource deploymentSearchServiceContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (manageAuthorizationResources && hasDistinctDeploymentPrincipal) {
   name: guid(searchService.id, deploymentPrincipalObjectId, roleIds.searchServiceContributor)
   scope: searchService
   properties: {

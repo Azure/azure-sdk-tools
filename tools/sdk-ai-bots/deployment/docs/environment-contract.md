@@ -11,6 +11,7 @@ declared:
 - resource group prefix
 - deployment location
 - whether local provision and deploy operations are allowed
+- whether Bicep manages privileged authorization resources
 - whether the chatbot evolution workflow is enabled
 - candidate environment used by the production evolution workflow
 - Teams group ID and channel IDs
@@ -48,6 +49,7 @@ environments:
         bicepOverrides: Record<string, string>?
         teamsGroupId: string
         teamsChannelIds: string[]
+        manageAuthorizationResources: bool
         localDeployAllowed: bool
 
 components:
@@ -105,6 +107,15 @@ The preprovision hook detects the active login as
 pipeline WIF grants separate from developer access. The developer principal is
 configuration-owned and must be set explicitly in `bicepOverrides`; the hook
 never substitutes the deployment identity when it is absent.
+
+`manageAuthorizationResources` defaults through the environment contract and
+controls Azure RBAC assignments and resource locks in Bicep. Keep it `true` for
+fresh and pipeline-managed environments. The existing dev environment sets it
+to `false` because its runtime assignments and delete lock are already present,
+while local developers have Contributor access without
+`Microsoft.Authorization/*/Write`. In that mode the final postprovision hook
+also leaves protected Storage, Key Vault, App Configuration, and Search data
+unchanged.
 
 Each `infra/layers/<name>/main.bicepparam` adapts the environment variables
 needed by that layer. Pipeline preview and apply use the same layer adapters.

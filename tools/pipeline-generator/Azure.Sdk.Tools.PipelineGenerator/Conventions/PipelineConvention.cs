@@ -371,11 +371,7 @@ namespace PipelineGenerator.Conventions
             return Task.FromResult(hasChanges);
         }
 
-        protected bool EnsureDefaultPullRequestTrigger(
-            BuildDefinition definition,
-            bool overrideYaml = true,
-            bool securePipeline = true,
-            CommentTriggerOption internalRepoCommentOption = CommentTriggerOption.All)
+        protected bool EnsureDefaultPullRequestTrigger(BuildDefinition definition, bool overrideYaml = true, bool securePipeline = true)
         {
             bool hasChanges = false;
             var prTriggers = definition.Triggers.OfType<PullRequestTrigger>();
@@ -405,7 +401,7 @@ namespace PipelineGenerator.Conventions
                 newTrigger.IsCommentRequiredForInternalRepoPRs = securePipeline;
                 if (securePipeline)
                 {
-                    newTrigger.CommentOptionInternalRepos = internalRepoCommentOption;
+                    newTrigger.CommentOptionInternalRepos = CommentTriggerOption.All;
                 }
 
                 definition.Triggers.Add(newTrigger);
@@ -448,7 +444,7 @@ namespace PipelineGenerator.Conventions
                         trigger.Forks.Enabled != true ||
                         trigger.IsCommentRequiredForPullRequest != securePipeline ||
                         trigger.IsCommentRequiredForInternalRepoPRs != securePipeline ||
-                        (securePipeline && trigger.CommentOptionInternalRepos != internalRepoCommentOption))
+                        (securePipeline && trigger.CommentOptionInternalRepos != CommentTriggerOption.All))
                     {
                         trigger.Forks.AllowSecrets = securePipeline;
                         trigger.Forks.Enabled = true;
@@ -457,7 +453,7 @@ namespace PipelineGenerator.Conventions
                         trigger.IsCommentRequiredForInternalRepoPRs = securePipeline;
                         if (securePipeline)
                         {
-                            trigger.CommentOptionInternalRepos = internalRepoCommentOption;
+                            trigger.CommentOptionInternalRepos = CommentTriggerOption.All;
                         }
 
                         hasChanges = true;

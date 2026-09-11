@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+.pytest_cache/
+.pyright/
+*.pyc
+.code-index/
+node_modules/
+coverage.xml
+test-results.xml

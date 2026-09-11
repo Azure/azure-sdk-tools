@@ -13,6 +13,7 @@ from config.app_config import Settings, get as cfg
 from config.tenant_config import (
     get_tenant_scope_description,
 )
+from models.code_search import SearchIndexedCodeResult
 from models.chat import (
     AdditionalInfo,
     AdditionalInfoType,
@@ -50,6 +51,7 @@ from openai.types.responses import Response as OpenAIResponse
 from utils.azure_ai_foundry_agent import HostedAgentClient, ConversationBrokenError
 from openai.types.responses import (
     ResponseFunctionToolCall,
+    ResponseFunctionToolCallOutputItem,
     ResponseOutputItem,
     ResponseOutputMessage,
 )
@@ -133,6 +135,19 @@ class ChatService:
         conversation_items: list[ResponseInputItemParam] = []
         if is_new:
             conversation_items.append(tenant_system_item)
+        else:
+            conversation_items.append(
+                cast(
+                    ResponseInputItemParam,
+                    ConversationItem(
+                        role=Role.System,
+                        content=(
+                            "[tenant_context] "
+                            f"original_tenant_id={req.tenant_id.value}"
+                        ),
+                    ).model_dump(mode="json", exclude_none=True),
+                )
+            )
 
         memory_scope = self._resolve_memory_scope(req)
         if memory_scope:
@@ -517,9 +532,26 @@ class ChatService:
         """Map hosted-agent response to `ChatResponse`."""
         tool_results = self._extract_tool_results(response.output)
         search = tool_results.get("search_knowledge_base")
-        tool_references = (
+        knowledge_references = (
             search.results if isinstance(search, SearchKnowledgeBaseResult) else []
         )
+        code_search = tool_results.get("search_indexed_code")
+        code_references = (
+            [
+                Reference(
+                    title=result.symbol_name or result.path,
+                    source=result.git_url,
+                    blob_path=result.path,
+                    link=result.link,
+                    content=result.content,
+                    score=result.score,
+                )
+                for result in code_search.results
+            ]
+            if isinstance(code_search, SearchIndexedCodeResult)
+            else []
+        )
+        tool_references = [*knowledge_references, *code_references]
         tenant = self._extract_routed_tenant(response.output)
 
         output_text = response.output_text or ""
@@ -533,7 +565,7 @@ class ChatService:
             output_text, tool_references
         )
 
-        # Build full_context from search tool results when requested.
+        # Build full_context from documentation and indexed-code evidence.
         # Keys use "document_" prefix for compatibility with the eval pipeline.
         full_context = None
         if req.with_full_context and tool_references:
@@ -673,13 +705,17 @@ class ChatService:
                 if item.call_id and item.name:
                     call_id_to_name[item.call_id] = item.name
 
-        # Decode each tool output using its registered response model
+        # Decode each tool output using its registered response model.
         for item in items:
-            if not isinstance(item, ResponseOutputMessage):
+            if isinstance(item, ResponseFunctionToolCallOutputItem):
+                call_id = item.call_id
+                output = item.output
+            elif isinstance(item, ResponseOutputMessage):
+                extras = item.model_extra or {}
+                call_id = extras.get("call_id") or ""
+                output = extras.get("output", None)
+            else:
                 continue
-            extras = item.model_extra or {}
-            call_id = extras.get("call_id") or ""
-            output = extras.get("output", None)
             tool_name = call_id_to_name.get(call_id, "") if call_id else ""
             if not tool_name or not output:
                 continue

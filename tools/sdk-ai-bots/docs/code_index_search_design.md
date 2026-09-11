@@ -35,7 +35,7 @@ The Azure SDK-owned indexing App will use these CocoIndex capabilities:
 | Capability | CocoIndex implementation |
 | --- | --- |
 | File discovery | `localfs.walk_dir` with an Azure SDK-owned matcher for include/exclude patterns, `.gitignore`, binary filtering, and maximum file size |
-| Language detection | `detect_code_language` plus tenant-configured extension overrides |
+| Language detection | Built-in `.tsp` recognition plus `detect_code_language` for other files |
 | Default chunking | `RecursiveSplitter` with an initial 1,000-byte target, 250-byte minimum, and 150-byte overlap |
 | TypeSpec chunking | An Azure SDK-owned per-extension dispatcher returning CocoIndex `Chunk` values |
 | Incremental indexing | Memoized per-file `@coco.fn(memo=True)` transformations and `mount_each` target reconciliation |
@@ -220,7 +220,7 @@ The previous successful workspace remains immutable while the prospective genera
 
 1. Load every `TenantConfig` and flatten its `code_repositories` entries.
 2. Validate and group entries by canonical `git_url` and full `git_ref`.
-3. Validate that duplicate entries agree on exclusions, language overrides, chunkers, file-size limits, and other index-level settings. A conflict fails configuration validation instead of selecting one definition silently.
+3. Validate that duplicate entries agree on exclusions, file-size limits, and other index-level settings. A conflict fails configuration validation instead of selecting one definition silently.
 4. Union the tenant-requested include/path scopes for each Git URL/ref App and retain the original per-tenant scopes for online query enforcement.
 5. Resolve each configured Git ref to an immutable commit SHA with `git ls-remote` and calculate the effective index identity.
 6. Reuse the active generation when the resolved commit and effective index identity are unchanged.
@@ -270,15 +270,7 @@ Generated code is not excluded unconditionally because the evaluation dataset co
 
 ## 8 TypeSpec chunking
 
-The CocoIndex default language detection and recursive splitter do not currently provide TypeSpec-aware declaration boundaries. The aggregated repository configuration will include `.tsp`, override its language to `typespec`, and route the file through an Azure SDK-owned chunker:
-
-```python
-RepositoryIndexConfig(
-    include_patterns=("**/*.tsp",),
-    language_overrides={".tsp": "typespec"},
-    chunkers={".tsp": typespec_chunker},
-)
-```
+The builder recognizes `.tsp` as `typespec` without tenant-specific language or chunker configuration and routes it through an Azure SDK-owned chunker. Other recognized code files use CocoIndex language detection and language-aware recursive splitting.
 
 The Python chunker will use a bounded pool of long-lived Node workers running a pinned `@typespec/compiler`; it will not start a Node process for every file. Each request parses one file and returns CocoIndex `Chunk` records at namespace, model, enum, union, scalar, interface, operation, alias, decorator declaration, and top-level statement boundaries. Oversized declarations will be split at member or block boundaries while preserving the declaration header and exact line range.
 
@@ -465,8 +457,6 @@ class CodeRepositoryConfig:
     path_prefixes: tuple[str, ...]
     include_patterns: tuple[str, ...]
     exclude: tuple[str, ...] = ()
-    language_overrides: tuple[LanguageOverride, ...] = ()
-    chunkers: tuple[ChunkerConfig, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -485,8 +475,6 @@ _TENANT_CONFIG_MAP = {
                 path_prefixes=("packages",),
                 include_patterns=("packages/**/*.tsp", "packages/**/*.ts"),
                 exclude=("**/node_modules/**", "**/dist/**"),
-                language_overrides=(LanguageOverride(extension="tsp", language="typespec"),),
-                chunkers=(ChunkerConfig(extension="tsp", name="typespec"),),
             ),
         ],
     ),

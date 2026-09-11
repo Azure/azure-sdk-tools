@@ -1,0 +1,8 @@
+{
+  "name": "azure-sdk-qa-bot-code-search",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@typespec/compiler": "1.13.0"
+  }
+}

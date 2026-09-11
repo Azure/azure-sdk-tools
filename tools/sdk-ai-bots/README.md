@@ -4,7 +4,7 @@ This folder contains AI-powered components that work together to provide intelli
 
 ## Architecture Overview
 
-The system consists of five main components that work together to provide support for Azure SDK domain knowledge. Each component operates independently with well-defined interfaces:
+The system consists of six main components that work together to provide support for Azure SDK domain knowledge. Each component operates independently with well-defined interfaces:
 
 ```mermaid
 flowchart TB
@@ -14,6 +14,7 @@ flowchart TB
         agent["Chat Agent<br/>(Python)<br/>azure-sdk-qa-bot-agent/"]
         func["Azure Function<br/>(TypeScript)<br/>azure-sdk-qa-bot-function/"]
         sync["Knowledge Sync<br/>(TypeScript)<br/>azure-sdk-qa-bot-knowledge-sync/"]
+        code["Code Search Builder<br/>(Python)<br/>azure-sdk-qa-bot-code-search/"]
     end
     eval["Evaluation Framework<br/>(Python)<br/>azure-sdk-qa-bot-evaluation/"]
     system --- eval
@@ -40,6 +41,10 @@ A quality assurance system that continuously monitors and evaluates the performa
 ### 5. Knowledge Sync Service (`azure-sdk-qa-bot-knowledge-sync/`)
 
 A standalone TypeScript application that processes documentation from various repositories and maintains the knowledge base. It clones repositories, processes markdown files and TypeSpec Spector test files, uploads processed content to Azure Blob Storage, and updates the Azure AI Search index. This service maintains change detection for efficient processing and serves as the primary knowledge management component for the system.
+
+### 6. Code Search Builder (`azure-sdk-qa-bot-code-search/`)
+
+An offline CocoIndex builder that incrementally indexes tenant-configured Git repositories into a dedicated Azure AI Search index. It publishes generation-pinned repository metadata so the Chat Agent can retrieve implementation evidence with immutable GitHub links.
 
 ## Knowledge Sources
 
@@ -102,6 +107,16 @@ npm start
 cd azure-sdk-qa-bot-evaluation
 pip install -r requirements.txt
 python evals_run.py --help
+```
+
+#### Code Search Builder
+
+```bash
+cd azure-sdk-qa-bot-code-search
+pip install -r requirements.txt
+npm ci
+python -m code_search ensure-index
+python -m code_search build-all
 ```
 
 **NOTE**: Running Evaluations

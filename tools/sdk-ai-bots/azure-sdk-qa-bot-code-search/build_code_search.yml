@@ -1,0 +1,105 @@
+name: Build Azure SDK QA Bot Code Search
+
+trigger: none
+pr: none
+
+schedules:
+  - cron: '0 6 * * *'
+    displayName: 'Daily (06:00 UTC)'
+    branches:
+      include:
+        - main
+    always: true
+
+variables:
+  - template: /eng/pipelines/templates/variables/globals.yml
+  - template: /eng/pipelines/templates/variables/image.yml
+  - name: workingDirectory
+    value: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-code-search'
+
+extends:
+  template: /eng/pipelines/templates/stages/1es-redirect.yml
+  parameters:
+    Use1ESOfficial: true
+    stages:
+      - stage: BuildCodeIndex
+        displayName: 'Build Code Index'
+        jobs:
+          - job: BuildCodeIndex
+            timeoutInMinutes: 360
+            pool:
+              name: $(LINUXPOOL)
+              image: $(LINUXVMIMAGE)
+              os: linux
+            steps:
+              - checkout: self
+
+              - task: UsePythonVersion@0
+                inputs:
+                  versionSpec: '3.12'
+
+              - task: NodeTool@0
+                inputs:
+                  versionSpec: '22.x'
+
+              - task: PipAuthenticate@1
+                inputs:
+                  artifactFeeds: 'public/azure-sdk-for-python'
+
+              - task: Cache@2
+                inputs:
+                  key: '"code-search" | "$(Agent.OS)" | "$(Build.BuildId)"'
+                  restoreKeys: |
+                    "code-search" | "$(Agent.OS)"
+                  path: '$(workingDirectory)/.code-index'
+                displayName: 'Restore Git and CocoIndex cache'
+
+              - task: AzureCLI@2
+                displayName: 'Build and publish code index'
+                inputs:
+                  azureSubscription: $(SERVICE_CONNECTION)
+                  addSpnToEnvironment: true
+                  scriptType: bash
+                  scriptLocation: inlineScript
+                  workingDirectory: $(workingDirectory)
+                  inlineScript: |
+                    set -euo pipefail
+
+                    echo "$idToken" > "$(Agent.TempDirectory)/id_token"
+                    export AZURE_CLIENT_ID="$servicePrincipalId"
+                    export AZURE_TENANT_ID="$tenantId"
+                    export AZURE_FEDERATED_TOKEN_FILE="$(Agent.TempDirectory)/id_token"
+
+                    python -m pip install --upgrade pip
+                    python -m pip install keyring artifacts-keyring --retries 5 --timeout 60
+                    python -m pip config set global.index-url "$PIP_INDEX_URL"
+                    pip install -r requirements.txt --retries 5 --timeout 60
+                    npm ci
+
+                    python -m code_search ensure-index
+                    python -m code_search build-all
+                env:
+                  AZURE_CORE_WELCOME_MESSAGE: 'false'
+                  AZURE_APPCONFIG_ENDPOINT: $(AZURE_APPCONFIG_ENDPOINT)
+
+              - task: AzureCLI@2
+                displayName: 'Collect expired code index generations'
+                continueOnError: true
+                inputs:
+                  azureSubscription: $(SERVICE_CONNECTION)
+                  addSpnToEnvironment: true
+                  scriptType: bash
+                  scriptLocation: inlineScript
+                  workingDirectory: $(workingDirectory)
+                  inlineScript: |
+                    set -euo pipefail
+
+                    echo "$idToken" > "$(Agent.TempDirectory)/id_token"
+                    export AZURE_CLIENT_ID="$servicePrincipalId"
+                    export AZURE_TENANT_ID="$tenantId"
+                    export AZURE_FEDERATED_TOKEN_FILE="$(Agent.TempDirectory)/id_token"
+
+                    python -m code_search collect-garbage
+                env:
+                  AZURE_CORE_WELCOME_MESSAGE: 'false'
+                  AZURE_APPCONFIG_ENDPOINT: $(AZURE_APPCONFIG_ENDPOINT)

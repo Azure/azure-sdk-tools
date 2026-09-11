@@ -31,6 +31,7 @@ from agent_framework_foundry_hosting import ResponsesHostServer
 
 import config.app_config as app_config
 from config.app_config import get as cfg
+from tools.code_search_tools import CodeSearchTools
 from tools.knowledge_tools import KnowledgeTools
 from tools.web_tools import WebTools
 from tools.ado_mcp_tools import create_ado_mcp_tool
@@ -46,6 +47,7 @@ from utils.azure_memory_store import (
 )
 from utils.memory_context_provider import MemoryContextProvider
 from utils.tool_security import ToolOutputSecurityMiddleware
+from utils.tenant_context import TenantContextMiddleware
 
 logger = logging.getLogger(__name__)
 
@@ -91,6 +93,7 @@ async def main() -> None:
 
     # Init Tools (synchronous / instant)
     knowledge_tools = KnowledgeTools()
+    code_search_tools = CodeSearchTools()
     web_tools = WebTools()
     pipeline_tools = PipelineTools()
     web_search_tool = agent_client.get_web_search_tool(
@@ -100,6 +103,7 @@ async def main() -> None:
     tools = [
         knowledge_tools.search_knowledge_base,
         knowledge_tools.wiki_search,
+        code_search_tools.search_indexed_code,
         web_tools.web_fetch,
         pipeline_tools.azsdk_analyze_pipeline,
         web_search_tool,
@@ -157,7 +161,7 @@ async def main() -> None:
         instructions=instructions,
         tools=tools,
         context_providers=[skills_provider, memory_provider, compaction_provider],
-        middleware=[ToolOutputSecurityMiddleware()],
+        middleware=[TenantContextMiddleware(), ToolOutputSecurityMiddleware()],
         default_options={
             "reasoning": {"effort": reasoning_effort},
             "max_tool_calls": MAX_TOOL_CALLS_PER_TURN,

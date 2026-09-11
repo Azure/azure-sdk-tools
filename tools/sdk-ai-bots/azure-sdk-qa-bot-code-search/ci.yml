@@ -1,0 +1,88 @@
+name: CI - Azure SDK QA Bot Code Search
+
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - tools/sdk-ai-bots/azure-sdk-qa-bot-code-search
+      - tools/sdk-ai-bots/azure-sdk-qa-bot-agent/config/tenant_config.py
+
+pr:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - tools/sdk-ai-bots/azure-sdk-qa-bot-code-search
+      - tools/sdk-ai-bots/azure-sdk-qa-bot-agent/config/tenant_config.py
+
+variables:
+  - template: /eng/pipelines/templates/variables/globals.yml
+  - template: /eng/pipelines/templates/variables/image.yml
+  - name: workingDirectory
+    value: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-code-search'
+  - name: pythonVersion
+    value: '3.12'
+
+extends:
+  template: /eng/pipelines/templates/stages/1es-redirect.yml
+  parameters:
+    Use1ESOfficial: true
+    stages:
+      - stage: CI
+        displayName: 'Lint & Test'
+        jobs:
+          - job: LintAndTest
+            pool:
+              name: $(LINUXPOOL)
+              image: $(LINUXVMIMAGE)
+              os: linux
+            steps:
+              - checkout: self
+
+              - task: UsePythonVersion@0
+                inputs:
+                  versionSpec: $(pythonVersion)
+
+              - task: NodeTool@0
+                inputs:
+                  versionSpec: '22.x'
+
+              - task: PipAuthenticate@1
+                inputs:
+                  artifactFeeds: 'public/azure-sdk-for-python'
+
+              - bash: |
+                  set -euo pipefail
+                  python -m pip install --upgrade pip
+                  python -m pip install keyring artifacts-keyring --retries 5 --timeout 60
+                  python -m pip config set global.index-url "$PIP_INDEX_URL"
+                  pip install -r requirements.txt pytest pyright --retries 5 --timeout 60
+                  npm ci
+                displayName: 'Install dependencies'
+                workingDirectory: $(workingDirectory)
+
+              - bash: |
+                  set -euo pipefail
+                  pyright --pythonversion $(pythonVersion) code_search
+                  node --check code_search/typespec_worker.mjs
+                  python -m compileall -q code_search
+                displayName: 'Type and compile checks'
+                workingDirectory: $(workingDirectory)
+
+              - bash: |
+                  set -euo pipefail
+                  python -m pytest tests -q \
+                    --junitxml=$(workingDirectory)/test-results.xml
+                displayName: 'Run unit tests'
+                workingDirectory: $(workingDirectory)
+
+              - task: PublishTestResults@2
+                condition: always()
+                inputs:
+                  testResultsFormat: 'JUnit'
+                  testResultsFiles: '$(workingDirectory)/test-results.xml'
+                  testRunTitle: 'QA Bot Code Search Unit Tests'
+                  failTaskOnFailedTests: true

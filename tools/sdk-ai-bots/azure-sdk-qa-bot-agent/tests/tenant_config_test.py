@@ -4,6 +4,7 @@ from pathlib import Path
 
 from config.tenant_config import (
     SRC_AZURE_MCP_SERVER_DOCS,
+    SRC_AZURE_SDK_DOCS_ENG,
     TenantID,
     get_knowledge_source,
     get_tenant_config,
@@ -15,12 +16,18 @@ from skills.tenant_skills import (
 )
 
 
-def test_azure_mcp_server_tenant_uses_curated_source() -> None:
+def test_azure_mcp_server_tenant_uses_curated_sources() -> None:
     config = get_tenant_config(TenantID.AZURE_MCP_SERVER)
 
     assert config is not None
     assert config.skill_name == "azure-mcp-server"
-    assert [source.name for source in config.sources] == [SRC_AZURE_MCP_SERVER_DOCS]
+    assert [source.name for source in config.sources] == [
+        SRC_AZURE_MCP_SERVER_DOCS,
+        SRC_AZURE_SDK_DOCS_ENG,
+    ]
+    assert config.source_filter[SRC_AZURE_SDK_DOCS_ENG] == (
+        "search.ismatch('mcp*', 'title')"
+    )
     assert config.agent.name == "azure-mcp-server-agent"
     assert config.agent.name_config_key == "AZURE_MCP_SERVER_AGENT_NAME"
 
@@ -48,6 +55,10 @@ def test_azure_mcp_server_skill_contains_routing_metadata() -> None:
     assert get_skill_name_for_tenant(TenantID.AZURE_MCP_SERVER) == "azure-mcp-server"
     assert f"[skill_tenant_id]: {TenantID.AZURE_MCP_SERVER.value}" in content
     assert f"- {SRC_AZURE_MCP_SERVER_DOCS}:" in content
+    assert f"- {SRC_AZURE_SDK_DOCS_ENG}:" in content
+    assert "Azure SDK engineering documentation" in content
+    assert "onboarding, releases, engineering systems" in content
+    assert "Azure MCP guidance" in content
     assert "[skill_guideline]" not in content
 
 
@@ -62,6 +73,18 @@ def test_azure_mcp_server_source_resolves_repository_paths() -> None:
     )
     assert source.get_link("docs/Authentication.md") == (
         "https://github.com/microsoft/mcp/blob/main/docs/Authentication.md"
+    )
+
+
+def test_internal_mcp_docs_resolve_to_eng_ms_paths() -> None:
+    source = get_knowledge_source(SRC_AZURE_SDK_DOCS_ENG)
+
+    assert source is not None
+    assert source.get_link("docs#mcp.md") == (
+        "https://eng.ms/docs/products/azure-developer-experience/mcp"
+    )
+    assert source.get_link("docs#mcp#getting-started.md") == (
+        "https://eng.ms/docs/products/azure-developer-experience/mcp/getting-started"
     )
 
 
@@ -85,12 +108,50 @@ def test_azure_mcp_server_instruction_selects_sources_by_question() -> None:
     assert "Prefer short bullets with one idea each" in instruction
     assert "under roughly 150 words unless the user asks for detail" in instruction
     assert "For broad or multi-part questions" in instruction
-    assert "For under-specified questions, give a short answer first" in instruction
+    assert "For under-specified questions, answer what the evidence establishes" in instruction
     assert "use `wiki_search` when a synthesized view would help" in instruction
     assert "Use the tenant context supplied by the preloaded skill" in instruction
     assert "tenant_id=azure_mcp_server" not in instruction
     assert "Resolve important evidence gaps before answering" in instruction
     assert "Do not invent unsupported details or links" in instruction
+
+
+def test_azure_mcp_server_instruction_preserves_decision_criteria() -> None:
+    """Guard instruction content, not the model's behavioral compliance."""
+    instruction = (
+        Path(__file__).parents[1]
+        / "agents"
+        / "azure_mcp_server_agent"
+        / "instruction.md"
+    ).read_text(encoding="utf-8")
+
+    assert "Preserve the user's stated goal when reformulating searches" in instruction
+    assert "retrieve their definitions before drawing conclusions" in instruction
+    assert "sources leave the mapping ambiguous" in instruction
+    assert "A limitation in one area does not negate a documented benefit in another" in instruction
+    assert "Do not turn a caveat into a prohibition or mandatory requirement" in instruction
+    assert "Label additional precautions as recommendations" in instruction
+    assert "preserving its conditions and exceptions" in instruction
+    assert "do not give a definitive recommendation that depends on an unresolved assumption" in instruction
+
+
+def test_azure_mcp_server_instruction_limits_retrieval_rounds() -> None:
+    """Guard latency guidance; model adherence needs behavioral evaluation."""
+    instruction = (
+        Path(__file__).parents[1]
+        / "agents"
+        / "azure_mcp_server_agent"
+        / "instruction.md"
+    ).read_text(encoding="utf-8")
+
+    assert 'Start with `search_mode="quick"` for both' in instruction
+    assert "Batch independent, necessary tool calls in parallel" in instruction
+    assert "Wiki results already include source chunks" in instruction
+    assert "Aim for one retrieval round followed by the answer" in instruction
+    assert "make one targeted follow-up instead of repeating a broad search" in instruction
+    assert 'Escalate to `search_mode="deep"` only when quick retrieval leaves a specific evidence gap' in instruction
+    assert "Do not escalate merely to confirm an already supported answer" in instruction
+    assert "Never repeat a tool call with identical arguments" in instruction
 
 
 def test_azure_mcp_server_agent_registers_wiki_search() -> None:

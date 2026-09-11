@@ -269,7 +269,7 @@ _register(
     ),
     KnowledgeSource(
         name=SRC_AZURE_SDK_DOCS_ENG,
-        description="Azure SDK engineering documentation covering onboarding, release processes, and engineering systems.",
+        description="Internal Azure SDK engineering documentation for onboarding, releases, engineering systems, and Azure MCP guidance.",
         link_fn=lambda title: (
             "https://eng.ms/docs/products/azure-developer-experience"
             if _trim_file_format(title.replace("#", "/")) == "index"
@@ -662,7 +662,10 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
             "Azure MCP Server telemetry, support, known issues, and release changes",
             "Azure Skills and Azure MCP Server capability boundaries",
         ],
-        sources=_sources(SRC_AZURE_MCP_SERVER_DOCS),
+        sources=_sources(SRC_AZURE_MCP_SERVER_DOCS, SRC_AZURE_SDK_DOCS_ENG),
+        source_filter={
+            SRC_AZURE_SDK_DOCS_ENG: "search.ismatch('mcp*', 'title')",
+        },
         enable_routing=False,
         agent=AgentConfig(
             name="azure-mcp-server-agent",

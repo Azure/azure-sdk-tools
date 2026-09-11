@@ -10,8 +10,9 @@ A ``QARecord`` is the durable status row for **one conversation thread**
   answer (i.e. a case worth a feedback analysis).
 * **Layer 2 — Evolution lifecycle** (:class:`FeedbackStatus`, embedded in
   :class:`FeedbackState`): tracks analysis, issue remediation, and validation.
-  An issue moves to ``pending_validation``; successful validation moves to
-    ``done`` and any processing or validation error moves to retryable ``failed``.
+    An issue moves to ``pending_validation``; completed validation moves to
+    ``validation_passed`` or ``validation_failed``, and processing errors move
+    to retryable ``failed``.
 
 Partition key is ``/tenant_id`` (matches the episode and conversation
 conventions). The ``id`` is the thread key
@@ -53,8 +54,12 @@ class FeedbackStatus(str, Enum):
     running = "running"
     #: An issue was created; wait for it to close before validating the fix.
     pending_validation = "pending_validation"
-    #: The agent finished and the result was persisted.
+    #: Analysis completed without requiring remediation.
     done = "done"
+    #: Validation completed and confirmed the remediation.
+    validation_passed = "validation_passed"
+    #: Validation completed but rejected the remediation.
+    validation_failed = "validation_failed"
     #: The agent errored, timed out, or the run was cancelled; retry next run.
     failed = "failed"
 

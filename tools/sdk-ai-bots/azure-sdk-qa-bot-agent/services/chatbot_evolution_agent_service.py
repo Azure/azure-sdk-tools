@@ -266,10 +266,9 @@ class ChatbotEvolutionAgentService:
             return
 
         if result.outcome == ChatbotEvolutionAgentOutcome.validation_passed:
-            record.feedback.status = FeedbackStatus.done
+            record.feedback.status = FeedbackStatus.validation_passed
         elif result.outcome == ChatbotEvolutionAgentOutcome.validation_failed:
-            record.feedback.status = FeedbackStatus.failed
-            record.feedback.error = "validation_failed"
+            record.feedback.status = FeedbackStatus.validation_failed
         else:
             raise ValueError(
                 f"Unsupported validation outcome: {result.outcome.value}"

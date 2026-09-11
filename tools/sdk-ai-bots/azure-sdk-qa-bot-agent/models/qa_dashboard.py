@@ -17,6 +17,8 @@ class FeedbackStatusFilter(str, Enum):
     running = "running"
     pending_validation = "pending_validation"
     done = "done"
+    validation_passed = "validation_passed"
+    validation_failed = "validation_failed"
     failed = "failed"
 
 

@@ -150,7 +150,7 @@ foreach ($issue_number in $issues) {
     if ($sync_success) {
       $details = ""
       if ($work_item_id -ne "" -and $null -ne $work_item_id) {
-        $details = "`n<details><summary>Details</summary><tt>[Status: $work_item_id]</tt></details>"
+        $details = "`n<details><summary>Details</summary><tt>[Work Item: $work_item_id]</tt></details>"
       }
 
       gh issue comment $issue_number --body "Product onboarding status synced successfully.$details" --repo "$issues_repo"

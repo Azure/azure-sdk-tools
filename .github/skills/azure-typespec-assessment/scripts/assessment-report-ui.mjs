@@ -344,6 +344,128 @@ export function downstreamMethodData(dimension = {}, raw) {
   return { methods: methods.sort((a, b) => a.name.localeCompare(b.name)), types, unmapped: types.filter((type) => !type.mapped.length) };
 }
 
+export function documentQualitySummary(dimension = {}) {
+  const status = dimension.status ?? "not-assessed";
+  const coverage = dimension.coverage;
+  const label = status === "passed" ? "Passed" : status === "failed" ? "Failed" : "Not assessed";
+  if (!coverage) return { status, label, detail: dimension.summary ?? "Document Quality and Agent Friendliness is not assessed." };
+  const detail = [
+    `${dimension.findings?.length ?? 0} findings`,
+    `${coverage.assessedCheckCount}/${coverage.checkCount} checks assessed`,
+    `${coverage.assessedDocumentCount}/${coverage.documentCount} @doc documents assessed`,
+    `${coverage.assessedIntentCount}/${coverage.semanticIntentCount} intents assessed`,
+  ];
+  if (coverage.notApplicableIntentIds?.length) detail.push(`${coverage.notApplicableIntentIds.length} intents with no applicable @doc`);
+  return { status, label, detail: detail.join(" · ") };
+}
+
+function declarationIncludesDoc(source = "") {
+  // Only leading decorator applications belong to this declaration, not nested or quoted @doc text.
+  let position = 0;
+  let depth = 0;
+  while (position < source.length) {
+    if (/\s/.test(source[position])) { position++; continue; }
+    if (source.startsWith("//", position)) {
+      const end = source.indexOf("\n", position + 2);
+      if (end < 0) return false;
+      position = end + 1;
+      continue;
+    }
+    if (source.startsWith("/*", position)) {
+      const end = source.indexOf("*/", position + 2);
+      if (end < 0) return false;
+      position = end + 2;
+      continue;
+    }
+    if (depth === 0) {
+      const decorator = /^@@?([A-Za-z_$][\w$]*(?:\s*\.\s*[A-Za-z_$][\w$]*)*)\s*\(/.exec(source.slice(position));
+      if (!decorator) return false;
+      const name = decorator[1].replaceAll(/\s/g, "");
+      if (name === "doc" || name === "TypeSpec.doc") return true;
+      position += decorator[0].length;
+      depth = 1;
+      continue;
+    }
+    if (source[position] === '"' || source[position] === "`") {
+      const delimiter = source.startsWith('"""', position) ? '"""' : source[position];
+      position += delimiter.length;
+      while (position < source.length && !source.startsWith(delimiter, position)) {
+        position += source[position] === "\\" ? 2 : 1;
+      }
+      position += delimiter.length;
+      continue;
+    }
+    if (source[position] === "(") depth++;
+    if (source[position] === ")") depth--;
+    position++;
+  }
+  return false;
+}
+
+export function renderDocumentQuality(dimension = {}, helpers) {
+  const { escapeHtml: escape, sectionHead, status, count, summary, affectedIntents, intentLinks } = helpers;
+  const presentation = documentQualitySummary(dimension);
+  const findings = dimension.findings ?? [];
+  const assessments = dimension.intentAssessments ?? [];
+  const checkName = (check) => check === "correctness" ? "Correctness" : check === "meaning" ? "Meaning" : "Recorded check";
+  const snapshot = (value, side) => {
+    if (!value) return `<div class="report-document-snapshot"><h4>${side}</h4><p class="report-small">No ${side.toLowerCase()} snapshot recorded.</p></div>`;
+    const source = value.source;
+    const location = source ? `${source.path}:${source.startLine}-${source.endLine} (${source.revision})` : "Source location not recorded.";
+    const includesDoc = declarationIncludesDoc(value.declaration);
+    return `<div class="report-document-snapshot"><h4>${side}</h4><p class="sources"><code>${escape(location)}</code></p>${includesDoc ? "" : `<h5>Recorded @doc text</h5><pre><code>${escape(value.doc)}</code></pre>`}<h5>${includesDoc ? "@doc and declaration contract" : "Declaration contract"}</h5><pre><code>${escape(value.declaration)}</code></pre></div>`;
+  };
+  const renderCheck = (check, document, finding, index) => {
+    const decision = finding ? "failed" : check.decision === "pass" ? "passed" : check.decision === "fail" ? "failed" : "not-assessed";
+    const id = finding ? `document-quality-${anchor(finding.id)}` : `document-check-${index}`;
+    const title = finding?.title ?? check.title ?? `${checkName(check.check)}: ${document?.qualifiedName ?? "Documentation"}`;
+    const expected = finding?.expected ?? check.expected;
+    const rationale = finding?.rationale ?? check.rationale;
+    const actual = document
+      ? `<div class="report-document-snapshots">${snapshot(document.before, "Before")}${snapshot(document.after, "After")}</div>`
+      : `<p class="report-small">Document source snapshots unavailable.</p>${finding?.actual !== undefined ? `<h4>Recorded @doc</h4><pre><code>${escape(finding.actual)}</code></pre>` : ""}`;
+    return `<details class="report-card document-quality-check" id="${id}">${summary(
+      escape(title), escape(`${checkName(check.check)} · ${document?.qualifiedName ?? "Document identity unavailable"}`),
+      status(decision), affectedIntents(unique([finding?.reviewUnitId, check.reviewUnitId, ...(finding?.semanticIntentIds ?? [])])),
+    )}<div class="report-card-body">${expected ? `<div class="report-guideline-section expected-details"><h3>Expected</h3><p>${escape(expected)}</p></div>` : ""}<div class="report-guideline-section actual-details"><h3>Actual</h3>${actual}</div>${rationale ? `<div class="report-document-rationale"><strong>Assessment rationale:</strong><p>${escape(rationale)}</p></div>` : ""}</div></details>`;
+  };
+  const checkedFindings = new Set();
+  const otherChecks = new Map();
+  let index = 0;
+  const cards = assessments.flatMap((assessment) => (assessment.checks ?? []).flatMap((check) => {
+    const finding = findings.find((item) => item.reviewUnitId === assessment.reviewUnitId && item.documentId === check.documentId && item.check === check.check);
+    if (finding) checkedFindings.add(finding.id);
+    const document = finding?.document ?? assessment.documents?.find((item) => item.id === check.documentId);
+    if (finding || check.decision === "fail") {
+      return [renderCheck({ ...check, reviewUnitId: assessment.reviewUnitId }, document, finding, index++)];
+    }
+    const key = JSON.stringify([assessment.reviewUnitId, check.documentId]);
+    const group = otherChecks.get(key) ?? { reviewUnitId: assessment.reviewUnitId, document, checks: [] };
+    group.checks.push(check);
+    otherChecks.set(key, group);
+    return [];
+  }));
+  for (const finding of findings.filter((item) => !checkedFindings.has(item.id))) {
+    cards.push(renderCheck(finding, finding.document, finding, index++));
+  }
+  for (const group of otherChecks.values()) {
+    const passedCount = group.checks.filter((check) => check.decision === "pass").length;
+    const unassessedCount = group.checks.length - passedCount;
+    cards.push(`<details class="report-card document-quality-check-summary">${summary(
+      escape(`Check results: ${group.document?.qualifiedName ?? "Documentation"}`),
+      escape(`${passedCount} passed · ${unassessedCount} not assessed`),
+      status(unassessedCount ? "not-assessed" : "passed"), affectedIntents([group.reviewUnitId]),
+    )}<div class="report-card-body">${group.checks.map((check) => `<div class="report-guideline-section"><h4>${escape(checkName(check.check))} ${status(check.decision === "pass" ? "passed" : "not-assessed")}</h4>${check.expected ? `<p><strong>Expected:</strong> ${escape(check.expected)}</p>` : ""}<p><strong>${check.decision === "pass" ? "Assessment rationale" : "Not assessed reason"}:</strong> ${escape(check.rationale)}</p></div>`).join("")}</div></details>`);
+  }
+  const notes = assessments.filter((item) => item.reason || item.status === "not-applicable" || item.status === "not-assessed").map((item) =>
+    `<div class="report-empty">${status(item.status)} ${intentLinks([item.reviewUnitId])}<p>${escape(item.reason ?? (item.status === "not-applicable" ? "No applicable @doc document for this intent." : "Documentation checks were not fully assessed."))}</p></div>`,
+  ).join("");
+  const unreported = (dimension.coverage?.unassessedIntentIds ?? []).filter((id) => !assessments.some((item) => item.reviewUnitId === id && item.status === "not-assessed"));
+  const unassessed = unreported.length ? `<div class="report-empty">Documentation not assessed for: ${intentLinks(unreported)}</div>` : "";
+  const blockers = dimension.blockers?.length ? `<div class="report-empty"><strong>Assessment blocked</strong><ul>${dimension.blockers.map((blocker) => `<li>${escape(blocker.message ?? blocker.reason ?? blocker)}</li>`).join("")}</ul></div>` : "";
+  return `<section id="document-quality">${sectionHead("Document Quality and Agent Friendliness", "@doc Correctness and Meaning only. Examples, external documentation, and agent execution are not assessed.", status(presentation.status) + (dimension.coverage ? count(`${findings.length} findings`) : ""))}${dimension.coverage ? `<p class="report-small">${escape(presentation.detail)}</p>` : ""}<p class="report-small">${escape(dimension.summary ?? presentation.detail)}</p>${cards.join("") || (!notes ? `<div class="report-empty">${presentation.status === "not-assessed" ? "Document Quality and Agent Friendliness is not assessed." : dimension.coverage?.documentCount === 0 ? "No applicable @doc documents." : "No recorded documentation checks."}</div>` : "")}${notes}${unassessed}${blockers}</section>`;
+}
+
 export function renderReportSections(assessment, helpers, options = {}) {
   const { escapeHtml: escape, operationContractRows, restContractDelta, findingMatchesOperation, complianceFindingGroups, complianceCode, renderSourceHunks, sourceLinks, legacyEvidence, contractAreaParts, directLegacyDownstreamFindings } = helpers;
   const { dimensions } = assessment;
@@ -489,6 +611,8 @@ export function renderReportSections(assessment, helpers, options = {}) {
   const unassessed = compliance.coverage?.unassessedIntentIds ?? [];
   const guidelineBody = guidelineCards || `<div class="report-empty">${compliance.status === "not-assessed" ? "Azure Guidelines could not be fully assessed." : "No Azure Guidelines findings."}</div>`;
   const coverage = compliance.coverage;
+  const documentQuality = dimensions.documentQuality ?? {};
+  const documentBody = renderDocumentQuality(documentQuality, { escapeHtml: escape, sectionHead, status, count, summary, affectedIntents, intentLinks });
 
   const semanticBody = items.map((item) => {
     const related = item.relatedFindings ?? {};
@@ -506,7 +630,8 @@ export function renderReportSections(assessment, helpers, options = {}) {
     }
     const impactLinks = unique([...restLinks, ...downstreamLinks]);
     const guidelineIds = unique(complianceFindings.filter((finding) => finding.semanticIntentId === item.id || finding.relatedSemanticIntents?.includes(item.id) || related.compliance?.includes(finding.id)).map((finding) => finding.id));
-    const relations = impactLinks.length || guidelineIds.length ? `<div class="report-intent-relations">${impactLinks.length ? `<span class="report-relation-label" title="REST and downstream impacts">Impacts (${impactLinks.length})</span><div class="report-link-row" aria-label="Intent impacts">${impactLinks.join("")}</div>` : ""}${guidelineIds.length ? `<div class="report-link-row" aria-label="Guideline findings">${guidelineIds.map((id, index) => `<a class="report-link" href="#compliance-finding-${anchor(id)}">Azure Guidelines${guidelineIds.length > 1 ? ` (${index + 1})` : ""}</a>`).join("")}</div>` : ""}</div>` : "";
+    const documentFindings = (documentQuality.findings ?? []).filter((finding) => finding.reviewUnitId === item.id || finding.semanticIntentIds?.includes(item.id));
+    const relations = impactLinks.length || guidelineIds.length || documentFindings.length ? `<div class="report-intent-relations">${impactLinks.length ? `<span class="report-relation-label" title="REST and downstream impacts">Impacts (${impactLinks.length})</span><div class="report-link-row" aria-label="Intent impacts">${impactLinks.join("")}</div>` : ""}${guidelineIds.length ? `<div class="report-link-row" aria-label="Guideline findings">${guidelineIds.map((id, index) => `<a class="report-link" href="#compliance-finding-${anchor(id)}">Azure Guidelines${guidelineIds.length > 1 ? ` (${index + 1})` : ""}</a>`).join("")}</div>` : ""}${documentFindings.length ? `<div class="report-link-row" aria-label="Document quality findings">${documentFindings.map((finding) => `<a class="report-link" href="#document-quality-${anchor(finding.id)}">Document Quality: ${escape(finding.title)}</a>`).join("")}</div>` : ""}</div>` : "";
     const all = item.operations ?? [];
     const operations = all.slice(0, 10).map((operation) => {
       const rows = operationContractRows(operation, restFindings, item.id);
@@ -527,7 +652,7 @@ export function renderReportSections(assessment, helpers, options = {}) {
     html: `<section id="rest-breaking">${sectionHead("REST breaking changes", "Operation impact and affected intents at a glance; expand for before/after evidence.", status(restStatus) + count(`${restCards.length} operations · ${restFindings.length + (dimensions.rest.legacyFindings?.length ?? 0)} findings`))}${restBody || `<div class="report-empty">${restStatus === "not-assessed" ? "REST breaking changes were not fully assessed." : "No confirmed REST breaking changes."}</div>`}</section>
 <section id="downstream-breaking">${sectionHead("Downstream breaking changes", "Method impact and affected intents at a glance; expand for before/after evidence.", status(downstreamStatus) + count(`${downstream.methods.length} mapped methods · ${downstream.types.length} changed types`))}${downstreamBody || `<div class="report-empty">${downstreamStatus === "not-assessed" ? "Downstream breaking changes were not fully assessed." : "No downstream breaking changes detected."}</div>`}</section>
 <section id="azure-compliance">${sectionHead("Azure Guidelines", "Findings and affected intents at a glance; expand for expected guidance and actual changes.", status(compliance.status) + count(`${complianceFindings.length} findings`))}${coverage ? `<p class="report-small">${coverage.assessedIntentCount} of ${coverage.semanticIntentCount} semantic intents assessed · ${coverage.selectedDocumentCount} documents selected</p>` : ""}${guidelineBody}${noGuidance.length ? `<p class="report-small">No applicable guideline was found for: ${intentLinks(noGuidance)}.</p>` : ""}${unassessed.length ? `<div class="report-empty">Azure Guidelines not assessed for: ${intentLinks(unassessed)}</div>` : ""}</section>
-<section id="document-quality">${sectionHead("Document Quality and Agent Friendliness", "Documentation assessment status.", status(dimensions.documentQuality.status))}<div class="report-empty">${escape(dimensions.documentQuality.summary)}</div></section>
+${documentBody}
 <section id="semantic-intents">${sectionHead("Semantic intents", "Impact links are visible at a glance; expand for changed TypeSpec source, followed by affected operations.", count(`${items.length} intents · ${items.filter((item) => item.action === "add").length} added · ${items.filter((item) => item.action === "modify").length} modified · ${items.filter((item) => item.action === "remove").length} removed`))}${semanticBody || '<div class="report-empty">No semantic intents.</div>'}</section>`,
   };
 }

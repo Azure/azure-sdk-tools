@@ -29,6 +29,28 @@
     },
     "restDecisions": { "$ref": "#/$defs/decisions" },
     "downstreamDecisions": { "$ref": "#/$defs/decisions" },
+    "documentQualityDecisions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["reviewUnitId", "documentId", "check", "decision", "rationale"],
+        "properties": {
+          "reviewUnitId": { "type": "string", "pattern": "^semantic-" },
+          "documentId": { "type": "string", "pattern": "^document-" },
+          "check": { "enum": ["correctness", "meaning"] },
+          "decision": { "enum": ["pass", "fail", "not-assessed"] },
+          "rationale": { "type": "string", "pattern": "\\S" },
+          "title": { "type": "string", "pattern": "\\S" },
+          "expected": { "type": "string", "pattern": "\\S" },
+          "docQuote": { "type": "string", "pattern": "\\S" }
+        },
+        "allOf": [{
+          "if": { "properties": { "decision": { "const": "fail" } } },
+          "then": { "required": ["title", "expected", "docQuote"] }
+        }]
+      }
+    },
     "complianceDecisions": {
       "type": "array",
       "items": {

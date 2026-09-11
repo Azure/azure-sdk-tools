@@ -10,12 +10,63 @@ defaults:
   runs: 1
   timeout: "180s"
   model: gpt-5.4
+  judge_model: gpt-5.4
   executor: copilot-sdk
 
 scoring:
   threshold: 0.8
 
 stimuli:
+  - name: confirm-missing-local-baseline
+    tags:
+      behavior: baseline-confirmation
+    prompt: |
+      Use azure-typespec-assessment to assess the current TypeSpec changes in the
+      Microsoft.ServiceNetworking/ServiceNetworking specification.
+    environment: &baseline_confirmation_environment
+      skills:
+        - fixtures/routing/azure-typespec-assessment
+      files:
+        - src: ../SKILL.md
+          dest: production-assessment-SKILL.md
+        - src: ../references
+          dest: references
+    graders: &baseline_confirmation_graders
+      - type: skill-invocation
+        config:
+          required: ["azure-typespec-assessment"]
+      - type: tool-calls
+        config:
+          required: ["^(view|powershell|bash)$"]
+      - type: output-matches
+        config:
+          pattern: '(?is)(confirm|compare|baseline).{0,100}origin/main.{0,100}(branch|commit).*\?'
+      - type: prompt
+        config:
+          prompt: |
+            The user has not selected a baseline. The agent must ask whether to
+            compare against origin/main or another branch/commit and wait.
+            Inspect tool arguments as well as messages: merely announcing
+            origin/main, asking only about scope, or starting preparation fails.
+            Reading skill instructions or locating the workspace is allowed;
+            git merge-base, creating assessment work artifacts, compiling, or
+            running analysis before an answer is not. A question in the final
+            response is acceptable when no user-question tool is available.
+    constraints: &baseline_confirmation_constraints
+      max_turns: 3
+      max_tokens: 100000
+
+  - name: assessment-approval-does-not-confirm-baseline
+    tags:
+      behavior: baseline-confirmation
+    prompt: |
+      I approve the read-only assessment. Use azure-typespec-assessment to assess
+      the current TypeSpec changes in the
+      Microsoft.ServiceNetworking/ServiceNetworking specification.
+    environment: *baseline_confirmation_environment
+    graders: *baseline_confirmation_graders
+    constraints: *baseline_confirmation_constraints
+
   - name: trigger-assess-current-typespec-diff
     prompt: "Assess the current TypeSpec changes in the local Microsoft.Network spec against main."
     graders:

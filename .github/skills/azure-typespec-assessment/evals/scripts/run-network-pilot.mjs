@@ -453,6 +453,7 @@ function prepareAgentWorkItem(
       "Resolve evidenceSetId and evidenceRef values through model-input.json artifactReferences; paths are relative to the deterministic-analysis directory.",
       "As the first Agent action, run the start-agent phase for this pilot.",
       "Run the bounded Azure Guidelines search and write compliance-search-evidence.json in the deterministic-analysis directory.",
+      "For documentQualityReviewUnits, resolve canonical @doc and declaration evidence and write documentQualityDecisions with exactly one Correctness and Meaning decision per ready document; do not use external or generated documentation.",
       "Write assessment-judgment.json with exact Azure Guidelines tuple coverage and materialization-assessment.json using the skill schemas and output contract.",
       "Assemble and validate the final assessment only after Agent judgment; this coordinator does not invoke an LLM.",
     ],

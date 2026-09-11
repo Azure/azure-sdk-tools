@@ -12,6 +12,8 @@ import {
   visibleSharedTypeImpacts,
 } from "./render-assessment-html.mjs";
 import { readComplianceCatalog } from "./compliance-assessment.mjs";
+import { assembleDocumentQuality, DOCUMENT_QUALITY_ARTIFACT } from "./document-quality-assessment.mjs";
+import { buildDocumentQualityInput } from "./document-quality-input.mjs";
 
 function notAssessedCompliance() {
   return {
@@ -1839,4 +1841,183 @@ test("renderer derives overall code quality from assessed dimensions", () => {
     renderAssessmentHtml(mediumAssessment),
     /<span class="">i<\/span> Not assessed<\/div><div class="summary-label">Overall code quality/,
   );
+});
+
+function documentedAssessment(decision = "pass", noDocs = false) {
+  const source = {
+    id: "source-widget", path: "models.tsp",
+    hunks: [{ id: "hunk-widget", lines: ['-@doc("The count.")', '+@doc("A positive count.")'] }],
+    declarations: [{ id: "declaration-widget", qualifiedName: "Widget.count", kind: "property", hunkIds: ["hunk-widget"] }],
+  };
+  const intent = {
+    id: "semantic-widget", action: "modify", title: "Constrain widget counts", summary: "Require a positive count.",
+    declarationIds: ["declaration-widget"],
+    sources: [source], operations: [], relatedFindings: {},
+  };
+  const document = {
+    id: "document-widget", sourceChangeId: source.id, qualifiedName: "Widget.count", kind: "property",
+    before: { doc: "The count.", declaration: '@doc("The count.")\ncount: int32;', source: { path: source.path, revision: "base", startLine: 1, endLine: 2 } },
+    after: { doc: "A positive count.", declaration: '@doc("A positive count.")\n@minValue(1)\ncount: int32;', source: { path: source.path, revision: "current", startLine: 1, endLine: 3 } },
+  };
+  source.documentEvidence = { status: "ready", documents: noDocs ? [] : [{ ...document, hunkIds: ["hunk-widget"] }], blockers: [] };
+  const unit = {
+    reviewUnitId: intent.id, status: noDocs ? "not-applicable" : "ready",
+    ...(noDocs ? { reason: "No current @doc in the changed declaration scope." } : {}),
+    sourceChangeIds: [source.id], hunkIds: ["hunk-widget"], declarationIds: ["declaration-widget"], documents: noDocs ? [] : [document],
+  };
+  const input = buildDocumentQualityInput({
+    sourceIndex: { sourceChanges: [source] },
+    semantic: { reviewUnits: [{ id: intent.id, sourceChangeIds: unit.sourceChangeIds, hunkIds: unit.hunkIds, declarationIds: unit.declarationIds }] },
+  });
+  const decisions = noDocs ? [] : ["correctness", "meaning"].map((check) => {
+    const checkDecision = typeof decision === "string" ? decision : decision[check];
+    return {
+      reviewUnitId: intent.id, documentId: document.id, check, decision: checkDecision,
+      rationale: checkDecision === "not-assessed" ? "Contract evidence incomplete." : "Recorded documentation judgment.",
+      ...(checkDecision === "fail" ? { title: `${check} issue in count documentation`, expected: "State the exact allowed count.", docQuote: "positive count" } : {}),
+    };
+  });
+  const documentQuality = assembleDocumentQuality({
+    input,
+    modelInput: {
+      artifactReferences: { documentQuality: DOCUMENT_QUALITY_ARTIFACT },
+      documentQualityReviewUnits: [{
+        reviewUnitId: intent.id, status: unit.status, documentIds: unit.documents.map((item) => item.id), evidenceSetId: "evidence-document-widget",
+        ...(input.reviewUnits[0].reason ? { reason: input.reviewUnits[0].reason } : {}),
+      }],
+      evidenceSets: {
+        "evidence-document-widget": {
+          sourceChangeIds: unit.sourceChangeIds, hunkIds: unit.hunkIds, declarationCount: unit.declarationIds.length,
+          evidenceFactIds: [], evidenceRef: { artifact: DOCUMENT_QUALITY_ARTIFACT, id: intent.id },
+        },
+      },
+    },
+    decisions, semanticUnits: [intent], sourceChanges: [source],
+  });
+  return {
+    schemaVersion: 1, comparison: { baseCommit: "baseline", headCommit: "target" },
+    confidence: "high", safety: { scope: "rest-and-downstream-only", status: "passed" },
+    dimensions: {
+      semantic: { status: "assessed", sourceHunkIds: ["hunk-widget"], items: [intent] },
+      rest: { status: "passed", findings: [] }, downstream: { status: "passed", findings: [] },
+      compliance: notAssessedCompliance(), documentQuality,
+    },
+    blockers: [], projects: [], changedFiles: [], provenance: {},
+  };
+}
+
+test("document hero reflects final pass, fail, incomplete and no-applicable-doc coverage", () => {
+  for (const [decision, noDocs, label, coverage] of [
+    ["pass", false, "Passed", "2/2 checks assessed"],
+    ["fail", false, "Failed", "2/2 checks assessed"],
+    ["not-assessed", false, "Not assessed", "0/2 checks assessed"],
+    ["pass", true, "Passed", "0/0 checks assessed"],
+  ]) {
+    const assessment = documentedAssessment(decision, noDocs);
+    const before = structuredClone(assessment);
+    const html = renderAssessmentHtml(assessment);
+    const hero = [...html.matchAll(/<a class="summary-card" href="#document-quality">[\s\S]*?<\/a>/g)].find(([card]) => card.includes('<div class="summary-label">Document Quality and Agent Friendliness</div>'))[0];
+    assert.ok(hero.includes(`</span> ${label}</div>`));
+    assert.ok(hero.includes(coverage));
+    if (noDocs) assert.match(hero, /no applicable @doc/);
+    assert.match(html, /REST, downstream, Azure Guidelines, and Document Quality/);
+    assert.ok(html.includes(`${decision === "fail" ? "Failed" : "Not assessed"}</div><div class="summary-label">Overall code quality`));
+    assert.deepEqual(assessment, before);
+    assert.equal(assessment.safety.status, "passed");
+    const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map((match) => match[1]);
+    assert.equal(ids.length, new Set(ids).size);
+    for (const [, id] of html.matchAll(/href="#([^"]+)"/g)) assert.ok(ids.includes(id), `Missing fragment ${id}`);
+  }
+});
+
+test("legacy document hero remains not-assessed without invented assessment counts", () => {
+  const assessment = documentedAssessment();
+  assessment.dimensions.documentQuality = { status: "not-assessed", summary: 'Old artifacts lack <documentation> evidence & "checks".' };
+  const html = renderAssessmentHtml(assessment);
+  const hero = [...html.matchAll(/<a class="summary-card" href="#document-quality">[\s\S]*?<\/a>/g)].find(([card]) => card.includes('<div class="summary-label">Document Quality and Agent Friendliness</div>'))[0];
+  assert.match(hero, /Not assessed/);
+  assert.match(hero, /&lt;documentation&gt; evidence &amp; &quot;checks&quot;/);
+  assert.doesNotMatch(hero, /checks assessed|0 findings|Passed/);
+});
+
+test("active documentation affects aggregate quality but legacy placeholders do not affect safety or quality", () => {
+  const recorded = JSON.parse(readFileSync(new URL("../evals/assessments/45348/assessment.json", import.meta.url), "utf8"));
+  const passedGuidance = recorded.dimensions.compliance.intentAssessments[0];
+  assert.equal(recorded.dimensions.compliance.status, "passed");
+  for (const [decision, legacy, expected] of [
+    ["pass", false, "Passed"],
+    ["fail", false, "Failed"],
+    ["not-assessed", false, "Not assessed"],
+    ["pass", true, "Passed"],
+  ]) {
+    const assessment = documentedAssessment(decision);
+    assessment.dimensions.compliance = {
+      ...structuredClone(recorded.dimensions.compliance),
+      intentAssessments: [{ ...structuredClone(passedGuidance), semanticIntentId: "semantic-widget" }],
+      coverage: { semanticIntentCount: 1, assessedIntentCount: 1, selectedDocumentCount: passedGuidance.documents.length, unassessedIntentIds: [] },
+    };
+    if (legacy) assessment.dimensions.documentQuality = { status: "not-assessed", summary: "Historical artifact has no doc assessment." };
+    const before = structuredClone(assessment);
+    const html = renderAssessmentHtml(assessment);
+    const aggregate = html.match(/<a class="summary-card"[^>]*>[\s\S]*?Overall code quality[\s\S]*?<\/a>/)[0];
+    assert.ok(aggregate.includes(`</span> ${expected}</div>`));
+    if (!legacy && decision !== "pass") assert.match(aggregate, /href="#document-quality"/);
+    if (legacy) assert.doesNotMatch(aggregate, /Document Quality/);
+    else assert.match(aggregate, /Document Quality/);
+    assert.deepEqual(assessment, before);
+    assert.equal(assessment.safety.status, "passed");
+    assert.equal(assessment.safety.scope, "rest-and-downstream-only");
+  }
+});
+
+test("failed documentation with partial checks reports incomplete intent coverage", () => {
+  const assessment = documentedAssessment({ correctness: "fail", meaning: "not-assessed" });
+  const dimension = assessment.dimensions.documentQuality;
+  assert.equal(dimension.status, "failed");
+  assert.equal(dimension.intentAssessments[0].status, "failed");
+  assert.deepEqual(dimension.coverage.unassessedIntentIds, ["semantic-widget"]);
+  assert.equal(dimension.coverage.assessedIntentCount, 0);
+  assert.equal(dimension.coverage.assessedCheckCount, 1);
+  const html = renderAssessmentHtml(assessment);
+  assert.match(html, /1\/2 checks assessed/);
+  assert.match(html, /0\/1 intents assessed/);
+  assert.match(html, /Documentation not assessed for:/);
+  assert.match(html, /Failed<\/div><div class="summary-label">Overall code quality/);
+  assert.equal(assessment.safety.status, "passed");
+});
+
+test("passed documentation checks retain compact rationales without missing-expected warnings or duplicated source", () => {
+  const assessment = documentedAssessment("pass");
+  assert.ok(assessment.dimensions.documentQuality.intentAssessments[0].checks.every((check) => check.expected === undefined));
+  const html = renderAssessmentHtml(assessment);
+  const quality = html.slice(html.indexOf('<section id="document-quality">'), html.indexOf('<section id="semantic-intents">'));
+  assert.equal((quality.match(/class="report-card document-quality-check-summary"/g) ?? []).length, 1);
+  assert.match(quality, /2 passed · 0 not assessed/);
+  assert.match(quality, /2\/2 checks assessed/);
+  assert.equal((quality.match(/Recorded documentation judgment\./g) ?? []).length, 2);
+  assert.doesNotMatch(quality, /Expected meaning or contract was not recorded|<h3>Expected|<h3>Actual|class="report-document-snapshots"|class="report-card document-quality-check"/);
+});
+
+test("one failed and one passed doc check render only one full source comparison", () => {
+  const html = renderAssessmentHtml(documentedAssessment({ correctness: "pass", meaning: "fail" }));
+  const quality = html.slice(html.indexOf('<section id="document-quality">'), html.indexOf('<section id="semantic-intents">'));
+  assert.equal((quality.match(/class="report-card document-quality-check"/g) ?? []).length, 1);
+  assert.equal((quality.match(/class="report-card document-quality-check-summary"/g) ?? []).length, 1);
+  assert.equal((quality.match(/class="report-document-snapshots"/g) ?? []).length, 1);
+  assert.equal((quality.match(/<pre><code>/g) ?? []).length, 2);
+  assert.equal((quality.match(/<h3>Expected<\/h3>/g) ?? []).length, 1);
+  assert.equal((quality.match(/<h3>Actual<\/h3>/g) ?? []).length, 1);
+  assert.match(quality, /meaning issue in count documentation/);
+  assert.match(quality, /1 passed · 0 not assessed/);
+  assert.doesNotMatch(quality, /Expected meaning or contract was not recorded/);
+});
+
+test("unassessed documentation checks keep compact reasons and coverage without fabricated expected judgments", () => {
+  const html = renderAssessmentHtml(documentedAssessment("not-assessed"));
+  const quality = html.slice(html.indexOf('<section id="document-quality">'), html.indexOf('<section id="semantic-intents">'));
+  assert.match(quality, /0 passed · 2 not assessed/);
+  assert.match(quality, /0\/2 checks assessed/);
+  assert.match(quality, /0\/1 intents assessed/);
+  assert.equal((quality.match(/Not assessed reason:<\/strong> Contract evidence incomplete\./g) ?? []).length, 2);
+  assert.doesNotMatch(quality, /Expected meaning or contract was not recorded|<h3>Expected|<h3>Actual|class="report-document-snapshots"/);
 });

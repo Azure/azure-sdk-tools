@@ -10,6 +10,7 @@ import {
   typeIdentity,
 } from "./sdk-method-delta.mjs";
 import { assembleCompliance } from "./compliance-assessment.mjs";
+import { assembleDocumentQuality, DOCUMENT_QUALITY_ARTIFACT } from "./document-quality-assessment.mjs";
 import { sameAutorestContract } from "./autorest-contract.mjs";
 
 function duplicates(values) {
@@ -72,6 +73,7 @@ function validateJudgment(answer) {
       "restDecisions",
       "downstreamDecisions",
       "complianceDecisions",
+      "documentQualityDecisions",
       "overallConfidence",
       "blockers",
     ],
@@ -1150,6 +1152,15 @@ export function assembleAssessment({ work, judgment }) {
           },
         ],
       };
+  const documentQualityPath = path.join(work, DOCUMENT_QUALITY_ARTIFACT);
+  const documentQualityDimension = assembleDocumentQuality({
+    input: fs.existsSync(documentQualityPath) ? readJson(documentQualityPath) : undefined,
+    modelInput,
+    decisions: answer.documentQualityDecisions,
+    semanticUnits: semantic.reviewUnits,
+    semanticStatus: semantic.status,
+    sourceChanges: sourceIndex.sourceChanges,
+  });
   return {
     schemaVersion: 1,
     generatedAt: new Date().toISOString(),
@@ -1194,16 +1205,16 @@ export function assembleAssessment({ work, judgment }) {
       rest: restDimension,
       downstream: downstreamDimension,
       compliance: complianceDimension,
-      documentQuality: {
-        status: "not-assessed",
-        summary: "Document Quality and Agent Friendliness is not assessed.",
-      },
+      documentQuality: documentQualityDimension,
     },
     changedFiles: manifest.changedFiles,
     projects: manifest.projects,
     blockers: [...manifest.blockers, ...answer.blockers, ...inferenceBlockers],
     provenance: {
       modelInput: "model-input.json",
+      ...(modelInput.artifactReferences?.documentQuality
+        ? { documentQuality: DOCUMENT_QUALITY_ARTIFACT }
+        : {}),
       ...(inference ? { inference: "inference.json" } : {}),
       ...(hasComplianceInput
         ? { complianceSearchEvidence: "compliance-search-evidence.json" }

@@ -4,6 +4,9 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { readRevisionFile, unifiedDiff } from "./git-evidence.mjs";
 
+// Raw revision text is process-local: never serialize whole files into model evidence.
+const revisionSources = new WeakMap();
+
 function id(prefix, value) {
   return `${prefix}-${crypto.createHash("sha256").update(value).digest("hex").slice(0, 16)}`;
 }
@@ -166,10 +169,12 @@ export function buildSourceIndex({
   readFile = (revision, file) => readRevisionFile(repo, revision, file),
   diffFile = (file) => unifiedDiff(repo, mergeBase, file),
 }) {
+  const texts = new Map();
   const sourceChanges = changedFiles.map((file) => {
     const base = readFile(mergeBase, file.path);
     const current = readFile("working", file.path);
     const head = readFile(headCommit, file.path);
+    texts.set(file.path, { base, current });
     let diff = diffFile(file.path);
     if (!diff && base === null && current !== null) {
       const added = current
@@ -205,7 +210,7 @@ export function buildSourceIndex({
       ],
     };
   });
-  return {
+  const result = {
     schemaVersion: 1,
     analysis: {
       status: "not-run",
@@ -214,6 +219,8 @@ export function buildSourceIndex({
     },
     sourceChanges,
   };
+  revisionSources.set(result, texts);
+  return result;
 }
 
 function normalizedRelative(root, file) {
@@ -327,7 +334,140 @@ function compilerDeclaration(type, kind, revision, root, source, compiler) {
 async function compilerModule(worktree) {
   const entry = path.join(worktree, "node_modules", "@typespec", "compiler", "dist", "src", "index.js");
   if (!fs.existsSync(entry)) throw new Error(`TypeSpec compiler not found: ${entry}`);
-  return import(pathToFileURL(entry).href);
+  const compiler = await import(pathToFileURL(entry).href);
+  // Older compilers may not expose the AST entry point. Preserve semantic analysis
+  // and explicitly block only documentation evidence in that case.
+  const astEntry = path.join(path.dirname(entry), "ast", "index.js");
+  const ast = fs.existsSync(astEntry)
+    ? await import(pathToFileURL(astEntry).href)
+    : undefined;
+  const packageJson = JSON.parse(fs.readFileSync(
+    path.join(worktree, "node_modules", "@typespec", "compiler", "package.json"), "utf8",
+  ));
+  return { ...compiler, ...ast, compilerVersion: packageJson.version };
+}
+
+function documentDeclarations(script, program, compiler, source, revision) {
+  if (!compiler.SyntaxKind || typeof compiler.visitChildren !== "function") {
+    throw new Error("This TypeSpec compiler does not expose the required AST traversal API.");
+  }
+  const kinds = {
+    NamespaceStatement: "namespace", ModelStatement: "model", ModelProperty: "property",
+    OperationStatement: "operation", InterfaceStatement: "interface", ScalarStatement: "scalar",
+    EnumStatement: "enum", EnumMember: "enum-member", UnionStatement: "union",
+    UnionVariant: "union-variant", AliasStatement: "alias",
+    ScalarConstructor: "scalar-constructor",
+  };
+  const records = [];
+  const file = script.file;
+  // Hunk context is not a change: only +/- positions establish document ownership.
+  // Pair equality below also excludes untouched siblings when a whole file is diffed.
+  const edits = source.hunks.map((hunk) => {
+    let line = hunk[revision].startLine;
+    const changed = [];
+    for (const text of hunk.lines) {
+      const marker = text[0];
+      if (marker === (revision === "base" ? "-" : "+")) changed.push(line);
+      if (marker === " " || marker === (revision === "base" ? "-" : "+")) line += 1;
+    }
+    return { id: hunk.id, lines: changed };
+  });
+  const visit = (node, owner = "") => {
+    if (node.kind === compiler.SyntaxKind.TypeSpecScript) {
+      let scope = owner;
+      for (const statement of node.statements) {
+        visit(statement, scope);
+        let namespace = statement;
+        const names = [];
+        while (namespace?.kind === compiler.SyntaxKind.NamespaceStatement &&
+          !Array.isArray(namespace.statements)) {
+          names.push(namespace.id.sv);
+          namespace = namespace.statements;
+        }
+        if (!namespace && names.length) scope = [owner, ...names].filter(Boolean).join(".");
+      }
+      return;
+    }
+    const kind = kinds[compiler.SyntaxKind[node.kind]];
+    const name = node.id?.sv;
+    const qualifiedName = kind && name ? [owner, name].filter(Boolean).join(".") : owner;
+    const decorators = node.kind === compiler.SyntaxKind.AugmentDecoratorStatement
+      ? [node]
+      : node.decorators ?? [];
+    const targetName = (target) => target?.sv ??
+      (target?.base && target?.id ? `${targetName(target.base)}.${target.id.sv}` : "");
+    const candidates = decorators.filter((decorator) =>
+      ["doc", "TypeSpec.doc"].includes(targetName(decorator.target)));
+    if (candidates.length) {
+      const startLine = file.getLineAndCharacterOfPosition(node.pos).line + 1;
+      const endLine = file.getLineAndCharacterOfPosition(Math.max(node.pos, node.end - 1)).line + 1;
+      let doc = null;
+      let blocker;
+      if (candidates.length && (!kind || !name)) {
+        blocker = "Cannot establish a supported named declaration context for this @doc.";
+      } else if (candidates.length) {
+        const type = program.checker.getTypeForNode(node);
+        const applications = (type.decorators ?? []).filter((item) => item.decorator === compiler.$doc);
+        const docs = candidates.filter((candidate) =>
+          applications.some((application) => application.node === candidate));
+        if (docs.length !== candidates.length) {
+          blocker = "Cannot establish that the documentation decorator resolves to TypeSpec @doc.";
+        } else if (docs.length !== 1 || docs[0].arguments.length !== 1 ||
+          docs[0].arguments[0].kind !== compiler.SyntaxKind.StringLiteral) {
+          blocker = "Only a single literal TypeSpec @doc argument is supported; dynamic or formatted documentation cannot be evaluated.";
+        } else {
+          doc = docs[0].arguments[0].value;
+        }
+      }
+      records.push({
+        key: kind && name ? `${kind}:${qualifiedName}` : `unsupported:${qualifiedName}:${node.pos}`,
+        qualifiedName: qualifiedName || compiler.SyntaxKind[node.kind],
+        kind: kind ?? "unsupported", doc, blocker,
+        declaration: file.text.slice(node.pos, node.end),
+        source: { path: source.path, revision, startLine, endLine },
+        hunkIds: edits.filter((hunk) =>
+          hunk.lines.some((line) => line >= startLine && line <= endLine)).map((hunk) => hunk.id),
+      });
+    }
+    compiler.visitChildren(node, (child) => { visit(child, qualifiedName); });
+  };
+  visit(script);
+  return records;
+}
+
+function changedDocumentEvidence(source, revisions) {
+  const byRevision = {};
+  for (const revision of ["base", "current"]) {
+    byRevision[revision] = new Map();
+    for (const record of revisions[revision] ?? []) {
+      if (byRevision[revision].has(record.key)) {
+        throw new Error(`Ambiguous documentation declaration: ${record.qualifiedName}`);
+      }
+      byRevision[revision].set(record.key, record);
+    }
+  }
+  const documents = [];
+  for (const [key, after] of byRevision.current) {
+    const before = byRevision.base.get(key);
+    if (after.doc === null && !after.blocker) continue;
+    if (before?.declaration === after.declaration) continue;
+    const hunkIds = [...new Set([...(before?.hunkIds ?? []), ...after.hunkIds])].sort();
+    if (!hunkIds.length) continue;
+    const snapshot = (record) => record?.doc !== null && record?.doc !== undefined ? {
+      doc: record.doc, declaration: record.declaration, source: record.source,
+    } : null;
+    documents.push({
+      id: id("document", `${source.path}:${key}`),
+      sourceChangeId: source.id,
+      qualifiedName: after.qualifiedName,
+      kind: after.kind,
+      before: snapshot(before),
+      after: snapshot(after),
+      hunkIds,
+      blocker: after.blocker ?? before?.blocker,
+    });
+  }
+  return documents.sort((left, right) => left.id.localeCompare(right.id));
 }
 
 export async function addCompilerEvidence({
@@ -335,7 +475,12 @@ export async function addCompilerEvidence({
   baseWorktree,
   currentWorktree,
   projects,
+  loadCompiler = compilerModule,
 }) {
+  // Only changed @doc/declaration pairs are serialized. All AST siblings are kept
+  // locally for pairing, then discarded; deleted docs are deliberately not coverage findings.
+  const documentRevisions = new Map(sourceIndex.sourceChanges.map((source) => [source.id, {}]));
+  const documentBlockers = new Map(sourceIndex.sourceChanges.map((source) => [source.id, []]));
   const declarations = new Map(sourceIndex.sourceChanges.map((source) => [source.id, []]));
   const referencedDeclarations = {};
   const resourceModels = {};
@@ -345,12 +490,8 @@ export async function addCompilerEvidence({
   for (const [revision, worktree] of [["base", baseWorktree], ["current", currentWorktree]]) {
     let compiler;
     try {
-      compiler = await compilerModule(worktree);
-      const packageJson = JSON.parse(fs.readFileSync(
-        path.join(worktree, "node_modules", "@typespec", "compiler", "package.json"),
-        "utf8",
-      ));
-      versions.add(packageJson.version);
+      compiler = await loadCompiler(worktree);
+      versions.add(compiler.compilerVersion ?? "unknown");
     } catch (error) {
       blockers.push({ revision, message: error.message });
       continue;
@@ -370,6 +511,25 @@ export async function addCompilerEvidence({
             message: `TypeSpec program has ${diagnostics.length} error diagnostic(s).`,
           });
           continue;
+        }
+        for (const source of sourceIndex.sourceChanges) {
+          const script = [...program.sourceFiles.values()].find((item) =>
+            normalizedRelative(worktree, item.file.path) === source.path);
+          if (!script) continue;
+          const raw = revisionSources.get(sourceIndex)?.get(source.path)?.[revision];
+          if (raw === null) continue;
+          if (raw !== undefined && raw !== script.file.text) {
+            documentBlockers.get(source.id).push({
+              revision, message: "Compiled source differs from the captured changed revision.",
+            });
+            continue;
+          }
+          try {
+            documentRevisions.get(source.id)[revision] =
+              documentDeclarations(script, program, compiler, source, revision);
+          } catch (error) {
+            documentBlockers.get(source.id).push({ revision, message: error.message });
+          }
         }
         const operationTypes = [];
         const listeners = {};
@@ -492,6 +652,30 @@ export async function addCompilerEvidence({
       source.declarations = [...new Map(compiled.map((item) => [item.id, item])).values()]
         .sort((left, right) => left.source.startLine - right.source.startLine);
     }
+    const revisions = documentRevisions.get(source.id);
+    const evidenceBlockers = documentBlockers.get(source.id);
+    for (const revision of ["base", "current"]) {
+      const raw = revisionSources.get(sourceIndex)?.get(source.path)?.[revision];
+      const absent = raw === null || (raw === undefined &&
+        (revision === "base" ? source.status === "added" : source.status === "deleted"));
+      if (absent) revisions[revision] = [];
+      if (!revisions[revision]) evidenceBlockers.push({
+        revision, message: "Changed source was not available in a successfully compiled TypeSpec program.",
+      });
+    }
+    let documents = [];
+    if (!evidenceBlockers.length) {
+      try {
+        documents = changedDocumentEvidence(source, revisions);
+      } catch (error) {
+        evidenceBlockers.push({ message: error.message });
+      }
+    }
+    source.documentEvidence = {
+      status: evidenceBlockers.length ? "blocked" : "ready",
+      blockers: evidenceBlockers,
+      documents,
+    };
   }
   sourceIndex.analysis = {
     status: blockers.length ? "blocked" : "ready",

@@ -74,6 +74,25 @@ Write one `assessment-judgment.json` conforming to `scripts\assessment-judgment.
     }
   ],
   "overallConfidence": "high",
+  "documentQualityDecisions": [
+    {
+      "reviewUnitId": "semantic-...",
+      "documentId": "document-...",
+      "check": "correctness",
+      "decision": "pass",
+      "rationale": "No contradiction with the associated declaration."
+    },
+    {
+      "reviewUnitId": "semantic-...",
+      "documentId": "document-...",
+      "check": "meaning",
+      "decision": "fail",
+      "title": "Description only repeats the parameter name",
+      "expected": "Explain what the timeout controls.",
+      "docQuote": "The timeout.",
+      "rationale": "The caller cannot identify which activity is limited."
+    }
+  ],
   "blockers": []
 }
 ```
@@ -88,6 +107,16 @@ the Azure Guidelines assessment.
 All IDs and URLs must come from the bounded inputs or validated inference
 output. Every `applicable-fail` decision must also provide a concise finding
 title and `high`, `medium`, or `low` severity for structured assessment data.
+
+For `documentQualityReviewUnits`, resolve the canonical artifact through its
+dedicated evidence set. Cover each document in every `ready` unit exactly once
+per check (`correctness`, `meaning`), following the
+[documentation rules](document-quality.md). `fail` requires `title`,
+`expected`, `rationale`, and a nonempty exact target `docQuote`; `pass` and
+`not-assessed` require rationale. Do not include severity. Units that are
+`not-applicable` or `blocked` require no Agent document decisions. Missing
+decisions for new inputs are errors; legacy inputs without the documentation
+field may omit this decision array.
 
 ## Final data
 
@@ -115,13 +144,16 @@ Dimension statuses are derived, not authored:
 - REST/downstream: `passed`, `failed`, or `not-assessed`;
 - Azure Guidelines: `passed`, `failed`, or `not-assessed`, derived from
   Semantic intent coverage and applicable fetched guidance;
-- Document Quality and Agent Friendliness: `not-assessed` with
-  `Document Quality and Agent Friendliness is not assessed.`;
+- Document Quality and Agent Friendliness: `passed`, `failed`, or
+  `not-assessed`, with separate semantic-unit, document, and check coverage;
 - safety scope: `rest-and-downstream-only`, never Azure Guidelines or document quality.
 
-A blocked implemented dimension cannot pass. Document Quality and Agent
-Friendliness cannot pass or report zero findings as if assessed; it remains
-explicitly `not-assessed`.
+A blocked implemented dimension cannot pass. Documentation is `failed` when
+there are confirmed failures, otherwise `not-assessed` when coverage is
+incomplete, otherwise `passed`. Retain partial coverage even when failures are
+confirmed. A documentation unit with no eligible target `@doc` is explicitly
+`not-applicable`; it counts as assessed scope but not as an assessed document.
+Legacy documentation dimensions without input remain `not-assessed`.
 A completed Azure Guidelines search with no governing guidance is represented by an
 intent-level `no-applicable-guidance` decision. It counts as assessed and does
 not create a blocker. `not-assessed` is reserved for missing evidence,
@@ -135,7 +167,7 @@ the Azure Guidelines assessment.
 intents, active Azure Guidelines status
 and coverage, retained document evidence, fetched guidance and changed
 TypeSpec, collapsed finding cards, retrieval blockers, explicit
-not-assessed Document Quality and Agent Friendliness, and complete provenance.
+Document Quality and Agent Friendliness status and coverage, and complete provenance.
 After overall code quality, summary cards and main sections must order the five
 dimensions as REST breaking changes, downstream breaking changes, Azure
 Guidelines, Document Quality and Agent Friendliness, and Semantic intents. The
@@ -218,3 +250,14 @@ links, and non-duplicate actual explanation). Grouped findings retain per-intent
 anchors. Do not duplicate these sections with a comparison table or a second
 source-evidence block. Preserve pass/fail/not-assessed and no-applicable-guidance
 states without severity labels.
+
+Documentation uses the same collapsed cards with readable affected-intent
+links, a Correctness/Meaning label, and Expected/Actual sections. Actual
+retains exact target `@doc` and associated source declarations, including
+baseline context when available. Show canonical evidence, not invented fixes
+or generated descriptions. Preserve pass/fail/not-assessed and explicit
+no-applicable-documentation outcomes with coverage. Documentation links are
+separate from REST/downstream `Impacts (N)` and do not affect scoped safety.
+Active documentation results participate in overall code quality. Legacy
+documentation placeholders without coverage remain excluded from that
+aggregate.

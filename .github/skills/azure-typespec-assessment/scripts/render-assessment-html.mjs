@@ -6,7 +6,7 @@ import {
 } from "./api-version-selection.mjs";
 import { isMain, parseArgs, readJson, runMain } from "./cli.mjs";
 import { validateAssessment } from "./validate-assessment.mjs";
-import { renderReportSections } from "./assessment-report-ui.mjs";
+import { documentQualitySummary, renderReportSections } from "./assessment-report-ui.mjs";
 
 const reportStyles = fs.readFileSync(new URL("./assessment-report-ui.css", import.meta.url), "utf8");
 
@@ -93,10 +93,16 @@ function headerSummary(assessment) {
     : complianceFindingGroups(compliance.findings).length;
   const complianceCoveredCount = compliance.coverage?.assessedIntentCount ?? 0;
   const complianceMaterialCount = compliance.coverage?.semanticIntentCount ?? 0;
+  const documentQuality = assessment.dimensions.documentQuality;
+  const documentQualityActive = documentQuality?.coverage !== undefined;
+  const qualityStatuses = [
+    assessment.safety.status, compliance.status,
+    ...(documentQualityActive ? [documentQuality.status] : []),
+  ];
   const codeQuality =
-    assessment.safety.status === "failed" || compliance.status === "failed"
+    qualityStatuses.includes("failed")
       ? "failed"
-      : assessment.safety.status === "passed" && compliance.status === "passed"
+      : qualityStatuses.every((status) => status === "passed")
         ? "passed"
         : "not-assessed";
   const codeQualityTarget =
@@ -104,9 +110,15 @@ function headerSummary(assessment) {
       ? restCount
         ? "#rest-breaking"
         : "#downstream-breaking"
-      : compliance.status !== "passed"
+      : compliance.status === "failed"
         ? "#azure-compliance"
-        : "#rest-breaking";
+        : documentQualityActive && documentQuality.status === "failed"
+          ? "#document-quality"
+          : compliance.status !== "passed"
+            ? "#azure-compliance"
+            : documentQualityActive && documentQuality.status !== "passed"
+              ? "#document-quality"
+              : "#rest-breaking";
   return {
     semanticItems,
     actionCounts,
@@ -124,6 +136,9 @@ function headerSummary(assessment) {
       : `${complianceCoveredCount}/${complianceMaterialCount} intents assessed`,
     codeQuality,
     codeQualityTarget,
+    codeQualityDetail: documentQualityActive
+      ? "REST, downstream, Azure Guidelines, and Document Quality"
+      : "REST, downstream, and Azure Guidelines",
     codeQualityIcon:
       codeQuality === "passed" ? "✓" : codeQuality === "failed" ? "×" : "i",
     codeQualityLabel:
@@ -2179,6 +2194,8 @@ function renderCurrent(assessment, options = {}) {
   summary.downstreamCount = report.downstreamCount;
   const restStatus = complianceStatus(dimensions.rest.status ?? (summary.restCount ? "failed" : "not-assessed"));
   const downstreamStatus = complianceStatus(dimensions.downstream.status ?? (summary.downstreamCount ? "failed" : "not-assessed"));
+  const documentQuality = documentQualitySummary(dimensions.documentQuality);
+  const documentStatus = complianceStatus(documentQuality.status);
   const comparisons = new Map(
     (assessment.artifactComparisons ?? []).map((item) => [
       item.projectId,
@@ -2214,11 +2231,11 @@ ${reportStyles}
 <header class="hero"><div class="container"><div class="eyebrow">TypeSpec Assessment</div><h1>${escapeHtml(headerTitle(assessment))}</h1>
 <p class="hero-meta">TypeSpec source diff: ${comparisonHeader}</p>
 <div class="summary-grid">
-<a class="summary-card" href="${summary.codeQualityTarget}"><div class="summary-value"><span class="${summary.codeQuality === "passed" ? "pass" : summary.codeQuality === "failed" ? "fail" : ""}">${summary.codeQualityIcon}</span> ${escapeHtml(summary.codeQualityLabel)}</div><div class="summary-label">Overall code quality</div><div class="summary-detail">REST, downstream, and Azure Guidelines</div></a>
+<a class="summary-card" href="${summary.codeQualityTarget}"><div class="summary-value"><span class="${summary.codeQuality === "passed" ? "pass" : summary.codeQuality === "failed" ? "fail" : ""}">${summary.codeQualityIcon}</span> ${escapeHtml(summary.codeQualityLabel)}</div><div class="summary-label">Overall code quality</div><div class="summary-detail">${escapeHtml(summary.codeQualityDetail)}</div></a>
 <a class="summary-card" href="#rest-breaking"><div class="summary-value"><span class="${restStatus.className}">${restStatus.icon}</span> ${summary.restCount}</div><div class="summary-label">REST breaking changes</div></a>
 <a class="summary-card" href="#downstream-breaking"><div class="summary-value"><span class="${downstreamStatus.className}">${downstreamStatus.icon}</span> ${summary.downstreamCount}</div><div class="summary-label">Downstream breaking changes</div><div class="summary-detail">Generated SDK contract changes</div></a>
 <a class="summary-card" href="#azure-compliance"><div class="summary-value"><span class="${complianceStatus(summary.complianceStatus).className}">${complianceStatus(summary.complianceStatus).icon}</span> ${summary.complianceIssueCount}</div><div class="summary-label">Azure Guidelines</div><div class="summary-detail">${summary.complianceIssueCount} guideline ${summary.complianceIssueCount === 1 ? "issue" : "issues"}<br>${escapeHtml(summary.complianceCoverageDetail)}</div></a>
-<a class="summary-card" href="#document-quality"><div class="summary-value"><span>i</span> Not assessed</div><div class="summary-label">Document Quality and Agent Friendliness</div><div class="summary-detail">${escapeHtml(dimensions.documentQuality.summary)}</div></a>
+<a class="summary-card" href="#document-quality"><div class="summary-value"><span class="${documentStatus.className}">${documentStatus.icon}</span> ${escapeHtml(documentQuality.label)}</div><div class="summary-label">Document Quality and Agent Friendliness</div><div class="summary-detail">${escapeHtml(documentQuality.detail)}</div></a>
 <a class="summary-card" href="#semantic-intents"><div class="summary-value"><span>i</span> ${summary.semanticItems.length}</div><div class="summary-label">Semantic intents</div><div class="summary-detail">${summary.operationCount} operations<br>${summary.actionCounts.add} Added, ${summary.actionCounts.modify} Modified, ${summary.actionCounts.remove} Removed</div></a>
 </div></div></header>
 <details class="notice"><summary class="container"><span class="notice-title">Preview Notice</span><span class="notice-summary">The TypeSpec Assessment Assistant is in preview; official validation and review remain the source of truth.</span></summary>

@@ -71,8 +71,9 @@ test("model input references canonical evidence without embedding sources", () =
     restCandidates: "dimensions/rest-breaking-input.json",
     downstreamCandidates: "dimensions/downstream-breaking-input.json",
     complianceSearchRequests: "dimensions/compliance-search-requests.json",
+    documentQuality: "dimensions/document-quality-input.json",
   });
-  assert.equal(Object.keys(input.evidenceSets).length, 1);
+  assert.equal(Object.keys(input.evidenceSets).length, 2);
   assert.deepEqual(Object.keys(input.facts), []);
   assert.equal(input.semanticReviewUnits[0].affectedOperationCount, 1);
   assert.deepEqual(input.semanticReviewUnits[0].representativeOperationIds, [
@@ -104,15 +105,114 @@ test("model input references canonical evidence without embedding sources", () =
   );
   assert.equal(input.semanticReviewUnits[0].inferenceRequired, false);
   assert.deepEqual(input.inferenceRequests, []);
-  assert.deepEqual(input.deferredDimensions, {
-    documentQuality: "not-assessed",
-  });
+  assert.equal(input.deferredDimensions, undefined);
+  assert.equal(input.documentQualityReviewUnits.length, 1);
+  assert.equal(input.documentQualityReviewUnits[0].reviewUnitId, "semantic-1");
   assert.equal(input.inputAccounting.budgetTier, "small");
   assert.equal(
     input.inputAccounting.omittedRedundant.rawEmitterArtifacts,
     true,
   );
   assert.equal(input.inputAccounting.omittedRedundant.sourceChanges, true);
+});
+
+test("documentation input retains exact document IDs with dedicated canonical evidence", () => {
+  const longDoc = "The amount of time, in seconds, to wait. ".repeat(10000);
+  const unit = {
+    reviewUnitId: "semantic-doc",
+    status: "ready",
+    sourceChangeIds: ["source-doc"],
+    hunkIds: ["hunk-doc"],
+    declarationIds: ["declaration-doc"],
+    documents: [
+      {
+        id: "document-timeout",
+        sourceChangeId: "source-doc",
+        qualifiedName: "Options.timeout",
+        kind: "property",
+        before: null,
+        after: {
+          doc: longDoc,
+          declaration: "timeout?: int32 = 30;",
+          source: {
+            path: "models.tsp",
+            revision: "current",
+            startLine: 2,
+            endLine: 3,
+          },
+        },
+      },
+    ],
+  };
+  const options = {
+    manifest: {
+      comparison: { mergeBaseCommit: "base", headCommit: "head", workingTree: {} },
+      projects: [],
+      blockers: [],
+    },
+    sourceIndex: {
+      sourceChanges: [
+        {
+          id: "source-doc",
+          path: "models.tsp",
+          hunks: [{ id: "hunk-doc", lines: ['+@doc("The timeout.")'] }],
+          declarations: [],
+        },
+      ],
+    },
+    semantic: {
+      status: "ready",
+      reviewUnits: [
+        {
+          id: unit.reviewUnitId,
+          sourceChangeIds: unit.sourceChangeIds,
+          hunkIds: unit.hunkIds,
+          declarationIds: unit.declarationIds,
+        },
+      ],
+      facts: {},
+      blockers: [],
+    },
+    rest: { status: "ready", candidates: [], facts: {}, blockers: [] },
+    downstream: { status: "ready", candidates: [], facts: {}, blockers: [] },
+    documentQuality: {
+      schemaVersion: 1,
+      status: "ready",
+      reviewUnits: [unit],
+      blockers: [],
+    },
+  };
+  const input = buildModelInput(options);
+  const summary = input.documentQualityReviewUnits[0];
+  assert.deepEqual(summary.documentIds, ["document-timeout"]);
+  assert.deepEqual(summary.qualifiedNames, ["Options.timeout"]);
+  assert.equal(summary.status, "ready");
+  assert.equal(summary.documents, undefined);
+  assert.equal(JSON.stringify(input).includes(longDoc), false);
+  assert.deepEqual(input.evidenceSets[summary.evidenceSetId].evidenceRef, {
+    artifact: "dimensions/document-quality-input.json",
+    id: "semantic-doc",
+  });
+  assert.notEqual(summary.evidenceSetId, input.semanticReviewUnits[0].evidenceSetId);
+  assert.equal(input.inputAccounting.retained.documentQualityReviewUnits, 1);
+  assert.equal(input.inputAccounting.retained.documentQualityDocuments, 1);
+  assert.deepEqual(input.inferenceRequests, []);
+
+  const reason = "The associated declaration could not be resolved.";
+  const blocked = buildModelInput({
+    ...options,
+    documentQuality: {
+      schemaVersion: 1,
+      status: "blocked",
+      blockers: [{ message: reason }],
+      reviewUnits: [{ ...unit, status: "blocked", reason, documents: [] }],
+    },
+  });
+  assert.equal(blocked.documentQualityReviewUnits[0].status, "blocked");
+  assert.equal(blocked.documentQualityReviewUnits[0].reason, reason);
+  assert.equal(blocked.inputAccounting.retained.documentQualityDocuments, 0);
+  assert.ok(blocked.blockers.some((blocker) => blocker.message === reason));
+  assert.deepEqual(blocked.inferenceRequests, []);
 });
 
 test("model input requests inference only for unknown hunks", () => {

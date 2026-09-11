@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { buildSourceIndex, parseUnifiedHunks } from "./source-index.mjs";
+import { addCompilerEvidence, buildSourceIndex, parseUnifiedHunks } from "./source-index.mjs";
 
 test("parseUnifiedHunks retains base and current ranges", () => {
   const hunks = parseUnifiedHunks(`diff --git a/main.tsp b/main.tsp
@@ -75,7 +75,44 @@ test("does not classify inline operation response fields as interface properties
        };
  }`,
   });
+
   assert.ok(!index.sourceChanges[0].declarations.some(
     (item) => item.kind === "property" && item.qualifiedName === "Widgets.location",
   ));
+});
+
+test("raw revision sources are not serialized and unavailable compilers block @doc context", async () => {
+  const sourceIndex = buildSourceIndex({
+    repo: "repo", mergeBase: "base", headCommit: "head",
+    changedFiles: [{ path: "main.tsp", status: "modified", origins: ["working"] }],
+    readFile: () => '@doc("private raw marker") model Widget {}',
+    diffFile: () => "@@ -1 +1 @@\n-model Widget {}\n+model Widget { x: string; }",
+  });
+  assert.ok(!JSON.stringify(sourceIndex).includes("private raw marker"));
+  await addCompilerEvidence({
+    sourceIndex, baseWorktree: ".", currentWorktree: ".", projects: ["main.tsp"],
+    loadCompiler: async () => { throw new Error("Compiler missing"); },
+  });
+  assert.equal(sourceIndex.analysis.status, "blocked");
+  assert.equal(sourceIndex.sourceChanges[0].documentEvidence.status, "blocked");
+  assert.equal(sourceIndex.sourceChanges[0].documentEvidence.blockers.length, 2);
+  assert.deepEqual(sourceIndex.sourceChanges[0].documentEvidence.documents, []);
+});
+
+test("failed compiler programs never report @doc evidence ready", async () => {
+  const sourceIndex = buildSourceIndex({
+    repo: "repo", mergeBase: "base", headCommit: "head",
+    changedFiles: [{ path: "main.tsp", status: "modified" }],
+    readFile: () => '@doc("A model") model Widget {}',
+    diffFile: () => "@@ -1 +1 @@\n-model Widget {}\n+model Widget { x: string; }",
+  });
+  await addCompilerEvidence({
+    sourceIndex, baseWorktree: ".", currentWorktree: ".", projects: ["main.tsp"],
+    loadCompiler: async () => ({
+      NodeHost: {},
+      compile: async () => ({ diagnostics: [{ severity: "error" }] }),
+    }),
+  });
+  assert.equal(sourceIndex.analysis.status, "blocked");
+  assert.equal(sourceIndex.sourceChanges[0].documentEvidence.status, "blocked");
 });

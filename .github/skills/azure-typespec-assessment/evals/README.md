@@ -218,6 +218,22 @@ the existing `run-assessment-analysis.mjs` contract unchanged.
 
 ## Vally
 
+For source-only documentation regressions, point to an installed TypeSpec
+compiler from an assessment worktree. The integration tests compile in-memory
+source and do not modify the assessed specification:
+
+```powershell
+$env:TYPESPEC_COMPILER_ENTRY = "<worktree>\node_modules\@typespec\compiler\dist\src\index.js"
+node --test `
+  .github\skills\azure-typespec-assessment\scripts\document-quality-input.test.mjs `
+  .github\skills\azure-typespec-assessment\scripts\document-quality-assessment.test.mjs
+```
+
+Without `TYPESPEC_COMPILER_ENTRY`, the real-compiler test is explicitly skipped;
+the deterministic input/coverage tests still run. Documentation extraction
+uses literal `@doc` and associated declarations only; assessment criteria are
+in [documentation checks](../references/document-quality.md).
+
 The skill eval at `assessment.eval.yaml` covers routing boundaries and uses PR
 44988 as the representative report-generation capability case. The deterministic
 Node E2E test covers all 12 cases without model or network variability:

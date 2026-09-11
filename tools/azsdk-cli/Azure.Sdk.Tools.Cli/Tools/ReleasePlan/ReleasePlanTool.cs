@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 using System.CommandLine;
 using System.ComponentModel;
+using System.Globalization;
 using System.Net;
 using System.Text;
 using System.Text.Json;
@@ -38,9 +39,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         HttpClient httpClient,
         INpxHelper npxHelper,
         IRawOutputHelper outputHelper,
-        INotificationService notificationService
+        INotificationService notificationService,
+        TimeProvider? timeProvider = null
     ) : MCPMultiCommandTool
     {
+        private const int ScheduleRiskWarningWindowDays = 7;
+        private readonly TimeProvider _timeProvider = timeProvider ?? TimeProvider.System;
+
         public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.ReleasePlan];
 
         // Commands
@@ -58,7 +63,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         private const string updateReleasePlanTargetCommandName = "update-release-target";
 
         // MCP Tool Names
-        private const string GetReleasePlanForSpecPrToolName = "azsdk_get_release_plan_for_spec_pr";
         private const string GetReleasePlanToolName = "azsdk_get_release_plan";
         private const string CreateReleasePlanToolName = "azsdk_create_release_plan";
         private const string UpdateReleasePlanToolName = "azsdk_update_release_plan";
@@ -493,13 +497,91 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     }
                 }
 
+                await AddReleasePlanScheduleRiskGuidanceAsync(response, ct);
                 return response;
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Failed to get release plan details");
                 return new ReleasePlanResponse { ResponseError = $"Failed to get release plan details: {ex.Message}" };
             }
+        }
+
+        private async Task AddReleasePlanScheduleRiskGuidanceAsync(ReleasePlanResponse response, CancellationToken ct)
+        {
+            var typeSpecProjectPath = response.ReleasePlanDetails?.APISpecProjectPath;
+            if (string.IsNullOrWhiteSpace(typeSpecProjectPath))
+            {
+                return;
+            }
+
+            try
+            {
+                var activeReleasePlans = await devOpsService.GetActiveReleasePlansByTypeSpecProjectPathAsync(typeSpecProjectPath, ct: ct);
+                var today = _timeProvider.GetLocalNow().Date;
+                var warningCutoff = today.AddDays(ScheduleRiskWarningWindowDays);
+                var hasPastDuePlan = false;
+                var hasDueSoonPlan = false;
+
+                foreach (var releasePlan in activeReleasePlans)
+                {
+                    if (!DateTime.TryParseExact(releasePlan.SDKReleaseMonth, "MMMM yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var targetReleaseMonth))
+                    {
+                        continue;
+                    }
+
+                    var pastDueDate = new DateTime(targetReleaseMonth.Year, targetReleaseMonth.Month, 1).AddMonths(1);
+                    if (pastDueDate > warningCutoff)
+                    {
+                        continue;
+                    }
+
+                    var releasePlanId = releasePlan.ReleasePlanId > 0 ? releasePlan.ReleasePlanId : releasePlan.WorkItemId;
+                    response.Warnings ??= [];
+                    if (pastDueDate <= today)
+                    {
+                        hasPastDuePlan = true;
+                        response.Warnings.Add($"Release plan {releasePlanId} ({releasePlan.ReleasePlanLink}) is past due. Its target release month was {releasePlan.SDKReleaseMonth}.");
+                    }
+                    else
+                    {
+                        hasDueSoonPlan = true;
+                        var formattedPastDueDate = pastDueDate.ToString("MMMM d, yyyy", CultureInfo.InvariantCulture);
+                        response.Warnings.Add($"Release plan {releasePlanId} ({releasePlan.ReleasePlanLink}) will become past due on {formattedPastDueDate}. Its target release month is {releasePlan.SDKReleaseMonth}.");
+                    }
+                }
+
+                if (hasPastDuePlan)
+                {
+                    (response.NextSteps ??= []).Add("For each past-due release plan, either postpone it using azsdk agent and azsdk_update_release_plan_target tool with a future target month, or abandon it after confirming it is no longer needed.");
+                }
+                if (hasDueSoonPlan)
+                {
+                    (response.NextSteps ??= []).Add("Review release plans nearing their deadline and update their target month before they become past due if the release will not complete this month.");
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Failed to check schedule risks for TypeSpec project {TypeSpecProjectPath}", typeSpecProjectPath);
+                (response.Warnings ??= []).Add("Unable to check other release plans for schedule risks. Review the release plan dashboard for this TypeSpec project.");
+            }
+        }
+
+        private async Task<ReleasePlanResponse> AddCreateReleasePlanScheduleRiskGuidanceAsync(ReleasePlanResponse response, string specPullRequestUrl, CancellationToken ct)
+        {
+            if (!string.IsNullOrWhiteSpace(specPullRequestUrl))
+            {
+                await AddReleasePlanScheduleRiskGuidanceAsync(response, ct);
+            }
+            return response;
         }
 
         /// <summary>
@@ -1040,13 +1122,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                         logger.LogInformation("Found existing release plan {ReleasePlanId} (work item {WorkItemId}) with the same TypeSpec project path and API version. Returning existing plan instead of creating a new one.",
                             existingReleasePlanWithSameVersion.ReleasePlanId, existingReleasePlanWithSameVersion.WorkItemId);
                         
-                        return new ReleasePlanResponse
-                        {
-                            ReleasePlanDetails = existingReleasePlanWithSameVersion,
-                            Message = $"An existing release plan (ID: {existingReleasePlanWithSameVersion.ReleasePlanId}) was found for TypeSpec project '{specProject}' with API version '{apiVersion}'. No new release plan was created.",
-                            TypeSpecProject = specProject,
-                            NextSteps = ["Review the existing release plan and use it for your SDK release."]
-                        };
+                        return await AddCreateReleasePlanScheduleRiskGuidanceAsync(
+                            new ReleasePlanResponse
+                            {
+                                ReleasePlanDetails = existingReleasePlanWithSameVersion,
+                                Message = $"An existing release plan (ID: {existingReleasePlanWithSameVersion.ReleasePlanId}) was found for TypeSpec project '{specProject}' with API version '{apiVersion}'. No new release plan was created.",
+                                TypeSpecProject = specProject,
+                                NextSteps = ["Review the existing release plan and use it for your SDK release."]
+                            },
+                            specPullRequestUrl,
+                            ct);
                     }
                 }
 
@@ -1086,13 +1171,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     var existingReleasePlan = await devOpsService.GetReleasePlanByTypeSpecProjectPathAsync(specProject, apiReleaseType: parsedApiReleaseType, ct: ct);
                     if (existingReleasePlan != null)
                     {
-                        return new ReleasePlanResponse
-                        {
-                            Message = $"An active release plan already exists for the TypeSpec project: {specProject}. "
-                            +  $"Release plan link: {existingReleasePlan.ReleasePlanLink}",
-                            ReleasePlanDetails = existingReleasePlan,
-                            NextSteps = ["Use the existing release plan returned in this response."]
-                        };
+                        return await AddCreateReleasePlanScheduleRiskGuidanceAsync(
+                            new ReleasePlanResponse
+                            {
+                                Message = $"An active release plan already exists for the TypeSpec project: {specProject}. "
+                                +  $"Release plan link: {existingReleasePlan.ReleasePlanLink}",
+                                ReleasePlanDetails = existingReleasePlan,
+                                NextSteps = ["Use the existing release plan returned in this response."]
+                            },
+                            specPullRequestUrl,
+                            ct);
                     }
                 }
 
@@ -1103,11 +1191,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     var existingReleasePlan = await devOpsService.GetReleasePlanAsync(specPullRequestUrl, parsedApiReleaseType, ct);
                     if (existingReleasePlan != null && existingReleasePlan.WorkItemId > 0)
                     {
-                        return new ReleasePlanResponse
-                        {
-                            Message = $"A {parsedApiReleaseType.ToDisplayLabel()} release plan already exists for the pull request: {specPullRequestUrl}. Release plan link: {existingReleasePlan.ReleasePlanLink}",
-                            ReleasePlanDetails = existingReleasePlan
-                        };
+                        return await AddCreateReleasePlanScheduleRiskGuidanceAsync(
+                            new ReleasePlanResponse
+                            {
+                                Message = $"A {parsedApiReleaseType.ToDisplayLabel()} release plan already exists for the pull request: {specPullRequestUrl}. Release plan link: {existingReleasePlan.ReleasePlanLink}",
+                                ReleasePlanDetails = existingReleasePlan
+                            },
+                            specPullRequestUrl,
+                            ct);
                     }
                 }
 
@@ -1243,7 +1334,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                         logger.LogWarning(notifyEx, "Failed to refresh release plan or send release plan notification.");
                     }
 
-                    return new ReleasePlanResponse
+                    var response = new ReleasePlanResponse
                     {
                         Message = message,
                         ReleasePlanDetails = releasePlan,
@@ -1252,7 +1343,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                         TypeSpecProject = specProject,
                         PackageType = isMgmt ? SdkType.Management : SdkType.Dataplane
                     };
+                    return await AddCreateReleasePlanScheduleRiskGuidanceAsync(response, specPullRequestUrl, ct);
                 }
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
             }
             catch (Exception ex)
             {

@@ -471,6 +471,10 @@ namespace Azure.Sdk.Tools.Cli.Services
                     logger.LogWarning("API spec work item not found for release plan work item {workItemId}", releasePlan.WorkItemId);
                 }
             }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Failed to get API spec work item for release plan work item {WorkItemId}", releasePlan.WorkItemId);
@@ -897,6 +901,10 @@ namespace Azure.Sdk.Tools.Cli.Services
                     logger.LogWarning("No work items found.");
                     return [];
                 }
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
             }
             catch (Exception ex)
             {
@@ -2091,6 +2099,10 @@ namespace Azure.Sdk.Tools.Cli.Services
 
                 var releasePlans = await Task.WhenAll(releasePlanWorkItems.Select(workItem => MapWorkItemToReleasePlanAsync(workItem, ct)));
                 return releasePlans.ToList();
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
             }
             catch (Exception ex)
             {

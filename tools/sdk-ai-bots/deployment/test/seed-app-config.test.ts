@@ -69,7 +69,7 @@ test("injects the chat agent Application Insights resource ID", () => {
     AZURE_RESOURCE_GROUP: "resource-group",
     AZURE_SUBSCRIPTION_ID: "00000000-0000-0000-0000-000000000000",
     CONTAINER_REGISTRY_NAME: "registry",
-    COSMOSDB_ACCOUNT_NAME: "cosmos",
+    COSMOS_DB_ACCOUNT_NAME: "cosmos",
     FOUNDRY_PROJECT_ENDPOINT: "https://example.services.ai.azure.com/api/projects/project/",
     KEY_VAULT_NAME: "vault",
     SEARCH_SERVICE_NAME: "search",

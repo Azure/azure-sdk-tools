@@ -4,7 +4,6 @@ var env = readEnvironmentVariable('AZURE_ENV_NAME', 'dev')
 var envSuffixTitleCase = '${toUpper(substring(env, 0, 1))}${substring(env, 1)}'
 var serverApplicationIdUri = readEnvironmentVariable('SERVER_APPLICATION_ID_URI', '')
 var tableNameOverride = readEnvironmentVariable('AZURE_TABLE_NAME_FOR_CONVERSATION', '')
-var ragServiceScopeOverride = readEnvironmentVariable('RAG_SERVICE_SCOPE', '')
 var displayNameOverride = readEnvironmentVariable('TEAMS_BOT_FULL_DISPLAY_NAME', '')
 
 param storageAccountName = readEnvironmentVariable('STORAGE_ACCOUNT_NAME', '')
@@ -20,5 +19,5 @@ param frontendServerErrorsAlertNameOverride = readEnvironmentVariable('FRONTEND_
 param frontendHealthCheckAlertNameOverride = readEnvironmentVariable('FRONTEND_HEALTH_CHECK_ALERT_NAME', '')
 param frontendDeleteLockNameOverride = readEnvironmentVariable('FRONTEND_DELETE_LOCK_NAME', '')
 param azureTableNameForConversation = !empty(tableNameOverride) ? tableNameOverride : 'TeamsChannelConversations${envSuffixTitleCase}'
-param ragServiceScope = !empty(ragServiceScopeOverride) ? ragServiceScopeOverride : '${serverApplicationIdUri}/.default'
+param ragServiceScope = '${serverApplicationIdUri}/.default'
 param teamsBotFullDisplayName = !empty(displayNameOverride) ? displayNameOverride : (env == 'prod' ? 'Azure SDK Q&A Bot' : 'Azure SDK Q&A Bot ${env}')

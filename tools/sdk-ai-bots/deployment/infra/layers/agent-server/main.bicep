@@ -12,26 +12,14 @@ param managedIdentityClientId string
 @description('Client ID of the frontend managed identity that calls the agent server.')
 param frontendIdentityClientId string
 
-@description('Client ID (audience) of the Entra app registration that fronts the agent server, used by App Service authentication (Easy Auth).')
-param serverAudience string
+@description('Client ID of the Entra app registration that fronts the agent server, used by App Service authentication (Easy Auth).')
+param serverApplicationClientId string
 
 @description('Name of the shared user-assigned managed identity attached to the site.')
 param sharedIdentityName string
 
 @description('Name of the frontend/bot user-assigned managed identity also attached to the site.')
 param frontendIdentityName string
-
-@description('Azure AI Services account name the agent server talks to.')
-param aiResourceName string
-
-@description('Azure AI project name.')
-param aiProjectName string
-
-@description('Cosmos DB account name.')
-param cosmosDbAccountName string
-
-@description('Storage account name.')
-param storageAccountName string
 
 @description('App Configuration store name.')
 param appConfigName string
@@ -160,24 +148,8 @@ resource site 'Microsoft.Web/sites@2025-05-01' = {
           value: resourceGroup().name
         }
         {
-          name: 'AI_PROJECT_NAME'
-          value: aiProjectName
-        }
-        {
-          name: 'AZURE_AI_RESOURCE_NAME'
-          value: aiResourceName
-        }
-        {
-          name: 'APP_INSIGHTS_CONNECTION_STRING'
+          name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
           value: component.properties.ConnectionString
-        }
-        {
-          name: 'COSMOS_DB_ACCOUNT_NAME'
-          value: cosmosDbAccountName
-        }
-        {
-          name: 'STORAGE_ACCOUNT_NAME'
-          value: storageAccountName
         }
         {
           // The Python agent server loads all other settings from App
@@ -211,7 +183,7 @@ resource config 'Microsoft.Web/sites/config@2025-05-01' = {
       azureActiveDirectory: {
         enabled: true
         registration: {
-          clientId: serverAudience
+          clientId: serverApplicationClientId
           openIdIssuer: '${environment().authentication.loginEndpoint}${tenant().tenantId}/v2.0'
         }
         validation: {
@@ -278,4 +250,3 @@ resource serverMetricAlert 'Microsoft.Insights/metricAlerts@2024-03-01-preview' 
 // Outputs consumed by azd services and hooks.
 output SERVER_BASE_URL string = 'https://${site.properties.defaultHostName}'
 output AGENT_SERVER_SITE_NAME string = site.name
-output AGENT_SERVER_IMAGE string = containerImage

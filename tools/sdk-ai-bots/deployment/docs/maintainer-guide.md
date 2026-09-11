@@ -42,9 +42,9 @@ The common commands map to different responsibilities:
    pipeline agent.
 - `azd env set <key> <value>` persists an input consumed by Bicep, azd, or a
    hook.
-- `azd up` provisions and deploys the whole project. It is useful for standard
-   azd projects, but this pipeline does not use it because it cannot preserve
-   the required preview and approval boundary or select one service.
+
+The pipeline composes provision and deploy commands separately so the preview,
+approval, infrastructure scope, and application service are explicit.
 
 The project currently requires azd `>=1.32.0` and pins the
 `azure.ai.agents` extension in `azure.yaml`. Keep the pin intentional: an
@@ -58,7 +58,8 @@ pipeline when an owning contract already exists.
 
 - **Services, layer graph, hooks, and tool versions:**
    `tools/sdk-ai-bots/azure.yaml`
-- **Subscription, region, names, routing, and component images:**
+- **Service image repositories:** `tools/sdk-ai-bots/azure.yaml`
+- **Subscription IDs, locations, resource names, routing, and health paths:**
    `deployment/infra/environments/environment-suite.yaml`
 - **Azure resource shape and base configuration:**
    `deployment/infra/layers/<layer>/main.bicep`
@@ -71,9 +72,11 @@ pipeline when an owning contract already exists.
 - **Executable deployment contracts:** `deployment/test/`
 
 `environment-suite.yaml` is canonical configuration. Local azd state is derived
-from it by `scripts/sync-env-suite.ps1`; pipeline variables are derived from it
-by `pipelines/templates/load-environment-suite.yml`. When adding a value, update
-both mappings if both local and pipeline execution need it.
+from it by `scripts/sync-env-suite.ts`; pipeline variables are derived from it
+by `pipelines/templates/load-environment-suite.yml`. The TypeScript suite module
+owns local derivation, validation, and operator lookup so maintainers do not
+need to keep shell-specific YAML parsers synchronized. When adding a value,
+update the local and pipeline mappings if both execution paths need it.
 
 ## Execution Model
 
@@ -113,6 +116,15 @@ Full-stack application order is `agent-server`, `function-app`, `agent`, the
 production-only evolution agent, then `frontend`. The dependency and
 stabilization ordering is deliberate; preserve it unless the resource or
 runtime contract changes.
+
+The pipeline always publishes a Bicep/configuration preview before apply and
+uses a manual approval stage. The approval task expires after 24 hours and the
+stage after three days. Logic App provisioning verifies the Teams managed
+connection and requests delegated consent before the deployment can complete.
+
+Scheduled knowledge sync, wiki generation, and feedback/evolution pipelines
+remain data jobs outside the azd service graph. They own data production and
+Search indexer triggers rather than hosted application deployment.
 
 ## azd Hook Workflow
 
@@ -172,14 +184,15 @@ The registered provision hooks are:
 
 - **`resource-group` preprovision: `preprovision.ts`.** Checks required tools,
    validates the environment-suite name, detects local azd environment drift,
-   blocks local production provisioning, checks quota, and records the active
-   deployment principal. Bicep cannot inspect local tools, compare local azd
+   enforces `localDeployAllowed`, checks quota, and records the active deployment
+   principal. Bicep cannot inspect local tools, compare local azd
    state with repository configuration, query quota safely, or derive the
    caller identity from the current Azure CLI token.
 - **Shared, agent, frontend, agent-server, and Function App preprovision:
-   `layer-preprovision.ts`.** Enforces the production pipeline guard immediately
-   before each layer apply. The repeated layer registration also protects a
-   targeted `azd provision <layer>` that does not execute `resource-group`.
+   `layer-preprovision.ts`.** Enforces the selected environment's local
+   operation policy immediately before each layer apply. The repeated layer
+   registration also protects a targeted `azd provision <layer>` that does not
+   execute `resource-group`.
 - **Agent postprovision: `agent-postprovision.ts`.** Creates or adopts the
    Foundry User role assignment for the shared managed identity. This uses an
    idempotent Azure CLI operation because an equivalent assignment may already
@@ -226,14 +239,8 @@ match that pipeline sequence.
 The registered deploy hooks are:
 
 - **Project predeploy: `predeploy.ts`.** Runs for every service and rejects a
-   production deploy outside Azure DevOps or GitHub Actions. Native azd knows
-   how to deploy a service but does not own this release policy.
-- **Frontend predeploy: `frontend-predeploy.ts`.** Optionally refreshes the
-   Teams environment, compiles the TypeScript output included in the image,
-   builds the immutable image with ACR Tasks, and points App Service at that
-   exact image. The custom step is needed because this image contains generated
-   `lib` output and provisioning otherwise leaves the site on its placeholder
-   tag.
+   local deploy when the selected environment disables it. Native azd knows how
+   to deploy a service but does not own this release policy.
 - **Frontend postdeploy: `frontend-postdeploy.ts`.** Runs Teams Toolkit
    provisioning, publishes when requested or when installation drift exists,
    installs or upgrades the app in the configured team through Microsoft Graph,
@@ -241,10 +248,6 @@ The registered deploy hooks are:
    native azd. The pipeline normally sets `AZD_SKIP_TEAMS_PROVISION=1`; local
    interactive runs can perform the Teams work. Teams failures and health
    timeout are warnings unless strict Teams mode is enabled.
-- **Function App predeploy: `function-predeploy.ts`.** Builds the immutable
-   function image with ACR Tasks, records the exact service image for azd, and
-   points the Function App at it. This prevents azd from selecting a second tag
-   and restores the runtime image after Bicep provisioning sets its placeholder.
 - **Function App postdeploy: `function-postdeploy.ts`.** Verifies that the
    Function App is running, waits for host readiness, and installs the complete
    Logic App workflow. The workflow calls the Function App, so applying it in
@@ -260,10 +263,13 @@ The registered deploy hooks are:
    definition are unavailable to Bicep beforehand. The environment injection
    also compensates for behavior not handled by the pinned azd agent extension.
 
-`agent-server` has no custom service hook. It uses azd's native package,
-publish, and App Service container deployment. `agent` has no predeploy hook;
-azd and the `azure.ai.agents` extension own its image build and initial Foundry
-deployment before `agent-postdeploy.ts` reconciles runtime state.
+Frontend, Function App, and `agent-server` have no custom predeploy hook. They
+use azd's native package, remote publish, and container deployment lifecycle;
+the frontend Dockerfile compiles TypeScript inside the remote build. The
+Function App uses the native container-aware `function` host. `agent` also has
+no predeploy hook; azd and the `azure.ai.agents` extension own its image build
+and initial Foundry deployment before `agent-postdeploy.ts` reconciles runtime
+state.
 
 ### When to Add a Hook
 
@@ -294,10 +300,11 @@ The `Show image version` step runs before the build or deployment.
 The handoff is:
 
 1. `azd-deploy.yml` resolves or accepts the tag and sets `AZD_IMAGE_TAG`.
-2. `azure.yaml` uses `AZD_IMAGE_TAG` as `docker.tag` for azd-managed container
-   builds.
-3. Frontend and Function App predeploy hooks consume the same value for their
-   custom ACR builds.
+2. `azure.yaml` uses `AZD_IMAGE_TAG` as `docker.tag` for all four azd-managed
+   container builds.
+3. Agent postdeploy independently reconstructs the selected chat-agent image
+   from the ACR endpoint, environment name, and `AZD_IMAGE_TAG` before it clones
+   a Foundry version to inject runtime environment variables.
 4. The evolution-agent deployment passes the same value to
    `deploy_hosted_agent.py`.
 
@@ -355,6 +362,16 @@ build-based tag when no override is supplied.
    credentials to YAML.
 6. Validate both an empty optional value and an explicit queue-time value.
 
+### Tear down one layer
+
+All layers share one resource group. Enable azd deployment stacks before using
+`azd down <layer>` so layer cleanup follows stack ownership instead of
+resource-group deletion behavior:
+
+```bash
+azd config set alpha.deployment.stacks on
+```
+
 ## Invariants and Common Failure Modes
 
 - Never hard-code an environment-specific subscription, resource name, endpoint,
@@ -381,11 +398,11 @@ From `tools/sdk-ai-bots/deployment`:
 
 ```bash
 npm ci
-./node_modules/.bin/tsc --noEmit -p tsconfig.json
-./node_modules/.bin/tsx --test test/*.test.ts
+npm run typecheck
+npm test
 yq eval '.' pipelines/orchestrators/qa-bot-deploy.yml \
    pipelines/templates/*.yml >/dev/null
-pwsh ./scripts/validate-env-suite.ps1
+npm run validate-env-suite
 ```
 
 Also run the build and tests for any changed application package. For an

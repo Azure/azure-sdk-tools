@@ -111,13 +111,14 @@ lifecycle hooks:
   reconciles Search objects, and seeds App Configuration;
 - agent hooks reconcile Foundry settings, hosted identity, RBAC, and Entra
   authorization;
-- frontend hooks resolve the image, synchronize Teams environment values, and
-  install or update an approved Teams app;
-- Function App hooks resolve the image and install the complete Logic App
-  workflow after the function exists.
+- frontend postdeploy synchronizes Teams environment values, installs or
+  updates the approved Teams app, and probes `/health`;
+- Function App postdeploy verifies host readiness and installs the complete
+  Logic App workflow.
 
-Re-running provision can restore Bicep's placeholder images or empty Logic App
-shell. Always run the corresponding deploy stages after provisioning.
+Application images use azd native remote Docker builds. After infrastructure
+apply, the selected application deployment stage establishes runtime state and
+postdeploy reconciliation as described in the [deploy runbook](runbook-deploy.md).
 
 ## Data Flows
 
@@ -133,9 +134,9 @@ flowchart LR
     EVOLVE --> VALIDATE[Validate closed issues]
 ```
 
-  The existing knowledge-sync and wiki-generation pipelines remain outside the
-  deployment orchestrator set and start their Search indexers after writing blobs.
-  The feedback pipeline does not queue a knowledge-sync pipeline.
+Knowledge sync and wiki generation run as scheduled data pipelines outside the
+azd service graph and start their Search indexers after writing blobs. The
+feedback pipeline operates independently of knowledge sync.
 
 ## Security Boundaries
 
@@ -147,19 +148,19 @@ flowchart LR
   no client secret is created.
 - Teams managed-API consent and first tenant catalog publication remain
   interactive operator actions.
-- Production provisioning and deployment are pipeline-only.
+- Dev permits local operations; preview and production use their mapped
+  pipelines and service connections.
 
-## Current Limitations
+## Release and Recovery Model
 
-- A complete layered preview requires prior layer state. Bootstrap a brand-new
-  dev environment before using the normal preview/approval pipeline. A
-  first-state bootstrap path for local-disabled preview and production
-  environments is not implemented and must be added before creating either from
-  scratch.
-- The active orchestrators do not execute slot swaps or a blocking
-  multi-service smoke stage. Frontend postdeploy performs a non-fatal `/health`
-  probe; verify all endpoints after deployment as described in the runbook.
-- Automated rollback is not implemented. The supported code rollback is to run
-  the matching orchestrator from a known-good source revision.
+- Normal layered preview operates on environments with existing layer state.
+  Dev has a documented workstation bootstrap; a new preview or production
+  environment requires an approved first-state bootstrap pipeline before its
+  first normal deployment.
+- Application rollout targets the production service resources directly.
+  Release completion requires the endpoint, workflow, Teams, and telemetry
+  checks in the [deploy runbook](runbook-deploy.md).
+- Code recovery redeploys the affected component from a known-good source
+  revision. Data recovery follows the [rollback runbook](runbook-rollback.md).
 
 Continue with the [manual setup guide](manual-setup.md).

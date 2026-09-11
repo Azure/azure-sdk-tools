@@ -43,12 +43,14 @@ uploading an invalid configuration.
 3. Keep `${SERVER_BASE_URL}` in `channel.yaml`; do not copy another
     environment's resolved URL.
 4. Make channel and tenant IDs match the environment-suite values.
-5. Run `scripts/validate-env-suite.ps1 -Environment <env>`.
+5. Run `npm run validate-env-suite -- --environment <env>` from `deployment/`.
 6. Run the normal `azd provision` path; postprovision uploads the files after
     infrastructure outputs are available.
 
 ## Bypass
 
 Set `BOT_CONFIGS_SOURCE_DIR=<abs-path>` before `azd provision` to use a different
-source root for an operator-controlled run. Normal validated environments must
-contain both routing files; do not rely on a missing directory to skip upload.
+source root for an operator-controlled run. `npm run validate-env-suite`
+requires `channel.yaml` and `tenant.yaml` for each selected environment. The
+upload helper treats a missing or empty source directory as a no-op when it is
+invoked independently of that validated provisioning path.

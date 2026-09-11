@@ -15,13 +15,14 @@ services:
         docker:
             path: Dockerfile
             context: ../..
+            image: sdk-ai-bots/agent-${AZURE_ENV_NAME}
             registry: ${AZURE_CONTAINER_REGISTRY_ENDPOINT}
             tag: ${AZD_IMAGE_TAG}
             remoteBuild: true
         hooks:
             postdeploy:
                 shell: sh
-                run: cd ../../../deployment && npx tsx hooks/agent-postdeploy.ts
+                run: cd ../../../deployment && ./node_modules/.bin/tsx hooks/agent-postdeploy.ts
                 interactive: true
         config:
             container:
@@ -53,35 +54,34 @@ services:
     frontend:
         project: azure-sdk-qa-bot
         host: appservice
-        language: ts
-        dist: lib
-        hooks:
-            postdeploy:
-                shell: sh
-                run: cd ../deployment && npx tsx hooks/frontend-postdeploy.ts
-                interactive: true
-            predeploy:
-                shell: sh
-                run: cd ../deployment && npx tsx hooks/frontend-predeploy.ts
-                interactive: true
-    function-app:
-        project: azure-sdk-qa-bot-function
-        host: appservice
         language: docker
         docker:
             path: Dockerfile
             context: .
+            image: azure-sdk-qa-bot
             registry: ${AZURE_CONTAINER_REGISTRY_ENDPOINT}
             tag: ${AZD_IMAGE_TAG}
             remoteBuild: true
         hooks:
             postdeploy:
                 shell: sh
-                run: cd ../deployment && npx tsx hooks/function-postdeploy.ts
+                run: cd ../deployment && ./node_modules/.bin/tsx hooks/frontend-postdeploy.ts
                 interactive: true
-            predeploy:
+    function-app:
+        project: azure-sdk-qa-bot-function
+        host: function
+        language: docker
+        docker:
+            path: Dockerfile
+            context: .
+            image: azure-sdk-qa-bot-function
+            registry: ${AZURE_CONTAINER_REGISTRY_ENDPOINT}
+            tag: ${AZD_IMAGE_TAG}
+            remoteBuild: true
+        hooks:
+            postdeploy:
                 shell: sh
-                run: cd ../deployment && npx tsx hooks/function-predeploy.ts
+                run: cd ../deployment && ./node_modules/.bin/tsx hooks/function-postdeploy.ts
                 interactive: true
 infra:
     provider: bicep
@@ -93,7 +93,7 @@ infra:
             preprovision:
                 shell: sh
                 dir: ../../..
-                run: npx --yes tsx hooks/preprovision.ts
+                run: ./node_modules/.bin/tsx hooks/preprovision.ts
                 interactive: true
         - provider: bicep
           path: deployment/infra/layers/shared-resources
@@ -102,7 +102,7 @@ infra:
             preprovision:
                 shell: sh
                 dir: ../../..
-                run: npx --yes tsx hooks/layer-preprovision.ts
+                run: ./node_modules/.bin/tsx hooks/layer-preprovision.ts
                 interactive: true
           dependsOn:
             - resource-group
@@ -113,12 +113,12 @@ infra:
             postprovision:
                 shell: sh
                 dir: ../../..
-                run: npx --yes tsx hooks/agent-postprovision.ts
+                run: ./node_modules/.bin/tsx hooks/agent-postprovision.ts
                 interactive: true
             preprovision:
                 shell: sh
                 dir: ../../..
-                run: npx --yes tsx hooks/layer-preprovision.ts
+                run: ./node_modules/.bin/tsx hooks/layer-preprovision.ts
                 interactive: true
           dependsOn:
             - resource-group
@@ -130,12 +130,12 @@ infra:
             postprovision:
                 shell: sh
                 dir: ../../..
-                run: npx --yes tsx hooks/frontend-postprovision.ts
+                run: ./node_modules/.bin/tsx hooks/frontend-postprovision.ts
                 interactive: true
             preprovision:
                 shell: sh
                 dir: ../../..
-                run: npx --yes tsx hooks/layer-preprovision.ts
+                run: ./node_modules/.bin/tsx hooks/layer-preprovision.ts
                 interactive: true
           dependsOn:
             - resource-group
@@ -147,7 +147,7 @@ infra:
             preprovision:
                 shell: sh
                 dir: ../../..
-                run: npx --yes tsx hooks/layer-preprovision.ts
+                run: ./node_modules/.bin/tsx hooks/layer-preprovision.ts
                 interactive: true
           dependsOn:
             - shared-resources
@@ -160,7 +160,7 @@ infra:
             preprovision:
                 shell: sh
                 dir: ../../..
-                run: npx --yes tsx hooks/layer-preprovision.ts
+                run: ./node_modules/.bin/tsx hooks/layer-preprovision.ts
                 interactive: true
           dependsOn:
             - shared-resources
@@ -172,12 +172,12 @@ infra:
             postprovision:
                 shell: sh
                 dir: ../../..
-                run: npx --yes tsx hooks/postprovision.ts
+                run: ./node_modules/.bin/tsx hooks/postprovision.ts
                 interactive: true
             preprovision:
                 shell: sh
                 dir: ../../..
-                run: npx --yes tsx hooks/logic-app-preprovision.ts
+                run: ./node_modules/.bin/tsx hooks/logic-app-preprovision.ts
                 interactive: true
           dependsOn:
             - shared-resources
@@ -187,13 +187,13 @@ infra:
 hooks:
     postdown:
         shell: sh
-        run: npx --yes tsx deployment/hooks/postdown.ts
+        run: cd deployment && ./node_modules/.bin/tsx hooks/postdown.ts
         interactive: true
     predeploy:
         shell: sh
-        run: npx --yes tsx deployment/hooks/predeploy.ts
+        run: cd deployment && ./node_modules/.bin/tsx hooks/predeploy.ts
         interactive: true
     predown:
         shell: sh
-        run: npx --yes tsx deployment/hooks/predown.ts
+        run: cd deployment && ./node_modules/.bin/tsx hooks/predown.ts
         interactive: true

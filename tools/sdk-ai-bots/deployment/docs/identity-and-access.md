@@ -9,17 +9,9 @@ and its deployment system. It covers permissions declared in this repository.
 Effective Azure access can also include assignments inherited from a
 subscription, management group, resource group, or external tenant policy.
 
-The executable sources of truth are:
-
-- [`azure.yaml`](../../azure.yaml) for service, infrastructure, and hook wiring;
-- [`environment-suite.yaml`](../infra/environments/environment-suite.yaml) for
-  environment-specific identity inputs;
-- Bicep files under [`infra/layers`](../infra/layers/) for persistent resource
-  and role assignments;
-- [`hooks`](../hooks/) and [`scripts`](../scripts/) for dynamic grants and
-  data-plane operations;
-- [`service-connection.yml`](../pipelines/templates/service-connection.yml) for
-  environment-to-service-connection mapping.
+The [deployment maintainer guide](maintainer-guide.md#sources-of-truth) defines
+file ownership. This reference is the canonical description of principals,
+roles, consent, and grant lifecycles.
 
 ## Permission Planes
 
@@ -192,14 +184,17 @@ Declared in [`frontend/main.bicep`](../infra/layers/frontend/main.bicep):
 - **Monitoring Metrics Publisher**
   (`3913510d-42f4-4e42-8a64-420c390055eb`) on frontend Application Insights;
 - **AcrPull** on the shared registry;
-- **Storage Account Contributor**
-  (`17d1049b-9a84-46fb-8f53-869881c3d3ab`) on Storage;
 - **Storage Blob Data Contributor** on Storage;
 - **Storage Table Data Contributor** on Storage.
 
-`Storage Account Contributor` can retrieve storage account keys and is broader
-than Blob/Table data access. Treat changes to this role as a security-sensitive
-review item.
+The frontend uses managed identity and resource endpoints directly. It does not
+retrieve storage account keys, so it does not require a management-plane
+Storage role.
+
+Each assignment name is derived from the scope, frontend managed identity
+resource ID, and role definition ID. Before changing deterministic assignment
+names in an existing environment, review what-if output and complete any
+required role-assignment migration through an approved change.
 
 ### Search identity roles
 
@@ -333,11 +328,11 @@ scope and calls the server with that token.
 
 ### Runtime access
 
-The agent-server and Function App explicitly select `qabot-identity` through
-`AZURE_CLIENT_ID`. The agent-server uses it to read channel configuration from
-Blob Storage. The Logic App uses it for authenticated agent-server calls and
-the Cosmos managed API connection, and attaches the frontend identity for bot
-calls.
+The agent-server and Function App explicitly select the shared runtime identity
+through `AZURE_CLIENT_ID`. The agent-server uses it to read channel
+configuration from Blob Storage. The Logic App uses it for authenticated
+agent-server calls and the Cosmos managed API connection, and attaches the
+frontend identity for bot calls.
 
 The Teams managed connector is different: it uses delegated OAuth. The
 repository creates the connection shell and preserves a connected token, but
@@ -369,9 +364,8 @@ connection bootstrap and organizational governance, not these Bicep layers.
 - Do not replace managed identity with storage keys or service API keys unless a
   service integration explicitly requires one.
 - Do not commit `.azure/<environment>/.env`; it is local azd state.
-- Treat Storage Account Contributor, Secrets Officer, Search Service
-  Contributor, Foundry Project Manager, and role-assignment permissions as
-  privileged grants.
+- Treat Secrets Officer, Search Service Contributor, Foundry Project Manager,
+  and role-assignment permissions as privileged grants.
 - Preserve the Teams managed connection after consent; replacing it can discard
   delegated OAuth state.
 - Reapply hosted-agent roles after creating a new hosted-agent identity.
@@ -393,9 +387,9 @@ Validate Bicep and deployment contracts after changing roles:
 ```bash
 cd tools/sdk-ai-bots/deployment
 npm ci
-./node_modules/.bin/tsc --noEmit -p tsconfig.json
-./node_modules/.bin/tsx --test test/*.test.ts
-pwsh ./scripts/validate-env-suite.ps1
+npm run typecheck
+npm test
+npm run validate-env-suite
 ```
 
 Use `az role assignment list` and `az cosmosdb sql role assignment list` for

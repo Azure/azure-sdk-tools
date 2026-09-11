@@ -12,7 +12,7 @@ try {
     azdEnvName: environmentName,
     env: process.env,
     teamsAppId: getEnvSuiteValue(environmentName, "teamsAppId"),
-    teamsAppTenantId: getEnvSuiteValue(environmentName, "teamsAppTenantId"),
+    tenantId: getEnvSuiteValue(environmentName, "tenantId"),
     log,
   });
   log("Generated the azd-owned Teams environment file.");

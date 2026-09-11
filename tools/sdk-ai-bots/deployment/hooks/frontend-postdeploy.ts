@@ -1,8 +1,8 @@
 /**
  * frontend — postdeploy hook
  *
- * Runs as part of `azd deploy frontend`, after azd has pushed the container
- * image and repointed the App Service (see frontend-predeploy.ts). It:
+ * Runs as part of `azd deploy frontend`, after azd has built, pushed, and
+ * deployed the container image. It:
  *   1. Health-checks the bot front-end (reads the site URL from azd outputs), and
  *   2. Drives Teams Toolkit with the azd-owned environment: `teamsapp provision
  *      --env azd` (and, when TEAMS_PUBLISH=1, `teamsapp publish --env azd`), and
@@ -12,7 +12,7 @@
  * (deployment/hooks/lib/sync-teams-env.ts) from whichever logical environment
  * azd targeted (dev / preview / prod), so the whole flow is just:
  *   azd provision       →  writes env/.env.azd
- *   azd deploy frontend →  builds/pushes image + `teamsapp ... --env azd`
+ *   azd deploy frontend →  native image deploy + `teamsapp ... --env azd`
  *
  * Azure resource provisioning is owned by azd (the former teamsapp `arm/deploy`
  * step was removed). Teams Toolkit creates/updates the app registration and
@@ -169,7 +169,7 @@ async function reconcileTeamsApp(envFile: string): Promise<void> {
   const tenantId =
     process.env.TEAMS_APP_TENANT_ID?.trim() ||
     readEnvValue(envFile, "TEAMS_APP_TENANT_ID") ||
-    getEnvSuiteValue(environmentName, "teamsAppTenantId");
+    getEnvSuiteValue(environmentName, "tenantId");
   const manifest = readGeneratedManifest();
 
   if (!teamId || !tenantId) {

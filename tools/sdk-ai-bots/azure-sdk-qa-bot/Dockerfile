@@ -12,8 +12,12 @@ ENV LC_ALL=C.UTF-8
 
 WORKDIR /app
 
-COPY . .
+COPY package*.json ./
 
 RUN npm ci
+
+COPY . .
+
+RUN npm run build && npm prune --omit=dev
 
 CMD [ "npm", "run", "start" ]

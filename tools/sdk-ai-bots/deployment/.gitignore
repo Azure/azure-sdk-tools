@@ -12,3 +12,10 @@ node_modules/
 # (from the Python template) that would otherwise ignore our TS hook helpers.
 !hooks/lib/
 !hooks/lib/**
+
+# Re-include shared script helpers for the same reason.
+!scripts/lib/
+!scripts/lib/**
+
+# This source-controlled review artifact is intentionally named as a report.
+!docs/azd-deployment-journey-report.md

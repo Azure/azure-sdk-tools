@@ -70,7 +70,6 @@ stages:
                 - template: /tools/sdk-ai-bots/deployment/pipelines/templates/load-environment-suite.yml
                   parameters:
                       environment: ${{ parameters.environment }}
-                      loadServiceConnectionFromSuite: ${{ not(parameters.authenticateBeforeEnvironmentLoad) }}
                 - ${{ if not(parameters.authenticateBeforeEnvironmentLoad) }}:
                       - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-auth.yml
 

@@ -1,9 +1,8 @@
 # Rollback Runbook
 
-The deployment does not provide an automated slot or revision rollback. The
-supported code recovery is to rerun `qa-bot-deploy.yml` with the affected
-component from a known-good source revision, producing a new remote build and
-reapplying its deployment hooks.
+Code recovery reruns `qa-bot-deploy.yml` with the affected component from a
+known-good source revision, producing a new remote build and reapplying its
+deployment hooks.
 
 ## 1. Decide and Contain
 
@@ -46,8 +45,9 @@ pipeline-only.
 Code redeployment does not automatically restore data.
 
 - **Knowledge sync:** rerun from the last known-good source/input snapshot. If
-   blob versioning was enabled before the incident, restore the affected blob
-   versions first, then start the primary Search indexer.
+   blob versioning is part of the tested recovery plan, restore the affected
+   versions first; otherwise reconstruct the input snapshot, then start the
+   primary Search indexer.
 - **Generated wiki:** clear only the generated wiki state when required, rebuild
    from the known-good corpus, then start the wiki Search indexer.
 - **Search schema:** prefer creating a compatible replacement index and moving
@@ -55,8 +55,6 @@ Code redeployment does not automatically restore data.
    emergency first step.
 - **Cosmos DB:** use the configured continuous-backup restore procedure. Restore
    to a separate account and validate before redirecting consumers.
-Blob versioning is disabled by the current Bicep configuration. Do not claim
-blob-version recovery unless it was enabled and tested before the incident.
 
 ## 4. Verify Recovery
 
@@ -78,4 +76,4 @@ redeploy the failed revision without a reviewed fix.
 2. Record the recovery source revision, pipeline runs, and data actions.
 3. Add a CI, readiness, or observability gate when it would have detected the
     problem earlier.
-4. Update this runbook when the platform gains an automated rollback mechanism.
+4. Update this runbook when the deployment or recovery contract changes.

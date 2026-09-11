@@ -194,7 +194,7 @@ export function derivedAppConfigValues(env: NodeJS.ProcessEnv): Record<string, s
   const storageAccountName = required("STORAGE_ACCOUNT_NAME");
   const keyVaultName = required("KEY_VAULT_NAME");
   const aiResourceName = required("AI_RESOURCE_NAME");
-  const cosmosAccountName = required("COSMOSDB_ACCOUNT_NAME");
+  const cosmosAccountName = required("COSMOS_DB_ACCOUNT_NAME");
 
   return {
     ACR_LOGIN_SERVER:

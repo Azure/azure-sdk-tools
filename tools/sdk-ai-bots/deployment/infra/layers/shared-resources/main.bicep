@@ -840,7 +840,7 @@ output SEARCH_SERVICE_NAME string = searchService.name
 output SEARCH_SERVICE_PRINCIPAL_ID string = searchService.identity.principalId
 
 @description('Cosmos DB account name.')
-output COSMOSDB_ACCOUNT_NAME string = databaseAccount.name
+output COSMOS_DB_ACCOUNT_NAME string = databaseAccount.name
 
 @description('Shared action group name.')
 output ACTION_GROUP_NAME string = actionGroup.name

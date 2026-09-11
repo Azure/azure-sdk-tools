@@ -4,9 +4,16 @@
   "description": "azd lifecycle hooks and deployment scaffolding for the sdk-ai-bots tool",
   "private": true,
   "dependencies": {
-    "tsx": "^4.19.0"
+    "tsx": "^4.19.0",
+    "yaml": "^2.9.0"
   },
   "scripts": {
+    "test": "node --import tsx --test test/*.test.ts",
+    "typecheck": "tsc --noEmit",
+    "detect-drift": "tsx scripts/detect-drift.ts",
+    "smoke-test": "tsx scripts/smoke-test.ts",
+    "sync-env-suite": "tsx scripts/sync-env-suite.ts",
+    "validate-env-suite": "tsx scripts/validate-env-suite.ts",
     "preprovision": "tsx hooks/preprovision.ts",
     "preprovision:logic-app": "tsx hooks/logic-app-preprovision.ts",
     "postprovision:agent": "tsx hooks/agent-postprovision.ts",

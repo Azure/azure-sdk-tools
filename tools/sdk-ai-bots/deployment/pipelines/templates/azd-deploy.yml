@@ -2,7 +2,7 @@
 # Every service uses azd's native remote-build lifecycle.
 #
 # Required pipeline variables: AZURE_SERVICE_CONNECTION, AZURE_ENV_NAME,
-# ACR_NAME.
+# CONTAINER_REGISTRY_NAME.
 
 parameters:
     - name: service
@@ -43,14 +43,14 @@ steps:
                 frontend) IMAGE_REPOSITORY="${FRONTEND_IMAGE_REPOSITORY%:*}" ;;
                 function-app) IMAGE_REPOSITORY="${FUNCTION_IMAGE_REPOSITORY%:*}" ;;
                 agent-server) IMAGE_REPOSITORY="${AGENT_SERVER_IMAGE_REPOSITORY%:*}" ;;
-                agent) IMAGE_REPOSITORY="sdk-ai-bots/agent-${AZURE_ENV_NAME}" ;;
+                agent) IMAGE_REPOSITORY="$AGENT_IMAGE_REPOSITORY" ;;
               esac
 
               if [ -n "$REQUESTED_IMAGE_TAG" ]; then
                 IMAGE_VERSION="$REQUESTED_IMAGE_TAG"
               elif [ '${{ parameters.service }}' = 'frontend' ] || [ '${{ parameters.service }}' = 'function-app' ]; then
                 IMAGE_VERSION=$(./node_modules/.bin/tsx scripts/resolve-image-version.ts \
-                  "$ACR_NAME" "$IMAGE_REPOSITORY" "$AZURE_ENV_NAME")
+                  "$CONTAINER_REGISTRY_NAME" "$IMAGE_REPOSITORY" "$AZURE_ENV_NAME")
               else
                 IMAGE_VERSION="azd-deploy-$(Build.BuildId)"
               fi
@@ -60,7 +60,7 @@ steps:
                 exit 1
               fi
 
-              ACR_LOGIN_SERVER=$(az acr show --name "$ACR_NAME" --query loginServer -o tsv)
+              ACR_LOGIN_SERVER=$(az acr show --name "$CONTAINER_REGISTRY_NAME" --query loginServer -o tsv)
               echo "Image selected for deployment: ${ACR_LOGIN_SERVER}/${IMAGE_REPOSITORY}:${IMAGE_VERSION}"
               echo "Image version: $IMAGE_VERSION"
               echo "##vso[task.setvariable variable=AZD_IMAGE_TAG]$IMAGE_VERSION"
@@ -83,7 +83,6 @@ steps:
               # connection so component CD requires Azure RBAC only.
               export AZD_SKIP_TEAMS_PROVISION="${AZD_SKIP_TEAMS_PROVISION:-1}"
               export AZURE_ENV_NAME
-              export CONTAINER_REGISTRY_NAME="$ACR_NAME"
               if ! azd env select "$AZURE_ENV_NAME" --no-prompt >/dev/null 2>&1; then
                 azd env new "$AZURE_ENV_NAME" \
                   --location "$AZURE_LOCATION" \

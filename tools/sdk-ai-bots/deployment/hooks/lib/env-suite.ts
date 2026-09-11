@@ -1,148 +1,244 @@
-/**
- * env-suite — minimal reader for infra/environments/environment-suite.yaml.
- *
- * The suite file is the single source of truth for per-environment metadata
- * (subscription, resource group prefix, Teams app id, ...). Hooks read values
- * from it via `getEnvSuiteValue(envName, key)`; the pipeline reads the same
- * file via `yq` in pipelines/templates/load-environment-suite.yml.
- *
- * Uses `yq` when available (matches the pipeline path). Otherwise falls back
- * to a small indentation-aware reader for scalar and string-array fields.
- * Adds no runtime dependencies.
- */
+/** Shared, typed access to the deployment environment contract. */
 
-import { execFileSync, execSync } from "child_process";
-import { readFileSync, existsSync } from "fs";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "path";
 import { fileURLToPath } from "url";
+import { parse } from "yaml";
 
 // hooks/lib/env-suite.ts → ../../infra/environments/environment-suite.yaml
-const DEFAULT_SUITE_PATH = resolve(
+export const DEFAULT_SUITE_PATH = resolve(
   dirname(fileURLToPath(import.meta.url)),
   "../../infra/environments/environment-suite.yaml",
 );
+export const DEFAULT_PROJECT_PATH = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  "../../../azure.yaml",
+);
 
-let yqChecked = false;
-let yqAvailable = false;
+export const ENVIRONMENT_NAMES = ["dev", "preview", "prod"] as const;
+export type EnvironmentName = (typeof ENVIRONMENT_NAMES)[number];
 
-function getEnvironmentBlock(text: string, envName: string): { block: string; fieldIndent: number } | undefined {
-  const lines = text.split(/\r?\n/);
-  const headerPattern = new RegExp(`^(\\s*)${envName}:\\s*$`);
-  const headerIndex = lines.findIndex((line) => headerPattern.test(line));
-  if (headerIndex < 0) return undefined;
+export interface EnvironmentConfig {
+  subscriptionId: string;
+  tenantId: string;
+  serverApplicationClientId: string;
+  serverApplicationIdUri: string;
+  resourceGroupPrefix: string;
+  keyVaultName: string;
+  appConfigName: string;
+  containerRegistryName: string;
+  frontendSiteName: string;
+  agentServerSiteName: string;
+  functionAppName: string;
+  teamsAppId: string;
+  teamsGroupId: string;
+  teamsChannelIds: string[];
+  location: string;
+  aiLocation: string;
+  cosmosDbLocation: string;
+  chatbotEvolutionAgentEnabled: boolean;
+  candidateEnvironment?: string;
+  bicepOverrides?: Record<string, string>;
+  localDeployAllowed: boolean;
+  [key: string]: unknown;
+}
 
-  const headerMatch = headerPattern.exec(lines[headerIndex]);
-  const headerIndent = headerMatch?.[1].length ?? 0;
-  let endIndex = lines.length;
-  for (let index = headerIndex + 1; index < lines.length; index++) {
-    const line = lines[index];
-    if (!line.trim() || line.trimStart().startsWith("#")) continue;
-    const indent = line.length - line.trimStart().length;
-    if (indent <= headerIndent) {
-      endIndex = index;
-      break;
+export interface ComponentConfig {
+  healthPath: string;
+  [key: string]: unknown;
+}
+
+export interface EnvironmentSuite {
+  environments: Record<string, EnvironmentConfig>;
+  components: Record<string, ComponentConfig>;
+}
+
+export type ServiceImageRepositories = Record<
+  "agent" | "agent-server" | "frontend" | "function-app",
+  string
+>;
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === "object" && !Array.isArray(value);
+}
+
+export function loadEnvironmentSuite(
+  suitePath: string = DEFAULT_SUITE_PATH,
+): EnvironmentSuite {
+  if (!existsSync(suitePath)) {
+    throw new Error(`environment-suite.yaml not found at ${suitePath}`);
+  }
+
+  const parsed: unknown = parse(readFileSync(suitePath, "utf8"));
+  if (!isRecord(parsed) || !isRecord(parsed.environments) || !isRecord(parsed.components)) {
+    throw new Error(`${suitePath} must define object maps named environments and components.`);
+  }
+
+  return parsed as unknown as EnvironmentSuite;
+}
+
+export function loadServiceImageRepositories(
+  environmentName: string,
+  projectPath: string = DEFAULT_PROJECT_PATH,
+): ServiceImageRepositories {
+  if (!existsSync(projectPath)) {
+    throw new Error(`azure.yaml not found at ${projectPath}`);
+  }
+  const parsed: unknown = parse(readFileSync(projectPath, "utf8"));
+  if (!isRecord(parsed) || !isRecord(parsed.services)) {
+    throw new Error(`${projectPath} must define a services map.`);
+  }
+
+  const repositories = {} as ServiceImageRepositories;
+  for (const serviceName of ["agent", "agent-server", "frontend", "function-app"] as const) {
+    const service = parsed.services[serviceName];
+    const docker = isRecord(service) ? service.docker : undefined;
+    const image = isRecord(docker) && typeof docker.image === "string"
+      ? docker.image.replaceAll("${AZURE_ENV_NAME}", environmentName).trim()
+      : "";
+    if (!image || image.includes("${")) {
+      throw new Error(
+        `services.${serviceName}.docker.image must resolve from ${projectPath}.`,
+      );
     }
+    repositories[serviceName] = image;
   }
-  return {
-    block: lines.slice(headerIndex + 1, endIndex).join("\n"),
-    fieldIndent: headerIndent + 4,
-  };
+  return repositories;
 }
 
-function hasYq(): boolean {
-  if (yqChecked) return yqAvailable;
-  yqChecked = true;
-  const lookup = process.platform === "win32" ? "where" : "command -v";
-  try {
-    execSync(`${lookup} yq`, { stdio: "ignore" });
-    yqAvailable = true;
-  } catch {
-    yqAvailable = false;
+export function getEnvironmentConfig(
+  suite: EnvironmentSuite,
+  environmentName: string,
+): EnvironmentConfig {
+  const environment = suite.environments[environmentName];
+  if (!environment) {
+    throw new Error(
+      `Environment '${environmentName}' is not declared. Declared: ${Object.keys(suite.environments).join(", ")}.`,
+    );
   }
-  return yqAvailable;
+  return environment;
 }
 
-/**
- * Read a scalar field for `envName` from environment-suite.yaml. Returns
- * `undefined` when the field is missing or the file is absent. Never throws
- * for missing fields — callers decide whether the value is required.
- */
+export function getComponentConfig(
+  suite: EnvironmentSuite,
+  componentName: string,
+): ComponentConfig {
+  const component = suite.components[componentName];
+  if (!component) {
+    throw new Error(
+      `Component '${componentName}' is not declared. Declared: ${Object.keys(suite.components).join(", ")}.`,
+    );
+  }
+  return component;
+}
+
+function scalarToString(value: unknown): string | undefined {
+  if (typeof value === "string") return value || undefined;
+  if (typeof value === "boolean" || typeof value === "number") return String(value);
+  return undefined;
+}
+
+/** Compatibility accessor retained for existing hooks. */
 export function getEnvSuiteValue(
-  envName: string,
+  environmentName: string,
   key: string,
   suitePath: string = DEFAULT_SUITE_PATH,
 ): string | undefined {
-  if (!existsSync(suitePath)) return undefined;
-
-  if (hasYq()) {
-    const raw = execFileSync(
-      "yq",
-      ["-r", `.environments.${envName}.${key} // ""`, suitePath],
-      { encoding: "utf8" },
-    ).trim();
-    return raw === "" || raw === "null" ? undefined : raw;
+  try {
+    const environment = getEnvironmentConfig(loadEnvironmentSuite(suitePath), environmentName);
+    return scalarToString(environment[key]);
+  } catch {
+    return undefined;
   }
-
-  // Fallback: locate the `<envName>:` block and grep the flat `key: value`
-  // line at its top-level indentation. Handles single-quoted, double-quoted,
-  // and unquoted scalars. Sufficient for the flat scalar fields the hooks
-  // currently need (subscriptionId, resourceGroupPrefix, teamsAppId, ...).
-  const environment = getEnvironmentBlock(readFileSync(suitePath, "utf8"), envName);
-  if (!environment) return undefined;
-  const fieldRe = new RegExp(`^ {${environment.fieldIndent}}${key}:\\s*(.*)$`, "m");
-  const fieldMatch = fieldRe.exec(environment.block);
-  if (!fieldMatch) return undefined;
-  let value = fieldMatch[1].trim();
-  // Strip trailing inline comment.
-  value = value.replace(/\s+#.*$/, "").trim();
-  // Strip matching quotes.
-  if (
-    (value.startsWith("'") && value.endsWith("'")) ||
-    (value.startsWith('"') && value.endsWith('"'))
-  ) {
-    value = value.slice(1, -1);
-  }
-  return value === "" ? undefined : value;
 }
 
-/** Read a string-array field for `envName` from environment-suite.yaml. */
+/** Compatibility array accessor retained for existing hooks. */
 export function getEnvSuiteValues(
-  envName: string,
+  environmentName: string,
   key: string,
   suitePath: string = DEFAULT_SUITE_PATH,
 ): string[] {
-  if (!existsSync(suitePath)) return [];
+  try {
+    const environment = getEnvironmentConfig(loadEnvironmentSuite(suitePath), environmentName);
+    const value = environment[key];
+    return Array.isArray(value)
+      ? value.map(scalarToString).filter((item): item is string => !!item)
+      : [];
+  } catch {
+    return [];
+  }
+}
 
-  if (hasYq()) {
-    return execFileSync(
-      "yq",
-      ["-r", `.environments.${envName}.${key}[]? // ""`, suitePath],
-      { encoding: "utf8" },
-    )
-      .split(/\r?\n/)
-      .map((value) => value.trim())
-      .filter(Boolean);
+const OVERRIDE_ALIAS_KEYS = new Set([
+  "MANAGED_IDENTITY_NAME",
+  "ACTION_GROUP_NAME",
+  "KEY_VAULT_NAME",
+  "APP_CONFIG_NAME",
+  "SEARCH_SERVICE_NAME",
+  "CONTAINER_REGISTRY_NAME",
+  "STORAGE_ACCOUNT_NAME",
+  "COSMOS_DB_ACCOUNT_NAME",
+  "AI_RESOURCE_NAME",
+  "AI_PROJECT_NAME",
+  "AGENT_SERVER_SITE_NAME",
+  "FUNCTION_APP_NAME",
+  "INTEGRATION_ACCOUNT_NAME",
+  "TEAMS_CONNECTION_NAME",
+  "DOCUMENT_DB_CONNECTION_NAME",
+  "LOGIC_APP_WORKFLOW_NAME",
+  "LOGIC_APP_ALERT_NAME",
+]);
+
+export function buildAzdEnvironmentValues(
+  suite: EnvironmentSuite,
+  environmentName: string,
+  imageRepositories: ServiceImageRepositories = loadServiceImageRepositories(environmentName),
+): Record<string, string> {
+  const environment = getEnvironmentConfig(suite, environmentName);
+  if (!environment.location) {
+    throw new Error(`Environment '${environmentName}' must define a location.`);
   }
 
-  const environment = getEnvironmentBlock(readFileSync(suitePath, "utf8"), envName);
-  if (!environment) return [];
-  const fieldRe = new RegExp(`^ {${environment.fieldIndent}}${key}:\\s*$`, "m");
-  const fieldMatch = fieldRe.exec(environment.block);
-  if (!fieldMatch) return [];
-  const arrayRest = environment.block.slice(fieldMatch.index + fieldMatch[0].length + 1);
-  const itemIndent = environment.fieldIndent + 4;
-  const values: string[] = [];
-  for (const line of arrayRest.split(/\r?\n/)) {
-    const itemMatch = new RegExp(`^ {${itemIndent}}-\\s*(.+)$`).exec(line);
-    if (!itemMatch) break;
-    let value = itemMatch[1].replace(/\s+#.*$/, "").trim();
-    if (
-      (value.startsWith("'") && value.endsWith("'")) ||
-      (value.startsWith('"') && value.endsWith('"'))
-    ) {
-      value = value.slice(1, -1);
-    }
-    if (value) values.push(value);
+  const values: Record<string, string> = {
+    AZD_IMAGE_TAG: environmentName,
+    AZURE_SUBSCRIPTION_ID: environment.subscriptionId,
+    AZURE_TENANT_ID: environment.tenantId,
+    SERVER_APPLICATION_CLIENT_ID: environment.serverApplicationClientId,
+    SERVER_APPLICATION_ID_URI: environment.serverApplicationIdUri,
+    AZURE_RESOURCE_GROUP: environment.resourceGroupPrefix,
+    AZURE_LOCATION: environment.location,
+    AZURE_AI_LOCATION: environment.aiLocation,
+    COSMOS_DB_LOCATION: environment.cosmosDbLocation,
+    CHATBOT_EVOLUTION_AGENT_ENABLED: String(environment.chatbotEvolutionAgentEnabled),
+    FRONTEND_SITE_NAME: environment.frontendSiteName,
+    AGENT_SERVER_SITE_NAME: environment.agentServerSiteName,
+    AGENT_SERVER_SITE_NAME_OVERRIDE: environment.agentServerSiteName,
+    FUNCTION_APP_NAME: environment.functionAppName,
+    FUNCTION_APP_NAME_OVERRIDE: environment.functionAppName,
+    CONTAINER_REGISTRY_NAME: environment.containerRegistryName,
+    CONTAINER_REGISTRY_NAME_OVERRIDE: environment.containerRegistryName,
+    KEY_VAULT_NAME: environment.keyVaultName,
+    KEY_VAULT_NAME_OVERRIDE: environment.keyVaultName,
+    APP_CONFIG_NAME: environment.appConfigName,
+    APP_CONFIG_NAME_OVERRIDE: environment.appConfigName,
+    AZURE_APPCONFIG_ENDPOINT: `https://${environment.appConfigName}.azconfig.io`,
+    AGENT_IMAGE_REPOSITORY: imageRepositories.agent,
+    FRONTEND_IMAGE_REPOSITORY: `${imageRepositories.frontend}:${environmentName}`,
+    AGENT_SERVER_IMAGE_REPOSITORY: `${imageRepositories["agent-server"]}:${environmentName}`,
+    FUNCTION_IMAGE_REPOSITORY: `${imageRepositories["function-app"]}:${environmentName}`,
+    TEAMS_GROUP_ID: environment.teamsGroupId,
+    TEAMS_CHANNEL_IDS: environment.teamsChannelIds.join(","),
+  };
+
+  if (environment.candidateEnvironment) {
+    const candidate = getEnvironmentConfig(suite, environment.candidateEnvironment);
+    values.CANDIDATE_APPCONFIG_ENDPOINT = `https://${candidate.appConfigName}.azconfig.io`;
   }
+
+  for (const [key, value] of Object.entries(environment.bicepOverrides ?? {})) {
+    values[key] = String(value);
+    if (OVERRIDE_ALIAS_KEYS.has(key)) values[`${key}_OVERRIDE`] = String(value);
+  }
+
   return values;
 }

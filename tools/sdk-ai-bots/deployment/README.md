@@ -22,76 +22,36 @@ deployment/
 └─ test/                         ← deployment contract tests
 ```
 
-## Documentation Order
+## Documentation
 
-Developers changing deployment code should start with the
-[deployment maintainer guide](docs/maintainer-guide.md).
-Use the [identity and access reference](docs/identity-and-access.md) when
-reviewing authentication, RBAC, managed identities, or delegated consent.
-For setup and operations, follow these documents in order.
+Each document has one responsibility.
 
-| Step | Document | Use it for |
-| --- | --- | --- |
-| 1 | [Deployment architecture](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/deployment-architecture.md) | Understand services, infrastructure dependencies, deployment order, and scheduled data flows. |
-| 2 | [Environment contract](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/environment-contract.md) | Understand environment values before configuring a deployment. |
-| 3 | [Manual setup](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/manual-setup.md) | Prepare subscriptions, identities, service connections, pipelines, consent, secrets, and the first environment. |
-| 4 | [Operational readiness](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/operational-readiness-checklist.md) | Verify production prerequisites before approval. |
-| 5 | [Deploy runbook](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/runbook-deploy.md) | Run routine component or full-stack deployments. |
-| 6 | [Pipeline reference](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/pipelines/README.md) | Select and maintain CI, provisioning, deployment, and data-job pipelines. |
-| 7 | [Rollback runbook](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/runbook-rollback.md) | Recover by redeploying a known-good source revision and restoring data when needed. |
+| Document | Use it for |
+| --- | --- |
+| [Deployment architecture](docs/deployment-architecture.md) | Deployed topology, layer graph, service order, data flows, and release model. |
+| [Environment contract](docs/environment-contract.md) | Environment-suite schema, azd values, and variable ownership. |
+| [Identity and access](docs/identity-and-access.md) | Principals, authentication, RBAC, consent, and grant lifecycles. |
+| [Manual setup](docs/manual-setup.md) | One-time environment, identity, service-connection, pipeline, and consent setup. |
+| [Deployment maintainer guide](docs/maintainer-guide.md) | azd, Bicep, hook, pipeline, and image implementation mechanics. |
+| [Operational readiness](docs/operational-readiness-checklist.md) | Production approval checklist. |
+| [Deploy runbook](docs/runbook-deploy.md) | Routine pipeline and local dev deployment procedures. |
+| [Rollback runbook](docs/runbook-rollback.md) | Known-good redeployment and data recovery procedures. |
+| [Deployment journey](docs/azd-deployment-journey-report.md) | Historical evolution, upstream issues, and superseded approaches. |
+| [Bot configuration](config/README.md) | Source-controlled Teams routing uploaded during provisioning. |
 
-Maintainers should also use the [infrastructure reference](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/infra/README.md) and [bot configuration reference](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/config/README.md).
+## Local Utilities
 
-## Active Flow
+Run local deployment utilities from this directory through npm. Their CLI
+options use kebab-case, and their behavior is covered by `npm test`.
 
-1. Existing component workflows build and test the changed service.
-2. The pipeline loads `environment-suite.yaml` and authenticates with the
-	 environment's federated service connection.
-3. Preflight validates configuration and runs `azd provision --preview`.
-4. An operator reviews the preview and approves or rejects the apply stage.
-5. `qa-bot-deploy.yml` applies the complete graph when `component=all`, or the
-	 selected infrastructure layer and its dependencies for a scoped deployment.
-6. Full-stack deployment runs `agent-server`, `function-app`, `agent`, the
-	 production-only evolution agent, and `frontend` in that order; a component
-	 deployment runs only the selected service.
-7. Hooks reconcile App Configuration, Key Vault data, Search resources, RBAC,
-	 Teams configuration, hosted-agent settings, and the Logic App workflow.
-8. Scheduled knowledge, wiki, and feedback jobs maintain the data plane.
+| Command | Purpose |
+| --- | --- |
+| `npm run validate-env-suite -- --environment dev` | Validate one environment and its Teams routing. Omit `--environment` to validate all environments. |
+| `npm run sync-env-suite -- --environment dev` | Synchronize the suite into the selected local azd environment. |
+| `npm run smoke-test -- --component frontend --environment dev` | Probe a component endpoint; add `--resolve-only` to inspect the target without Azure calls. |
+| `npm run detect-drift -- --environment dev` | Preview every Bicep layer and fail on Modify or Delete operations. |
 
-## Important Boundaries
-
-- Production deployment is pipeline-only. Local deployment is supported for
-	`dev`; preview and production require the mapped service connections.
-- Only dev currently has a supported first-state bootstrap. A brand-new preview
-	or production environment needs a dedicated approved bootstrap pipeline before
-	the normal layered preview can run; do not bypass this by enabling local
-	deployment.
-- Every pipeline provisioning path includes a preview and manual approval
-	before apply. The documented first-dev bootstrap is the exception.
-- The agent-server deploys directly to its production App Service. The active
-	orchestrators do not perform slot swaps or a blocking multi-service smoke
-	stage. The frontend postdeploy hook has a non-fatal `/health` probe; operators
-	must still complete deployment verification.
-- Re-provisioning can reset images and the Logic App shell. Run the matching
-	deploy stages after provisioning so postdeploy hooks restore runtime state.
-- Entra application bootstrap, Teams/managed-API delegated consent, first Teams
-	catalog publication, and pipeline registration remain operator actions.
-- Preview cannot be deployed until all `REPLACE_WITH_*` values are resolved.
-
-## Local Dev Entry Point
-
-After completing the one-time setup guide:
-
-```bash
-cd tools/sdk-ai-bots/deployment
-npm ci
-azd auth login
-azd env select dev
-pwsh ./scripts/sync-env-suite.ps1 -Environment dev
-pwsh ./scripts/validate-env-suite.ps1 -Environment dev
-azd provision --environment dev --no-prompt
-azd deploy agent-server --environment dev --no-prompt
-azd deploy function-app --environment dev --no-prompt
-azd deploy agent --environment dev --no-prompt
-azd deploy frontend --environment dev --no-prompt
-```
+`scripts/list-risky-preview-operations.mjs` intentionally remains plain
+JavaScript because Azure DevOps invokes it with Node before package-local
+TypeScript tooling is guaranteed. It is the shared preview parser used by the
+pipeline and drift command, not a second implementation of drift rules.

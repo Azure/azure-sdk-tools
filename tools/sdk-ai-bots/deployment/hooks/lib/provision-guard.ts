@@ -1,11 +1,27 @@
-export function enforceProvisionGuard(): void {
-  const environmentName = process.env.AZURE_ENV_NAME ?? "";
-  const runningInPipeline = !!process.env.TF_BUILD || !!process.env.GITHUB_ACTIONS;
+import {
+  getEnvironmentConfig,
+  loadEnvironmentSuite,
+  type EnvironmentSuite,
+} from "./env-suite.js";
 
-  if (environmentName === "prod" && !runningInPipeline) {
+export function enforceLocalOperationAllowed(
+  operation: "provision" | "deploy",
+  env: NodeJS.ProcessEnv = process.env,
+  suite: EnvironmentSuite = loadEnvironmentSuite(),
+): void {
+  const environmentName = env.AZURE_ENV_NAME?.trim();
+  const runningInPipeline = !!env.TF_BUILD || !!env.GITHUB_ACTIONS;
+  if (!environmentName || runningInPipeline) return;
+
+  const environment = getEnvironmentConfig(suite, environmentName);
+  if (!environment.localDeployAllowed) {
     throw new Error(
-      "Refusing to provision prod from a non-pipeline context. " +
-        "Use the production provisioning pipeline.",
+      `Refusing to ${operation} '${environmentName}' from a non-pipeline context. ` +
+        "Use the environment's deployment pipeline.",
     );
   }
+}
+
+export function enforceProvisionGuard(): void {
+  enforceLocalOperationAllowed("provision");
 }

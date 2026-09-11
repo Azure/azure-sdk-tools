@@ -5,10 +5,9 @@
  *
  *   - Reads `infra/environments/environment-suite.yaml` and validates that
  *     `AZURE_ENV_NAME` matches one of the declared environments.
- *   - Enforces `prodDeployOnlyFromPipeline: true` by failing fast when run
- *     outside Azure DevOps for the prod env.
+ *   - Enforces the selected environment's `localDeployAllowed` policy.
  *   - Detects local-dev drift between the env-suite and the azd env vars
- *     and tells the developer to run scripts/sync-env-suite.ps1.
+ *     and tells the developer to run the TypeScript sync command.
  *   - Detects the deploying principal from its ARM access token without
  *     requiring Microsoft Graph access. The active principal is persisted
  *     separately from the optional developer user/group so automation always
@@ -16,11 +15,15 @@
  */
 
 import { execFileSync, execSync } from "child_process";
-import { readFileSync, existsSync } from "fs";
+import { existsSync } from "fs";
 import { dirname, resolve } from "path";
 import { fileURLToPath } from "url";
 
-import { getEnvSuiteValue, getEnvSuiteValues } from "./lib/env-suite.js";
+import {
+  buildAzdEnvironmentValues,
+  getEnvironmentConfig,
+  loadEnvironmentSuite,
+} from "./lib/env-suite.js";
 import { enforceProvisionGuard } from "./lib/provision-guard.js";
 import { runQuotaCheck } from "./lib/quota-check.js";
 
@@ -57,10 +60,7 @@ function validateEnvironmentSuite(): void {
     throw new Error(`environment-suite.yaml not found at ${SUITE_PATH}`);
   }
 
-  const text = readFileSync(SUITE_PATH, "utf8");
-  const declared = ["dev", "preview", "prod"].filter((e) =>
-    new RegExp(`^\\s{2,4}${e}:`, "m").test(text)
-  );
+  const declared = Object.keys(loadEnvironmentSuite(SUITE_PATH).environments);
   if (!ENV_NAME) {
     log("  AZURE_ENV_NAME not set — assuming developer-local 'dev' run.");
     return;
@@ -77,7 +77,7 @@ function validateEnvironmentSuite(): void {
 /**
  * Local-only drift detection: compares values azd loaded from
  * .azure/<env>/.env against the per-env block in environment-suite.yaml.
- * If they differ, instruct the developer to run sync-env-suite.ps1.
+ * If they differ, instruct the developer to run the TypeScript sync command.
  *
  * Skipped in pipelines (the pipeline gets values from
  * load-environment-suite.yml directly — no drift possible).
@@ -85,84 +85,30 @@ function validateEnvironmentSuite(): void {
 function detectLocalDrift(): void {
   if (RUNNING_IN_PIPELINE || !ENV_NAME) return;
 
-  const expected: Record<string, string> = {};
-  const lookup = process.platform === "win32" ? "where" : "command -v";
-  let yqAvailable = false;
-  try {
-    execSync(`${lookup} yq`, { stdio: "ignore" });
-    yqAvailable = true;
-  } catch {
-    log("  yq not on PATH — skipping env-suite portion of drift check.");
-  }
-
-  if (yqAvailable) {
-    const read = (path: string): string =>
-      execFileSync("yq", ["-r", path, SUITE_PATH], { encoding: "utf8" }).trim();
-
-    expected.AZURE_SUBSCRIPTION_ID = read(`.environments.${ENV_NAME}.subscriptionId`);
-    expected.AZURE_TENANT_ID = read(`.environments.${ENV_NAME}.tenantId`);
-    expected.AZURE_RESOURCE_GROUP = read(`.environments.${ENV_NAME}.resourceGroupPrefix`);
-    expected.AZURE_LOCATION = read(`.environments.${ENV_NAME}.regions[0].name`);
-    expected.AZURE_AI_LOCATION = read(`.environments.${ENV_NAME}.aiLocation`);
-    expected.AZURE_AI_DEPLOYMENTS_LOCATION = expected.AZURE_AI_LOCATION;
-    expected.COSMOS_DB_LOCATION = read(`.environments.${ENV_NAME}.cosmosDbLocation`);
-    expected.CHATBOT_EVOLUTION_AGENT_ENABLED = read(
-      `.environments.${ENV_NAME}.chatbotEvolutionAgentEnabled`,
-    );
-    expected.FRONTEND_SITE_NAME = read(`.environments.${ENV_NAME}.frontendSiteName`);
-    expected.AGENT_SERVER_SITE_NAME = read(`.environments.${ENV_NAME}.agentServerSiteName`);
-    expected.FUNCTION_APP_NAME = read(`.environments.${ENV_NAME}.functionAppName`);
-    expected.ACR_NAME = read(`.environments.${ENV_NAME}.containerRegistryName`);
-    expected.CONTAINER_REGISTRY_NAME = expected.ACR_NAME;
-    expected.KEY_VAULT_NAME = read(`.environments.${ENV_NAME}.keyVaultName`);
-    expected.APP_CONFIG_NAME = read(`.environments.${ENV_NAME}.appConfigName`);
-    expected.AZURE_APPCONFIG_ENDPOINT = `https://${expected.APP_CONFIG_NAME}.azconfig.io`;
-    const candidateEnvironment = read(`.environments.${ENV_NAME}.candidateEnvironment // ""`);
-    if (candidateEnvironment) {
-      const candidateAppConfigName = read(`.environments.${candidateEnvironment}.appConfigName`);
-      expected.CANDIDATE_APPCONFIG_ENDPOINT = `https://${candidateAppConfigName}.azconfig.io`;
-    }
-    expected.FRONTEND_IMAGE_REPOSITORY = `${read('.components.frontend.imageName')}:${ENV_NAME}`;
-    expected.AGENT_SERVER_IMAGE_REPOSITORY = `${read('.components."agent-server".imageName')}:${ENV_NAME}`;
-    expected.FUNCTION_IMAGE_REPOSITORY = `${read('.components."function-app".imageName')}:${ENV_NAME}`;
-
-    const overrides = JSON.parse(
-      execFileSync(
-        "yq",
-        ["-o=json", `.environments.${ENV_NAME}.bicepOverrides // {}`, SUITE_PATH],
-        { encoding: "utf8" },
-      ),
-    );
-    Object.assign(expected, overrides);
-  }
-
-  const serverApplicationClientId =
-    getEnvSuiteValue(ENV_NAME, "serverApplicationClientId", SUITE_PATH) ?? "";
-  const serverApplicationIdUri =
-    getEnvSuiteValue(ENV_NAME, "serverApplicationIdUri", SUITE_PATH) ?? "";
-  if (!serverApplicationClientId || serverApplicationClientId.startsWith("REPLACE_WITH_")) {
+  const suite = loadEnvironmentSuite(SUITE_PATH);
+  const environment = getEnvironmentConfig(suite, ENV_NAME);
+  const expected = buildAzdEnvironmentValues(suite, ENV_NAME);
+  if (
+    !environment.serverApplicationClientId ||
+    environment.serverApplicationClientId.startsWith("REPLACE_WITH_")
+  ) {
     throw new Error(`serverApplicationClientId is missing or still a placeholder in ${SUITE_PATH}`);
   }
-  if (!serverApplicationIdUri || serverApplicationIdUri.startsWith("REPLACE_WITH_")) {
+  if (
+    !environment.serverApplicationIdUri ||
+    environment.serverApplicationIdUri.startsWith("REPLACE_WITH_")
+  ) {
     throw new Error(`serverApplicationIdUri is missing or still a placeholder in ${SUITE_PATH}`);
   }
-  expected.SERVER_AUDIENCE = serverApplicationClientId;
-  expected.SERVER_APPLICATION_ID_URI = serverApplicationIdUri;
-  expected.RAG_SERVICE_SCOPE = `${serverApplicationIdUri}/.default`;
-
-  const teamsGroupId = getEnvSuiteValue(ENV_NAME, "teamsGroupId", SUITE_PATH) ?? "";
-  const teamsChannelIds = getEnvSuiteValues(ENV_NAME, "teamsChannelIds", SUITE_PATH);
-  if (!teamsGroupId || teamsGroupId.startsWith("REPLACE_WITH_")) {
+  if (!environment.teamsGroupId || environment.teamsGroupId.startsWith("REPLACE_WITH_")) {
     throw new Error(`teamsGroupId is missing or still a placeholder in ${SUITE_PATH}`);
   }
   if (
-    teamsChannelIds.length === 0 ||
-    teamsChannelIds.some((id: string) => !id || id.startsWith("REPLACE_WITH_"))
+    environment.teamsChannelIds.length === 0 ||
+    environment.teamsChannelIds.some((id) => !id || id.startsWith("REPLACE_WITH_"))
   ) {
     throw new Error(`teamsChannelIds is empty or contains a placeholder in ${SUITE_PATH}`);
   }
-  expected.TEAMS_GROUP_ID = teamsGroupId;
-  expected.TEAMS_CHANNEL_IDS = teamsChannelIds.join(",");
 
   const drift: string[] = [];
   for (const [key, want] of Object.entries(expected)) {
@@ -175,14 +121,10 @@ function detectLocalDrift(): void {
     throw new Error(
       "azd environment is out of sync with its configuration sources:\n" +
         drift.join("\n") +
-        `\n\nRun:  pwsh ./scripts/sync-env-suite.ps1 -Environment ${ENV_NAME}`
+        `\n\nRun: npm run sync-env-suite -- --environment ${ENV_NAME}`
     );
   }
-  log(
-    yqAvailable
-      ? "  ✓ azd env vars match environment-suite.yaml"
-      : "  ✓ fixed identity and Teams routing match environment-suite.yaml; full drift check skipped without yq",
-  );
+  log("  ✓ azd env vars match environment-suite.yaml");
 }
 
 function validateAuth(): void {

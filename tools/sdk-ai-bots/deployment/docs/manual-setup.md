@@ -1,7 +1,7 @@
 # Manual Setup Guide
 
 Use this guide once for each new deployment environment. Complete the sections
-in order. Routine deployments use the [deploy runbook](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/runbook-deploy.md).
+in order. Routine deployments use the [deploy runbook](runbook-deploy.md).
 
 ## 1. Install Local Prerequisites
 
@@ -12,8 +12,7 @@ workstation. Azure DevOps agents install their own dependencies.
 - Azure Developer CLI (`azd`) 1.32.0 or later
 - Bicep CLI 0.30 or later (`az bicep install`)
 - Node.js 20 or later and npm
-- PowerShell 7 or later
-- `yq` v4
+- `yq` v4 for extension setup and pipeline YAML checks
 - Docker only for optional local image builds; pipelines build remotely in ACR
 
 Install and validate the deployment tooling:
@@ -28,7 +27,7 @@ azd version
 
 ## 2. Choose Azure Targets and Check Quota
 
-Choose the subscription, tenant, resource-group name, and regions for each of
+Choose the subscription, tenant, resource-group name, and locations for each of
 `dev`, `preview`, and `prod`. Environments may share a subscription, but they
 must have isolated resource groups and globally unique resource names.
 
@@ -80,27 +79,19 @@ not create a multitenant bot or client secret.
 
 ## 4. Define the Environment and Bot Routing
 
-Edit `deployment/infra/environments/environment-suite.yaml`. For the selected
-environment, set:
-
-- service-connection alias, subscription ID, and tenant ID;
-- backend application client ID and Application ID URI from step 3;
-- resource group, region, AI region, and Cosmos DB region;
-- globally unique Key Vault, App Configuration, ACR, and site names;
-- Teams group and channel IDs;
-- approval, local-deploy, and production-pipeline policies;
-- existing resource names under `bicepOverrides` when adopting resources;
-- `candidateEnvironment` when chatbot evolution is enabled.
+Populate the selected environment in
+`deployment/infra/environments/environment-suite.yaml` according to the
+[environment contract](environment-contract.md). Use `bicepOverrides` for
+adopted resource names and set `candidateEnvironment` when chatbot evolution is
+enabled.
 
 Update `deployment/config/<env>/channel.yaml` and `tenant.yaml` for the same
 Teams routes. The postprovision hook substitutes resource placeholders and
 uploads these files to the `bot-configs` container. Do not hard-code a different
 environment's backend endpoint.
 
-Read the [environment contract](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/environment-contract.md), then validate:
-
-```pwsh
-pwsh ./scripts/validate-env-suite.ps1 -Environment <env>
+```bash
+npm run validate-env-suite -- --environment <env>
 ```
 
 All `REPLACE_WITH_*` values for the selected environment must be resolved.
@@ -108,8 +99,9 @@ All `REPLACE_WITH_*` values for the selected environment must be resolved.
 ## 5. Create Federated Service Connections
 
 Create an Azure Resource Manager workload-identity-federated service connection
-for each environment. Its name must match both the environment suite's
-`subscription` value and `pipelines/templates/service-connection.yml`.
+for each environment. Define its name in
+`pipelines/templates/service-connection.yml` and ensure it targets the
+environment suite's `subscriptionId`.
 
 The provisioning identity must be able to:
 
@@ -155,24 +147,16 @@ The application deployment definition accepts `component=all` (the default),
 provision and deploy one service; `shared-resources` and `logic-app` are
 provision-only selections.
 
-The existing knowledge-sync CI and scheduled sync definitions under
-`azure-sdk-qa-bot-knowledge-sync` remain outside this deployment pipeline set.
-
-See the [pipeline reference](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/pipelines/README.md) for composition and ownership.
+Knowledge sync, wiki generation, hosted-agent deployment, and feedback jobs use
+the package-owned definitions listed in the [deploy runbook](runbook-deploy.md).
 
 ## 7. Bootstrap Dev Layer State
 
-The normal full-stack preflight refreshes every layer before preview. A
-brand-new environment has no state to refresh, so bootstrap it once from an
-authorized workstation. This exception is supported for dev; production
-remains pipeline-only.
-
-Preview is also local-disabled. A brand-new preview or production environment
-therefore has no supported first-state path in the current pipelines: full
-preflight cannot refresh absent layers, while local bootstrap is prohibited.
-Treat that as a deployment blocker and add a separately reviewed bootstrap
-pipeline before creating either environment from scratch. Do not temporarily
-relax `localDeployAllowed` or `prodDeployOnlyFromPipeline` to work around it.
+The normal full-stack preflight refreshes existing layer state. Bootstrap a new
+dev environment once from an authorized workstation. Before creating a preview
+or production environment, provide an approved first-state bootstrap pipeline;
+those environments disable local provision and deploy through
+`localDeployAllowed`.
 
 The command below is for dev only:
 
@@ -183,8 +167,8 @@ azd env new dev \
   --subscription <dev-subscription-id> \
   --location <dev-region> \
   --no-prompt
-pwsh ./scripts/sync-env-suite.ps1 -Environment dev
-pwsh ./scripts/validate-env-suite.ps1 -Environment dev
+npm run sync-env-suite -- --environment dev
+npm run validate-env-suite -- --environment dev
 azd provision --environment dev --no-prompt
 ```
 
@@ -233,28 +217,12 @@ approved versions can be installed or upgraded by the frontend postdeploy hook.
 - Do not create a Cosmos DB connection-string secret for the Logic App; its
   connection uses managed identity.
 
-Storage soft-delete and seven-day continuous Cosmos backup are provisioned.
-Blob versioning is currently disabled. Enable it manually before relying on
-blob-version restoration as a recovery procedure.
+Storage soft delete and seven-day continuous Cosmos backup are provisioned. If
+the recovery plan requires blob-version restoration, enable and test blob
+versioning before production use.
 
 ## 9. Validate Readiness and Deploy
 
-Complete the [operational readiness checklist](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/operational-readiness-checklist.md), then follow the [deploy runbook](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/runbook-deploy.md).
-
-## 10. Cut Over Existing Pipelines
-
-Keep legacy component definitions during initial validation. After dev and
-preview have run successfully and operators accept the new runbooks, disable
-the superseded server, Logic App, and ARM deployment paths. Keep the existing
-knowledge-sync and evaluation pipelines separate; they are not part of this
-deployment.
-
-## Re-provisioning Warning
-
-Re-provisioning can reset application image settings and restore the Logic App
-to its empty Bicep shell. After any apply, run the normal application deployment
-stages so predeploy and postdeploy hooks restore the desired runtime state.
-
-State that is re-seeded on every complete provision includes App Configuration,
-Search objects, `AI-SEARCH-APIKEY`, and bot configuration blobs. Managed-API
-OAuth consent persists, but verify it whenever connection resources change.
+Complete the [operational readiness checklist](operational-readiness-checklist.md),
+then follow the [deploy runbook](runbook-deploy.md). The runbook owns routine
+apply, application deployment, verification, and re-provisioning procedures.

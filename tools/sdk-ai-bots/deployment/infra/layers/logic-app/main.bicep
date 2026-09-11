@@ -268,8 +268,6 @@ resource metricAlert 'Microsoft.Insights/metricAlerts@2024-03-01-preview' = {
   }
 }
 
-output INTEGRATION_ACCOUNT_NAME string = integrationAccountName
 output TEAMS_CONNECTION_NAME string = teamsConnectionName
 output DOCUMENT_DB_CONNECTION_NAME string = documentDbConnectionName
 output LOGIC_APP_WORKFLOW_NAME string = logicAppWorkflowName
-output LOGIC_APP_ALERT_NAME string = logicAppAlertName

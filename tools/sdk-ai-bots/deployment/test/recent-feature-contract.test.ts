@@ -85,12 +85,118 @@ test("reports the selected image version before each azd deployment", () => {
 
 test("deploys the image tag selected by the pipeline", () => {
   const project = read("../azure.yaml");
-  const frontend = read("hooks/frontend-predeploy.ts");
-  const functionApp = read("hooks/function-predeploy.ts");
+  const localSync = read("scripts/sync-env-suite.ts");
+  const frontend = project.match(/\n    frontend:\n([\s\S]*?)\n    function-app:/)?.[1] ?? "";
+  const functionApp = project.match(/\n    function-app:\n([\s\S]*?)\ninfra:/)?.[1] ?? "";
 
-  assert.equal((project.match(/tag: \$\{AZD_IMAGE_TAG\}/g) ?? []).length, 3);
-  assert.match(frontend, /process\.env\.AZD_IMAGE_TAG/);
-  assert.match(functionApp, /process\.env\.AZD_IMAGE_TAG/);
+  assert.equal((project.match(/tag: \$\{AZD_IMAGE_TAG\}/g) ?? []).length, 4);
+  assert.match(frontend, /language: docker/);
+  assert.match(frontend, /image: azure-sdk-qa-bot/);
+  assert.match(frontend, /remoteBuild: true/);
+  assert.doesNotMatch(frontend, /predeploy:/);
+  assert.match(functionApp, /host: function/);
+  assert.match(functionApp, /image: azure-sdk-qa-bot-function/);
+  assert.match(functionApp, /remoteBuild: true/);
+  assert.doesNotMatch(functionApp, /predeploy:/);
+  assert.match(localSync, /buildAzdEnvironmentValues/);
+});
+
+test("runs hooks with the package-local TypeScript runtime", () => {
+  const project = read("../azure.yaml");
+
+  assert.doesNotMatch(project, /npx(?: --yes)? tsx/);
+  assert.equal(
+    (project.match(/\.\/node_modules\/\.bin\/tsx/g) ?? []).length,
+    16,
+  );
+});
+
+test("builds frontend TypeScript inside the native container context", () => {
+  const dockerfile = read("../azure-sdk-qa-bot/Dockerfile");
+  const dockerignore = read("../azure-sdk-qa-bot/.dockerignore");
+
+  assert.match(dockerfile, /RUN npm run build && npm prune --omit=dev/);
+  assert.doesNotMatch(dockerignore, /^src$/m);
+  assert.doesNotMatch(dockerignore, /^\*\.ts$/m);
+  assert.doesNotMatch(dockerignore, /^tsconfig\.json$/m);
+});
+
+test("keeps rollout configuration limited to active behavior", () => {
+  const suite = read("infra/environments/environment-suite.yaml");
+  const loader = read("pipelines/templates/load-environment-suite.yml");
+  const smokeTest = read("scripts/smoke-test.ts");
+
+  assert.doesNotMatch(suite, /rolloutStrategy|slot-swap|slot: 'staging'/);
+  assert.doesNotMatch(suite, /minSuccessRate|latencyP95Ms|stabilizationWindowMinutes/);
+  assert.doesNotMatch(loader, /ROLLOUT_STRATEGY/);
+  assert.match(smokeTest, /frontendSiteName/);
+  assert.match(smokeTest, /resourceGroupPrefix/);
+  assert.match(smokeTest, /healthPath/);
+});
+
+test("declares principal-aware frontend role assignments in Bicep", () => {
+  const bicep = read("infra/layers/frontend/main.bicep");
+  const hook = read("hooks/frontend-postprovision.ts");
+
+  assert.equal((bicep.match(/Microsoft\.Authorization\/roleAssignments/g) ?? []).length, 3);
+  assert.match(
+    bicep,
+    /guid\(component\.id, userAssignedIdentity\.id, monitoringMetricsPublisherRoleDefinitionId\)/,
+  );
+  assert.match(
+    bicep,
+    /guid\(sharedRegistry\.id, userAssignedIdentity\.id, acrPullRoleDefinitionId\)/,
+  );
+  assert.match(
+    bicep,
+    /guid\(storageAccount\.id, userAssignedIdentity\.id, roleDefinitionId\)/,
+  );
+  assert.doesNotMatch(bicep, /17d1049b-9a84-46fb-8f53-869881c3d3ab/);
+  assert.match(bicep, /enabled: true\s+emailReceivers:/);
+  assert.doesNotMatch(hook, /ensureFrontendRoleAssignments/);
+});
+
+test("uses BOT_ID as the single frontend identity client ID", () => {
+  const frontend = read("infra/layers/frontend/main.bicep");
+  const agentServerParameters = read("infra/layers/agent-server/main.bicepparam");
+  const frontendConfig = read("../azure-sdk-qa-bot/src/config/config.ts");
+
+  assert.doesNotMatch(frontend, /BOT_MANAGED_IDENTITY_CLIENT_ID/);
+  assert.match(agentServerParameters, /frontendIdentityClientId = readEnvironmentVariable\('BOT_ID'/);
+  assert.doesNotMatch(agentServerParameters, /BOT_MANAGED_IDENTITY_CLIENT_ID/);
+  assert.match(frontendConfig, /userManagedIdentityClientID: process\.env\.BOT_ID/);
+});
+
+test("uses suite-owned frontend identity name and tenant values", () => {
+  const frontend = read("infra/layers/frontend/main.bicep");
+  const agentServerParameters = read("infra/layers/agent-server/main.bicepparam");
+  const logicAppParameters = read("infra/layers/logic-app/main.bicepparam");
+  const teamsSync = read("hooks/lib/sync-teams-env.ts");
+
+  assert.doesNotMatch(frontend, /output BOT_IDENTITY_NAME|output BOT_TENANT_ID/);
+  assert.match(agentServerParameters, /frontendIdentityName = readEnvironmentVariable\('FRONTEND_SITE_NAME'/);
+  assert.match(logicAppParameters, /botIdentityName = readEnvironmentVariable\('FRONTEND_SITE_NAME'/);
+  assert.match(teamsSync, /target: "BOT_TENANT_ID", source: "AZURE_TENANT_ID"/);
+});
+
+test("aligns runtime app settings with application consumers", () => {
+  const agentServer = read("infra/layers/agent-server/main.bicep");
+  const functionApp = read("infra/layers/function-app/main.bicep");
+  const storageService = read("../azure-sdk-qa-bot-function/src/services/StorageService.ts");
+
+  assert.match(agentServer, /name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'/);
+  assert.doesNotMatch(agentServer, /APP_INSIGHTS_CONNECTION_STRING/);
+  for (const unusedSetting of [
+    "AI_PROJECT_NAME",
+    "AZURE_AI_RESOURCE_NAME",
+    "COSMOS_DB_ACCOUNT_NAME",
+    "STORAGE_ACCOUNT_NAME",
+  ]) {
+    assert.doesNotMatch(agentServer, new RegExp(`name: '${unusedSetting}'`));
+  }
+  assert.doesNotMatch(functionApp, /name: 'APP_CONFIG_NAME'/);
+  assert.match(storageService, /process\.env\.STORAGE_ACCOUNT_NAME/g);
+  assert.doesNotMatch(storageService, /AZURE_STORAGE_ACCOUNT_NAME/);
 });
 
 test("runs Search indexers after both data producers", () => {

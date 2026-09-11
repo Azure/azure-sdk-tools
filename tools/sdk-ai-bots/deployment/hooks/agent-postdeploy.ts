@@ -21,6 +21,8 @@
 
 import { execSync } from "child_process";
 
+import { resolveAgentTargetImage } from "./lib/resolve-agent-image.js";
+
 const AGENT_BASE_URL = process.env.AGENT_BASE_URL ?? "";
 
 // Foundry data-plane api-version that returns/accepts environment_variables in
@@ -271,7 +273,14 @@ async function ensureAgentAppConfigEnv(): Promise<void> {
     return;
   }
 
-  const targetImage = latestImage;
+  const targetImage = resolveAgentTargetImage(process.env);
+  if (!targetImage) {
+    throw new Error(
+      "Cannot determine the deployment-selected agent image. Set " +
+        "AZURE_CONTAINER_REGISTRY_ENDPOINT, AGENT_IMAGE_REPOSITORY, " +
+        "AZURE_ENV_NAME, and AZD_IMAGE_TAG.",
+    );
+  }
 
   if (
     latestImage === targetImage &&

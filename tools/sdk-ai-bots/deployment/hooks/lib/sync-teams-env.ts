@@ -40,7 +40,7 @@ export interface SyncTeamsEnvOptions {
   /**
    * Teams app registration for this environment. Sourced from
    * `infra/environments/environment-suite.yaml`
-   * (environments.<env>.teamsAppId / .teamsAppTenantId) by the caller.
+  * (environments.<env>.teamsAppId / .tenantId) by the caller.
    *
    * Each env has its OWN Teams app; these MUST NOT be copied from the
    * committed base file (e.g. .env.dev), which would repoint the azd env to a
@@ -50,7 +50,7 @@ export interface SyncTeamsEnvOptions {
    * resulting GUID back into environment-suite.yaml.
    */
   teamsAppId?: string;
-  teamsAppTenantId?: string;
+  tenantId?: string;
   /**
    * Optional override for the Teams project root (folder containing `env/`).
    * Defaults to `../azure-sdk-qa-bot` relative to the deployment/ cwd azd uses
@@ -81,7 +81,7 @@ const AZD_OVERRIDES: { target: string; source: string; required: boolean }[] = [
   { target: "BOT_AZURE_APP_SERVICE_RESOURCE_ID", source: "BOT_AZURE_APP_SERVICE_RESOURCE_ID", required: true },
   { target: "BOT_DOMAIN", source: "BOT_DOMAIN", required: true },
   { target: "BOT_ID", source: "BOT_ID", required: true },
-  { target: "BOT_TENANT_ID", source: "BOT_TENANT_ID", required: true },
+  { target: "BOT_TENANT_ID", source: "AZURE_TENANT_ID", required: true },
   { target: "AZURE_SUBSCRIPTION_ID", source: "AZURE_SUBSCRIPTION_ID", required: false },
   { target: "AZURE_RESOURCE_GROUP_NAME", source: "AZURE_RESOURCE_GROUP", required: false },
 ];
@@ -175,7 +175,7 @@ export function syncTeamsEnv(options: SyncTeamsEnvOptions): void {
   // GUID should then be committed back to environment-suite.yaml.
   const teamsappValues: Record<(typeof TEAMSAPP_OWNED_KEYS)[number], string | undefined> = {
     TEAMS_APP_ID: options.teamsAppId,
-    TEAMS_APP_TENANT_ID: options.teamsAppTenantId,
+    TEAMS_APP_TENANT_ID: options.tenantId,
   };
   for (const key of TEAMSAPP_OWNED_KEYS) {
     const value = teamsappValues[key];

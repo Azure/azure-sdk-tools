@@ -142,10 +142,6 @@ resource site 'Microsoft.Web/sites@2025-05-01' = {
           value: '499b84ac-1321-427f-aa17-267ca6975798/.default'
         }
         {
-          name: 'APP_CONFIG_NAME'
-          value: 'qabot-config-${substring(uniqueString(resourceGroup().id), 0, 6)}'
-        }
-        {
           name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
           value: component.properties.InstrumentationKey
         }
@@ -193,4 +189,3 @@ resource site 'Microsoft.Web/sites@2025-05-01' = {
 
 // Output
 output FUNCTION_APP_NAME string = site.name
-output FUNCTION_CONTAINER_IMAGE string = containerImage

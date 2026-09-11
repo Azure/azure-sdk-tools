@@ -6,7 +6,7 @@ param storageAccountName string
 @description('Name of the shared container registry that hosts the frontend image.')
 param containerRegistryName string
 
-@description('Frontend container image repository and tag (e.g. `azure-sdk-qa-bot:dev`), pushed to the shared registry by CI / `frontend-predeploy.ts`.')
+@description('Frontend container image repository and tag (e.g. `azure-sdk-qa-bot:dev`), published through azd native remote build.')
 param frontendImageRepository string
 
 // Resource-name overrides — see the shared-resources layer. In
@@ -105,11 +105,13 @@ resource component 'Microsoft.Insights/components@2020-02-02' = {
   }
 }
 
-resource roleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+var monitoringMetricsPublisherRoleDefinitionId = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '3913510d-42f4-4e42-8a64-420c390055eb')
+
+resource monitoringMetricsPublisherRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   scope: component
-  name: guid(component.id, subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '3913510d-42f4-4e42-8a64-420c390055eb'))
+  name: guid(component.id, userAssignedIdentity.id, monitoringMetricsPublisherRoleDefinitionId)
   properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '3913510d-42f4-4e42-8a64-420c390055eb')
+    roleDefinitionId: monitoringMetricsPublisherRoleDefinitionId
     principalId: userAssignedIdentity.properties.principalId
     principalType: 'ServicePrincipal'
   }
@@ -120,6 +122,7 @@ resource actionGroup 'Microsoft.Insights/actionGroups@2024-10-01-preview' = {
   location: 'Global'
   properties: {
     groupShortName: 'EmailAlerts'
+    enabled: true
     emailReceivers: [
       {
         name: 'email-0'
@@ -149,13 +152,13 @@ resource sharedRegistry 'Microsoft.ContainerRegistry/registries@2026-01-01-previ
   name: containerRegistryName
 }
 
-// Grant the frontend identity AcrPull on the shared registry so the site can
-// pull its container image using this user-assigned identity.
-resource roleAssignment2 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+var acrPullRoleDefinitionId = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '7f951dda-4ed3-4680-a7ca-43fe172d538d')
+
+resource acrPullRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   scope: sharedRegistry
-  name: guid(sharedRegistry.id, userAssignedIdentity.id, subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '7f951dda-4ed3-4680-a7ca-43fe172d538d'))
+  name: guid(sharedRegistry.id, userAssignedIdentity.id, acrPullRoleDefinitionId)
   properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '7f951dda-4ed3-4680-a7ca-43fe172d538d')
+    roleDefinitionId: acrPullRoleDefinitionId
     principalId: userAssignedIdentity.properties.principalId
     principalType: 'ServicePrincipal'
   }
@@ -220,10 +223,6 @@ resource site 'Microsoft.Web/sites@2025-05-01' = {
         {
           name: 'BOT_TYPE'
           value: 'UserAssignedMsi'
-        }
-        {
-          name: 'BOT_MANAGED_IDENTITY_CLIENT_ID'
-          value: userAssignedIdentity.properties.clientId
         }
         {
           name: 'AZURE_CLIENT_ID'
@@ -469,37 +468,25 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2026-04-01' existing 
   name: storageAccountName
 }
 
-var storageRoleIds = [
-  '17d1049b-9a84-46fb-8f53-869881c3d3ab'
-  'ba92f5b4-2d11-453d-a403-e96b0029c9fe'
-  '0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3'
+var storageRoleDefinitionIds = [
+  subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')
+  subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3')
 ]
 
-resource storageRoleAssignments 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for roleId in storageRoleIds: {
+resource storageRoleAssignments 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for roleDefinitionId in storageRoleDefinitionIds: {
   scope: storageAccount
-  name: guid(storageAccount.id, subscriptionResourceId('Microsoft.Authorization/roleDefinitions', roleId))
+  name: guid(storageAccount.id, userAssignedIdentity.id, roleDefinitionId)
   properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', roleId)
+    roleDefinitionId: roleDefinitionId
     principalId: userAssignedIdentity.properties.principalId
     principalType: 'ServicePrincipal'
   }
 }]
 
 // Outputs
-output BOT_IDENTITY_NAME string = userAssignedIdentity.name
-output BOT_SERVICE_NAME string = botService.name
-output BOT_BASE_URL string = 'https://${site.properties.defaultHostName}'
 output BOT_ID string = userAssignedIdentity.properties.clientId
-output BOT_MANAGED_IDENTITY_CLIENT_ID string = userAssignedIdentity.properties.clientId
-// Token audience callers use when POSTing to the bot's /api/messages. For a
-// bot registered as `msaAppType: UserAssignedMSI`, the Bot Framework
-// CloudAdapter validates incoming JWTs against the Bot Framework Service
-// audience — not the UAMI clientId. Using anything else fails at AAD token
-// acquisition or at the adapter's inbound auth.
-output BOT_AUDIENCE string = 'https://api.botframework.com'
 // Consumed by hooks/lib/sync-teams-env.ts to populate the Teams Toolkit env
 // file (azure-sdk-qa-bot/env/.env.<env>) so `teamsapp` no longer needs its own
 // arm/deploy step — azd owns provisioning and feeds these values to Teams.
 output BOT_AZURE_APP_SERVICE_RESOURCE_ID string = site.id
 output BOT_DOMAIN string = site.properties.defaultHostName
-output BOT_TENANT_ID string = userAssignedIdentity.properties.tenantId

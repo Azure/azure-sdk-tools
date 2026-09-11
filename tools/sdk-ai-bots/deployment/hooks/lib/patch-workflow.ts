@@ -20,6 +20,8 @@ import { tmpdir } from "os";
 import { dirname, join, resolve } from "path";
 import { fileURLToPath } from "url";
 
+const BOT_FRAMEWORK_AUDIENCE = "https://api.botframework.com";
+
 export const WORKFLOW_API_VERSION = "2019-05-01";
 
 // Resolve relative to this source file (hooks/lib) so callers running from
@@ -189,7 +191,7 @@ export async function patchWorkflow(opts: PatchWorkflowOptions = {}): Promise<vo
   const docDbConnName = requireEnv("DOCUMENT_DB_CONNECTION_NAME");
 
   const serverIdentityName = requireEnv("MANAGED_IDENTITY_NAME");
-  const botIdentityName = requireEnv("BOT_IDENTITY_NAME");
+  const botIdentityName = requireEnv("FRONTEND_SITE_NAME");
   const functionAppName = requireEnv("FUNCTION_APP_NAME");
 
   const teamsConnectionStatus = readTeamsConnectionStatus(
@@ -223,8 +225,8 @@ export async function patchWorkflow(opts: PatchWorkflowOptions = {}): Promise<vo
     .filter((s) => s.length > 0);
   const serverBaseUrl = requireEnv("SERVER_BASE_URL");
   const serverApplicationIdUri = requireEnv("SERVER_APPLICATION_ID_URI");
-  const botBaseUrl = requireEnv("BOT_BASE_URL");
-  const botAudience = requireEnv("BOT_AUDIENCE");
+  const botBaseUrl = `https://${requireEnv("BOT_DOMAIN")}`;
+  const botAudience = BOT_FRAMEWORK_AUDIENCE;
 
   // Derived resource IDs.
   const serverIdentityResourceId = armResourceId(subscriptionId, resourceGroup, "Microsoft.ManagedIdentity", "userAssignedIdentities", serverIdentityName);

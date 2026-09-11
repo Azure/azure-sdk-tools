@@ -1,13 +1,14 @@
 # Deploy Runbook
 
 Use this runbook for routine deployments after the one-time
-[manual setup](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/manual-setup.md) is complete.
+[manual setup](manual-setup.md) is complete.
 
 ## 1. Select the Deployment Path
 
 Use the deployment pipeline with `component=all` when infrastructure contracts
 or multiple services change. Select one component for an isolated application
-or infrastructure change. Existing knowledge-sync jobs remain separate.
+or infrastructure change. Scheduled data jobs use their package-owned
+definitions.
 
 | Scope | Pipeline | `component` |
 | --- | --- | --- |
@@ -22,14 +23,21 @@ or infrastructure change. Existing knowledge-sync jobs remain separate.
 Production evolution-agent deployment is included in the full-stack path. Wiki
 generation and feedback processing use their specialized scheduled pipelines.
 
+| Related job | YAML definition |
+| --- | --- |
+| Knowledge sync | `azure-sdk-qa-bot-knowledge-sync/sync_knowledge.yml` |
+| Generated wiki | `azure-sdk-qa-bot-wiki-index/build_wiki.yml` |
+| Hosted-agent deployment | `azure-sdk-qa-bot-agent/pipelines/agent-cd.yml` |
+| Feedback/evolution jobs | `azure-sdk-qa-bot-agent/pipelines/feedback-job.yml` |
+
 ## 2. Pre-deployment Checks
 
 1. Record the candidate source revision.
 2. Confirm the relevant component build and test checks passed for that revision.
 3. Confirm the target environment contains no unresolved placeholders.
-4. Run `validate-env-suite.ps1 -Environment <env>` for local verification.
+4. Run `npm run validate-env-suite -- --environment <env>` for local verification.
 5. For production, complete the
-   [operational readiness checklist](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/operational-readiness-checklist.md).
+   [operational readiness checklist](operational-readiness-checklist.md).
 6. Confirm the source revision is permitted by the target service connection's
    branch-control policy.
 
@@ -52,10 +60,10 @@ Reject the run if the preview targets an unexpected subscription, resource
 group, region, identity, or resource name, or if a Delete/Modify operation is
 not understood.
 
-A complete preview requires existing layer state. Use the bootstrap procedure
-in the manual setup guide for a brand-new dev environment. Do not queue a new
-preview or production environment until an approved first-state bootstrap path
-has been implemented.
+Normal preview requires existing layer state. Use the manual setup procedure for
+a new dev environment. A new preview or production environment enters the
+normal deployment path after its approved first-state bootstrap pipeline has
+completed.
 
 ## 4. Deploy Application Code
 
@@ -75,10 +83,9 @@ then installs the final Logic App workflow. The frontend postdeploy hook
 synchronizes Teams values and installs or upgrades an app version only when
 tenant catalog prerequisites are satisfied.
 
-The active orchestrators do not perform slot swaps or a blocking multi-service
-smoke stage. Frontend postdeploy performs a non-fatal `/health` probe. Pipeline
-success means remote build/deploy and hooks succeeded; complete the verification
-below before declaring the release healthy.
+The rollout deploys directly to each service's production target. Frontend
+postdeploy also probes `/health`; release completion requires the full
+verification sequence below.
 
 ## 5. Verify the Deployment
 
@@ -101,14 +108,14 @@ the corresponding Search indexer start request was accepted.
 
 ## 6. Local Dev Deployment
 
-Local deployment is supported for dev only:
+The environment contract enables local deployment for dev:
 
 ```bash
 cd tools/sdk-ai-bots/deployment
 azd auth login
 azd env select dev
-pwsh ./scripts/sync-env-suite.ps1 -Environment dev
-pwsh ./scripts/validate-env-suite.ps1 -Environment dev
+npm run sync-env-suite -- --environment dev
+npm run validate-env-suite -- --environment dev
 azd provision --environment dev --no-prompt
 azd deploy agent-server --environment dev --no-prompt
 azd deploy function-app --environment dev --no-prompt
@@ -116,13 +123,13 @@ azd deploy agent --environment dev --no-prompt
 azd deploy frontend --environment dev --no-prompt
 ```
 
-Production guards reject local provision and deploy.
+Preview and production use their mapped pipelines and service connections.
 
 ## 7. Re-provisioning
 
-Never stop after re-provisioning an existing environment. Bicep can restore
-placeholder image values and the empty Logic App shell. Run the corresponding
-application deploy stages and repeat post-deployment verification.
+After infrastructure apply, run the corresponding application deployment
+stages and repeat post-deployment verification. This establishes the selected
+images and installs the complete Logic App workflow.
 
 If verification fails, stop promotion and follow the
-[rollback runbook](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/deployment/docs/runbook-rollback.md).
+[rollback runbook](runbook-rollback.md).

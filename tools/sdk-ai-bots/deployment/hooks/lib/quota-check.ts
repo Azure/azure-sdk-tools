@@ -249,8 +249,8 @@ export function runQuotaCheck(opts: {
   const suggestion =
     alternatives.length > 0
       ? `\n\nRegions with headroom for the exhausted quotas: ${alternatives.join(", ")}.\n` +
-        `To retarget, edit .environments.${envName || "<env>"}.regions[0].name in ` +
-        `infra/environments/environment-suite.yaml, then rerun scripts/sync-env-suite.ps1.`
+        `To retarget, edit .environments.${envName || "<env>"}.location in ` +
+         `infra/environments/environment-suite.yaml, then run npm run sync-env-suite -- --environment ${envName || "<env>"}.`
       : `\n\nNo alternative region among the probed candidates has headroom. ` +
         `Request a quota increase in the Azure portal (Subscription → Usage + quotas).`;
 

@@ -7,7 +7,7 @@ exception with an owner and due date.
 
 - [ ] The candidate source revision is recorded and all relevant build and test
       checks are green.
-- [ ] `validate-env-suite.ps1 -Environment prod` passes.
+- [ ] `npm run validate-env-suite -- --environment prod` passes.
 - [ ] No selected production value contains `REPLACE_WITH_*`.
 - [ ] Production tenant/channel YAML matches the environment suite.
 - [ ] Resource names and `bicepOverrides` identify the intended existing
@@ -54,11 +54,11 @@ exception with an owner and due date.
 - [ ] Knowledge sync and wiki build definitions have completed successfully and
       both Search indexer triggers were accepted.
 - [ ] Cosmos DB continuous backup is enabled and its restore procedure is known.
-- [ ] Blob versioning is enabled if blob-version rollback is part of the
-      recovery plan; it is disabled by the current Bicep configuration.
+- [ ] The selected Blob recovery method is enabled, tested, and documented in
+      the [rollback runbook](runbook-rollback.md).
 - [ ] A known-good source revision is recorded for each deployed component.
-- [ ] Operators understand that rollback is a redeployment; no automated
-      slot/revision rollback pipeline exists.
+- [ ] Operators have reviewed the known-good redeployment and data-recovery
+      procedures in the [rollback runbook](runbook-rollback.md).
 
 ## Observability and Verification
 

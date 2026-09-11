@@ -4,6 +4,8 @@
 
 ### Features Added
 
+- Release plan CLI commands now support storing and updating the TypeSpec specification commit SHA. SDK generation uses the stored commit when it is valid in the local repository and otherwise falls back to `main`.
+
 ### Breaking Changes
 
 ### Bugs Fixed

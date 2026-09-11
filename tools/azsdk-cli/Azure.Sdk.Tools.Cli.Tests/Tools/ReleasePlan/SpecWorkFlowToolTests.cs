@@ -17,6 +17,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
     {
         private MockDevOpsService mockDevOpsService;
         private Mock<IGitHubService> mockGitHubService;
+        private Mock<IGitHelper> mockGitHelper;
         private Mock<ITypeSpecHelper> mockTypeSpecHelper;
         private ILogger<SpecWorkflowTool> logger;
         private SpecWorkflowTool specWorkflowTool;
@@ -27,6 +28,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         {
             mockDevOpsService = new MockDevOpsService();
             mockGitHubService = new Mock<IGitHubService>();
+            mockGitHelper = new Mock<IGitHelper>();
+            mockGitHelper.Setup(x => x.IsValidCommitAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(false);
             mockTypeSpecHelper = new Mock<ITypeSpecHelper>();
             logger = new TestLogger<SpecWorkflowTool>();
             inputSanitizer = new InputSanitizer();
@@ -38,6 +42,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
 
             specWorkflowTool = new SpecWorkflowTool(
                 mockGitHubService.Object,
+                mockGitHelper.Object,
                 mockDevOpsService,
                 mockTypeSpecHelper.Object,
                 logger,

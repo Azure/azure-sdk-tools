@@ -79,6 +79,9 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
         [FieldName("Custom.ApiSpecProjectPath")]
         public string APISpecProjectPath { get; set; } = string.Empty;
 
+        [FieldName("Custom.SpecCommitSHA")]
+        public string SpecCommitSHA { get; set; } = string.Empty;
+
         [FieldName("Custom.AttestationStatus")]
         public string AttestationStatus { get; set; } = string.Empty;
 

@@ -133,6 +133,11 @@ public class CheckPackageResponse : CommandResponse
             messages.Add("[ERROR] " + error);
         }
 
+        if (PermissionGuidance is { } permissionGuidance)
+        {
+            messages.Add(permissionGuidance);
+        }
+
         if (SupportChannel != null)
         {
             messages.Add(SupportChannel);

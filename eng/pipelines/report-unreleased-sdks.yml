@@ -21,6 +21,12 @@ jobs:
     steps:
       - checkout: self
 
+      # Private Preview spec PRs require an authenticated GitHub read.
+      - template: /eng/common/pipelines/templates/steps/login-to-github.yml
+        parameters:
+          TokenOwners:
+            - Azure
+
       - task: PowerShell@2
         displayName: 'Install Azure SDK MCP'
         inputs:
@@ -30,10 +36,11 @@ jobs:
           workingDirectory: '$(System.DefaultWorkingDirectory)'
 
       - task: AzureCLI@2
-        displayName: Abandon past-due release plans without active SDK pull requests
+        displayName: Abandon inactive release plans after the overdue grace period
         condition: and(succeeded(), eq(variables['Build.Reason'], 'Schedule'))
         env:
           AZSDKTOOLS_NOTIFICATION_SERVICE_URL: $(AzureSDKEmailerSasURL)
+          GITHUB_TOKEN: $(GH_TOKEN)
         inputs:
           azureSubscription: opensource-api-connection
           scriptType: pscore
@@ -43,6 +50,8 @@ jobs:
 
       - task: AzureCLI@2
         displayName: Email product owners about overdue SDK release plans
+        env:
+          GITHUB_TOKEN: $(GH_TOKEN)
         inputs:
           azureSubscription: opensource-api-connection
           scriptType: pscore

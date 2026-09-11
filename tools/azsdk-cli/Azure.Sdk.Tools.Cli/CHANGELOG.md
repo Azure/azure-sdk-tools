@@ -8,7 +8,7 @@
 
 ### Features Added
 
-- Added `release-plan abandon-overdue` to abandon past-due release plans without active SDK pull requests and notify their owners.
+- Added `release-plan abandon-overdue` to abandon inactive Public Preview, GA, and Private Preview release plans after one full overdue calendar month. Public/GA plans with merged or active SDK PRs, or any released SDK, are preserved; Private Preview plans are assessed by spec PR merge status. Overdue reminders provide release-type-specific actions.
 
 ## 0.6.44 (2026-09-08)
 

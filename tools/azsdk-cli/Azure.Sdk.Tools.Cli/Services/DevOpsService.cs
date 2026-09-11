@@ -227,12 +227,13 @@ namespace Azure.Sdk.Tools.Cli.Services
                 query += " AND [Custom.SDKReleasemonth] <> ''";
 
                 var releasePlanWorkItems = await FetchWorkItemsPagedAsync(query, ct: ct);
-                var releasePlans = await Task.WhenAll(releasePlanWorkItems.Select(workItem => MapWorkItemToReleasePlanAsync(workItem, ct)));
+                var releasePlans = await Task.WhenAll(releasePlanWorkItems.Select(workItem => MapWorkItemToReleasePlanAsync(workItem, ct, requireSpecDetails: true)));
 
-                var today = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+                var utcNow = DateTime.UtcNow;
+                var today = new DateTime(utcNow.Year, utcNow.Month, 1);
                 var overduePlans = releasePlans.Where(releasePlan =>
                 {
-                    if (DateTime.TryParseExact(releasePlan.SDKReleaseMonth, "MMMM yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var releaseDate))
+                    if (DateTime.TryParseExact(releasePlan.SDKReleaseMonth, ["MMMM yyyy", "MMM yyyy"], CultureInfo.InvariantCulture, DateTimeStyles.None, out var releaseDate))
                     {
                         var normalizedReleaseDate = new DateTime(releaseDate.Year, releaseDate.Month, 1);
                         return normalizedReleaseDate < today;
@@ -397,7 +398,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
         }
 
-        private async Task<ReleasePlanWorkItem> MapWorkItemToReleasePlanAsync(WorkItem workItem, CancellationToken ct)
+        private async Task<ReleasePlanWorkItem> MapWorkItemToReleasePlanAsync(WorkItem workItem, CancellationToken ct, bool requireSpecDetails = false)
         {
             var releasePlan = new ReleasePlanWorkItem()
             {
@@ -457,6 +458,14 @@ namespace Azure.Sdk.Tools.Cli.Services
                 );
             }
 
+            // The overdue query expands relations, so no child link means there is no linked spec.
+            // Do not confuse an unreadable child with a missing spec when deciding abandonment.
+            if (requireSpecDetails && releasePlan.ApiReleaseType == ApiReleaseType.PrivatePreview
+                && workItem.Relations?.Any(relation => relation.Rel == "System.LinkTypes.Hierarchy-Forward") != true)
+            {
+                return releasePlan;
+            }
+
             // Get details from API spec work item
             try
             {
@@ -472,9 +481,17 @@ namespace Azure.Sdk.Tools.Cli.Services
                     logger.LogWarning("API spec work item not found for release plan work item {workItemId}", releasePlan.WorkItemId);
                 }
             }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Failed to get API spec work item for release plan work item {WorkItemId}", releasePlan.WorkItemId);
+                if (requireSpecDetails && releasePlan.ApiReleaseType == ApiReleaseType.PrivatePreview)
+                {
+                    throw;
+                }
             }
 
             return releasePlan;
@@ -946,6 +963,10 @@ namespace Azure.Sdk.Tools.Cli.Services
                     logger.LogWarning("No work items found.");
                     return [];
                 }
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
             }
             catch (Exception ex)
             {

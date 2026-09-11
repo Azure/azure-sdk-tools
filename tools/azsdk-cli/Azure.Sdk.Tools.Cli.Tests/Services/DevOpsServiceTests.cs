@@ -27,6 +27,54 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             _devOpsService = new DevOpsService(_logger, _connection);
         }
 
+        [TestCase("January 2020")]
+        [TestCase("Jan 2020")]
+        public async Task ListOverdueReleasePlansAsync_PrivatePreviewWithoutSpecChild_IsMissing(string targetMonth)
+        {
+            var plan = CreateReleasePlanWorkItem(100, "In Progress");
+            plan.Fields["Custom.ReleasePlanType"] = ApiReleaseType.PrivatePreview.ToAdoFieldValue();
+            plan.Fields["Custom.SDKReleasemonth"] = targetMonth;
+            _connection.AddWorkItemToQuery(plan);
+
+            var result = await _devOpsService.ListOverdueReleasePlansAsync(CancellationToken.None);
+
+            Assert.That(result, Has.Count.EqualTo(1));
+            Assert.That(result[0].ApiReleaseType, Is.EqualTo(ApiReleaseType.PrivatePreview));
+            Assert.That(result[0].ActiveSpecPullRequest, Is.Empty);
+        }
+
+        [Test]
+        public void ListOverdueReleasePlansAsync_UnreadablePrivateSpecChild_DoesNotBecomeMissing()
+        {
+            var plan = CreateReleasePlanWorkItemWithApiSpecChild(100, "In Progress", 200);
+            plan.Fields["Custom.ReleasePlanType"] = ApiReleaseType.PrivatePreview.ToAdoFieldValue();
+            plan.Fields["Custom.SDKReleasemonth"] = "January 2020";
+            _connection.AddWorkItemToQuery(plan);
+            _connection.AddWorkItem(plan);
+
+            var error = Assert.ThrowsAsync<Exception>(async () =>
+                await _devOpsService.ListOverdueReleasePlansAsync(CancellationToken.None));
+
+            Assert.That(error!.GetBaseException().Message, Does.Contain("200"));
+        }
+
+        [Test]
+        public async Task ListOverdueReleasePlansAsync_MapsPrivateSpecPullRequest()
+        {
+            const string specPr = "https://github.com/Azure/azure-rest-api-specs-pr/pull/42";
+            var plan = CreateReleasePlanWorkItemWithApiSpecChild(100, "In Progress", 200);
+            plan.Fields["Custom.ReleasePlanType"] = ApiReleaseType.PrivatePreview.ToAdoFieldValue();
+            plan.Fields["Custom.SDKReleasemonth"] = "January 2020";
+            _connection.AddWorkItemToQuery(plan);
+            _connection.AddWorkItem(plan);
+            _connection.AddWorkItem(CreateApiSpecWorkItem(200, specPr, "New"));
+
+            var result = await _devOpsService.ListOverdueReleasePlansAsync(CancellationToken.None);
+
+            Assert.That(result, Has.Count.EqualTo(1));
+            Assert.That(result[0].ActiveSpecPullRequest, Is.EqualTo(specPr));
+        }
+
         #region GetReleasePlanAsync(string pullRequestUrl) Tests
 
         [Test]

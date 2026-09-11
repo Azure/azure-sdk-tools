@@ -1,3 +1,5 @@
+using System.Net;
+using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
 
 namespace Azure.Sdk.Tools.Cli.Services.Notification.Templates
@@ -20,13 +22,17 @@ namespace Azure.Sdk.Tools.Cli.Services.Notification.Templates
             $"""
             <html>
             <body>
-                <p>Hi {releasePlan.Owner},</p>
-                <p>Your release plan (<a href="{releasePlan.ReleasePlanLink}">{ReleasePlanIdentifier}</a>) is now past due and has been marked as abandoned because there are no active SDK PRs associated with it.</p>
+                <p>Hi {WebUtility.HtmlEncode(releasePlan.Owner)},</p>
+                <p>Your release plan (<a href="{WebUtility.HtmlEncode(releasePlan.ReleasePlanLink)}">{ReleasePlanIdentifier}</a>) is more than one month past its target release month ({WebUtility.HtmlEncode(releasePlan.SDKReleaseMonth)}) and has been marked as abandoned because {AbandonmentExplanation}.</p>
                 <p>If you intend to continue the release, please reopen the release plan and update the target release month accordingly. Going forward, please ensure that your release plan is actively managed and reaches either Completed or Closed status by the end of its target release month.</p>
                 <p>Thank you.</p>
             </body>
             </html>
             """;
+
+        private string AbandonmentExplanation => releasePlan.ApiReleaseType == ApiReleaseType.PrivatePreview
+            ? "its spec PR is missing or has not been merged"
+            : "there are no active SDK PRs associated with it";
 
         private int ReleasePlanIdentifier => releasePlan.ReleasePlanId > 0
             ? releasePlan.ReleasePlanId

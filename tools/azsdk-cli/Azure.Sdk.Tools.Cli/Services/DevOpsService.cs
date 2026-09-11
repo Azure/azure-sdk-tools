@@ -206,7 +206,10 @@ namespace Azure.Sdk.Tools.Cli.Services
                    or HttpStatusCode.Found                    // 302 (sign-in redirect)
                    or HttpStatusCode.NonAuthoritativeInformation; // 203 (DevOps anonymous-needs-auth)
 
-        [GeneratedRegex("\\|\\s(Beta|Stable|GA)\\s\\|\\s([\\S]+)\\s\\|\\s([\\S]+)\\s\\|")]
+        // Accept any release-type label, but require a numeric version (optionally v-prefixed)
+        // so the production "Type | Version | Date" header and separator are not releases.
+        // Keep fields within their cells and rows; callers classify preview/stable by version.
+        [GeneratedRegex(@"\|[ \t]+([^\s|]+)[ \t]+\|[ \t]+([vV]?[0-9][^\s|]*)[ \t]+\|[ \t]+([^\s|]+)[ \t]+\|")]
         private static partial Regex SdkReleaseDetailsRegex();
 
         private async Task<List<WorkItemRelationType>> GetCachedRelationTypes(CancellationToken ct)

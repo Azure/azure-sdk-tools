@@ -506,6 +506,107 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
 
         #endregion
 
+        #region MapPackageWorkItemToModel PlannedReleases parsing Tests
+
+        private static string CreateReleaseTable(string rows)
+        {
+            // GetMDVersionValue stores Markdown in a hidden div alongside its rendered HTML.
+            return "<div style='display:none' id=__md>| Type | Version | Date |\n" +
+                "| - | - | - |\n" + rows + "\n</div>";
+        }
+
+        private static WorkItem CreatePackageWorkItem(string plannedPackages, string version = "1.2.1")
+        {
+            return new WorkItem
+            {
+                Id = 1,
+                Url = "https://dev.azure.com/azure-sdk/internal/_apis/wit/workItems/1",
+                Fields = new Dictionary<string, object>
+                {
+                    { "System.WorkItemType", "Package" },
+                    { "System.State", "Active" },
+                    { "Custom.Package", "arm-computelimit" },
+                    { "Custom.PackageVersion", version },
+                    { "Custom.Language", "JavaScript" },
+                    { "Custom.PlannedPackages", plannedPackages }
+                },
+                Relations = new List<WorkItemRelation>()
+            };
+        }
+
+        [TestCase("2026-07-07")]
+        [TestCase("07/07/2026")]
+        public void MapPackageWorkItemToModel_ParsesPatchPlannedReleaseRow(string releaseDate)
+        {
+            // A Patch row must parse; previously the release-type allowlist (Beta|Stable|GA)
+            // dropped it, causing a false "No planned release date found" readiness failure.
+            var plannedPackages = CreateReleaseTable($"| Patch | 1.2.1 | {releaseDate} |");
+
+            var model = DevOpsService.MapPackageWorkItemToModel(CreatePackageWorkItem(plannedPackages));
+
+            Assert.That(model.PlannedReleases, Has.Count.EqualTo(1));
+            var planned = model.PlannedReleases[0];
+            Assert.Multiple(() =>
+            {
+                Assert.That(planned.ReleaseType, Is.EqualTo("Patch"));
+                Assert.That(planned.Version, Is.EqualTo("1.2.1"));
+                Assert.That(planned.ReleaseDate, Is.EqualTo(releaseDate));
+            });
+        }
+
+        [Test]
+        public void MapPackageWorkItemToModel_ParsesAllReleaseTypeLabels()
+        {
+            // All labels should parse, but the production header and separator must not.
+            var plannedPackages = CreateReleaseTable(
+                "| Beta | 1.0.0-beta.1 | 2026-07-01 |\n" +
+                "| Stable | 1.0.0 | 2026-07-02 |\n" +
+                "| GA | 1.3.0 | 2026-07-03 |\n" +
+                "| Patch | 1.2.1 | 2026-07-04 |\n" +
+                "| Hotfix | 1.3.0.post1 | 2026-07-05 |");
+
+            var model = DevOpsService.MapPackageWorkItemToModel(CreatePackageWorkItem(plannedPackages));
+
+            Assert.That(
+                model.PlannedReleases.Select(r => r.ReleaseType),
+                Is.EqualTo(new[] { "Beta", "Stable", "GA", "Patch", "Hotfix" }));
+        }
+
+        [TestCase("Custom.PlannedPackages")]
+        [TestCase("Custom.ShippedPackages")]
+        public void MapPackageWorkItemToModel_IgnoresReleaseTableWithoutDataRows(string field)
+        {
+            var workItem = CreatePackageWorkItem(string.Empty);
+            workItem.Fields[field] = CreateReleaseTable(string.Empty);
+
+            var model = DevOpsService.MapPackageWorkItemToModel(workItem);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(model.PlannedReleases, Is.Empty);
+                Assert.That(model.ReleasedVersions, Is.Empty);
+            });
+        }
+
+        [Test]
+        public void MapPackageWorkItemToModel_ParsesShippedReleaseWithoutTableMetadata()
+        {
+            var workItem = CreatePackageWorkItem(string.Empty);
+            workItem.Fields["Custom.ShippedPackages"] = CreateReleaseTable("| Patch | 1.2.1 | 07/07/2026 |");
+
+            var model = DevOpsService.MapPackageWorkItemToModel(workItem);
+
+            Assert.That(model.ReleasedVersions, Has.Count.EqualTo(1));
+            Assert.Multiple(() =>
+            {
+                Assert.That(model.ReleasedVersions[0].ReleaseType, Is.EqualTo("Patch"));
+                Assert.That(model.ReleasedVersions[0].Version, Is.EqualTo("1.2.1"));
+                Assert.That(model.ReleasedVersions[0].ReleaseDate, Is.EqualTo("07/07/2026"));
+            });
+        }
+
+        #endregion
+
         #region GetReleasePlansForPackageAsync Tests
 
         [TestCase("python", "Python")]

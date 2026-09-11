@@ -11,6 +11,7 @@ Run:
 
 from __future__ import annotations
 
+import json
 import os
 import sys
 
@@ -268,6 +269,7 @@ def test_combine_batch_results_sums_summaries():
                     "similarity_pass_rate": 1,
                     "similarity_fail_rate": 0,
                     "traced_cases": 1,
+                    "response_id_cases": 1,
                     "tool_call_count": 2,
                     "file_access_cases": 1,
                     "tool_usage": {
@@ -283,6 +285,7 @@ def test_combine_batch_results_sums_summaries():
                     "similarity_pass_rate": 0,
                     "similarity_fail_rate": 1,
                     "traced_cases": 1,
+                    "response_id_cases": 1,
                     "tool_call_count": 1,
                     "file_access_cases": 0,
                     "tool_usage": {
@@ -300,6 +303,7 @@ def test_combine_batch_results_sums_summaries():
         "similarity_pass_rate": 1,
         "similarity_fail_rate": 1,
         "traced_cases": 2,
+        "response_id_cases": 2,
         "tool_call_count": 3,
         "file_access_cases": 1,
         "tool_usage": {
@@ -319,12 +323,16 @@ def test_batch_completion_items_respects_count_and_payload_limits():
     assert [len(batch) for batch in count_batches] == [2, 2, 1]
 
     payload_batches = _batch_completion_items(
-        items, max_items=20, max_bytes=350
+        items, max_items=20, max_bytes=500
     )
     assert len(payload_batches) > 1
     assert [
         item["testcase"] for batch in payload_batches for item in batch
     ] == [item["testcase"] for item in items]
+    assert all(
+        len(json.dumps(batch, ensure_ascii=False).encode("utf-8")) <= 500
+        for batch in payload_batches
+    )
 
     try:
         _batch_completion_items(items, max_items=0)
@@ -332,6 +340,17 @@ def test_batch_completion_items_respects_count_and_payload_limits():
         assert "max_items" in str(exc)
     else:
         raise AssertionError("expected max_items validation")
+
+    try:
+        _batch_completion_items(
+            [{"testcase": "too-large", "response": "x" * 1_000}],
+            max_bytes=200,
+        )
+    except ValueError as exc:
+        assert "too-large" in str(exc)
+        assert "200-byte" in str(exc)
+    else:
+        raise AssertionError("expected oversized item validation")
 
 
 def test_build_testing_criteria_all_builtins():
@@ -533,6 +552,7 @@ def test_record_run_result_preserves_trace_and_summarizes_tool_usage():
         ],
     }
     assert recorded[-1]["traced_cases"] == 1
+    assert recorded[-1]["response_id_cases"] == 1
     assert recorded[-1]["tool_call_count"] == 3
     assert recorded[-1]["file_access_cases"] == 1
     assert recorded[-1]["tool_usage"] == {
@@ -540,6 +560,34 @@ def test_record_run_result_preserves_trace_and_summarizes_tool_usage():
         "file_access_grep": {"calls": 1, "cases": 1},
         "file_access_read": {"calls": 1, "cases": 1},
     }
+
+
+def test_record_run_result_distinguishes_response_and_trace_ids():
+    from _evals_result import EvalsResult
+
+    er = EvalsResult(metrics={"similarity": None}, suppressions=None)
+    recorded = er.record_run_result(
+        {
+            "rows": [
+                {
+                    "inputs.testcase": "response-only",
+                    "inputs.ground_truth": "gt",
+                    "inputs.expected_references": [],
+                    "inputs.expected_knowledges": [],
+                    "inputs.response": "answer",
+                    "inputs.response_id": "response-1",
+                    "inputs.trace_id": "",
+                    "inputs.references": [],
+                    "inputs.knowledges": [],
+                    "outputs.similarity.similarity": 5.0,
+                    "outputs.similarity.similarity_result": "pass",
+                }
+            ]
+        }
+    )
+
+    assert recorded[-1]["traced_cases"] == 0
+    assert recorded[-1]["response_id_cases"] == 1
 
 
 def test_failed_row_counts_as_failure_in_gate():

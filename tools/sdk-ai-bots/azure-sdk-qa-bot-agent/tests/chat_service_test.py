@@ -107,7 +107,11 @@ def test_postprocess_captures_ordered_tool_trace_and_all_knowledge() -> None:
     )
     items = [
         ResponseFunctionToolCall(
-            arguments='{"queries":["operation id"],"access_token":"secret"}',
+            arguments=(
+                '{"queries":["operation id"],"access_token":"secret",'
+                '"url":"https://storage.test/blob?sv=1&sig=sas-secret&se=tomorrow",'
+                '"nested":{"api-key":"api-secret"}}'
+            ),
             call_id="call-search",
             name="search_knowledge_base",
             type="function_call",
@@ -165,6 +169,10 @@ def test_postprocess_captures_ordered_tool_trace_and_all_knowledge() -> None:
         "file_access_grep",
     ]
     assert traces[0]["arguments"]["access_token"] == "[REDACTED]"
+    assert traces[0]["arguments"]["nested"]["api-key"] == "[REDACTED]"
+    assert "sas-secret" not in traces[0]["arguments"]["url"]
+    assert "sig=[REDACTED]" in traces[0]["arguments"]["url"]
+    assert "se=tomorrow" in traces[0]["arguments"]["url"]
     assert traces[0]["output_captured"] is False
     assert traces[0]["output_chars"] > 0
     assert traces[1]["output_captured"] is True
@@ -186,6 +194,21 @@ def test_postprocess_captures_ordered_tool_trace_and_all_knowledge() -> None:
             "score": 0.0,
         }
     ]
+
+
+def test_tool_trace_redacts_non_json_credentials() -> None:
+    service = ChatService(settings=lambda _key, default="": default)
+
+    arguments = service._parse_trace_arguments(
+        "url=https://storage.test/blob?sv=1&sig=sas-secret "
+        "Authorization: Bearer bearer-secret, api_key=api-secret"
+    )
+
+    assert isinstance(arguments, str)
+    assert "sas-secret" not in arguments
+    assert "bearer-secret" not in arguments
+    assert "api-secret" not in arguments
+    assert arguments.count("[REDACTED]") == 3
 
 
 def test_tool_trace_content_has_a_total_budget() -> None:

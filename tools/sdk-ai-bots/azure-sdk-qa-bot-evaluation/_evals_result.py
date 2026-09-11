@@ -115,12 +115,15 @@ class EvalsResult:
 
         tool_usage: dict[str, dict[str, int]] = {}
         traced_cases = 0
+        response_id_cases = 0
         file_access_cases = 0
         tool_call_count = 0
         for row in result["rows"]:
             traces = row.get("inputs.tool_trace", []) or []
-            if row.get("inputs.trace_id") or row.get("inputs.response_id"):
+            if row.get("inputs.trace_id"):
                 traced_cases += 1
+            if row.get("inputs.response_id"):
+                response_id_cases += 1
             case_tools: set[str] = set()
             for trace in traces:
                 if not isinstance(trace, dict):
@@ -140,6 +143,7 @@ class EvalsResult:
         summary_result: dict[str, Any] = {
             "total_evals": len(result["rows"]),
             "traced_cases": traced_cases,
+            "response_id_cases": response_id_cases,
             "tool_call_count": tool_call_count,
             "file_access_cases": file_access_cases,
             "tool_usage": tool_usage,

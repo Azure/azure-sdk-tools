@@ -107,6 +107,7 @@ def _combine_batch_results(
         summary[f"{evaluator}_pass_rate"] = 0
         summary[f"{evaluator}_fail_rate"] = 0
     summary["traced_cases"] = 0
+    summary["response_id_cases"] = 0
     summary["tool_call_count"] = 0
     summary["file_access_cases"] = 0
     summary["tool_usage"] = {}
@@ -124,6 +125,9 @@ def _combine_batch_results(
                 f"{evaluator}_fail_rate"
             ]
         summary["traced_cases"] += batch_summary.get("traced_cases", 0)
+        summary["response_id_cases"] += batch_summary.get(
+            "response_id_cases", 0
+        )
         summary["tool_call_count"] += batch_summary.get("tool_call_count", 0)
         summary["file_access_cases"] += batch_summary.get("file_access_cases", 0)
         for tool_name, usage in batch_summary.get("tool_usage", {}).items():
@@ -149,20 +153,23 @@ def _batch_completion_items(
 
     batches: list[list[dict[str, Any]]] = []
     current: list[dict[str, Any]] = []
-    current_bytes = 0
     for item in items:
         projected = _completion_item(item)
         item_bytes = len(
-            json.dumps(projected, ensure_ascii=False).encode("utf-8")
+            json.dumps([projected], ensure_ascii=False).encode("utf-8")
         )
-        if current and (
-            len(current) >= max_items or current_bytes + item_bytes > max_bytes
-        ):
+        if item_bytes > max_bytes:
+            raise ValueError(
+                f"Evaluation item {projected['testcase']!r} is {item_bytes} bytes, "
+                f"which exceeds the {max_bytes}-byte inline batch limit"
+            )
+        candidate_bytes = len(
+            json.dumps([*current, projected], ensure_ascii=False).encode("utf-8")
+        )
+        if current and (len(current) >= max_items or candidate_bytes > max_bytes):
             batches.append(current)
             current = []
-            current_bytes = 0
         current.append(projected)
-        current_bytes += item_bytes
     if current:
         batches.append(current)
     return batches

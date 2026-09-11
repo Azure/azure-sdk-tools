@@ -70,10 +70,36 @@ BOT_SENDER_ID = "azure-sdk-qa-bot"
 BOT_SENDER_NAME = "Azure SDK Q&A Bot"
 
 _CITATION_RE = re.compile(r"[^\w\s]*cite[^\w\s]*turn\d+\S*")
+_TRACE_SENSITIVE_KEY_PATTERN = (
+    r"(?:access[-_ ]?key|access[-_ ]?token|account[-_ ]?key|api[-_ ]?key|"
+    r"authorization|client[-_ ]?secret|connection[-_ ]?string|credential|"
+    r"id[-_ ]?token|password|refresh[-_ ]?token|secret|shared[-_ ]?access[-_ ]?key|"
+    r"sig|signature|subscription[-_ ]?key|token)"
+)
 _TRACE_SENSITIVE_KEY_RE = re.compile(
-    r"(?:authorization|connection.?string|credential|password|secret|token)",
+    _TRACE_SENSITIVE_KEY_PATTERN,
     re.IGNORECASE,
 )
+_TRACE_SENSITIVE_QUERY_RE = re.compile(
+    rf"(?P<prefix>[?&](?:{_TRACE_SENSITIVE_KEY_PATTERN}|code|key)=)"
+    r"[^&#\s\"'<>]*",
+    re.IGNORECASE,
+)
+_TRACE_AUTHORIZATION_VALUE_RE = re.compile(
+    r"(?P<prefix>\bauthorization\b\s*[:=]\s*)"
+    r"(?:\"[^\"\r\n]*\"|'[^'\r\n]*'|[^\r\n,;}]+)",
+    re.IGNORECASE,
+)
+_TRACE_AUTH_SCHEME_RE = re.compile(
+    r"(?P<prefix>\b(?:basic|bearer)\s+)[A-Za-z0-9._~+/=-]+",
+    re.IGNORECASE,
+)
+_TRACE_SENSITIVE_ASSIGNMENT_RE = re.compile(
+    rf"(?P<prefix>\b{_TRACE_SENSITIVE_KEY_PATTERN}\b\s*[:=]\s*)"
+    r"(?:\"[^\"\r\n]*\"|'[^'\r\n]*'|[^\s,;&}]+)",
+    re.IGNORECASE,
+)
+_TRACE_REDACTED_VALUE = "[REDACTED]"
 _TRACE_MAX_CALLS = 32
 _TRACE_MAX_ARGUMENT_CHARS = 2_000
 _TRACE_MAX_OUTPUT_CHARS = 8_000
@@ -89,11 +115,26 @@ _TRACE_OUTPUT_TOOLS = frozenset(
 )
 
 
+def _redact_trace_string(value: str) -> str:
+    value = _TRACE_AUTHORIZATION_VALUE_RE.sub(
+        rf"\g<prefix>{_TRACE_REDACTED_VALUE}", value
+    )
+    value = _TRACE_AUTH_SCHEME_RE.sub(
+        rf"\g<prefix>{_TRACE_REDACTED_VALUE}", value
+    )
+    value = _TRACE_SENSITIVE_QUERY_RE.sub(
+        rf"\g<prefix>{_TRACE_REDACTED_VALUE}", value
+    )
+    return _TRACE_SENSITIVE_ASSIGNMENT_RE.sub(
+        rf"\g<prefix>{_TRACE_REDACTED_VALUE}", value
+    )
+
+
 def _redact_trace_value(value: Any) -> Any:
     if isinstance(value, dict):
         return {
             str(key): (
-                "[REDACTED]"
+                _TRACE_REDACTED_VALUE
                 if _TRACE_SENSITIVE_KEY_RE.search(str(key))
                 else _redact_trace_value(item)
             )
@@ -101,6 +142,8 @@ def _redact_trace_value(value: Any) -> Any:
         }
     if isinstance(value, list):
         return [_redact_trace_value(item) for item in value]
+    if isinstance(value, str):
+        return _redact_trace_string(value)
     return value
 
 

@@ -401,7 +401,10 @@ public class PackageInfoTool(
         var results = new List<string>();
         foreach (var file in targetedFiles)
         {
-            var shouldExclude = excludePaths.Any(exclude => file.StartsWith(exclude, StringComparison.CurrentCultureIgnoreCase));
+            var shouldExclude = excludePaths.Any(exclude =>
+                exclude.EndsWith("/", StringComparison.Ordinal)
+                    ? file.StartsWith(exclude, StringComparison.CurrentCultureIgnoreCase)
+                    : file.Equals(exclude, StringComparison.CurrentCultureIgnoreCase));
             if (!shouldExclude)
             {
                 results.Add(file);

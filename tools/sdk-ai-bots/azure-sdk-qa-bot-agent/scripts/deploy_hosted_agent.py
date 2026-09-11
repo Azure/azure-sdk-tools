@@ -276,6 +276,9 @@ def main() -> None:
             "ENABLE_INSTRUMENTATION": "true",
             "APP_VERSION": next_version,
         }
+        if args.agent_name == "teams_collection_agent":
+            env_vars["ENABLE_INSTRUMENTATION"] = "false"
+            env_vars["ENABLE_SENSITIVE_DATA"] = "false"
         if candidate_appconfig_endpoint:
             env_vars["CANDIDATE_APPCONFIG_ENDPOINT"] = candidate_appconfig_endpoint
 

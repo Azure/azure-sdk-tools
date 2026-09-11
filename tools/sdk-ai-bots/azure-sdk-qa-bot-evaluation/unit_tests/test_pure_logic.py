@@ -29,9 +29,13 @@ from dataset.schema import (  # noqa: E402
 )
 from dataset.review import review  # noqa: E402
 from _evals_runner import (  # noqa: E402
+    _batch_completion_items,
+    _completion_item,
+    _combine_batch_results,
     output_items_to_rows,
     extract_title_and_link_from_references,
     extract_title_and_link_from_context,
+    extract_tool_trace_from_context,
     resolve_tenant_for_scenario,
 )
 from eval.criteria import build_testing_criteria, BUILTIN_EVALUATORS  # noqa: E402
@@ -254,6 +258,82 @@ def test_output_items_to_rows_groundedness_fail():
     assert rows[0]["outputs.groundedness.groundedness_result"] == "fail"
 
 
+def test_combine_batch_results_sums_summaries():
+    combined = _combine_batch_results(
+        [
+            [
+                {"testcase": "one"},
+                {
+                    "total_evals": 1,
+                    "similarity_pass_rate": 1,
+                    "similarity_fail_rate": 0,
+                    "traced_cases": 1,
+                    "tool_call_count": 2,
+                    "file_access_cases": 1,
+                    "tool_usage": {
+                        "search_knowledge_base": {"calls": 1, "cases": 1},
+                        "file_access_grep": {"calls": 1, "cases": 1},
+                    },
+                },
+            ],
+            [
+                {"testcase": "two"},
+                {
+                    "total_evals": 1,
+                    "similarity_pass_rate": 0,
+                    "similarity_fail_rate": 1,
+                    "traced_cases": 1,
+                    "tool_call_count": 1,
+                    "file_access_cases": 0,
+                    "tool_usage": {
+                        "search_knowledge_base": {"calls": 1, "cases": 1},
+                    },
+                },
+            ],
+        ],
+        ["similarity"],
+    )
+
+    assert combined[:-1] == [{"testcase": "one"}, {"testcase": "two"}]
+    assert combined[-1] == {
+        "total_evals": 2,
+        "similarity_pass_rate": 1,
+        "similarity_fail_rate": 1,
+        "traced_cases": 2,
+        "tool_call_count": 3,
+        "file_access_cases": 1,
+        "tool_usage": {
+            "search_knowledge_base": {"calls": 2, "cases": 2},
+            "file_access_grep": {"calls": 1, "cases": 1},
+        },
+    }
+
+
+def test_batch_completion_items_respects_count_and_payload_limits():
+    items = [
+        {"testcase": f"case-{index}", "query": "q", "response": "x" * 80}
+        for index in range(5)
+    ]
+
+    count_batches = _batch_completion_items(items, max_items=2, max_bytes=10_000)
+    assert [len(batch) for batch in count_batches] == [2, 2, 1]
+
+    payload_batches = _batch_completion_items(
+        items, max_items=20, max_bytes=350
+    )
+    assert len(payload_batches) > 1
+    assert [
+        item["testcase"] for batch in payload_batches for item in batch
+    ] == [item["testcase"] for item in items]
+
+    try:
+        _batch_completion_items(items, max_items=0)
+    except ValueError as exc:
+        assert "max_items" in str(exc)
+    else:
+        raise AssertionError("expected max_items validation")
+
+
 def test_build_testing_criteria_all_builtins():
     crit = build_testing_criteria(list(BUILTIN_EVALUATORS), model="gpt-4o")
     by_name = {c["evaluator_name"]: c for c in crit}
@@ -300,11 +380,50 @@ def test_extract_references():
 def test_extract_context_from_full_context_json():
     import json as _json
 
-    ctx = _json.dumps([{"document_title": "D", "document_link": "http://d"}, {"title": "E", "link": "http://e"}])
+    trace = {
+        "sequence": 1,
+        "tool_name": "file_access_grep",
+        "call_id": "call-1",
+    }
+    ctx = _json.dumps([
+        {"document_title": "D", "document_link": "http://d"},
+        {"title": "E", "link": "http://e"},
+        {
+            "document_title": "Tool call 1: file_access_grep",
+            "document_link": "agent-trace://response/call-1",
+            "document_source": "agent_tool_trace",
+            "document_content": _json.dumps(trace),
+        },
+    ])
     out = extract_title_and_link_from_context(ctx)
     assert out == [{"title": "D", "link": "http://d"}, {"title": "E", "link": "http://e"}]
+    assert extract_tool_trace_from_context(ctx) == [trace]
     assert extract_title_and_link_from_context("") == []
+    assert extract_tool_trace_from_context("") == []
     assert extract_title_and_link_from_context("not-json") == []
+    assert extract_tool_trace_from_context("not-json") == []
+
+
+def test_completion_item_preserves_execution_metadata():
+    item = _completion_item(
+        {
+            "testcase": "traceable",
+            "query": "q",
+            "response": "answer",
+            "response_id": "response-1",
+            "trace_id": "trace-1",
+            "agent_conversation_id": "conversation-1",
+            "latency": 1.25,
+            "response_length": 6,
+        }
+    )
+
+    assert item["response_id"] == "response-1"
+    assert item["trace_id"] == "trace-1"
+    assert item["agent_conversation_id"] == "conversation-1"
+    assert item["latency"] == 1.25
+    assert item["response_length"] == 6
+    assert "tool_trace" not in item
 
 
 def test_resolve_tenant_for_scenario():
@@ -321,10 +440,28 @@ def test_resolve_tenant_for_scenario():
 
 def test_output_items_to_rows_completion_item_response():
     # In completion mode the answer/references live in the datasource_item.
+    import json as _json
+
+    trace = {"tool_name": "file_access_read"}
+    context = _json.dumps(
+        [
+            {
+                "document_source": "agent_tool_trace",
+                "document_content": _json.dumps(trace),
+            }
+        ]
+    )
     output_items = [
         {
             "datasource_item": {
-                "testcase": "t", "ground_truth": "gt", "response": "collected answer",
+                "testcase": "t", "query": "question", "ground_truth": "gt",
+                "response": "collected answer",
+                "context": context,
+                "response_id": "response-1",
+                "trace_id": "trace-1",
+                "agent_conversation_id": "conversation-1",
+                "latency": 1.5,
+                "response_length": 16,
                 "references": [{"title": "R", "link": "http://r"}],
                 "knowledges": [{"title": "K", "link": "http://k"}],
             },
@@ -333,9 +470,76 @@ def test_output_items_to_rows_completion_item_response():
         }
     ]
     rows = output_items_to_rows(output_items, ["similarity"])["rows"]
+    assert rows[0]["inputs.query"] == "question"
     assert rows[0]["inputs.response"] == "collected answer"
+    assert rows[0]["inputs.context"] == context
+    assert rows[0]["inputs.response_id"] == "response-1"
+    assert rows[0]["inputs.trace_id"] == "trace-1"
+    assert rows[0]["inputs.agent_conversation_id"] == "conversation-1"
+    assert rows[0]["inputs.latency"] == 1.5
+    assert rows[0]["inputs.response_length"] == 16
+    assert rows[0]["inputs.tool_trace"] == [trace]
     assert rows[0]["inputs.references"] == [{"title": "R", "link": "http://r"}]
     assert rows[0]["inputs.knowledges"] == [{"title": "K", "link": "http://k"}]
+
+
+def test_record_run_result_preserves_trace_and_summarizes_tool_usage():
+    from _evals_result import EvalsResult
+
+    er = EvalsResult(metrics={"similarity": None}, suppressions=None)
+    recorded = er.record_run_result(
+        {
+            "rows": [
+                {
+                    "inputs.testcase": "traceable",
+                    "inputs.query": "question",
+                    "inputs.ground_truth": "gt",
+                    "inputs.expected_references": [],
+                    "inputs.expected_knowledges": [],
+                    "inputs.response": "answer",
+                    "inputs.context": "context",
+                    "inputs.response_id": "response-1",
+                    "inputs.trace_id": "trace-1",
+                    "inputs.agent_conversation_id": "conversation-1",
+                    "inputs.latency": 1.25,
+                    "inputs.response_length": 6,
+                    "inputs.tool_trace": [
+                        {"tool_name": "search_knowledge_base"},
+                        {"tool_name": "file_access_grep"},
+                        {"tool_name": "file_access_read"},
+                    ],
+                    "inputs.references": [],
+                    "inputs.knowledges": [],
+                    "outputs.similarity.similarity": 5.0,
+                    "outputs.similarity.similarity_result": "pass",
+                }
+            ]
+        }
+    )
+
+    assert recorded[0]["query"] == "question"
+    assert recorded[0]["actual"]["context"] == "context"
+    assert recorded[0]["execution"] == {
+        "response_id": "response-1",
+        "trace_id": "trace-1",
+        "agent_conversation_id": "conversation-1",
+        "latency_seconds": 1.25,
+        "response_length": 6,
+        "used_file_access": True,
+        "tool_calls": [
+            {"tool_name": "search_knowledge_base"},
+            {"tool_name": "file_access_grep"},
+            {"tool_name": "file_access_read"},
+        ],
+    }
+    assert recorded[-1]["traced_cases"] == 1
+    assert recorded[-1]["tool_call_count"] == 3
+    assert recorded[-1]["file_access_cases"] == 1
+    assert recorded[-1]["tool_usage"] == {
+        "search_knowledge_base": {"calls": 1, "cases": 1},
+        "file_access_grep": {"calls": 1, "cases": 1},
+        "file_access_read": {"calls": 1, "cases": 1},
+    }
 
 
 def test_failed_row_counts_as_failure_in_gate():

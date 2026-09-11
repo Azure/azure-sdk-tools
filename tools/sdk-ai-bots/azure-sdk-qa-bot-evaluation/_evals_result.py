@@ -57,6 +57,7 @@ class EvalsResult:
         for row in result["rows"]:
             row_result: dict[str, Any] = {}
             row_result["testcase"] = row["inputs.testcase"]
+            row_result["query"] = row.get("inputs.query", "")
             row_result["expected"] = {
                 "answer": row["inputs.ground_truth"],
                 "references": row["inputs.expected_references"],
@@ -66,6 +67,25 @@ class EvalsResult:
                 "answer": row["inputs.response"],
                 "references": row["inputs.references"],
                 "knowledges": row["inputs.knowledges"],
+                "context": row.get("inputs.context", ""),
+            }
+            tool_trace = row.get("inputs.tool_trace", []) or []
+            used_file_access = any(
+                isinstance(trace, dict)
+                and isinstance(trace.get("tool_name"), str)
+                and trace["tool_name"].startswith("file_access_")
+                for trace in tool_trace
+            )
+            row_result["execution"] = {
+                "response_id": row.get("inputs.response_id", ""),
+                "trace_id": row.get("inputs.trace_id", ""),
+                "agent_conversation_id": row.get(
+                    "inputs.agent_conversation_id", ""
+                ),
+                "latency_seconds": row.get("inputs.latency", 0.0),
+                "response_length": row.get("inputs.response_length", 0),
+                "used_file_access": used_file_access,
+                "tool_calls": tool_trace,
             }
             pattern = r"^outputs\.(\w+)\.(\w+)$"
             for index, (key, value) in enumerate(row.items()):
@@ -93,7 +113,37 @@ class EvalsResult:
                         row_result[metric_name] = value
             run_result.append(row_result)
 
-        summary_result: dict[str, Any] = {"total_evals": len(result["rows"])}
+        tool_usage: dict[str, dict[str, int]] = {}
+        traced_cases = 0
+        file_access_cases = 0
+        tool_call_count = 0
+        for row in result["rows"]:
+            traces = row.get("inputs.tool_trace", []) or []
+            if row.get("inputs.trace_id") or row.get("inputs.response_id"):
+                traced_cases += 1
+            case_tools: set[str] = set()
+            for trace in traces:
+                if not isinstance(trace, dict):
+                    continue
+                tool_name = trace.get("tool_name")
+                if not isinstance(tool_name, str) or not tool_name:
+                    continue
+                tool_call_count += 1
+                case_tools.add(tool_name)
+                usage = tool_usage.setdefault(tool_name, {"calls": 0, "cases": 0})
+                usage["calls"] += 1
+            for tool_name in case_tools:
+                tool_usage[tool_name]["cases"] += 1
+            if any(name.startswith("file_access_") for name in case_tools):
+                file_access_cases += 1
+
+        summary_result: dict[str, Any] = {
+            "total_evals": len(result["rows"]),
+            "traced_cases": traced_cases,
+            "tool_call_count": tool_call_count,
+            "file_access_cases": file_access_cases,
+            "tool_usage": tool_usage,
+        }
         for index, (key, value) in enumerate(pass_rates.items()):
             summary_result[f"{key}_pass_rate"] = value
         for index, (key, value) in enumerate(fail_rates.items()):

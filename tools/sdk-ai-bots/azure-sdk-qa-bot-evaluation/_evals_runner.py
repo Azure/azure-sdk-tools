@@ -50,6 +50,8 @@ SCENARIO_TO_CHANNEL: dict[str, str] = {
 
 # Composite weights
 BOT_EVALS_WEIGHTS = {"similarity": 0.6, "response_completeness": 0.4}
+INLINE_EVAL_BATCH_SIZE = 20
+INLINE_EVAL_BATCH_MAX_BYTES = 400_000
 
 # Item schema for the inline eval data: the answer/context are collected from
 # /completion and carried in the item (read via {{item.response}} / {{item.context}}).
@@ -61,6 +63,11 @@ COMPLETION_ITEM_SCHEMA: dict[str, Any] = {
         "ground_truth": {"type": "string"},
         "response": {"type": "string"},
         "context": {"type": "string"},
+        "response_id": {"type": "string"},
+        "trace_id": {"type": "string"},
+        "agent_conversation_id": {"type": "string"},
+        "latency": {"type": "number"},
+        "response_length": {"type": "integer"},
         "expected_references": {"type": "array", "items": {"type": "object"}},
         "expected_knowledges": {"type": "array", "items": {"type": "object"}},
         "references": {"type": "array", "items": {"type": "object"}},
@@ -78,11 +85,87 @@ def _completion_item(it: dict[str, Any]) -> dict[str, Any]:
         "ground_truth": it.get("ground_truth", ""),
         "response": it.get("response", ""),
         "context": it.get("context", "") or "",
+        "response_id": it.get("response_id", "") or "",
+        "trace_id": it.get("trace_id", "") or "",
+        "agent_conversation_id": it.get("agent_conversation_id", "") or "",
+        "latency": float(it.get("latency", 0.0) or 0.0),
+        "response_length": int(it.get("response_length", 0) or 0),
         "expected_references": it.get("expected_references", []),
         "expected_knowledges": it.get("expected_knowledges", []),
         "references": it.get("references", []),
         "knowledges": it.get("knowledges", []),
     }
+
+
+def _combine_batch_results(
+    batch_results: list[list[dict[str, Any]]],
+    evaluators: list[str],
+) -> list[dict[str, Any]]:
+    combined: list[dict[str, Any]] = []
+    summary: dict[str, Any] = {"total_evals": 0}
+    for evaluator in evaluators:
+        summary[f"{evaluator}_pass_rate"] = 0
+        summary[f"{evaluator}_fail_rate"] = 0
+    summary["traced_cases"] = 0
+    summary["tool_call_count"] = 0
+    summary["file_access_cases"] = 0
+    summary["tool_usage"] = {}
+    for result in batch_results:
+        if not result:
+            raise ValueError("evaluation batch result must include a summary")
+        combined.extend(result[:-1])
+        batch_summary = result[-1]
+        summary["total_evals"] += batch_summary["total_evals"]
+        for evaluator in evaluators:
+            summary[f"{evaluator}_pass_rate"] += batch_summary[
+                f"{evaluator}_pass_rate"
+            ]
+            summary[f"{evaluator}_fail_rate"] += batch_summary[
+                f"{evaluator}_fail_rate"
+            ]
+        summary["traced_cases"] += batch_summary.get("traced_cases", 0)
+        summary["tool_call_count"] += batch_summary.get("tool_call_count", 0)
+        summary["file_access_cases"] += batch_summary.get("file_access_cases", 0)
+        for tool_name, usage in batch_summary.get("tool_usage", {}).items():
+            combined_usage = summary["tool_usage"].setdefault(
+                tool_name, {"calls": 0, "cases": 0}
+            )
+            combined_usage["calls"] += usage.get("calls", 0)
+            combined_usage["cases"] += usage.get("cases", 0)
+    combined.append(summary)
+    return combined
+
+
+def _batch_completion_items(
+    items: list[dict[str, Any]],
+    *,
+    max_items: int = INLINE_EVAL_BATCH_SIZE,
+    max_bytes: int = INLINE_EVAL_BATCH_MAX_BYTES,
+) -> list[list[dict[str, Any]]]:
+    if max_items <= 0:
+        raise ValueError("max_items must be positive")
+    if max_bytes <= 0:
+        raise ValueError("max_bytes must be positive")
+
+    batches: list[list[dict[str, Any]]] = []
+    current: list[dict[str, Any]] = []
+    current_bytes = 0
+    for item in items:
+        projected = _completion_item(item)
+        item_bytes = len(
+            json.dumps(projected, ensure_ascii=False).encode("utf-8")
+        )
+        if current and (
+            len(current) >= max_items or current_bytes + item_bytes > max_bytes
+        ):
+            batches.append(current)
+            current = []
+            current_bytes = 0
+        current.append(projected)
+        current_bytes += item_bytes
+    if current:
+        batches.append(current)
+    return batches
 
 
 def extract_title_and_link_from_references(references: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -111,12 +194,47 @@ def extract_title_and_link_from_context(context: str) -> list[dict[str, Any]]:
             title = ""
             link = ""
             if isinstance(doc, dict):
+                if doc.get("document_source") == "agent_tool_trace":
+                    continue
                 title = doc.get("document_title") or doc.get("title") or ""
                 link = doc.get("document_link") or doc.get("link") or ""
             docs.append({"title": title, "link": link})
     except (json.JSONDecodeError, TypeError) as exc:
         logger.warning("Failed to parse full_context JSON: %s", exc)
     return docs
+
+
+def extract_tool_trace_from_context(context: str) -> list[dict[str, Any]]:
+    """Extract structured hosted-agent tool calls from ``full_context``."""
+    if not context:
+        return []
+    traces: list[dict[str, Any]] = []
+    try:
+        docs_obj = json.loads(context)
+    except (json.JSONDecodeError, TypeError) as exc:
+        logger.warning("Failed to parse tool trace JSON: %s", exc)
+        return traces
+    if not isinstance(docs_obj, list):
+        return traces
+    for doc in docs_obj:
+        if not isinstance(doc, dict):
+            continue
+        if doc.get("document_source") != "agent_tool_trace":
+            continue
+        content = doc.get("document_content", "")
+        if not isinstance(content, str):
+            continue
+        try:
+            trace = json.loads(content)
+        except (json.JSONDecodeError, TypeError):
+            logger.warning(
+                "Failed to parse tool trace entry: %s",
+                doc.get("document_title", "unknown"),
+            )
+            continue
+        if isinstance(trace, dict):
+            traces.append(trace)
+    return traces
 
 
 class CompletionCollector:
@@ -177,6 +295,10 @@ class CompletionCollector:
                     "ground_truth": record.get("ground_truth", ""),
                     "response": answer,
                     "response_id": api_response.get("id", ""),
+                    "trace_id": api_response.get("trace_id", ""),
+                    "agent_conversation_id": api_response.get(
+                        "agent_conversation_id", ""
+                    ),
                     "context": full_context,
                     "latency": time.time() - start,
                     "response_length": len(answer),
@@ -311,13 +433,25 @@ def output_items_to_rows(
     for oi in output_items:
         item = _get(oi, "datasource_item", {}) or {}
         results = _get(oi, "results", []) or []
+        context = item.get("context", "") or ""
 
         row: dict[str, Any] = {
             "inputs.testcase": item.get("testcase", item.get("query", "unknown")),
+            "inputs.query": item.get("query", ""),
             "inputs.ground_truth": item.get("ground_truth", ""),
             "inputs.expected_references": item.get("expected_references", []),
             "inputs.expected_knowledges": item.get("expected_knowledges", []),
             "inputs.response": item.get("response", ""),
+            "inputs.context": context,
+            "inputs.response_id": item.get("response_id", "") or "",
+            "inputs.trace_id": item.get("trace_id", "") or "",
+            "inputs.agent_conversation_id": item.get(
+                "agent_conversation_id", ""
+            )
+            or "",
+            "inputs.latency": float(item.get("latency", 0.0) or 0.0),
+            "inputs.response_length": int(item.get("response_length", 0) or 0),
+            "inputs.tool_trace": extract_tool_trace_from_context(context),
             "inputs.references": item.get("references", []) or [],
             "inputs.knowledges": item.get("knowledges", []) or [],
         }
@@ -419,10 +553,18 @@ class FoundryEvalsRunner:
         """A synthetic result row that fails every requested metric (uncollected case)."""
         row: dict[str, Any] = {
             "inputs.testcase": record.get("testcase", record.get("query", "unknown")),
+            "inputs.query": record.get("query", ""),
             "inputs.ground_truth": record.get("ground_truth", ""),
             "inputs.expected_references": record.get("expected_references", []),
             "inputs.expected_knowledges": record.get("expected_knowledges", []),
             "inputs.response": "",
+            "inputs.context": "",
+            "inputs.response_id": "",
+            "inputs.trace_id": "",
+            "inputs.agent_conversation_id": "",
+            "inputs.latency": 0.0,
+            "inputs.response_length": 0,
+            "inputs.tool_trace": [],
             "inputs.references": [],
             "inputs.knowledges": [],
         }
@@ -505,16 +647,52 @@ class FoundryEvalsRunner:
         )
         logger.info("Evaluation created (id=%s, name=%s)", eval_object.id, name)
 
-        # 3) Grade the pre-collected answers as inline data (no agent target).
-        content = [SourceFileContentContent(item=_completion_item(it)) for it in items]
-        data_source = CreateEvalJSONLRunDataSourceParam(
-            type="jsonl", source=SourceFileContent(type="file_content", content=content)
-        )
-        run = openai_client.evals.runs.create(
-            eval_id=eval_object.id, name=f"{name}-run", data_source=data_source  # type: ignore[arg-type]
-        )
-        logger.info("Evaluation run created (id=%s)", run.id)
-        return self._poll_and_adapt(openai_client, eval_object.id, run.id, scenario, failed_rows)
+        # 3) Grade the pre-collected answers as bounded inline batches. Foundry
+        # run-history rejects oversized inline documents before grading starts.
+        batch_results: list[list[dict[str, Any]]] = []
+        batches = _batch_completion_items(items)
+        batch_count = len(batches)
+        for batch_index, batch in enumerate(batches, start=1):
+            batch_bytes = sum(
+                len(json.dumps(item, ensure_ascii=False).encode("utf-8"))
+                for item in batch
+            )
+            content = [
+                SourceFileContentContent(item=item)
+                for item in batch
+            ]
+            data_source = CreateEvalJSONLRunDataSourceParam(
+                type="jsonl",
+                source=SourceFileContent(type="file_content", content=content),
+            )
+            run = openai_client.evals.runs.create(
+                eval_id=eval_object.id,
+                name=f"{name}-run-{batch_index:02d}",
+                data_source=data_source,  # type: ignore[arg-type]
+            )
+            logger.info(
+                "Evaluation batch %d/%d created (id=%s, cases=%d, bytes=%d)",
+                batch_index,
+                batch_count,
+                run.id,
+                len(batch),
+                batch_bytes,
+            )
+            adapted = self._poll_and_adapt(
+                openai_client,
+                eval_object.id,
+                run.id,
+                f"{scenario}-batch-{batch_index:02d}",
+                failed_rows if batch_index == batch_count else None,
+            )
+            batch_results.append(next(iter(adapted.values())))
+
+        return {
+            f"{scenario}_batched": _combine_batch_results(
+                batch_results,
+                self._evaluators,
+            )
+        }
 
 
 def resolve_records(dataset_spec: str, *, script_dir: Path) -> tuple[list[dict[str, Any]], str]:
@@ -563,5 +741,6 @@ __all__ = [
     "resolve_tenant_for_scenario",
     "extract_title_and_link_from_references",
     "extract_title_and_link_from_context",
+    "extract_tool_trace_from_context",
     "COMPLETION_ITEM_SCHEMA",
 ]

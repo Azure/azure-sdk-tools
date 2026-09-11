@@ -316,6 +316,15 @@ def get_knowledge_source(name: str) -> KnowledgeSource | None:
 
 
 @dataclass(frozen=True)
+class CodeRepositoryConfig:
+    git_url: str
+    git_ref: str
+    path_prefixes: tuple[str, ...]
+    include_patterns: tuple[str, ...]
+    exclude: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
 class TenantConfig:
     """Per-tenant configuration.
 
@@ -339,6 +348,7 @@ class TenantConfig:
     qa_guideline_file: str = ""
     enable_routing: bool = False
     enable_wiki_cross_document_pages: bool = True
+    code_repositories: tuple[CodeRepositoryConfig, ...] = ()
 
 
 # ---------------------------------------------------------------------------
@@ -393,6 +403,30 @@ _AZURE_TYPESPEC_AUTHORING_SOURCES = _sources(
     SRC_TYPESPEC_AZURE_RESOURCE_MANAGER_LIB,
 )
 
+_TYPESPEC_CODE_PATTERNS = tuple(
+    f"packages/**/*{extension}"
+    for extension in (".tsp", ".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs")
+)
+
+_TYPESPEC_AZURE_CODE = CodeRepositoryConfig(
+    git_url="https://github.com/Azure/typespec-azure.git",
+    git_ref="refs/heads/main",
+    path_prefixes=("packages",),
+    include_patterns=_TYPESPEC_CODE_PATTERNS,
+)
+
+_TYPESPEC_CODE = CodeRepositoryConfig(
+    git_url="https://github.com/microsoft/typespec.git",
+    git_ref="refs/heads/main",
+    path_prefixes=("packages",),
+    include_patterns=_TYPESPEC_CODE_PATTERNS,
+)
+
+_TYPESPEC_REPOSITORIES = (
+    _TYPESPEC_AZURE_CODE,
+    _TYPESPEC_CODE,
+)
+
 # ---------------------------------------------------------------------------
 # Tenant config map
 # ---------------------------------------------------------------------------
@@ -421,6 +455,7 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
             SRC_AZURE_REST_API_SPECS_WIKI: "search.ismatch('SDK', 'title')",
         },
         qa_guideline_file="tenants/language_python.md",
+        code_repositories=_TYPESPEC_REPOSITORIES,
     ),
     TenantID.DOTNET_CHANNEL_QA_BOT: TenantConfig(
         display_name=".NET (C#) SDK",
@@ -538,6 +573,7 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
         },
         qa_guideline_file="tenants/typespec.md",
         enable_routing=True,
+        code_repositories=_TYPESPEC_REPOSITORIES,
     ),
     TenantID.TYPESPEC_EMITTER_QA_BOT: TenantConfig(
         display_name="Alloy Framework (Test)",
@@ -557,6 +593,7 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
             SRC_TYPESPEC_DOCS: "search.ismatch('/.*extending-typespec.*emitter-framework.*/', 'title', 'full', 'any')",
         },
         qa_guideline_file="tenants/typespec.md",
+        code_repositories=(_TYPESPEC_AZURE_CODE, _TYPESPEC_CODE),
     ),
     TenantID.AZURE_SDK_ONBOARDING: TenantConfig(
         display_name="Azure SDK Onboarding",
@@ -576,6 +613,7 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
             SRC_STATIC_CPEX_DOCS,
         ),
         qa_guideline_file="tenants/azure_sdk_onboarding.md",
+        code_repositories=_TYPESPEC_REPOSITORIES,
     ),
     TenantID.AZURE_TYPESPEC_AUTHORING: TenantConfig(
         display_name="Azure TypeSpec Authoring",
@@ -588,6 +626,7 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
         ],
         sources=_AZURE_TYPESPEC_AUTHORING_SOURCES,
         qa_guideline_file="tenants/azure_typespec_authoring.md",
+        code_repositories=_TYPESPEC_REPOSITORIES,
     ),
     TenantID.API_SPEC_REVIEW_BOT: TenantConfig(
         display_name="API Spec Review",
@@ -621,6 +660,7 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
         },
         qa_guideline_file="tenants/api_spec_review.md",
         enable_routing=True,
+        code_repositories=_TYPESPEC_REPOSITORIES,
     ),
     TenantID.GENERAL_QA_BOT: TenantConfig(
         display_name="General",
@@ -628,6 +668,7 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
         scope="Questions that don't clearly fit any single domain above. General specialist with all knowledge sources.",
         qa_guideline_file="tenants/general.md",
         enable_routing=True,
+        code_repositories=_TYPESPEC_REPOSITORIES,
     ),
 }
 
@@ -647,6 +688,14 @@ def get_tenant_config(tenant_id: TenantID) -> TenantConfig | None:
 def get_all_tenant_ids() -> list[str]:
     """Return all registered tenant ID strings."""
     return [t.value for t in _TENANT_CONFIG_MAP]
+
+
+def get_all_code_repository_configs() -> dict[str, tuple[CodeRepositoryConfig, ...]]:
+    """Return repository demand keyed by tenant ID."""
+    return {
+        tenant_id.value: config.code_repositories
+        for tenant_id, config in _TENANT_CONFIG_MAP.items()
+    }
 
 
 def get_tenant_skill_map() -> dict[TenantID, str]:

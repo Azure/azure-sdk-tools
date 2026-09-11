@@ -1,0 +1,75 @@
+name: Sync Azure SDK QA Bot Code Repositories
+
+trigger: none
+pr: none
+
+schedules:
+  - cron: '0 6 * * *'
+    displayName: 'Daily (06:00 UTC)'
+    branches:
+      include:
+        - main
+    always: true
+
+variables:
+  - template: /eng/pipelines/templates/variables/globals.yml
+  - template: /eng/pipelines/templates/variables/image.yml
+  - name: workingDirectory
+    value: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-code-search'
+  - name: pythonVersion
+    value: '3.12'
+
+extends:
+  template: /eng/pipelines/templates/stages/1es-redirect.yml
+  parameters:
+    Use1ESOfficial: true
+    stages:
+      - stage: SyncCodeRepositories
+        displayName: 'Sync Code Repositories'
+        jobs:
+          - job: SyncCodeRepositories
+            displayName: 'Sync Code Repositories'
+            timeoutInMinutes: 360
+            pool:
+              name: $(LINUXPOOL)
+              image: $(LINUXVMIMAGE)
+              os: linux
+            steps:
+              - checkout: self
+                displayName: 'Checkout repository'
+
+              - task: UsePythonVersion@0
+                inputs:
+                  versionSpec: $(pythonVersion)
+
+              - task: PipAuthenticate@1
+                displayName: 'Authenticate pip to Azure Artifacts'
+                inputs:
+                  artifactFeeds: 'public/azure-sdk-for-python'
+
+              - task: AzureCLI@2
+                displayName: 'Sync code repositories'
+                inputs:
+                  azureSubscription: $(SERVICE_CONNECTION)
+                  addSpnToEnvironment: true
+                  scriptType: bash
+                  scriptLocation: inlineScript
+                  workingDirectory: $(workingDirectory)
+                  inlineScript: |
+                    set -euo pipefail
+
+                    echo "$idToken" > "$(Agent.TempDirectory)/id_token"
+                    export AZURE_CLIENT_ID="$servicePrincipalId"
+                    export AZURE_TENANT_ID="$tenantId"
+                    export AZURE_FEDERATED_TOKEN_FILE="$(Agent.TempDirectory)/id_token"
+                    echo "authenticating as client id $servicePrincipalId"
+
+                    python -m pip install --upgrade pip
+                    python -m pip install keyring artifacts-keyring --retries 5 --timeout 60
+                    python -m pip config set global.index-url "$PIP_INDEX_URL"
+                    pip install -r requirements.txt --retries 5 --timeout 60
+
+                    python -m code_repository_sync
+                env:
+                  AZURE_CORE_WELCOME_MESSAGE: 'false'
+                  AZURE_APPCONFIG_ENDPOINT: $(AZURE_APPCONFIG_ENDPOINT)

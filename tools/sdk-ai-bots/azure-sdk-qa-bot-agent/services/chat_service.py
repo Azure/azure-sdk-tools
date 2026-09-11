@@ -50,6 +50,7 @@ from openai.types.responses import Response as OpenAIResponse
 from utils.azure_ai_foundry_agent import HostedAgentClient, ConversationBrokenError
 from openai.types.responses import (
     ResponseFunctionToolCall,
+    ResponseFunctionToolCallOutputItem,
     ResponseOutputItem,
     ResponseOutputMessage,
 )
@@ -133,6 +134,19 @@ class ChatService:
         conversation_items: list[ResponseInputItemParam] = []
         if is_new:
             conversation_items.append(tenant_system_item)
+        else:
+            conversation_items.append(
+                cast(
+                    ResponseInputItemParam,
+                    ConversationItem(
+                        role=Role.System,
+                        content=(
+                            "[tenant_context] "
+                            f"original_tenant_id={req.tenant_id.value}"
+                        ),
+                    ).model_dump(mode="json", exclude_none=True),
+                )
+            )
 
         memory_scope = self._resolve_memory_scope(req)
         if memory_scope:
@@ -666,20 +680,22 @@ class ChatService:
         if not items:
             return results
 
-        # Build mapping from call_id to tool name
         call_id_to_name: dict[str, str] = {}
         for item in items:
             if isinstance(item, ResponseFunctionToolCall):
                 if item.call_id and item.name:
                     call_id_to_name[item.call_id] = item.name
 
-        # Decode each tool output using its registered response model
         for item in items:
-            if not isinstance(item, ResponseOutputMessage):
+            if isinstance(item, ResponseFunctionToolCallOutputItem):
+                call_id = item.call_id
+                output = item.output
+            elif isinstance(item, ResponseOutputMessage):
+                extras = item.model_extra or {}
+                call_id = extras.get("call_id") or ""
+                output = extras.get("output", None)
+            else:
                 continue
-            extras = item.model_extra or {}
-            call_id = extras.get("call_id") or ""
-            output = extras.get("output", None)
             tool_name = call_id_to_name.get(call_id, "") if call_id else ""
             if not tool_name or not output:
                 continue

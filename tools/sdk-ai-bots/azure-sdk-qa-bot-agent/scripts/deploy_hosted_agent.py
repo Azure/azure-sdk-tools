@@ -48,12 +48,33 @@ from utils.azure_credential import close_credential
 
 def _run(cmd: list[str], **kwargs) -> None:
     print(f"  $ {' '.join(cmd)}")
-    subprocess.run(cmd, check=True, **kwargs)
+    kwargs["env"] = _subprocess_environment(kwargs.get("env"))
+    subprocess.run(_native_command(cmd), check=True, **kwargs)
 
 
 def _run_quiet(cmd: list[str], **kwargs) -> subprocess.CompletedProcess:
     """Run a command and return the result without raising on failure."""
-    return subprocess.run(cmd, capture_output=True, text=True, **kwargs)
+    kwargs["env"] = _subprocess_environment(kwargs.get("env"))
+    return subprocess.run(
+        _native_command(cmd),
+        capture_output=True,
+        text=True,
+        **kwargs,
+    )
+
+
+def _native_command(cmd: list[str]) -> list[str]:
+    if os.name == "nt" and cmd and cmd[0].casefold() == "az":
+        return [os.environ.get("COMSPEC", "cmd.exe"), "/d", "/c", *cmd]
+    return cmd
+
+
+def _subprocess_environment(environment: dict[str, str] | None) -> dict[str, str]:
+    result = dict(environment or os.environ)
+    if os.name == "nt":
+        result.setdefault("PYTHONIOENCODING", "utf-8")
+        result.setdefault("PYTHONUTF8", "1")
+    return result
 
 
 def _git_short_sha() -> str:

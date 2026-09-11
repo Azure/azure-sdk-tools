@@ -1,5 +1,13 @@
 trigger: none
-pr: none 
+pr: none
+
+schedules:
+  - cron: "0 0 1 * *"
+    displayName: Monthly past-due release plan cleanup
+    branches:
+      include:
+        - main
+    always: true
 
 variables:
   - template: /eng/pipelines/templates/variables/image.yml
@@ -20,6 +28,18 @@ jobs:
           script: './eng/common/mcp/azure-sdk-mcp.ps1 -InstallDirectory $(System.DefaultWorkingDirectory)'
           pwsh: true
           workingDirectory: '$(System.DefaultWorkingDirectory)'
+
+      - task: AzureCLI@2
+        displayName: Abandon past-due release plans without active SDK pull requests
+        condition: and(succeeded(), eq(variables['Build.Reason'], 'Schedule'))
+        env:
+          AZSDKTOOLS_NOTIFICATION_SERVICE_URL: $(AzureSDKEmailerSasURL)
+        inputs:
+          azureSubscription: opensource-api-connection
+          scriptType: pscore
+          scriptLocation: inlineScript
+          inlineScript: |
+            & "$(System.DefaultWorkingDirectory)/azsdk" release-plan abandon-overdue
 
       - task: AzureCLI@2
         displayName: Email product owners about overdue SDK release plans

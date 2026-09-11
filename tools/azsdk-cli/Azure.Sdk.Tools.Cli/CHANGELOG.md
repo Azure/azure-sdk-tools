@@ -20,6 +20,10 @@
 
 - C# customized-code updates now regenerate the SDK after patching customizations and before the final build.
 
+### Features Added
+
+- Added `release-plan abandon-overdue` to abandon past-due release plans without active SDK pull requests and notify their owners.
+
 ## 0.6.44 (2026-09-08)
 
 ### Breaking Changes

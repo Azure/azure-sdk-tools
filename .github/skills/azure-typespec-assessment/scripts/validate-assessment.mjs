@@ -83,7 +83,7 @@ function validateLegacy(assessment) {
 
 function validateComplianceDimension(compliance, semanticItems, errors) {
   if (!["passed", "failed", "not-assessed"].includes(compliance?.status)) {
-    errors.push("Compliance status is invalid.");
+    errors.push("Azure Guidelines status is invalid.");
     return;
   }
   for (const field of [
@@ -93,10 +93,10 @@ function validateComplianceDimension(compliance, semanticItems, errors) {
     "blockers",
   ]) {
     if (!Array.isArray(compliance[field]))
-      errors.push(`Compliance ${field} must be an array.`);
+      errors.push(`Azure Guidelines ${field} must be an array.`);
   }
   if (!compliance.coverage || typeof compliance.coverage !== "object") {
-    errors.push("Compliance coverage is required.");
+    errors.push("Azure Guidelines coverage is required.");
     return;
   }
   const catalog = readComplianceCatalog();
@@ -108,7 +108,7 @@ function validateComplianceDimension(compliance, semanticItems, errors) {
   const assessments = compliance.intentAssessments ?? [];
   const assessmentIds = assessments.map((item) => item.semanticIntentId);
   if (duplicateValues(assessmentIds).length) {
-    errors.push("Compliance contains duplicate intent assessments.");
+    errors.push("Azure Guidelines contains duplicate intent assessments.");
   }
   const migrationBlocked = (compliance.blockers ?? []).some((item) =>
     String(item?.message ?? item).startsWith(
@@ -121,7 +121,7 @@ function validateComplianceDimension(compliance, semanticItems, errors) {
     (semanticIds.some((id) => !assessmentIds.includes(id)) ||
       assessmentIds.some((id) => !semanticIds.includes(id)))
   ) {
-    errors.push("Compliance intent coverage does not match Semantic intents.");
+    errors.push("Azure Guidelines intent coverage does not match Semantic intents.");
   }
 
   let selectedDocumentCount = 0;
@@ -131,7 +131,7 @@ function validateComplianceDimension(compliance, semanticItems, errors) {
   for (const item of assessments) {
     if (!semanticMap.has(item.semanticIntentId)) {
       errors.push(
-        `Compliance references unknown semantic intent ${item.semanticIntentId}.`,
+        `Azure Guidelines references unknown semantic intent ${item.semanticIntentId}.`,
       );
       continue;
     }
@@ -143,7 +143,7 @@ function validateComplianceDimension(compliance, semanticItems, errors) {
     );
     if (documents.length !== 4 && !hasExhaustion) {
       errors.push(
-        `Compliance intent ${item.semanticIntentId} requires four documents.`,
+        `Azure Guidelines intent ${item.semanticIntentId} requires four documents.`,
       );
       incompleteEvidence = true;
     }
@@ -152,7 +152,7 @@ function validateComplianceDimension(compliance, semanticItems, errors) {
       duplicateValues(ranking.map((entry) => entry.canonicalUrl)).length
     ) {
       errors.push(
-        `Compliance intent ${item.semanticIntentId} has incomplete catalog ranking.`,
+        `Azure Guidelines intent ${item.semanticIntentId} has incomplete catalog ranking.`,
       );
     }
     const sortedRanking = [...ranking].sort(
@@ -184,7 +184,7 @@ function validateComplianceDimension(compliance, semanticItems, errors) {
         JSON.stringify(ranking.map((entry) => entry.canonicalUrl))
     ) {
       errors.push(
-        `Compliance intent ${item.semanticIntentId} has invalid catalog ranking.`,
+        `Azure Guidelines intent ${item.semanticIntentId} has invalid catalog ranking.`,
       );
     }
     const failedUrls = new Set(
@@ -202,7 +202,7 @@ function validateComplianceDimension(compliance, semanticItems, errors) {
       JSON.stringify(expectedUrls) !== JSON.stringify(urls)
     ) {
       errors.push(
-        `Compliance intent ${item.semanticIntentId} selected invalid documents.`,
+        `Azure Guidelines intent ${item.semanticIntentId} selected invalid documents.`,
       );
     }
     for (const document of documents) {
@@ -213,7 +213,7 @@ function validateComplianceDimension(compliance, semanticItems, errors) {
         typeof document.noRelevantGuidance !== "boolean" ||
         document.noRelevantGuidance === (document.guidance ?? []).length > 0
       ) {
-        errors.push(`Compliance document ${document.canonicalUrl} is invalid.`);
+        errors.push(`Azure Guidelines document ${document.canonicalUrl} is invalid.`);
       }
       for (const guidance of document.guidance ?? []) {
         if (
@@ -227,7 +227,7 @@ function validateComplianceDimension(compliance, semanticItems, errors) {
           )
         ) {
           errors.push(
-            `Compliance document ${document.canonicalUrl} has incomplete guidance.`,
+            `Azure Guidelines document ${document.canonicalUrl} has incomplete guidance.`,
           );
         }
       }
@@ -244,7 +244,7 @@ function validateComplianceDimension(compliance, semanticItems, errors) {
       !Array.isArray(item.applicableGuidance)
     ) {
       errors.push(
-        `Compliance intent ${item.semanticIntentId} has an invalid decision.`,
+        `Azure Guidelines intent ${item.semanticIntentId} has an invalid decision.`,
       );
       incompleteEvidence = true;
       continue;
@@ -261,7 +261,7 @@ function validateComplianceDimension(compliance, semanticItems, errors) {
         !(item.codeSnippets ?? []).length
       ) {
         errors.push(
-          `Compliance intent ${item.semanticIntentId} lacks applicable evidence.`,
+          `Azure Guidelines intent ${item.semanticIntentId} lacks applicable evidence.`,
         );
       }
       for (const applicable of item.applicableGuidance) {
@@ -275,7 +275,7 @@ function validateComplianceDimension(compliance, semanticItems, errors) {
           )
         ) {
           errors.push(
-            `Compliance intent ${item.semanticIntentId} uses unknown guidance.`,
+            `Azure Guidelines intent ${item.semanticIntentId} uses unknown guidance.`,
           );
         }
       }
@@ -283,7 +283,7 @@ function validateComplianceDimension(compliance, semanticItems, errors) {
       assessedIntentIds.push(item.semanticIntentId);
       if (item.applicableGuidance.length || (item.blockers ?? []).length) {
         errors.push(
-          `Compliance intent ${item.semanticIntentId} cannot use no-applicable-guidance with applicable guidance or blockers.`,
+          `Azure Guidelines intent ${item.semanticIntentId} cannot use no-applicable-guidance with applicable guidance or blockers.`,
         );
       }
     } else {
@@ -296,7 +296,7 @@ function validateComplianceDimension(compliance, semanticItems, errors) {
         !["high", "medium", "low"].includes(item.severity)
       ) {
         errors.push(
-          `Compliance intent ${item.semanticIntentId} lacks finding presentation.`,
+          `Azure Guidelines intent ${item.semanticIntentId} lacks finding presentation.`,
         );
       }
     }
@@ -310,7 +310,7 @@ function validateComplianceDimension(compliance, semanticItems, errors) {
       failure.status !== "failed" ||
       !failure.error?.trim()
     ) {
-      errors.push("Compliance contains an invalid retrieval failure.");
+      errors.push("Azure Guidelines contains an invalid retrieval failure.");
     }
   }
   const findingIntentIds = (compliance.findings ?? []).map(
@@ -322,7 +322,7 @@ function validateComplianceDimension(compliance, semanticItems, errors) {
     findingIntentIds.some((id) => !failedIntentIds.includes(id))
   ) {
     errors.push(
-      "Compliance findings must exactly match failed intent assessments.",
+      "Azure Guidelines findings must exactly match failed intent assessments.",
     );
   }
   for (const finding of compliance.findings ?? []) {
@@ -338,11 +338,11 @@ function validateComplianceDimension(compliance, semanticItems, errors) {
       !(finding.codeSnippets ?? []).length
     ) {
       errors.push(
-        `Compliance finding ${finding.id ?? "<unknown>"} is incomplete.`,
+        `Azure Guidelines finding ${finding.id ?? "<unknown>"} is incomplete.`,
       );
     }
   }
-  uniqueIds(compliance.findings ?? [], "Compliance findings", errors);
+  uniqueIds(compliance.findings ?? [], "Azure Guidelines findings", errors);
   const coverageSemanticIds = migrationBlocked ? [] : semanticIds;
   const unassessedIntentIds = coverageSemanticIds.filter(
     (id) => !assessedIntentIds.includes(id),
@@ -355,7 +355,7 @@ function validateComplianceDimension(compliance, semanticItems, errors) {
     JSON.stringify([...(coverage.unassessedIntentIds ?? [])].sort()) !==
       JSON.stringify(unassessedIntentIds.sort())
   ) {
-    errors.push("Compliance coverage counts are inconsistent.");
+    errors.push("Azure Guidelines coverage counts are inconsistent.");
   }
   const expectedStatus = failedIntentIds.length
     ? "failed"
@@ -363,7 +363,7 @@ function validateComplianceDimension(compliance, semanticItems, errors) {
       ? "not-assessed"
       : "passed";
   if (compliance.status !== expectedStatus) {
-    errors.push(`Compliance status must be ${expectedStatus}.`);
+    errors.push(`Azure Guidelines status must be ${expectedStatus}.`);
   }
 }
 export function validateAssessment(assessment) {
@@ -543,17 +543,25 @@ export function validateAssessment(assessment) {
   const restIds = new Set(
     (dimensions.rest?.findings ?? []).map((item) => item.id),
   );
+  const methodGroups =
+    dimensions.downstream?.methodGroups ??
+    dimensions.downstream?.operationGroups ??
+    [];
+  const typeImpacts =
+    dimensions.downstream?.typeImpacts ??
+    dimensions.downstream?.sharedTypeImpacts ??
+    [];
   const downstreamGroupIds = new Set(
-    (dimensions.downstream?.operationGroups ?? []).map((item) => item.id),
+    methodGroups.map((item) => item.id),
   );
   uniqueIds(
-    dimensions.downstream?.operationGroups ?? [],
-    "downstream operation groups",
+    methodGroups,
+    "downstream method groups",
     errors,
   );
   uniqueIds(
-    dimensions.downstream?.sharedTypeImpacts ?? [],
-    "shared type impacts",
+    typeImpacts,
+    "SDK type impacts",
     errors,
   );
   validateComplianceDimension(
@@ -561,7 +569,7 @@ export function validateAssessment(assessment) {
     dimensions.semantic?.items ?? [],
     errors,
   );
-  for (const impact of dimensions.downstream?.sharedTypeImpacts ?? []) {
+  for (const impact of typeImpacts) {
     downstreamGroupIds.add(impact.id);
   }
   for (const finding of [
@@ -613,6 +621,7 @@ export function validateAssessment(assessment) {
     }
     for (const id of [
       ...(item.relatedFindings?.downstream ?? []),
+      ...(item.relatedFindings?.typeImpact ?? []),
       ...(item.relatedFindings?.sharedTypeImpact ?? []),
     ]) {
       if (!downstreamGroupIds.has(id)) {
@@ -626,7 +635,7 @@ export function validateAssessment(assessment) {
     (dimensions.downstream?.findings ?? []).map((item) => item.id),
   );
   const aggregatedFindingIds = [];
-  for (const group of dimensions.downstream?.operationGroups ?? []) {
+  for (const group of methodGroups) {
     if (!group.symbol || !group.deltas?.length)
       errors.push(`Downstream group ${group.id} is incomplete.`);
     for (const delta of group.deltas ?? []) {
@@ -648,33 +657,32 @@ export function validateAssessment(assessment) {
       }
     }
   }
-  for (const impact of dimensions.downstream?.sharedTypeImpacts ?? []) {
-    if (!impact.summary?.trim() || !impact.typeCount || !impact.types?.length) {
-      errors.push(`Shared type impact ${impact.id} is incomplete.`);
+  const allowedLocations = new Set([
+    "request-path",
+    "request-query",
+    "request-header",
+    "request-body",
+    "response-header",
+    "response-body",
+  ]);
+  for (const impact of typeImpacts) {
+    const types = impact.type ? [impact.type] : impact.types ?? [];
+    if (!impact.summary?.trim() || !types.length) {
+      errors.push(`SDK type impact ${impact.id} is incomplete.`);
     }
-    if (impact.typeCount !== new Set(impact.types ?? []).size) {
-      errors.push(
-        `Shared type impact ${impact.id} has inconsistent type count.`,
-      );
+    for (const location of impact.locations ?? []) {
+      if (!allowedLocations.has(location)) {
+        errors.push(
+          `SDK type impact ${impact.id} has unsupported location ${location}.`,
+        );
+      }
     }
     if (
       impact.affectedMethodCount !==
       new Set((impact.affectedMethods ?? []).map((item) => item.symbol)).size
     ) {
       errors.push(
-        `Shared type impact ${impact.id} has inconsistent method count.`,
-      );
-    }
-    if (
-      impact.affectedOperationCount !==
-      new Set(
-        (impact.affectedMethods ?? [])
-          .map((item) => item.operationId)
-          .filter(Boolean),
-      ).size
-    ) {
-      errors.push(
-        `Shared type impact ${impact.id} has inconsistent operation count.`,
+        `SDK type impact ${impact.id} has inconsistent method count.`,
       );
     }
     for (const id of impact.findingIds ?? []) {
@@ -689,16 +697,15 @@ export function validateAssessment(assessment) {
       const intent = (dimensions.semantic?.items ?? []).find(
         (item) => item.id === id,
       );
-      if (!intent?.relatedFindings?.sharedTypeImpact?.includes(impact.id)) {
+      if (
+        !intent?.relatedFindings?.typeImpact?.includes(impact.id) &&
+        !intent?.relatedFindings?.sharedTypeImpact?.includes(impact.id)
+      ) {
         errors.push(
-          `Shared type impact ${impact.id} and semantic item ${id} are not reciprocal.`,
+          `SDK type impact ${impact.id} and semantic item ${id} are not reciprocal.`,
         );
       }
     }
-  }
-  for (const group of dimensions.downstream?.impliedByRest ?? []) {
-    for (const delta of group.deltas ?? [])
-      aggregatedFindingIds.push(delta.findingId);
   }
   const duplicateAggregates = duplicateValues(aggregatedFindingIds);
   const missingAggregates = [...downstreamFindingIds].filter(

@@ -2,14 +2,12 @@
 
 ## Goal
 
-Define the target architecture for
-`.github/skills/azure-typespec-assessment`, following
-`tools/azsdk-cli/docs/specs/typespec-assessment.spec.md` at commit
-`0c73c7462073e857b490d76e27a05a02eed4a1ed`.
+Document the current architecture and invariants of
+`.github/skills/azure-typespec-assessment`.
 
-The assessment is a read-only review of the current TypeSpec Git diff. It compares
-the merge base of `HEAD` and a selected branch with `HEAD` plus staged,
-unstaged, and relevant untracked changes.
+The assessment is a read-only review of the current TypeSpec Git diff. It
+compares the merge base of `HEAD` and a selected branch with `HEAD` plus
+staged, unstaged, and relevant untracked changes.
 
 Included:
 
@@ -24,12 +22,9 @@ Included:
 - validated `assessment.json`;
 - readable `assessment.html`.
 
-Document Quality and Agent Friendliness is a separate visible dimension with
-status `not-assessed`.
-
-**Implementation status:** Semantic, REST, downstream, and documentation-
-and optional AI inference are active. Document Quality and Agent Friendliness
-is present but not assessed.
+Semantic, REST, downstream, Azure Guidelines, and optional bounded inference
+are active. Document Quality and Agent Friendliness remains a separate visible
+dimension with status `not-assessed`.
 
 ## End-to-end flow
 
@@ -98,30 +93,15 @@ is present but not assessed.
                             assessment.json + assessment.html
 ```
 
-No Node.js script produces `inference.json` or
-`compliance-search-evidence.json`, or calls an LLM API. Preparation, dimension
-analysis, and coverage accounting are deterministic.
-`compliance-search-request.mjs` only builds the query profiles embedded in
-`model-input.json`. The main Agent reads that bounded input and the local
-document catalog, calls `web_fetch` until it obtains the four highest-ranked
-retrievable official documents per review unit or exhausts the catalog, and
-writes both `compliance-search-evidence.json` and
-`assessment-judgment.json`. `compliance-assessment.mjs`, called during
-assembly, consumes and validates the search evidence; it does not produce it.
+Preparation, dimension analysis, and coverage accounting are deterministic.
+No Node.js script calls an LLM or produces `inference.json` or
+`compliance-search-evidence.json`. The Agent writes those optional evidence
+artifacts and `assessment-judgment.json` from bounded input; deterministic
+assembly validates them and joins complete canonical evidence.
 
-Azure Guidelines is parallel to Semantic, REST, and Downstream as an assessment
-dimension, but not as an initial deterministic analyzer. Its search requires
-the deterministic Semantic review units and their TypeSpec evidence, so it
-branches from `model-input.json`. It does not consume REST or Downstream
-candidates; those take the direct branch from `model-input.json` into the same
-bounded Agent judgment.
-
-Coverage accounting is embedded in `model-input.json`; it is not a separate
-artifact and does not rewrite the file after creation. When every hunk has a
-deterministic candidate or explicit deterministic classification, the Agent
-skips inference. Otherwise, the Agent reads only the bounded inference requests
-for unknown hunks, writes `inference.json`, and then judges the combined
-deterministic and inferred candidates.
+Azure Guidelines branches from Semantic review units rather than REST or
+downstream candidates. Inference runs only for hunks whose deterministic
+coverage status is `unknown`.
 
 ## 1. Preparation manifest
 
@@ -876,13 +856,7 @@ Dimension output:
       "sourceCommit": "base-sha|head-sha",
       "apiVersion": "2026-01-01-preview",
       "factKind": "method|model|enum|union|client|customization",
-      "kind": "basic|paging|lro|lropaging",
-      "references": [
-        {
-          "kind": "parameter|response|property|lro-result|paging-item",
-          "targetFactId": "sdk-fact-<hash>"
-        }
-      ]
+      "kind": "basic|paging|lro|lropaging"
     }
   },
   "rootCauses": [
@@ -891,14 +865,15 @@ Dimension output:
       "kind": "method-return-propagation|type-contract-propagation|enum-union-propagation|unresolved",
       "directCandidateIds": ["downstream-<hash>"],
       "propagatedCandidateIds": ["downstream-<hash>"],
-      "operationFactIds": ["sdk-fact-<hash>"],
       "methodFactIds": ["sdk-fact-<hash>"],
       "typeFactIds": ["sdk-fact-<hash>"],
       "referenceEvidence": [
         {
           "fromFactId": "sdk-fact-<hash>",
           "toFactId": "sdk-fact-<hash>",
-          "kind": "response|lro-result|property"
+          "kind": "parameter|response|property|lro-result|paging-item",
+          "memberName": "segment",
+          "location": "request-path|request-query|request-header|request-body|response-header|response-body"
         }
       ]
     }
@@ -931,6 +906,28 @@ The downstream analyzer builds `rootCauses` before Agent judgment by traversing
 normalized TCGC method-to-type and type-to-type reference edges. Candidates
 carry their deterministic `rootCauseIds`. The Agent approves or rejects
 candidates but cannot create, merge, split, or assign root causes.
+
+Downstream analysis is independent from REST compatibility. It does not join,
+deduplicate, suppress, count, or present REST operations. Normalized TCGC HTTP
+metadata is retained only when it identifies the SDK-facing location of a
+method parameter or type member. That evidence produces the six locations
+`request-path`, `request-query`, `request-header`, `request-body`,
+`response-header`, and `response-body`; it does not create a downstream-to-REST
+relationship.
+
+For each project and comparison role, build one indexed TCGC reference graph.
+Graph nodes are public methods and named SDK types. Directed edges represent
+method parameters, method responses, paging items, LRO results, model
+properties, inheritance, collection elements, and union variants. Build
+forward and reverse adjacency maps once, then locate affected public methods
+by traversing reverse edges from each changed type. Cache traversal by changed
+type identity so multiple member candidates on one type share one lookup.
+Cycles use visited sets. Retain one shortest path per affected method and only
+the unchanged bridge facts on those paths.
+
+The expected cost is linear graph construction plus traversal of the relevant
+subgraph. The analyzer must not rescan every method and recursively walk every
+model for each candidate.
 
 ### Deterministic candidate rules
 
@@ -984,97 +981,45 @@ method parameter change. A query parameter added to both the method and its
 nested LRO operation URI produces one `method-parameters-changed` finding, not
 an additional `method-lro-changed` finding.
 
-### Downstream type presentation and root-cause aggregation
+### Downstream SDK method and type presentation
 
-REST-compatible model, enum, union, and other shared SDK type findings are
-grouped by **root cause** in JSON for causal traceability and deduplication.
-HTML renders one default-collapsed breaking-change card per distinct affected
-SDK type, alongside the operation-level downstream cards. It does not render
-one large `Shared SDK type impact` card containing several types.
+Confirmed direct method candidates are grouped by SDK method identity into
+`methodGroups`. Confirmed model, enum, union, and other named-type candidates
+are grouped into `typeImpacts` by project and cross-language SDK type identity.
+Each impact retains all deterministically proven request/response locations.
+Candidate judgment remains independent: presentation grouping never merges
+Agent decisions.
 
-A root cause is the nearest deterministic SDK contract change that caused the
-types to acquire a breaking public-surface difference. Examples include:
+Root-cause and affected-method relationships come only from deterministic TCGC
+method-to-type reference paths. Matching by project, source file, REST
+operation, name coincidence, or simultaneous usage changes is insufficient.
+An unchanged public method is still an affected SDK method when a changed type
+is reachable through its request, response, paging, or LRO contract.
 
-- one or more SDK methods beginning to return a previously input-only model;
-- a directly changed public model propagating through methods that expose it;
-- an enum or union contract change propagating through containing public
-  models.
+Presentation is method-first: one card per distinct mapped SDK method combines
+direct method changes and indirect type causes. The collapsed summary exposes
+the target method name, cause, and related Semantic intent links.
 
-Root-cause relationships must come from TCGC type and method reference
-provenance. Matching only by project, source file, name, or simultaneous usage
-changes is insufficient.
+Expanding a method card shows its normalized before/after contract and nested
+type causes. Parameters, properties, and enum members are rows, not independent
+cards. Each type cause retains its finding IDs and displays only verified
+method-specific paths, request/response locations, and baseline/target roles.
+An indirect impact does not imply a changed top-level method signature.
 
-Each type card summary contains:
+The renderer uses explicitly supplied, matching downstream graph evidence.
+Without it, recorded method associations remain visible but precise paths and
+locations are unavailable. Root-wide location unions must not be presented as
+per-method evidence. REST operation identity, HTTP method, and route are not
+part of the downstream assessment contract.
 
-1. the short SDK type name;
-2. an `SDK type` tag.
+Retain confirmed types without proven method mappings in fallback cards with
+an explicit unresolved relationship reason. Never infer methods from Semantic
+intent operations or discard a finding solely to fit the layout. Finding,
+changed-type, and mapped-method counts remain distinct.
 
-All `SDK type` and `SDK method` tags use the report's blue informational tag
-style. Red remains reserved for REST-breaking tags and failure indicators; it
-must not be used to imply severity on downstream SDK contract cards.
-
-Do not show the contract-change count or affected REST operation count in the
-collapsed summary. Do not show `high`, `medium`, or `low` severity labels or
-severity-colored borders; severity remains structured JSON metadata. Contract
-details belong in the expanded body.
-
-Expanding the card shows:
-
-1. the stable cross-language SDK contract identity and a concise change
-   summary;
-2. a structured `Contract area | Before | After` table for the changed type
-   shape, properties, or enum members;
-3. a highlighted `Why this is breaking` explanation;
-4. a default-collapsed `Affected REST operations (N)` disclosure whose rows
-   show operation ID, HTTP method, and path;
-5. related Semantic intent links. Changed TypeSpec source evidence remains in
-   the Semantic intent and appendix rather than being repeated in the SDK type
-   card.
-
-The outer type card and all nested detail disclosures, including affected REST
-operations, are collapsed by default. A type card with one or more related
-REST operations uses the same visual hierarchy as the REST-contract and direct
-operation-level downstream cards. The report labels the type as an
-`SDK contract` rather than presenting it as a secondary aggregate.
-
-Mapped SDK method data and root-cause provenance remain in `assessment.json`
-for deterministic traceability but are not rendered in the SDK type card.
-
-Counts are based on distinct stable identities, not finding count. The same
-underlying downstream finding must appear in exactly one type card. Multiple
-property, enum-member, union, or usage deltas for the same cross-language type
-are merged into that type's card and remain separately traceable in JSON. If
-several method deltas are parts of one method contract change, such as method
-kind, response type, and LRO metadata, they count as one affected SDK method
-and one affected REST operation.
-
-When one type is affected by multiple independent root causes, render one type
-card containing separate root-cause references rather than duplicate cards.
-The JSON records the canonical type-card identity and root-cause memberships
-so validation can enforce complete, non-overlapping finding coverage.
-
-Related operations require deterministic evidence: TCGC type/method reference
-provenance, or exact changed TypeSpec declaration identity linked to a Semantic
-intent's operation inventory. Source-file coincidence alone is insufficient.
-Do not present a related REST operation as a mapped SDK method.
-
-If deterministic evidence cannot establish a root cause or an operation/method
-relationship, retain the type card and show the unavailable relationship
-explicitly. Do not attach operations or methods based on guesses; counts for
-unproven relationships remain zero. A confirmed type-level breaking change
-must not disappear merely because operation or method mapping is unavailable.
-
-For PR 43308, the ten public-type usage findings are one root-cause group:
-
-- root cause: `ScenarioConfigurations.execute` and `ScenarioRuns.cancel`
-  change from `basic`/void to `lro`/`ScenarioRun`;
-- affected SDK types: 10;
-- affected REST operations: 2;
-- affected SDK methods: 2;
-- the two direct methods remain separate operation cards containing their
-  merged kind, response, and LRO deltas;
-- HTML renders ten collapsed SDK type cards, each linked to the shared root
-  cause and its deterministically related operations/methods.
+The bounded judgment procedure and candidate-specific compatibility rules are
+defined in [Downstream SDK Breaking Cases](references/downstream-breaking-cases.md)
+and [Downstream Candidate Rules](references/downstream-candidate-rules.md).
 
 ### Semantic and finding relationships
 
@@ -1082,24 +1027,25 @@ Relationships between Semantic intents and confirmed findings are
 **bidirectional** and deterministic:
 
 - each REST finding records its related Semantic intent IDs;
-- each downstream operation group and SDK type card records its related
+- each downstream SDK method group and SDK type impact records its related
   Semantic intent IDs;
-- each Semantic intent records its related REST finding, downstream operation
-  group, and SDK type card IDs.
+- each Semantic intent records its related REST finding, downstream method
+  group, and SDK type impact IDs.
 
-The primary affected list inside a Semantic intent contains REST operations
-only. SDK methods, models, enums, unions, and other generated symbols appear
-only in a separate `Related findings` area.
+The primary affected-operation list inside a Semantic intent contains REST
+operations only. Static impact links target related SDK method cards or
+unmapped-type fallback cards. Selecting a link opens its enclosing details;
+relationship labels do not toggle the Semantic intent.
 
 Allowed relationship evidence:
 
 1. REST finding to Semantic intent: exact project, API version, and REST
    operation identity.
-2. Downstream method group to Semantic intent: exact project and compiled HTTP
-   method/path mapped to an affected REST operation in that intent.
-3. SDK type card to Semantic intent: deterministic TCGC root-cause
-   provenance through its related downstream method groups or an exact changed
-   TypeSpec declaration.
+2. Downstream method group to Semantic intent: exact changed TypeSpec
+   declaration identity, or exact candidate source ownership.
+3. SDK type impact to Semantic intent: exact changed TypeSpec declaration
+   identity from its findings. A deterministic TCGC path identifies affected
+   SDK methods but does not transfer REST operation ownership.
 4. Unique source fallback: allowed only when one and only one Semantic intent
    owns the relevant changed declaration/hunk and no stronger identity mapping
    exists.
@@ -1457,7 +1403,6 @@ File: `model-input.json`
         "AddressPrefixSets_Delete"
       ],
       "restChangedOperationCount": 4,
-      "downstreamChangedOperationCount": 4,
       "groupingSummaries": [
         "The resource model and lifecycle operations form one child-resource change."
       ],
@@ -1532,7 +1477,7 @@ File: `model-input.json`
       "compilerLogs": true,
       "unchangedInventories": true,
       "unreferencedFacts": true,
-      "deterministicCandidateFacts": true,
+      "unreferencedDeterministicFacts": true,
       "sourceChanges": true,
       "repeatedDeclarationIds": true,
       "repeatedReviewUnitEvidence": true
@@ -1541,9 +1486,14 @@ File: `model-input.json`
 }
 ```
 
-Only inference-relevant compact facts enter model input. Full source,
-declaration, deterministic candidate, candidate fact, and Azure Guidelines request
-evidence remains in the canonical artifacts named by `artifactReferences`.
+Model input retains compact facts referenced by deterministic downstream
+candidates and their shortest method-to-type paths, together with
+inference-relevant facts. The retained SDK fact set is the union of candidate
+`evidenceFactIds`, root-cause `methodFactIds` and `typeFactIds`,
+`referenceEvidence.fromFactId` and `toFactId`, and inference-required fact IDs.
+Unrelated SDK inventory remains omitted. Full source, declaration, candidate,
+and Azure Guidelines request evidence remains in the canonical artifacts named
+by `artifactReferences`.
 `evidenceSets` connects bounded judgment items to exact canonical entries
 without repeating large declaration lists or operation facts. Qualified names,
 changed constructs, and query terms are bounded summaries with total counts;
@@ -1660,15 +1610,6 @@ File: `assessment-judgment.json`
       "rationale": "Language-neutral SDK compatibility rationale."
     }
   ],
-  "downstreamRootCauseDecisions": [
-    {
-      "rootCauseId": "downstream-root-cause-<hash>",
-      "decision": "approve|reject",
-      "severity": "high|medium|low",
-      "rationale": "The method return change propagates output usage to these public types.",
-      "excludedCandidateIds": []
-    }
-  ],
   "complianceDecisions": [
     {
       "reviewUnitId": "semantic-<hash>",
@@ -1695,17 +1636,8 @@ File: `assessment-judgment.json`
 ```
 
 Exactly one semantic result is required per review unit and one decision per
-deterministic or inferred REST candidate. Direct deterministic or inferred
-downstream candidates require one decision per candidate. Propagated
-shared-type candidates require one decision per deterministic root cause
-instead of repetitive per-type decisions.
-
-An internal `approve` root-cause decision retains every `propagatedCandidateId` in that
-root cause except IDs explicitly listed in `excludedCandidateIds`. Exclusions
-must be members of that root cause and are treated as rejected. A rejected
-root-cause decision rejects every propagated candidate and omits severity.
-Every downstream candidate must be covered exactly once by either a direct
-candidate decision or one canonical root-cause decision.
+deterministic or inferred REST/downstream candidate. Root causes are
+deterministic aggregation evidence and are not Agent decision units.
 
 Every Semantic intent must have exactly one Azure Guidelines decision. Every
 applicable guidance URL must identify a successfully fetched
@@ -1791,11 +1723,8 @@ File: `assessment.json`
               "method": "post",
               "path": "/scenarios/{scenarioName}/runs/{runId}/cancel",
               "restChanged": false,
-              "downstreamChanged": true,
               "changedAspects": [],
               "restOutcome": "HTTP signature and represented payload contract unchanged.",
-              "downstreamOutcome": "SDK method changed from basic/void to lro/ScenarioRun.",
-              "downstreamGroupIds": ["downstream-group-<hash>"],
               "matchBasis": "operation-identity",
               "mappingSummary": "Changed TypeSpec operation ScenarioRuns.cancel compiles to ScenarioRuns_Cancel.",
               "mappingEvidence": [
@@ -1815,7 +1744,7 @@ File: `assessment.json`
           "relatedFindings": {
             "rest": [],
             "downstream": ["downstream-group-<hash>"],
-            "sharedTypeImpact": []
+            "typeImpact": []
           }
         }
       ],
@@ -1830,13 +1759,10 @@ File: `assessment.json`
     "downstream": {
       "status": "passed|failed|not-assessed",
       "findings": [],
-      "operationGroups": [
+      "methodGroups": [
         {
           "id": "downstream-group-<hash>",
-          "operationId": "ScenarioRuns_Cancel",
           "symbol": "Microsoft.Chaos.ScenarioRuns.cancel",
-          "method": "post",
-          "path": "/scenarios/{scenarioName}/runs/{runId}/cancel",
           "apiVersion": "2026-05-01-preview",
           "parametersUnchanged": true,
           "deltas": [
@@ -1855,48 +1781,26 @@ File: `assessment.json`
           "relatedSemanticIntents": ["semantic-<hash>"]
         }
       ],
-      "sharedTypeImpacts": [
+      "typeImpacts": [
         {
-          "id": "shared-type-impact-<hash>",
-          "rootCauseId": "downstream-root-cause-<hash>",
-          "rootCauseSummary": "Two methods now return ScenarioRun through Location-based LROs.",
+          "id": "sdk-type-impact-<hash>",
+          "type": "Microsoft.Chaos.ScenarioRun",
+          "locations": ["response-body"],
+          "rootCauseIds": ["downstream-root-cause-<hash>"],
           "findingIds": ["downstream-<hash>"],
-          "canonicalFindingIds": ["downstream-<hash>"],
-          "typeCount": 10,
-          "types": ["Microsoft.Chaos.ScenarioRun"],
-          "sampleTypes": ["Microsoft.Chaos.ScenarioRun"],
-          "affectedOperationCount": 2,
-          "affectedOperations": [
-            "ScenarioConfigurations_Execute",
-            "ScenarioRuns_Cancel"
-          ],
           "affectedMethodCount": 2,
           "affectedMethods": [
-            "Microsoft.Chaos.ScenarioConfigurations.execute",
-            "Microsoft.Chaos.ScenarioRuns.cancel"
-          ],
-          "sampleOperationMethods": [
             {
-              "operationId": "ScenarioConfigurations_Execute",
-              "methodId": "Microsoft.Chaos.ScenarioConfigurations.execute"
+              "symbol": "Microsoft.Chaos.ScenarioConfigurations.execute",
+              "referenceFactIds": ["sdk-fact-<hash>"]
             },
             {
-              "operationId": "ScenarioRuns_Cancel",
-              "methodId": "Microsoft.Chaos.ScenarioRuns.cancel"
+              "symbol": "Microsoft.Chaos.ScenarioRuns.cancel",
+              "referenceFactIds": ["sdk-fact-<hash>"]
             }
           ],
           "relatedSemanticIntents": ["semantic-<hash>"],
           "unresolvedRelationshipReason": null
-        }
-      ],
-      "impliedByRest": [
-        {
-          "findingId": "downstream-<hash>",
-          "operationId": "Widgets_Delete",
-          "methodId": "Microsoft.Contoso.Widgets.delete",
-          "rule": "method-removed",
-          "restFindingIds": ["rest-<hash>"],
-          "causalMatchBasis": "operation-removed-implies-method-removed"
         }
       ],
       "rejectedCandidateCount": 0,
@@ -2014,8 +1918,10 @@ File: `assessment.json`
 }
 ```
 
-Every downstream operation group merges all confirmed deltas for one project,
-REST operation, and SDK method. Each delta retains its underlying finding ID,
+### Downstream SDK method groups
+
+Every downstream method group merges all confirmed direct deltas for one
+project and SDK method identity. Each delta retains its underlying finding ID,
 rule, severity, concise actual/expected behavior, and rationale, and adds
 structured `field`, `before`, and `after` values.
 
@@ -2048,78 +1954,19 @@ When parameters change, the parameter delta uses `changes` instead of complete
 Adding a parameter does not mark retained parameters as reordered when their
 relative order is unchanged.
 
-HTML renders only the changed parameters:
+HTML renders changed parameters and method deltas from this structured data;
+the presentation contract is defined in [HTML requirements](#11-html-requirements).
+Method cards are collapsed by default and contain SDK method identity, a
+`Contract area | Before | After` table, a highlighted breaking rationale, and
+related Semantic intent links. They do not show HTTP method, route, REST
+operation identity, or REST findings. Render only changed parameter and method
+rows: additions/removals use `not present` on the missing side, modifications
+show projected before/after signatures, reordering uses one-based positions,
+and retained unchanged parameters contribute only to the summary count.
 
-- added parameters as a green `+ name?: type` row;
-- removed parameters as a red `- name: type` row;
-- modified parameters with only changed attributes highlighted;
-- reordered parameters with old and new positions;
-- a concise count of unchanged parameters.
-
-For example, adding an optional boolean to a method with three retained
-parameters renders:
-
-```text
-Parameters: 1 added, 3 unchanged
-+ afcManagedSync?: boolean
-```
-
-All method-delta labels use readable field names instead of internal rule IDs.
-Before values use removal styling and after values use addition styling, so
-the changed portion is visually prominent. A method card contains only
-semantic deltas whose normalized before and after values differ; unchanged
-LRO, paging, response, kind, access, or client metadata is not listed.
-
-Each SDK method card uses the same contract-focused hierarchy as an SDK type
-card:
-
-1. the default-collapsed summary shows the REST operation ID, an `SDK method`
-   tag, and the SDK contract-change count without a severity label or
-   severity-colored border;
-2. expanded metadata shows the stable SDK method identity, HTTP method/path,
-   and a concise change summary;
-3. a structured `SDK method member | Before | After` table renders parameter
-   additions/removals/modifications/reordering and non-parameter method deltas;
-4. a highlighted `Why this is breaking` block combines the confirmed
-   method-delta rationales;
-5. a compact footer retains parameter counts and related Semantic intent
-   links. Changed TypeSpec source evidence remains in the Semantic intent and
-   appendix rather than being repeated in the SDK method card.
-
-The card does not repeat unchanged parameters as table rows. Added or removed
-parameters use `not present` on the missing side, modified parameters show the
-projected before/after signatures, and reordered parameters show their
-one-based positions.
-
-### REST/downstream deduplication
-
-When an operation is already REST breaking, suppress only downstream SDK
-deltas that are deterministically caused by that REST break. Preserve
-independent REST-compatible SDK breaks for the same operation.
-
-Examples:
-
-- a removed REST operation causally implies removal of its generated SDK
-  method, so the method-removal delta is omitted from downstream detail;
-- a changed REST response schema may causally imply the corresponding SDK
-  response-type change;
-- an unrelated `@clientName`, client-location, access, paging, or LRO
-  customization may remain an independent downstream finding even when the
-  operation also has a REST break.
-
-Each suppressed delta records the confirmed REST finding IDs and deterministic
-causal match basis in `impliedByRest`. HTML presents one unified **Downstream
-breaking changes (N)** list. `N` counts the visible entries: linked REST
-findings, direct SDK method groups, and distinct SDK type cards. Each REST
-breaking finding also appears in that list with a `REST breaking` tag and a
-direct link to its REST finding details; the REST details are not duplicated.
-Independent REST-compatible SDK method and type breaks remain full collapsed
-downstream cards. If an operation group contains both implied and independent
-deltas, render the group with only its independent deltas.
-
-Do not suppress an entire operation group based only on matching operation ID,
-HTTP method/path, project, or API version. Deduplication requires a supported
-rule-to-rule causal relationship and matching deterministic evidence.
+REST and downstream dimensions report independently. Assembly does not
+suppress downstream findings because a related wire contract is REST breaking,
+and it does not emit `impliedByRest`.
 
 ## 10. Validation
 
@@ -2127,8 +1974,8 @@ Assembly validates the small Agent answer and joins complete deterministic
 evidence. Final validation independently checks:
 
 1. allowed schemas and enums;
-2. exact review-unit, direct-candidate, and downstream root-cause coverage,
-   with every underlying candidate covered exactly once;
+2. exact review-unit and REST/downstream candidate coverage, with every
+   candidate covered exactly once;
 3. no invented or duplicate IDs;
 4. complete actual/expected/evidence/source for findings;
 5. exact one-time changed TypeSpec hunk coverage;
@@ -2153,54 +2000,9 @@ evidence. Final validation independently checks:
 
 ## 11. HTML requirements
 
-The report must show:
-
-1. report identity, overall code quality (`passed|failed|not-assessed`), and a
-   header link to the detailed source/artifact comparison in the appendix;
-2. scope notice and assessed/not-assessed dimension coverage;
-3. REST breaking findings with actual/expected behavior;
-4. one numbered downstream breaking list containing linked, tagged REST
-   findings, direct SDK method cards, and one SDK type card per distinct
-   affected cross-language type;
-5. all SDK method and SDK contract cards collapsed by default; SDK contract
-   summaries show the short type name and an `SDK type` tag without severity
-   labels or severity-colored borders. Expanded details use a structured
-   before/after contract table, highlighted breaking rationale, and the
-   affected REST operation list.
-   SDK method cards use the same structure with an `SDK method` tag, method
-   identity, HTTP method/path, structured changed-member rows, and highlighted
-   rationale.
-   The affected REST operation list is also collapsed by default, while
-   expanded details retain Semantic intent links. Changed TypeSpec source
-   evidence remains in Semantic intents and the appendix. Mapped SDK method
-   data and root-cause provenance remain available in JSON rather than the
-   main report;
-6. a numbered `Azure Guidelines (N)` section before Semantic intents,
-   containing only findings, without
-   a separate status or coverage summary card, plus an explicit not-assessed
-   Document Quality and Agent Friendliness dimension;
-   findings with identical canonical guidance-section sets and expected
-   behavior may share one visual guideline-issue card. The section and summary
-   counts report distinct visual guideline issues. The grouped card renders
-   shared guidance once and lists each affected Semantic intent with its own
-   actual behavior and changed-code evidence. The underlying intent-level
-   finding count remains available through the affected-intent detail and JSON;
-   per-intent assessments, ranked search documents, and retrieval details
-   appear only in the appendix;
-7. source-first Semantic intents;
-8. expandable REST operations with before/after impact;
-9. Azure Guidelines finding cards without a separate TypeSpec source-link list;
-   under **Actual**, show at most two changed-code snippets ranked by relevance
-   to the actual behavior, while retaining complete evidence in JSON and the
-   appendix;
-10. appendix with a **Potential limits** subsection for retained assessment
-    blockers, followed by a clickable pull-request link when PR identity is
-    available, files, projects, compiler artifacts, timings, model input
-    accounting, ranked Azure Guidelines documents, retrieval attempts, and
-    provenance. Derive the link from the repository remote and PR number when
-    the current schema does not carry a dedicated pull-request object.
-    Potential limits are supporting caveats rather than a standalone
-    main-report section.
+The normative report content, ordering, and status requirements are defined in
+[`references/output-contract.md`](references/output-contract.md). This section
+defines the renderer's presentation and evidence-grouping behavior.
 
 ### REST contract cards
 
@@ -2209,36 +2011,6 @@ cards. The renderer groups confirmed REST findings by stable wire-contract
 identity, such as a model, enum, request parameter type, or response header
 type. One contract produces one default-collapsed card and retains every
 deterministically affected REST operation.
-
-Collapsed:
-
-```text
-┌ NfsFileType  [REST contract]
-│ 3 contract changes · 6 affected REST operations
-└
-```
-
-Expanded:
-
-```text
-┌ NfsFileType  [REST contract]
-│
-│ REST contract  Storage.File.NfsFileType
-│
-│ Breaking changes
-│ ┌ Contract area                         Before              After
-│ ├ NfsFileType.SymLink                   "SymLink"            removed
-│ ├ NfsFileType.BlockDevice               "BlockDevice"        removed
-│ └ NfsFileType.CharacterDevice           "CharacterDevice"    removed
-│
-│ Why this is breaking
-│ Removing serialized values narrows the wire contract.
-│
-│ ▸ Affected REST operations (6)
-│
-│ Related semantic intents  Remove NFS file-type variants
-└
-```
 
 Presentation rules:
 
@@ -2270,16 +2042,15 @@ Presentation rules:
 10. The footer contains only human-readable links to related Semantic intents.
     Do not repeat Changed TypeSpec source links in the REST card; complete
     source evidence remains in the Semantic intent and appendix.
-11. REST-derived downstream entries link back to the contract card rather than
-    duplicate its REST details.
-12. Changed TypeSpec sources and related Semantic intents appear at the bottom.
-13. A REST finding without a proven contract identity remains visible as a
+11. A REST finding without a proven contract identity remains visible as a
     default-collapsed `Unmapped REST contract change` card. Do not infer a
     contract from source-file coincidence.
-14. Stable finding anchors remain inside the aggregate card so existing deep
+12. Stable finding anchors remain inside the aggregate card so existing deep
     links continue to work. JSON retains every underlying finding once.
 15. The visible REST count is the number of distinct contract cards plus
     unmapped cards, not the raw finding-row count.
+
+### Azure Guidelines rendering
 
 Azure Guidelines rendering is source-first:
 
@@ -2289,6 +2060,7 @@ Azure Guidelines rendering is source-first:
   identity and normalized expected behavior, never by title alone;
 - render one shared expected/guidance block and one actual-evidence entry per
   affected Semantic intent, preserving every finding anchor and intent link;
+- under **Actual**, show at most two changed-code snippets ranked by relevance;
 - under each Semantic intent, show the four ranked documents, score
   components, fetched section, and canonical source link;
 - show one fetched-guidance synthesis beside the intent's representative
@@ -2297,6 +2069,8 @@ Azure Guidelines rendering is source-first:
 - collapse `applicable-pass` intent assessments by default;
 - render retrieval failures, catalog exhaustion, and `not-assessed` intents
   explicitly rather than presenting zero findings as a pass.
+
+### Semantic rendering
 
 Semantic operation rendering is bounded:
 
@@ -2312,6 +2086,8 @@ unchanged statement, and downstream outcome. It is deterministic supporting
 evidence, not a separate Semantic or Azure Guidelines assessment, and it does not
 repeat TypeSpec code.
 
+### Shared contract rows
+
 Semantic operation cards and REST breaking cards use the same contract-delta
 row presentation as SDK method and SDK type cards:
 
@@ -2323,11 +2099,12 @@ row presentation as SDK method and SDK type cards:
 - Before and After use the same removal/addition color treatment;
 - REST and Semantic operation rows derive the area kind from normalized wire
   location and schema path;
-- SDK method parameter rows use related REST operation evidence to show their
-  query, path, request-header, or request-body origin when that mapping is
-  unambiguous, and otherwise use `Method parameter`;
+- SDK method parameter rows use normalized TCGC HTTP metadata to show their
+  request path, query, header, or body location when unambiguous, and otherwise
+  use `Method parameter`;
 - SDK type property rows derive the concrete property name, type, optionality,
-  and wire role from baseline/target TCGC facts and related operation evidence;
+  and SDK usage role from baseline/target TCGC facts and retained reference
+  paths;
   a property is labeled `Request body property` or `Response body property`
   only when that concrete member appears in the corresponding normalized body
   schema, not merely because its containing SDK type is reachable from that
@@ -2368,6 +2145,8 @@ row presentation as SDK method and SDK type cards:
   while Semantic operation cards group the applicable rows under each
   representative operation.
 
+### Semantic source evidence
+
 Each Semantic intent is collapsed by default and shows exactly one escaped
 TypeSpec code example. The example is nested in a second disclosure that is
 also collapsed by default. It is presentation-only and does not narrow the
@@ -2401,12 +2180,7 @@ Operation-specific source evidence remains in `assessment.json` for
 traceability and representative-example selection, but code is rendered once
 at the Semantic-intent level.
 
-For previously generated publication units that predate operation-level
-source IDs, assembly may recover only the unit's compiler-indexed `Versions`
-declaration hunks. This fallback is limited to API-version publication units;
-it is further restricted to the operation fact's project root. It must not
-attach another subservice's version declaration or other intent-wide feature
-or compatibility hunks to every published operation.
+### Header and appendix
 
 The header's `TypeSpec source diff` line shows only the Git source commits:
 
@@ -2506,43 +2280,17 @@ Never label a head-source artifact as a base-commit artifact.
 
 ## 12. Files
 
-```text
-.github/skills/azure-typespec-assessment/
-  SKILL.md
-  references/
-    workflow.md
-    classification.md
-    output-contract.md
-    downstream-breaking-cases.md
-    agentic-search.md
-    reference-document-links.md
-  scripts/
-    cli.mjs
-    stable-id.mjs
-    git-evidence.mjs
-    source-index.mjs
-    api-version-selection.mjs
-    compiler-runner.mjs
-    autorest-contract.mjs
-    tcgc-contract.mjs
-    prepare-assessment.mjs
-    analyze-semantic-intents.mjs
-    analyze-rest-breaking.mjs
-    analyze-downstream-breaking.mjs
-    run-assessment-analysis.mjs
-    compliance-search-request.mjs
-    compliance-search-evidence.schema.json
-    inference.schema.json
-    assessment-judgment.schema.json
-    assessment.schema.json
-    assemble-assessment.mjs
-    validate-assessment.mjs
-    assessment-display.mjs
-    render-assessment-html.mjs
-    *.test.mjs
-  evals/
-    assessment.eval.yaml
-```
+| Area | Source of truth |
+| ---- | --------------- |
+| Skill workflow and boundaries | `SKILL.md`, `references/workflow.md` |
+| Judgment rules | `references/classification.md`, `references/downstream-breaking-cases.md` |
+| Azure Guidelines retrieval | `references/agentic-search.md`, `references/reference-document-links.md` |
+| Output contract | `references/output-contract.md`, `scripts/*.schema.json` |
+| Deterministic preparation | `scripts/prepare-assessment.mjs`, `scripts/run-assessment-analysis.mjs` |
+| Dimension analyzers | `scripts/analyze-*.mjs` |
+| Assembly and validation | `scripts/assemble-assessment.mjs`, `scripts/validate-assessment.mjs` |
+| HTML presentation | `scripts/assessment-display.mjs`, `scripts/render-assessment-html.mjs` |
+| Regression coverage | `scripts/*.test.mjs`, `evals/` |
 
 Preserve accepted assessments, `evals/cases.json`, and user-owned eval changes.
 
@@ -2639,31 +2387,5 @@ The main challenges are:
     evidence graphs. Input compaction must preserve all transitively required
     evidence without overwhelming the bounded Agent context.
 
-To make deterministic blind spots observable, each Semantic review unit
-includes a coverage ledger:
-
-```json
-{
-  "reviewUnitId": "semantic-...",
-  "deterministicCoverage": {
-    "restCandidateIds": [],
-    "downstreamCandidateIds": [],
-    "complianceSearchRequestIds": ["compliance-search-..."],
-    "relatedOperationIds": [],
-    "coveredHunkIds": [],
-    "uncoveredHunkIds": ["hunk-..."],
-    "gaps": ["no-language-specific-tcgc-delta"]
-  },
-  "inferenceRequired": true
-}
-```
-
-This changes the completeness invariant from:
-
-> Every generated candidate was judged.
-
-to:
-
-> Every changed piece of evidence was deterministically analyzed, explicitly
-> classified as no impact, sent to bounded AI inference, or reported as
-> blocked.
+The deterministic coverage ledger and completeness invariant are defined in
+[Deterministic coverage and optional inference](#71-deterministic-coverage-and-optional-inference).

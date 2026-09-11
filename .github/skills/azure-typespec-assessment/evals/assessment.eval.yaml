@@ -31,7 +31,7 @@ stimuli:
           required: ["azure-typespec-assessment"]
 
   - name: trigger-explain-typespec-rest-impact
-    prompt: "Explain the semantic intent and Azure compliance impact of the local TypeSpec changes."
+    prompt: "Explain the semantic intent and Azure Guidelines impact of the local TypeSpec changes."
     graders:
       - type: skill-invocation
         config:
@@ -120,17 +120,22 @@ stimuli:
           disallowed: ["azure-typespec-assessment"]
 
   - name: retain-pr-44988-html-report
+    tags:
+      behavior: report-rendering
     prompt: |
       Use azure-typespec-assessment to validate the supplied PR 44988 assessment
       fixture and render its final HTML report to output/assessment.html.
+      Run scripts/validate-assessment.mjs and scripts/render-assessment-html.mjs
+      against assessment.json. This is an existing-report replay, not a fresh
+      source assessment.
     environment:
       files:
         - src: assessments/44988/assessment.json
           dest: assessment.json
-        - src: ../scripts/validate-assessment.mjs
-          dest: validate-assessment.mjs
-        - src: ../scripts/render-assessment-html.mjs
-          dest: render-assessment-html.mjs
+        - src: ../scripts
+          dest: scripts
+        - src: ../references
+          dest: references
     graders:
       - type: skill-invocation
         config:
@@ -141,11 +146,11 @@ stimuli:
             - "^(powershell|bash)$"
       - type: run-command
         config:
-          command: "node validate-assessment.mjs assessment.json"
+          command: "node scripts/validate-assessment.mjs assessment.json"
           expected_exit_code: 0
       - type: run-command
         config:
-          command: "node render-assessment-html.mjs assessment.json output/assessment.html"
+          command: "node scripts/render-assessment-html.mjs assessment.json output/assessment.html"
           expected_exit_code: 0
       - type: file-exists
         config:
@@ -153,4 +158,4 @@ stimuli:
       - type: file-matches
         config:
           path: "output/assessment.html"
-          pattern: "Release Network API Version 2025-09-01"
+          pattern: "FirewallPolicies\\.createOrUpdate"

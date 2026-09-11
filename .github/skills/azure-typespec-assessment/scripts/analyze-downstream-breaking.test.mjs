@@ -102,6 +102,78 @@ function parameterOnlyLroShape(current, finalStateVia = "azure-async-operation")
   return shape;
 }
 
+function nestedResponseShape(current) {
+  const shape = packageShape(false);
+  const method = shape.clients[0].methods[0];
+  method.name = "listFilesAndDirectoriesSegment";
+  method.crossLanguageDefinitionId =
+    "Storage.File.Directory.listFilesAndDirectoriesSegment";
+  method.response = {
+    kind: "method",
+    type: {
+      kind: "model",
+      name: "ListFilesAndDirectoriesSegmentResponse",
+      crossLanguageDefinitionId:
+        "Storage.File.ListFilesAndDirectoriesSegmentResponse",
+    },
+  };
+  const property = (name, type) => ({
+    kind: "property",
+    name,
+    serializedName: name,
+    optional: true,
+    discriminator: false,
+    type,
+  });
+  shape.models = [
+    {
+      kind: "model",
+      name: "ListFilesAndDirectoriesSegmentResponse",
+      crossLanguageDefinitionId:
+        "Storage.File.ListFilesAndDirectoriesSegmentResponse",
+      access: "public",
+      usage: 2,
+      properties: [
+        property("segment", {
+          kind: "model",
+          name: "FilesAndDirectoriesListSegment",
+          crossLanguageDefinitionId:
+            "Storage.File.FilesAndDirectoriesListSegment",
+        }),
+      ],
+    },
+    {
+      kind: "model",
+      name: "FilesAndDirectoriesListSegment",
+      crossLanguageDefinitionId:
+        "Storage.File.FilesAndDirectoriesListSegment",
+      access: "public",
+      usage: 2,
+      properties: current
+        ? []
+        : [
+            property("blockDeviceItems", {
+              kind: "array",
+              valueType: {
+                kind: "model",
+                name: "BlockDeviceItem",
+                crossLanguageDefinitionId: "Storage.File.BlockDeviceItem",
+              },
+            }),
+          ],
+    },
+    {
+      kind: "model",
+      name: "BlockDeviceItem",
+      crossLanguageDefinitionId: "Storage.File.BlockDeviceItem",
+      access: "public",
+      usage: 2,
+      properties: [],
+    },
+  ];
+  return shape;
+}
+
 function analyzeShapes(context, base, current) {
   const work = fs.mkdtempSync(path.join(process.cwd(), ".downstream-analyzer-test-"));
   context.after(() => fs.rmSync(work, { recursive: true, force: true }));
@@ -150,6 +222,36 @@ test("detects PR 43308-style kind/response/LRO changes without inventing paramet
   ));
 });
 
+test("retains response-header evidence without changing established candidate IDs", (context) => {
+  const withoutHeaders = analyzeShapes(
+    context,
+    packageShape(false),
+    packageShape(true),
+  );
+  const base = packageShape(false);
+  const current = packageShape(true);
+  for (const shape of [base, current]) {
+    shape.clients[0].methods[0].operation.responses[0].headers = [{
+      kind: "responseheader",
+      name: "location",
+      serializedName: "Location",
+      optional: true,
+      type: { kind: "string" },
+    }];
+    shape.clients[0].methods[0].operation.exceptions[0].headers = [];
+  }
+  const withHeaders = analyzeShapes(context, base, current);
+
+  assert.deepEqual(
+    withHeaders.candidates.map((item) => item.id),
+    withoutHeaders.candidates.map((item) => item.id),
+  );
+  assert.ok(Object.values(withHeaders.facts).some((fact) =>
+    fact.factKind === "method" &&
+    fact.operation.responses[0].headers[0].serializedName === "Location",
+  ));
+});
+
 test("does not emit an LRO finding when only a public parameter and nested URI template change", (context) => {
   const result = analyzeShapes(
     context,
@@ -171,4 +273,47 @@ test("retains actual LRO behavior changes", (context) => {
 
   assert.ok(result.candidates.some((item) => item.rule === "method-lro-changed"));
   assert.ok(!result.candidates.some((item) => item.rule === "method-parameters-changed"));
+});
+
+test("links nested response type changes to unchanged public methods", (context) => {
+  const result = analyzeShapes(
+    context,
+    nestedResponseShape(false),
+    nestedResponseShape(true),
+  );
+  const propertyCandidate = result.candidates.find(
+    (item) => item.rule === "model-property-removed",
+  );
+
+  assert.ok(propertyCandidate);
+  assert.ok(
+    !result.candidates.some((item) => item.rule === "method-response-changed"),
+  );
+  const root = result.rootCauses.find((item) =>
+    item.directCandidateIds.includes(propertyCandidate.id),
+  );
+  assert.equal(root.kind, "type-contract-propagation");
+  assert.equal(root.methodFactIds.length, 1);
+  assert.ok(
+    root.referenceEvidence.some(
+      (edge) =>
+        edge.kind === "response" && edge.location === "response-body",
+    ),
+  );
+  assert.ok(
+    root.referenceEvidence.some(
+      (edge) =>
+        edge.kind === "property" &&
+        edge.memberName === "segment" &&
+        edge.location === "response-body",
+    ),
+  );
+  assert.ok(
+    Object.values(result.facts).some(
+      (fact) =>
+        fact.factKind === "method" &&
+        fact.crossLanguageDefinitionId ===
+          "Storage.File.Directory.listFilesAndDirectoriesSegment",
+    ),
+  );
 });

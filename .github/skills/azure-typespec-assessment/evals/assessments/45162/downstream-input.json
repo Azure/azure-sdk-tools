@@ -1,0 +1,1090 @@
+{
+  "facts": {
+    "sdk-fact-4739320f7e27467a": {
+      "projectId": "project-819de5ecc40e",
+      "comparisonRole": "target",
+      "sourceRevision": "current",
+      "sourceCommit": "31a6e2baccd0c4f42d10e66df95c1706fc97cc25",
+      "apiVersion": "2026-07-31-preview",
+      "factKind": "model",
+      "id": "sdk-fact-4739320f7e27467a",
+      "identity": "ConfidentialLedger.LedgerWriteResult",
+      "crossLanguageDefinitionId": "ConfidentialLedger.LedgerWriteResult",
+      "name": "LedgerWriteResult",
+      "access": "public",
+      "usage": 260,
+      "properties": [
+        {
+          "name": "collectionId",
+          "serializedName": "collectionId",
+          "type": {
+            "kind": "string"
+          },
+          "optional": false,
+          "flatten": false,
+          "access": "public",
+          "discriminator": false,
+          "visibility": [
+            1,
+            2,
+            4,
+            8,
+            16
+          ],
+          "serialization": {
+            "json": {
+              "name": "collectionId"
+            }
+          },
+          "crossLanguageDefinitionId": "ConfidentialLedger.LedgerWriteResult.collectionId"
+        },
+        {
+          "name": "receipt",
+          "serializedName": "receipt",
+          "type": {
+            "kind": "model",
+            "id": "ConfidentialLedger.ReceiptContents",
+            "name": "ReceiptContents"
+          },
+          "optional": true,
+          "flatten": false,
+          "access": "public",
+          "discriminator": false,
+          "visibility": [
+            1,
+            2,
+            4,
+            8,
+            16
+          ],
+          "serialization": {
+            "json": {
+              "name": "receipt"
+            }
+          },
+          "crossLanguageDefinitionId": "ConfidentialLedger.LedgerWriteResult.receipt"
+        },
+        {
+          "name": "state",
+          "serializedName": "state",
+          "type": {
+            "kind": "enum",
+            "id": "ConfidentialLedger.TransactionState",
+            "name": "TransactionState"
+          },
+          "optional": false,
+          "flatten": false,
+          "access": "public",
+          "discriminator": false,
+          "visibility": [
+            1,
+            2,
+            4,
+            8,
+            16
+          ],
+          "serialization": {
+            "json": {
+              "name": "state"
+            }
+          },
+          "crossLanguageDefinitionId": "ConfidentialLedger.LedgerWriteResult.state"
+        },
+        {
+          "name": "applicationClaims",
+          "serializedName": "applicationClaims",
+          "type": {
+            "kind": "array",
+            "valueType": {
+              "kind": "model",
+              "id": "ConfidentialLedger.ApplicationClaim",
+              "name": "ApplicationClaim"
+            }
+          },
+          "optional": true,
+          "flatten": false,
+          "access": "public",
+          "discriminator": false,
+          "visibility": [
+            1,
+            2,
+            4,
+            8,
+            16
+          ],
+          "serialization": {
+            "json": {
+              "name": "applicationClaims"
+            }
+          },
+          "crossLanguageDefinitionId": "ConfidentialLedger.LedgerWriteResult.applicationClaims"
+        }
+      ],
+      "discriminatedSubtypes": [],
+      "serialization": {
+        "json": {
+          "name": "LedgerWriteResult"
+        }
+      },
+      "reachable": true
+    },
+    "sdk-fact-63d34c6573fe93f0": {
+      "projectId": "project-819de5ecc40e",
+      "comparisonRole": "target",
+      "sourceRevision": "current",
+      "sourceCommit": "31a6e2baccd0c4f42d10e66df95c1706fc97cc25",
+      "apiVersion": "2026-07-31-preview",
+      "factKind": "method",
+      "id": "sdk-fact-63d34c6573fe93f0",
+      "identity": "ConfidentialLedger.createLedgerEntry",
+      "crossLanguageDefinitionId": "ConfidentialLedger.createLedgerEntry",
+      "client": "ConfidentialLedger.ConfidentialLedgerClient",
+      "clientName": "ConfidentialLedgerClient",
+      "name": "createLedgerEntry",
+      "kind": "basic",
+      "access": "public",
+      "parameters": [
+        {
+          "position": 0,
+          "name": "collectionId",
+          "kind": "method",
+          "type": {
+            "kind": "string"
+          },
+          "optional": true,
+          "onClient": false,
+          "isApiVersionParam": false,
+          "access": "public",
+          "flatten": false,
+          "crossLanguageDefinitionId": "ConfidentialLedger.createLedgerEntry.collectionId"
+        },
+        {
+          "position": 1,
+          "name": "tags",
+          "kind": "method",
+          "type": {
+            "kind": "string"
+          },
+          "optional": true,
+          "onClient": false,
+          "isApiVersionParam": false,
+          "access": "public",
+          "flatten": false,
+          "crossLanguageDefinitionId": "ConfidentialLedger.createLedgerEntry.tags"
+        },
+        {
+          "position": 2,
+          "name": "entry",
+          "kind": "method",
+          "type": {
+            "kind": "model",
+            "id": "ConfidentialLedger.LedgerEntry",
+            "name": "LedgerEntry"
+          },
+          "optional": false,
+          "onClient": false,
+          "isApiVersionParam": false,
+          "access": "public",
+          "flatten": false,
+          "crossLanguageDefinitionId": "ConfidentialLedger.createLedgerEntry.entry"
+        },
+        {
+          "position": 3,
+          "name": "waitForCommit",
+          "kind": "method",
+          "type": {
+            "kind": "boolean"
+          },
+          "optional": true,
+          "onClient": false,
+          "isApiVersionParam": false,
+          "access": "public",
+          "flatten": false,
+          "crossLanguageDefinitionId": "ConfidentialLedger.createLedgerEntry.waitForCommit"
+        },
+        {
+          "position": 4,
+          "name": "contentType",
+          "kind": "method",
+          "type": {
+            "kind": "constant",
+            "value": "application/json",
+            "valueType": {
+              "kind": "string"
+            }
+          },
+          "optional": false,
+          "onClient": false,
+          "isApiVersionParam": false,
+          "access": "public",
+          "flatten": false,
+          "crossLanguageDefinitionId": "ConfidentialLedger.createLedgerEntry.contentType"
+        },
+        {
+          "position": 5,
+          "name": "accept",
+          "kind": "method",
+          "type": {
+            "kind": "constant",
+            "value": "application/json",
+            "valueType": {
+              "kind": "string"
+            }
+          },
+          "optional": false,
+          "onClient": false,
+          "isApiVersionParam": false,
+          "access": "public",
+          "flatten": false,
+          "crossLanguageDefinitionId": "ConfidentialLedger.createLedgerEntry.accept"
+        }
+      ],
+      "responseType": {
+        "kind": "model",
+        "id": "ConfidentialLedger.LedgerWriteResult",
+        "name": "LedgerWriteResult"
+      },
+      "apiVersions": [
+        "2026-07-31-preview"
+      ],
+      "generateConvenient": true,
+      "generateProtocol": true,
+      "isOverride": false,
+      "operation": {
+        "kind": "http",
+        "path": "/app/transactions",
+        "uriTemplate": "/app/transactions{?api%2Dversion,collectionId,tags,waitForCommit}",
+        "verb": "post",
+        "parameters": [
+          {
+            "position": 0,
+            "name": "apiVersion",
+            "serializedName": "api-version",
+            "kind": "query",
+            "type": {
+              "kind": "string"
+            },
+            "optional": false,
+            "onClient": true,
+            "isApiVersionParam": true,
+            "access": "public",
+            "flatten": false,
+            "crossLanguageDefinitionId": "ConfidentialLedger.createLedgerEntry.apiVersion",
+            "serialization": {
+              "serializedName": "api-version"
+            },
+            "methodParameterSegments": [
+              [
+                "ConfidentialLedger.getConstitution.apiVersion"
+              ]
+            ],
+            "explode": false
+          },
+          {
+            "position": 1,
+            "name": "collectionId",
+            "serializedName": "collectionId",
+            "kind": "query",
+            "type": {
+              "kind": "string"
+            },
+            "optional": true,
+            "onClient": false,
+            "isApiVersionParam": false,
+            "access": "public",
+            "flatten": false,
+            "crossLanguageDefinitionId": "ConfidentialLedger.createLedgerEntry.collectionId",
+            "serialization": {
+              "serializedName": "collectionId"
+            },
+            "methodParameterSegments": [
+              [
+                "ConfidentialLedger.createLedgerEntry.collectionId"
+              ]
+            ],
+            "explode": false
+          },
+          {
+            "position": 2,
+            "name": "tags",
+            "serializedName": "tags",
+            "kind": "query",
+            "type": {
+              "kind": "string"
+            },
+            "optional": true,
+            "onClient": false,
+            "isApiVersionParam": false,
+            "access": "public",
+            "flatten": false,
+            "crossLanguageDefinitionId": "ConfidentialLedger.createLedgerEntry.tags",
+            "serialization": {
+              "serializedName": "tags"
+            },
+            "methodParameterSegments": [
+              [
+                "ConfidentialLedger.createLedgerEntry.tags"
+              ]
+            ],
+            "explode": false
+          },
+          {
+            "position": 3,
+            "name": "waitForCommit",
+            "serializedName": "waitForCommit",
+            "kind": "query",
+            "type": {
+              "kind": "boolean"
+            },
+            "optional": true,
+            "onClient": false,
+            "isApiVersionParam": false,
+            "access": "public",
+            "flatten": false,
+            "crossLanguageDefinitionId": "ConfidentialLedger.createLedgerEntry.waitForCommit",
+            "serialization": {
+              "serializedName": "waitForCommit"
+            },
+            "methodParameterSegments": [
+              [
+                "ConfidentialLedger.createLedgerEntry.waitForCommit"
+              ]
+            ],
+            "explode": false
+          },
+          {
+            "position": 4,
+            "name": "contentType",
+            "serializedName": "Content-Type",
+            "kind": "header",
+            "type": {
+              "kind": "constant",
+              "value": "application/json",
+              "valueType": {
+                "kind": "string"
+              }
+            },
+            "optional": false,
+            "onClient": false,
+            "isApiVersionParam": false,
+            "access": "public",
+            "flatten": false,
+            "crossLanguageDefinitionId": "ConfidentialLedger.createLedgerEntry.contentType",
+            "serialization": {
+              "serializedName": "Content-Type"
+            },
+            "methodParameterSegments": [
+              [
+                "ConfidentialLedger.createLedgerEntry.contentType"
+              ]
+            ]
+          },
+          {
+            "position": 5,
+            "name": "accept",
+            "serializedName": "Accept",
+            "kind": "header",
+            "type": {
+              "kind": "constant",
+              "value": "application/json",
+              "valueType": {
+                "kind": "string"
+              }
+            },
+            "optional": false,
+            "onClient": false,
+            "isApiVersionParam": false,
+            "access": "public",
+            "flatten": false,
+            "crossLanguageDefinitionId": "ConfidentialLedger.createLedgerEntry.accept",
+            "serialization": {
+              "serializedName": "Accept"
+            },
+            "methodParameterSegments": [
+              [
+                "ConfidentialLedger.createLedgerEntry.accept"
+              ]
+            ]
+          }
+        ],
+        "bodyParam": {
+          "position": 0,
+          "name": "entry",
+          "serializedName": "entry",
+          "kind": "body",
+          "type": {
+            "kind": "model",
+            "id": "ConfidentialLedger.LedgerEntry",
+            "name": "LedgerEntry"
+          },
+          "optional": false,
+          "onClient": false,
+          "isApiVersionParam": false,
+          "access": "public",
+          "flatten": false,
+          "crossLanguageDefinitionId": "ConfidentialLedger.createLedgerEntry.entry",
+          "serialization": {
+            "json": {
+              "name": "entry"
+            }
+          },
+          "methodParameterSegments": [
+            [
+              "ConfidentialLedger.createLedgerEntry.entry"
+            ]
+          ]
+        },
+        "responses": [
+          {
+            "statusCodes": 200,
+            "type": {
+              "kind": "model",
+              "id": "ConfidentialLedger.LedgerWriteResult",
+              "name": "LedgerWriteResult"
+            },
+            "headers": [
+              {
+                "position": 0,
+                "name": "transactionId",
+                "serializedName": "x-ms-ccf-transaction-id",
+                "kind": "responseheader",
+                "type": {
+                  "kind": "string"
+                },
+                "optional": false,
+                "onClient": false,
+                "isApiVersionParam": false,
+                "access": "public",
+                "flatten": false,
+                "crossLanguageDefinitionId": "ConfidentialLedger.LedgerWriteResultWithReceipt.transactionId",
+                "serialization": {
+                  "serializedName": "x-ms-ccf-transaction-id"
+                }
+              }
+            ],
+            "contentTypes": [
+              "application/json"
+            ],
+            "defaultContentType": "application/json"
+          }
+        ],
+        "exceptions": [
+          {
+            "statusCodes": "*",
+            "type": {
+              "kind": "model",
+              "id": "ConfidentialLedgerCommon.ConfidentialLedgerError",
+              "name": "ConfidentialLedgerError"
+            },
+            "headers": [],
+            "contentTypes": [
+              "application/json"
+            ],
+            "defaultContentType": "application/json"
+          },
+          {
+            "statusCodes": 503,
+            "type": {
+              "kind": "model",
+              "id": "ConfidentialLedgerCommon.ConfidentialLedgerError",
+              "name": "ConfidentialLedgerError"
+            },
+            "headers": [],
+            "contentTypes": [
+              "application/json"
+            ],
+            "defaultContentType": "application/json"
+          }
+        ]
+      }
+    },
+    "sdk-fact-c6135e6010b68166": {
+      "projectId": "project-819de5ecc40e",
+      "comparisonRole": "baseline",
+      "sourceRevision": "current",
+      "sourceCommit": "31a6e2baccd0c4f42d10e66df95c1706fc97cc25",
+      "apiVersion": "2026-02-23",
+      "factKind": "model",
+      "id": "sdk-fact-c6135e6010b68166",
+      "identity": "ConfidentialLedger.LedgerWriteResult",
+      "crossLanguageDefinitionId": "ConfidentialLedger.LedgerWriteResult",
+      "name": "LedgerWriteResult",
+      "access": "public",
+      "usage": 260,
+      "properties": [
+        {
+          "name": "transactionId",
+          "serializedName": "transactionId",
+          "type": {
+            "kind": "string"
+          },
+          "optional": false,
+          "flatten": false,
+          "access": "public",
+          "discriminator": false,
+          "visibility": [
+            1,
+            2,
+            4,
+            8,
+            16
+          ],
+          "serialization": {
+            "json": {
+              "name": "transactionId"
+            }
+          },
+          "crossLanguageDefinitionId": "ConfidentialLedger.LedgerWriteResult.transactionId"
+        },
+        {
+          "name": "collectionId",
+          "serializedName": "collectionId",
+          "type": {
+            "kind": "string"
+          },
+          "optional": false,
+          "flatten": false,
+          "access": "public",
+          "discriminator": false,
+          "visibility": [
+            1,
+            2,
+            4,
+            8,
+            16
+          ],
+          "serialization": {
+            "json": {
+              "name": "collectionId"
+            }
+          },
+          "crossLanguageDefinitionId": "ConfidentialLedger.LedgerWriteResult.collectionId"
+        }
+      ],
+      "discriminatedSubtypes": [],
+      "serialization": {
+        "json": {
+          "name": "LedgerWriteResult"
+        }
+      },
+      "reachable": true
+    },
+    "sdk-fact-e994c21d5c5aa508": {
+      "projectId": "project-819de5ecc40e",
+      "comparisonRole": "baseline",
+      "sourceRevision": "current",
+      "sourceCommit": "31a6e2baccd0c4f42d10e66df95c1706fc97cc25",
+      "apiVersion": "2026-02-23",
+      "factKind": "method",
+      "id": "sdk-fact-e994c21d5c5aa508",
+      "identity": "ConfidentialLedger.createLedgerEntry",
+      "crossLanguageDefinitionId": "ConfidentialLedger.createLedgerEntry",
+      "client": "ConfidentialLedger.ConfidentialLedgerClient",
+      "clientName": "ConfidentialLedgerClient",
+      "name": "createLedgerEntry",
+      "kind": "basic",
+      "access": "public",
+      "parameters": [
+        {
+          "position": 0,
+          "name": "collectionId",
+          "kind": "method",
+          "type": {
+            "kind": "string"
+          },
+          "optional": true,
+          "onClient": false,
+          "isApiVersionParam": false,
+          "access": "public",
+          "flatten": false,
+          "crossLanguageDefinitionId": "ConfidentialLedger.createLedgerEntry.collectionId"
+        },
+        {
+          "position": 1,
+          "name": "tags",
+          "kind": "method",
+          "type": {
+            "kind": "string"
+          },
+          "optional": true,
+          "onClient": false,
+          "isApiVersionParam": false,
+          "access": "public",
+          "flatten": false,
+          "crossLanguageDefinitionId": "ConfidentialLedger.createLedgerEntry.tags"
+        },
+        {
+          "position": 2,
+          "name": "entry",
+          "kind": "method",
+          "type": {
+            "kind": "model",
+            "id": "ConfidentialLedger.LedgerEntry",
+            "name": "LedgerEntry"
+          },
+          "optional": false,
+          "onClient": false,
+          "isApiVersionParam": false,
+          "access": "public",
+          "flatten": false,
+          "crossLanguageDefinitionId": "ConfidentialLedger.createLedgerEntry.entry"
+        },
+        {
+          "position": 3,
+          "name": "contentType",
+          "kind": "method",
+          "type": {
+            "kind": "constant",
+            "value": "application/json",
+            "valueType": {
+              "kind": "string"
+            }
+          },
+          "optional": false,
+          "onClient": false,
+          "isApiVersionParam": false,
+          "access": "public",
+          "flatten": false,
+          "crossLanguageDefinitionId": "ConfidentialLedger.createLedgerEntry.contentType"
+        },
+        {
+          "position": 4,
+          "name": "accept",
+          "kind": "method",
+          "type": {
+            "kind": "constant",
+            "value": "application/json",
+            "valueType": {
+              "kind": "string"
+            }
+          },
+          "optional": false,
+          "onClient": false,
+          "isApiVersionParam": false,
+          "access": "public",
+          "flatten": false,
+          "crossLanguageDefinitionId": "ConfidentialLedger.createLedgerEntry.accept"
+        }
+      ],
+      "responseType": {
+        "kind": "model",
+        "id": "ConfidentialLedger.LedgerWriteResult",
+        "name": "LedgerWriteResult"
+      },
+      "apiVersions": [
+        "2024-12-09-preview",
+        "2026-02-23"
+      ],
+      "generateConvenient": true,
+      "generateProtocol": true,
+      "isOverride": false,
+      "operation": {
+        "kind": "http",
+        "path": "/app/transactions",
+        "uriTemplate": "/app/transactions{?api%2Dversion,collectionId,tags}",
+        "verb": "post",
+        "parameters": [
+          {
+            "position": 0,
+            "name": "apiVersion",
+            "serializedName": "api-version",
+            "kind": "query",
+            "type": {
+              "kind": "string"
+            },
+            "optional": false,
+            "onClient": true,
+            "isApiVersionParam": true,
+            "access": "public",
+            "flatten": false,
+            "crossLanguageDefinitionId": "ConfidentialLedger.createLedgerEntry.apiVersion",
+            "serialization": {
+              "serializedName": "api-version"
+            },
+            "methodParameterSegments": [
+              [
+                "ConfidentialLedger.getConstitution.apiVersion"
+              ]
+            ],
+            "explode": false
+          },
+          {
+            "position": 1,
+            "name": "collectionId",
+            "serializedName": "collectionId",
+            "kind": "query",
+            "type": {
+              "kind": "string"
+            },
+            "optional": true,
+            "onClient": false,
+            "isApiVersionParam": false,
+            "access": "public",
+            "flatten": false,
+            "crossLanguageDefinitionId": "ConfidentialLedger.createLedgerEntry.collectionId",
+            "serialization": {
+              "serializedName": "collectionId"
+            },
+            "methodParameterSegments": [
+              [
+                "ConfidentialLedger.createLedgerEntry.collectionId"
+              ]
+            ],
+            "explode": false
+          },
+          {
+            "position": 2,
+            "name": "tags",
+            "serializedName": "tags",
+            "kind": "query",
+            "type": {
+              "kind": "string"
+            },
+            "optional": true,
+            "onClient": false,
+            "isApiVersionParam": false,
+            "access": "public",
+            "flatten": false,
+            "crossLanguageDefinitionId": "ConfidentialLedger.createLedgerEntry.tags",
+            "serialization": {
+              "serializedName": "tags"
+            },
+            "methodParameterSegments": [
+              [
+                "ConfidentialLedger.createLedgerEntry.tags"
+              ]
+            ],
+            "explode": false
+          },
+          {
+            "position": 3,
+            "name": "contentType",
+            "serializedName": "Content-Type",
+            "kind": "header",
+            "type": {
+              "kind": "constant",
+              "value": "application/json",
+              "valueType": {
+                "kind": "string"
+              }
+            },
+            "optional": false,
+            "onClient": false,
+            "isApiVersionParam": false,
+            "access": "public",
+            "flatten": false,
+            "crossLanguageDefinitionId": "ConfidentialLedger.createLedgerEntry.contentType",
+            "serialization": {
+              "serializedName": "Content-Type"
+            },
+            "methodParameterSegments": [
+              [
+                "ConfidentialLedger.createLedgerEntry.contentType"
+              ]
+            ]
+          },
+          {
+            "position": 4,
+            "name": "accept",
+            "serializedName": "Accept",
+            "kind": "header",
+            "type": {
+              "kind": "constant",
+              "value": "application/json",
+              "valueType": {
+                "kind": "string"
+              }
+            },
+            "optional": false,
+            "onClient": false,
+            "isApiVersionParam": false,
+            "access": "public",
+            "flatten": false,
+            "crossLanguageDefinitionId": "ConfidentialLedger.createLedgerEntry.accept",
+            "serialization": {
+              "serializedName": "Accept"
+            },
+            "methodParameterSegments": [
+              [
+                "ConfidentialLedger.createLedgerEntry.accept"
+              ]
+            ]
+          }
+        ],
+        "bodyParam": {
+          "position": 0,
+          "name": "entry",
+          "serializedName": "entry",
+          "kind": "body",
+          "type": {
+            "kind": "model",
+            "id": "ConfidentialLedger.LedgerEntry",
+            "name": "LedgerEntry"
+          },
+          "optional": false,
+          "onClient": false,
+          "isApiVersionParam": false,
+          "access": "public",
+          "flatten": false,
+          "crossLanguageDefinitionId": "ConfidentialLedger.createLedgerEntry.entry",
+          "serialization": {
+            "json": {
+              "name": "entry"
+            }
+          },
+          "methodParameterSegments": [
+            [
+              "ConfidentialLedger.createLedgerEntry.entry"
+            ]
+          ]
+        },
+        "responses": [
+          {
+            "statusCodes": 200,
+            "type": {
+              "kind": "model",
+              "id": "ConfidentialLedger.LedgerWriteResult",
+              "name": "LedgerWriteResult"
+            },
+            "headers": [
+              {
+                "position": 0,
+                "name": "transactionId",
+                "serializedName": "x-ms-ccf-transaction-id",
+                "kind": "responseheader",
+                "type": {
+                  "kind": "string"
+                },
+                "optional": false,
+                "onClient": false,
+                "isApiVersionParam": false,
+                "access": "public",
+                "flatten": false,
+                "crossLanguageDefinitionId": "ConfidentialLedger.LedgerWriteResult.transactionId",
+                "serialization": {
+                  "serializedName": "x-ms-ccf-transaction-id"
+                }
+              }
+            ],
+            "contentTypes": [
+              "application/json"
+            ],
+            "defaultContentType": "application/json"
+          }
+        ],
+        "exceptions": [
+          {
+            "statusCodes": "*",
+            "type": {
+              "kind": "model",
+              "id": "ConfidentialLedgerCommon.ConfidentialLedgerError",
+              "name": "ConfidentialLedgerError"
+            },
+            "headers": [],
+            "contentTypes": [
+              "application/json"
+            ],
+            "defaultContentType": "application/json"
+          }
+        ]
+      }
+    }
+  },
+  "candidates": [
+    {
+      "id": "downstream-6bcd2ee7c060757b",
+      "rule": "method-parameters-changed",
+      "defaultSeverity": "high",
+      "actual": "ConfidentialLedger.createLedgerEntry has a different ordered public parameter list.",
+      "expected": "ConfidentialLedger.createLedgerEntry preserves its existing language-neutral generated SDK contract.",
+      "crossLanguageDefinitionId": "ConfidentialLedger.createLedgerEntry",
+      "sourceChangeIds": [
+        "source-2a6a8cd1c1b06810",
+        "source-6b90b1a5f4c3ae2a",
+        "source-a1b03decaab4b3df"
+      ],
+      "declarationIds": [
+        "declaration-06c449df4b1322b9",
+        "declaration-070f8752261b14ba",
+        "declaration-1ea4404bbc1f2475",
+        "declaration-2aa447c52b89f4ff",
+        "declaration-3921b6e194bf6900",
+        "declaration-464978f111824a22",
+        "declaration-4c4f510067f4e40b",
+        "declaration-583a5b5486695542",
+        "declaration-5e67407e6592fade",
+        "declaration-5ecc05a024463454",
+        "declaration-619fab206c833526",
+        "declaration-68c10e9e933401e0",
+        "declaration-7feb90faf7759dae",
+        "declaration-7ff424c62b845fe6",
+        "declaration-8c73aa8b74ace3bb",
+        "declaration-8d389098545eacc7",
+        "declaration-a0b6fc3ff8fe903e",
+        "declaration-aaddd686534b4afb",
+        "declaration-abb1c8cc929d6afa",
+        "declaration-b04a9749ce64dc34",
+        "declaration-bd02832ac14f6383",
+        "declaration-be06c0f80ad1aff3",
+        "declaration-bf69936e4c168b4c",
+        "declaration-c2af33e048d69150",
+        "declaration-e8a7420c11bdbc9e",
+        "declaration-eca5ca394eedaec5",
+        "declaration-f028f89216a4c816",
+        "declaration-f737b2b1281bde2a"
+      ],
+      "evidenceFactIds": [
+        "sdk-fact-e994c21d5c5aa508",
+        "sdk-fact-63d34c6573fe93f0"
+      ],
+      "reviewRequired": true,
+      "rootCauseIds": [
+        "downstream-root-cause-416c54dc2f7bb3c0"
+      ]
+    },
+    {
+      "id": "downstream-c806ee9b3d6e5ab1",
+      "rule": "model-property-removed",
+      "defaultSeverity": "high",
+      "actual": "ConfidentialLedger.LedgerWriteResult no longer exposes property transactionId.",
+      "expected": "ConfidentialLedger.LedgerWriteResult preserves its existing language-neutral generated SDK contract.",
+      "crossLanguageDefinitionId": "ConfidentialLedger.LedgerWriteResult",
+      "sourceChangeIds": [
+        "source-2a6a8cd1c1b06810",
+        "source-6b90b1a5f4c3ae2a",
+        "source-a1b03decaab4b3df"
+      ],
+      "declarationIds": [
+        "declaration-06c449df4b1322b9",
+        "declaration-070f8752261b14ba",
+        "declaration-1ea4404bbc1f2475",
+        "declaration-2aa447c52b89f4ff",
+        "declaration-3921b6e194bf6900",
+        "declaration-464978f111824a22",
+        "declaration-4c4f510067f4e40b",
+        "declaration-583a5b5486695542",
+        "declaration-5e67407e6592fade",
+        "declaration-5ecc05a024463454",
+        "declaration-619fab206c833526",
+        "declaration-68c10e9e933401e0",
+        "declaration-7feb90faf7759dae",
+        "declaration-7ff424c62b845fe6",
+        "declaration-8c73aa8b74ace3bb",
+        "declaration-8d389098545eacc7",
+        "declaration-a0b6fc3ff8fe903e",
+        "declaration-aaddd686534b4afb",
+        "declaration-abb1c8cc929d6afa",
+        "declaration-b04a9749ce64dc34",
+        "declaration-bd02832ac14f6383",
+        "declaration-be06c0f80ad1aff3",
+        "declaration-bf69936e4c168b4c",
+        "declaration-c2af33e048d69150",
+        "declaration-e8a7420c11bdbc9e",
+        "declaration-eca5ca394eedaec5",
+        "declaration-f028f89216a4c816",
+        "declaration-f737b2b1281bde2a"
+      ],
+      "evidenceFactIds": [
+        "sdk-fact-c6135e6010b68166",
+        "sdk-fact-4739320f7e27467a"
+      ],
+      "reviewRequired": true,
+      "rootCauseIds": [
+        "downstream-root-cause-55831e1c4fc5077e"
+      ]
+    },
+    {
+      "id": "downstream-de03a1e305b0fe20",
+      "rule": "model-property-added-required",
+      "defaultSeverity": "high",
+      "actual": "ConfidentialLedger.LedgerWriteResult added required property state.",
+      "expected": "ConfidentialLedger.LedgerWriteResult preserves its existing language-neutral generated SDK contract.",
+      "crossLanguageDefinitionId": "ConfidentialLedger.LedgerWriteResult",
+      "sourceChangeIds": [
+        "source-2a6a8cd1c1b06810",
+        "source-6b90b1a5f4c3ae2a",
+        "source-a1b03decaab4b3df"
+      ],
+      "declarationIds": [
+        "declaration-06c449df4b1322b9",
+        "declaration-070f8752261b14ba",
+        "declaration-1ea4404bbc1f2475",
+        "declaration-2aa447c52b89f4ff",
+        "declaration-3921b6e194bf6900",
+        "declaration-464978f111824a22",
+        "declaration-4c4f510067f4e40b",
+        "declaration-583a5b5486695542",
+        "declaration-5e67407e6592fade",
+        "declaration-5ecc05a024463454",
+        "declaration-619fab206c833526",
+        "declaration-68c10e9e933401e0",
+        "declaration-7feb90faf7759dae",
+        "declaration-7ff424c62b845fe6",
+        "declaration-8c73aa8b74ace3bb",
+        "declaration-8d389098545eacc7",
+        "declaration-a0b6fc3ff8fe903e",
+        "declaration-aaddd686534b4afb",
+        "declaration-abb1c8cc929d6afa",
+        "declaration-b04a9749ce64dc34",
+        "declaration-bd02832ac14f6383",
+        "declaration-be06c0f80ad1aff3",
+        "declaration-bf69936e4c168b4c",
+        "declaration-c2af33e048d69150",
+        "declaration-e8a7420c11bdbc9e",
+        "declaration-eca5ca394eedaec5",
+        "declaration-f028f89216a4c816",
+        "declaration-f737b2b1281bde2a"
+      ],
+      "evidenceFactIds": [
+        "sdk-fact-c6135e6010b68166",
+        "sdk-fact-4739320f7e27467a"
+      ],
+      "reviewRequired": true,
+      "rootCauseIds": [
+        "downstream-root-cause-55831e1c4fc5077e"
+      ]
+    }
+  ],
+  "rootCauses": [
+    {
+      "id": "downstream-root-cause-416c54dc2f7bb3c0",
+      "kind": "method-return-propagation",
+      "directCandidateIds": [
+        "downstream-6bcd2ee7c060757b"
+      ],
+      "propagatedCandidateIds": [],
+      "methodFactIds": [
+        "sdk-fact-63d34c6573fe93f0",
+        "sdk-fact-e994c21d5c5aa508"
+      ],
+      "typeFactIds": [],
+      "referenceEvidence": [],
+      "rootKey": "project-819de5ecc40e:ConfidentialLedger.createLedgerEntry"
+    },
+    {
+      "id": "downstream-root-cause-55831e1c4fc5077e",
+      "kind": "type-contract-propagation",
+      "directCandidateIds": [
+        "downstream-c806ee9b3d6e5ab1",
+        "downstream-de03a1e305b0fe20"
+      ],
+      "propagatedCandidateIds": [],
+      "methodFactIds": [
+        "sdk-fact-63d34c6573fe93f0"
+      ],
+      "typeFactIds": [
+        "sdk-fact-4739320f7e27467a",
+        "sdk-fact-c6135e6010b68166"
+      ],
+      "referenceEvidence": [
+        {
+          "fromFactId": "sdk-fact-63d34c6573fe93f0",
+          "toFactId": "sdk-fact-4739320f7e27467a",
+          "kind": "response",
+          "location": "response-body"
+        }
+      ],
+      "rootKey": "project-819de5ecc40e:ConfidentialLedger.LedgerWriteResult"
+    }
+  ]
+}

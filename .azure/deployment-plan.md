@@ -76,6 +76,61 @@ None. The reports are standalone static HTML files and require no API, database,
 
 ## 7. Execution Checklist
 
+### Concise Explanation Refresh Validation - 2026-09-11T05:08:35.585Z
+
+User approved replacing the accepted reports and publishing all 12 to the
+existing Static Web App. This is a content-only update; the subscription,
+resource group, region, landing page, and report URLs are unchanged.
+
+| Check | Command / evidence | Result |
+|-------|--------------------|--------|
+| Existing target and authentication | `az account show`; `az staticwebapp show` with explicit subscription | Azure SDK Developer Playground; existing Free site in East Asia |
+| Production readiness | `az staticwebapp environment list` | Production `Ready` |
+| Deployment permission | `az role assignment list --assignee ... --include-inherited --include-groups` at site scope | Inherited Contributor confirmed |
+| Accepted files and static bundle | `node <session-files>\publish-short-reports.mjs` | All 12 generated/accepted HTML and JSON files match; report HTML copied into the bundle |
+| Local content and routes | Same script, temporary loopback HTTP server | Index and all 12 reports return HTTP 200 and match SHA-256 |
+| Configuration and upload scope | Same script, exact file allowlist and JSON parsing | 14 files, 2,154,109 bytes; only report HTML, index, and hosting configuration |
+| Deployment client | `npx --no-install @azure/static-web-apps-cli@2.0.10 deploy --help` | Available |
+| Infrastructure, containers, application RBAC | No infrastructure/configuration/identity changes | Not applicable |
+
+Validated by azure-validate. Detailed hashes are recorded in session artifact
+`short-reports-validation-proof.json`. No compiler artifacts, local paths from
+judgment manifests, or credentials are included in the deployment bundle.
+
+Published through the Static Web Apps CLI to the existing production environment.
+At `2026-09-11T05:10:00.192Z`, the live index and all 12 report routes returned
+HTTP 200 with SHA-256 hashes matching the deployment bundle and accepted reports.
+HTML content types and `X-Content-Type-Options: nosniff` were present; production
+remained `Ready`. Proof: session artifact `short-reports-production-proof.json`.
+
+Endpoint: https://wonderful-coast-0b5cc5a00.3.azurestaticapps.net
+
+### Current Refresh Validation Proof - 2026-09-11
+
+This refresh updates content only on the existing `typespec-assessments-haoling`
+Static Web App. No infrastructure, location, identity, or RBAC changes are planned.
+
+| Check | Command / evidence | Result |
+|-------|--------------------|--------|
+| Subscription and existing target | `az account show`; `az staticwebapp show --name typespec-assessments-haoling --resource-group rg-haoling --subscription faa080af-c1d8-40ad-9cce-e1a450ca5b57` | Existing target confirmed: Free, East Asia |
+| Production readiness | `az staticwebapp environment list` | Production environment `Ready` |
+| Deployment permission | `az role assignment list --include-inherited --include-groups` at the existing site scope | Contributor access confirmed |
+| Bundle build and integrity | `node <session-files>\refresh-static-reports.mjs` | 12 source reports copied byte-for-byte; SHA-256 matches |
+| Local routes and index membership | Same validation script, ephemeral local HTTP server | Index and all 12 report routes returned HTTP 200; report IDs match |
+| Hosting configuration and limits | JSON parsing and bundle inventory | 14 files, 2,154,114 bytes; only report HTML, index, and hosting configuration |
+| Deployment tooling | `npx --no-install @azure/static-web-apps-cli@2.0.10 deploy --help` | Client available; explicit app/output/config locations will be supplied |
+| Infrastructure validation / application roles | Existing static content upload only | Not applicable; no provisioning or application identities |
+
+Validated by the azure-validate skill on 2026-09-11. Bundle proof timestamp:
+`2026-09-11T03:49:07.788Z`.
+
+The SWA CLI `--dry-run` is not a valid production-upload preview: its installed
+implementation sets `DEPLOYMENT_ACTION` to `close`, and the service rejects it
+without a pull-request ID. No content upload occurred. The actual content,
+routes, configuration, permissions, and production target were validated above.
+Use the real production upload with an explicit `--swa-config-location` to avoid
+the CLI discovering another application's configuration elsewhere in this repository.
+
 ### Phase 1: Planning
 
 - [x] Analyze workspace
@@ -278,3 +333,21 @@ Validation completed at 2026-09-03T18:19:00+08:00:
 - The existing production environment is `Ready`.
 
 Deployment completed at 2026-09-03T18:21:00+08:00. The production index exposes 12 PR links and 12 report links, and every deployed report SHA-256 matches its current assessment source.
+
+---
+
+## 17. Production Report UI Refresh - 2026-09-11
+
+- [x] Refresh all 12 report HTML files from the explicitly requested assessments directory.
+- [x] Retain the existing list landing page and its 12 PR/report links.
+- [x] Validate report hashes, local routes, hosting configuration, and existing deployment access.
+- [x] Publish the refreshed bundle to the existing production Static Web App.
+- [x] Verify the live index and all 12 report hashes against the deployment bundle.
+
+Deployment completed on 2026-09-11. At `2026-09-11T03:55:43.103Z`, the live index
+and all 12 report routes returned HTTP 200 with SHA-256 hashes identical to the
+deployment bundle and the requested source report files. HTML content types and
+the `X-Content-Type-Options: nosniff` header were present. Azure reports the
+production environment as `Ready`.
+
+Endpoint: https://wonderful-coast-0b5cc5a00.3.azurestaticapps.net

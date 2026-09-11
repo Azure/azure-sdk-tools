@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-04T02:14:08.964Z",
+  "generatedAt": "2026-09-11T04:21:02.494Z",
   "title": "TypeSpec assessment: specification/storage/data-plane/FileStorage",
   "repository": {
     "root": "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\.workspaces\\44742\\head",
@@ -4234,8 +4234,8 @@
               "hunk-4dee08e0e6059404"
             ]
           },
-          "title": "Remove specialized NFS item models and file fields",
-          "summary": "Removes specialized block-device, character-device, FIFO, socket, and symbolic-link item shapes, together with NFS link-count and file-type fields introduced for API version 2026-12-06.",
+          "title": "Remove NFS file item metadata and specialized item models",
+          "summary": "Removes NFS link-count and file-type metadata from file items and removes specialized block-device, character-device, FIFO, socket, and symbolic-link item models used by handle-listing SDK surfaces.",
           "deterministicCoverage": {
             "restCandidateIds": [],
             "downstreamCandidateIds": [
@@ -5753,9 +5753,13 @@
           "relatedFindings": {
             "rest": [],
             "downstream": [],
-            "sharedTypeImpact": [
-              "shared-type-impact-ab51f5de14b65807",
-              "shared-type-impact-b3f1f16037920111"
+            "typeImpact": [
+              "sdk-type-impact-297059ace72c9a41",
+              "sdk-type-impact-2edd0f44871ea9d3",
+              "sdk-type-impact-8b6f45bc53d78a9f",
+              "sdk-type-impact-93236f52e8c3d3bb",
+              "sdk-type-impact-adfa48e45d95eeb0",
+              "sdk-type-impact-afa92013f67d466e"
             ]
           }
         },
@@ -8417,8 +8421,8 @@
               "hunk-a6115c581e6d3790"
             ]
           },
-          "title": "Remove NFS list response variants and include options",
-          "summary": "Removes NFS-specific directory/file list members and list include values from the existing 2026-12-06 contract, reducing the list response variants and selectable metadata.",
+          "title": "Remove NFS directory-list metadata, item groups, and include options",
+          "summary": "Removes NFS directory metadata, specialized item collections from file-and-directory listing responses, and previously supported list include values from the 2026-12-06 contract.",
           "deterministicCoverage": {
             "restCandidateIds": [
               "rest-00534218fd96f5ec",
@@ -9560,8 +9564,10 @@
               "rest-fdb35eba9b4a437b"
             ],
             "downstream": [],
-            "sharedTypeImpact": [
-              "shared-type-impact-b3f1f16037920111"
+            "typeImpact": [
+              "sdk-type-impact-0a87c6060022a986",
+              "sdk-type-impact-a2c6abc92ceb2f68",
+              "sdk-type-impact-ed95eaa6c481a466"
             ]
           }
         },
@@ -9617,7 +9623,7 @@
             ]
           },
           "title": "Remove NFS ownership and mode metadata",
-          "summary": "Removes owner, group, and file-mode properties from FileProperty in the existing 2026-12-06 API surface.",
+          "summary": "Removes the owner UID, group GID, and file-mode properties from the shared file property model.",
           "deterministicCoverage": {
             "restCandidateIds": [],
             "downstreamCandidateIds": [
@@ -10024,8 +10030,9 @@
           "relatedFindings": {
             "rest": [],
             "downstream": [],
-            "sharedTypeImpact": [
-              "shared-type-impact-b3f1f16037920111"
+            "typeImpact": [
+              "sdk-type-impact-297059ace72c9a41",
+              "sdk-type-impact-35d46e0ce43ebc6e"
             ]
           }
         },
@@ -17024,8 +17031,8 @@
               "hunk-58b9de7d81513824"
             ]
           },
-          "title": "Remove NFS file-type variants",
-          "summary": "Removes BlockDevice, CharacterDevice, FIFO, and Socket values from NfsFileType in the existing 2026-12-06 API contract.",
+          "title": "Remove specialized NFS file type values",
+          "summary": "Removes BlockDevice, CharacterDevice, FIFO, and Socket values from NfsFileType, narrowing request and response header contracts across six file and directory operations.",
           "deterministicCoverage": {
             "restCandidateIds": [
               "rest-602755e363934a01",
@@ -17410,8 +17417,8 @@
               "rest-e44caa5e57a6060c"
             ],
             "downstream": [],
-            "sharedTypeImpact": [
-              "shared-type-impact-b3f1f16037920111"
+            "typeImpact": [
+              "sdk-type-impact-8a7b808d430a570a"
             ]
           }
         }
@@ -130973,10 +130980,10 @@
           ],
           "reviewRequired": true,
           "rootCauseIds": [
-            "downstream-root-cause-6c5f1116663ef2ce"
+            "downstream-root-cause-4af8e9c02f48f601"
           ],
           "severity": "high",
-          "rationale": "The property was publicly exposed in the baseline language-neutral SDK model and is absent in the target, requiring existing SDK consumers to change.",
+          "rationale": "FilesAndDirectoriesListSegment removes socketItems. Code reading socket entries from list responses can no longer access that collection.",
           "evidence": [
             {
               "projectId": "project-11ca76782d2e",
@@ -134422,10 +134429,10 @@
           ],
           "reviewRequired": true,
           "rootCauseIds": [
-            "downstream-root-cause-6c5f1116663ef2ce"
+            "downstream-root-cause-4af8e9c02f48f601"
           ],
           "severity": "high",
-          "rationale": "The property was publicly exposed in the baseline language-neutral SDK model and is absent in the target, requiring existing SDK consumers to change.",
+          "rationale": "FilesAndDirectoriesListSegment removes blockDeviceItems. Code reading block-device entries from list responses can no longer access that collection.",
           "evidence": [
             {
               "projectId": "project-11ca76782d2e",
@@ -137869,9 +137876,11 @@
             "sdk-fact-3356833c94c4215c"
           ],
           "reviewRequired": true,
-          "rootCauseIds": [],
+          "rootCauseIds": [
+            "downstream-root-cause-9192b09281de38cd"
+          ],
           "severity": "high",
-          "rationale": "The baseline public SDK type is no longer reachable in the target surface, removing an existing generated symbol used by consumers.",
+          "rationale": "BlockDeviceItem is removed from the SDK. Code referencing this list-result model or its deviceMajor/deviceMinor members must change.",
           "evidence": [
             {
               "projectId": "project-11ca76782d2e",
@@ -141164,10 +141173,10 @@
           ],
           "reviewRequired": true,
           "rootCauseIds": [
-            "downstream-root-cause-6c5f1116663ef2ce"
+            "downstream-root-cause-48a9ddc9c54671ac"
           ],
           "severity": "high",
-          "rationale": "Previously generated public enum values are removed, so source code that references those values no longer compiles or behaves equivalently.",
+          "rationale": "NfsFileType removes BlockDevice, CharacterDevice, Fifo, and Socket. Existing references to these named SDK members must change, even though the enum still accepts arbitrary values.",
           "evidence": [
             {
               "projectId": "project-11ca76782d2e",
@@ -144359,9 +144368,11 @@
             "sdk-fact-37f76f15db9194c0"
           ],
           "reviewRequired": true,
-          "rootCauseIds": [],
+          "rootCauseIds": [
+            "downstream-root-cause-dbe552d831a64042"
+          ],
           "severity": "high",
-          "rationale": "The baseline public SDK type is no longer reachable in the target surface, removing an existing generated symbol used by consumers.",
+          "rationale": "SymLinkItem is removed from the SDK. Code referencing this list-result model or its linkText member must change.",
           "evidence": [
             {
               "projectId": "project-11ca76782d2e",
@@ -147628,10 +147639,10 @@
           ],
           "reviewRequired": true,
           "rootCauseIds": [
-            "downstream-root-cause-6c5f1116663ef2ce"
+            "downstream-root-cause-0ea1f392867a134b"
           ],
           "severity": "high",
-          "rationale": "The property was publicly exposed in the baseline language-neutral SDK model and is absent in the target, requiring existing SDK consumers to change.",
+          "rationale": "DirectoryItem removes linkCount. Code reading a listed directory's link count can no longer access that member.",
           "evidence": [
             {
               "projectId": "project-11ca76782d2e",
@@ -150991,3203 +151002,6 @@
           "semanticMatchBasis": "declaration-identity"
         },
         {
-          "id": "downstream-630a2a23c2940472",
-          "rule": "public-surface-changed",
-          "defaultSeverity": "high",
-          "actual": "Storage.File.NfsFileType changed public access, usage, or reachability.",
-          "expected": "Storage.File.NfsFileType preserves its existing language-neutral generated SDK contract.",
-          "crossLanguageDefinitionId": "Storage.File.NfsFileType",
-          "sourceChangeIds": [
-            "source-59080f734682d35e"
-          ],
-          "declarationIds": [
-            "declaration-0cefdc758ab8f2ba",
-            "declaration-11d9bfb5a9417330",
-            "declaration-1308395af552c920",
-            "declaration-1b231085bb2fd0fb",
-            "declaration-1d8f77f5a0706041",
-            "declaration-22af6cad4ced18ac",
-            "declaration-28faabea28d25a09",
-            "declaration-2d3a2b7aab17dfb3",
-            "declaration-2d8838f499c8d2a7",
-            "declaration-2fc5ef444759f4a7",
-            "declaration-3243b40112836aaa",
-            "declaration-32a2e47620175557",
-            "declaration-3468c062204a2ec9",
-            "declaration-34d0b16f9d82eb3e",
-            "declaration-371cc4fa5b506c07",
-            "declaration-388d5fab74ac6367",
-            "declaration-3ccbed40d5b5a580",
-            "declaration-4d422ac6bbb746c1",
-            "declaration-4ebf21e442725dae",
-            "declaration-4fb604ae8d7e498c",
-            "declaration-51c6e236781c718e",
-            "declaration-5305fbe5eab84bb2",
-            "declaration-536136ac3cb62850",
-            "declaration-5444d21d5571ca6d",
-            "declaration-548fd097e257bd20",
-            "declaration-5ad589dd342edf51",
-            "declaration-5c9d5a0e145109b8",
-            "declaration-5d5c269c56d15244",
-            "declaration-5e71c571d67a1a90",
-            "declaration-60ca7e1d8534d963",
-            "declaration-66f903520fea680f",
-            "declaration-6ebc648b9bc4929b",
-            "declaration-7579ab049368eba2",
-            "declaration-784023ca786802e3",
-            "declaration-7ab7e776a4a12af5",
-            "declaration-7e1538dc0206b9c0",
-            "declaration-81ae245a471237ca",
-            "declaration-82bde1abefd34af3",
-            "declaration-85501d96c1415c4d",
-            "declaration-8850dcb62d17992d",
-            "declaration-8c10fa4d4b94e0e6",
-            "declaration-8dbd598f86e39880",
-            "declaration-913b93a15794ef2f",
-            "declaration-95b0cdda43d146f0",
-            "declaration-9d2aa45e0b152e68",
-            "declaration-9dbbe6e587719d83",
-            "declaration-9e2e1a1d19347332",
-            "declaration-a0fca2849f54441e",
-            "declaration-a44641dd872bd2fb",
-            "declaration-a9ae57b209f780dc",
-            "declaration-abd4fe560343919a",
-            "declaration-af95a6a0e5930f05",
-            "declaration-bd7ac6d9e16b92ca",
-            "declaration-be5a596dbd04dd32",
-            "declaration-c00ed6ec653d2f38",
-            "declaration-c15318f2c3c92a7f",
-            "declaration-cadeadcca3e5df99",
-            "declaration-cb7ef84ffdccd6df",
-            "declaration-cbad4278443fcc57",
-            "declaration-cca86a1e4127e661",
-            "declaration-d53b5a8bb1aa1519",
-            "declaration-d73fb1ed7844d619",
-            "declaration-d7a4a8ba5c2d7e6c",
-            "declaration-dcc651a6c2451245",
-            "declaration-dd60ed751f286d8b",
-            "declaration-e55304f8e1921660",
-            "declaration-e69435f544489f6a",
-            "declaration-eb0a1fe2bd4b57f5",
-            "declaration-eb6eea00ac6f9bea",
-            "declaration-f4e8baf2553ff927",
-            "declaration-f645a014c6b8c231",
-            "declaration-f80f414575248c7e",
-            "declaration-f84d7b1313863775",
-            "declaration-fa33e601ec2821cf",
-            "declaration-fd7b6d11babaca4d"
-          ],
-          "evidenceFactIds": [
-            "sdk-fact-cadf2d8a280dc9ac",
-            "sdk-fact-bdfdf73dab3ac56e"
-          ],
-          "reviewRequired": true,
-          "rootCauseIds": [
-            "downstream-root-cause-6c5f1116663ef2ce"
-          ],
-          "severity": "high",
-          "rationale": "The baseline public SDK type is no longer reachable in the target surface, removing an existing generated symbol used by consumers.",
-          "evidence": [
-            {
-              "projectId": "project-11ca76782d2e",
-              "comparisonRole": "baseline",
-              "sourceRevision": "base",
-              "sourceCommit": "e75a07cd7ea1b2207190a362305db02b639715ec",
-              "apiVersion": "2026-12-06",
-              "factKind": "enum",
-              "id": "sdk-fact-cadf2d8a280dc9ac",
-              "identity": "Storage.File.NfsFileType",
-              "crossLanguageDefinitionId": "Storage.File.NfsFileType",
-              "name": "NfsFileType",
-              "access": "public",
-              "usage": 518,
-              "isFixed": false,
-              "isFlags": false,
-              "isUnionAsEnum": true,
-              "valueType": {
-                "kind": "string"
-              },
-              "values": [
-                {
-                  "name": "BlockDevice",
-                  "value": "BlockDevice"
-                },
-                {
-                  "name": "CharacterDevice",
-                  "value": "CharacterDevice"
-                },
-                {
-                  "name": "Directory",
-                  "value": "Directory"
-                },
-                {
-                  "name": "Fifo",
-                  "value": "Fifo"
-                },
-                {
-                  "name": "Regular",
-                  "value": "Regular"
-                },
-                {
-                  "name": "Socket",
-                  "value": "Socket"
-                },
-                {
-                  "name": "SymLink",
-                  "value": "SymLink"
-                }
-              ],
-              "reachable": true
-            },
-            {
-              "projectId": "project-11ca76782d2e",
-              "comparisonRole": "target",
-              "sourceRevision": "current",
-              "sourceCommit": "656ca8b0741973760f8a60ee0fd293ba9c31e708",
-              "apiVersion": "2026-12-06",
-              "factKind": "enum",
-              "id": "sdk-fact-bdfdf73dab3ac56e",
-              "identity": "Storage.File.NfsFileType",
-              "crossLanguageDefinitionId": "Storage.File.NfsFileType",
-              "name": "NfsFileType",
-              "access": "public",
-              "usage": 6,
-              "isFixed": false,
-              "isFlags": false,
-              "isUnionAsEnum": true,
-              "valueType": {
-                "kind": "string"
-              },
-              "values": [
-                {
-                  "name": "Directory",
-                  "value": "Directory"
-                },
-                {
-                  "name": "Regular",
-                  "value": "Regular"
-                },
-                {
-                  "name": "SymLink",
-                  "value": "SymLink"
-                }
-              ],
-              "reachable": true
-            }
-          ],
-          "sources": [
-            {
-              "id": "source-59080f734682d35e",
-              "path": "specification/storage/data-plane/FileStorage/models.tsp",
-              "status": "modified",
-              "origins": [
-                "committed"
-              ],
-              "hunks": [
-                {
-                  "id": "hunk-58b9de7d81513824",
-                  "base": {
-                    "startLine": 284,
-                    "endLine": 305
-                  },
-                  "current": {
-                    "startLine": 284,
-                    "endLine": 289
-                  },
-                  "lines": [
-                    " ",
-                    "   /** SymLink */",
-                    "   SymLink: \"SymLink\",",
-                    "-",
-                    "-  /** BlockDevice */",
-                    "-  @added(Versions.v2026_12_06)",
-                    "-  BlockDevice: \"BlockDevice\",",
-                    "-",
-                    "-  /** CharacterDevice */",
-                    "-  @added(Versions.v2026_12_06)",
-                    "-  CharacterDevice: \"CharacterDevice\",",
-                    "-",
-                    "-  /** Socket */",
-                    "-  @added(Versions.v2026_12_06)",
-                    "-  Socket: \"Socket\",",
-                    "-",
-                    "-  /** Fifo */",
-                    "-  @added(Versions.v2026_12_06)",
-                    "-  Fifo: \"Fifo\",",
-                    " }",
-                    " ",
-                    " /** The file property semantics. */"
-                  ]
-                },
-                {
-                  "id": "hunk-a6115c581e6d3790",
-                  "base": {
-                    "startLine": 405,
-                    "endLine": 426
-                  },
-                  "current": {
-                    "startLine": 389,
-                    "endLine": 394
-                  },
-                  "lines": [
-                    " ",
-                    "   /** PermissionKey */",
-                    "   PermissionKey,",
-                    "-",
-                    "-  /** Permissions */",
-                    "-  @added(Versions.v2026_12_06)",
-                    "-  Permissions,",
-                    "-",
-                    "-  /** LinkCount */",
-                    "-  @added(Versions.v2026_12_06)",
-                    "-  LinkCount,",
-                    "-",
-                    "-  /** NfsAttributes */",
-                    "-  @added(Versions.v2026_12_06)",
-                    "-  NfsAttributes,",
-                    "-",
-                    "-  /** All */",
-                    "-  @added(Versions.v2026_12_06)",
-                    "-  All,",
-                    " }",
-                    " ",
-                    " /** The type of share information to include in the listing. */"
-                  ]
-                },
-                {
-                  "id": "hunk-5bd0f0131086151d",
-                  "base": {
-                    "startLine": 557,
-                    "endLine": 592
-                  },
-                  "current": {
-                    "startLine": 525,
-                    "endLine": 530
-                  },
-                  "lines": [
-                    "   @Xml.unwrapped",
-                    "   @Xml.name(\"File\")",
-                    "   fileItems: FileItem[];",
-                    "-",
-                    "-  /** The symbolic link items. */",
-                    "-  @added(Versions.v2026_12_06)",
-                    "-  @Xml.unwrapped",
-                    "-  @Xml.name(\"SymLink\")",
-                    "-  symLinkItems?: SymLinkItem[];",
-                    "-",
-                    "-  /** The block device items. */",
-                    "-  @added(Versions.v2026_12_06)",
-                    "-  @Xml.unwrapped",
-                    "-  @Xml.name(\"BlockDevice\")",
-                    "-  blockDeviceItems?: BlockDeviceItem[];",
-                    "-",
-                    "-  /** The character device items. */",
-                    "-  @added(Versions.v2026_12_06)",
-                    "-  @Xml.unwrapped",
-                    "-  @Xml.name(\"CharDevice\")",
-                    "-  charDeviceItems?: CharDeviceItem[];",
-                    "-",
-                    "-  /** The FIFO items. */",
-                    "-  @added(Versions.v2026_12_06)",
-                    "-  @Xml.unwrapped",
-                    "-  @Xml.name(\"Fifo\")",
-                    "-  fifoItems?: FifoItem[];",
-                    "-",
-                    "-  /** The socket items. */",
-                    "-  @added(Versions.v2026_12_06)",
-                    "-  @Xml.unwrapped",
-                    "-  @Xml.name(\"Socket\")",
-                    "-  socketItems?: SocketItem[];",
-                    " }",
-                    " ",
-                    " /** A listed directory item. */"
-                  ]
-                },
-                {
-                  "id": "hunk-0f2db41c9cc968ad",
-                  "base": {
-                    "startLine": 606,
-                    "endLine": 616
-                  },
-                  "current": {
-                    "startLine": 544,
-                    "endLine": 549
-                  },
-                  "lines": [
-                    " ",
-                    "   /** The permission key. */",
-                    "   @Xml.name(\"PermissionKey\") permissionKey?: string;",
-                    "-",
-                    "-  /** NFS only. The link count of the directory. */",
-                    "-  @added(Versions.v2026_12_06)",
-                    "-  @Xml.name(\"LinkCount\")",
-                    "-  linkCount?: int64;",
-                    " }",
-                    " ",
-                    " /** An encoded string value. */"
-                  ]
-                },
-                {
-                  "id": "hunk-e5ff8d8bf05c0d3d",
-                  "base": {
-                    "startLine": 657,
-                    "endLine": 677
-                  },
-                  "current": {
-                    "startLine": 590,
-                    "endLine": 595
-                  },
-                  "lines": [
-                    " ",
-                    "   /** The ETag of the file. */",
-                    "   @Xml.name(\"Etag\") eTag?: Azure.Core.eTag;",
-                    "-",
-                    "-  /** NFS only. The owner user identifier (UID) of the file. */",
-                    "-  @added(Versions.v2026_12_06)",
-                    "-  @Xml.name(\"Uid\")",
-                    "-  owner?: string;",
-                    "-",
-                    "-  /** NFS only. The owner group identifier (GID) of the file. */",
-                    "-  @added(Versions.v2026_12_06)",
-                    "-  @Xml.name(\"Gid\")",
-                    "-  group?: string;",
-                    "-",
-                    "-  /** NFS only. The file mode of the file. */",
-                    "-  @added(Versions.v2026_12_06)",
-                    "-  @Xml.name(\"Mode\")",
-                    "-  fileMode?: string;",
-                    " }",
-                    " ",
-                    " /** A listed file item. */"
-                  ]
-                },
-                {
-                  "id": "hunk-4dee08e0e6059404",
-                  "base": {
-                    "startLine": 691,
-                    "endLine": 806
-                  },
-                  "current": {
-                    "startLine": 609,
-                    "endLine": 614
-                  },
-                  "lines": [
-                    " ",
-                    "   /** The permission key. */",
-                    "   @Xml.name(\"PermissionKey\") permissionKey?: string;",
-                    "-",
-                    "-  /** NFS only. The link count of the file. */",
-                    "-  @added(Versions.v2026_12_06)",
-                    "-  @Xml.name(\"LinkCount\")",
-                    "-  linkCount?: int64;",
-                    "-",
-                    "-  /** NFS only. The type of the file. */",
-                    "-  @added(Versions.v2026_12_06)",
-                    "-  @Xml.name(\"FileType\")",
-                    "-  fileType?: NfsFileType;",
-                    "-}",
-                    "-",
-                    "-/** A listed symbolic link item. */",
-                    "-@added(Versions.v2026_12_06)",
-                    "-@Xml.name(\"SymLink\")",
-                    "-model SymLinkItem {",
-                    "-  /** The symbolic link name. */",
-                    "-  @Xml.name(\"Name\") name: StringEncoded;",
-                    "-",
-                    "-  /** The file ID. */",
-                    "-  @Xml.name(\"FileId\") fileId?: string;",
-                    "-",
-                    "-  /** File properties. */",
-                    "-  @Xml.name(\"Properties\") properties: FileProperty;",
-                    "-",
-                    "-  /** NFS only. The link count of the symbolic link. */",
-                    "-  @Xml.name(\"LinkCount\") linkCount?: int64;",
-                    "-",
-                    "-  /** NFS only. The path to the original file, the symbolic link is pointing to. */",
-                    "-  @Xml.name(\"LinkText\") linkText?: string;",
-                    "-}",
-                    "-",
-                    "-/** A listed block device item. */",
-                    "-@added(Versions.v2026_12_06)",
-                    "-@Xml.name(\"BlockDevice\")",
-                    "-model BlockDeviceItem {",
-                    "-  /** The block device name. */",
-                    "-  @Xml.name(\"Name\") name: StringEncoded;",
-                    "-",
-                    "-  /** The file ID. */",
-                    "-  @Xml.name(\"FileId\") fileId?: string;",
-                    "-",
-                    "-  /** File properties. */",
-                    "-  @Xml.name(\"Properties\") properties: FileProperty;",
-                    "-",
-                    "-  /** NFS only. The link count of the block device. */",
-                    "-  @Xml.name(\"LinkCount\") linkCount?: int64;",
-                    "-",
-                    "-  /** NFS only. The major device number of the block device. */",
-                    "-  @Xml.name(\"DeviceMajor\") deviceMajor?: int64;",
-                    "-",
-                    "-  /** NFS only. The minor device number of the block device. */",
-                    "-  @Xml.name(\"DeviceMinor\") deviceMinor?: int64;",
-                    "-}",
-                    "-",
-                    "-/** A listed character device item. */",
-                    "-@added(Versions.v2026_12_06)",
-                    "-@Xml.name(\"CharDevice\")",
-                    "-model CharDeviceItem {",
-                    "-  /** The character device name. */",
-                    "-  @Xml.name(\"Name\") name: StringEncoded;",
-                    "-",
-                    "-  /** The file ID. */",
-                    "-  @Xml.name(\"FileId\") fileId?: string;",
-                    "-",
-                    "-  /** File properties. */",
-                    "-  @Xml.name(\"Properties\") properties: FileProperty;",
-                    "-",
-                    "-  /** NFS only. The link count of the character device. */",
-                    "-  @Xml.name(\"LinkCount\") linkCount?: int64;",
-                    "-",
-                    "-  /** NFS only. The major device number of the character device. */",
-                    "-  @Xml.name(\"DeviceMajor\") deviceMajor?: int64;",
-                    "-",
-                    "-  /** NFS only. The minor device number of the character device. */",
-                    "-  @Xml.name(\"DeviceMinor\") deviceMinor?: int64;",
-                    "-}",
-                    "-",
-                    "-/** A listed FIFO item. */",
-                    "-@added(Versions.v2026_12_06)",
-                    "-@Xml.name(\"Fifo\")",
-                    "-model FifoItem {",
-                    "-  /** The FIFO name. */",
-                    "-  @Xml.name(\"Name\") name: StringEncoded;",
-                    "-",
-                    "-  /** The file ID. */",
-                    "-  @Xml.name(\"FileId\") fileId?: string;",
-                    "-",
-                    "-  /** File properties. */",
-                    "-  @Xml.name(\"Properties\") properties: FileProperty;",
-                    "-",
-                    "-  /** NFS only. The link count of the FIFO. */",
-                    "-  @Xml.name(\"LinkCount\") linkCount?: int64;",
-                    "-}",
-                    "-",
-                    "-/** A listed socket item. */",
-                    "-@added(Versions.v2026_12_06)",
-                    "-@Xml.name(\"Socket\")",
-                    "-model SocketItem {",
-                    "-  /** The socket name. */",
-                    "-  @Xml.name(\"Name\") name: StringEncoded;",
-                    "-",
-                    "-  /** The file ID. */",
-                    "-  @Xml.name(\"FileId\") fileId?: string;",
-                    "-",
-                    "-  /** File properties. */",
-                    "-  @Xml.name(\"Properties\") properties: FileProperty;",
-                    "-",
-                    "-  /** NFS only. The link count of the socket. */",
-                    "-  @Xml.name(\"LinkCount\") linkCount?: int64;",
-                    " }",
-                    " ",
-                    " /** A listed Azure Storage handle item. */",
-                    ""
-                  ]
-                }
-              ],
-              "declarations": [
-                {
-                  "id": "declaration-82bde1abefd34af3",
-                  "kind": "union",
-                  "qualifiedName": "NfsFileType",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-58b9de7d81513824"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "Union",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 7493,
-                      "end": 7984
-                    },
-                    "referencedNames": [
-                      "BlockDevice",
-                      "CharacterDevice",
-                      "Directory",
-                      "Fifo",
-                      "Regular",
-                      "Socket",
-                      "SymLink",
-                      "string"
-                    ]
-                  },
-                  "source": {
-                    "revision": "base",
-                    "startLine": 275,
-                    "endLine": 303
-                  }
-                },
-                {
-                  "id": "declaration-a44641dd872bd2fb",
-                  "kind": "union",
-                  "qualifiedName": "NfsFileType",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-58b9de7d81513824"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "Union",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 7493,
-                      "end": 7676
-                    },
-                    "referencedNames": [
-                      "Directory",
-                      "Regular",
-                      "SymLink",
-                      "string"
-                    ]
-                  },
-                  "source": {
-                    "revision": "current",
-                    "startLine": 275,
-                    "endLine": 287
-                  }
-                },
-                {
-                  "id": "declaration-9e2e1a1d19347332",
-                  "kind": "union-variant",
-                  "qualifiedName": "NfsFileType.SymLink",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-58b9de7d81513824"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "UnionVariant",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 7638,
-                      "end": 7673
-                    },
-                    "referencedNames": []
-                  },
-                  "source": {
-                    "revision": "base",
-                    "startLine": 285,
-                    "endLine": 286
-                  }
-                },
-                {
-                  "id": "declaration-1b231085bb2fd0fb",
-                  "kind": "union-variant",
-                  "qualifiedName": "NfsFileType.SymLink",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-58b9de7d81513824"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "UnionVariant",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 7638,
-                      "end": 7673
-                    },
-                    "referencedNames": []
-                  },
-                  "source": {
-                    "revision": "current",
-                    "startLine": 285,
-                    "endLine": 286
-                  }
-                },
-                {
-                  "id": "declaration-dd60ed751f286d8b",
-                  "kind": "union-variant",
-                  "qualifiedName": "NfsFileType.BlockDevice",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-58b9de7d81513824"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "UnionVariant",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 7678,
-                      "end": 7756
-                    },
-                    "referencedNames": []
-                  },
-                  "source": {
-                    "revision": "base",
-                    "startLine": 288,
-                    "endLine": 290
-                  }
-                },
-                {
-                  "id": "declaration-cadeadcca3e5df99",
-                  "kind": "union",
-                  "qualifiedName": "FilePropertySemantics",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-58b9de7d81513824"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "Union",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 7678,
-                      "end": 7823
-                    },
-                    "referencedNames": [
-                      "New",
-                      "Restore",
-                      "string"
-                    ]
-                  },
-                  "source": {
-                    "revision": "current",
-                    "startLine": 289,
-                    "endLine": 298
-                  }
-                },
-                {
-                  "id": "declaration-2fc5ef444759f4a7",
-                  "kind": "union-variant",
-                  "qualifiedName": "NfsFileType.CharacterDevice",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-58b9de7d81513824"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "UnionVariant",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 7761,
-                      "end": 7851
-                    },
-                    "referencedNames": []
-                  },
-                  "source": {
-                    "revision": "base",
-                    "startLine": 292,
-                    "endLine": 294
-                  }
-                },
-                {
-                  "id": "declaration-4fb604ae8d7e498c",
-                  "kind": "union-variant",
-                  "qualifiedName": "NfsFileType.Socket",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-58b9de7d81513824"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "UnionVariant",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 7856,
-                      "end": 7919
-                    },
-                    "referencedNames": []
-                  },
-                  "source": {
-                    "revision": "base",
-                    "startLine": 296,
-                    "endLine": 298
-                  }
-                },
-                {
-                  "id": "declaration-51c6e236781c718e",
-                  "kind": "union-variant",
-                  "qualifiedName": "NfsFileType.Fifo",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-58b9de7d81513824"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "UnionVariant",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 7924,
-                      "end": 7981
-                    },
-                    "referencedNames": []
-                  },
-                  "source": {
-                    "revision": "base",
-                    "startLine": 300,
-                    "endLine": 302
-                  }
-                },
-                {
-                  "id": "declaration-eb6eea00ac6f9bea",
-                  "kind": "union",
-                  "qualifiedName": "FilePropertySemantics",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-58b9de7d81513824"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "Union",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 7986,
-                      "end": 8131
-                    },
-                    "referencedNames": [
-                      "New",
-                      "Restore",
-                      "string"
-                    ]
-                  },
-                  "source": {
-                    "revision": "base",
-                    "startLine": 305,
-                    "endLine": 314
-                  }
-                },
-                {
-                  "id": "declaration-cb7ef84ffdccd6df",
-                  "kind": "enum",
-                  "qualifiedName": "ListFilesIncludeType",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-a6115c581e6d3790"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "Enum",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 9181,
-                      "end": 9474
-                    },
-                    "referencedNames": []
-                  },
-                  "source": {
-                    "revision": "current",
-                    "startLine": 378,
-                    "endLine": 392
-                  }
-                },
-                {
-                  "id": "declaration-32a2e47620175557",
-                  "kind": "enum",
-                  "qualifiedName": "ListFilesIncludeType",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-a6115c581e6d3790"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "Enum",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 9489,
-                      "end": 10038
-                    },
-                    "referencedNames": []
-                  },
-                  "source": {
-                    "revision": "base",
-                    "startLine": 394,
-                    "endLine": 424
-                  }
-                },
-                {
-                  "id": "declaration-34d0b16f9d82eb3e",
-                  "kind": "enum",
-                  "qualifiedName": "ListSharesIncludeType",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-a6115c581e6d3790"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "Enum",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 9476,
-                      "end": 9730
-                    },
-                    "referencedNames": []
-                  },
-                  "source": {
-                    "revision": "current",
-                    "startLine": 394,
-                    "endLine": 405
-                  }
-                },
-                {
-                  "id": "declaration-536136ac3cb62850",
-                  "kind": "enum",
-                  "qualifiedName": "ListSharesIncludeType",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-a6115c581e6d3790"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "Enum",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 10040,
-                      "end": 10294
-                    },
-                    "referencedNames": []
-                  },
-                  "source": {
-                    "revision": "base",
-                    "startLine": 426,
-                    "endLine": 437
-                  }
-                },
-                {
-                  "id": "declaration-5e71c571d67a1a90",
-                  "kind": "model",
-                  "qualifiedName": "FilesAndDirectoriesListSegment",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-5bd0f0131086151d"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "Model",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 13031,
-                      "end": 13329
-                    },
-                    "referencedNames": [
-                      "Array",
-                      "DirectoryItem",
-                      "DirectoryItem.attributes",
-                      "DirectoryItem.fileId",
-                      "DirectoryItem.name",
-                      "DirectoryItem.permissionKey",
-                      "DirectoryItem.properties",
-                      "FileItem",
-                      "FileItem.attributes",
-                      "FileItem.fileId",
-                      "FileItem.name",
-                      "FileItem.permissionKey",
-                      "FileItem.properties",
-                      "FileProperty",
-                      "FileProperty.changeTime",
-                      "FileProperty.contentLength",
-                      "FileProperty.creationTime",
-                      "FileProperty.eTag",
-                      "FileProperty.lastAccessTime",
-                      "FileProperty.lastModified",
-                      "FileProperty.lastWriteTime",
-                      "FilesAndDirectoriesListSegment.directoryItems",
-                      "FilesAndDirectoriesListSegment.fileItems",
-                      "StringEncoded",
-                      "StringEncoded.content",
-                      "StringEncoded.encoded",
-                      "boolean",
-                      "eTag",
-                      "int64",
-                      "string",
-                      "utcDateTime"
-                    ]
-                  },
-                  "source": {
-                    "revision": "current",
-                    "startLine": 517,
-                    "endLine": 528
-                  }
-                },
-                {
-                  "id": "declaration-6ebc648b9bc4929b",
-                  "kind": "property",
-                  "qualifiedName": "FilesAndDirectoriesListSegment.fileItems",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-5bd0f0131086151d"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "ModelProperty",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 13243,
-                      "end": 13326
-                    },
-                    "referencedNames": [
-                      "Array",
-                      "FileItem",
-                      "FileItem.attributes",
-                      "FileItem.fileId",
-                      "FileItem.name",
-                      "FileItem.permissionKey",
-                      "FileItem.properties",
-                      "FileProperty",
-                      "FileProperty.changeTime",
-                      "FileProperty.contentLength",
-                      "FileProperty.creationTime",
-                      "FileProperty.eTag",
-                      "FileProperty.lastAccessTime",
-                      "FileProperty.lastModified",
-                      "FileProperty.lastWriteTime",
-                      "StringEncoded",
-                      "StringEncoded.content",
-                      "StringEncoded.encoded",
-                      "boolean",
-                      "eTag",
-                      "int64",
-                      "string",
-                      "utcDateTime"
-                    ]
-                  },
-                  "source": {
-                    "revision": "current",
-                    "startLine": 524,
-                    "endLine": 527
-                  }
-                },
-                {
-                  "id": "declaration-eb0a1fe2bd4b57f5",
-                  "kind": "model",
-                  "qualifiedName": "DirectoryItem",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-5bd0f0131086151d",
-                    "hunk-0f2db41c9cc968ad"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "Model",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 13331,
-                      "end": 13782
-                    },
-                    "referencedNames": [
-                      "DirectoryItem.attributes",
-                      "DirectoryItem.fileId",
-                      "DirectoryItem.name",
-                      "DirectoryItem.permissionKey",
-                      "DirectoryItem.properties",
-                      "FileProperty",
-                      "FileProperty.changeTime",
-                      "FileProperty.contentLength",
-                      "FileProperty.creationTime",
-                      "FileProperty.eTag",
-                      "FileProperty.lastAccessTime",
-                      "FileProperty.lastModified",
-                      "FileProperty.lastWriteTime",
-                      "StringEncoded",
-                      "StringEncoded.content",
-                      "StringEncoded.encoded",
-                      "boolean",
-                      "eTag",
-                      "int64",
-                      "string",
-                      "utcDateTime"
-                    ]
-                  },
-                  "source": {
-                    "revision": "current",
-                    "startLine": 530,
-                    "endLine": 547
-                  }
-                },
-                {
-                  "id": "declaration-5305fbe5eab84bb2",
-                  "kind": "property",
-                  "qualifiedName": "DirectoryItem.permissionKey",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-0f2db41c9cc968ad"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "ModelProperty",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 13701,
-                      "end": 13779
-                    },
-                    "referencedNames": [
-                      "string"
-                    ]
-                  },
-                  "source": {
-                    "revision": "current",
-                    "startLine": 545,
-                    "endLine": 546
-                  }
-                },
-                {
-                  "id": "declaration-9dbbe6e587719d83",
-                  "kind": "model",
-                  "qualifiedName": "FilesAndDirectoriesListSegment",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-5bd0f0131086151d"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "Model",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 13595,
-                      "end": 14578
-                    },
-                    "referencedNames": [
-                      "Array",
-                      "BlockDevice",
-                      "BlockDeviceItem",
-                      "BlockDeviceItem.deviceMajor",
-                      "BlockDeviceItem.deviceMinor",
-                      "BlockDeviceItem.fileId",
-                      "BlockDeviceItem.linkCount",
-                      "BlockDeviceItem.name",
-                      "BlockDeviceItem.properties",
-                      "CharDeviceItem",
-                      "CharDeviceItem.deviceMajor",
-                      "CharDeviceItem.deviceMinor",
-                      "CharDeviceItem.fileId",
-                      "CharDeviceItem.linkCount",
-                      "CharDeviceItem.name",
-                      "CharDeviceItem.properties",
-                      "CharacterDevice",
-                      "Directory",
-                      "DirectoryItem",
-                      "DirectoryItem.attributes",
-                      "DirectoryItem.fileId",
-                      "DirectoryItem.linkCount",
-                      "DirectoryItem.name",
-                      "DirectoryItem.permissionKey",
-                      "DirectoryItem.properties",
-                      "Fifo",
-                      "FifoItem",
-                      "FifoItem.fileId",
-                      "FifoItem.linkCount",
-                      "FifoItem.name",
-                      "FifoItem.properties",
-                      "FileItem",
-                      "FileItem.attributes",
-                      "FileItem.fileId",
-                      "FileItem.fileType",
-                      "FileItem.linkCount",
-                      "FileItem.name",
-                      "FileItem.permissionKey",
-                      "FileItem.properties",
-                      "FileProperty",
-                      "FileProperty.changeTime",
-                      "FileProperty.contentLength",
-                      "FileProperty.creationTime",
-                      "FileProperty.eTag",
-                      "FileProperty.fileMode",
-                      "FileProperty.group",
-                      "FileProperty.lastAccessTime",
-                      "FileProperty.lastModified",
-                      "FileProperty.lastWriteTime",
-                      "FileProperty.owner",
-                      "FilesAndDirectoriesListSegment.blockDeviceItems",
-                      "FilesAndDirectoriesListSegment.charDeviceItems",
-                      "FilesAndDirectoriesListSegment.directoryItems",
-                      "FilesAndDirectoriesListSegment.fifoItems",
-                      "FilesAndDirectoriesListSegment.fileItems",
-                      "FilesAndDirectoriesListSegment.socketItems",
-                      "FilesAndDirectoriesListSegment.symLinkItems",
-                      "NfsFileType",
-                      "Regular",
-                      "Socket",
-                      "SocketItem",
-                      "SocketItem.fileId",
-                      "SocketItem.linkCount",
-                      "SocketItem.name",
-                      "SocketItem.properties",
-                      "StringEncoded",
-                      "StringEncoded.content",
-                      "StringEncoded.encoded",
-                      "SymLink",
-                      "SymLinkItem",
-                      "SymLinkItem.fileId",
-                      "SymLinkItem.linkCount",
-                      "SymLinkItem.linkText",
-                      "SymLinkItem.name",
-                      "SymLinkItem.properties",
-                      "boolean",
-                      "eTag",
-                      "int64",
-                      "string",
-                      "utcDateTime"
-                    ]
-                  },
-                  "source": {
-                    "revision": "base",
-                    "startLine": 549,
-                    "endLine": 590
-                  }
-                },
-                {
-                  "id": "declaration-cbad4278443fcc57",
-                  "kind": "model",
-                  "qualifiedName": "StringEncoded",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-0f2db41c9cc968ad"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "Model",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 13784,
-                      "end": 14004
-                    },
-                    "referencedNames": [
-                      "StringEncoded.content",
-                      "StringEncoded.encoded",
-                      "boolean",
-                      "string"
-                    ]
-                  },
-                  "source": {
-                    "revision": "current",
-                    "startLine": 549,
-                    "endLine": 558
-                  }
-                },
-                {
-                  "id": "declaration-22af6cad4ced18ac",
-                  "kind": "property",
-                  "qualifiedName": "FilesAndDirectoriesListSegment.fileItems",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-5bd0f0131086151d"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "ModelProperty",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 13807,
-                      "end": 13890
-                    },
-                    "referencedNames": [
-                      "Array",
-                      "BlockDevice",
-                      "CharacterDevice",
-                      "Directory",
-                      "Fifo",
-                      "FileItem",
-                      "FileItem.attributes",
-                      "FileItem.fileId",
-                      "FileItem.fileType",
-                      "FileItem.linkCount",
-                      "FileItem.name",
-                      "FileItem.permissionKey",
-                      "FileItem.properties",
-                      "FileProperty",
-                      "FileProperty.changeTime",
-                      "FileProperty.contentLength",
-                      "FileProperty.creationTime",
-                      "FileProperty.eTag",
-                      "FileProperty.fileMode",
-                      "FileProperty.group",
-                      "FileProperty.lastAccessTime",
-                      "FileProperty.lastModified",
-                      "FileProperty.lastWriteTime",
-                      "FileProperty.owner",
-                      "NfsFileType",
-                      "Regular",
-                      "Socket",
-                      "StringEncoded",
-                      "StringEncoded.content",
-                      "StringEncoded.encoded",
-                      "SymLink",
-                      "boolean",
-                      "eTag",
-                      "int64",
-                      "string",
-                      "utcDateTime"
-                    ]
-                  },
-                  "source": {
-                    "revision": "base",
-                    "startLine": 556,
-                    "endLine": 559
-                  }
-                },
-                {
-                  "id": "declaration-3243b40112836aaa",
-                  "kind": "model",
-                  "qualifiedName": "FileProperty",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-e5ff8d8bf05c0d3d"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "Model",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 14006,
-                      "end": 14966
-                    },
-                    "referencedNames": [
-                      "FileProperty.changeTime",
-                      "FileProperty.contentLength",
-                      "FileProperty.creationTime",
-                      "FileProperty.eTag",
-                      "FileProperty.lastAccessTime",
-                      "FileProperty.lastModified",
-                      "FileProperty.lastWriteTime",
-                      "eTag",
-                      "int64",
-                      "utcDateTime"
-                    ]
-                  },
-                  "source": {
-                    "revision": "current",
-                    "startLine": 560,
-                    "endLine": 593
-                  }
-                },
-                {
-                  "id": "declaration-548fd097e257bd20",
-                  "kind": "property",
-                  "qualifiedName": "FilesAndDirectoriesListSegment.symLinkItems",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-5bd0f0131086151d"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "ModelProperty",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 13895,
-                      "end": 14028
-                    },
-                    "referencedNames": [
-                      "Array",
-                      "FileProperty",
-                      "FileProperty.changeTime",
-                      "FileProperty.contentLength",
-                      "FileProperty.creationTime",
-                      "FileProperty.eTag",
-                      "FileProperty.fileMode",
-                      "FileProperty.group",
-                      "FileProperty.lastAccessTime",
-                      "FileProperty.lastModified",
-                      "FileProperty.lastWriteTime",
-                      "FileProperty.owner",
-                      "StringEncoded",
-                      "StringEncoded.content",
-                      "StringEncoded.encoded",
-                      "SymLinkItem",
-                      "SymLinkItem.fileId",
-                      "SymLinkItem.linkCount",
-                      "SymLinkItem.linkText",
-                      "SymLinkItem.name",
-                      "SymLinkItem.properties",
-                      "boolean",
-                      "eTag",
-                      "int64",
-                      "string",
-                      "utcDateTime"
-                    ]
-                  },
-                  "source": {
-                    "revision": "base",
-                    "startLine": 561,
-                    "endLine": 565
-                  }
-                },
-                {
-                  "id": "declaration-95b0cdda43d146f0",
-                  "kind": "property",
-                  "qualifiedName": "FilesAndDirectoriesListSegment.blockDeviceItems",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-5bd0f0131086151d"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "ModelProperty",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 14033,
-                      "end": 14177
-                    },
-                    "referencedNames": [
-                      "Array",
-                      "BlockDeviceItem",
-                      "BlockDeviceItem.deviceMajor",
-                      "BlockDeviceItem.deviceMinor",
-                      "BlockDeviceItem.fileId",
-                      "BlockDeviceItem.linkCount",
-                      "BlockDeviceItem.name",
-                      "BlockDeviceItem.properties",
-                      "FileProperty",
-                      "FileProperty.changeTime",
-                      "FileProperty.contentLength",
-                      "FileProperty.creationTime",
-                      "FileProperty.eTag",
-                      "FileProperty.fileMode",
-                      "FileProperty.group",
-                      "FileProperty.lastAccessTime",
-                      "FileProperty.lastModified",
-                      "FileProperty.lastWriteTime",
-                      "FileProperty.owner",
-                      "StringEncoded",
-                      "StringEncoded.content",
-                      "StringEncoded.encoded",
-                      "boolean",
-                      "eTag",
-                      "int64",
-                      "string",
-                      "utcDateTime"
-                    ]
-                  },
-                  "source": {
-                    "revision": "base",
-                    "startLine": 567,
-                    "endLine": 571
-                  }
-                },
-                {
-                  "id": "declaration-3ccbed40d5b5a580",
-                  "kind": "property",
-                  "qualifiedName": "FilesAndDirectoriesListSegment.charDeviceItems",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-5bd0f0131086151d"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "ModelProperty",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 14182,
-                      "end": 14327
-                    },
-                    "referencedNames": [
-                      "Array",
-                      "CharDeviceItem",
-                      "CharDeviceItem.deviceMajor",
-                      "CharDeviceItem.deviceMinor",
-                      "CharDeviceItem.fileId",
-                      "CharDeviceItem.linkCount",
-                      "CharDeviceItem.name",
-                      "CharDeviceItem.properties",
-                      "FileProperty",
-                      "FileProperty.changeTime",
-                      "FileProperty.contentLength",
-                      "FileProperty.creationTime",
-                      "FileProperty.eTag",
-                      "FileProperty.fileMode",
-                      "FileProperty.group",
-                      "FileProperty.lastAccessTime",
-                      "FileProperty.lastModified",
-                      "FileProperty.lastWriteTime",
-                      "FileProperty.owner",
-                      "StringEncoded",
-                      "StringEncoded.content",
-                      "StringEncoded.encoded",
-                      "boolean",
-                      "eTag",
-                      "int64",
-                      "string",
-                      "utcDateTime"
-                    ]
-                  },
-                  "source": {
-                    "revision": "base",
-                    "startLine": 573,
-                    "endLine": 577
-                  }
-                },
-                {
-                  "id": "declaration-85501d96c1415c4d",
-                  "kind": "property",
-                  "qualifiedName": "FilesAndDirectoriesListSegment.fifoItems",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-5bd0f0131086151d"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "ModelProperty",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 14332,
-                      "end": 14447
-                    },
-                    "referencedNames": [
-                      "Array",
-                      "FifoItem",
-                      "FifoItem.fileId",
-                      "FifoItem.linkCount",
-                      "FifoItem.name",
-                      "FifoItem.properties",
-                      "FileProperty",
-                      "FileProperty.changeTime",
-                      "FileProperty.contentLength",
-                      "FileProperty.creationTime",
-                      "FileProperty.eTag",
-                      "FileProperty.fileMode",
-                      "FileProperty.group",
-                      "FileProperty.lastAccessTime",
-                      "FileProperty.lastModified",
-                      "FileProperty.lastWriteTime",
-                      "FileProperty.owner",
-                      "StringEncoded",
-                      "StringEncoded.content",
-                      "StringEncoded.encoded",
-                      "boolean",
-                      "eTag",
-                      "int64",
-                      "string",
-                      "utcDateTime"
-                    ]
-                  },
-                  "source": {
-                    "revision": "base",
-                    "startLine": 579,
-                    "endLine": 583
-                  }
-                },
-                {
-                  "id": "declaration-5444d21d5571ca6d",
-                  "kind": "property",
-                  "qualifiedName": "FilesAndDirectoriesListSegment.socketItems",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-5bd0f0131086151d"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "ModelProperty",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 14452,
-                      "end": 14575
-                    },
-                    "referencedNames": [
-                      "Array",
-                      "FileProperty",
-                      "FileProperty.changeTime",
-                      "FileProperty.contentLength",
-                      "FileProperty.creationTime",
-                      "FileProperty.eTag",
-                      "FileProperty.fileMode",
-                      "FileProperty.group",
-                      "FileProperty.lastAccessTime",
-                      "FileProperty.lastModified",
-                      "FileProperty.lastWriteTime",
-                      "FileProperty.owner",
-                      "SocketItem",
-                      "SocketItem.fileId",
-                      "SocketItem.linkCount",
-                      "SocketItem.name",
-                      "SocketItem.properties",
-                      "StringEncoded",
-                      "StringEncoded.content",
-                      "StringEncoded.encoded",
-                      "boolean",
-                      "eTag",
-                      "int64",
-                      "string",
-                      "utcDateTime"
-                    ]
-                  },
-                  "source": {
-                    "revision": "base",
-                    "startLine": 585,
-                    "endLine": 589
-                  }
-                },
-                {
-                  "id": "declaration-0cefdc758ab8f2ba",
-                  "kind": "property",
-                  "qualifiedName": "FileProperty.eTag",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-e5ff8d8bf05c0d3d"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "ModelProperty",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 14892,
-                      "end": 14963
-                    },
-                    "referencedNames": [
-                      "eTag"
-                    ]
-                  },
-                  "source": {
-                    "revision": "current",
-                    "startLine": 591,
-                    "endLine": 592
-                  }
-                },
-                {
-                  "id": "declaration-d53b5a8bb1aa1519",
-                  "kind": "model",
-                  "qualifiedName": "DirectoryItem",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-5bd0f0131086151d",
-                    "hunk-0f2db41c9cc968ad"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "Model",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 14580,
-                      "end": 15161
-                    },
-                    "referencedNames": [
-                      "DirectoryItem.attributes",
-                      "DirectoryItem.fileId",
-                      "DirectoryItem.linkCount",
-                      "DirectoryItem.name",
-                      "DirectoryItem.permissionKey",
-                      "DirectoryItem.properties",
-                      "FileProperty",
-                      "FileProperty.changeTime",
-                      "FileProperty.contentLength",
-                      "FileProperty.creationTime",
-                      "FileProperty.eTag",
-                      "FileProperty.fileMode",
-                      "FileProperty.group",
-                      "FileProperty.lastAccessTime",
-                      "FileProperty.lastModified",
-                      "FileProperty.lastWriteTime",
-                      "FileProperty.owner",
-                      "StringEncoded",
-                      "StringEncoded.content",
-                      "StringEncoded.encoded",
-                      "boolean",
-                      "eTag",
-                      "int64",
-                      "string",
-                      "utcDateTime"
-                    ]
-                  },
-                  "source": {
-                    "revision": "base",
-                    "startLine": 592,
-                    "endLine": 614
-                  }
-                },
-                {
-                  "id": "declaration-d73fb1ed7844d619",
-                  "kind": "model",
-                  "qualifiedName": "FileItem",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-e5ff8d8bf05c0d3d",
-                    "hunk-4dee08e0e6059404"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "Model",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 14968,
-                      "end": 15398
-                    },
-                    "referencedNames": [
-                      "FileItem.attributes",
-                      "FileItem.fileId",
-                      "FileItem.name",
-                      "FileItem.permissionKey",
-                      "FileItem.properties",
-                      "FileProperty",
-                      "FileProperty.changeTime",
-                      "FileProperty.contentLength",
-                      "FileProperty.creationTime",
-                      "FileProperty.eTag",
-                      "FileProperty.lastAccessTime",
-                      "FileProperty.lastModified",
-                      "FileProperty.lastWriteTime",
-                      "StringEncoded",
-                      "StringEncoded.content",
-                      "StringEncoded.encoded",
-                      "boolean",
-                      "eTag",
-                      "int64",
-                      "string",
-                      "utcDateTime"
-                    ]
-                  },
-                  "source": {
-                    "revision": "current",
-                    "startLine": 595,
-                    "endLine": 612
-                  }
-                },
-                {
-                  "id": "declaration-5c9d5a0e145109b8",
-                  "kind": "property",
-                  "qualifiedName": "DirectoryItem.permissionKey",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-0f2db41c9cc968ad"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "ModelProperty",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 14950,
-                      "end": 15028
-                    },
-                    "referencedNames": [
-                      "string"
-                    ]
-                  },
-                  "source": {
-                    "revision": "base",
-                    "startLine": 607,
-                    "endLine": 608
-                  }
-                },
-                {
-                  "id": "declaration-af95a6a0e5930f05",
-                  "kind": "property",
-                  "qualifiedName": "DirectoryItem.linkCount",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-0f2db41c9cc968ad"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "ModelProperty",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 15033,
-                      "end": 15158
-                    },
-                    "referencedNames": [
-                      "int64"
-                    ]
-                  },
-                  "source": {
-                    "revision": "base",
-                    "startLine": 610,
-                    "endLine": 613
-                  }
-                },
-                {
-                  "id": "declaration-8850dcb62d17992d",
-                  "kind": "property",
-                  "qualifiedName": "FileItem.permissionKey",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-4dee08e0e6059404"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "ModelProperty",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 15317,
-                      "end": 15395
-                    },
-                    "referencedNames": [
-                      "string"
-                    ]
-                  },
-                  "source": {
-                    "revision": "current",
-                    "startLine": 610,
-                    "endLine": 611
-                  }
-                },
-                {
-                  "id": "declaration-7ab7e776a4a12af5",
-                  "kind": "model",
-                  "qualifiedName": "HandleItem",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-4dee08e0e6059404"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "Model",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 15400,
-                      "end": 16565
-                    },
-                    "referencedNames": [
-                      "AccessRight",
-                      "Array",
-                      "HandleItem.accessRightList",
-                      "HandleItem.clientIp",
-                      "HandleItem.clientName",
-                      "HandleItem.fileId",
-                      "HandleItem.handleId",
-                      "HandleItem.lastReconnectTime",
-                      "HandleItem.openTime",
-                      "HandleItem.parentId",
-                      "HandleItem.path",
-                      "HandleItem.sessionId",
-                      "StringEncoded",
-                      "StringEncoded.content",
-                      "StringEncoded.encoded",
-                      "boolean",
-                      "string",
-                      "utcDateTime"
-                    ]
-                  },
-                  "source": {
-                    "revision": "current",
-                    "startLine": 614,
-                    "endLine": 653
-                  }
-                },
-                {
-                  "id": "declaration-bd7ac6d9e16b92ca",
-                  "kind": "model",
-                  "qualifiedName": "StringEncoded",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-0f2db41c9cc968ad"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "Model",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 15163,
-                      "end": 15383
-                    },
-                    "referencedNames": [
-                      "StringEncoded.content",
-                      "StringEncoded.encoded",
-                      "boolean",
-                      "string"
-                    ]
-                  },
-                  "source": {
-                    "revision": "base",
-                    "startLine": 616,
-                    "endLine": 625
-                  }
-                },
-                {
-                  "id": "declaration-9d2aa45e0b152e68",
-                  "kind": "model",
-                  "qualifiedName": "FileProperty",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-e5ff8d8bf05c0d3d"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "Model",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 15385,
-                      "end": 16731
-                    },
-                    "referencedNames": [
-                      "FileProperty.changeTime",
-                      "FileProperty.contentLength",
-                      "FileProperty.creationTime",
-                      "FileProperty.eTag",
-                      "FileProperty.fileMode",
-                      "FileProperty.group",
-                      "FileProperty.lastAccessTime",
-                      "FileProperty.lastModified",
-                      "FileProperty.lastWriteTime",
-                      "FileProperty.owner",
-                      "eTag",
-                      "int64",
-                      "string",
-                      "utcDateTime"
-                    ]
-                  },
-                  "source": {
-                    "revision": "base",
-                    "startLine": 627,
-                    "endLine": 675
-                  }
-                },
-                {
-                  "id": "declaration-a0fca2849f54441e",
-                  "kind": "property",
-                  "qualifiedName": "FileProperty.eTag",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-e5ff8d8bf05c0d3d"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "ModelProperty",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 16271,
-                      "end": 16342
-                    },
-                    "referencedNames": [
-                      "eTag"
-                    ]
-                  },
-                  "source": {
-                    "revision": "base",
-                    "startLine": 658,
-                    "endLine": 659
-                  }
-                },
-                {
-                  "id": "declaration-2d3a2b7aab17dfb3",
-                  "kind": "property",
-                  "qualifiedName": "FileProperty.owner",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-e5ff8d8bf05c0d3d"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "ModelProperty",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 16347,
-                      "end": 16475
-                    },
-                    "referencedNames": [
-                      "string"
-                    ]
-                  },
-                  "source": {
-                    "revision": "base",
-                    "startLine": 661,
-                    "endLine": 664
-                  }
-                },
-                {
-                  "id": "declaration-f84d7b1313863775",
-                  "kind": "property",
-                  "qualifiedName": "FileProperty.group",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-e5ff8d8bf05c0d3d"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "ModelProperty",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 16480,
-                      "end": 16609
-                    },
-                    "referencedNames": [
-                      "string"
-                    ]
-                  },
-                  "source": {
-                    "revision": "base",
-                    "startLine": 666,
-                    "endLine": 669
-                  }
-                },
-                {
-                  "id": "declaration-f645a014c6b8c231",
-                  "kind": "property",
-                  "qualifiedName": "FileProperty.fileMode",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-e5ff8d8bf05c0d3d"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "ModelProperty",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 16614,
-                      "end": 16728
-                    },
-                    "referencedNames": [
-                      "string"
-                    ]
-                  },
-                  "source": {
-                    "revision": "base",
-                    "startLine": 671,
-                    "endLine": 674
-                  }
-                },
-                {
-                  "id": "declaration-f80f414575248c7e",
-                  "kind": "model",
-                  "qualifiedName": "FileItem",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-e5ff8d8bf05c0d3d",
-                    "hunk-4dee08e0e6059404"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "Model",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 16733,
-                      "end": 17411
-                    },
-                    "referencedNames": [
-                      "BlockDevice",
-                      "CharacterDevice",
-                      "Directory",
-                      "Fifo",
-                      "FileItem.attributes",
-                      "FileItem.fileId",
-                      "FileItem.fileType",
-                      "FileItem.linkCount",
-                      "FileItem.name",
-                      "FileItem.permissionKey",
-                      "FileItem.properties",
-                      "FileProperty",
-                      "FileProperty.changeTime",
-                      "FileProperty.contentLength",
-                      "FileProperty.creationTime",
-                      "FileProperty.eTag",
-                      "FileProperty.fileMode",
-                      "FileProperty.group",
-                      "FileProperty.lastAccessTime",
-                      "FileProperty.lastModified",
-                      "FileProperty.lastWriteTime",
-                      "FileProperty.owner",
-                      "NfsFileType",
-                      "Regular",
-                      "Socket",
-                      "StringEncoded",
-                      "StringEncoded.content",
-                      "StringEncoded.encoded",
-                      "SymLink",
-                      "boolean",
-                      "eTag",
-                      "int64",
-                      "string",
-                      "utcDateTime"
-                    ]
-                  },
-                  "source": {
-                    "revision": "base",
-                    "startLine": 677,
-                    "endLine": 704
-                  }
-                },
-                {
-                  "id": "declaration-d7a4a8ba5c2d7e6c",
-                  "kind": "property",
-                  "qualifiedName": "FileItem.permissionKey",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-4dee08e0e6059404"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "ModelProperty",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 17082,
-                      "end": 17160
-                    },
-                    "referencedNames": [
-                      "string"
-                    ]
-                  },
-                  "source": {
-                    "revision": "base",
-                    "startLine": 692,
-                    "endLine": 693
-                  }
-                },
-                {
-                  "id": "declaration-5d5c269c56d15244",
-                  "kind": "property",
-                  "qualifiedName": "FileItem.linkCount",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-4dee08e0e6059404"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "ModelProperty",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 17165,
-                      "end": 17285
-                    },
-                    "referencedNames": [
-                      "int64"
-                    ]
-                  },
-                  "source": {
-                    "revision": "base",
-                    "startLine": 695,
-                    "endLine": 698
-                  }
-                },
-                {
-                  "id": "declaration-c00ed6ec653d2f38",
-                  "kind": "property",
-                  "qualifiedName": "FileItem.fileType",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-4dee08e0e6059404"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "ModelProperty",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 17290,
-                      "end": 17408
-                    },
-                    "referencedNames": [
-                      "BlockDevice",
-                      "CharacterDevice",
-                      "Directory",
-                      "Fifo",
-                      "NfsFileType",
-                      "Regular",
-                      "Socket",
-                      "SymLink",
-                      "string"
-                    ]
-                  },
-                  "source": {
-                    "revision": "base",
-                    "startLine": 700,
-                    "endLine": 703
-                  }
-                },
-                {
-                  "id": "declaration-4ebf21e442725dae",
-                  "kind": "model",
-                  "qualifiedName": "SymLinkItem",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-4dee08e0e6059404"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "Model",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 17413,
-                      "end": 17964
-                    },
-                    "referencedNames": [
-                      "FileProperty",
-                      "FileProperty.changeTime",
-                      "FileProperty.contentLength",
-                      "FileProperty.creationTime",
-                      "FileProperty.eTag",
-                      "FileProperty.fileMode",
-                      "FileProperty.group",
-                      "FileProperty.lastAccessTime",
-                      "FileProperty.lastModified",
-                      "FileProperty.lastWriteTime",
-                      "FileProperty.owner",
-                      "StringEncoded",
-                      "StringEncoded.content",
-                      "StringEncoded.encoded",
-                      "SymLinkItem.fileId",
-                      "SymLinkItem.linkCount",
-                      "SymLinkItem.linkText",
-                      "SymLinkItem.name",
-                      "SymLinkItem.properties",
-                      "boolean",
-                      "eTag",
-                      "int64",
-                      "string",
-                      "utcDateTime"
-                    ]
-                  },
-                  "source": {
-                    "revision": "base",
-                    "startLine": 706,
-                    "endLine": 724
-                  }
-                },
-                {
-                  "id": "declaration-913b93a15794ef2f",
-                  "kind": "property",
-                  "qualifiedName": "SymLinkItem.name",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-4dee08e0e6059404"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "ModelProperty",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 17521,
-                      "end": 17591
-                    },
-                    "referencedNames": [
-                      "StringEncoded",
-                      "StringEncoded.content",
-                      "StringEncoded.encoded",
-                      "boolean",
-                      "string"
-                    ]
-                  },
-                  "source": {
-                    "revision": "base",
-                    "startLine": 710,
-                    "endLine": 711
-                  }
-                },
-                {
-                  "id": "declaration-8c10fa4d4b94e0e6",
-                  "kind": "property",
-                  "qualifiedName": "SymLinkItem.fileId",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-4dee08e0e6059404"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "ModelProperty",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 17596,
-                      "end": 17653
-                    },
-                    "referencedNames": [
-                      "string"
-                    ]
-                  },
-                  "source": {
-                    "revision": "base",
-                    "startLine": 713,
-                    "endLine": 714
-                  }
-                },
-                {
-                  "id": "declaration-7e1538dc0206b9c0",
-                  "kind": "property",
-                  "qualifiedName": "SymLinkItem.properties",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-4dee08e0e6059404"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "ModelProperty",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 17658,
-                      "end": 17732
-                    },
-                    "referencedNames": [
-                      "FileProperty",
-                      "FileProperty.changeTime",
-                      "FileProperty.contentLength",
-                      "FileProperty.creationTime",
-                      "FileProperty.eTag",
-                      "FileProperty.fileMode",
-                      "FileProperty.group",
-                      "FileProperty.lastAccessTime",
-                      "FileProperty.lastModified",
-                      "FileProperty.lastWriteTime",
-                      "FileProperty.owner",
-                      "eTag",
-                      "int64",
-                      "string",
-                      "utcDateTime"
-                    ]
-                  },
-                  "source": {
-                    "revision": "base",
-                    "startLine": 716,
-                    "endLine": 717
-                  }
-                },
-                {
-                  "id": "declaration-784023ca786802e3",
-                  "kind": "property",
-                  "qualifiedName": "SymLinkItem.linkCount",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-4dee08e0e6059404"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "ModelProperty",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 17737,
-                      "end": 17833
-                    },
-                    "referencedNames": [
-                      "int64"
-                    ]
-                  },
-                  "source": {
-                    "revision": "base",
-                    "startLine": 719,
-                    "endLine": 720
-                  }
-                },
-                {
-                  "id": "declaration-dcc651a6c2451245",
-                  "kind": "property",
-                  "qualifiedName": "SymLinkItem.linkText",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-4dee08e0e6059404"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "ModelProperty",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 17838,
-                      "end": 17961
-                    },
-                    "referencedNames": [
-                      "string"
-                    ]
-                  },
-                  "source": {
-                    "revision": "base",
-                    "startLine": 722,
-                    "endLine": 723
-                  }
-                },
-                {
-                  "id": "declaration-f4e8baf2553ff927",
-                  "kind": "model",
-                  "qualifiedName": "BlockDeviceItem",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-4dee08e0e6059404"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "Model",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 17966,
-                      "end": 18620
-                    },
-                    "referencedNames": [
-                      "BlockDeviceItem.deviceMajor",
-                      "BlockDeviceItem.deviceMinor",
-                      "BlockDeviceItem.fileId",
-                      "BlockDeviceItem.linkCount",
-                      "BlockDeviceItem.name",
-                      "BlockDeviceItem.properties",
-                      "FileProperty",
-                      "FileProperty.changeTime",
-                      "FileProperty.contentLength",
-                      "FileProperty.creationTime",
-                      "FileProperty.eTag",
-                      "FileProperty.fileMode",
-                      "FileProperty.group",
-                      "FileProperty.lastAccessTime",
-                      "FileProperty.lastModified",
-                      "FileProperty.lastWriteTime",
-                      "FileProperty.owner",
-                      "StringEncoded",
-                      "StringEncoded.content",
-                      "StringEncoded.encoded",
-                      "boolean",
-                      "eTag",
-                      "int64",
-                      "string",
-                      "utcDateTime"
-                    ]
-                  },
-                  "source": {
-                    "revision": "base",
-                    "startLine": 726,
-                    "endLine": 747
-                  }
-                },
-                {
-                  "id": "declaration-5ad589dd342edf51",
-                  "kind": "property",
-                  "qualifiedName": "BlockDeviceItem.name",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-4dee08e0e6059404"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "ModelProperty",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 18081,
-                      "end": 18150
-                    },
-                    "referencedNames": [
-                      "StringEncoded",
-                      "StringEncoded.content",
-                      "StringEncoded.encoded",
-                      "boolean",
-                      "string"
-                    ]
-                  },
-                  "source": {
-                    "revision": "base",
-                    "startLine": 730,
-                    "endLine": 731
-                  }
-                },
-                {
-                  "id": "declaration-11d9bfb5a9417330",
-                  "kind": "property",
-                  "qualifiedName": "BlockDeviceItem.fileId",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-4dee08e0e6059404"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "ModelProperty",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 18155,
-                      "end": 18212
-                    },
-                    "referencedNames": [
-                      "string"
-                    ]
-                  },
-                  "source": {
-                    "revision": "base",
-                    "startLine": 733,
-                    "endLine": 734
-                  }
-                },
-                {
-                  "id": "declaration-fd7b6d11babaca4d",
-                  "kind": "property",
-                  "qualifiedName": "BlockDeviceItem.properties",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-4dee08e0e6059404"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "ModelProperty",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 18217,
-                      "end": 18291
-                    },
-                    "referencedNames": [
-                      "FileProperty",
-                      "FileProperty.changeTime",
-                      "FileProperty.contentLength",
-                      "FileProperty.creationTime",
-                      "FileProperty.eTag",
-                      "FileProperty.fileMode",
-                      "FileProperty.group",
-                      "FileProperty.lastAccessTime",
-                      "FileProperty.lastModified",
-                      "FileProperty.lastWriteTime",
-                      "FileProperty.owner",
-                      "eTag",
-                      "int64",
-                      "string",
-                      "utcDateTime"
-                    ]
-                  },
-                  "source": {
-                    "revision": "base",
-                    "startLine": 736,
-                    "endLine": 737
-                  }
-                },
-                {
-                  "id": "declaration-abd4fe560343919a",
-                  "kind": "property",
-                  "qualifiedName": "BlockDeviceItem.linkCount",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-4dee08e0e6059404"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "ModelProperty",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 18296,
-                      "end": 18391
-                    },
-                    "referencedNames": [
-                      "int64"
-                    ]
-                  },
-                  "source": {
-                    "revision": "base",
-                    "startLine": 739,
-                    "endLine": 740
-                  }
-                },
-                {
-                  "id": "declaration-fa33e601ec2821cf",
-                  "kind": "property",
-                  "qualifiedName": "BlockDeviceItem.deviceMajor",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-4dee08e0e6059404"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "ModelProperty",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 18396,
-                      "end": 18504
-                    },
-                    "referencedNames": [
-                      "int64"
-                    ]
-                  },
-                  "source": {
-                    "revision": "base",
-                    "startLine": 742,
-                    "endLine": 743
-                  }
-                },
-                {
-                  "id": "declaration-e69435f544489f6a",
-                  "kind": "property",
-                  "qualifiedName": "BlockDeviceItem.deviceMinor",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-4dee08e0e6059404"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "ModelProperty",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 18509,
-                      "end": 18617
-                    },
-                    "referencedNames": [
-                      "int64"
-                    ]
-                  },
-                  "source": {
-                    "revision": "base",
-                    "startLine": 745,
-                    "endLine": 746
-                  }
-                },
-                {
-                  "id": "declaration-3468c062204a2ec9",
-                  "kind": "model",
-                  "qualifiedName": "CharDeviceItem",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-4dee08e0e6059404"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "Model",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 18622,
-                      "end": 19294
-                    },
-                    "referencedNames": [
-                      "CharDeviceItem.deviceMajor",
-                      "CharDeviceItem.deviceMinor",
-                      "CharDeviceItem.fileId",
-                      "CharDeviceItem.linkCount",
-                      "CharDeviceItem.name",
-                      "CharDeviceItem.properties",
-                      "FileProperty",
-                      "FileProperty.changeTime",
-                      "FileProperty.contentLength",
-                      "FileProperty.creationTime",
-                      "FileProperty.eTag",
-                      "FileProperty.fileMode",
-                      "FileProperty.group",
-                      "FileProperty.lastAccessTime",
-                      "FileProperty.lastModified",
-                      "FileProperty.lastWriteTime",
-                      "FileProperty.owner",
-                      "StringEncoded",
-                      "StringEncoded.content",
-                      "StringEncoded.encoded",
-                      "boolean",
-                      "eTag",
-                      "int64",
-                      "string",
-                      "utcDateTime"
-                    ]
-                  },
-                  "source": {
-                    "revision": "base",
-                    "startLine": 749,
-                    "endLine": 770
-                  }
-                },
-                {
-                  "id": "declaration-2d8838f499c8d2a7",
-                  "kind": "property",
-                  "qualifiedName": "CharDeviceItem.name",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-4dee08e0e6059404"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "ModelProperty",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 18739,
-                      "end": 18812
-                    },
-                    "referencedNames": [
-                      "StringEncoded",
-                      "StringEncoded.content",
-                      "StringEncoded.encoded",
-                      "boolean",
-                      "string"
-                    ]
-                  },
-                  "source": {
-                    "revision": "base",
-                    "startLine": 753,
-                    "endLine": 754
-                  }
-                },
-                {
-                  "id": "declaration-c15318f2c3c92a7f",
-                  "kind": "property",
-                  "qualifiedName": "CharDeviceItem.fileId",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-4dee08e0e6059404"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "ModelProperty",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 18817,
-                      "end": 18874
-                    },
-                    "referencedNames": [
-                      "string"
-                    ]
-                  },
-                  "source": {
-                    "revision": "base",
-                    "startLine": 756,
-                    "endLine": 757
-                  }
-                },
-                {
-                  "id": "declaration-28faabea28d25a09",
-                  "kind": "property",
-                  "qualifiedName": "CharDeviceItem.properties",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-4dee08e0e6059404"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "ModelProperty",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 18879,
-                      "end": 18953
-                    },
-                    "referencedNames": [
-                      "FileProperty",
-                      "FileProperty.changeTime",
-                      "FileProperty.contentLength",
-                      "FileProperty.creationTime",
-                      "FileProperty.eTag",
-                      "FileProperty.fileMode",
-                      "FileProperty.group",
-                      "FileProperty.lastAccessTime",
-                      "FileProperty.lastModified",
-                      "FileProperty.lastWriteTime",
-                      "FileProperty.owner",
-                      "eTag",
-                      "int64",
-                      "string",
-                      "utcDateTime"
-                    ]
-                  },
-                  "source": {
-                    "revision": "base",
-                    "startLine": 759,
-                    "endLine": 760
-                  }
-                },
-                {
-                  "id": "declaration-4d422ac6bbb746c1",
-                  "kind": "property",
-                  "qualifiedName": "CharDeviceItem.linkCount",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-4dee08e0e6059404"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "ModelProperty",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 18958,
-                      "end": 19057
-                    },
-                    "referencedNames": [
-                      "int64"
-                    ]
-                  },
-                  "source": {
-                    "revision": "base",
-                    "startLine": 762,
-                    "endLine": 763
-                  }
-                },
-                {
-                  "id": "declaration-60ca7e1d8534d963",
-                  "kind": "property",
-                  "qualifiedName": "CharDeviceItem.deviceMajor",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-4dee08e0e6059404"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "ModelProperty",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 19062,
-                      "end": 19174
-                    },
-                    "referencedNames": [
-                      "int64"
-                    ]
-                  },
-                  "source": {
-                    "revision": "base",
-                    "startLine": 765,
-                    "endLine": 766
-                  }
-                },
-                {
-                  "id": "declaration-7579ab049368eba2",
-                  "kind": "property",
-                  "qualifiedName": "CharDeviceItem.deviceMinor",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-4dee08e0e6059404"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "ModelProperty",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 19179,
-                      "end": 19291
-                    },
-                    "referencedNames": [
-                      "int64"
-                    ]
-                  },
-                  "source": {
-                    "revision": "base",
-                    "startLine": 768,
-                    "endLine": 769
-                  }
-                },
-                {
-                  "id": "declaration-be5a596dbd04dd32",
-                  "kind": "model",
-                  "qualifiedName": "FifoItem",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-4dee08e0e6059404"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "Model",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 19296,
-                      "end": 19686
-                    },
-                    "referencedNames": [
-                      "FifoItem.fileId",
-                      "FifoItem.linkCount",
-                      "FifoItem.name",
-                      "FifoItem.properties",
-                      "FileProperty",
-                      "FileProperty.changeTime",
-                      "FileProperty.contentLength",
-                      "FileProperty.creationTime",
-                      "FileProperty.eTag",
-                      "FileProperty.fileMode",
-                      "FileProperty.group",
-                      "FileProperty.lastAccessTime",
-                      "FileProperty.lastModified",
-                      "FileProperty.lastWriteTime",
-                      "FileProperty.owner",
-                      "StringEncoded",
-                      "StringEncoded.content",
-                      "StringEncoded.encoded",
-                      "boolean",
-                      "eTag",
-                      "int64",
-                      "string",
-                      "utcDateTime"
-                    ]
-                  },
-                  "source": {
-                    "revision": "base",
-                    "startLine": 772,
-                    "endLine": 787
-                  }
-                },
-                {
-                  "id": "declaration-66f903520fea680f",
-                  "kind": "property",
-                  "qualifiedName": "FifoItem.name",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-4dee08e0e6059404"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "ModelProperty",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 19389,
-                      "end": 19450
-                    },
-                    "referencedNames": [
-                      "StringEncoded",
-                      "StringEncoded.content",
-                      "StringEncoded.encoded",
-                      "boolean",
-                      "string"
-                    ]
-                  },
-                  "source": {
-                    "revision": "base",
-                    "startLine": 776,
-                    "endLine": 777
-                  }
-                },
-                {
-                  "id": "declaration-1308395af552c920",
-                  "kind": "property",
-                  "qualifiedName": "FifoItem.fileId",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-4dee08e0e6059404"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "ModelProperty",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 19455,
-                      "end": 19512
-                    },
-                    "referencedNames": [
-                      "string"
-                    ]
-                  },
-                  "source": {
-                    "revision": "base",
-                    "startLine": 779,
-                    "endLine": 780
-                  }
-                },
-                {
-                  "id": "declaration-e55304f8e1921660",
-                  "kind": "property",
-                  "qualifiedName": "FifoItem.properties",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-4dee08e0e6059404"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "ModelProperty",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 19517,
-                      "end": 19591
-                    },
-                    "referencedNames": [
-                      "FileProperty",
-                      "FileProperty.changeTime",
-                      "FileProperty.contentLength",
-                      "FileProperty.creationTime",
-                      "FileProperty.eTag",
-                      "FileProperty.fileMode",
-                      "FileProperty.group",
-                      "FileProperty.lastAccessTime",
-                      "FileProperty.lastModified",
-                      "FileProperty.lastWriteTime",
-                      "FileProperty.owner",
-                      "eTag",
-                      "int64",
-                      "string",
-                      "utcDateTime"
-                    ]
-                  },
-                  "source": {
-                    "revision": "base",
-                    "startLine": 782,
-                    "endLine": 783
-                  }
-                },
-                {
-                  "id": "declaration-81ae245a471237ca",
-                  "kind": "property",
-                  "qualifiedName": "FifoItem.linkCount",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-4dee08e0e6059404"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "ModelProperty",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 19596,
-                      "end": 19683
-                    },
-                    "referencedNames": [
-                      "int64"
-                    ]
-                  },
-                  "source": {
-                    "revision": "base",
-                    "startLine": 785,
-                    "endLine": 786
-                  }
-                },
-                {
-                  "id": "declaration-cca86a1e4127e661",
-                  "kind": "model",
-                  "qualifiedName": "SocketItem",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-4dee08e0e6059404"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "Model",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 19688,
-                      "end": 20088
-                    },
-                    "referencedNames": [
-                      "FileProperty",
-                      "FileProperty.changeTime",
-                      "FileProperty.contentLength",
-                      "FileProperty.creationTime",
-                      "FileProperty.eTag",
-                      "FileProperty.fileMode",
-                      "FileProperty.group",
-                      "FileProperty.lastAccessTime",
-                      "FileProperty.lastModified",
-                      "FileProperty.lastWriteTime",
-                      "FileProperty.owner",
-                      "SocketItem.fileId",
-                      "SocketItem.linkCount",
-                      "SocketItem.name",
-                      "SocketItem.properties",
-                      "StringEncoded",
-                      "StringEncoded.content",
-                      "StringEncoded.encoded",
-                      "boolean",
-                      "eTag",
-                      "int64",
-                      "string",
-                      "utcDateTime"
-                    ]
-                  },
-                  "source": {
-                    "revision": "base",
-                    "startLine": 789,
-                    "endLine": 804
-                  }
-                },
-                {
-                  "id": "declaration-8dbd598f86e39880",
-                  "kind": "property",
-                  "qualifiedName": "SocketItem.name",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-4dee08e0e6059404"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "ModelProperty",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 19787,
-                      "end": 19850
-                    },
-                    "referencedNames": [
-                      "StringEncoded",
-                      "StringEncoded.content",
-                      "StringEncoded.encoded",
-                      "boolean",
-                      "string"
-                    ]
-                  },
-                  "source": {
-                    "revision": "base",
-                    "startLine": 793,
-                    "endLine": 794
-                  }
-                },
-                {
-                  "id": "declaration-388d5fab74ac6367",
-                  "kind": "property",
-                  "qualifiedName": "SocketItem.fileId",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-4dee08e0e6059404"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "ModelProperty",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 19855,
-                      "end": 19912
-                    },
-                    "referencedNames": [
-                      "string"
-                    ]
-                  },
-                  "source": {
-                    "revision": "base",
-                    "startLine": 796,
-                    "endLine": 797
-                  }
-                },
-                {
-                  "id": "declaration-a9ae57b209f780dc",
-                  "kind": "property",
-                  "qualifiedName": "SocketItem.properties",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-4dee08e0e6059404"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "ModelProperty",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 19917,
-                      "end": 19991
-                    },
-                    "referencedNames": [
-                      "FileProperty",
-                      "FileProperty.changeTime",
-                      "FileProperty.contentLength",
-                      "FileProperty.creationTime",
-                      "FileProperty.eTag",
-                      "FileProperty.fileMode",
-                      "FileProperty.group",
-                      "FileProperty.lastAccessTime",
-                      "FileProperty.lastModified",
-                      "FileProperty.lastWriteTime",
-                      "FileProperty.owner",
-                      "eTag",
-                      "int64",
-                      "string",
-                      "utcDateTime"
-                    ]
-                  },
-                  "source": {
-                    "revision": "base",
-                    "startLine": 799,
-                    "endLine": 800
-                  }
-                },
-                {
-                  "id": "declaration-1d8f77f5a0706041",
-                  "kind": "property",
-                  "qualifiedName": "SocketItem.linkCount",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-4dee08e0e6059404"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "ModelProperty",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 19996,
-                      "end": 20085
-                    },
-                    "referencedNames": [
-                      "int64"
-                    ]
-                  },
-                  "source": {
-                    "revision": "base",
-                    "startLine": 802,
-                    "endLine": 803
-                  }
-                },
-                {
-                  "id": "declaration-371cc4fa5b506c07",
-                  "kind": "model",
-                  "qualifiedName": "HandleItem",
-                  "decorators": [],
-                  "versionedMembers": [],
-                  "hunkIds": [
-                    "hunk-4dee08e0e6059404"
-                  ],
-                  "compilerEvidence": {
-                    "kind": "semantic-type",
-                    "compilerTypeKind": "Model",
-                    "sourceFile": "specification/storage/data-plane/FileStorage/models.tsp",
-                    "position": {
-                      "start": 20090,
-                      "end": 21255
-                    },
-                    "referencedNames": [
-                      "AccessRight",
-                      "Array",
-                      "HandleItem.accessRightList",
-                      "HandleItem.clientIp",
-                      "HandleItem.clientName",
-                      "HandleItem.fileId",
-                      "HandleItem.handleId",
-                      "HandleItem.lastReconnectTime",
-                      "HandleItem.openTime",
-                      "HandleItem.parentId",
-                      "HandleItem.path",
-                      "HandleItem.sessionId",
-                      "StringEncoded",
-                      "StringEncoded.content",
-                      "StringEncoded.encoded",
-                      "boolean",
-                      "string",
-                      "utcDateTime"
-                    ]
-                  },
-                  "source": {
-                    "revision": "base",
-                    "startLine": 806,
-                    "endLine": 845
-                  }
-                }
-              ]
-            }
-          ],
-          "relatedSemanticIntents": [
-            "semantic-eed96d1f60797ccb"
-          ],
-          "semanticMatchBasis": "declaration-identity"
-        },
-        {
           "id": "downstream-7783e82b5610438b",
           "rule": "enum-values-removed",
           "defaultSeverity": "high",
@@ -154280,10 +151094,10 @@
           ],
           "reviewRequired": true,
           "rootCauseIds": [
-            "downstream-root-cause-6c5f1116663ef2ce"
+            "downstream-root-cause-b39bed42fbca62f5"
           ],
           "severity": "high",
-          "rationale": "Previously generated public enum values are removed, so source code that references those values no longer compiles or behaves equivalently.",
+          "rationale": "ListFilesIncludeType removes All, LinkCount, NfsAttributes, and Permissions. Existing list calls using these named include options must change.",
           "evidence": [
             {
               "projectId": "project-11ca76782d2e",
@@ -157485,10 +154299,10 @@
           ],
           "reviewRequired": true,
           "rootCauseIds": [
-            "downstream-root-cause-6c5f1116663ef2ce"
+            "downstream-root-cause-4af8e9c02f48f601"
           ],
           "severity": "high",
-          "rationale": "The property was publicly exposed in the baseline language-neutral SDK model and is absent in the target, requiring existing SDK consumers to change.",
+          "rationale": "FilesAndDirectoriesListSegment removes charDeviceItems. Code reading character-device entries from list responses can no longer access that collection.",
           "evidence": [
             {
               "projectId": "project-11ca76782d2e",
@@ -160934,10 +157748,10 @@
           ],
           "reviewRequired": true,
           "rootCauseIds": [
-            "downstream-root-cause-6c5f1116663ef2ce"
+            "downstream-root-cause-4af8e9c02f48f601"
           ],
           "severity": "high",
-          "rationale": "The property was publicly exposed in the baseline language-neutral SDK model and is absent in the target, requiring existing SDK consumers to change.",
+          "rationale": "FilesAndDirectoriesListSegment removes fifoItems. Code reading FIFO entries from list responses can no longer access that collection.",
           "evidence": [
             {
               "projectId": "project-11ca76782d2e",
@@ -164383,10 +161197,10 @@
           ],
           "reviewRequired": true,
           "rootCauseIds": [
-            "downstream-root-cause-6c5f1116663ef2ce"
+            "downstream-root-cause-6b98e0b8b252012f"
           ],
           "severity": "high",
-          "rationale": "The property was publicly exposed in the baseline language-neutral SDK model and is absent in the target, requiring existing SDK consumers to change.",
+          "rationale": "FileProperty removes group. Code reading the group identifier from listed item properties can no longer access that member.",
           "evidence": [
             {
               "projectId": "project-11ca76782d2e",
@@ -168026,10 +164840,10 @@
           ],
           "reviewRequired": true,
           "rootCauseIds": [
-            "downstream-root-cause-6c5f1116663ef2ce"
+            "downstream-root-cause-ae97658028e0ebbd"
           ],
           "severity": "high",
-          "rationale": "The property was publicly exposed in the baseline language-neutral SDK model and is absent in the target, requiring existing SDK consumers to change.",
+          "rationale": "FileItem removes fileType. Code inspecting a listed file's type can no longer access that member; NfsFileType remaining elsewhere does not preserve this property.",
           "evidence": [
             {
               "projectId": "project-11ca76782d2e",
@@ -171508,9 +168322,11 @@
             "sdk-fact-d5de8fa08f72f856"
           ],
           "reviewRequired": true,
-          "rootCauseIds": [],
+          "rootCauseIds": [
+            "downstream-root-cause-79bdf84647ebf5df"
+          ],
           "severity": "high",
-          "rationale": "The baseline public SDK type is no longer reachable in the target surface, removing an existing generated symbol used by consumers.",
+          "rationale": "SocketItem is removed from the SDK. Code referencing this list-result model or its members must change.",
           "evidence": [
             {
               "projectId": "project-11ca76782d2e",
@@ -174749,9 +171565,11 @@
             "sdk-fact-962542dadb555204"
           ],
           "reviewRequired": true,
-          "rootCauseIds": [],
+          "rootCauseIds": [
+            "downstream-root-cause-d3530aebadc988d9"
+          ],
           "severity": "high",
-          "rationale": "The baseline public SDK type is no longer reachable in the target surface, removing an existing generated symbol used by consumers.",
+          "rationale": "FifoItem is removed from the SDK. Code referencing this list-result model or its members must change.",
           "evidence": [
             {
               "projectId": "project-11ca76782d2e",
@@ -177992,10 +174810,10 @@
           ],
           "reviewRequired": true,
           "rootCauseIds": [
-            "downstream-root-cause-6c5f1116663ef2ce"
+            "downstream-root-cause-4af8e9c02f48f601"
           ],
           "severity": "high",
-          "rationale": "The property was publicly exposed in the baseline language-neutral SDK model and is absent in the target, requiring existing SDK consumers to change.",
+          "rationale": "FilesAndDirectoriesListSegment removes symLinkItems. Code reading symbolic-link entries from list responses can no longer access that collection.",
           "evidence": [
             {
               "projectId": "project-11ca76782d2e",
@@ -181441,10 +178259,10 @@
           ],
           "reviewRequired": true,
           "rootCauseIds": [
-            "downstream-root-cause-6c5f1116663ef2ce"
+            "downstream-root-cause-ae97658028e0ebbd"
           ],
           "severity": "high",
-          "rationale": "The property was publicly exposed in the baseline language-neutral SDK model and is absent in the target, requiring existing SDK consumers to change.",
+          "rationale": "FileItem removes linkCount. Code reading a listed file's link count can no longer access that member.",
           "evidence": [
             {
               "projectId": "project-11ca76782d2e",
@@ -184925,10 +181743,10 @@
           ],
           "reviewRequired": true,
           "rootCauseIds": [
-            "downstream-root-cause-6c5f1116663ef2ce"
+            "downstream-root-cause-6b98e0b8b252012f"
           ],
           "severity": "high",
-          "rationale": "The property was publicly exposed in the baseline language-neutral SDK model and is absent in the target, requiring existing SDK consumers to change.",
+          "rationale": "FileProperty removes fileMode. Code reading the mode from listed item properties can no longer access that member.",
           "evidence": [
             {
               "projectId": "project-11ca76782d2e",
@@ -188566,9 +185384,11 @@
             "sdk-fact-fb4b9176536c43e2"
           ],
           "reviewRequired": true,
-          "rootCauseIds": [],
+          "rootCauseIds": [
+            "downstream-root-cause-1ff36836cd822e84"
+          ],
           "severity": "high",
-          "rationale": "The baseline public SDK type is no longer reachable in the target surface, removing an existing generated symbol used by consumers.",
+          "rationale": "CharDeviceItem is removed from the SDK. Code referencing this list-result model or its deviceMajor/deviceMinor members must change.",
           "evidence": [
             {
               "projectId": "project-11ca76782d2e",
@@ -191861,10 +188681,10 @@
           ],
           "reviewRequired": true,
           "rootCauseIds": [
-            "downstream-root-cause-6c5f1116663ef2ce"
+            "downstream-root-cause-6b98e0b8b252012f"
           ],
           "severity": "high",
-          "rationale": "The property was publicly exposed in the baseline language-neutral SDK model and is absent in the target, requiring existing SDK consumers to change.",
+          "rationale": "FileProperty removes owner. Code reading the owner identifier from listed item properties can no longer access that member.",
           "evidence": [
             {
               "projectId": "project-11ca76782d2e",
@@ -195412,135 +192232,1032 @@
           "semanticMatchBasis": "declaration-identity"
         }
       ],
-      "operationGroups": [],
-      "sharedTypeImpacts": [
+      "methodGroups": [],
+      "typeImpacts": [
         {
-          "id": "shared-type-impact-ab51f5de14b65807",
-          "rootCauseId": "unresolved:public-surface-changed:access,usage,reachable",
-          "rootCause": "unresolved:public-surface-changed:access,usage,reachable",
-          "summary": "These SDK types share the same generated public-surface change.",
+          "id": "sdk-type-impact-0a87c6060022a986",
+          "projectId": "project-11ca76782d2e",
+          "type": "Storage.File.DirectoryItem",
+          "locations": [
+            "response-body"
+          ],
+          "rootCauseIds": [
+            "downstream-root-cause-0ea1f392867a134b"
+          ],
+          "summary": "This generated SDK type has a confirmed public contract change.",
           "findingIds": [
-            "downstream-30bbc186b5e3f5c4",
-            "downstream-4fd0a9648c5d8e3b",
-            "downstream-ad863e4fbce7e72f",
-            "downstream-c246cf097347b760",
-            "downstream-f53ded273e75e732"
+            "downstream-5ef4de813e5e4cac"
           ],
-          "typeCount": 5,
-          "types": [
-            "Storage.File.BlockDeviceItem",
-            "Storage.File.CharDeviceItem",
-            "Storage.File.FifoItem",
-            "Storage.File.SocketItem",
-            "Storage.File.SymLinkItem"
+          "affectedMethodCount": 1,
+          "affectedMethods": [
+            {
+              "symbol": "Storage.File.Directory.listFilesAndDirectoriesSegment",
+              "locations": [
+                "response-body"
+              ],
+              "referenceFactIds": [
+                "sdk-fact-698333969bb950ad",
+                "sdk-fact-770e874354e1704c",
+                "sdk-fact-79716d26070a1d82",
+                "sdk-fact-9355cde4ef61a261"
+              ]
+            }
           ],
-          "sampleTypes": [
-            "Storage.File.BlockDeviceItem",
-            "Storage.File.CharDeviceItem",
-            "Storage.File.FifoItem"
-          ],
-          "affectedOperationCount": 0,
-          "affectedMethodCount": 0,
-          "affectedMethods": [],
-          "sampleMethods": [],
           "relatedSemanticIntents": [
-            "semantic-106722e15dc2d25d"
-          ]
+            "semantic-259f67bc56ae9c3d"
+          ],
+          "unresolvedRelationshipReason": null
         },
         {
-          "id": "shared-type-impact-b3f1f16037920111",
-          "rootCauseId": "downstream-root-cause-6c5f1116663ef2ce",
-          "rootCause": "unresolved",
-          "summary": "These SDK types share the same generated public-surface change.",
+          "id": "sdk-type-impact-297059ace72c9a41",
+          "projectId": "project-11ca76782d2e",
+          "type": "Storage.File.FileItem",
+          "locations": [
+            "response-body"
+          ],
+          "rootCauseIds": [
+            "downstream-root-cause-ae97658028e0ebbd"
+          ],
+          "summary": "This generated SDK type has a confirmed public contract change.",
           "findingIds": [
-            "downstream-1233aad46ca88eb3",
-            "downstream-2a75e195124aa520",
-            "downstream-3168a08ffe65e21a",
-            "downstream-5ef4de813e5e4cac",
-            "downstream-630a2a23c2940472",
-            "downstream-7783e82b5610438b",
-            "downstream-84d397d74007da31",
-            "downstream-a043b8f3f1b67d6a",
-            "downstream-a54af762c61b0b68",
             "downstream-a5bfb9940411cb07",
-            "downstream-c74d148fcd163cc6",
-            "downstream-c8ace440e6399c7d",
+            "downstream-c8ace440e6399c7d"
+          ],
+          "affectedMethodCount": 1,
+          "affectedMethods": [
+            {
+              "symbol": "Storage.File.Directory.listFilesAndDirectoriesSegment",
+              "locations": [
+                "response-body"
+              ],
+              "referenceFactIds": [
+                "sdk-fact-3e159f809460b02c",
+                "sdk-fact-698333969bb950ad",
+                "sdk-fact-770e874354e1704c",
+                "sdk-fact-9355cde4ef61a261"
+              ]
+            }
+          ],
+          "relatedSemanticIntents": [
+            "semantic-106722e15dc2d25d",
+            "semantic-bdd43786bf6adae0"
+          ],
+          "unresolvedRelationshipReason": null
+        },
+        {
+          "id": "sdk-type-impact-2edd0f44871ea9d3",
+          "projectId": "project-11ca76782d2e",
+          "type": "Storage.File.SocketItem",
+          "locations": [
+            "response-body"
+          ],
+          "rootCauseIds": [
+            "downstream-root-cause-79bdf84647ebf5df"
+          ],
+          "summary": "This generated SDK type has a confirmed public contract change.",
+          "findingIds": [
+            "downstream-ad863e4fbce7e72f"
+          ],
+          "affectedMethodCount": 1,
+          "affectedMethods": [
+            {
+              "symbol": "Storage.File.Directory.listFilesAndDirectoriesSegment",
+              "locations": [
+                "response-body"
+              ],
+              "referenceFactIds": [
+                "sdk-fact-0ceebd08a9b3fe73",
+                "sdk-fact-1444f1b954c5c854",
+                "sdk-fact-d5de8fa08f72f856",
+                "sdk-fact-d7cbb3f8bf5da6ec"
+              ]
+            }
+          ],
+          "relatedSemanticIntents": [
+            "semantic-106722e15dc2d25d"
+          ],
+          "unresolvedRelationshipReason": null
+        },
+        {
+          "id": "sdk-type-impact-35d46e0ce43ebc6e",
+          "projectId": "project-11ca76782d2e",
+          "type": "Storage.File.FileProperty",
+          "locations": [
+            "response-body"
+          ],
+          "rootCauseIds": [
+            "downstream-root-cause-6b98e0b8b252012f"
+          ],
+          "summary": "This generated SDK type has a confirmed public contract change.",
+          "findingIds": [
+            "downstream-a54af762c61b0b68",
             "downstream-e1f82fe2103d8f0c",
             "downstream-fbbb2d7cc3f5a3b0"
           ],
-          "typeCount": 6,
-          "types": [
-            "Storage.File.DirectoryItem",
-            "Storage.File.FileItem",
-            "Storage.File.FileProperty",
-            "Storage.File.FilesAndDirectoriesListSegment",
-            "Storage.File.ListFilesIncludeType",
-            "Storage.File.NfsFileType"
+          "affectedMethodCount": 1,
+          "affectedMethods": [
+            {
+              "symbol": "Storage.File.Directory.listFilesAndDirectoriesSegment",
+              "locations": [
+                "response-body"
+              ],
+              "referenceFactIds": [
+                "sdk-fact-698333969bb950ad",
+                "sdk-fact-6998bb9f4e4733d0",
+                "sdk-fact-770e874354e1704c",
+                "sdk-fact-79716d26070a1d82",
+                "sdk-fact-9355cde4ef61a261"
+              ]
+            }
           ],
-          "sampleTypes": [
-            "Storage.File.DirectoryItem",
-            "Storage.File.FileItem",
-            "Storage.File.FileProperty"
-          ],
-          "affectedOperationCount": 0,
-          "affectedMethodCount": 0,
-          "affectedMethods": [],
-          "sampleMethods": [],
           "relatedSemanticIntents": [
-            "semantic-106722e15dc2d25d",
-            "semantic-259f67bc56ae9c3d",
-            "semantic-bdd43786bf6adae0",
+            "semantic-bdd43786bf6adae0"
+          ],
+          "unresolvedRelationshipReason": null
+        },
+        {
+          "id": "sdk-type-impact-8a7b808d430a570a",
+          "projectId": "project-11ca76782d2e",
+          "type": "Storage.File.NfsFileType",
+          "locations": [
+            "request-header",
+            "response-body",
+            "response-header"
+          ],
+          "rootCauseIds": [
+            "downstream-root-cause-48a9ddc9c54671ac"
+          ],
+          "summary": "This generated SDK type has a confirmed public contract change.",
+          "findingIds": [
+            "downstream-3168a08ffe65e21a"
+          ],
+          "affectedMethodCount": 7,
+          "affectedMethods": [
+            {
+              "symbol": "Storage.File.Directory.create",
+              "locations": [
+                "request-header",
+                "response-body",
+                "response-header"
+              ],
+              "referenceFactIds": [
+                "sdk-fact-0ceebd08a9b3fe73",
+                "sdk-fact-1444f1b954c5c854",
+                "sdk-fact-6d499b5530e56a26",
+                "sdk-fact-a09c7a50d3f3e45a",
+                "sdk-fact-b522eae186e55c20",
+                "sdk-fact-bdfdf73dab3ac56e",
+                "sdk-fact-caaaabd75c828475",
+                "sdk-fact-cadf2d8a280dc9ac",
+                "sdk-fact-cc94dcddd4a8e95d",
+                "sdk-fact-d7cbb3f8bf5da6ec",
+                "sdk-fact-e16ed733871705be",
+                "sdk-fact-e8ef9b56b0c77924"
+              ]
+            },
+            {
+              "symbol": "Storage.File.Directory.getProperties",
+              "locations": [
+                "request-header",
+                "response-body",
+                "response-header"
+              ],
+              "referenceFactIds": [
+                "sdk-fact-0ceebd08a9b3fe73",
+                "sdk-fact-1444f1b954c5c854",
+                "sdk-fact-6d499b5530e56a26",
+                "sdk-fact-a09c7a50d3f3e45a",
+                "sdk-fact-b522eae186e55c20",
+                "sdk-fact-bdfdf73dab3ac56e",
+                "sdk-fact-caaaabd75c828475",
+                "sdk-fact-cadf2d8a280dc9ac",
+                "sdk-fact-cc94dcddd4a8e95d",
+                "sdk-fact-d7cbb3f8bf5da6ec",
+                "sdk-fact-e16ed733871705be",
+                "sdk-fact-e8ef9b56b0c77924"
+              ]
+            },
+            {
+              "symbol": "Storage.File.Directory.listFilesAndDirectoriesSegment",
+              "locations": [
+                "request-header",
+                "response-body",
+                "response-header"
+              ],
+              "referenceFactIds": [
+                "sdk-fact-0ceebd08a9b3fe73",
+                "sdk-fact-1444f1b954c5c854",
+                "sdk-fact-6d499b5530e56a26",
+                "sdk-fact-a09c7a50d3f3e45a",
+                "sdk-fact-b522eae186e55c20",
+                "sdk-fact-bdfdf73dab3ac56e",
+                "sdk-fact-caaaabd75c828475",
+                "sdk-fact-cadf2d8a280dc9ac",
+                "sdk-fact-cc94dcddd4a8e95d",
+                "sdk-fact-d7cbb3f8bf5da6ec",
+                "sdk-fact-e16ed733871705be",
+                "sdk-fact-e8ef9b56b0c77924"
+              ]
+            },
+            {
+              "symbol": "Storage.File.File.create",
+              "locations": [
+                "request-header",
+                "response-body",
+                "response-header"
+              ],
+              "referenceFactIds": [
+                "sdk-fact-0ceebd08a9b3fe73",
+                "sdk-fact-1444f1b954c5c854",
+                "sdk-fact-6d499b5530e56a26",
+                "sdk-fact-a09c7a50d3f3e45a",
+                "sdk-fact-b522eae186e55c20",
+                "sdk-fact-bdfdf73dab3ac56e",
+                "sdk-fact-caaaabd75c828475",
+                "sdk-fact-cadf2d8a280dc9ac",
+                "sdk-fact-cc94dcddd4a8e95d",
+                "sdk-fact-d7cbb3f8bf5da6ec",
+                "sdk-fact-e16ed733871705be",
+                "sdk-fact-e8ef9b56b0c77924"
+              ]
+            },
+            {
+              "symbol": "Storage.File.File.createHardLink",
+              "locations": [
+                "request-header",
+                "response-body",
+                "response-header"
+              ],
+              "referenceFactIds": [
+                "sdk-fact-0ceebd08a9b3fe73",
+                "sdk-fact-1444f1b954c5c854",
+                "sdk-fact-6d499b5530e56a26",
+                "sdk-fact-a09c7a50d3f3e45a",
+                "sdk-fact-b522eae186e55c20",
+                "sdk-fact-bdfdf73dab3ac56e",
+                "sdk-fact-caaaabd75c828475",
+                "sdk-fact-cadf2d8a280dc9ac",
+                "sdk-fact-cc94dcddd4a8e95d",
+                "sdk-fact-d7cbb3f8bf5da6ec",
+                "sdk-fact-e16ed733871705be",
+                "sdk-fact-e8ef9b56b0c77924"
+              ]
+            },
+            {
+              "symbol": "Storage.File.File.createSymbolicLink",
+              "locations": [
+                "request-header",
+                "response-body",
+                "response-header"
+              ],
+              "referenceFactIds": [
+                "sdk-fact-0ceebd08a9b3fe73",
+                "sdk-fact-1444f1b954c5c854",
+                "sdk-fact-6d499b5530e56a26",
+                "sdk-fact-a09c7a50d3f3e45a",
+                "sdk-fact-b522eae186e55c20",
+                "sdk-fact-bdfdf73dab3ac56e",
+                "sdk-fact-caaaabd75c828475",
+                "sdk-fact-cadf2d8a280dc9ac",
+                "sdk-fact-cc94dcddd4a8e95d",
+                "sdk-fact-d7cbb3f8bf5da6ec",
+                "sdk-fact-e16ed733871705be",
+                "sdk-fact-e8ef9b56b0c77924"
+              ]
+            },
+            {
+              "symbol": "Storage.File.File.getProperties",
+              "locations": [
+                "request-header",
+                "response-body",
+                "response-header"
+              ],
+              "referenceFactIds": [
+                "sdk-fact-0ceebd08a9b3fe73",
+                "sdk-fact-1444f1b954c5c854",
+                "sdk-fact-6d499b5530e56a26",
+                "sdk-fact-a09c7a50d3f3e45a",
+                "sdk-fact-b522eae186e55c20",
+                "sdk-fact-bdfdf73dab3ac56e",
+                "sdk-fact-caaaabd75c828475",
+                "sdk-fact-cadf2d8a280dc9ac",
+                "sdk-fact-cc94dcddd4a8e95d",
+                "sdk-fact-d7cbb3f8bf5da6ec",
+                "sdk-fact-e16ed733871705be",
+                "sdk-fact-e8ef9b56b0c77924"
+              ]
+            }
+          ],
+          "relatedSemanticIntents": [
             "semantic-eed96d1f60797ccb"
-          ]
+          ],
+          "unresolvedRelationshipReason": null
+        },
+        {
+          "id": "sdk-type-impact-8b6f45bc53d78a9f",
+          "projectId": "project-11ca76782d2e",
+          "type": "Storage.File.CharDeviceItem",
+          "locations": [
+            "response-body"
+          ],
+          "rootCauseIds": [
+            "downstream-root-cause-1ff36836cd822e84"
+          ],
+          "summary": "This generated SDK type has a confirmed public contract change.",
+          "findingIds": [
+            "downstream-f53ded273e75e732"
+          ],
+          "affectedMethodCount": 1,
+          "affectedMethods": [
+            {
+              "symbol": "Storage.File.Directory.listFilesAndDirectoriesSegment",
+              "locations": [
+                "response-body"
+              ],
+              "referenceFactIds": [
+                "sdk-fact-0ceebd08a9b3fe73",
+                "sdk-fact-1444f1b954c5c854",
+                "sdk-fact-d7cbb3f8bf5da6ec",
+                "sdk-fact-fb4b9176536c43e2"
+              ]
+            }
+          ],
+          "relatedSemanticIntents": [
+            "semantic-106722e15dc2d25d"
+          ],
+          "unresolvedRelationshipReason": null
+        },
+        {
+          "id": "sdk-type-impact-93236f52e8c3d3bb",
+          "projectId": "project-11ca76782d2e",
+          "type": "Storage.File.FifoItem",
+          "locations": [
+            "response-body"
+          ],
+          "rootCauseIds": [
+            "downstream-root-cause-d3530aebadc988d9"
+          ],
+          "summary": "This generated SDK type has a confirmed public contract change.",
+          "findingIds": [
+            "downstream-c246cf097347b760"
+          ],
+          "affectedMethodCount": 1,
+          "affectedMethods": [
+            {
+              "symbol": "Storage.File.Directory.listFilesAndDirectoriesSegment",
+              "locations": [
+                "response-body"
+              ],
+              "referenceFactIds": [
+                "sdk-fact-0ceebd08a9b3fe73",
+                "sdk-fact-1444f1b954c5c854",
+                "sdk-fact-962542dadb555204",
+                "sdk-fact-d7cbb3f8bf5da6ec"
+              ]
+            }
+          ],
+          "relatedSemanticIntents": [
+            "semantic-106722e15dc2d25d"
+          ],
+          "unresolvedRelationshipReason": null
+        },
+        {
+          "id": "sdk-type-impact-a2c6abc92ceb2f68",
+          "projectId": "project-11ca76782d2e",
+          "type": "Storage.File.FilesAndDirectoriesListSegment",
+          "locations": [
+            "response-body"
+          ],
+          "rootCauseIds": [
+            "downstream-root-cause-4af8e9c02f48f601"
+          ],
+          "summary": "This generated SDK type has a confirmed public contract change.",
+          "findingIds": [
+            "downstream-1233aad46ca88eb3",
+            "downstream-2a75e195124aa520",
+            "downstream-84d397d74007da31",
+            "downstream-a043b8f3f1b67d6a",
+            "downstream-c74d148fcd163cc6"
+          ],
+          "affectedMethodCount": 1,
+          "affectedMethods": [
+            {
+              "symbol": "Storage.File.Directory.listFilesAndDirectoriesSegment",
+              "locations": [
+                "response-body"
+              ],
+              "referenceFactIds": [
+                "sdk-fact-698333969bb950ad",
+                "sdk-fact-770e874354e1704c",
+                "sdk-fact-9355cde4ef61a261"
+              ]
+            }
+          ],
+          "relatedSemanticIntents": [
+            "semantic-259f67bc56ae9c3d"
+          ],
+          "unresolvedRelationshipReason": null
+        },
+        {
+          "id": "sdk-type-impact-adfa48e45d95eeb0",
+          "projectId": "project-11ca76782d2e",
+          "type": "Storage.File.SymLinkItem",
+          "locations": [
+            "response-body"
+          ],
+          "rootCauseIds": [
+            "downstream-root-cause-dbe552d831a64042"
+          ],
+          "summary": "This generated SDK type has a confirmed public contract change.",
+          "findingIds": [
+            "downstream-4fd0a9648c5d8e3b"
+          ],
+          "affectedMethodCount": 1,
+          "affectedMethods": [
+            {
+              "symbol": "Storage.File.Directory.listFilesAndDirectoriesSegment",
+              "locations": [
+                "response-body"
+              ],
+              "referenceFactIds": [
+                "sdk-fact-0ceebd08a9b3fe73",
+                "sdk-fact-1444f1b954c5c854",
+                "sdk-fact-37f76f15db9194c0",
+                "sdk-fact-d7cbb3f8bf5da6ec"
+              ]
+            }
+          ],
+          "relatedSemanticIntents": [
+            "semantic-106722e15dc2d25d"
+          ],
+          "unresolvedRelationshipReason": null
+        },
+        {
+          "id": "sdk-type-impact-afa92013f67d466e",
+          "projectId": "project-11ca76782d2e",
+          "type": "Storage.File.BlockDeviceItem",
+          "locations": [
+            "response-body"
+          ],
+          "rootCauseIds": [
+            "downstream-root-cause-9192b09281de38cd"
+          ],
+          "summary": "This generated SDK type has a confirmed public contract change.",
+          "findingIds": [
+            "downstream-30bbc186b5e3f5c4"
+          ],
+          "affectedMethodCount": 1,
+          "affectedMethods": [
+            {
+              "symbol": "Storage.File.Directory.listFilesAndDirectoriesSegment",
+              "locations": [
+                "response-body"
+              ],
+              "referenceFactIds": [
+                "sdk-fact-0ceebd08a9b3fe73",
+                "sdk-fact-1444f1b954c5c854",
+                "sdk-fact-3356833c94c4215c",
+                "sdk-fact-d7cbb3f8bf5da6ec"
+              ]
+            }
+          ],
+          "relatedSemanticIntents": [
+            "semantic-106722e15dc2d25d"
+          ],
+          "unresolvedRelationshipReason": null
+        },
+        {
+          "id": "sdk-type-impact-ed95eaa6c481a466",
+          "projectId": "project-11ca76782d2e",
+          "type": "Storage.File.ListFilesIncludeType",
+          "locations": [
+            "request-query"
+          ],
+          "rootCauseIds": [
+            "downstream-root-cause-b39bed42fbca62f5"
+          ],
+          "summary": "This generated SDK type has a confirmed public contract change.",
+          "findingIds": [
+            "downstream-7783e82b5610438b"
+          ],
+          "affectedMethodCount": 1,
+          "affectedMethods": [
+            {
+              "symbol": "Storage.File.Directory.listFilesAndDirectoriesSegment",
+              "locations": [
+                "request-query"
+              ],
+              "referenceFactIds": [
+                "sdk-fact-770e874354e1704c",
+                "sdk-fact-e7f479bc9352318b"
+              ]
+            }
+          ],
+          "relatedSemanticIntents": [
+            "semantic-259f67bc56ae9c3d"
+          ],
+          "unresolvedRelationshipReason": null
         }
       ],
       "rootCauses": [
         {
-          "id": "downstream-root-cause-6c5f1116663ef2ce",
-          "kind": "unresolved",
-          "directCandidateIds": [],
-          "propagatedCandidateIds": [
+          "id": "downstream-root-cause-0ea1f392867a134b",
+          "kind": "type-contract-propagation",
+          "directCandidateIds": [
+            "downstream-5ef4de813e5e4cac"
+          ],
+          "propagatedCandidateIds": [],
+          "methodFactIds": [
+            "sdk-fact-770e874354e1704c"
+          ],
+          "typeFactIds": [
+            "sdk-fact-698333969bb950ad",
+            "sdk-fact-79716d26070a1d82",
+            "sdk-fact-9355cde4ef61a261",
+            "sdk-fact-f6315213b302e077"
+          ],
+          "referenceEvidence": [
+            {
+              "fromFactId": "sdk-fact-770e874354e1704c",
+              "toFactId": "sdk-fact-698333969bb950ad",
+              "kind": "response",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-698333969bb950ad",
+              "toFactId": "sdk-fact-9355cde4ef61a261",
+              "kind": "property",
+              "memberName": "segment",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-9355cde4ef61a261",
+              "toFactId": "sdk-fact-79716d26070a1d82",
+              "kind": "property",
+              "memberName": "directoryItems",
+              "location": "response-body"
+            }
+          ],
+          "rootKey": "project-11ca76782d2e:Storage.File.DirectoryItem"
+        },
+        {
+          "id": "downstream-root-cause-1ff36836cd822e84",
+          "kind": "type-contract-propagation",
+          "directCandidateIds": [
+            "downstream-f53ded273e75e732"
+          ],
+          "propagatedCandidateIds": [],
+          "methodFactIds": [
+            "sdk-fact-1444f1b954c5c854"
+          ],
+          "typeFactIds": [
+            "sdk-fact-0ceebd08a9b3fe73",
+            "sdk-fact-d7cbb3f8bf5da6ec",
+            "sdk-fact-fb4b9176536c43e2"
+          ],
+          "referenceEvidence": [
+            {
+              "fromFactId": "sdk-fact-1444f1b954c5c854",
+              "toFactId": "sdk-fact-d7cbb3f8bf5da6ec",
+              "kind": "response",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-d7cbb3f8bf5da6ec",
+              "toFactId": "sdk-fact-0ceebd08a9b3fe73",
+              "kind": "property",
+              "memberName": "segment",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-0ceebd08a9b3fe73",
+              "toFactId": "sdk-fact-fb4b9176536c43e2",
+              "kind": "property",
+              "memberName": "charDeviceItems",
+              "location": "response-body"
+            }
+          ],
+          "rootKey": "project-11ca76782d2e:Storage.File.CharDeviceItem"
+        },
+        {
+          "id": "downstream-root-cause-48a9ddc9c54671ac",
+          "kind": "enum-union-propagation",
+          "directCandidateIds": [
+            "downstream-3168a08ffe65e21a",
+            "downstream-630a2a23c2940472"
+          ],
+          "propagatedCandidateIds": [],
+          "methodFactIds": [
+            "sdk-fact-1444f1b954c5c854",
+            "sdk-fact-a09c7a50d3f3e45a",
+            "sdk-fact-b522eae186e55c20",
+            "sdk-fact-caaaabd75c828475",
+            "sdk-fact-cc94dcddd4a8e95d",
+            "sdk-fact-e16ed733871705be",
+            "sdk-fact-e8ef9b56b0c77924"
+          ],
+          "typeFactIds": [
+            "sdk-fact-0ceebd08a9b3fe73",
+            "sdk-fact-6d499b5530e56a26",
+            "sdk-fact-bdfdf73dab3ac56e",
+            "sdk-fact-cadf2d8a280dc9ac",
+            "sdk-fact-d7cbb3f8bf5da6ec"
+          ],
+          "referenceEvidence": [
+            {
+              "fromFactId": "sdk-fact-a09c7a50d3f3e45a",
+              "toFactId": "sdk-fact-bdfdf73dab3ac56e",
+              "kind": "response-header",
+              "memberName": "x-ms-file-file-type",
+              "location": "response-header"
+            },
+            {
+              "fromFactId": "sdk-fact-b522eae186e55c20",
+              "toFactId": "sdk-fact-bdfdf73dab3ac56e",
+              "kind": "response-header",
+              "memberName": "x-ms-file-file-type",
+              "location": "response-header"
+            },
+            {
+              "fromFactId": "sdk-fact-caaaabd75c828475",
+              "toFactId": "sdk-fact-bdfdf73dab3ac56e",
+              "kind": "parameter",
+              "memberName": "nfsFileType",
+              "location": "request-header"
+            },
+            {
+              "fromFactId": "sdk-fact-caaaabd75c828475",
+              "toFactId": "sdk-fact-bdfdf73dab3ac56e",
+              "kind": "response-header",
+              "memberName": "x-ms-file-file-type",
+              "location": "response-header"
+            },
+            {
+              "fromFactId": "sdk-fact-e16ed733871705be",
+              "toFactId": "sdk-fact-bdfdf73dab3ac56e",
+              "kind": "response-header",
+              "memberName": "x-ms-file-file-type",
+              "location": "response-header"
+            },
+            {
+              "fromFactId": "sdk-fact-e8ef9b56b0c77924",
+              "toFactId": "sdk-fact-bdfdf73dab3ac56e",
+              "kind": "response-header",
+              "memberName": "x-ms-file-file-type",
+              "location": "response-header"
+            },
+            {
+              "fromFactId": "sdk-fact-cc94dcddd4a8e95d",
+              "toFactId": "sdk-fact-bdfdf73dab3ac56e",
+              "kind": "response-header",
+              "memberName": "x-ms-file-file-type",
+              "location": "response-header"
+            },
+            {
+              "fromFactId": "sdk-fact-1444f1b954c5c854",
+              "toFactId": "sdk-fact-d7cbb3f8bf5da6ec",
+              "kind": "response",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-d7cbb3f8bf5da6ec",
+              "toFactId": "sdk-fact-0ceebd08a9b3fe73",
+              "kind": "property",
+              "memberName": "segment",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-0ceebd08a9b3fe73",
+              "toFactId": "sdk-fact-6d499b5530e56a26",
+              "kind": "property",
+              "memberName": "fileItems",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-6d499b5530e56a26",
+              "toFactId": "sdk-fact-cadf2d8a280dc9ac",
+              "kind": "property",
+              "memberName": "fileType",
+              "location": "response-body"
+            }
+          ],
+          "rootKey": "project-11ca76782d2e:Storage.File.NfsFileType"
+        },
+        {
+          "id": "downstream-root-cause-4af8e9c02f48f601",
+          "kind": "type-contract-propagation",
+          "directCandidateIds": [
             "downstream-1233aad46ca88eb3",
             "downstream-2a75e195124aa520",
-            "downstream-3168a08ffe65e21a",
-            "downstream-5ef4de813e5e4cac",
-            "downstream-630a2a23c2940472",
-            "downstream-7783e82b5610438b",
             "downstream-84d397d74007da31",
             "downstream-a043b8f3f1b67d6a",
+            "downstream-c74d148fcd163cc6"
+          ],
+          "propagatedCandidateIds": [],
+          "methodFactIds": [
+            "sdk-fact-770e874354e1704c"
+          ],
+          "typeFactIds": [
+            "sdk-fact-0ceebd08a9b3fe73",
+            "sdk-fact-698333969bb950ad",
+            "sdk-fact-9355cde4ef61a261"
+          ],
+          "referenceEvidence": [
+            {
+              "fromFactId": "sdk-fact-770e874354e1704c",
+              "toFactId": "sdk-fact-698333969bb950ad",
+              "kind": "response",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-698333969bb950ad",
+              "toFactId": "sdk-fact-9355cde4ef61a261",
+              "kind": "property",
+              "memberName": "segment",
+              "location": "response-body"
+            }
+          ],
+          "rootKey": "project-11ca76782d2e:Storage.File.FilesAndDirectoriesListSegment"
+        },
+        {
+          "id": "downstream-root-cause-6b98e0b8b252012f",
+          "kind": "type-contract-propagation",
+          "directCandidateIds": [
             "downstream-a54af762c61b0b68",
-            "downstream-a5bfb9940411cb07",
-            "downstream-c74d148fcd163cc6",
-            "downstream-c8ace440e6399c7d",
             "downstream-e1f82fe2103d8f0c",
             "downstream-fbbb2d7cc3f5a3b0"
           ],
-          "operationFactIds": [],
-          "methodFactIds": [],
+          "propagatedCandidateIds": [],
+          "methodFactIds": [
+            "sdk-fact-770e874354e1704c"
+          ],
           "typeFactIds": [
-            "sdk-fact-0ceebd08a9b3fe73",
-            "sdk-fact-3e159f809460b02c",
+            "sdk-fact-698333969bb950ad",
             "sdk-fact-6998bb9f4e4733d0",
-            "sdk-fact-6d499b5530e56a26",
             "sdk-fact-79716d26070a1d82",
             "sdk-fact-9355cde4ef61a261",
-            "sdk-fact-b0cd4f98ff0825e4",
-            "sdk-fact-bdfdf73dab3ac56e",
-            "sdk-fact-cadf2d8a280dc9ac",
-            "sdk-fact-e7f479bc9352318b",
-            "sdk-fact-f0bd5bd79b5c1048",
-            "sdk-fact-f6315213b302e077"
+            "sdk-fact-b0cd4f98ff0825e4"
           ],
-          "referenceEvidence": []
+          "referenceEvidence": [
+            {
+              "fromFactId": "sdk-fact-770e874354e1704c",
+              "toFactId": "sdk-fact-698333969bb950ad",
+              "kind": "response",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-698333969bb950ad",
+              "toFactId": "sdk-fact-9355cde4ef61a261",
+              "kind": "property",
+              "memberName": "segment",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-9355cde4ef61a261",
+              "toFactId": "sdk-fact-79716d26070a1d82",
+              "kind": "property",
+              "memberName": "directoryItems",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-79716d26070a1d82",
+              "toFactId": "sdk-fact-6998bb9f4e4733d0",
+              "kind": "property",
+              "memberName": "properties",
+              "location": "response-body"
+            }
+          ],
+          "rootKey": "project-11ca76782d2e:Storage.File.FileProperty"
+        },
+        {
+          "id": "downstream-root-cause-79bdf84647ebf5df",
+          "kind": "type-contract-propagation",
+          "directCandidateIds": [
+            "downstream-ad863e4fbce7e72f"
+          ],
+          "propagatedCandidateIds": [],
+          "methodFactIds": [
+            "sdk-fact-1444f1b954c5c854"
+          ],
+          "typeFactIds": [
+            "sdk-fact-0ceebd08a9b3fe73",
+            "sdk-fact-d5de8fa08f72f856",
+            "sdk-fact-d7cbb3f8bf5da6ec"
+          ],
+          "referenceEvidence": [
+            {
+              "fromFactId": "sdk-fact-1444f1b954c5c854",
+              "toFactId": "sdk-fact-d7cbb3f8bf5da6ec",
+              "kind": "response",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-d7cbb3f8bf5da6ec",
+              "toFactId": "sdk-fact-0ceebd08a9b3fe73",
+              "kind": "property",
+              "memberName": "segment",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-0ceebd08a9b3fe73",
+              "toFactId": "sdk-fact-d5de8fa08f72f856",
+              "kind": "property",
+              "memberName": "socketItems",
+              "location": "response-body"
+            }
+          ],
+          "rootKey": "project-11ca76782d2e:Storage.File.SocketItem"
+        },
+        {
+          "id": "downstream-root-cause-9192b09281de38cd",
+          "kind": "type-contract-propagation",
+          "directCandidateIds": [
+            "downstream-30bbc186b5e3f5c4"
+          ],
+          "propagatedCandidateIds": [],
+          "methodFactIds": [
+            "sdk-fact-1444f1b954c5c854"
+          ],
+          "typeFactIds": [
+            "sdk-fact-0ceebd08a9b3fe73",
+            "sdk-fact-3356833c94c4215c",
+            "sdk-fact-d7cbb3f8bf5da6ec"
+          ],
+          "referenceEvidence": [
+            {
+              "fromFactId": "sdk-fact-1444f1b954c5c854",
+              "toFactId": "sdk-fact-d7cbb3f8bf5da6ec",
+              "kind": "response",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-d7cbb3f8bf5da6ec",
+              "toFactId": "sdk-fact-0ceebd08a9b3fe73",
+              "kind": "property",
+              "memberName": "segment",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-0ceebd08a9b3fe73",
+              "toFactId": "sdk-fact-3356833c94c4215c",
+              "kind": "property",
+              "memberName": "blockDeviceItems",
+              "location": "response-body"
+            }
+          ],
+          "rootKey": "project-11ca76782d2e:Storage.File.BlockDeviceItem"
+        },
+        {
+          "id": "downstream-root-cause-ae97658028e0ebbd",
+          "kind": "type-contract-propagation",
+          "directCandidateIds": [
+            "downstream-a5bfb9940411cb07",
+            "downstream-c8ace440e6399c7d"
+          ],
+          "propagatedCandidateIds": [],
+          "methodFactIds": [
+            "sdk-fact-770e874354e1704c"
+          ],
+          "typeFactIds": [
+            "sdk-fact-3e159f809460b02c",
+            "sdk-fact-698333969bb950ad",
+            "sdk-fact-6d499b5530e56a26",
+            "sdk-fact-9355cde4ef61a261"
+          ],
+          "referenceEvidence": [
+            {
+              "fromFactId": "sdk-fact-770e874354e1704c",
+              "toFactId": "sdk-fact-698333969bb950ad",
+              "kind": "response",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-698333969bb950ad",
+              "toFactId": "sdk-fact-9355cde4ef61a261",
+              "kind": "property",
+              "memberName": "segment",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-9355cde4ef61a261",
+              "toFactId": "sdk-fact-3e159f809460b02c",
+              "kind": "property",
+              "memberName": "fileItems",
+              "location": "response-body"
+            }
+          ],
+          "rootKey": "project-11ca76782d2e:Storage.File.FileItem"
+        },
+        {
+          "id": "downstream-root-cause-b39bed42fbca62f5",
+          "kind": "enum-union-propagation",
+          "directCandidateIds": [
+            "downstream-7783e82b5610438b"
+          ],
+          "propagatedCandidateIds": [],
+          "methodFactIds": [
+            "sdk-fact-770e874354e1704c"
+          ],
+          "typeFactIds": [
+            "sdk-fact-e7f479bc9352318b",
+            "sdk-fact-f0bd5bd79b5c1048"
+          ],
+          "referenceEvidence": [
+            {
+              "fromFactId": "sdk-fact-770e874354e1704c",
+              "toFactId": "sdk-fact-e7f479bc9352318b",
+              "kind": "parameter",
+              "memberName": "include",
+              "location": "request-query"
+            }
+          ],
+          "rootKey": "project-11ca76782d2e:Storage.File.ListFilesIncludeType"
+        },
+        {
+          "id": "downstream-root-cause-d3530aebadc988d9",
+          "kind": "type-contract-propagation",
+          "directCandidateIds": [
+            "downstream-c246cf097347b760"
+          ],
+          "propagatedCandidateIds": [],
+          "methodFactIds": [
+            "sdk-fact-1444f1b954c5c854"
+          ],
+          "typeFactIds": [
+            "sdk-fact-0ceebd08a9b3fe73",
+            "sdk-fact-962542dadb555204",
+            "sdk-fact-d7cbb3f8bf5da6ec"
+          ],
+          "referenceEvidence": [
+            {
+              "fromFactId": "sdk-fact-1444f1b954c5c854",
+              "toFactId": "sdk-fact-d7cbb3f8bf5da6ec",
+              "kind": "response",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-d7cbb3f8bf5da6ec",
+              "toFactId": "sdk-fact-0ceebd08a9b3fe73",
+              "kind": "property",
+              "memberName": "segment",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-0ceebd08a9b3fe73",
+              "toFactId": "sdk-fact-962542dadb555204",
+              "kind": "property",
+              "memberName": "fifoItems",
+              "location": "response-body"
+            }
+          ],
+          "rootKey": "project-11ca76782d2e:Storage.File.FifoItem"
+        },
+        {
+          "id": "downstream-root-cause-dbe552d831a64042",
+          "kind": "type-contract-propagation",
+          "directCandidateIds": [
+            "downstream-4fd0a9648c5d8e3b"
+          ],
+          "propagatedCandidateIds": [],
+          "methodFactIds": [
+            "sdk-fact-1444f1b954c5c854"
+          ],
+          "typeFactIds": [
+            "sdk-fact-0ceebd08a9b3fe73",
+            "sdk-fact-37f76f15db9194c0",
+            "sdk-fact-d7cbb3f8bf5da6ec"
+          ],
+          "referenceEvidence": [
+            {
+              "fromFactId": "sdk-fact-1444f1b954c5c854",
+              "toFactId": "sdk-fact-d7cbb3f8bf5da6ec",
+              "kind": "response",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-d7cbb3f8bf5da6ec",
+              "toFactId": "sdk-fact-0ceebd08a9b3fe73",
+              "kind": "property",
+              "memberName": "segment",
+              "location": "response-body"
+            },
+            {
+              "fromFactId": "sdk-fact-0ceebd08a9b3fe73",
+              "toFactId": "sdk-fact-37f76f15db9194c0",
+              "kind": "property",
+              "memberName": "symLinkItems",
+              "location": "response-body"
+            }
+          ],
+          "rootKey": "project-11ca76782d2e:Storage.File.SymLinkItem"
         }
       ],
-      "impliedByRest": [],
-      "rejectedCandidateCount": 0,
+      "rejectedCandidateCount": 1,
       "blockers": []
     },
     "compliance": {
       "status": "failed",
-      "summary": "4 documentation-grounded compliance finding(s).",
+      "summary": "4 documentation-grounded Azure Guidelines finding(s).",
       "coverage": {
         "semanticIntentCount": 4,
         "assessedIntentCount": 4,
@@ -199290,18 +197007,18 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\44742\\deterministic-analysis\\worktrees\\base\\specification\\storage\\data-plane\\FileStorage",
+                "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44742\\worktrees\\base\\specification\\storage\\data-plane\\FileStorage",
                 "--emit=@azure-tools/typespec-autorest",
-                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\44742\\deterministic-analysis\\projects\\project-11ca76782d2e\\baseline\\autorest",
+                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44742\\projects\\project-11ca76782d2e\\baseline\\autorest",
                 "--warn-as-error",
                 "--option=@azure-tools/typespec-autorest.version=2026-12-06"
               ]
             },
             "exitCode": 0,
-            "durationMs": 7107,
-            "configPath": "worktrees\\base\\specification\\storage\\data-plane\\FileStorage\\tspconfig.yaml",
+            "durationMs": 5613,
+            "configPath": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44742\\worktrees\\base\\specification\\storage\\data-plane\\FileStorage\\tspconfig.yaml",
             "configHash": "658d7bb59ace0983e5c765770fc28e1cd76847daaf10592cbb1a8443335fb5c6",
-            "logPath": "logs\\project-11ca76782d2e-baseline-autorest.log",
+            "logPath": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44742\\logs\\project-11ca76782d2e-baseline-autorest.log",
             "comparisonRole": "baseline",
             "sourceRevision": "base",
             "sourceCommit": "e75a07cd7ea1b2207190a362305db02b639715ec",
@@ -199309,7 +197026,7 @@
             "format": "swagger-2.0",
             "files": [
               {
-                "path": "projects\\project-11ca76782d2e\\baseline\\autorest\\stable\\2026-12-06\\generated_file.json",
+                "path": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44742\\projects\\project-11ca76782d2e\\baseline\\autorest\\stable\\2026-12-06\\generated_file.json",
                 "apiVersion": "2026-12-06",
                 "documentRole": "feature",
                 "contentHash": "003450f5f87b9f80574074c250e1e85da919b46f7c8474c9050b27bac180b1a1"
@@ -199322,19 +197039,19 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\44742\\deterministic-analysis\\worktrees\\base\\specification\\storage\\data-plane\\FileStorage",
+                "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44742\\worktrees\\base\\specification\\storage\\data-plane\\FileStorage",
                 "--emit=@azure-tools/typespec-client-generator-core",
-                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\44742\\deterministic-analysis\\projects\\project-11ca76782d2e\\baseline\\tcgc",
+                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44742\\projects\\project-11ca76782d2e\\baseline\\tcgc",
                 "--warn-as-error",
-                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\44742\\deterministic-analysis\\inputs\\empty-examples",
+                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44742\\inputs\\empty-examples",
                 "--option=@azure-tools/typespec-client-generator-core.api-version=2026-12-06"
               ]
             },
             "exitCode": 0,
-            "durationMs": 5966,
-            "configPath": "worktrees\\base\\specification\\storage\\data-plane\\FileStorage\\tspconfig.yaml",
+            "durationMs": 5012,
+            "configPath": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44742\\worktrees\\base\\specification\\storage\\data-plane\\FileStorage\\tspconfig.yaml",
             "configHash": "658d7bb59ace0983e5c765770fc28e1cd76847daaf10592cbb1a8443335fb5c6",
-            "logPath": "logs\\project-11ca76782d2e-baseline-tcgc.log",
+            "logPath": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44742\\logs\\project-11ca76782d2e-baseline-tcgc.log",
             "comparisonRole": "baseline",
             "sourceRevision": "base",
             "sourceCommit": "e75a07cd7ea1b2207190a362305db02b639715ec",
@@ -199342,7 +197059,7 @@
             "format": "tcgc-yaml",
             "files": [
               {
-                "path": "projects\\project-11ca76782d2e\\baseline\\tcgc\\tcgc-output.yaml",
+                "path": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44742\\projects\\project-11ca76782d2e\\baseline\\tcgc\\tcgc-output.yaml",
                 "contentHash": "c7c2cad008417bb867917b4983809c8b5d81cd5723d6007b44c01c923d0db2a8"
               }
             ]
@@ -199359,18 +197076,18 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\44742\\deterministic-analysis\\worktrees\\current\\specification\\storage\\data-plane\\FileStorage",
+                "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44742\\worktrees\\current\\specification\\storage\\data-plane\\FileStorage",
                 "--emit=@azure-tools/typespec-autorest",
-                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\44742\\deterministic-analysis\\projects\\project-11ca76782d2e\\target\\autorest",
+                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44742\\projects\\project-11ca76782d2e\\target\\autorest",
                 "--warn-as-error",
                 "--option=@azure-tools/typespec-autorest.version=2026-12-06"
               ]
             },
             "exitCode": 0,
-            "durationMs": 5707,
-            "configPath": "worktrees\\current\\specification\\storage\\data-plane\\FileStorage\\tspconfig.yaml",
+            "durationMs": 4625,
+            "configPath": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44742\\worktrees\\current\\specification\\storage\\data-plane\\FileStorage\\tspconfig.yaml",
             "configHash": "658d7bb59ace0983e5c765770fc28e1cd76847daaf10592cbb1a8443335fb5c6",
-            "logPath": "logs\\project-11ca76782d2e-target-autorest.log",
+            "logPath": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44742\\logs\\project-11ca76782d2e-target-autorest.log",
             "comparisonRole": "target",
             "sourceRevision": "current",
             "sourceCommit": "656ca8b0741973760f8a60ee0fd293ba9c31e708",
@@ -199378,7 +197095,7 @@
             "format": "swagger-2.0",
             "files": [
               {
-                "path": "projects\\project-11ca76782d2e\\target\\autorest\\stable\\2026-12-06\\generated_file.json",
+                "path": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44742\\projects\\project-11ca76782d2e\\target\\autorest\\stable\\2026-12-06\\generated_file.json",
                 "apiVersion": "2026-12-06",
                 "documentRole": "feature",
                 "contentHash": "4a5c8a1522392e72a3efc5c6de0901b73560a667f9c889608bb769a50d70e68f"
@@ -199391,19 +197108,19 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\44742\\deterministic-analysis\\worktrees\\current\\specification\\storage\\data-plane\\FileStorage",
+                "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44742\\worktrees\\current\\specification\\storage\\data-plane\\FileStorage",
                 "--emit=@azure-tools/typespec-client-generator-core",
-                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\44742\\deterministic-analysis\\projects\\project-11ca76782d2e\\target\\tcgc",
+                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44742\\projects\\project-11ca76782d2e\\target\\tcgc",
                 "--warn-as-error",
-                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\44742\\deterministic-analysis\\inputs\\empty-examples",
+                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44742\\inputs\\empty-examples",
                 "--option=@azure-tools/typespec-client-generator-core.api-version=2026-12-06"
               ]
             },
             "exitCode": 0,
-            "durationMs": 6390,
-            "configPath": "worktrees\\current\\specification\\storage\\data-plane\\FileStorage\\tspconfig.yaml",
+            "durationMs": 4967,
+            "configPath": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44742\\worktrees\\current\\specification\\storage\\data-plane\\FileStorage\\tspconfig.yaml",
             "configHash": "658d7bb59ace0983e5c765770fc28e1cd76847daaf10592cbb1a8443335fb5c6",
-            "logPath": "logs\\project-11ca76782d2e-target-tcgc.log",
+            "logPath": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44742\\logs\\project-11ca76782d2e-target-tcgc.log",
             "comparisonRole": "target",
             "sourceRevision": "current",
             "sourceCommit": "656ca8b0741973760f8a60ee0fd293ba9c31e708",
@@ -199411,7 +197128,7 @@
             "format": "tcgc-yaml",
             "files": [
               {
-                "path": "projects\\project-11ca76782d2e\\target\\tcgc\\tcgc-output.yaml",
+                "path": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\44742\\projects\\project-11ca76782d2e\\target\\tcgc\\tcgc-output.yaml",
                 "contentHash": "8d75175de8c8e4e3a7a8aad2fd769e2d33fe453b7cb5d86f31dd7c84f6cd36d3"
               }
             ]
@@ -199479,17 +197196,17 @@
     "preparationManifest": "preparation-manifest.json"
   },
   "inputAccounting": {
-    "budgetTier": "medium",
-    "budgetBytes": 262144,
-    "bytes": 132312,
-    "estimatedTokens": 33078,
+    "budgetTier": "small",
+    "budgetBytes": 131072,
+    "bytes": 102862,
+    "estimatedTokens": 25716,
     "retained": {
       "evidenceSets": 26,
-      "facts": 31,
+      "facts": 27,
       "semanticReviewUnits": 4,
       "restCandidates": 22,
       "downstreamCandidates": 19,
-      "downstreamRootCauses": 1,
+      "downstreamRootCauses": 11,
       "complianceSearchRequests": 4,
       "inferenceRequests": 0
     },
@@ -199498,6 +197215,7 @@
       "compilerLogs": true,
       "unchangedInventories": true,
       "unreferencedFacts": true,
+      "unreferencedDeterministicFacts": true,
       "sourceChanges": true,
       "repeatedDeclarationIds": true,
       "repeatedReviewUnitEvidence": true
@@ -199511,14 +197229,8 @@
     }
   },
   "timings": {
-    "totalMs": 42829,
-    "semanticAnalysisMs": 136,
-    "restAnalysisMs": 88,
-    "downstreamAnalysisMs": 3015
+    "downstreamAnalysisMs": 2394,
+    "buildModelInputMs": 8
   },
-  "pr": 44742,
-  "pullRequest": {
-    "number": 44742,
-    "url": "https://github.com/Azure/azure-rest-api-specs/pull/44742"
-  }
+  "pr": 44742
 }

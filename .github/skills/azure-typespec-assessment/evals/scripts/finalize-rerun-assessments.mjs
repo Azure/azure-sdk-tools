@@ -850,7 +850,7 @@ function main() {
     const complianceSpecification = complianceFixture[pr];
     const executionTimeBreakdown = executionTimeBreakdowns[pr];
     if (!complianceSpecification) {
-      throw new Error(`Missing compliance fixture for PR ${pr}.`);
+      throw new Error(`Missing Azure Guidelines fixture for PR ${pr}.`);
     }
     if (!executionTimeBreakdown) {
       throw new Error(`Missing execution-time breakdown for PR ${pr}.`);
@@ -875,7 +875,7 @@ function main() {
         complianceSpecification,
       );
     } catch (error) {
-      throw new Error(`PR ${pr} compliance evidence failed: ${error.message}`, {
+      throw new Error(`PR ${pr} Azure Guidelines evidence failed: ${error.message}`, {
         cause: error,
       });
     }

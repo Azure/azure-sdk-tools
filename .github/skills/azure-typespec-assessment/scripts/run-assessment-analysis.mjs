@@ -186,6 +186,7 @@ function compactSdkFact(fact) {
     comparisonRole: fact.comparisonRole,
     sourceRevision: fact.sourceRevision,
     sourceCommit: fact.sourceCommit,
+    apiVersion: fact.apiVersion,
     apiVersions: fact.apiVersions,
     factKind: fact.factKind,
     kind: fact.kind,
@@ -306,6 +307,27 @@ function referencedFacts(semantic, rest, downstream, retainedIds) {
       .sort()
       .map((id) => [id, compactFact(id, available[id])]),
   );
+}
+
+function downstreamReferencedFactIds(downstream) {
+  const ids = new Set(
+    (downstream.candidates ?? []).flatMap(
+      (candidate) => candidate.evidenceFactIds ?? [],
+    ),
+  );
+  for (const rootCause of downstream.rootCauses ?? []) {
+    for (const id of [
+      ...(rootCause.methodFactIds ?? []),
+      ...(rootCause.typeFactIds ?? []),
+      ...(rootCause.referenceEvidence ?? []).flatMap((edge) => [
+        edge.fromFactId,
+        edge.toFactId,
+      ]),
+    ]) {
+      if (id) ids.add(id);
+    }
+  }
+  return ids;
 }
 
 function semanticSourceExcerpts(unit, sourceChanges) {
@@ -1119,7 +1141,7 @@ function accountInput(input, maximumBytes) {
         compilerLogs: true,
         unchangedInventories: true,
         unreferencedFacts: true,
-        deterministicCandidateFacts: true,
+        unreferencedDeterministicFacts: true,
         sourceChanges: true,
         repeatedDeclarationIds: true,
         repeatedReviewUnitEvidence: true,
@@ -1197,6 +1219,10 @@ export function buildModelInput({
     downstream,
     coverages,
   });
+  const retainedFactIds = new Set([
+    ...retainedInferenceFactIds,
+    ...downstreamReferencedFactIds(downstream),
+  ]);
   const compactCandidate = (candidate, artifact) => {
     const {
       sourceChangeIds,
@@ -1282,7 +1308,7 @@ export function buildModelInput({
       semantic,
       rest,
       downstream,
-      retainedInferenceFactIds,
+      retainedFactIds,
     ),
     semanticReviewUnits,
     restCandidates:
@@ -1365,7 +1391,7 @@ function blockedAssessment(manifest, semantic, rest, downstream) {
       compliance: {
         status: "not-assessed",
         summary:
-          "Compliance could not run because deterministic analysis was blocked.",
+          "Azure Guidelines could not run because deterministic analysis was blocked.",
         coverage: {
           semanticIntentCount: 0,
           assessedIntentCount: 0,

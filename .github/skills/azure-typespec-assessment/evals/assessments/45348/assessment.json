@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-04T02:08:11.892Z",
+  "generatedAt": "2026-09-11T04:10:00.092Z",
   "title": "TypeSpec assessment: specification/deviceregistry/DeviceRegistry.Management",
   "repository": {
     "root": "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\.workspaces\\45348\\head",
@@ -57836,7 +57836,7 @@
           "relatedFindings": {
             "rest": [],
             "downstream": [],
-            "sharedTypeImpact": []
+            "typeImpact": []
           }
         }
       ],
@@ -57854,10 +57854,9 @@
     "downstream": {
       "status": "passed",
       "findings": [],
-      "operationGroups": [],
-      "sharedTypeImpacts": [],
+      "methodGroups": [],
+      "typeImpacts": [],
       "rootCauses": [],
-      "impliedByRest": [],
       "rejectedCandidateCount": 0,
       "blockers": []
     },
@@ -58494,18 +58493,18 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\45348-compact\\deterministic-analysis\\worktrees\\base\\specification\\deviceregistry\\DeviceRegistry.Management",
+                "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\45348\\worktrees\\base\\specification\\deviceregistry\\DeviceRegistry.Management",
                 "--emit=@azure-tools/typespec-autorest",
-                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\45348-compact\\deterministic-analysis\\projects\\project-dd25e6db7b7b\\baseline\\autorest",
+                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\45348\\projects\\project-dd25e6db7b7b\\baseline\\autorest",
                 "--warn-as-error",
                 "--option=@azure-tools/typespec-autorest.version=2026-11-02-preview"
               ]
             },
             "exitCode": 0,
-            "durationMs": 12046,
-            "configPath": "worktrees\\base\\specification\\deviceregistry\\DeviceRegistry.Management\\tspconfig.yaml",
+            "durationMs": 11584,
+            "configPath": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\45348\\worktrees\\base\\specification\\deviceregistry\\DeviceRegistry.Management\\tspconfig.yaml",
             "configHash": "3450e099b6566a4e005c8c440e4bed0b6433dc6201f0dbadc72984f5f47c72d0",
-            "logPath": "logs\\project-dd25e6db7b7b-baseline-autorest.log",
+            "logPath": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\45348\\logs\\project-dd25e6db7b7b-baseline-autorest.log",
             "comparisonRole": "baseline",
             "sourceRevision": "base",
             "sourceCommit": "2991970c5377110244bcf9614be03e5aaf32362f",
@@ -58513,7 +58512,7 @@
             "format": "swagger-2.0",
             "files": [
               {
-                "path": "projects\\project-dd25e6db7b7b\\baseline\\autorest\\resource-manager\\Microsoft.DeviceRegistry\\preview\\2026-11-02-preview\\deviceregistry.json",
+                "path": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\45348\\projects\\project-dd25e6db7b7b\\baseline\\autorest\\resource-manager\\Microsoft.DeviceRegistry\\preview\\2026-11-02-preview\\deviceregistry.json",
                 "apiVersion": "2026-11-02-preview",
                 "documentRole": "feature",
                 "contentHash": "05ef34b65b73d2753630dd5d807eb93b002c375fd58eaa0a7c795821d7627ae9"
@@ -58526,19 +58525,19 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\45348-compact\\deterministic-analysis\\worktrees\\base\\specification\\deviceregistry\\DeviceRegistry.Management",
+                "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\45348\\worktrees\\base\\specification\\deviceregistry\\DeviceRegistry.Management",
                 "--emit=@azure-tools/typespec-client-generator-core",
-                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\45348-compact\\deterministic-analysis\\projects\\project-dd25e6db7b7b\\baseline\\tcgc",
+                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\45348\\projects\\project-dd25e6db7b7b\\baseline\\tcgc",
                 "--warn-as-error",
-                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\45348-compact\\deterministic-analysis\\inputs\\empty-examples",
+                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\45348\\inputs\\empty-examples",
                 "--option=@azure-tools/typespec-client-generator-core.api-version=2026-11-02-preview"
               ]
             },
             "exitCode": 0,
-            "durationMs": 12396,
-            "configPath": "worktrees\\base\\specification\\deviceregistry\\DeviceRegistry.Management\\tspconfig.yaml",
+            "durationMs": 11393,
+            "configPath": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\45348\\worktrees\\base\\specification\\deviceregistry\\DeviceRegistry.Management\\tspconfig.yaml",
             "configHash": "3450e099b6566a4e005c8c440e4bed0b6433dc6201f0dbadc72984f5f47c72d0",
-            "logPath": "logs\\project-dd25e6db7b7b-baseline-tcgc.log",
+            "logPath": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\45348\\logs\\project-dd25e6db7b7b-baseline-tcgc.log",
             "comparisonRole": "baseline",
             "sourceRevision": "base",
             "sourceCommit": "2991970c5377110244bcf9614be03e5aaf32362f",
@@ -58546,7 +58545,7 @@
             "format": "tcgc-yaml",
             "files": [
               {
-                "path": "projects\\project-dd25e6db7b7b\\baseline\\tcgc\\tcgc-output.yaml",
+                "path": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\45348\\projects\\project-dd25e6db7b7b\\baseline\\tcgc\\tcgc-output.yaml",
                 "contentHash": "8b6a7c977789ec863afeaf4e7fa730e28c610349b9b43096f5dc5e7914ded2d8"
               }
             ]
@@ -58563,18 +58562,18 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\45348-compact\\deterministic-analysis\\worktrees\\current\\specification\\deviceregistry\\DeviceRegistry.Management",
+                "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\45348\\worktrees\\current\\specification\\deviceregistry\\DeviceRegistry.Management",
                 "--emit=@azure-tools/typespec-autorest",
-                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\45348-compact\\deterministic-analysis\\projects\\project-dd25e6db7b7b\\target\\autorest",
+                "--option=@azure-tools/typespec-autorest.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\45348\\projects\\project-dd25e6db7b7b\\target\\autorest",
                 "--warn-as-error",
                 "--option=@azure-tools/typespec-autorest.version=2026-11-02-preview"
               ]
             },
             "exitCode": 0,
-            "durationMs": 11912,
-            "configPath": "worktrees\\current\\specification\\deviceregistry\\DeviceRegistry.Management\\tspconfig.yaml",
+            "durationMs": 11173,
+            "configPath": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\45348\\worktrees\\current\\specification\\deviceregistry\\DeviceRegistry.Management\\tspconfig.yaml",
             "configHash": "3450e099b6566a4e005c8c440e4bed0b6433dc6201f0dbadc72984f5f47c72d0",
-            "logPath": "logs\\project-dd25e6db7b7b-target-autorest.log",
+            "logPath": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\45348\\logs\\project-dd25e6db7b7b-target-autorest.log",
             "comparisonRole": "target",
             "sourceRevision": "current",
             "sourceCommit": "b209254310b3e569b16210d3c59fc8b8ac3b84b4",
@@ -58582,7 +58581,7 @@
             "format": "swagger-2.0",
             "files": [
               {
-                "path": "projects\\project-dd25e6db7b7b\\target\\autorest\\resource-manager\\Microsoft.DeviceRegistry\\preview\\2026-11-02-preview\\deviceregistry.json",
+                "path": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\45348\\projects\\project-dd25e6db7b7b\\target\\autorest\\resource-manager\\Microsoft.DeviceRegistry\\preview\\2026-11-02-preview\\deviceregistry.json",
                 "apiVersion": "2026-11-02-preview",
                 "documentRole": "feature",
                 "contentHash": "20b34c63fea896ca89e5f2dfa3946338b534a587616a846cff695e85a0f27c21"
@@ -58595,19 +58594,19 @@
               "executable": "node_modules\\.bin\\tsp.cmd",
               "args": [
                 "compile",
-                "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\45348-compact\\deterministic-analysis\\worktrees\\current\\specification\\deviceregistry\\DeviceRegistry.Management",
+                "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\45348\\worktrees\\current\\specification\\deviceregistry\\DeviceRegistry.Management",
                 "--emit=@azure-tools/typespec-client-generator-core",
-                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\45348-compact\\deterministic-analysis\\projects\\project-dd25e6db7b7b\\target\\tcgc",
+                "--option=@azure-tools/typespec-client-generator-core.emitter-output-dir=C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\45348\\projects\\project-dd25e6db7b7b\\target\\tcgc",
                 "--warn-as-error",
-                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\outputs\\reassessment-optimized-20260904\\45348-compact\\deterministic-analysis\\inputs\\empty-examples",
+                "--option=@azure-tools/typespec-client-generator-core.examples-dir=C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\45348\\inputs\\empty-examples",
                 "--option=@azure-tools/typespec-client-generator-core.api-version=2026-11-02-preview"
               ]
             },
             "exitCode": 0,
-            "durationMs": 12021,
-            "configPath": "worktrees\\current\\specification\\deviceregistry\\DeviceRegistry.Management\\tspconfig.yaml",
+            "durationMs": 11429,
+            "configPath": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\45348\\worktrees\\current\\specification\\deviceregistry\\DeviceRegistry.Management\\tspconfig.yaml",
             "configHash": "3450e099b6566a4e005c8c440e4bed0b6433dc6201f0dbadc72984f5f47c72d0",
-            "logPath": "logs\\project-dd25e6db7b7b-target-tcgc.log",
+            "logPath": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\45348\\logs\\project-dd25e6db7b7b-target-tcgc.log",
             "comparisonRole": "target",
             "sourceRevision": "current",
             "sourceCommit": "b209254310b3e569b16210d3c59fc8b8ac3b84b4",
@@ -58615,7 +58614,7 @@
             "format": "tcgc-yaml",
             "files": [
               {
-                "path": "projects\\project-dd25e6db7b7b\\target\\tcgc\\tcgc-output.yaml",
+                "path": "C:\\workspace\\azure-sdk-tools\\result\\downstream-graph-replay-v3-20260904\\45348\\projects\\project-dd25e6db7b7b\\target\\tcgc\\tcgc-output.yaml",
                 "contentHash": "121a029536a5d6cf27ae4b9b2d51485b04790d1dadab25302f7734905229863e"
               }
             ]
@@ -58713,7 +58712,7 @@
   "inputAccounting": {
     "budgetTier": "medium",
     "budgetBytes": 262144,
-    "bytes": 179097,
+    "bytes": 179100,
     "estimatedTokens": 44775,
     "retained": {
       "evidenceSets": 111,
@@ -58730,7 +58729,7 @@
       "compilerLogs": true,
       "unchangedInventories": true,
       "unreferencedFacts": true,
-      "deterministicCandidateFacts": true,
+      "unreferencedDeterministicFacts": true,
       "sourceChanges": true,
       "repeatedDeclarationIds": true,
       "repeatedReviewUnitEvidence": true
@@ -58744,14 +58743,8 @@
     }
   },
   "timings": {
-    "totalMs": 71641,
-    "semanticAnalysisMs": 376,
-    "restAnalysisMs": 174,
-    "downstreamAnalysisMs": 5727
+    "downstreamAnalysisMs": 5360,
+    "buildModelInputMs": 69
   },
-  "pr": 45348,
-  "pullRequest": {
-    "number": 45348,
-    "url": "https://github.com/Azure/azure-rest-api-specs/pull/45348"
-  }
+  "pr": 45348
 }

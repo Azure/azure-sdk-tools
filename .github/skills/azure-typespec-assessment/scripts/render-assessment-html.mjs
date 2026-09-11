@@ -4,8 +4,11 @@ import {
   extractApiVersions,
   selectApiVersionPair,
 } from "./api-version-selection.mjs";
-import { isMain, readJson, runMain } from "./cli.mjs";
+import { isMain, parseArgs, readJson, runMain } from "./cli.mjs";
 import { validateAssessment } from "./validate-assessment.mjs";
+import { renderReportSections } from "./assessment-report-ui.mjs";
+
+const reportStyles = fs.readFileSync(new URL("./assessment-report-ui.css", import.meta.url), "utf8");
 
 export function escapeHtml(value) {
   return String(value ?? "")
@@ -21,7 +24,7 @@ function sourceLinks(sources = []) {
     .map((source) => {
       const current = source.declarations?.find(
         (item) => item.source?.revision === "current",
-      );
+      ) ?? source.declarations?.find((item) => item.source?.link);
       const label = `${source.path}${current ? `:${current.source.startLine}` : ""}`;
       return current?.source?.link
         ? `<a href="${escapeHtml(current.source.link)}">${escapeHtml(label)}</a>`
@@ -73,12 +76,14 @@ function headerSummary(assessment) {
     restContractCards(assessment.dimensions.rest.findings).length +
     (assessment.dimensions.rest.legacyFindings?.length ?? 0);
   const directDownstreamCount =
-    (assessment.dimensions.downstream.operationGroups?.length ?? 0) +
+    (assessment.dimensions.downstream.methodGroups?.length ??
+      assessment.dimensions.downstream.operationGroups?.length ??
+      0) +
     downstreamTypeCards(assessment.dimensions.downstream).length +
     directLegacyDownstreamFindings(
       assessment.dimensions.downstream.legacyFindings,
     ).length;
-  const downstreamCount = directDownstreamCount + restCount;
+  const downstreamCount = directDownstreamCount;
   const compliance = assessment.dimensions.compliance;
   const complianceFindingCount = compliance.legacyFindings
     ? compliance.legacyFindings.length
@@ -440,9 +445,23 @@ function complianceEvidenceAppendix(dimension) {
     seenUrls.add(url);
     return true;
   });
-  return uniqueDocuments.length
+  const documentList = uniqueDocuments.length
     ? `<ul class="guidance-document-list">${uniqueDocuments.map(fetchedComplianceDocument).join("")}</ul>`
     : '<div class="panel">No guidance fetched.</div>';
+  const evidence = {
+    status: dimension.status,
+    coverage: dimension.coverage,
+    intentAssessments: (dimension.intentAssessments ?? []).map((item) => ({
+      semanticIntentId: item.semanticIntentId,
+      decision: item.decision,
+      catalogRanking: item.catalogRanking,
+      documents: item.documents,
+      blockers: item.blockers,
+    })),
+    retrievalFailures: dimension.retrievalFailures,
+    blockers: dimension.blockers,
+  };
+  return `${documentList}<details class="guidance-coverage"><summary>Guidance coverage and retrieval evidence</summary><pre>${escapeHtml(JSON.stringify(evidence, null, 2))}</pre></details>`;
 }
 
 function intentTitleLinks(ids, semanticItems) {
@@ -512,7 +531,7 @@ function renderCompliance(dimension, semanticItems) {
         ? `<p class="empty good">Azure Guidelines were assessed. ${dimension.intentAssessments.length > noApplicableGuidanceIds.length ? "They passed for the other intents, and no" : "No"} applicable guideline was found for ${noApplicableGuidanceIds.length === 1 ? "intent" : "intents"} ${intentTitleLinks(noApplicableGuidanceIds, semanticItems)}.</p>`
         : '<p class="empty good">No Azure Guidelines findings.</p>';
   return `${findings || empty}
-${uncovered.length ? `<div class="panel"><strong>Compliance not assessed for:</strong> ${intentTitleLinks(uncovered, semanticItems)}</div>` : ""}`;
+${uncovered.length ? `<div class="panel"><strong>Azure Guidelines not assessed for:</strong> ${intentTitleLinks(uncovered, semanticItems)}</div>` : ""}`;
 }
 
 function headerComparison(assessment) {
@@ -1390,22 +1409,8 @@ export function visibleSharedTypeImpacts(impacts = []) {
   return impacts.filter(
     (impact) =>
       (impact.findingIds?.length ?? 0) > 0 ||
-      (impact.affectedOperationCount ?? 0) > 0 ||
       (impact.affectedMethodCount ?? 0) > 0,
   );
-}
-
-export function relatedImpactOperations(impact, semanticItems = []) {
-  const relatedIntentIds = new Set(impact.relatedSemanticIntents ?? []);
-  const operations = semanticItems
-    .filter((item) => relatedIntentIds.has(item.id))
-    .flatMap((item) => item.operations ?? []);
-  const unique = new Map();
-  for (const operation of operations) {
-    const key = `${operation.operationId}:${operation.apiVersion ?? ""}`;
-    if (!unique.has(key)) unique.set(key, operation);
-  }
-  return [...unique.values()];
 }
 
 export function downstreamTypeCards(dimension = {}) {
@@ -1413,8 +1418,12 @@ export function downstreamTypeCards(dimension = {}) {
     (dimension.findings ?? []).map((finding) => [finding.id, finding]),
   );
   const cards = new Map();
-  for (const impact of visibleSharedTypeImpacts(dimension.sharedTypeImpacts)) {
-    const types = [...new Set(impact.types ?? [])].sort();
+  const impacts =
+    dimension.typeImpacts ?? dimension.sharedTypeImpacts ?? [];
+  for (const impact of visibleSharedTypeImpacts(impacts)) {
+    const types = impact.type
+      ? [impact.type]
+      : [...new Set(impact.types ?? [])].sort();
     for (const [index, type] of types.entries()) {
       if (!cards.has(type)) {
         cards.set(type, {
@@ -1422,6 +1431,7 @@ export function downstreamTypeCards(dimension = {}) {
           findings: [],
           relatedSemanticIntents: [],
           affectedMethods: [],
+          locations: [],
           rootCauses: [],
           legacyImpactIds: [],
         });
@@ -1442,11 +1452,15 @@ export function downstreamTypeCards(dimension = {}) {
         );
       }
       card.affectedMethods.push(...(impact.affectedMethods ?? []));
-      card.rootCauses.push({
-        id: impact.rootCauseId,
-        kind: impact.rootCause,
-        summary: impact.summary,
-      });
+      card.locations.push(...(impact.locations ?? []));
+      for (const id of impact.rootCauseIds ?? [impact.rootCauseId]) {
+        if (!id) continue;
+        card.rootCauses.push({
+          id,
+          kind: impact.rootCause,
+          summary: impact.summary,
+        });
+      }
       if (index === 0) card.legacyImpactIds.push(impact.id);
     }
   }
@@ -1459,6 +1473,7 @@ export function downstreamTypeCards(dimension = {}) {
         ).values(),
       ];
       card.relatedSemanticIntents = [...new Set(card.relatedSemanticIntents)];
+      card.locations = [...new Set(card.locations)].sort();
       card.affectedMethods = [
         ...new Map(
           card.affectedMethods.map((method) => [method.symbol, method]),
@@ -1622,7 +1637,7 @@ function operationCard(operation, restFindings, semanticIntentId) {
 <p><strong>Change outcome:</strong> ${escapeHtml(outcome)}</p></div></details>`;
 }
 
-function semanticFindingReferences(item, compliance) {
+function semanticFindingReferences(item, compliance, downstream = {}) {
   const complianceIds = new Set([
     ...(item.relatedFindings?.compliance ?? []),
     ...(compliance.findings ?? [])
@@ -1635,7 +1650,30 @@ function semanticFindingReferences(item, compliance) {
   ]);
   const downstreamIds = new Set([
     ...(item.relatedFindings?.downstream ?? []),
+    ...(item.relatedFindings?.typeImpact ?? []),
     ...(item.relatedFindings?.sharedTypeImpact ?? []),
+  ]);
+  const methodGroups = downstream.methodGroups ?? downstream.operationGroups ?? [];
+  const typeImpacts = downstream.typeImpacts ?? downstream.sharedTypeImpacts ?? [];
+  const downstreamItems = new Map([
+    ...methodGroups.map((group) => [
+      group.id,
+      {
+        title: group.symbol?.split(".").at(-1) ?? group.symbol ?? group.id,
+        detail: "SDK method",
+      },
+    ]),
+    ...typeImpacts.map((impact) => {
+      const type = impact.type ?? impact.types?.[0] ?? impact.id;
+      const findings = impact.findingIds?.length ?? 0;
+      return [
+        impact.id,
+        {
+          title: type.split(".").at(-1) ?? type,
+          detail: `${findings} ${findings === 1 ? "change" : "changes"}`,
+        },
+      ];
+    }),
   ]);
   return [
     ...(item.relatedFindings?.rest ?? []).map((id) => ({
@@ -1647,6 +1685,7 @@ function semanticFindingReferences(item, compliance) {
       id,
       kind: "downstream",
       href: `#downstream-${anchor(id)}`,
+      ...(downstreamItems.get(id) ?? { title: id, detail: "SDK contract" }),
     })),
     ...[...complianceIds].map((id) => ({
       id,
@@ -1656,61 +1695,54 @@ function semanticFindingReferences(item, compliance) {
   ];
 }
 
-function relatedFindingLinks(references) {
-  return references.length
-    ? references
-        .map(({ href, id }) => `<a href="${href}">${escapeHtml(id)}</a>`)
-        .join(", ")
-    : "None";
-}
-
-function semanticFindingBadge(references) {
+function semanticFindingBadge(references, intentId) {
   const labels = {
     rest: "REST breaking changes",
     downstream: "Downstream breaking changes",
     compliance: "Azure Guidelines",
   };
-  const kinds = [...new Set(references.map(({ kind }) => kind))];
-  return kinds.length
-    ? `<span class="intent-finding-badges">${kinds
-        .map((kind) => {
-          const target = references.find(
-            (reference) => reference.kind === kind,
-          );
-          return `<a class="intent-finding-badge ${kind}" href="${target.href}">${labels[kind]}</a>`;
+  const grouped = new Map();
+  for (const reference of references) {
+    const values = grouped.get(reference.kind) ?? [];
+    values.push(reference);
+    grouped.set(reference.kind, values);
+  }
+  return grouped.size
+    ? `<span class="intent-finding-badges">${[...grouped]
+        .map(([kind, values]) => {
+          if (kind !== "downstream") {
+            return `<a class="intent-finding-badge ${kind}" href="${values[0].href}">${labels[kind]}${kind === "rest" ? ` (${values.length})` : ""}</a>`;
+          }
+          const popoverId = `downstream-impact-popover-${anchor(intentId)}`;
+          return `<span class="intent-impact-trigger"><button class="intent-finding-badge downstream" type="button" aria-expanded="false" aria-controls="${popoverId}">Downstream breaking changes (${values.length})</button><span class="intent-impact-popover" id="${popoverId}">${values
+            .map(
+              (reference) =>
+                `<a href="${reference.href}"><strong>${escapeHtml(reference.title)}</strong><span>${escapeHtml(reference.detail)}</span></a>`,
+            )
+            .join("")}</span></span>`;
         })
         .join("")}</span>`
     : "";
 }
 
-function deterministicCoverageSummary(item) {
-  const coverage = item.deterministicCoverage;
-  if (!coverage) return "";
-  const total =
-    coverage.classifications?.length ??
-    coverage.coveredHunkIds.length + coverage.uncoveredHunkIds.length;
-  const inferred = item.inferenceResults?.length ?? 0;
-  const inference = item.inferenceRequired
-    ? `AI inference used for ${inferred} request${inferred === 1 ? "" : "s"}.`
-    : "AI inference skipped.";
-  return `<p><strong>Deterministic coverage:</strong> ${coverage.coveredHunkIds.length} of ${total} changed hunks classified. ${escapeHtml(inference)}</p>`;
-}
-
-function semanticCard(item, compliance, restFindings) {
+function semanticCard(item, compliance, restFindings, downstream) {
   const all = item.operations ?? [];
   const shown = all.slice(0, 3);
   const operationContent = all.length
-    ? `<p><strong>Operation impact:</strong> ${all.length} REST operations are affected; ${shown.length} representative operation(s) are shown below${all.length > shown.length ? ` and ${all.length - shown.length} are omitted from HTML` : ""}. The complete inventory is retained in assessment.json.</p>
-${shown.map((operation) => operationCard(operation, restFindings, item.id)).join("\n")}`
+    ? shown
+        .map((operation) => operationCard(operation, restFindings, item.id))
+        .join("\n")
     : '<p class="empty">No directly affected REST operation.</p>';
-  const findingReferences = semanticFindingReferences(item, compliance);
-  return `<details class="intent" id="intent-${anchor(item.id)}"><summary><strong><span class="action">${escapeHtml(item.action)}</span> ${escapeHtml(item.title)}</strong>${semanticFindingBadge(findingReferences)}</summary><div class="intent-body">
+  const findingReferences = semanticFindingReferences(
+    item,
+    compliance,
+    downstream,
+  );
+  return `<details class="intent" id="intent-${anchor(item.id)}"><summary><strong><span class="action">${escapeHtml(item.action)}</span> ${escapeHtml(item.title)}</strong>${semanticFindingBadge(findingReferences, item.id)}</summary><div class="intent-body">
 <p>${escapeHtml(item.summary)}</p>
-${deterministicCoverageSummary(item)}
 ${representativeExample(item)}
-<h4>Affected REST operations (${all.length})</h4>
+<h3>Affected REST operations (${all.length})</h3>
 ${operationContent}
-<p id="related-findings-${anchor(item.id)}"><strong>Related findings:</strong> ${relatedFindingLinks(findingReferences)}</p>
 </div></details>`;
 }
 
@@ -1745,16 +1777,23 @@ function downstreamOperationGroups(dimension, semanticItems) {
     `<code class="contract-value ${kind}">${escapeHtml(cellValue)}</code>${detail ? `<span class="contract-detail">${escapeHtml(detail)}</span>` : ""}`;
   const parameterType = (parameter) =>
     `${parameter.type ?? "unknown"}${parameter.optional ? "?" : ""}`;
-  const methodParameterAreaKind = (parameterName, operations) => {
+  const methodParameterAreaKind = (parameterName, group) => {
     const locations = new Set();
-    for (const operation of operations) {
-      for (const fact of [operation.before, operation.after]) {
-        for (const parameter of fact?.parameters ?? []) {
-          if (parameter.name === parameterName && parameter.in) {
-            locations.add(parameter.in);
-          }
+    for (const method of [group.before, group.after]) {
+      const protocolParameters = [
+        ...(method?.operation?.parameters ?? []),
+        ...(method?.operation?.bodyParam ? [method.operation.bodyParam] : []),
+      ];
+      for (const parameter of protocolParameters) {
+        const segments = (parameter.methodParameterSegments ?? [])
+          .flat(Infinity)
+          .map(String);
+        if (
+          parameter.name === parameterName ||
+          segments.includes(parameterName)
+        ) {
+          locations.add(parameter.kind);
         }
-        if (fact?.request?.name === parameterName) locations.add("body");
       }
     }
     if (locations.size !== 1) return "Method parameter";
@@ -1762,14 +1801,14 @@ function downstreamOperationGroups(dimension, semanticItems) {
     const labels = {
       query: "query",
       path: "path",
-      header: "request header",
-      body: "request body",
+      header: "header",
+      body: "body",
     };
     return labels[location]
-      ? `Method parameter · ${labels[location]}`
+      ? `Request ${labels[location]}`
       : "Method parameter";
   };
-  const methodContractRows = (group, operations) =>
+  const methodContractRows = (group) =>
     group.deltas.flatMap((delta) => {
       if (delta.field !== "parameters") {
         return [
@@ -1783,14 +1822,14 @@ function downstreamOperationGroups(dimension, semanticItems) {
       }
       return [
         ...(delta.changes.removed ?? []).map((item) => ({
-          areaKind: methodParameterAreaKind(item.parameter.name, operations),
+          areaKind: methodParameterAreaKind(item.parameter.name, group),
           member: item.parameter.name,
           before: parameterType(item.parameter),
           beforeDetail: "Existing method parameter",
           after: "not present",
         })),
         ...(delta.changes.added ?? []).map((item) => ({
-          areaKind: methodParameterAreaKind(item.parameter.name, operations),
+          areaKind: methodParameterAreaKind(item.parameter.name, group),
           member: item.parameter.name,
           before: "not present",
           beforeDetail: "Existing generated method signature",
@@ -1800,7 +1839,7 @@ function downstreamOperationGroups(dimension, semanticItems) {
             : "Required method parameter",
         })),
         ...(delta.changes.modified ?? []).map((item) => ({
-          areaKind: methodParameterAreaKind(item.name, operations),
+          areaKind: methodParameterAreaKind(item.name, group),
           member: item.name,
           before: parameterType(item.before),
           beforeDetail: `Changed: ${item.changedFields.join(", ")}`,
@@ -1808,17 +1847,17 @@ function downstreamOperationGroups(dimension, semanticItems) {
           afterDetail: `Changed: ${item.changedFields.join(", ")}`,
         })),
         ...(delta.changes.reordered ?? []).map((item) => ({
-          areaKind: methodParameterAreaKind(item.name, operations),
+          areaKind: methodParameterAreaKind(item.name, group),
           member: item.name,
           before: `position ${item.beforeIndex + 1}`,
           after: `position ${item.afterIndex + 1}`,
         })),
       ];
     });
-  const groups = (dimension.operationGroups ?? [])
+  const methodGroups = dimension.methodGroups ?? dimension.operationGroups ?? [];
+  const groups = methodGroups
     .map((group) => {
-      const relatedOperations = relatedImpactOperations(group, semanticItems);
-      const rows = methodContractRows(group, relatedOperations);
+      const rows = methodContractRows(group);
       const parameterDelta = group.deltas.find(
         (delta) => delta.field === "parameters",
       );
@@ -1839,9 +1878,9 @@ function downstreamOperationGroups(dimension, semanticItems) {
         : group.parametersUnchanged
           ? "unchanged"
           : "changed";
-      return `<details class="finding sdk-method-card" id="downstream-${anchor(group.id)}"><summary><strong>${escapeHtml(group.operationId ?? group.symbol)}</strong><span class="contract-tag">SDK method</span><span class="finding-summary">${rows.length} SDK contract ${rows.length === 1 ? "change" : "changes"}</span></summary>
+      return `<details class="finding sdk-method-card" id="downstream-${anchor(group.id)}"><summary><strong>${escapeHtml(group.symbol.split(".").at(-1) ?? group.symbol)}</strong><span class="contract-tag">SDK method</span></summary>
 <div class="finding-body">
-<dl class="contract-metadata"><dt>SDK method:</dt><dd><code>${escapeHtml(group.symbol)}</code></dd><dt>HTTP:</dt><dd><span class="http-contract"><span class="http-method">${escapeHtml((group.method ?? "").toUpperCase())}</span><code>${escapeHtml(group.path)}</code></span></dd><dt>Change:</dt><dd>${escapeHtml(changeSummary)}</dd></dl>
+<dl class="contract-metadata"><dt>SDK method:</dt><dd><code>${escapeHtml(group.symbol)}</code></dd><dt>Change:</dt><dd>${escapeHtml(changeSummary)}</dd></dl>
 <h4>Breaking changes</h4>
 <table class="contract-change-table"><thead><tr><th>Contract area</th><th>Before</th><th>After</th></tr></thead><tbody>${rows
         .map(
@@ -1855,7 +1894,7 @@ ${rationale ? `<div class="breaking-rationale"><strong>Why this is breaking:</st
     })
     .join("\n");
   const groupedFindingIds = new Set(
-    (dimension.operationGroups ?? []).flatMap((group) =>
+    methodGroups.flatMap((group) =>
       group.deltas.map((delta) => delta.findingId),
     ),
   );
@@ -1958,122 +1997,19 @@ ${rationale ? `<div class="breaking-rationale"><strong>Why this is breaking:</st
   const propertyName = (finding) =>
     finding.actual?.match(/\bproperty\s+([A-Za-z_$][\w$]*)\b/)?.[1] ??
     finding.expected?.match(/\bproperty\s+([A-Za-z_$][\w$]*)\b/)?.[1];
-  const schemaMatchesType = (schema, type) => {
-    const shortName = shortTypeName(type);
-    const identities = [
-      schemaIdentity(schema),
-      schema.reference,
-      ...(schema.references ?? []),
-    ].filter(Boolean);
-    if (
-      identities.some(
-        (identity) =>
-          identity === type ||
-          identity === shortName ||
-          identity.endsWith(`/${shortName}`) ||
-          identity.endsWith(`#/${shortName}`) ||
-          identity.endsWith(`/definitions/${shortName}`),
-      )
-    ) {
-      return true;
-    }
-    return false;
+  const typePropertyAreaKind = (card) => {
+    if (card.locations.length !== 1) return "Model property";
+    const labels = {
+      "request-path": "Request path",
+      "request-query": "Request query",
+      "request-header": "Request header",
+      "request-body": "Request body",
+      "response-header": "Response header",
+      "response-body": "Response body",
+    };
+    return labels[card.locations[0]] ?? "Model property";
   };
-  const schemaReferencesType = (schema, type) => {
-    if (!schema || typeof schema !== "object") return false;
-    if (schemaMatchesType(schema, type)) return true;
-    return (
-      schemaReferencesType(schema.items, type) ||
-      schemaReferencesType(schema.valueType, type) ||
-      (schema.properties ?? []).some((property) =>
-        schemaReferencesType(property.schema ?? property.type, type),
-      )
-    );
-  };
-  const schemasForType = (schema, type) => {
-    if (!schema || typeof schema !== "object") return [];
-    return [
-      ...(schemaMatchesType(schema, type) ? [schema] : []),
-      ...schemasForType(schema.items, type),
-      ...schemasForType(schema.valueType, type),
-      ...(schema.properties ?? []).flatMap((property) =>
-        schemasForType(property.schema ?? property.type, type),
-      ),
-    ];
-  };
-  const normalizedWireName = (value) =>
-    String(value ?? "")
-      .toLowerCase()
-      .replace(/[^a-z0-9]/g, "");
-  const headerMatchesProperty = (headerName, propertyNames) => {
-    const header = normalizedWireName(headerName);
-    return propertyNames.some((propertyName) => {
-      const property = normalizedWireName(propertyName);
-      return (
-        property &&
-        (header === property ||
-          (property.length >= 6 && header.endsWith(property)))
-      );
-    });
-  };
-  const schemaTypeHasProperty = (schema, type, propertyNames) =>
-    schemasForType(schema, type).some((typeSchema) =>
-      (typeSchema.properties ?? []).some((property) =>
-        propertyNames.includes(property.name),
-      ),
-    );
-  const typePropertyAreaKind = (
-    type,
-    beforeProperty,
-    afterProperty,
-    operations,
-  ) => {
-    const propertyNames = [
-      beforeProperty?.name,
-      beforeProperty?.serializedName,
-      afterProperty?.name,
-      afterProperty?.serializedName,
-    ].filter(Boolean);
-    let requestBody = false;
-    let responseBody = false;
-    let responseHeader = false;
-    for (const operation of operations) {
-      for (const fact of [operation.before, operation.after]) {
-        requestBody ||= schemaTypeHasProperty(
-          fact?.request?.schema,
-          type,
-          propertyNames,
-        );
-        for (const response of fact?.responses ?? []) {
-          const responseUsesType = schemaReferencesType(response.schema, type);
-          responseBody ||= schemaTypeHasProperty(
-            response.schema,
-            type,
-            propertyNames,
-          );
-          responseHeader ||=
-            responseUsesType &&
-            (response.headers ?? []).some((header) =>
-              headerMatchesProperty(header.name, propertyNames),
-            );
-        }
-      }
-    }
-    if (responseHeader && !requestBody && !responseBody) {
-      return "Response header property";
-    }
-    if (requestBody && responseBody && !responseHeader) {
-      return "Body property · request/response";
-    }
-    if (requestBody && !responseBody && !responseHeader) {
-      return "Request body property";
-    }
-    if (responseBody && !requestBody && !responseHeader) {
-      return "Response body property";
-    }
-    return "Model property";
-  };
-  const modelContractRows = (card, findings, operations) =>
+  const modelContractRows = (card, findings) =>
     findings.flatMap((finding) => {
       const name = propertyName(finding);
       const { before, after } = typeFacts(finding);
@@ -2086,12 +2022,7 @@ ${rationale ? `<div class="breaking-rationale"><strong>Why this is breaking:</st
       );
       return [
         {
-          areaKind: typePropertyAreaKind(
-            card.type,
-            beforeProperty,
-            afterProperty,
-            operations,
-          ),
+          areaKind: typePropertyAreaKind(card),
           member: name,
           before: propertyDisplay(beforeProperty) ?? "not present",
           after: propertyDisplay(afterProperty) ?? "removed",
@@ -2152,28 +2083,23 @@ ${rationale ? `<div class="breaking-rationale"><strong>Why this is breaking:</st
       before: finding.expected,
       after: finding.actual,
     }));
-  const affectedOperations = (operations) =>
-    operations.length
-      ? `<details class="affected-operations"><summary><strong>Affected REST operations (${operations.length})</strong></summary>
-<div class="affected-operation-list">${operations
+  const affectedMethods = (methods) =>
+    methods.length
+      ? `<details class="affected-methods"><summary><strong>Affected SDK methods (${methods.length})</strong></summary>
+<div class="affected-method-list">${methods
           .map(
-            (operation) =>
-              `<div class="affected-operation"><strong>${escapeHtml(operation.operationId)}</strong><span class="http-method">${escapeHtml((operation.method ?? "").toUpperCase())}</span><code>${escapeHtml(operation.path ?? "Path unavailable")}</code></div>`,
+            (method) =>
+              `<div class="affected-method"><strong>${escapeHtml(method.symbol.split(".").at(-1) ?? method.symbol)}</strong><code>${escapeHtml(method.symbol)}</code></div>`,
           )
           .join("")}</div></details>`
-      : '<p class="mapping-unavailable"><strong>Affected REST operations (0):</strong> mapping unavailable</p>';
+      : '<p class="mapping-unavailable"><strong>Affected SDK methods:</strong> mapping unavailable</p>';
   const typeCards = downstreamTypeCards(dimension)
     .map((card) => {
-      const relatedOperations = relatedImpactOperations(card, semanticItems);
       const directFindings = card.findings.filter(
         (finding) => !groupedFindingIds.has(finding.id),
       );
       const enumRows = enumContractRows(card);
-      const modelRows = modelContractRows(
-        card,
-        directFindings,
-        relatedOperations,
-      );
+      const modelRows = modelContractRows(card, directFindings);
       const structuredRows = [
         ...enumRows,
         ...modelRows,
@@ -2221,7 +2147,7 @@ ${rationale ? `<div class="breaking-rationale"><strong>Why this is breaking:</st
         )
         .join("")}</tbody></table>
 ${rationale ? `<div class="breaking-rationale"><strong>Why this is breaking:</strong> ${escapeHtml(rationale)}</div>` : ""}
-${affectedOperations(relatedOperations)}
+${affectedMethods(card.affectedMethods)}
 <div class="contract-footer"><span><strong>Related semantic intents:</strong> ${semanticLinks(card.relatedSemanticIntents)}</span></div>
 </div></details>`;
     })
@@ -2233,25 +2159,26 @@ ${affectedOperations(relatedOperations)}
   return `${groups}${typeCards}${legacy}`;
 }
 
-function downstreamRestItems(rest) {
-  const current = restContractCards(rest.findings).map((card) => ({
-    title: card.identity,
-    target: `#${restContractCardId(card)}`,
-  }));
-  const legacy = (rest.legacyFindings ?? []).map((finding) => ({
-    title: finding.title,
-    target: `#finding-${anchor(finding.id)}`,
-  }));
-  return [...current, ...legacy]
-    .map(({ title, target }) => {
-      return `<div class="panel downstream-rest-item"><a class="downstream-rest-link" href="${target}"><span class="origin-tag rest-breaking-tag">REST breaking</span><strong>${escapeHtml(title)}</strong></a></div>`;
-    })
-    .join("\n");
-}
-
-function renderCurrent(assessment) {
+function renderCurrent(assessment, options = {}) {
   const { dimensions } = assessment;
   const summary = headerSummary(assessment);
+  const report = renderReportSections(assessment, {
+    escapeHtml,
+    operationContractRows,
+    restContractDelta,
+    findingMatchesOperation,
+    complianceFindingGroups,
+    complianceCode,
+    renderSourceHunks,
+    sourceLinks,
+    legacyEvidence,
+    contractAreaParts,
+    directLegacyDownstreamFindings,
+  }, options);
+  summary.restCount = report.restCount;
+  summary.downstreamCount = report.downstreamCount;
+  const restStatus = complianceStatus(dimensions.rest.status ?? (summary.restCount ? "failed" : "not-assessed"));
+  const downstreamStatus = complianceStatus(dimensions.downstream.status ?? (summary.downstreamCount ? "failed" : "not-assessed"));
   const comparisons = new Map(
     (assessment.artifactComparisons ?? []).map((item) => [
       item.projectId,
@@ -2270,45 +2197,6 @@ function renderCurrent(assessment) {
       return `<tr><td><code>${escapeHtml(project.path)}</code></td><td>${escapeHtml(comparison.mode ?? "legacy")}</td><td><code>${escapeHtml(artifactLabel(comparison.baseline))}</code><br><small>${escapeHtml(comparison.baseline?.sourceRevision ?? "base")} · ${escapeHtml(comparison.baseline?.reason ?? "")}</small></td><td><code>${escapeHtml(artifactLabel(comparison.target))}</code><br><small>${escapeHtml(comparison.target?.sourceRevision ?? "current")} · ${escapeHtml(comparison.target?.reason ?? "")}</small></td><td>${escapeHtml(baselineArtifact?.autorest?.status ?? "n/a")} / ${escapeHtml(baselineArtifact?.tcgc?.status ?? "n/a")}</td><td>${escapeHtml(targetArtifact?.autorest?.status ?? "n/a")} / ${escapeHtml(targetArtifact?.tcgc?.status ?? "n/a")}</td></tr>`;
     })
     .join("");
-  const semantic = dimensions.semantic.items
-    .map((item, index) => ({
-      item,
-      index,
-      hasFindings:
-        semanticFindingReferences(item, dimensions.compliance).length > 0,
-    }))
-    .sort(
-      (left, right) =>
-        Number(right.hasFindings) - Number(left.hasFindings) ||
-        left.index - right.index,
-    )
-    .map(({ item }) =>
-      semanticCard(item, dimensions.compliance, dimensions.rest.findings),
-    )
-    .join("\n");
-  const rest =
-    [
-      renderRestContractCards(
-        dimensions.rest.findings,
-        dimensions.semantic.items,
-      ),
-      legacyFindingCards(dimensions.rest.legacyFindings),
-    ]
-      .filter((content, index) =>
-        index > 0 ? content : dimensions.rest.findings?.length,
-      )
-      .join("\n") || '<p class="empty good">No breaking changes detected.</p>';
-  const downstreamItems =
-    [
-      downstreamRestItems(dimensions.rest),
-      downstreamOperationGroups(
-        dimensions.downstream,
-        dimensions.semantic.items,
-      ),
-    ]
-      .filter(Boolean)
-      .join("\n") ||
-    '<p class="empty good">No downstream breaking changes detected.</p>';
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>TypeSpec Assessment</title>
@@ -2319,13 +2207,16 @@ function renderCurrent(assessment) {
 .rest-contract-card .contract-tag{background:#fee2e2;color:#991b1b}.rest-contract-card .rest-operation-list{margin-top:10px}
 .notice{padding:0}.notice>summary{display:flex;min-height:46px;align-items:center;gap:10px;padding:8px 0;cursor:pointer;list-style:none}.notice>summary::-webkit-details-marker{display:none}.notice>summary::before{content:"▸";flex:none;color:#b45309;font-size:15px;font-weight:900;transition:transform .15s ease}.notice[open]>summary::before{transform:rotate(90deg)}.notice-title{flex:none;font-size:14px;font-weight:800}.notice-summary{overflow:hidden;color:color-mix(in srgb,currentColor 78%,var(--muted));font-size:12.5px;text-overflow:ellipsis;white-space:nowrap}.notice-body{display:grid;grid-template-columns:1fr 1fr;gap:24px;padding:0 0 12px 25px;font-size:12.5px;line-height:1.4}.notice-body p{margin:0}@media(max-width:700px){.notice-summary{display:none}.notice-body{grid-template-columns:1fr;gap:6px}}@media(prefers-color-scheme:dark){.notice>summary::before{color:#fbbf24}}
 .compliance-finding-group>summary{flex-wrap:wrap}.compliance-affected-intents{display:grid;gap:12px}.compliance-affected-intent{margin:0;padding:14px 16px;border:1px solid var(--line);border-radius:10px}.compliance-affected-intent h4{margin:0 0 8px}.compliance-affected-intent h5{margin:14px 0 6px}
+.intent-finding-badge{font:inherit;font-size:13px;cursor:pointer}.intent-impact-trigger{position:relative}.intent-impact-popover{position:absolute;z-index:20;top:calc(100% + 8px);right:0;display:none;width:min(480px,88vw);overflow:hidden;border:1px solid var(--line);border-radius:10px;background:var(--panel);box-shadow:0 14px 34px rgb(31 42 68 / 18%)}.intent-impact-trigger.open .intent-impact-popover{display:grid}.intent-impact-popover a{display:grid;grid-template-columns:minmax(240px,1fr) auto;gap:12px;align-items:center;padding:12px 14px;border-top:1px solid var(--line);color:var(--text)!important;text-decoration:none}.intent-impact-popover a:first-child{border-top:0}.intent-impact-popover a:hover,.intent-impact-popover a:focus-visible{background:color-mix(in srgb,var(--panel) 92%,var(--accent))}.intent-impact-popover a span{color:var(--muted);font-size:13px}.intent h3,.representative-example>summary{font-size:17px;font-weight:750;line-height:1.35}.impact-highlight{outline:3px solid #ef4444;outline-offset:3px}
+.affected-methods{margin:20px 0}.affected-methods>summary{font-size:18px}.affected-method-list{display:grid;gap:7px;margin-top:10px}.affected-method{display:grid;grid-template-columns:minmax(180px,.6fr) minmax(280px,1.4fr);align-items:center;gap:12px;padding:9px 12px;border:1px solid var(--line);border-radius:8px}@media(max-width:700px){.affected-method{grid-template-columns:1fr}}
+${reportStyles}
 </style></head><body>
 <header class="hero"><div class="container"><div class="eyebrow">TypeSpec Assessment</div><h1>${escapeHtml(headerTitle(assessment))}</h1>
 <p class="hero-meta">TypeSpec source diff: ${comparisonHeader}</p>
 <div class="summary-grid">
 <a class="summary-card" href="${summary.codeQualityTarget}"><div class="summary-value"><span class="${summary.codeQuality === "passed" ? "pass" : summary.codeQuality === "failed" ? "fail" : ""}">${summary.codeQualityIcon}</span> ${escapeHtml(summary.codeQualityLabel)}</div><div class="summary-label">Overall code quality</div><div class="summary-detail">REST, downstream, and Azure Guidelines</div></a>
-<a class="summary-card" href="#rest-breaking"><div class="summary-value"><span class="${summary.restCount ? "fail" : "pass"}">${summary.restCount ? "×" : "✓"}</span> ${summary.restCount}</div><div class="summary-label">REST breaking changes</div></a>
-<a class="summary-card" href="#downstream-breaking"><div class="summary-value"><span class="${summary.downstreamCount ? "fail" : "pass"}">${summary.downstreamCount ? "×" : "✓"}</span> ${summary.downstreamCount}</div><div class="summary-label">Downstream breaking changes</div><div class="summary-detail">${summary.directDownstreamCount} direct · ${summary.restCount} from REST breaking</div></a>
+<a class="summary-card" href="#rest-breaking"><div class="summary-value"><span class="${restStatus.className}">${restStatus.icon}</span> ${summary.restCount}</div><div class="summary-label">REST breaking changes</div></a>
+<a class="summary-card" href="#downstream-breaking"><div class="summary-value"><span class="${downstreamStatus.className}">${downstreamStatus.icon}</span> ${summary.downstreamCount}</div><div class="summary-label">Downstream breaking changes</div><div class="summary-detail">Generated SDK contract changes</div></a>
 <a class="summary-card" href="#azure-compliance"><div class="summary-value"><span class="${complianceStatus(summary.complianceStatus).className}">${complianceStatus(summary.complianceStatus).icon}</span> ${summary.complianceIssueCount}</div><div class="summary-label">Azure Guidelines</div><div class="summary-detail">${summary.complianceIssueCount} guideline ${summary.complianceIssueCount === 1 ? "issue" : "issues"}<br>${escapeHtml(summary.complianceCoverageDetail)}</div></a>
 <a class="summary-card" href="#document-quality"><div class="summary-value"><span>i</span> Not assessed</div><div class="summary-label">Document Quality and Agent Friendliness</div><div class="summary-detail">${escapeHtml(dimensions.documentQuality.summary)}</div></a>
 <a class="summary-card" href="#semantic-intents"><div class="summary-value"><span>i</span> ${summary.semanticItems.length}</div><div class="summary-label">Semantic intents</div><div class="summary-detail">${summary.operationCount} operations<br>${summary.actionCounts.add} Added, ${summary.actionCounts.modify} Modified, ${summary.actionCounts.remove} Removed</div></a>
@@ -2334,11 +2225,7 @@ function renderCurrent(assessment) {
 <div class="container notice-body"><p>The TypeSpec Assessment Assistant is currently in preview. Its goal is to help service developers build confidence earlier in the TypeSpec authoring workflow by providing contextual analysis, risk identification, and guidance on potential downstream impacts.</p>
 <p>This report is intended as a review reference and learning aid only. It does not replace official ARM API, Azure API Stewardship, Azure Breaking Change reviews, and should not be treated as authoritative review feedback or approval for specification changes. Official validation tools, generated artifacts, and reviewer feedback remain the source of truth for merge and release decisions.</p></div></details>
 <main class="container">
-<section id="rest-breaking"><h2>REST breaking changes (${summary.restCount})</h2>${rest}</section>
-<section id="downstream-breaking"><h2>Downstream breaking changes (${summary.downstreamCount})</h2>${downstreamItems}</section>
-<section id="azure-compliance"><h2>Azure Guidelines (${summary.complianceIssueCount})</h2>${renderCompliance(dimensions.compliance, dimensions.semantic.items)}</section>
-<section id="document-quality"><h2>Document Quality and Agent Friendliness</h2><div class="panel not-assessed"><strong>Not assessed</strong> — ${escapeHtml(dimensions.documentQuality.summary)}</div></section>
-<section id="semantic-intents"><h2>Semantic intents (${dimensions.semantic.items.length})</h2>${semantic || '<div class="panel">No semantic review units.</div>'}</section>
+${report.html}
 <section id="appendix"><details class="dimension-details"><summary><h2>Appendix</h2></summary><div class="panel"><h3 id="potential-limits">Potential limits</h3>${assessment.blockers.length ? `<ul>${assessment.blockers.map((blocker) => `<li>${escapeHtml(blocker.message ?? blocker)}</li>`).join("")}</ul>` : "<p>None</p>"}
 <h3 id="projects-and-compiler-status">Projects and compiler status</h3><table><thead><tr><th>Project</th><th>Mode</th><th>Baseline commit@version</th><th>Target commit@version</th><th>Baseline AutoRest / TCGC</th><th>Target AutoRest / TCGC</th></tr></thead><tbody>${projects}</tbody></table>
 <p><strong>Pull request:</strong> ${pullRequestLink(assessment)}</p>
@@ -2359,7 +2246,18 @@ function revealHashTarget() {
 }
 window.addEventListener("hashchange", revealHashTarget);
 document.addEventListener("click", (event) => {
-  if (event.target instanceof Element && event.target.closest('a[href^="#"]')) {
+  if (event.target instanceof Element &&
+      event.target.closest(".report-card > summary .report-intent-relations") &&
+      !event.target.closest("a")) {
+    event.preventDefault();
+    return;
+  }
+  const link = event.target instanceof Element
+    ? event.target.closest('a[href^="#"]')
+    : null;
+  if (link) {
+    event.preventDefault();
+    location.hash = link.getAttribute("href");
     window.setTimeout(revealHashTarget);
   }
 });
@@ -2605,7 +2503,7 @@ function adaptLegacy(assessment) {
         status: dimensions.azureCompliance.status ?? "not-assessed",
         summary:
           dimensions.azureCompliance.reason ??
-          `${dimensions.azureCompliance.findings?.length ?? 0} historical compliance finding(s).`,
+          `${dimensions.azureCompliance.findings?.length ?? 0} historical Azure Guidelines finding(s).`,
         coverage: {
           semanticIntentCount: 0,
           assessedIntentCount: 0,
@@ -2620,7 +2518,7 @@ function adaptLegacy(assessment) {
           dimensions.azureCompliance.status === "not-assessed"
             ? [
                 dimensions.azureCompliance.reason ??
-                  "Historical compliance was not assessed.",
+                  "Historical Azure Guidelines were not assessed.",
               ]
             : [],
         legacyDocuments: dimensions.azureCompliance.documents ?? [],
@@ -2641,23 +2539,28 @@ function adaptLegacy(assessment) {
   };
 }
 
-export function renderAssessmentHtml(assessment) {
+export function renderAssessmentHtml(assessment, options = {}) {
   const errors = validateAssessment(assessment);
   if (errors.length) throw new Error(errors.join("\n"));
   return renderCurrent(
     assessment.schemaVersion === 1 ? assessment : adaptLegacy(assessment),
+    options,
   );
 }
 
 if (isMain(import.meta.url)) {
   runMain(async () => {
-    const [input, output] = process.argv.slice(2);
+    const args = parseArgs(process.argv.slice(2));
+    const [input, output] = args._ ?? [];
     if (!input || !output) {
       throw new Error(
-        "Usage: render-assessment-html.mjs <assessment.json> <assessment.html>",
+        "Usage: render-assessment-html.mjs <assessment.json> <assessment.html> [--downstream-input <downstream-breaking-input.json>] [--downstream-assessment <matching-assessment.json>]",
       );
     }
-    const html = renderAssessmentHtml(readJson(path.resolve(input)));
+    const html = renderAssessmentHtml(readJson(path.resolve(input)), {
+      downstreamInput: args.downstream_input ? readJson(path.resolve(args.downstream_input)) : undefined,
+      downstreamAssessment: args.downstream_assessment ? readJson(path.resolve(args.downstream_assessment)) : undefined,
+    });
     fs.mkdirSync(path.dirname(path.resolve(output)), { recursive: true });
     fs.writeFileSync(path.resolve(output), html);
     console.log(path.resolve(output));

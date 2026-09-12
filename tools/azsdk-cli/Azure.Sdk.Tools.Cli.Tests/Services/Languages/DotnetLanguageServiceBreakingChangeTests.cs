@@ -40,12 +40,12 @@ public class DotnetLanguageServiceBreakingChangeTests
     [TestCase("{}")]
     [TestCase("{\"packageOptions\":{}}")]
     [TestCase("{\"packageOptions\":{\"buildScript\":{\"command\":\"build\"}}}")]
-    public async Task PatternCatalog_DefaultsOnlyForAbsentProperty(string config)
+    public async Task PatternCatalog_AbsentPropertyDoesNotSelectDotnetDefault(string config)
     {
         await File.WriteAllTextAsync(_configPath, config);
 
         Assert.That(await _service.GetSdkBreakingPattern(_directory.DirectoryPath, CancellationToken.None),
-            Is.EqualTo("Default .NET patterns"));
+            Is.Empty);
     }
 
     [Test]
@@ -94,18 +94,10 @@ public class DotnetLanguageServiceBreakingChangeTests
             _service.GetSdkBreakingPattern(_directory.DirectoryPath, CancellationToken.None));
     }
 
-    [TestCase(false)]
-    [TestCase(true)]
-    public void PatternCatalog_MissingCatalogIsExplicitFailure(bool configured)
+    [Test]
+    public void PatternCatalog_MissingCatalogIsExplicitFailure()
     {
-        if (configured)
-        {
-            File.WriteAllText(_configPath, """{"packageOptions":{"sdkBreakingChangePatternFile":"missing.md"}}""");
-        }
-        else
-        {
-            File.Delete(_defaultCatalogPath);
-        }
+        File.WriteAllText(_configPath, """{"packageOptions":{"sdkBreakingChangePatternFile":"missing.md"}}""");
 
         Assert.ThrowsAsync<FileNotFoundException>(() =>
             _service.GetSdkBreakingPattern(_directory.DirectoryPath, CancellationToken.None));
@@ -114,6 +106,7 @@ public class DotnetLanguageServiceBreakingChangeTests
     [Test]
     public void PatternCatalog_EmptyCatalogIsExplicitFailure()
     {
+        File.WriteAllText(_configPath, """{"packageOptions":{"sdkBreakingChangePatternFile":"doc/dev/SDKBreakingChanges.md"}}""");
         File.WriteAllText(_defaultCatalogPath, "  \n");
 
         Assert.ThrowsAsync<InvalidOperationException>(() =>
@@ -130,17 +123,32 @@ public class DotnetLanguageServiceBreakingChangeTests
             _service.GetSdkBreakingPattern(_directory.DirectoryPath, cts.Token));
     }
 
-    [TestCase(SdkBreakingChangeMitigation.Generator)]
-    [TestCase(SdkBreakingChangeMitigation.ClientCustomization)]
-    [TestCase(SdkBreakingChangeMitigation.Manual)]
-    public void Classification_AcceptsEverySupportedRoute(SdkBreakingChangeMitigation route)
+    [Test]
+    public async Task PatternCatalog_CommonLanguageServiceUsesTheSameConfiguration()
+    {
+        await File.WriteAllTextAsync(_configPath, """{"packageOptions":{"sdkBreakingChangePatternFile":"custom.md"}}""");
+        await File.WriteAllTextAsync(Path.Combine(_directory.DirectoryPath, "custom.md"), "Language-owned patterns");
+        var configHelper = new SpecGenSdkConfigHelper(new TestLogger<SpecGenSdkConfigHelper>(), Mock.Of<IProcessHelper>());
+        var service = new Mock<LanguageService>(
+            Mock.Of<IProcessHelper>(), Mock.Of<IGitHelper>(), new TestLogger<LanguageService>(),
+            Mock.Of<ICommonValidationHelpers>(), Mock.Of<IPackageInfoHelper>(), Mock.Of<IFileHelper>(),
+            configHelper, Mock.Of<IChangelogHelper>()) { CallBase = true };
+
+        Assert.That(await service.Object.GetSdkBreakingPattern(_directory.DirectoryPath, CancellationToken.None),
+            Is.EqualTo(await _service.GetSdkBreakingPattern(_directory.DirectoryPath, CancellationToken.None)));
+    }
+
+    [TestCase(SdkBreakingChangeMitigationStrategy.Generator)]
+    [TestCase(SdkBreakingChangeMitigationStrategy.ClientCustomization)]
+    [TestCase(SdkBreakingChangeMitigationStrategy.Manual)]
+    public void Classification_AcceptsEverySupportedRoute(SdkBreakingChangeMitigationStrategy route)
     {
         Assert.That(_service.ValidateBreakingChangeClassification(Classification(route)), Is.Null);
     }
 
     [TestCase(null)]
-    [TestCase((SdkBreakingChangeMitigation)999)]
-    public void Classification_RejectsMissingOrUndefinedRoute(SdkBreakingChangeMitigation? route)
+    [TestCase((SdkBreakingChangeMitigationStrategy)999)]
+    public void Classification_RejectsMissingOrUndefinedRoute(SdkBreakingChangeMitigationStrategy? route)
     {
         Assert.That(_service.ValidateBreakingChangeClassification(Classification(route)),
             Does.Contain("supported mitigation route"));
@@ -153,7 +161,7 @@ public class DotnetLanguageServiceBreakingChangeTests
     [TestCase("mixed-routes")]
     public void Classification_RejectsIncompleteResults(string scenario)
     {
-        var result = Classification(SdkBreakingChangeMitigation.Manual);
+        var result = Classification(SdkBreakingChangeMitigationStrategy.Manual);
         switch (scenario)
         {
             case "false": result.HasBreakingChange = false; break;
@@ -174,12 +182,12 @@ public class DotnetLanguageServiceBreakingChangeTests
         Assert.That(otherLanguage.Object.ValidateBreakingChangeClassification(Classification(null)), Is.Null);
     }
 
-    private static SdkBreakingChangeDetectionResult Classification(SdkBreakingChangeMitigation? route) => new()
+    private static SdkBreakingChangeDetectionResult Classification(SdkBreakingChangeMitigationStrategy? route) => new()
     {
         HasBreakingChange = true,
         BreakingChanges =
         [
-            new SdkBreakingChange { BreakingChange = "Widget removed", Category = SdkBreakingChangeCategory.Unknown, Mitigation = route },
+            new SdkBreakingChange { BreakingChange = "Widget removed", Category = SdkBreakingChangeCategory.Unknown, MitigationStrategy = route },
         ],
     };
 

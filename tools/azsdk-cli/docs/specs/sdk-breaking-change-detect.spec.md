@@ -151,9 +151,10 @@ detector's evidence.
 Each classified entry contains `breakingChange`, `category`, and `originBreaks`
 (the exact original breaking entries). `resolution` is optional actionable
 guidance consumed by `azsdk_customized_code_update`. It is distinct from
-`mitigation`, an optional routing enum that is required for classified .NET
+`mitigationStrategy`, an optional routing enum that is required for classified .NET
 breaks: `generator`, `client customization`, or `manual`. Other languages can
-continue returning entries without `mitigation`.
+continue returning entries without `mitigationStrategy`. `category` always
+describes the root cause, not whether or how the change can be mitigated.
 
 **Classified .NET result:**
 
@@ -169,7 +170,7 @@ continue returning entries without `mitigation`.
             "breakingChange": "Member Azure.Example.Widget.Get(string) was removed",
             "category": "unknown",
             "resolution": "Review the removed member against the released API and TypeSpec source before selecting a fix; no safe mapping has been verified.",
-            "mitigation": "manual",
+            "mitigationStrategy": "manual",
             "originBreaks": [
                 "CP0002: Member Azure.Example.Widget.Get(string) removed"
             ]
@@ -215,7 +216,7 @@ existing `operation_status`. Other package operations omit this field.
 | `detected` | Raw breaking changes were detected; classification was skipped. |
 | `classified` | Breaking changes were classified and passed language-specific validation. |
 | `inconclusive` | A .NET report lacks `details` or a nonblank `details.baselineVersion`. Evidence is preserved, but classification is skipped. |
-| `blocked` | The required .NET detector configuration property is absent; detection did not run. |
+| `blocked` | No detector is configured and the language's default detection is unsupported. |
 | `failed` | Configuration, execution, report validation, catalog loading, or classification failed. |
 
 An inconclusive report retains `operation_status: Succeeded` and exit code 0
@@ -309,18 +310,27 @@ actual latest GA package (not merely the pinned `ApiCompatVersion`), and invokes
 ApiCompat independently of the normal build target. Existing rule settings,
 attribute exclusions, and approved centralized suppressions remain in effect.
 The detector never generates suppressions. .NET uses the same
-`RetrieveSdkChangeFromScriptAsync` path as other languages; `getSdkChangesScript`
-must be configured when retrieving a fresh report. Missing configuration is a
-blocker, not permission to fall back to a build or assume a clean comparison.
+`RetrieveSdkChangeFromScriptAsync` path as other languages. When
+`getSdkChangesScript` is absent, the tool invokes the language's default
+detection method. .NET has no separate default detector, so that common method
+returns an explicit unsupported (`blocked`) response, not a build or a clean
+comparison. A configured detector's failures are returned as failures and never
+trigger an unsupported fallback.
 A captured report can instead be supplied through `--sdk-change-json-file-path`
 when `--changes-only` is not set.
 
-For .NET classification, an absent `sdkBreakingChangePatternFile` property
-defaults to `doc/dev/SDKBreakingChanges.md` only after successfully reading and
-parsing the repository configuration. A missing/unreadable configuration file,
-malformed JSON, or a blank/null/nonstring configured catalog value fails without
-falling back. A missing, unreadable, or empty selected catalog also fails.
-`--changes-only` bypasses catalog loading and classification.
+Like other languages, .NET loads its Markdown pattern catalog through the common
+`LanguageService.GetSdkBreakingPattern` method and the configured
+`sdkBreakingChangePatternFile` property. There is no .NET-specific default path.
+The catalog follows [the shared pattern design in #15559](https://github.com/Azure/azure-sdk-tools/issues/15559):
+SDK-change pattern, optional TypeSpec pattern, breaking change, root-cause reason,
+and resolution. The classifier uses that catalog for categories and resolution
+guidance rather than embedding mitigation tool instructions in its prompt.
+
+An absent catalog configuration prevents classification, while preserving the
+raw detector evidence. Malformed configuration, unreadable files, and empty
+catalogs fail explicitly. `--changes-only` bypasses catalog loading and
+classification.
 
 Native extraction requires current intermediate assemblies and matching
 portable/embedded PDBs for each evaluated target framework. The PowerShell host
@@ -330,11 +340,14 @@ must support the selected SDK's MSBuild reader (.NET 10 SDK requires PowerShell
 the report. Baseline restore honors the SDK repository's `NuGet.Config`.
 
 The existing `changes` and `hasBreakingChange` fields remain unchanged.
-.NET also returns optional `details` containing the baseline version, structured
-API changes, original diagnostics, and limitations. These are native detector
-observations, not LLM classifications or instructions for applying a fix.
-`DotnetSdkApiChange` models each .NET API observation; its JSON shape remains
-language-neutral so existing report consumers do not need to change:
+Optional `details` uses a language-neutral `SdkChangeDetails` metadata container.
+Unknown language fields and shapes round-trip without being interpreted as
+.NET metadata or requiring a type discriminator in the report.
+`DotnetSdkChangeDetails` supplies the typed .NET view: baseline version, API
+changes (`DotnetSdkApiChange`), original diagnostics, and limitations. The tool
+interprets this view only for a .NET package. These are native observations,
+not LLM classifications or instructions for applying a fix. The existing JSON
+shape is unchanged:
 
 ```json
 {
@@ -365,7 +378,7 @@ flag; the tool preserves the report and does not classify it. This distinguishes
 missing baseline provenance from a compatibility pass. Invalid reports, missing
 references, and failed native invocations remain errors.
 
-Classified .NET changes include `mitigation`: `generator`, `client customization`,
+Classified .NET changes include `mitigationStrategy`: `generator`, `client customization`,
 or `manual`. Generator routing requires a verified deterministic pattern and
 uses the .NET repository's existing `mitigate-breaking-changes` skill. Client
 customizations use the current `azsdk_customized_code_update` tool (formerly
@@ -374,9 +387,15 @@ covers both TypeSpec client-layer customization (`SpecInputs`) and handwritten
 SDK custom code (`CustomCode`), never direct edits to generated files. `All`
 requires authorization for both surfaces; `SpecChangeRequired` is a handoff,
 not permission to widen scope. The `resolution` describes the concrete work,
-while `mitigation` selects who or what should perform it. Unknown
+while `mitigationStrategy` selects who or what should perform it. Unknown
 causes, ambiguous renames, and unsupported behavioral changes require manual
 judgment. Management-specific patterns must not be applied to data-plane SDKs.
+
+A verified removal/addition mapping can be classified as a rename. When that
+mapping is uncertain, the original violations remain separate, but an
+independently established root cause (such as an emitter or spec change) still
+determines `category`. An uncertain rename or manual strategy does not by itself
+make the root cause `unknown`.
 
 The shared `azsdk-common-sdk-breaking-change` skill and its workflow handoffs
 are deferred to [PR #16634](https://github.com/Azure/azure-sdk-tools/pull/16634).
@@ -492,7 +511,7 @@ SDK changes
             "breakingChange": "Member Azure.Example.Widget.Get(string) was removed",
             "category": "unknown",
             "resolution": "Obtain the source mapping and owner decision before applying a mitigation.",
-            "mitigation": "manual",
+            "mitigationStrategy": "manual",
             "originBreaks": [
                 "CP0002: Member Azure.Example.Widget.Get(string) removed"
             ]

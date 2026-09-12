@@ -25,10 +25,10 @@ public class DotnetBreakingChangeClassificationTests
             _agentRunner.Object, new TestLogger<SdkBreakingChangeClassificationService>());
     }
 
-    [TestCase("generator", SdkBreakingChangeMitigation.Generator)]
-    [TestCase("client customization", SdkBreakingChangeMitigation.ClientCustomization)]
-    [TestCase("manual", SdkBreakingChangeMitigation.Manual)]
-    public async Task Classify_PreservesSupportedMitigationRoute(string route, SdkBreakingChangeMitigation expected)
+    [TestCase("generator", SdkBreakingChangeMitigationStrategy.Generator)]
+    [TestCase("client customization", SdkBreakingChangeMitigationStrategy.ClientCustomization)]
+    [TestCase("manual", SdkBreakingChangeMitigationStrategy.Manual)]
+    public async Task Classify_PreservesSupportedMitigationRoute(string route, SdkBreakingChangeMitigationStrategy expected)
     {
         ConfigureResponse($$"""
             {
@@ -37,7 +37,7 @@ public class DotnetBreakingChangeClassificationTests
                     "breakingChange": "Widget.Name changed",
                     "category": "emitter change",
                     "resolution": "Follow the verified pattern and request user selection.",
-                    "mitigation": "{{route}}",
+                    "mitigationStrategy": "{{route}}",
                     "originBreaks": ["CP0002: Widget.Name was removed"]
                 }]
             }
@@ -47,13 +47,13 @@ public class DotnetBreakingChangeClassificationTests
             "### Breaking Changes\n- CP0002: Widget.Name was removed", "Verified patterns", "DotNet", null, CancellationToken.None);
 
         Assert.That(result, Is.Not.Null);
-        Assert.That(result!.BreakingChanges.Single().Mitigation, Is.EqualTo(expected));
+        Assert.That(result!.BreakingChanges.Single().MitigationStrategy, Is.EqualTo(expected));
         Assert.That(result.BreakingChanges.Single().OriginBreaks, Is.EqualTo(new[] { "CP0002: Widget.Name was removed" }));
-        Assert.That(JsonSerializer.Serialize(result), Does.Contain($"\"mitigation\":\"{route}\""));
+        Assert.That(JsonSerializer.Serialize(result), Does.Contain($"\"mitigationStrategy\":\"{route}\""));
     }
 
-    [TestCase(", \"mitigation\": \"suppress\"")]
-    [TestCase(", \"mitigation\": 999")]
+    [TestCase(", \"mitigationStrategy\": \"suppress\"")]
+    [TestCase(", \"mitigationStrategy\": 999")]
     public async Task Classify_RejectsUnparseableRoute(string mitigationProperty)
     {
         ConfigureResponse($$"""
@@ -74,8 +74,8 @@ public class DotnetBreakingChangeClassificationTests
     }
 
     [TestCase("")]
-    [TestCase(", \"mitigation\": null")]
-    [TestCase(", \"mitigation\": \"999\"")]
+    [TestCase(", \"mitigationStrategy\": null")]
+    [TestCase(", \"mitigationStrategy\": \"999\"")]
     public async Task Classify_LeavesLanguageSpecificValidationToLanguageService(string mitigationProperty)
     {
         ConfigureResponse($$"""
@@ -113,8 +113,8 @@ public class DotnetBreakingChangeClassificationTests
             "### Breaking Changes\n- Widget removed", "Patterns", language, null, CancellationToken.None);
 
         Assert.That(result, Is.Not.Null);
-        Assert.That(result!.BreakingChanges.Single().Mitigation, Is.Null);
-        Assert.That(JsonSerializer.Serialize(result), Does.Not.Contain("\"mitigation\""));
+        Assert.That(result!.BreakingChanges.Single().MitigationStrategy, Is.Null);
+        Assert.That(JsonSerializer.Serialize(result), Does.Not.Contain("\"mitigationStrategy\""));
     }
 
     [TestCase(".NET")]
@@ -132,8 +132,12 @@ public class DotnetBreakingChangeClassificationTests
             Assert.That(prompt, Does.Contain("not proof of a rename"));
             Assert.That(prompt, Does.Not.Contain("treat the combined evidence as a likely model rename"));
             Assert.That(prompt, Does.Contain("reverse-comparison diagnostics are supplementary evidence"));
-            Assert.That(prompt, Does.Contain("mitigate-breaking-changes skill"));
-            Assert.That(prompt, Does.Contain("azsdk_customized_code_update"));
+            Assert.That(prompt, Does.Not.Contain("mitigate-breaking-changes skill"));
+            Assert.That(prompt, Does.Not.Contain("azsdk_customized_code_update"));
+            Assert.That(prompt, Does.Contain("Select the mitigation strategy and resolution from the matched SDK pattern catalog"));
+            Assert.That(prompt, Does.Contain("A rename can be classified when"));
+            Assert.That(prompt, Does.Contain("Category describes the root cause, independently of rename confidence"));
+            Assert.That(prompt, Does.Not.Contain("otherwise preserve the original violations with category unknown"));
             Assert.That(prompt, Does.Contain("Use \"manual\" for ambiguous mappings"));
             Assert.That(prompt, Does.Contain("Never apply fixes, edit generated code, add suppressions"));
             Assert.That(prompt, Does.Contain("Original ApiCompat diagnostics"));
@@ -149,6 +153,40 @@ public class DotnetBreakingChangeClassificationTests
         Assert.That(prompt, Does.Not.Contain(".NET compatibility and mitigation"));
         Assert.That(prompt, Does.Not.Contain("mitigate-breaking-changes skill"));
         Assert.That(prompt, Does.Contain("treat the combined evidence as a likely model rename"));
+    }
+
+    [TestCase("Go")]
+    [TestCase("DotNet")]
+    public void Prompt_ExplainsValidFieldValuesOutsideTheJsonExample(string language)
+    {
+        var prompt = new SdkBreakingChangeClassificationTemplate("Patterns", "Changes", language, null).BuildPrompt();
+
+        Assert.That(prompt, Does.Contain("hasBreakingChange is a Boolean: true when breaking changes exist, otherwise false"));
+        Assert.That(prompt, Does.Contain("breakingChanges is an array"));
+        Assert.That(prompt, Does.Contain("category explains why the change occurred"));
+        Assert.That(prompt, Does.Contain("\"emitter change\", \"conversion-by design\", \"conversion-need resolve\", \"spec change\", or \"unknown\""));
+        Assert.That(prompt, Does.Contain("mitigationStrategy is separate from category"));
+    }
+
+    [TestCase("emitter change", "manual", SdkBreakingChangeCategory.EmitterChange)]
+    [TestCase("spec change", "client customization", SdkBreakingChangeCategory.SpecChange)]
+    public async Task Classify_PreservesRootCauseIndependentlyOfStrategy(string category, string strategy, SdkBreakingChangeCategory expected)
+    {
+        ConfigureResponse($$"""
+            {"hasBreakingChange":true,"breakingChanges":[{
+                "breakingChange":"Widget removed; mapping is not verified",
+                "category":"{{category}}","mitigationStrategy":"{{strategy}}",
+                "resolution":"Catalog guidance","originBreaks":["Widget removed"]
+            }]}
+            """);
+
+        var result = await _service.ClassifySdkBreakingChangesAsync("Changes", "Patterns", "DotNet", null, CancellationToken.None);
+
+        Assert.That(result!.BreakingChanges.Single().Category, Is.EqualTo(expected));
+        Assert.That(result.BreakingChanges.Single().Resolution, Is.EqualTo("Catalog guidance"));
+        var json = JsonSerializer.SerializeToElement(result.BreakingChanges.Single());
+        Assert.That(json.GetProperty("mitigationStrategy").GetString(), Is.EqualTo(strategy));
+        Assert.That(json.TryGetProperty("mitigation", out _), Is.False);
     }
 
     [TestCase(".NET", true)]
@@ -167,7 +205,7 @@ public class DotnetBreakingChangeClassificationTests
         var example = prompt[start..end].Trim();
 
         using var document = JsonDocument.Parse(example);
-        Assert.That(document.RootElement.GetProperty("breakingChanges")[0].TryGetProperty("mitigation", out _),
+        Assert.That(document.RootElement.GetProperty("breakingChanges")[0].TryGetProperty("mitigationStrategy", out _),
             Is.EqualTo(requiresRoute));
         var classification = JsonSerializer.Deserialize<SdkBreakingChangeDetectionResult>(example)!;
         var validator = requiresRoute

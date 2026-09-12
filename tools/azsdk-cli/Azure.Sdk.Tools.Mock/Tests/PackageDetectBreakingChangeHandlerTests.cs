@@ -43,9 +43,9 @@ public class PackageDetectBreakingChangeHandlerTests
         });
         if (language == SdkLanguage.DotNet)
         {
-            Assert.That(result.Details!.BaselineVersion, Is.EqualTo("1.0.0"));
-            Assert.That(result.Details.ApiChanges.Select(change => change.Kind), Is.EqualTo(new[] { "removed", "added" }));
-            Assert.That(result.Details.ApiChanges.Select(change => change.IsBreaking), Is.EqualTo(new[] { true, false }));
+            Assert.That(GetDotnetDetails(result).BaselineVersion, Is.EqualTo("1.0.0"));
+            Assert.That(GetDotnetDetails(result).ApiChanges.Select(change => change.Kind), Is.EqualTo(new[] { "removed", "added" }));
+            Assert.That(GetDotnetDetails(result).ApiChanges.Select(change => change.IsBreaking), Is.EqualTo(new[] { true, false }));
         }
         else
         {
@@ -57,7 +57,7 @@ public class PackageDetectBreakingChangeHandlerTests
             Assert.That(breakingChange.Category, Is.EqualTo(SdkBreakingChangeCategory.Unknown));
             Assert.That(breakingChange.Resolution, Does.Contain("not a proven rename"));
             Assert.That(result.SdkChangeMD, Does.Contain(breakingChange.OriginBreaks!.Single()));
-            Assert.That(breakingChange.Mitigation, Is.EqualTo(language == SdkLanguage.DotNet ? SdkBreakingChangeMitigation.Manual : null));
+            Assert.That(breakingChange.MitigationStrategy, Is.EqualTo(language == SdkLanguage.DotNet ? SdkBreakingChangeMitigationStrategy.Manual : null));
         });
     }
 
@@ -78,7 +78,7 @@ public class PackageDetectBreakingChangeHandlerTests
             Assert.That(result.SdkChangeMD, Does.Contain("### Features Added").And.Not.Contain("### Breaking Changes"));
             if (response.Language == SdkLanguage.DotNet)
             {
-                Assert.That(result.Details!.ApiChanges.Single().Kind, Is.EqualTo("added"));
+                Assert.That(GetDotnetDetails(result).ApiChanges.Single().Kind, Is.EqualTo("added"));
             }
         });
     }
@@ -98,8 +98,8 @@ public class PackageDetectBreakingChangeHandlerTests
             Assert.That(response.BreakingChangeStatus, Is.EqualTo(SdkBreakingChangeStatus.Detected));
             Assert.That(result.HasBreakingChange, Is.True);
             Assert.That(result.BreakingChanges, Is.Empty);
-            Assert.That(result.Details!.ApiChanges, Has.Count.EqualTo(2));
-            Assert.That(result.Details.Diagnostics.Single(), Does.Contain("CP0002"));
+            Assert.That(GetDotnetDetails(result).ApiChanges, Has.Count.EqualTo(2));
+            Assert.That(GetDotnetDetails(result).Diagnostics.Single(), Does.Contain("CP0002"));
             Assert.That(response.Message, Does.Contain("without classification"));
         });
     }
@@ -112,7 +112,7 @@ public class PackageDetectBreakingChangeHandlerTests
 
         var response = Invoke(ToWireArguments(arguments));
 
-        Assert.That(GetResult(response).BreakingChanges.Single().Mitigation, Is.EqualTo(SdkBreakingChangeMitigation.Manual));
+        Assert.That(GetResult(response).BreakingChanges.Single().MitigationStrategy, Is.EqualTo(SdkBreakingChangeMitigationStrategy.Manual));
     }
 
     [TestCase(false)]
@@ -126,8 +126,8 @@ public class PackageDetectBreakingChangeHandlerTests
         {
             Assert.That(response.Message, Does.Contain("Compatibility not evaluated"));
             Assert.That(response.BreakingChangeStatus, Is.EqualTo(SdkBreakingChangeStatus.Inconclusive));
-            Assert.That(result.Details!.BaselineVersion, Is.Null);
-            Assert.That(result.Details.Limitations.Single(), Does.Contain("no GA baseline"));
+            Assert.That(GetDotnetDetails(result).BaselineVersion, Is.Null);
+            Assert.That(GetDotnetDetails(result).Limitations.Single(), Does.Contain("no GA baseline"));
             Assert.That(result.BreakingChanges, Is.Empty);
         });
     }
@@ -146,8 +146,8 @@ public class PackageDetectBreakingChangeHandlerTests
             Assert.That(response.ResponseErrors, Is.Not.Empty);
             Assert.That(result.HasBreakingChange, Is.True);
             Assert.That(result.SdkChangeMD, Does.Contain("CP0002").And.Contain("DisplayName"));
-            Assert.That(result.Details!.ApiChanges, Has.Count.EqualTo(2));
-            Assert.That(result.Details.Diagnostics.Single(), Does.Contain("CP0002"));
+            Assert.That(GetDotnetDetails(result).ApiChanges, Has.Count.EqualTo(2));
+            Assert.That(GetDotnetDetails(result).Diagnostics.Single(), Does.Contain("CP0002"));
             Assert.That(result.BreakingChanges, Is.Empty);
         });
     }
@@ -275,15 +275,15 @@ public class PackageDetectBreakingChangeHandlerTests
     public void Handle_DetailsDoNotReplacePrimaryCompatibilityFieldsOrLeakAcrossCalls()
     {
         var first = GetResult(Invoke("Azure.Contoso.Widget"));
-        first.Details!.ApiChanges.ForEach(change => change.IsBreaking = false);
-        first.Details.Diagnostics.Clear();
+        GetDotnetDetails(first).ApiChanges.ForEach(change => change.IsBreaking = false);
+        GetDotnetDetails(first).Diagnostics.Clear();
 
         Assert.That(first.HasBreakingChange, Is.True);
         var second = GetResult(Invoke("Azure.Contoso.Widget"));
         Assert.Multiple(() =>
         {
-            Assert.That(second.Details!.ApiChanges[0].IsBreaking, Is.True);
-            Assert.That(second.Details.Diagnostics, Is.Not.Empty);
+            Assert.That(GetDotnetDetails(second).ApiChanges[0].IsBreaking, Is.True);
+            Assert.That(GetDotnetDetails(second).Diagnostics, Is.Not.Empty);
             Assert.That(second.SdkChangeMD, Is.EqualTo(first.SdkChangeMD));
         });
     }
@@ -302,13 +302,13 @@ public class PackageDetectBreakingChangeHandlerTests
             Assert.That(result.GetProperty("changes").ValueKind, Is.EqualTo(JsonValueKind.String));
             Assert.That(result.GetProperty("hasBreakingChange").GetBoolean(), Is.True);
             Assert.That(json.GetProperty("breaking_change_status").GetString(), Is.EqualTo("classified"));
-            Assert.That(result.GetProperty("breakingChanges")[0].TryGetProperty("mitigation", out _), Is.EqualTo(hasMitigation));
+            Assert.That(result.GetProperty("breakingChanges")[0].TryGetProperty("mitigationStrategy", out _), Is.EqualTo(hasMitigation));
         });
         if (hasMitigation)
         {
             Assert.That(result.GetProperty("details").GetProperty("baselineVersion").GetString(), Is.EqualTo("1.0.0"));
             Assert.That(result.GetProperty("details").GetProperty("apiChanges").GetArrayLength(), Is.EqualTo(2));
-            Assert.That(result.GetProperty("breakingChanges")[0].GetProperty("mitigation").GetString(), Is.EqualTo("manual"));
+            Assert.That(result.GetProperty("breakingChanges")[0].GetProperty("mitigationStrategy").GetString(), Is.EqualTo("manual"));
         }
         else
         {
@@ -378,5 +378,11 @@ public class PackageDetectBreakingChangeHandlerTests
     {
         Assert.That(response.Result, Is.TypeOf<SdkBreakingChangeDetectionResult>());
         return (SdkBreakingChangeDetectionResult)response.Result!;
+    }
+
+    private static DotnetSdkChangeDetails GetDotnetDetails(SdkBreakingChangeDetectionResult result)
+    {
+        Assert.That(result.Details, Is.TypeOf<DotnetSdkChangeDetails>());
+        return (DotnetSdkChangeDetails)result.Details!;
     }
 }

@@ -26,7 +26,7 @@ namespace Azure.Sdk.Tools.Cli.Models.SdkBreakingChangeDetection
 
         /// <summary>
         /// Actionable instructions for resolving the breaking change, if available.
-        /// Retained for customization consumers; unlike Mitigation, this describes what to do.
+        /// Retained for customization consumers; unlike MitigationStrategy, this describes what to do.
         /// </summary>
         [JsonPropertyName("resolution")]
         public string? Resolution { get; set; }
@@ -37,9 +37,9 @@ namespace Azure.Sdk.Tools.Cli.Models.SdkBreakingChangeDetection
         /// code, never generated code.
         /// Detection and classification never apply the mitigation themselves.
         /// </summary>
-        [JsonPropertyName("mitigation")]
+        [JsonPropertyName("mitigationStrategy")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public SdkBreakingChangeMitigation? Mitigation { get; set; }
+        public SdkBreakingChangeMitigationStrategy? MitigationStrategy { get; set; }
 
         /// <summary>
         /// The original breaking changes that this change is related to, if any.

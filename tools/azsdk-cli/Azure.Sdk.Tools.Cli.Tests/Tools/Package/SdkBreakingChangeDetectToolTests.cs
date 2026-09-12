@@ -120,14 +120,14 @@ public class SdkBreakingChangeDetectToolTests
             {
                 HasBreakingChange = true,
                 SdkChangeMD = "Untrusted rewritten evidence",
-                Details = new SdkChangeDetails { BaselineVersion = "invented" },
+                Details = new DotnetSdkChangeDetails { BaselineVersion = "invented" },
                 BreakingChanges =
                 [
                     new SdkBreakingChange
                     {
                         BreakingChange = "Widget.Name was removed; a possible rename requires review.",
                         Category = SdkBreakingChangeCategory.Unknown,
-                        Mitigation = SdkBreakingChangeMitigation.Manual,
+                        MitigationStrategy = SdkBreakingChangeMitigationStrategy.Manual,
                         OriginBreaks = ["CP0002: Member 'Azure.Test.Widget.Name' was removed."],
                     },
                 ],
@@ -166,7 +166,7 @@ public class SdkBreakingChangeDetectToolTests
             {
                 HasBreakingChange = breaking,
                 SdkChangeMD = "No GA release.",
-                Details = new SdkChangeDetails { Limitations = ["No GA baseline is available."] },
+                Details = new DotnetSdkChangeDetails { Limitations = ["No GA baseline is available."] },
             }));
 
         var response = await _tool.DetectSDKBreakingChangesAsync(_packagePath, changesOnly: changesOnly);
@@ -175,7 +175,7 @@ public class SdkBreakingChangeDetectToolTests
         Assert.That(response.BreakingChangeStatus, Is.EqualTo(SdkBreakingChangeStatus.Inconclusive));
         Assert.That(GetResult(response).HasBreakingChange, Is.EqualTo(breaking));
         Assert.That(response.Message, Does.Contain("compatibility was not evaluated"));
-        Assert.That(GetResult(response).Details!.Limitations, Is.Not.Empty);
+        Assert.That(JsonSerializer.SerializeToElement(GetResult(response).Details).GetProperty("limitations").GetArrayLength(), Is.GreaterThan(0));
         _classifier.VerifyNoOtherCalls();
     }
 
@@ -369,16 +369,23 @@ public class SdkBreakingChangeDetectToolTests
             It.IsAny<PackageInfo?>(), It.IsAny<string>(), It.IsAny<string[]?>()), Times.Once);
     }
 
-    [Test]
-    public async Task MissingDotnetDetectorConfiguration_IsBlockedWithoutDefaultBuild()
+    [TestCase(SdkLanguage.DotNet, "azure-sdk-for-net")]
+    [TestCase(SdkLanguage.Go, "azure-sdk-for-go")]
+    [TestCase(SdkLanguage.Java, "azure-sdk-for-java")]
+    [TestCase(SdkLanguage.JavaScript, "azure-sdk-for-js")]
+    [TestCase(SdkLanguage.Python, "azure-sdk-for-python")]
+    public async Task MissingDetectorConfiguration_UsesCommonUnsupportedResponse(SdkLanguage language, string repository)
     {
+        _languageService.SetupGet(s => s.Language).Returns(language);
+        _gitHelper.Setup(g => g.GetRepoNameAsync(_packagePath, It.IsAny<CancellationToken>())).ReturnsAsync(repository);
+
         var response = await _tool.DetectSDKBreakingChangesAsync(_packagePath);
 
         Assert.That(response.ExitCode, Is.Not.Zero);
         Assert.That(response.BreakingChangeStatus, Is.EqualTo(SdkBreakingChangeStatus.Blocked));
-        Assert.That(string.Join("\n", response.ResponseErrors), Does.Contain("packageOptions.getSdkChangesScript"));
+        Assert.That(response.ResponseError, Does.Contain("packageOptions.getSdkChangesScript"));
         Assert.That(response.Result, Is.Not.InstanceOf<SdkBreakingChangeDetectionResult>());
-        _languageService.Verify(s => s.DetectSdkBreakingChangeAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        _languageService.Verify(s => s.DetectSdkBreakingChangeAsync(_packagePath, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test]
@@ -432,8 +439,8 @@ public class SdkBreakingChangeDetectToolTests
     }
 
     [TestCase(null)]
-    [TestCase((SdkBreakingChangeMitigation)999)]
-    public async Task DotnetClassification_RejectsInvalidRoutesAndPreservesRawEvidence(SdkBreakingChangeMitigation? mitigation)
+    [TestCase((SdkBreakingChangeMitigationStrategy)999)]
+    public async Task DotnetClassification_RejectsInvalidRoutesAndPreservesRawEvidence(SdkBreakingChangeMitigationStrategy? mitigation)
     {
         ConfigureDetectorReport(true);
         ConfigureClassification(mitigation);
@@ -447,10 +454,10 @@ public class SdkBreakingChangeDetectToolTests
         Assert.That(GetResult(response).BreakingChanges, Is.Empty);
     }
 
-    [TestCase(SdkBreakingChangeMitigation.Generator)]
-    [TestCase(SdkBreakingChangeMitigation.ClientCustomization)]
-    [TestCase(SdkBreakingChangeMitigation.Manual)]
-    public async Task DotnetClassification_AcceptsValidRoutes(SdkBreakingChangeMitigation route)
+    [TestCase(SdkBreakingChangeMitigationStrategy.Generator)]
+    [TestCase(SdkBreakingChangeMitigationStrategy.ClientCustomization)]
+    [TestCase(SdkBreakingChangeMitigationStrategy.Manual)]
+    public async Task DotnetClassification_AcceptsValidRoutes(SdkBreakingChangeMitigationStrategy route)
     {
         ConfigureDetectorReport(true);
         ConfigureClassification(route);
@@ -458,7 +465,7 @@ public class SdkBreakingChangeDetectToolTests
         var response = await _tool.DetectSDKBreakingChangesAsync(_packagePath);
 
         Assert.That(response.BreakingChangeStatus, Is.EqualTo(SdkBreakingChangeStatus.Classified));
-        Assert.That(GetResult(response).BreakingChanges.Single().Mitigation, Is.EqualTo(route));
+        Assert.That(GetResult(response).BreakingChanges.Single().MitigationStrategy, Is.EqualTo(route));
     }
 
     [TestCase(SdkLanguage.Go, "azure-sdk-for-go")]
@@ -476,14 +483,14 @@ public class SdkBreakingChangeDetectToolTests
         var response = await _tool.DetectSDKBreakingChangesAsync(_packagePath);
 
         Assert.That(response.BreakingChangeStatus, Is.EqualTo(SdkBreakingChangeStatus.Classified));
-        Assert.That(GetResult(response).BreakingChanges.Single().Mitigation, Is.Null);
+        Assert.That(GetResult(response).BreakingChanges.Single().MitigationStrategy, Is.Null);
     }
 
     [Test]
     public async Task Classification_UsesLanguageValidationExtensionPoint()
     {
         ConfigureDetectorReport(true);
-        ConfigureClassification(SdkBreakingChangeMitigation.Manual);
+        ConfigureClassification(SdkBreakingChangeMitigationStrategy.Manual);
         _languageService.Setup(s => s.ValidateBreakingChangeClassification(It.IsAny<SdkBreakingChangeDetectionResult>()))
             .Returns("Language-specific classification requirement failed.");
 
@@ -546,7 +553,7 @@ public class SdkBreakingChangeDetectToolTests
         ConfigureScript(JsonSerializer.Serialize(new SdkChange
         {
             SdkChangeMD = Additions,
-            Details = new SdkChangeDetails { BaselineVersion = "1.0.0" },
+            Details = new DotnetSdkChangeDetails { BaselineVersion = "1.0.0" },
         }), contentType: contentType);
 
         var response = await _tool.DetectSDKBreakingChangesAsync(_packagePath);
@@ -585,6 +592,55 @@ public class SdkBreakingChangeDetectToolTests
 
         Assert.That(response.BreakingChangeStatus, Is.EqualTo(SdkBreakingChangeStatus.Failed));
         _languageService.Verify(s => s.DetectSdkBreakingChangeAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        _classifier.VerifyNoOtherCalls();
+    }
+
+    [TestCase("single")]
+    [TestCase("multiple")]
+    [TestCase("exit-code")]
+    [TestCase("null")]
+    public async Task ScriptFailure_ReturnsFailureForErrorsEvenWithExplicitZeroExitCode(string scenario)
+    {
+        ConfigureDetectorReport(false);
+        _configHelper.Setup(c => c.ExecuteProcessAsync(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>(),
+                It.IsAny<PackageInfo?>(), It.IsAny<string>(), It.IsAny<string[]?>()))
+            .ReturnsAsync(() =>
+            {
+                File.WriteAllText(_scriptOutputPath!, """{"changes":"Stale output","hasBreakingChange":false}""");
+                return scenario switch
+                {
+                    "single" => new PackageOperationResponse { ExitCode = 0, ResponseError = "Primary failure" },
+                    "multiple" => new PackageOperationResponse { ExitCode = 0, ResponseErrors = ["Primary failure"] },
+                    "exit-code" => new PackageOperationResponse { ExitCode = 2 },
+                    _ => null!,
+                };
+            });
+
+        var response = await _tool.DetectSDKBreakingChangesAsync(_packagePath);
+
+        Assert.That(response.OperationStatus, Is.EqualTo(Status.Failed));
+        Assert.That(response.BreakingChangeStatus, Is.EqualTo(SdkBreakingChangeStatus.Failed));
+        Assert.That(response.Result, Is.Not.InstanceOf<SdkBreakingChangeDetectionResult>());
+        Assert.That(response.ResponseErrors.Single(), Does.StartWith("Failed to retrieve SDK changes"));
+        Assert.That(File.Exists(_scriptOutputPath), Is.False);
+        _languageService.Verify(s => s.DetectSdkBreakingChangeAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        _classifier.VerifyNoOtherCalls();
+    }
+
+    [TestCase("")]
+    [TestCase(" \n")]
+    public async Task MissingCatalogConfiguration_PreservesEvidenceWithoutInvokingClassifier(string catalog)
+    {
+        ConfigureDetectorReport(true);
+        _languageService.Setup(s => s.GetSdkBreakingPattern(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(catalog);
+
+        var response = await _tool.DetectSDKBreakingChangesAsync(_packagePath);
+
+        Assert.That(response.BreakingChangeStatus, Is.EqualTo(SdkBreakingChangeStatus.Failed));
+        Assert.That(response.ResponseErrors.Single(), Does.Contain("sdkBreakingChangePatternFile"));
+        Assert.That(GetResult(response).HasBreakingChange, Is.True);
+        Assert.That(GetResult(response).SdkChangeMD, Is.EqualTo(BreakingChanges));
         _classifier.VerifyNoOtherCalls();
     }
 
@@ -686,20 +742,20 @@ public class SdkBreakingChangeDetectToolTests
         Assert.That(JsonSerializer.SerializeToElement(new PackageOperationResponse()).TryGetProperty("breaking_change_status", out _), Is.False);
     }
 
-    private void ConfigureClassification(SdkBreakingChangeMitigation? mitigation)
+    private void ConfigureClassification(SdkBreakingChangeMitigationStrategy? mitigation)
     {
         _classifier.Setup(c => c.ClassifySdkBreakingChangesAsync(It.IsAny<string>(), It.IsAny<string>(),
                 It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new SdkBreakingChangeDetectionResult
             {
                 HasBreakingChange = true,
-                BreakingChanges = [new SdkBreakingChange { BreakingChange = "Widget removed", Category = SdkBreakingChangeCategory.Unknown, Mitigation = mitigation }],
+                BreakingChanges = [new SdkBreakingChange { BreakingChange = "Widget removed", Category = SdkBreakingChangeCategory.Unknown, MitigationStrategy = mitigation }],
             });
     }
 
     private void ConfigureDetectorReport(bool hasBreakingChange)
     {
-        _details = new SdkChangeDetails
+        _details = new DotnetSdkChangeDetails
         {
             BaselineVersion = "1.2.3",
             ApiChanges =

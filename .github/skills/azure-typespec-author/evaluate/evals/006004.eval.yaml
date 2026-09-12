@@ -4,7 +4,7 @@ version: '1.0'
 type: capability
 area: "dataplane"
 environment: azsdk-mcp
-config:
+defaults:
   runs: 1
   timeout: 660s
   model: gpt-5.6-sol
@@ -51,6 +51,10 @@ stimuli:
   prompt: '@azure-typespec-author Add a Widgets interface with full CRUD and list operations for the WidgetSuite resource. The interface should include operations to create or update, get, list, and delete
     widgets. Use the appropriate Azure.Core resource operation templates.'
   environment: *id001
+  rubric: &shared_rubric
+  - A Widgets interface is defined with get/read, create-or-update, list, and delete operations for WidgetSuite.
+  - Each operation uses the appropriate Azure.Core resource operation template for its behavior.
+  - Changes are limited to the requested interface and operations and contain no unrelated edits.
   graders:
   - *id002
   - type: run-command
@@ -107,6 +111,7 @@ stimuli:
   prompt: Add a Widgets interface with full CRUD and list operations for the WidgetSuite resource. The interface should include operations to create or update, get, list, and delete widgets. Use the appropriate
     Azure.Core resource operation templates.
   environment: *id001
+  rubric: *shared_rubric
   graders:
   - type: tool-calls
     config:

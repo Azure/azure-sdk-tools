@@ -8,7 +8,7 @@ namespace Azure.Sdk.Tools.Cli.Prompts.Templates
     public class SdkBreakingChangeClassificationTemplate : BasePromptTemplate
     {
         public override string TemplateId => "sdk-breaking-change-classification";
-        public override string Version => "1.2.0";
+        public override string Version => "1.3.0";
         public override string Description => "Classify SDK Breaking Changes";
 
         private readonly string _sdkBreakingPatternContent;
@@ -58,11 +58,12 @@ namespace Azure.Sdk.Tools.Cli.Prompts.Templates
                 **.NET compatibility and mitigation:**
                 - ApiCompat's forward comparison against the latest GA release is the compatibility authority. Preserve every reported compatibility violation and its diagnostic ID; do not suppress or downgrade it.
                 - Additions and reverse-comparison diagnostics are supplementary evidence, not additional breaking changes. Keep old and new signatures available when analyzing a possible transformation.
-                - A removed API and an added API are not proof of a rename. Confirm the mapping in TypeSpec and the pattern catalog; otherwise retain the original violations, use category "unknown", and route to manual review.
+                - A removed API and an added API are not proof of a rename. A rename can be classified when the TypeSpec source and pattern catalog support that mapping; otherwise retain the original violations without asserting a rename.
+                - Category describes the root cause, independently of rename confidence or mitigation strategy. Preserve a supported emitter, conversion, or spec-change category even when the mapping or safe mitigation is uncertain. Use "unknown" only when the root-cause evidence is insufficient.
                 - A diagnostic ID alone does not establish a root cause or a safe fix. Explain the evidence for the category; use "unknown" when that evidence is absent.
-                - Include a "mitigation" field in every classified .NET breaking change: "generator", "client customization", or "manual".
-                - Use "generator" only for an explicitly documented deterministic generator mitigation whose preconditions are verified. Its resolution must invoke the SDK repository's existing mitigate-breaking-changes skill; do not invent a replacement generator fix.
-                - Use "client customization" only when a verified TypeSpec client customization or handwritten SDK custom code preserves the public API and wire semantics. Its resolution must use azsdk_customized_code_update with the appropriate TypeSpec project and edit scope, never generated code.
+                - Include a "mitigationStrategy" field in every classified .NET breaking change: "generator", "client customization", or "manual".
+                - Select the mitigation strategy and resolution from the matched SDK pattern catalog. Use "generator" only for a documented deterministic generator mitigation whose preconditions are verified.
+                - Use "client customization" only when the catalog identifies a TypeSpec client customization or handwritten SDK customization that preserves the public API and wire semantics.
                 - Use "manual" for ambiguous mappings, unsupported patterns, behavior or wire-contract changes, and any case requiring user judgment. State what evidence or decision is missing.
                 - Classification is read-only. Never apply fixes, edit generated code, add suppressions, or infer user approval.
                 """ : string.Empty;
@@ -119,13 +120,20 @@ namespace Azure.Sdk.Tools.Cli.Prompts.Templates
                     """;
             }
             var pairedChangeRule = SdkLanguageHelpers.GetSdkLanguage(_language) == SdkLanguage.DotNet
-                ? "For .NET, preserve paired removals and additions as candidate transformations. Merge a rename or signature change only after verifying the mapping using the TypeSpec source and the pattern catalog; otherwise preserve the original violations with category unknown and mitigation manual."
+                ? "For .NET, preserve paired removals and additions as candidate transformations. Merge a rename or signature change only after verifying the mapping using the TypeSpec source and the pattern catalog; otherwise preserve the original violations. Determine category from root-cause evidence independently; use mitigationStrategy manual when no safe mitigation is established."
                 : "If one entry shows that `struct A` was removed and another shows that `struct B` was added, examine related entries together. For example, if another entry shows an operation parameter type changing from `A` to `B`, treat the combined evidence as a likely model rename from `A` to `B` rather than as unrelated changes and merged those as one classified breaking change.";
             var mitigationProperty = SdkLanguageHelpers.GetSdkLanguage(_language) == SdkLanguage.DotNet
-                ? "\n            \"mitigation\": \"manual\","
+                ? "\n            \"mitigationStrategy\": \"manual\","
                 : string.Empty;
             return $$"""
             **CRITICAL: Required Output Format**
+
+            Field guidance (not JSON comments):
+            - hasBreakingChange is a Boolean: true when breaking changes exist, otherwise false.
+            - breakingChanges is an array of classified SDK breaking changes; use an empty array when none exist.
+            - category explains why the change occurred: "emitter change", "conversion-by design", "conversion-need resolve", "spec change", or "unknown". The sample value is not a default category.
+            - resolution is optional guidance from the matched pattern catalog; it is not a tool-execution instruction generated by this classifier.
+            - mitigationStrategy is separate from category: for .NET, use "generator", "client customization", or "manual" based on the catalog and available evidence. Other languages may omit it.
 
             Return exactly one valid JSON object following this exact format:
             {

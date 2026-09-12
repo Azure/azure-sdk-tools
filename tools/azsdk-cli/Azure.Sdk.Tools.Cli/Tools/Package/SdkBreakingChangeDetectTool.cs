@@ -3,6 +3,7 @@
 
 using System.CommandLine;
 using System.ComponentModel;
+using System.Text.Json;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
@@ -129,34 +130,27 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     else
                     {
                         // Read and deserialize the local SDK change JSON file
-                        sdkChange = await SdkChangeHelper.ReadFromFileAsync(localSdkChangeJsonFilePath, ct);
+                        sdkChange = await ReadSdkChangeAsync(localSdkChangeJsonFilePath, ct);
                     }
                 }
                 // If sdkChange is still null, attempt to retrieve it using the configured script
                 if (sdkChange == null)
                 {
-                   
-                    bool isSupported;
-                    (isSupported, sdkChange) = await RetrieveSdkChangeFromScriptAsync(sdkRepoRoot, packagePath, packageInfo, languageService, ct);
-                    if (isSupported && sdkChange == null)
+                    var retrieval = await RetrieveSdkChangeFromScriptAsync(sdkRepoRoot, packagePath, packageInfo, languageService, ct);
+                    if (retrieval.failure != null)
                     {
-                        logger.LogError("Failed to retrieve SDK changes using the configured script.");
-                        return CreateFailure("Failed to retrieve SDK changes using the configured script.", packageInfo);
+                        return retrieval.failure;
                     }
-                    if (!isSupported && languageService.Language == SdkLanguage.DotNet)
-                    {
-                        var blocked = CreateFailure(
-                            ".NET SDK breaking-change detection requires packageOptions.getSdkChangesScript.command or .path in eng/swagger_to_sdk_config.json. Configure the SDK repository's detector or supply a local SDK change report.",
-                            packageInfo);
-                        blocked.BreakingChangeStatus = SdkBreakingChangeStatus.Blocked;
-                        return blocked;
-                    }
+                    sdkChange = retrieval.sdkChange;
                 }
 
                 if (sdkChange != null)
                 {
+                    var dotnetDetails = languageService.Language == SdkLanguage.DotNet && sdkChange.Details != null
+                        ? JsonSerializer.SerializeToElement(sdkChange.Details).Deserialize<DotnetSdkChangeDetails>()
+                        : null;
                     if (languageService.Language == SdkLanguage.DotNet &&
-                        string.IsNullOrWhiteSpace(sdkChange.Details?.BaselineVersion))
+                        string.IsNullOrWhiteSpace(dotnetDetails?.BaselineVersion))
                     {
                         return new PackageOperationResponse
                         {
@@ -191,7 +185,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 logger.LogInformation("Running default logic to detect SDK breaking changes for the package...");
                 var fallbackResponse = await languageService.DetectSdkBreakingChangeAsync(packagePath, ct);
                 ct.ThrowIfCancellationRequested();
-                fallbackResponse.BreakingChangeStatus = fallbackResponse.ExitCode == 0
+                fallbackResponse.BreakingChangeStatus ??= fallbackResponse.OperationStatus == Status.Succeeded && fallbackResponse.ExitCode == 0
                     ? SdkBreakingChangeStatus.Clean : SdkBreakingChangeStatus.Failed;
                 return fallbackResponse;
             }
@@ -218,6 +212,17 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             return response;
         }
 
+        private static async Task<SdkChange> ReadSdkChangeAsync(string path, CancellationToken ct)
+        {
+            await using var stream = File.OpenRead(path);
+            var change = await JsonSerializer.DeserializeAsync<SdkChange>(stream, cancellationToken: ct);
+            if (change == null || string.IsNullOrWhiteSpace(change.SdkChangeMD))
+            {
+                throw new JsonException($"SDK change file '{path}' must contain nonempty changes (Markdown) and a Boolean hasBreakingChange.");
+            }
+            return change;
+        }
+
         private static SdkBreakingChangeDetectionResult CreateUnclassifiedResult(SdkChange sdkChange) => new()
         {
             HasBreakingChange = sdkChange.HasBreakingChange,
@@ -225,11 +230,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             Details = sdkChange.Details,
         };
 
-        private async Task<(bool isSupported, SdkChange? sdkChange)> RetrieveSdkChangeFromScriptAsync(string sdkRepoRoot, string packagePath, PackageInfo packageInfo, LanguageService languageService, CancellationToken ct)
+        private async Task<(SdkChange? sdkChange, PackageOperationResponse? failure)> RetrieveSdkChangeFromScriptAsync(string sdkRepoRoot, string packagePath, PackageInfo packageInfo, LanguageService languageService, CancellationToken ct)
         {
             logger.LogInformation("Retrieve SDK changes using the configured script.");
             SdkChange? sdkChange = null;
-            bool isSupported = true;
             // execute configured sdk change retrieve script
             var (configContentType, configValue) = await _specGenSdkConfigHelper.GetConfigurationAsync(sdkRepoRoot, SpecGenSdkConfigType.GetSdkChanges, ct);
             ct.ThrowIfCancellationRequested();
@@ -257,15 +261,15 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     {
                         var sdkChangeResponse = await _specGenSdkConfigHelper.ExecuteProcessAsync(processOptions, ct, packageInfo, "SDK changes are retrieved.");
                         ct.ThrowIfCancellationRequested();
-                        if (sdkChangeResponse == null || sdkChangeResponse.ExitCode != 0)
+                        if (sdkChangeResponse == null || sdkChangeResponse.OperationStatus == Status.Failed || sdkChangeResponse.ExitCode != 0)
                         {
-                            throw new InvalidOperationException($"Failed to retrieve SDK changes using the configured script: {sdkChangeResponse?.ResponseError}{Environment.NewLine}{string.Join(Environment.NewLine, sdkChangeResponse?.ResponseErrors ?? [])}");
+                            return (null, CreateFailure($"Failed to retrieve SDK changes using the configured script: {sdkChangeResponse?.ResponseError}{Environment.NewLine}{string.Join(Environment.NewLine, sdkChangeResponse?.ResponseErrors ?? [])}", packageInfo));
                         }
                         if (!File.Exists(sdkChangeFilePath))
                         {
-                            throw new FileNotFoundException("The SDK change script did not produce its output JSON file.", sdkChangeFilePath);
+                            return (null, CreateFailure("The SDK change script did not produce its output JSON file.", packageInfo));
                         }
-                        sdkChange = await SdkChangeHelper.ReadFromFileAsync(sdkChangeFilePath, ct);
+                        sdkChange = await ReadSdkChangeAsync(sdkChangeFilePath, ct);
                     }
                     finally
                     {
@@ -282,15 +286,15 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 else
                 {
                     logger.LogError("Failed to create process options for the configured script.");
+                    return (null, CreateFailure("Failed to create process options for the configured script.", packageInfo));
                 }
             }
             else
             {
                 logger.LogInformation("No valid SDK change retrieval configuration was found. It is not implemented.");
-                isSupported = false;
             }
 
-            return (isSupported, sdkChange);
+            return (sdkChange, null);
         }
 
         /// <summary>
@@ -302,6 +306,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             var tspProjectPath = tspConfigPath != null ? Path.GetDirectoryName(tspConfigPath) : null;
             var sdkBreakingPattern = await languageService.GetSdkBreakingPattern(sdkRepoRoot, ct);
             ct.ThrowIfCancellationRequested();
+            if (string.IsNullOrWhiteSpace(sdkBreakingPattern))
+            {
+                var failure = CreateFailure("SDK breaking-change classification requires a configured packageOptions.sdkBreakingChangePatternFile catalog.", packageInfo);
+                failure.Result = CreateUnclassifiedResult(sdkChange);
+                return failure;
+            }
             var sdkBreakingChangeResult = await _classifyService.ClassifySdkBreakingChangesAsync(sdkChange.SdkChangeMD, sdkBreakingPattern, languageService.Language.ToString(), tspProjectPath, ct);
             ct.ThrowIfCancellationRequested();
             if (sdkBreakingChangeResult == null)

@@ -33,85 +33,71 @@ public class SdkBreakingChangeConfigurationTests
     {
         await File.WriteAllTextAsync(_configPath, config);
 
-        Assert.That(await _helper.GetConfigurationAsync(_directory.DirectoryPath, SpecGenSdkConfigType.GetSdkChanges, CancellationToken.None),
-            Is.EqualTo((SpecGenSdkConfigContentType.Unknown, string.Empty)));
         Assert.That(await _helper.GetSdkBreakingChangePatternFileConfigurationAsync(_directory.DirectoryPath, CancellationToken.None),
             Is.Empty);
     }
 
-    [TestCase("{\"command\":\"detect\"}", SpecGenSdkConfigContentType.Command, "detect")]
-    [TestCase("{\"path\":\"detect.ps1\"}", SpecGenSdkConfigContentType.ScriptPath, "detect.ps1")]
-    [TestCase("{\"command\":\"detect\",\"path\":\"detect.ps1\"}", SpecGenSdkConfigContentType.Command, "detect")]
-    [TestCase("{\"command\":\"generator sdkchange {packagePath} {outputJsonFile}\",\"path\":\"\"}",
-        SpecGenSdkConfigContentType.Command, "generator sdkchange {packagePath} {outputJsonFile}")]
-    [TestCase("{\"command\":\"detect\",\"path\":\"\"}", SpecGenSdkConfigContentType.Command, "detect")]
-    [TestCase("{\"command\":\"detect\",\"path\":\" \\t\\n\"}", SpecGenSdkConfigContentType.Command, "detect")]
-    [TestCase("{\"command\":\"detect\",\"path\":null}", SpecGenSdkConfigContentType.Command, "detect")]
-    [TestCase("{\"command\":\"detect\",\"path\":42}", SpecGenSdkConfigContentType.Command, "detect")]
-    [TestCase("{\"command\":\"detect\",\"path\":[]}", SpecGenSdkConfigContentType.Command, "detect")]
-    [TestCase("{\"command\":\"\",\"path\":\"detect.ps1\"}", SpecGenSdkConfigContentType.ScriptPath, "detect.ps1")]
-    [TestCase("{\"command\":\" \\t\\n\",\"path\":\"detect.ps1\"}", SpecGenSdkConfigContentType.ScriptPath, "detect.ps1")]
-    public async Task ValidDetectorConfiguration_UsesSharedCommandOrPath(string script, SpecGenSdkConfigContentType type, string value)
+    [TestCase("eng/sdk-breaking-change-patterns.json")]
+    [TestCase("eng/custom patterns.json")]
+    public async Task ConfiguredPatternFile_UsesSharedPropertyLookup(string path)
     {
-        await WriteScriptAsync(script);
+        await WritePatternFileAsync(JsonSerializer.Serialize(path));
 
-        Assert.That(await _helper.GetConfigurationAsync(_directory.DirectoryPath, SpecGenSdkConfigType.GetSdkChanges, CancellationToken.None),
-            Is.EqualTo((type, value)));
+        Assert.That(await ReadPatternFileAsync(), Is.EqualTo(path));
+        Assert.That(await _helper.GetConfigValueFromRepoAsync<string>(
+            _directory.DirectoryPath, "packageOptions/sdkBreakingChangePatternFile", CancellationToken.None), Is.EqualTo(path));
     }
 
     [TestCase("null")]
     [TestCase("[]")]
-    [TestCase("\"detect\"")]
-    [TestCase("{\"command\":null}")]
-    [TestCase("{\"command\":42}")]
-    [TestCase("{\"path\":null}")]
-    [TestCase("{\"path\":false}")]
-    [TestCase("{\"command\":null,\"path\":\"valid.ps1\"}")]
-    [TestCase("{\"command\":42,\"path\":\"valid.ps1\"}")]
-    [TestCase("{\"command\":{},\"path\":\"valid.ps1\"}")]
-    [TestCase("{\"command\":\"\",\"path\":null}")]
-    [TestCase("{\"command\":\" \\t\",\"path\":42}")]
-    public async Task InvalidConfiguredValue_NeverFallsBack(string script)
-    {
-        await WriteScriptAsync(script);
-
-        Assert.ThrowsAsync<JsonException>(() => ReadDetectorAsync());
-    }
-
     [TestCase("{}")]
-    [TestCase("{\"command\":\"\"}")]
-    [TestCase("{\"command\":\" \\t\"}")]
-    [TestCase("{\"path\":\"\"}")]
-    [TestCase("{\"path\":\" \\t\"}")]
-    [TestCase("{\"command\":\"\",\"path\":\"\"}")]
-    [TestCase("{\"command\":\" \\t\",\"path\":\" \\n\"}")]
-    public async Task PresentScriptWithoutUsableCommandOrPath_FailsInsteadOfReturningUnsupported(string script)
+    [TestCase("42")]
+    [TestCase("false")]
+    [TestCase("\"\"")]
+    [TestCase("\" \\t\\n\"")]
+    public async Task InvalidConfiguredPatternFile_NeverLooksAbsent(string value)
     {
-        await WriteScriptAsync(script);
+        await WritePatternFileAsync(value);
 
-        var exception = Assert.ThrowsAsync<JsonException>(() => ReadDetectorAsync());
+        var exception = Assert.ThrowsAsync<JsonException>(() => ReadPatternFileAsync());
 
-        Assert.That(exception!.Message, Is.EqualTo("getSdkChangesScript must contain a nonempty command or path."));
+        Assert.That(exception!.Message, Does.Contain("packageOptions/sdkBreakingChangePatternFile"));
     }
 
+    [TestCase("""{"packageOptions":{"getSdkChangesScript":null}}""", "")]
+    [TestCase("""{"packageOptions":{"getSdkChangesScript":{},"sdkBreakingChangePatternFile":"patterns.json"}}""", "patterns.json")]
+    public async Task UnusedMalformedScript_DoesNotAffectPatternFile(string config, string expected)
+    {
+        await File.WriteAllTextAsync(_configPath, config);
+
+        Assert.That(await ReadPatternFileAsync(), Is.EqualTo(expected));
+    }
+
+    [TestCase("")]
+    [TestCase(" ")]
     [TestCase("not json")]
+    [TestCase("{")]
     [TestCase("null")]
     [TestCase("[]")]
+    [TestCase("\"config\"")]
+    [TestCase("42")]
+    [TestCase("false")]
     [TestCase("{\"packageOptions\":null}")]
     [TestCase("{\"packageOptions\":false}")]
+    [TestCase("{\"packageOptions\":42}")]
+    [TestCase("{\"packageOptions\":\"options\"}")]
+    [TestCase("{\"packageOptions\":[]}")]
     public void MalformedConfiguration_NeverLooksAbsent(string config)
     {
         File.WriteAllText(_configPath, config);
 
-        Assert.CatchAsync<JsonException>(() => ReadDetectorAsync());
-        Assert.CatchAsync<JsonException>(() =>
-            _helper.GetSdkBreakingChangePatternFileConfigurationAsync(_directory.DirectoryPath, CancellationToken.None));
+        Assert.CatchAsync<JsonException>(() => ReadPatternFileAsync());
     }
 
     [Test]
     public void MissingFile_PropagatesReadFailure()
     {
-        Assert.ThrowsAsync<FileNotFoundException>(() => ReadDetectorAsync());
+        Assert.ThrowsAsync<FileNotFoundException>(() => ReadPatternFileAsync());
     }
 
     [Test]
@@ -119,7 +105,7 @@ public class SdkBreakingChangeConfigurationTests
     {
         Directory.CreateDirectory(_configPath);
 
-        Assert.ThrowsAsync<UnauthorizedAccessException>(() => ReadDetectorAsync());
+        Assert.ThrowsAsync<UnauthorizedAccessException>(() => ReadPatternFileAsync());
     }
 
     [Test]
@@ -128,9 +114,7 @@ public class SdkBreakingChangeConfigurationTests
         File.WriteAllText(_configPath, "{}");
         using var stream = File.Open(_configPath, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
 
-        Assert.ThrowsAsync<IOException>(() => ReadDetectorAsync());
-        Assert.ThrowsAsync<IOException>(() =>
-            _helper.GetSdkBreakingChangePatternFileConfigurationAsync(_directory.DirectoryPath, CancellationToken.None));
+        Assert.ThrowsAsync<IOException>(() => ReadPatternFileAsync());
     }
 
     [Test]
@@ -141,12 +125,12 @@ public class SdkBreakingChangeConfigurationTests
         cts.Cancel();
 
         Assert.CatchAsync<OperationCanceledException>(() =>
-            _helper.GetConfigurationAsync(_directory.DirectoryPath, SpecGenSdkConfigType.GetSdkChanges, cts.Token));
+            _helper.GetSdkBreakingChangePatternFileConfigurationAsync(_directory.DirectoryPath, cts.Token));
     }
 
-    private Task WriteScriptAsync(string script) =>
-        File.WriteAllTextAsync(_configPath, """{"packageOptions":{"getSdkChangesScript":""" + script + "}}");
+    private Task WritePatternFileAsync(string value) =>
+        File.WriteAllTextAsync(_configPath, """{"packageOptions":{"sdkBreakingChangePatternFile":""" + value + "}}");
 
-    private Task<(SpecGenSdkConfigContentType, string)> ReadDetectorAsync() =>
-        _helper.GetConfigurationAsync(_directory.DirectoryPath, SpecGenSdkConfigType.GetSdkChanges, CancellationToken.None);
+    private Task<string> ReadPatternFileAsync() =>
+        _helper.GetSdkBreakingChangePatternFileConfigurationAsync(_directory.DirectoryPath, CancellationToken.None);
 }

@@ -7,8 +7,8 @@ using Azure.Sdk.Tools.Cli.Models.Serialization;
 
 namespace Azure.Sdk.Tools.Cli.Models.SdkBreakingChangeDetection;
 
-[JsonConverter(typeof(JsonStringEnumWithEnumMemberConverter<SdkBreakingChangeMitigation>))]
-public enum SdkBreakingChangeMitigation
+[JsonConverter(typeof(JsonStringEnumWithEnumMemberConverter<SdkBreakingChangeMitigationStrategy>))]
+public enum SdkBreakingChangeMitigationStrategy
 {
     [EnumMember(Value = "manual")]
     Manual,

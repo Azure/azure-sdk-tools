@@ -5,6 +5,7 @@
 ### Features Added
 
 - Added .NET SDK breaking-change detection through the shared configured-script workflow, with structured ApiCompat evidence and explicit mitigation routing.
+- Release plan get and create responses now warn about active plans for the same TypeSpec project that are past due or within seven days of becoming past due.
 
 ### Breaking Changes
 

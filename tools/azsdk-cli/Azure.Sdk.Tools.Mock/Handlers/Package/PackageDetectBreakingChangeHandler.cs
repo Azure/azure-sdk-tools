@@ -102,7 +102,7 @@ public class PackageDetectBreakingChangeHandler : IMockToolHandler
             response.Result = new SdkBreakingChangeDetectionResult
             {
                 SdkChangeMD = limitation,
-                Details = new SdkChangeDetails { Limitations = [limitation] },
+                Details = new DotnetSdkChangeDetails { Limitations = [limitation] },
             };
             return response;
         }
@@ -136,7 +136,7 @@ public class PackageDetectBreakingChangeHandler : IMockToolHandler
                     BreakingChange = $"Public API '{RemovedSymbol(packageInfo)}' was removed.",
                     Category = SdkBreakingChangeCategory.Unknown,
                     Resolution = "The removal and addition are not a proven rename. Root-cause confidence is low; request owner judgment before mitigation.",
-                    Mitigation = packageInfo.Language == SdkLanguage.DotNet ? SdkBreakingChangeMitigation.Manual : null,
+                    MitigationStrategy = packageInfo.Language == SdkLanguage.DotNet ? SdkBreakingChangeMitigationStrategy.Manual : null,
                     OriginBreaks = [RemovalDiagnostic(packageInfo)],
                 },
             ];
@@ -180,7 +180,7 @@ public class PackageDetectBreakingChangeHandler : IMockToolHandler
         var diagnosticId = isDotnet ? "CP0002" : "MOCK001";
         var diagnostic = RemovalDiagnostic(packageInfo);
         var addition = $"Public API '{addedSymbol}' was added.";
-        var details = new SdkChangeDetails { BaselineVersion = "1.0.0" };
+        var details = new DotnetSdkChangeDetails { BaselineVersion = "1.0.0" };
         if (!additionsOnly)
         {
             details.Diagnostics.Add(diagnostic);

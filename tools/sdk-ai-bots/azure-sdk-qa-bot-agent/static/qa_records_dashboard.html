@@ -143,7 +143,8 @@
       font-weight: 600;
       text-transform: capitalize;
     }
-    .status-finished, .status-done, .status-correct, .status-closed {
+    .status-finished, .status-done, .status-validation_passed,
+    .status-correct, .status-closed {
       color: #0b5f32;
       background: #dff5e7;
     }
@@ -454,7 +455,9 @@
           <option value="created">Created</option>
           <option value="running">Running</option>
           <option value="pending_validation">Pending validation</option>
-          <option value="done">Done</option>
+          <option value="done">Analysis complete</option>
+          <option value="validation_passed">Validation passed</option>
+          <option value="validation_failed">Validation failed</option>
           <option value="failed">Failed</option>
         </select>
       </label>

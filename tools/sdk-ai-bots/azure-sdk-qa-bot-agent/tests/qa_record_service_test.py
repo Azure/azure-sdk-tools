@@ -294,8 +294,14 @@ def test_remediation_failure_rejects_issue_url() -> None:
 @pytest.mark.parametrize(
     ("outcome", "expected"),
     [
-        (ChatbotEvolutionAgentOutcome.validation_passed, FeedbackStatus.done),
-        (ChatbotEvolutionAgentOutcome.validation_failed, FeedbackStatus.failed),
+        (
+            ChatbotEvolutionAgentOutcome.validation_passed,
+            FeedbackStatus.validation_passed,
+        ),
+        (
+            ChatbotEvolutionAgentOutcome.validation_failed,
+            FeedbackStatus.validation_failed,
+        ),
     ],
 )
 def test_validation_result_is_terminal(
@@ -317,6 +323,10 @@ def test_validation_result_is_terminal(
     assert record.feedback is not None
     assert record.feedback.status == expected
     assert record.feedback.validated_at is not None
+    assert not ChatbotEvolutionAgentService._can_run(
+        record,
+        ChatbotEvolutionAgentMode.validation,
+    )
 
 
 def test_failed_analysis_is_eligible_for_retry() -> None:
@@ -334,13 +344,14 @@ def test_failed_analysis_is_eligible_for_retry() -> None:
     )
 
 
-def test_failed_validation_is_eligible_for_retry() -> None:
+def test_failed_validation_processing_is_eligible_for_retry() -> None:
     record = _record(
         qa_status=QAStatus.failed,
         feedback_status=FeedbackStatus.failed,
     )
     assert record.feedback is not None
     record.feedback.issue_url = "https://github.com/Azure/azure-sdk-pr/issues/123"
+    record.feedback.error = "agent_processing_failed"
     assert not ChatbotEvolutionAgentService._can_run(
         record,
         ChatbotEvolutionAgentMode.analysis,
@@ -373,13 +384,14 @@ async def test_failed_analysis_is_listed_as_analyzable() -> None:
 
 
 @pytest.mark.asyncio
-async def test_failed_validation_is_listed_as_pending() -> None:
+async def test_failed_validation_processing_is_listed_as_pending() -> None:
     record = _record(
         qa_status=QAStatus.failed,
         feedback_status=FeedbackStatus.failed,
     )
     assert record.feedback is not None
     record.feedback.issue_url = "https://github.com/Azure/azure-sdk-pr/issues/123"
+    record.feedback.error = "agent_processing_failed"
     with patch(
         "services.qa_record_service.query_qa_records_by_feedback_status",
         new=AsyncMock(side_effect=[[], [record.to_cosmos()]]),

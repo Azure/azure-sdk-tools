@@ -46,6 +46,29 @@ namespace APIViewWeb.Repositories
             _connectionLock.Dispose();
         }
 
+        /// <summary>
+        /// Builds the artifact download URL for a single file within an artifact.
+        /// </summary>
+        /// <remarks>
+        /// <paramref name="filePath"/> reaches here from the request, so it is escaped
+        /// rather than concatenated: an unescaped <c>&amp;</c> or <c>#</c> would add or
+        /// truncate parameters on a request that carries this service's Azure DevOps
+        /// credentials. Escaping turns <c>/</c> into <c>%2F</c>, which is correct for a
+        /// query value and is decoded back by the server before use; the
+        /// path-segment reading of <c>%2F</c> does not apply to a query parameter.
+        /// </remarks>
+        public static string BuildArtifactDownloadUrl(string downloadUrl, string format, string filePath)
+        {
+            if (!filePath.StartsWith("/"))
+            {
+                filePath = "/" + filePath;
+            }
+
+            return downloadUrl.Split("?")[0]
+                + "?format=" + Uri.EscapeDataString(format)
+                + "&subPath=" + Uri.EscapeDataString(filePath);
+        }
+
         public async Task<Stream> DownloadPackageArtifact(string repoName, string buildId, string artifactName, string filePath, string project, string format= "file")
         {
             var downloadUrl = await getDownloadArtifactUrl(buildId, artifactName, project);
@@ -56,11 +79,7 @@ namespace APIViewWeb.Repositories
             
             if(!string.IsNullOrEmpty(filePath))
             {
-                if (!filePath.StartsWith("/"))
-                {
-                    filePath = "/" + filePath;
-                }
-                downloadUrl = downloadUrl.Split("?")[0] + "?format=" + format + "&subPath=" + filePath;
+                downloadUrl = BuildArtifactDownloadUrl(downloadUrl, format, filePath);
             }
 
             HttpResponseMessage downloadResp = await GetFromDevopsAsync(downloadUrl);

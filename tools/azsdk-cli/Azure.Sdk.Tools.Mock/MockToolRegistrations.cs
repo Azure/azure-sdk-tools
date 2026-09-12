@@ -54,7 +54,7 @@ public static class MockToolRegistrations
 /// </summary>
 internal class MockMcpServerTool(McpServerTool innerTool, MockToolFactory factory) : DelegatingMcpServerTool(innerTool)
 {
-    public override IReadOnlyList<object> Metadata => innerTool.Metadata;
+    public override IReadOnlyList<object> Metadata { get; } = innerTool.Metadata;
 
     public override ValueTask<CallToolResult> InvokeAsync(
         RequestContext<CallToolRequestParams> request,

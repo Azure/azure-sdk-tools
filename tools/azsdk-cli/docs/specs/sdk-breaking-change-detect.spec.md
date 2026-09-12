@@ -132,62 +132,100 @@ This design covers the complete SDK breaking change detection workflow for an SD
 **Prerequisite**:
 The SDK has been generated and built successfully.
 
+For .NET, compatibility detection consumes current, already-built assemblies
+without invoking source compilation or analyzer validation. These are separate
+results: a normal build/analyzer failure must not hide an available compatibility
+result, and missing or stale assemblies must be reported as a detector error
+rather than a clean comparison.
+
 A sdkChange-breakingchange pattern guide (e.g. https://github.com/Azure/azure-sdk-for-go/blob/main/documentation/development/breaking-changes/sdk-breaking-changes-guide.md) will service as the foundation to teach copilot agent to detect and classify SDK breaking changes for a SDK. The existing TypeSpec code and the configuration will help agent to classify the SDK breaking changes.
 
 **Output Format:**
 
-The result is JSON-formatted.
+The tool returns a package-operation response with a JSON-formatted `result`.
+The examples below show that result payload, not the response envelope.
+`changes` preserves the detector's Markdown and `hasBreakingChange` preserves
+its verdict. Classification adds `breakingChanges` without replacing the
+detector's evidence.
+
+Each classified entry contains `breakingChange`, `category`, and `originBreaks`
+(the exact original breaking entries). `resolution` is optional actionable
+guidance consumed by `azsdk_customized_code_update`. It is distinct from
+`mitigationStrategy`, an optional routing enum that is required for classified .NET
+breaks: `generator`, `client customization`, or `manual`. Other languages can
+continue returning entries without `mitigationStrategy`. `category` always
+describes the root cause, not whether or how the change can be mitigated.
+
+**Classified .NET result:**
 
 ```json
 {
     "hasBreakingChange": true,
-    "language": "java",
-    "breakingchanges": [
+    "changes": "### Breaking Changes\n- CP0002: Member Azure.Example.Widget.Get(string) removed",
+    "details": {
+        "baselineVersion": "1.2.3"
+    },
+    "breakingChanges": [
         {
-            "breakingchange": "model `ResourceInfo` is renamed to `Resource`",
-            "category": "Conversion-need to be resolve",
-            "mitigation": "Use client customization to rename ```tsp\n@@clientName(Resource, \"ResourceInfo\", \"go\");```"
-        },
-        {
-            "breakingchange": "Type of property `Prop` of model `ContainerRegistry` has been changed from `string` to `int32`",
-            "category": "typespec change",
-            "mitigation": "Use `@@alternateType` to change the property type back to the constant string. ```tsp\n@@alternateType(ContainerRegistry.Prop, string, \"go\");```"
+            "breakingChange": "Member Azure.Example.Widget.Get(string) was removed",
+            "category": "unknown",
+            "resolution": "Review the removed member against the released API and TypeSpec source before selecting a fix; no safe mapping has been verified.",
+            "mitigationStrategy": "manual",
+            "originBreaks": [
+                "CP0002: Member Azure.Example.Widget.Get(string) removed"
+            ]
         }
     ]
 }
 ```
 
-The result of the `azsdk_package_detect_breaking_change` tool. It provides an overall assessment of whether the package introduces SDK breaking changes, along with details for each breaking change (breaking-change and category) if any are detected.
-
-**No Breaking change:**
+**No breaking changes after a completed comparison:**
 
 ```json
 {
     "hasBreakingChange": false,
-    "language": "java"
+    "changes": "### Breaking Changes\nNone.\n\n### Features Added\nNone."
 }
 ```
 
-**Has Breaking changes:**
+**Classified result for a language that does not require mitigation routing:**
 
 ```json
 {
     "hasBreakingChange": true,
-    "language": "java",
-    "breakingchanges": [
+    "changes": "### Breaking Changes\n- Field Prop of struct ContainerRegistry changed from string to int32",
+    "breakingChanges": [
         {
-            "breakingchange": "model `ResourceInfo` is renamed to `Resource`",
-            "category": "Conversion-need to be resolve",
-            "mitigation": "Use client customization to rename ```tsp\n@@clientName(Resource, \"ResourceInfo\", \"go\");```"
-        },
-        {
-            "breakingchange": "Type of property `Prop` has been changed from `string` to `int32`",
-            "category": "typespec change",
-            "mitigation": "Locate the model property and use `@@alternateType` to change the property type back to the constant string. ```tsp\n@@alternateType(ContainerRegistry.Prop, string, \"go\");```"
+            "breakingChange": "ContainerRegistry.Prop changed from string to int32",
+            "category": "spec change",
+            "resolution": "Review the service contract change with the owner before choosing a compatible representation.",
+            "originBreaks": [
+                "Field Prop of struct ContainerRegistry changed from string to int32"
+            ]
         }
     ]
 }
 ```
+
+The response envelope also includes `breaking_change_status`, separate from the
+existing `operation_status`. Other package operations omit this field.
+
+| `breaking_change_status` | Meaning |
+| --- | --- |
+| `clean` | A valid comparison found no breaking changes. .NET also requires baseline provenance. |
+| `detected` | Raw breaking changes were detected; classification was skipped. |
+| `classified` | Breaking changes were classified and passed language-specific validation. |
+| `inconclusive` | A .NET report lacks `details` or a nonblank `details.baselineVersion`. Evidence is preserved, but classification is skipped. |
+| `blocked` | No detector is configured and the language's default detection is unsupported. |
+| `failed` | Configuration, execution, report validation, catalog loading, or classification failed. |
+
+An inconclusive report retains `operation_status: Succeeded` and exit code 0
+because report retrieval succeeded; this is not a compatibility pass.
+Blocked/failed responses use the existing error fields and nonzero exit code.
+Classification failures retain known raw `changes`, `details`, and
+`hasBreakingChange`. Callers must inspect `breaking_change_status`, not infer
+compatibility from command success or a false breaking flag alone.
+Cancellation propagates instead of manufacturing an outcome.
 
 ### Architecture Diagram
 
@@ -237,7 +275,7 @@ Each language SDK already has a tool or script that generates sdk changes. We on
 | **Go** | Custom Go AST diff (`exports`/`delta`/`report` packages) | Go exported symbols | GitHub release tag ZIP | Generated code | both | No |
 | **Java (CI)** | `revapi-maven-plugin` | Java public API | Maven Central GA release | Locally built JAR | both | No |
 | **Java (Sdk automation)** | `japicmp` (JarArchiveComparator) | JAR bytecode | Maven Central JAR | Locally built JAR | both | No |
-| **.NET** | `Microsoft.DotNet.ApiCompat` MSBuild target | .NET assemblies | NuGet cached baseline DLL | Built DLL | both | only report breaking changes |
+| **.NET** | SDK-shipped `Microsoft.DotNet.ApiCompat.Task.ValidateAssembliesTask` | .NET assemblies | Latest GA NuGet package | Current built DLL | both | Forward violations plus reverse extraction of added types/members; behavioral changes and ambiguous mappings require review |
 | **JS/TS** | API Extractor + `git diff` | `.api.md` review files | Git baseline | Generated review files | both | No |
 | **Python** | `jsondiff` + AST/`inspect` introspection | JSON API reports | PyPI stable package | Current code | both | Need twick a litter for data-plane |
 
@@ -245,8 +283,135 @@ Each tool of language SDKs is suitable for both management-plane SDK and data-pl
 
 Limitation:
 
-- Net: Microsoft.DoNet.ApiCompat only report breaking changes, not all SDK changes.
+- .NET: ApiCompat remains the compatibility authority. Reverse `CP0001`/`CP0002`
+  diagnostics supplement additions because forward compatibility violations
+  alone do not describe the full change. Reverse results do not set
+  `hasBreakingChange`, and a removal/addition pair is not proof of a rename.
 - Python: the tool need to be twicked a litter for data-plane
+
+##### .NET integration
+
+The .NET SDK repository supplies the native detector and pattern catalog in
+`eng/swagger_to_sdk_config.json`:
+
+```json
+{
+  "packageOptions": {
+    "getSdkChangesScript": {
+      "path": "./eng/scripts/compatibility/Get-SdkChanges.ps1"
+    },
+    "sdkBreakingChangePatternFile": "doc/dev/SDKBreakingChanges.md"
+  }
+}
+```
+
+The script accepts `PackagePath`, `SdkRepoPath`, and `OutputJsonFile`, resolves the
+actual latest GA package (not merely the pinned `ApiCompatVersion`), and invokes
+ApiCompat independently of the normal build target. Existing rule settings,
+attribute exclusions, and approved centralized suppressions remain in effect.
+The detector never generates suppressions. .NET uses the same
+`RetrieveSdkChangeFromScriptAsync` path as other languages. When
+`getSdkChangesScript` is absent, the tool invokes the language's default
+detection method. .NET has no separate default detector, so that common method
+returns an explicit unsupported (`blocked`) response, not a build or a clean
+comparison. A configured detector's failures are returned as failures and never
+trigger an unsupported fallback.
+A captured report can instead be supplied through `--sdk-change-json-file-path`
+when `--changes-only` is not set.
+
+Like other languages, .NET loads its Markdown pattern catalog through the common
+`LanguageService.GetSdkBreakingPattern` method and the configured
+`sdkBreakingChangePatternFile` property. There is no .NET-specific default path.
+The catalog follows [the shared pattern design in #15559](https://github.com/Azure/azure-sdk-tools/issues/15559):
+SDK-change pattern, optional TypeSpec pattern, breaking change, root-cause reason,
+and resolution. The classifier uses that catalog for categories and resolution
+guidance rather than embedding mitigation tool instructions in its prompt.
+
+An absent catalog configuration prevents classification, while preserving the
+raw detector evidence. Malformed configuration, unreadable files, and empty
+catalogs fail explicitly. `--changes-only` bypasses catalog loading and
+classification.
+
+Native extraction requires current intermediate assemblies and matching
+portable/embedded PDBs for each evaluated target framework. The PowerShell host
+must support the selected SDK's MSBuild reader (.NET 10 SDK requires PowerShell
+7.6 or newer). `Configuration` must match the artifacts; SDK PR packaging uses
+`Release`. An inherited `TargetFramework` limits coverage and is disclosed in
+the report. Baseline restore honors the SDK repository's `NuGet.Config`.
+
+The existing `changes` and `hasBreakingChange` fields remain unchanged.
+Optional `details` uses a language-neutral `SdkChangeDetails` metadata container.
+Unknown language fields and shapes round-trip without being interpreted as
+.NET metadata or requiring a type discriminator in the report.
+`DotnetSdkChangeDetails` supplies the typed .NET view: baseline version, API
+changes (`DotnetSdkApiChange`), original diagnostics, and limitations. The tool
+interprets this view only for a .NET package. These are native observations,
+not LLM classifications or instructions for applying a fix. The existing JSON
+shape is unchanged:
+
+```json
+{
+  "changes": "### Breaking Changes\n- CP0002: Previous member signature removed\n\n### Features Added\n- New member signature",
+  "hasBreakingChange": true,
+  "details": {
+    "baselineVersion": "1.2.3",
+    "apiChanges": [
+      {
+        "kind": "removed",
+        "symbol": "Azure.Example.Widget.Get(string)",
+        "description": "Previous member signature removed",
+        "isBreaking": true,
+        "diagnosticId": "CP0002",
+        "targetFramework": "netstandard2.0"
+      }
+    ],
+    "diagnostics": ["Original ApiCompat diagnostic"],
+    "limitations": ["Confirm a possible signature transformation or rename before mitigation."]
+  }
+}
+```
+
+This original evidence is preserved in the common result after classification
+and on classification failure. .NET reports with absent `details` or a
+null/blank `baselineVersion` are `inconclusive`, even if they contain a breaking
+flag; the tool preserves the report and does not classify it. This distinguishes
+missing baseline provenance from a compatibility pass. Invalid reports, missing
+references, and failed native invocations remain errors.
+
+Classified .NET changes include `mitigationStrategy`: `generator`, `client customization`,
+or `manual`. Generator routing requires a verified deterministic pattern and
+uses the .NET repository's existing `mitigate-breaking-changes` skill. Client
+customizations use the current `azsdk_customized_code_update` tool (formerly
+`azsdk_typespec_customized_code_update`) with the approved edit scope. This route
+covers both TypeSpec client-layer customization (`SpecInputs`) and handwritten
+SDK custom code (`CustomCode`), never direct edits to generated files. `All`
+requires authorization for both surfaces; `SpecChangeRequired` is a handoff,
+not permission to widen scope. The `resolution` describes the concrete work,
+while `mitigationStrategy` selects who or what should perform it. Unknown
+causes, ambiguous renames, and unsupported behavioral changes require manual
+judgment. Management-specific patterns must not be applied to data-plane SDKs.
+
+A verified removal/addition mapping can be classified as a rename. When that
+mapping is uncertain, the original violations remain separate, but an
+independently established root cause (such as an emitter or spec change) still
+determines `category`. An uncertain rename or manual strategy does not by itself
+make the root cause `unknown`.
+
+The shared `azsdk-common-sdk-breaking-change` skill and its workflow handoffs
+are deferred to [PR #16634](https://github.com/Azure/azure-sdk-tools/pull/16634).
+This change supplies the CLI contract that such a workflow can consume; it does
+not add a competing shared skill.
+
+Spec PR integration belongs in the specs repository's `spec-gen-sdk-runner`
+or GitHub workflows, not the deprecated `tools/spec-gen-sdk` tool.
+[Specs PR #46143](https://github.com/Azure/azure-rest-api-specs/pull/46143)
+tracks that integration. The native detector, catalog, SDK configuration, and
+SDK PR reporting are companion work in
+[.NET SDK PR #62729](https://github.com/Azure/azure-sdk-for-net/pull/62729).
+Successful extraction alone is not a compatibility pass. Collected reports can
+be replayed through this tool for classification and mitigation guidance.
+
+##### Common input and output
 
 **Input**:
 SDK package
@@ -255,6 +420,10 @@ SDK package
 
 - SDK changes: the string of sdk changes markdown. (see following sdk change markdown schema)
 - 'hasBreakingChange': true/false
+
+Both fields are required. `changes` must contain non-whitespace Markdown even
+when `hasBreakingChange` is false; an empty or malformed report is not a clean
+comparison. Optional `details` does not substitute for `changes`.
 
 e.g.
 
@@ -336,16 +505,16 @@ SDK changes
 
 ```json
 {
-    "breakingchanges": [
+    "hasBreakingChange": true,
+    "breakingChanges": [
         {
-            "breakingchange": "model ResourceInfo is renamed to Resource",
-            "category": "Conversion-need to be resolve",
-            "mitigation": "Use client customization to rename ```tsp\n@@clientName(Resource, \"ResourceInfo\", \"go\");```"
-        },
-        {
-            "breakingchange": "Property type changed from int to string",
-            "category": "typespec change",
-            "mitigation": "Locate the model property and use `@@alternateType` to change the property type back to the constant string. ```tsp\n@@alternateType(ContainerRegistry.Prop, string, \"go\");```"
+            "breakingChange": "Member Azure.Example.Widget.Get(string) was removed",
+            "category": "unknown",
+            "resolution": "Obtain the source mapping and owner decision before applying a mitigation.",
+            "mitigationStrategy": "manual",
+            "originBreaks": [
+                "CP0002: Member Azure.Example.Widget.Get(string) removed"
+            ]
         }
     ]
 }
@@ -555,20 +724,19 @@ detect the breaking changes for Go SDK of Webpubsub service
 2. compare the sdk change with `sdkChange-breakingchange` pattern for Go SDK
 3. identify breaking changes and classify the breaking changes to different category
 
-**Expect output:**
+**Expected result payload:**
 
 ```json
 {
     "hasBreakingChange": true,
-    "language": "GO",
-    "breakingchanges": [
+    "changes": "### Breaking Changes\n- Field Prop of struct ContainerRegistry changed from string to int32",
+    "breakingChanges": [
         {
-            "breakingchange": "model `ResourceInfo` is renamed to `Resource`",
-            "category": "Conversion-need to be resolve"
-        },
-        {
-            "breakingchange": "Type of property `Prop` has been changed from `string` to `int32`",
-            "category": "typespec change"
+            "breakingChange": "ContainerRegistry.Prop changed from string to int32",
+            "category": "spec change",
+            "originBreaks": [
+                "Field Prop of struct ContainerRegistry changed from string to int32"
+            ]
         }
     ]
 }

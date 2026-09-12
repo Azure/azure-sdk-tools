@@ -1,12 +1,14 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+using Azure.Sdk.Tools.Cli.Models;
+
 namespace Azure.Sdk.Tools.Cli.Prompts.Templates
 {
     public class SdkBreakingChangeClassificationTemplate : BasePromptTemplate
     {
         public override string TemplateId => "sdk-breaking-change-classification";
-        public override string Version => "1.0.0";
+        public override string Version => "1.3.0";
         public override string Description => "Classify SDK Breaking Changes";
 
         private readonly string _sdkBreakingPatternContent;
@@ -52,6 +54,19 @@ namespace Azure.Sdk.Tools.Cli.Prompts.Templates
             var referenceTypeSpecInstruction = string.IsNullOrEmpty(_tspProjectPath) ? "" : $"""
                 When identifying an SDK breaking change, you **must** search the TypeSpec code in the provided TypeSpec project `{_tspProjectPath}` for the matching **spec pattern** in the SDK Breaking Change Pattern Document.
                 """;
+            var dotnetInstructions = SdkLanguageHelpers.GetSdkLanguage(_language) == SdkLanguage.DotNet ? """
+                **.NET compatibility and mitigation:**
+                - ApiCompat's forward comparison against the latest GA release is the compatibility authority. Preserve every reported compatibility violation and its diagnostic ID; do not suppress or downgrade it.
+                - Additions and reverse-comparison diagnostics are supplementary evidence, not additional breaking changes. Keep old and new signatures available when analyzing a possible transformation.
+                - A removed API and an added API are not proof of a rename. A rename can be classified when the TypeSpec source and pattern catalog support that mapping; otherwise retain the original violations without asserting a rename.
+                - Category describes the root cause, independently of rename confidence or mitigation strategy. Preserve a supported emitter, conversion, or spec-change category even when the mapping or safe mitigation is uncertain. Use "unknown" only when the root-cause evidence is insufficient.
+                - A diagnostic ID alone does not establish a root cause or a safe fix. Explain the evidence for the category; use "unknown" when that evidence is absent.
+                - Include a "mitigationStrategy" field in every classified .NET breaking change: "generator", "client customization", or "manual".
+                - Select the mitigation strategy and resolution from the matched SDK pattern catalog. Use "generator" only for a documented deterministic generator mitigation whose preconditions are verified.
+                - Use "client customization" only when the catalog identifies a TypeSpec client customization or handwritten SDK customization that preserves the public API and wire semantics.
+                - Use "manual" for ambiguous mappings, unsupported patterns, behavior or wire-contract changes, and any case requiring user judgment. State what evidence or decision is missing.
+                - Classification is read-only. Never apply fixes, edit generated code, add suppressions, or infer user approval.
+                """ : string.Empty;
 
             return $"""
             **Current Context:**
@@ -60,6 +75,7 @@ namespace Azure.Sdk.Tools.Cli.Prompts.Templates
             **Task:**
             Analyze the following SDK changes and classify each SDK breaking change based on the provided SDK breaking change pattern document.
             {referenceTypeSpecInstruction}
+            {dotnetInstructions}
             Compare each SDK change against the patterns and conditions in the document to determine whether it is a breaking change, assign the correct category, and retrieve the resolution when one is available in the matched pattern.
             First pass requirement: iterate through every entry in `sdk changes ### Breaking Changes` and reference to `sdk changes in ### Features Added` if any to determine its root-cause candidate.
             Merge entries that share the same root cause into one classified breaking change, for example: "model 'User' renamed to 'Customer'". Include every related breaking caused by that root change (direct and cascading) in the same merged breaking change.
@@ -103,18 +119,31 @@ namespace Azure.Sdk.Tools.Cli.Prompts.Templates
                     5. **When the element cannot be found** in any `.tsp` file, fall back to the SDK-level name from the breaking change and note it as unresolved.
                     """;
             }
+            var pairedChangeRule = SdkLanguageHelpers.GetSdkLanguage(_language) == SdkLanguage.DotNet
+                ? "For .NET, preserve paired removals and additions as candidate transformations. Merge a rename or signature change only after verifying the mapping using the TypeSpec source and the pattern catalog; otherwise preserve the original violations. Determine category from root-cause evidence independently; use mitigationStrategy manual when no safe mitigation is established."
+                : "If one entry shows that `struct A` was removed and another shows that `struct B` was added, examine related entries together. For example, if another entry shows an operation parameter type changing from `A` to `B`, treat the combined evidence as a likely model rename from `A` to `B` rather than as unrelated changes and merged those as one classified breaking change.";
+            var mitigationProperty = SdkLanguageHelpers.GetSdkLanguage(_language) == SdkLanguage.DotNet
+                ? "\n            \"mitigationStrategy\": \"manual\","
+                : string.Empty;
             return $$"""
             **CRITICAL: Required Output Format**
 
+            Field guidance (not JSON comments):
+            - hasBreakingChange is a Boolean: true when breaking changes exist, otherwise false.
+            - breakingChanges is an array of classified SDK breaking changes; use an empty array when none exist.
+            - category explains why the change occurred: "emitter change", "conversion-by design", "conversion-need resolve", "spec change", or "unknown". The sample value is not a default category.
+            - resolution is optional guidance from the matched pattern catalog; it is not a tool-execution instruction generated by this classifier.
+            - mitigationStrategy is separate from category: for .NET, use "generator", "client customization", or "manual" based on the catalog and available evidence. Other languages may omit it.
+
             Return exactly one valid JSON object following this exact format:
             {
-                "hasBreakingChange": true, //if any breaking changes are detected, otherwise false
-                "breakingChanges": //classified SDK breaking changes
+                "hasBreakingChange": true,
+                "breakingChanges":
                 [
                     {
                         "breakingChange": "<one-line sdk breaking change>",
-                        "category": "<emitter change | conversion-by design | conversion-need resolve | spec change | unknown>",
-                        "resolution": "<one-line mitigation resolution for this sdk breaking change, optional>",
+                        "category": "unknown",{{mitigationProperty}}
+                        "resolution": "<one-line actionable resolution for this sdk breaking change, optional>",
                         "originBreaks": [
                             "<exact original breaking change #1 from sdk changes ### Breaking Changes>",
                             "<exact original breaking change #2 from sdk changes ### Breaking Changes>"
@@ -130,6 +159,7 @@ namespace Azure.Sdk.Tools.Cli.Prompts.Templates
 
             **Rules:**
             **General Requirements**
+            - Set hasBreakingChange to true if any breaking changes are detected, otherwise false. breakingChanges contains the classified entries.
             {{breakingReferenceInstruction}}
             - Every original breaking entry from sdk changes ### Breaking Changes must be processed.
             - No original breaking entry may be skipped.
@@ -142,7 +172,7 @@ namespace Azure.Sdk.Tools.Cli.Prompts.Templates
             - Avoid reporting internal service-model or code-generation changes unless they directly affect the SDK surface.
             - When a service model maps to an SDK type with a different name, describe the SDK type change and optionally mention the corresponding service model for context.e.g Struct ResourceInfo for model WebPubSubResource renamed to Resource.
             - Prefer concise, user-impact-focused wording that helps SDK consumers understand what code may need to be updated.
-            - If one entry shows that `struct A` was removed and another shows that `struct B` was added, examine related entries together. For example, if another entry shows an operation parameter type changing from `A` to `B`, treat the combined evidence as a likely model rename from `A` to `B` rather than as unrelated changes and merged those as one classified breaking change.
+            - {{pairedChangeRule}}
             **Merging Rules**
             When a root SDK element (e.g., a model, enum, or operation) is renamed or restructured, all downstream breaking changes caused by that same root change MUST be merged into one classified breaking change. Examples:
             - If model 'User' is renamed to 'Customer', every breaking change involving properties, parameters, or return types changing from 'User' to 'Customer' is part of the same root change and must be reported as one merged breaking change.

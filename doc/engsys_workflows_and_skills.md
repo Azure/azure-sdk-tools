@@ -10,12 +10,15 @@ Any updates to files in the `.github/workflows` directory should be made in the 
 
 Any updates to directories matching the pattern `.github/skills/azsdk-common-*` should be made in the [azure-sdk-tools](https://github.com/azure/azure-sdk-tools) repo.
 
+Updates to `.github/skills/azure-typespec-author/SKILL.md` and its `references/` directory should also be made in `azure-sdk-tools`. These runtime files are synced specifically to `Azure/azure-rest-api-specs`; its `evaluate/` and `agentic-doc-refinement/` directories are not synced.
+
 All changes made through the sync pipelines will cause PRs to be created in subscribed azure-sdk language repos which will blindly replace the synced files or directories in those repos. For that reason do **NOT** make changes to these files in the azure-sdk or individual azure-sdk language repos as they will be overwritten the next time an update is taken from the corresponding directory in the azure-sdk-tools repository.
 
 ## Pipelines
 
 - [`tools - sync-.github`][workflow-yml] syncs selected files from `.github/workflows/`, including `post-apiview.yml` and `protected-files.yml`.
 - [`tools - sync-.github-skills`][skills-yml] syncs shared skills from `.github/skills/azsdk-common-*`.
+- [`tools - sync-azure-typespec-author-skill`][typespec-author-skill-yml] syncs the runtime files for `.github/skills/azure-typespec-author` to `Azure/azure-rest-api-specs`.
 
 ## Workflow
 
@@ -27,7 +30,8 @@ This process is set up in such a way to make it easier for changes to be tested 
 2. The matching sync pipeline is automatically triggered for the **Tools PR**:
    - [`tools - sync-.github`][workflow-yml] for the synced workflow targets in `.github/workflows`.
    - [`tools - sync-.github-skills`][skills-yml] for `.github/skills/azsdk-common-*` changes.
-   - If your PR changes both areas, both pipelines will run.
+   - [`tools - sync-azure-typespec-author-skill`][typespec-author-skill-yml] for changes to the `azure-typespec-author` runtime files.
+   - If your PR changes multiple synced areas, each matching pipeline will run.
 3. Each triggered pipeline creates branches mirroring your changes, one branch in azure-sdk and one per language repository receiving that sync. You can use these branches to run tests in those repos. The pipeline also queues test runs for template pipelines for each repo. These help you test the changes in the **Tools PR**. All of this is done in the `Create Sync` stage of the corresponding pipeline, specifically through `template: ./templates/steps/sync-directory.yml`.
 4. If you make additional changes to your **Tools PR** repeat steps 1 - 3 until you have completed the necessary testing of your changes. This includes full releases of the template package, if necessary.
 5. Once you reviewed all the test runs and did any of additional ad-hoc tests from the created branches in language repositories, you must manually approve in your pipeline execution instance the next stage - creation of PRs.
@@ -40,3 +44,4 @@ This process is set up in such a way to make it easier for changes to be tested 
 
 [workflow-yml]: https://github.com/Azure/azure-sdk-tools/blob/main/eng/pipelines/sync-.github.yml
 [skills-yml]: https://github.com/Azure/azure-sdk-tools/blob/main/eng/pipelines/sync-.github-skills.yml
+[typespec-author-skill-yml]: https://github.com/Azure/azure-sdk-tools/blob/main/eng/pipelines/sync-azure-typespec-author-skill.yml

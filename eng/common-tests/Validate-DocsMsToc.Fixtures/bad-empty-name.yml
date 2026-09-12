@@ -1,0 +1,10 @@
+- name: Reference
+  landingPageType: Root
+  expanded: false
+  items:
+  - name: ''
+    landingPageType: Service
+    items:
+    - name: Azure.Something
+      children:
+      - Azure.Something

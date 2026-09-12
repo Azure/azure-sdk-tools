@@ -3,25 +3,14 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "logicAppName": {
-      "value": "azuresdkqabot-dev-logicapp"
+      "value": "azuremcpserver-qabot-dev-logicapp"
     },
     "teamsGroupId": {
-      "value": "7ccc31f0-b371-450b-a73c-48f5a31a9b96"
+      "value": "07bb6114-8ffb-4e79-b65a-67f19d23e5bc"
     },
     "teamsChannelIds": {
       "value": [
-        "19:3iefzURPmxhDZJJTtwePbdO1EdI5T0hfK9UFK_59Sbk1@thread.tacv2",
-        "19:43d25834bb394e0fa9a3b316ce5a2ea4@thread.tacv2",
-        "19:f876c6910f4048aa81f172300e0f7104@thread.tacv2",
-        "19:6f6b56e7deda45ecb9dc001a18dcfa3b@thread.tacv2",
-        "19:7fed54bbc68e443381c6e196c7615b6b@thread.tacv2",
-        "19:b518e8426f32490eab370e9642b3600a@thread.tacv2",
-        "19:06178cf7377f447cb486bb15fca7a5f5@thread.tacv2",
-        "19:e0c83381ddd141d08e5ebea53fd8366c@thread.tacv2",
-        "19:2f1cb90ce78a46678b203709167db8c1@thread.tacv2",
-        "19:975533cdd084485ca305739f16b30507@thread.tacv2",
-        "19:453ec446a66446589d764132f5cebb00@thread.tacv2",
-        "19:037246b9968445edb3a23612ea44524d@thread.tacv2"
+        "19:GZ1GJyuOy0b8PWe6XtNxFdiaiT2M-NdiOXDLR5ySXXc1@thread.tacv2"
       ]
     },
     "serverBaseUrl": {

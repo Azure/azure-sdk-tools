@@ -1,0 +1,26 @@
+{
+  "name": "vally-eval-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Multi-repository Vally eval pipeline dashboard with a local filesystem-backed Blob POC.",
+  "type": "module",
+  "main": "start.js",
+  "engines": {
+    "node": ">=22.12 <23"
+  },
+  "scripts": {
+    "start": "node start.js",
+    "poc": "npm run poc:seed && npm run poc:start",
+    "poc:publish": "node scripts/publish-poc-run.mjs",
+    "poc:seed": "node scripts/seed-poc.mjs",
+    "poc:start": "node scripts/start-poc.mjs",
+    "test": "node --test test/artifact-sync.test.mjs",
+    "postinstall": "node scripts/patch-vally.mjs"
+  },
+  "dependencies": {
+    "@hono/node-server": "^2.0.5",
+    "@microsoft/vally-server": "0.15.0",
+    "fflate": "0.8.3",
+    "hono": "^4.12.26"
+  }
+}

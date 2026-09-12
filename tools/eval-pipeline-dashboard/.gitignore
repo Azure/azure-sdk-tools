@@ -1,0 +1,30 @@
+# Dependencies are restored for the target platform, not committed.
+node_modules/
+
+# The repository-wide lib/ ignore must not hide the dashboard source.
+!lib/
+!lib/**
+
+# Derived data / regenerable cache (built from the results/ folder at runtime).
+# On Azure these live on persistent storage (/home), not in the code package.
+eval.db
+eval.db-wal
+eval.db-shm
+
+# Eval result folders are data, not source — keep them out of version control.
+# (The running app watches this folder; it does not need to be committed.)
+results/
+poc-blob/
+poc-data/
+
+# Local test scratch
+.test*
+.blob-staging/
+
+# Misc
+*.log
+.DS_Store
+
+# Azure CLI `az webapp up` local cache + build/upload artifacts
+.azure/
+*.zip

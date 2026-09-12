@@ -1,0 +1,510 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Implementation plan for a multi-repository, multi-pipeline Vally evaluation dashboard backed by Azure Blob Storage and hosted on Azure App Service.">
+<title>Development Plan: Multi-Repo Vally Eval Dashboard</title>
+<style>
+  :root {
+    --bg: #fafaf9;
+    --surface: #ffffff;
+    --surface-alt: #f5f5f4;
+    --ink: #1c1917;
+    --muted: #78716c;
+    --faint: #a8a29e;
+    --line: #e7e5e4;
+    --line-soft: #f0eeec;
+    --accent: #b45309;
+    --accent-soft: rgba(180, 83, 9, 0.08);
+    --green: #15803d;
+    --green-soft: #edf7ef;
+    --blue: #2563eb;
+    --blue-soft: #eff6ff;
+    --red: #dc2626;
+    --red-soft: #fef2f2;
+    --amber: #ca8a04;
+    --amber-soft: #fffbeb;
+    --nav: #11131a;
+    --radius: 8px;
+    --max: 1120px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    color: var(--ink);
+    background: var(--bg);
+    font: 15px/1.58 Inter, "Segoe UI", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); text-underline-offset: 3px; }
+  code, pre { font-family: "JetBrains Mono", Consolas, monospace; }
+  code { padding: 1px 4px; background: var(--surface-alt); border-radius: 4px; font-size: .88em; }
+  pre {
+    margin: 12px 0;
+    padding: 16px 18px;
+    overflow-x: auto;
+    color: #f5f5f4;
+    background: #1c1917;
+    border-radius: var(--radius);
+    font-size: 12.5px;
+    line-height: 1.55;
+  }
+
+  .topbar {
+    position: sticky;
+    z-index: 20;
+    top: 0;
+    display: flex;
+    align-items: center;
+    min-height: 50px;
+    color: #f5f5f4;
+    background: var(--nav);
+    border-bottom: 1px solid #2a2d3a;
+  }
+  .topbar-inner { width: min(var(--max), calc(100% - 40px)); margin: auto; font-weight: 600; }
+  .topbar span { color: #f59e0b; }
+
+  .hero { border-bottom: 1px solid var(--line); background: var(--surface); }
+  .hero-inner { width: min(var(--max), calc(100% - 40px)); margin: auto; padding: 42px 0 34px; }
+  .eyebrow { margin: 0 0 8px; color: var(--accent); font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+  h1 { max-width: 850px; margin: 0; font-size: 36px; line-height: 1.16; letter-spacing: -.025em; }
+  .hero-copy { max-width: 800px; margin: 14px 0 22px; color: var(--muted); font-size: 16px; }
+  .metadata { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-top: 1px solid var(--line); border-left: 1px solid var(--line); }
+  .metadata div { padding: 11px 14px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .metadata dt { color: var(--faint); font-size: 10px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
+  .metadata dd { margin: 3px 0 0; font-size: 12.5px; }
+
+  .shell { display: grid; grid-template-columns: 205px minmax(0, 1fr); gap: 36px; width: min(1350px, calc(100% - 40px)); margin: 0 auto; padding: 34px 0 90px; }
+  nav { position: sticky; top: 72px; align-self: start; max-height: calc(100vh - 88px); overflow-y: auto; }
+  nav strong { display: block; margin-bottom: 8px; color: var(--muted); font-size: 10px; letter-spacing: .07em; text-transform: uppercase; }
+  nav a { display: block; padding: 5px 8px; color: var(--muted); border-left: 2px solid transparent; font-size: 12.5px; text-decoration: none; }
+  nav a:hover { color: var(--ink); border-left-color: var(--accent); }
+
+  main { min-width: 0; max-width: var(--max); }
+  section { margin-bottom: 48px; scroll-margin-top: 74px; }
+  h2 { margin: 0 0 12px; padding-bottom: 9px; border-bottom: 1px solid var(--line); font-size: 22px; letter-spacing: -.015em; }
+  h2 .n { margin-right: 8px; color: var(--faint); font-size: 13px; }
+  h3 { margin: 22px 0 8px; font-size: 16px; }
+  h4 { margin: 0 0 6px; font-size: 13px; }
+  p { margin: 0 0 12px; }
+  ul, ol { margin: 0 0 12px; padding-left: 22px; }
+  li { margin-bottom: 4px; }
+
+  .status-strip { display: flex; gap: 16px; flex-wrap: wrap; margin: 14px 0 0; padding: 12px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .status-strip div { display: flex; align-items: baseline; gap: 5px; }
+  .status-strip strong { font-size: 17px; }
+  .status-strip span { color: var(--faint); font-size: 11px; }
+
+  .grid-2, .grid-3 { display: grid; gap: 12px; }
+  .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .card { padding: 16px 18px; background: var(--surface); border: 1px solid var(--line-soft); border-radius: var(--radius); }
+  .card p:last-child, .card ul:last-child { margin-bottom: 0; }
+  .label { display: inline-block; margin-bottom: 7px; padding: 2px 7px; border-radius: 999px; font-size: 9px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+  .existing { color: var(--green); background: var(--green-soft); }
+  .poc { color: var(--blue); background: var(--blue-soft); }
+  .proposed { color: var(--accent); background: var(--accent-soft); }
+  .decision { color: var(--red); background: var(--red-soft); }
+
+  .callout { margin: 14px 0; padding: 12px 15px; background: var(--amber-soft); border-left: 4px solid var(--amber); font-size: 13.5px; }
+  .callout strong { display: block; margin-bottom: 3px; color: #92400e; font-size: 10px; letter-spacing: .05em; text-transform: uppercase; }
+
+  .architecture { padding: 20px; overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+  .arch-row { display: grid; grid-template-columns: 1fr 30px 1fr 30px 1fr 30px 1fr; align-items: stretch; min-width: 800px; }
+  .arch-box { padding: 13px 14px; background: var(--surface-alt); border: 1px solid var(--line); border-top: 3px solid var(--box, var(--accent)); border-radius: 6px; }
+  .arch-box strong { display: block; margin-bottom: 4px; font-size: 13px; }
+  .arch-box span { color: var(--muted); font-size: 11.5px; }
+  .arrow { display: grid; place-items: center; color: var(--faint); font-weight: 700; }
+  .arch-caption { margin: 12px 0 0; color: var(--muted); font-size: 12px; }
+
+  table { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--line); font-size: 12.5px; }
+  th, td { padding: 9px 11px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
+  th { color: var(--muted); background: var(--surface-alt); font-size: 10px; letter-spacing: .05em; text-transform: uppercase; }
+  tr:last-child td { border-bottom: 0; }
+  .table-wrap { overflow-x: auto; border-radius: var(--radius); }
+
+  .step-list { margin: 0; padding: 0; list-style: none; counter-reset: step; }
+  .step-list > li { position: relative; margin-bottom: 10px; padding: 14px 16px 14px 48px; background: var(--surface); border: 1px solid var(--line-soft); border-radius: var(--radius); counter-increment: step; }
+  .step-list > li::before { content: counter(step); position: absolute; top: 14px; left: 14px; display: grid; width: 23px; height: 23px; place-items: center; color: white; background: var(--ink); border-radius: 50%; font-size: 10px; font-weight: 700; }
+  .step-list p { margin: 3px 0 0; color: var(--muted); font-size: 12.5px; }
+  .step-list ul { margin-top: 7px; font-size: 12.5px; }
+
+  .phase { display: grid; grid-template-columns: 130px minmax(0, 1fr); gap: 18px; margin-bottom: 12px; padding: 16px 18px; background: var(--surface); border: 1px solid var(--line-soft); border-left: 4px solid var(--phase, var(--accent)); border-radius: var(--radius); }
+  .phase-title strong { display: block; font-size: 13px; }
+  .phase-title span { color: var(--muted); font-size: 11px; }
+  .phase-body ul { margin: 0; font-size: 12.5px; }
+
+  .metric-table td:nth-child(2), .metric-table th:nth-child(2) { text-align: right; }
+  .question { padding: 13px 15px; background: var(--red-soft); border-left: 4px solid var(--red); margin-bottom: 10px; }
+  .question strong { display: block; font-size: 13px; }
+  .question p { margin: 3px 0 0; color: var(--muted); font-size: 12.5px; }
+
+  .footer { width: min(var(--max), calc(100% - 40px)); margin: 0 auto; padding: 22px 0 60px; color: var(--muted); border-top: 1px solid var(--line); font-size: 12px; }
+
+  @media (max-width: 900px) {
+    .shell { grid-template-columns: 1fr; }
+    nav { position: static; max-height: none; }
+    nav div { display: flex; gap: 4px; overflow-x: auto; padding-bottom: 5px; }
+    nav a { min-width: max-content; border: 1px solid var(--line); border-radius: 5px; }
+    .grid-3 { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 650px) {
+    .metadata, .grid-2 { grid-template-columns: 1fr; }
+    h1 { font-size: 28px; }
+    .phase { grid-template-columns: 1fr; gap: 8px; }
+    .shell, .hero-inner, .topbar-inner, .footer { width: calc(100% - 24px); }
+  }
+  @media print {
+    .topbar, nav { display: none; }
+    .shell { display: block; width: 100%; padding: 20px; }
+    .hero-inner { width: 100%; padding: 20px; }
+    section { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<header class="topbar"><div class="topbar-inner"><span>vally</span> / multi-repo dashboard implementation plan</div></header>
+<div class="hero">
+  <div class="hero-inner">
+    <p class="eyebrow">Technical design and implementation plan</p>
+    <h1>Multi-repository, multi-pipeline Vally evaluation dashboard</h1>
+    <p class="hero-copy">A production plan for continuously collecting new eval results from Azure DevOps pipelines, preserving them durably in Azure Blob Storage, building history from go-live forward, and expanding the existing TypeSpec author dashboard across Azure SDK repositories.</p>
+    <p>The implementation lives alongside this document in <code>Azure/azure-sdk-tools/tools/eval-pipeline-dashboard</code>. See <a href="README.md">the README</a> for local setup, the fake Blob workflow, tests, and current POC limitations. Production defaults below are design targets, not claims that Azure resources or CI uploads have been deployed.</p>
+    <dl class="metadata">
+      <div><dt>Status</dt><dd>Draft for engineering review</dd></div>
+      <div><dt>Dashboard runtime</dt><dd>Azure App Service + Vally 0.15</dd></div>
+      <div><dt>Durable data</dt><dd>Azure Blob Storage</dd></div>
+      <div><dt>Query cache</dt><dd>SQLite on App Service /home</dd></div>
+      <div><dt>Retrieval cadence</dt><dd>Startup + every 5 minutes</dd></div>
+      <div><dt>Freshness SLO</dt><dd>95% visible within 10 minutes</dd></div>
+      <div><dt>Retention</dt><dd>731 days from go-live</dd></div>
+    </dl>
+  </div>
+</div>
+<div class="shell">
+<nav aria-label="Document contents">
+  <strong>Contents</strong>
+  <div>
+    <a href="#summary">1. Executive summary</a>
+    <a href="#decision-summary">2. Technical decisions</a>
+    <a href="#state">3. What exists today</a>
+    <a href="#goals">4. Goals and non-goals</a>
+    <a href="#architecture">5. Target architecture</a>
+    <a href="#storage">6. Storage and query model</a>
+    <a href="#contract">7. Artifact contract</a>
+    <a href="#pipeline">8. Pipeline work</a>
+    <a href="#service">9. Dashboard service work</a>
+    <a href="#history-policy">10. History boundary</a>
+    <a href="#security">11. Security and reliability</a>
+    <a href="#capacity">12. Capacity and retention</a>
+    <a href="#rollout">13. Delivery plan</a>
+    <a href="#testing">14. Test plan</a>
+    <a href="#operations">15. Operations</a>
+    <a href="#decisions">16. Remaining decisions</a>
+  </div>
+</nav>
+<main>
+
+<section id="summary">
+  <h2><span class="n">1</span>Executive summary</h2>
+  <p>The dashboard will remain a hosted Vally application. Eval pipelines in multiple repositories will publish one immutable, build-level result bundle to Azure Blob Storage. The dashboard service will discover new bundles, ingest them into Vally's SQLite schema, and expose repository/pipeline drill-down pages that reuse Vally's existing charts, history, comparisons, and trajectory data.</p>
+  <div class="status-strip">
+    <div><strong>7</strong><span>target repositories</span></div>
+    <div><strong>Blob</strong><span>durable source of truth</span></div>
+    <div><strong>SQLite</strong><span>rebuildable query cache</span></div>
+    <div><strong>1</strong><span>App Service instance initially</span></div>
+  </div>
+  <div class="callout"><strong>Key boundary</strong>Azure Blob Storage stores immutable result bundles. SQLite does not run inside Blob Storage; it is created by Vally on the App Service persistent filesystem at <code>/home/data/eval.db</code>.</div>
+</section>
+
+<section id="decision-summary">
+  <h2><span class="n">2</span>Technical decision summary</h2>
+  <p>This table is the authoritative set of defaults for the first production release. Detailed sections below explain implementation and tradeoffs.</p>
+  <div class="table-wrap"><table><thead><tr><th>Topic</th><th>Decision</th><th>Why</th><th>Operational result</th></tr></thead><tbody>
+    <tr><td>Durable storage</td><td>One private Azure Blob container stores one immutable <code>dashboard-bundle.zip</code> per completed pipeline build.</td><td>Blob is inexpensive, durable, lifecycle-managed, and independent of ADO artifact expiry.</td><td>Blob is the recoverable source of truth; no raw result folders remain on App Service.</td></tr>
+    <tr><td>Result producer</td><td>The shared eval Summary template pushes each new bundle directly to Blob after validation.</td><td>One shared implementation covers 10+ pipelines and avoids central ADO artifact polling.</td><td>History begins at go-live. No historical backfill and no daily ADO download job.</td></tr>
+    <tr><td>Blob retrieval</td><td>The App Service worker performs a full metadata listing on startup and every <strong>5 minutes</strong>, then downloads only unknown Blob names.</td><td>The expected two-year volume is small enough for simple polling; startup scanning also provides recovery.</td><td>Default <code>VALLY_BLOB_POLL_MS=300000</code>; one sync at a time; two concurrent downloads maximum.</td></tr>
+    <tr><td>Freshness target</td><td>A valid pipeline bundle should appear in the dashboard within <strong>10 minutes</strong> of Summary completion.</td><td>Five-minute polling plus bounded download/ingestion leaves operational headroom without extra event infrastructure.</td><td>Target: upload under 2 minutes, discovery under 5 minutes, ingestion under 3 minutes.</td></tr>
+    <tr><td>Retention</td><td>Keep published bundles hot for 30 days, cool from day 31, and delete after <strong>731 days</strong>.</td><td>Two years supports trend analysis while limiting durable storage growth.</td><td>A daily SQLite prune removes rows older than the same 731-day boundary.</td></tr>
+    <tr><td>Hosted runtime</td><td>One Linux Node 22 Azure App Service instance hosts the wrapper and <code>@microsoft/vally-server 0.15.0</code>.</td><td>Vally is a dynamic Hono API/UI application with a native SQLite dependency, not a static HTML site.</td><td>Single writer avoids SQLite coordination. Entra authentication protects the website.</td></tr>
+    <tr><td>Query store</td><td>Vally SQLite at <code>/home/data/eval.db</code> is a disposable, indexed query cache.</td><td>Blob ZIP/JSONL objects cannot efficiently answer cross-run filters, pagination, aggregates, or comparisons.</td><td>Each bundle is parsed once. Browser requests query SQLite only; the database can be rebuilt from Blob.</td></tr>
+    <tr><td>Presentation</td><td>The wrapper supplies repository/pipeline navigation; Vally supplies charts, tables, rankings, graders, tools, and comparisons.</td><td>Reusing Vally avoids a second analytics implementation and keeps report semantics consistent.</td><td>Index data is fresh on page load; drill-down data is fresh on navigation or browser refresh.</td></tr>
+    <tr><td>Failure behavior</td><td>Do not record a Blob as ingested until Vally commits successfully; retry transient failures on the next poll.</td><td>At-least-once discovery plus idempotent Blob identity prevents silent data loss and duplicates.</td><td>Corrupt bundles remain unrecorded, are logged with build URL, and require a corrected new attempt path.</td></tr>
+    <tr><td>Scale boundary</td><td>Use full-container polling for v1; reconsider Event Grid + Queue when retained objects exceed 100,000 or listing takes over 30 seconds.</td><td>Polling is simpler and sufficient for the expected 10-20 daily pipelines.</td><td>No Event Grid, queue, or separate ingestion service is required for the first release.</td></tr>
+  </tbody></table></div>
+</section>
+
+<section id="state">
+  <h2><span class="n">3</span>What exists today</h2>
+  <div class="grid-3">
+    <article class="card"><span class="label existing">Existing</span><h3>Example dashboard</h3><p>The repository hosts <code>@microsoft/vally-server</code> on Linux App Service. <code>add-result.ps1</code> manually uploads run folders through Kudu into <code>/home/site/results</code>.</p></article>
+    <article class="card"><span class="label existing">Existing</span><h3>Vally persistence</h3><p><code>server.js</code> calls Vally's <code>initializeDatabase()</code>. SQLite is stored at <code>/home/data/eval.db</code>; <code>results/</code> is treated as source data and SQLite as a derived cache.</p></article>
+    <article class="card"><span class="label poc">POC proven</span><h3>Multi-repo index</h3><p>The local POC groups runs by repository and pipeline, uses Vally 0.15, and reuses its charts through scoped routes such as <code>/p/azure-sdk-tools/skill-eval</code>.</p></article>
+  </div>
+  <h3>Current pipeline limitation</h3>
+  <p>The shared eval pipeline publishes JUnit on every shard, but raw Vally output is currently retained only in failure-debug artifacts. The Summary job downloads only JUnit. That means current successful builds generally lack the full trajectories required for tokens, tool usage, grader detail, and rich historical charts.</p>
+</section>
+
+<section id="goals">
+  <h2><span class="n">4</span>Goals and non-goals</h2>
+  <div class="grid-2">
+    <article class="card"><span class="label proposed">Goals</span><ul><li>One index for tools, specs, and language repositories.</li><li>Pipeline-level latest results and accumulated Vally history from go-live forward.</li><li>Durable, recoverable result storage independent of ADO artifact expiry.</li><li>Automatic ingestion without manual Kudu uploads.</li><li>New repository/pipeline onboarding through metadata, not dashboard code changes.</li><li>Links from dashboard runs back to source ADO builds.</li></ul></article>
+    <article class="card"><span class="label decision">Non-goals</span><ul><li>Forking or reimplementing Vally charts and analytics.</li><li>Kusto ingestion for this phase.</li><li>Running SQLite directly from Blob Storage.</li><li>Multi-instance database writes in the initial release.</li><li>Importing or reconstructing pipeline runs created before dashboard publishing goes live.</li></ul></article>
+  </div>
+</section>
+
+<section id="architecture">
+  <h2><span class="n">5</span>Target architecture</h2>
+  <div class="architecture">
+    <div class="arch-row">
+      <div class="arch-box" style="--box:var(--blue)"><strong>ADO eval pipelines</strong><span>Run Vally shards, merge results, create manifest and immutable bundle.</span></div>
+      <div class="arrow">&rarr;</div>
+      <div class="arch-box" style="--box:var(--accent)"><strong>Azure Blob Storage</strong><span>Durable bundles organized by project, repository, pipeline definition, and build.</span></div>
+      <div class="arrow">&rarr;</div>
+      <div class="arch-box" style="--box:var(--green)"><strong>Dashboard sync worker</strong><span>Lists metadata, downloads unseen bundles, verifies and ingests them.</span></div>
+      <div class="arrow">&rarr;</div>
+      <div class="arch-box" style="--box:var(--red)"><strong>App Service</strong><span>SQLite query cache + Vally API/UI + multi-repo pipeline index.</span></div>
+    </div>
+    <p class="arch-caption">Browser requests query the dashboard API and SQLite only. Browsers never enumerate ADO builds or download Blob bundles.</p>
+  </div>
+  <h3>Retrieval cadence and freshness</h3>
+  <div class="table-wrap"><table><thead><tr><th>Activity</th><th>Cadence</th><th>Behavior</th><th>Failure handling</th></tr></thead><tbody>
+    <tr><td>Pipeline publication</td><td>Immediately after each Summary job validates its bundle.</td><td>Upload one new immutable path. Retry the upload task up to three times.</td><td>Publication failure is reported separately from the eval verdict. Re-run the Summary/publication job while its ADO artifact exists.</td></tr>
+    <tr><td>Startup discovery</td><td>Once before the web service is considered ready.</td><td>List all retained Blob metadata, compare names/ETags with SQLite, and enqueue unseen objects.</td><td>If listing fails, health reports degraded and the worker retries with exponential backoff capped at five minutes.</td></tr>
+    <tr><td>Steady-state discovery</td><td>Every 5 minutes.</td><td>List metadata only. Do not download known immutable objects. Allow only one listing/sync cycle at a time.</td><td>A failed cycle leaves the ingestion ledger unchanged and retries on the next cycle.</td></tr>
+    <tr><td>Bundle download</td><td>Immediately after discovery, maximum two downloads concurrently.</td><td>Download to a unique temporary directory, validate size/hash/path/manifest, ingest, then delete the ZIP and extracted files.</td><td>Transient download errors retry on the next poll. Invalid bundles are logged with Blob name and source build URL.</td></tr>
+    <tr><td>SQLite retention prune</td><td>Daily at 02:00 UTC and once at startup.</td><td>Delete cache rows older than the 731-day retention boundary in one transaction, then checkpoint WAL.</td><td>Prune failure does not block reads; emit an alert and retry the next day.</td></tr>
+    <tr><td>Browser data refresh</td><td>On page load, navigation, or explicit browser refresh.</td><td>The browser calls dashboard APIs backed by SQLite. It never polls Blob or opens ZIPs.</td><td>No WebSocket or push refresh in v1. Show last successful sync time so users can judge freshness.</td></tr>
+  </tbody></table></div>
+  <div class="callout"><strong>Freshness SLO</strong>For 95% of valid builds, data should be queryable within 10 minutes after the pipeline Summary completes. The five-minute poll is a maximum normal discovery delay, not a daily batch.</div>
+  <h3>Why polling is sufficient for v1</h3>
+  <p>With 10-20 pipelines running approximately daily, two years of retained history produces roughly 7,300-14,600 bundle objects. Metadata listing at five-minute intervals is operationally simple and small enough for the pilot. Move to Blob Event Grid events delivered through a Storage Queue only when the retained object count exceeds 100,000, a full listing takes more than 30 seconds, or the 10-minute freshness SLO cannot be met.</p>
+  <h3>Data flow for one completed build</h3>
+  <ol class="step-list">
+    <li><strong>Shard execution</strong><p>Every shard writes Vally <code>results.jsonl</code> and JUnit, regardless of pass/fail.</p></li>
+    <li><strong>Summary consolidation</strong><p>Select the highest job attempt per shard and produce one canonical build-level result.</p></li>
+    <li><strong>Bundle publication</strong><p>Create <code>manifest.json</code>, package the merged results, and upload using a workload-identity service connection.</p></li>
+    <li><strong>Discovery</strong><p>The service lists Blob names and ETags, comparing them with <code>run_metadata</code> in local SQLite.</p></li>
+    <li><strong>Ingestion</strong><p>Download a new bundle to a temporary directory, call Vally <code>ingestDirectory()</code>, persist repository/pipeline metadata, then delete temporary extracted files.</p></li>
+    <li><strong>Presentation</strong><p>The index shows repository/pipeline cards; drill-down routes reuse Vally's current and historical diagrams.</p></li>
+  </ol>
+</section>
+
+<section id="storage">
+  <h2><span class="n">6</span>Storage and query model</h2>
+  <div class="grid-2">
+    <article class="card"><span class="label proposed">Durable</span><h3>Azure Blob Storage</h3><p>Immutable build-level bundles are the recoverable source of truth. Lifecycle policies move older bundles to cool storage and eventually delete them according to policy.</p></article>
+    <article class="card"><span class="label existing">Derived</span><h3>App Service SQLite</h3><p>Vally creates <code>/home/data/eval.db</code>. It holds <code>runs</code>, <code>outcomes</code>, graders, tool calls, and dashboard-owned <code>run_metadata</code>. It can be deleted and rebuilt from Blob.</p></article>
+  </div>
+  <h3>What the hosted Vally service is</h3>
+  <p><code>@microsoft/vally-server</code> is a Node.js package, not a generated static report. It exports the database initializer, JSONL ingestion logic, SQLite-backed data source, Hono REST API, and browser dashboard. The wrapper application deploys those pieces together in one Linux App Service:</p>
+  <pre>start.js
+  - prepares node_modules for the App Service runtime
+  - loads server.js
+
+server.js
+  - initializeDatabase("/home/data/eval.db")
+  - starts the Blob synchronization worker
+  - createApp(new DatabaseStore(db))
+  - mounts the multi-repository index before the Vally routes
+  - listens on the App Service PORT</pre>
+  <p>The deployment is self-contained in the sense that one App Service owns the ingestion worker, SQLite cache, REST API, and web UI. It still depends on Azure Blob Storage for durable data and Entra ID for authentication. Vally currently loads Chart.js from a public CDN in the browser; production must either allow that endpoint through the network policy or vendor the Chart.js asset into the application package.</p>
+  <h3>How a page is rendered</h3>
+  <ol class="step-list">
+    <li><strong>Repository index</strong><p>The wrapper queries <code>run_metadata</code> and renders repository/pipeline cards with run count and newest ingestion time.</p></li>
+    <li><strong>Pipeline route</strong><p><code>/p/:repository/:pipeline</code> resolves the exact Vally run IDs owned by that pipeline.</p></li>
+    <li><strong>Vally browser UI</strong><p>The existing Vally page calls its REST endpoints for runs, outcomes, rankings, graders, tools, metrics, and comparisons.</p></li>
+    <li><strong>SQLite queries</strong><p><code>DatabaseStore</code> executes indexed queries and returns compact JSON. Chart.js renders the diagrams in the browser.</p></li>
+  </ol>
+  <h3>Why SQLite is required</h3>
+  <div class="table-wrap"><table><thead><tr><th>Option</th><th>Decision</th><th>Reason</th></tr></thead><tbody>
+    <tr><td>Query Blob directly</td><td>Rejected</td><td>Each object is a compressed JSONL bundle. Blob has no joins, indexes, pagination, grader aggregation, or cross-run comparison. Every page request would repeatedly download and decompress historical files.</td></tr>
+    <tr><td>SQLite cache</td><td>Selected for v1</td><td>It is the storage engine already implemented by Vally. Each result is parsed once, ingested transactionally, indexed, and then reused by every chart/query without network access.</td></tr>
+    <tr><td>Kusto</td><td>Rejected for this phase</td><td>It adds ingestion mappings, operational ownership, and a second analytics implementation when Vally already provides the required query model and UI.</td></tr>
+    <tr><td>Azure SQL/PostgreSQL</td><td>Deferred</td><td>An external relational database becomes useful only when the service requires multiple App Service instances, stronger high availability, or data volume beyond a single-node SQLite cache.</td></tr>
+  </tbody></table></div>
+  <div class="callout"><strong>Cache semantics</strong>SQLite is not the durable source and is not uploaded on every change. If it is lost or incompatible after a Vally upgrade, delete it and replay every retained Blob bundle. This is why Blob retention and SQLite retention must use the same 731-day boundary.</div>
+  <h3>Blob path</h3>
+  <pre>vally-results/v1/
+  &lt;ado-project&gt;/
+    &lt;repository&gt;/
+      &lt;pipeline-definition-id&gt;/
+        &lt;build-id&gt;/
+          &lt;summary-attempt&gt;/
+            dashboard-bundle.zip</pre>
+  <p>Use the immutable pipeline definition ID in the storage path. Put the friendly pipeline name in the manifest because names can change.</p>
+  <h3>Ingestion ledger</h3>
+  <p>Do not add a separate <code>ingested_blobs</code> table for v1. Extend <code>run_metadata</code> with <code>blob_name</code> and <code>blob_etag</code>. A unique index on <code>blob_name</code> prevents duplicate ingestion; the ETag detects unexpected replacement.</p>
+  <pre>ALTER TABLE run_metadata ADD COLUMN blob_name TEXT;
+ALTER TABLE run_metadata ADD COLUMN blob_etag TEXT;
+CREATE UNIQUE INDEX idx_run_metadata_blob ON run_metadata(blob_name);</pre>
+</section>
+
+<section id="contract">
+  <h2><span class="n">7</span>Artifact and manifest contract</h2>
+  <h3>Bundle contents</h3>
+  <pre>dashboard-bundle.zip
+  manifest.json
+  results.jsonl
+  eval-summary.md
+  junit/
+    *.junit.xml</pre>
+  <h3>Manifest v1</h3>
+  <pre>{
+  "schemaVersion": 1,
+  "adoProject": "internal",
+  "repository": "azure-rest-api-specs",
+  "pipelineDefinitionId": 1234,
+  "pipelineName": "skill-eval",
+  "buildId": 678901,
+  "buildNumber": "20260903.4",
+  "buildUrl": "https://dev.azure.com/azure-sdk/internal/_build/results?buildId=678901",
+  "branch": "refs/heads/main",
+  "commitSha": "...",
+  "reason": "Schedule",
+  "startedAt": "2026-09-03T08:00:00Z",
+  "completedAt": "2026-09-03T08:17:42Z",
+  "vallyVersion": "0.15.0"
+}</pre>
+  <div class="table-wrap"><table><thead><tr><th>Rule</th><th>Requirement</th></tr></thead><tbody>
+    <tr><td>Immutability</td><td>One Blob path is written once. Retries publish under a new summary-attempt path.</td></tr>
+    <tr><td>Identity</td><td>Dashboard run ID derives from project + repository + definition ID + build ID + attempt.</td></tr>
+    <tr><td>Completeness</td><td>Bundle is uploaded only after all selected highest-attempt shard outputs are present.</td></tr>
+    <tr><td>Compatibility</td><td>Manifest is versioned independently of Vally's JSONL format.</td></tr>
+    <tr><td>History boundary</td><td>Only bundles published after the continuous path goes live are included. No pre-launch runs are imported.</td></tr>
+  </tbody></table></div>
+</section>
+
+<section id="pipeline">
+  <h2><span class="n">8</span>Pipeline implementation work</h2>
+  <ol class="step-list">
+    <li><strong>Always publish raw Vally output</strong><p>Update shared <code>eval-shard.yml</code> so every attempt publishes <code>results.jsonl</code> alongside JUnit. Keep heavy session logs and workspaces failure-only.</p><ul><li>Artifact name includes shard and <code>System.JobAttempt</code>.</li><li>Publish condition is <code>always()</code>.</li><li>Never expose secrets from executor environment.</li></ul></li>
+    <li><strong>Merge shard results in Summary</strong><p>Update <code>eval-summarize.yml</code> to download raw shard outputs, select the highest attempt, and call a shared merge/postprocessing script.</p><ul><li>Reject missing expected shards as incomplete.</li><li>Preserve each trial record exactly once.</li><li>Emit a canonical build-level <code>results.jsonl</code>.</li></ul></li>
+    <li><strong>Generate manifest</strong><p>Capture repository, definition/build IDs, branch, commit, reason, timestamps, Vally version, build URL, and fidelity.</p></li>
+    <li><strong>Upload immutable bundle to Blob</strong><p>Add a shared pipeline template executed after Summary under <code>condition: always()</code>, but upload only if the bundle validates.</p><ul><li>Use Azure workload identity federation.</li><li>Grant <code>Storage Blob Data Contributor</code> only to the upload identity.</li><li>Set content hash and metadata on upload.</li><li>Retry transient upload failures three times.</li><li>Report publication failure separately from the eval test verdict.</li></ul></li>
+    <li><strong>Keep short-term ADO artifacts</strong><p>Publish the same bundle as an ADO pipeline artifact for build-level debugging. Retain it for 30 days (or the repository's longer existing policy); dashboard history never depends on ADO retention.</p></li>
+  </ol>
+  <h3>Repository rollout order</h3>
+  <div class="table-wrap"><table><thead><tr><th>Order</th><th>Repository</th><th>Purpose</th></tr></thead><tbody>
+    <tr><td>1</td><td><code>azure-sdk-tools</code></td><td>Own shared templates/scripts and validate workflow/skill evals.</td></tr>
+    <tr><td>2</td><td><code>azure-rest-api-specs</code></td><td>Existing pilot with skill eval and ARM reviewer coverage.</td></tr>
+    <tr><td>3</td><td><code>azure-sdk</code></td><td>Validate shared consumer behavior.</td></tr>
+    <tr><td>4</td><td>Java, JS, .NET, Python</td><td>Onboard language repositories after shared contract stabilizes.</td></tr>
+  </tbody></table></div>
+</section>
+
+<section id="service">
+  <h2><span class="n">9</span>Dashboard service implementation work</h2>
+  <ol class="step-list">
+    <li><strong>Upgrade and pin Vally</strong><p>Use <code>@microsoft/vally-server 0.15.0</code> from the configured Azure feed and Node <code>&gt;=22.12</code>. Keep lockfile deterministic.</p></li>
+    <li><strong>Add Blob source adapter</strong><p>Use <code>@azure/storage-blob</code> with <code>DefaultAzureCredential</code>. Run a complete metadata listing at startup and every five minutes.</p><ul><li>Set production <code>VALLY_BLOB_POLL_MS=300000</code>.</li><li>List Blob names, ETags, sizes, and modified timestamps without downloading content.</li><li>Skip known immutable names before download.</li><li>Allow one sync cycle and at most two downloads concurrently.</li><li>Use atomic temporary extraction.</li><li>Escalate to Event Grid + Queue only at the documented scale threshold.</li></ul></li>
+    <li><strong>Extend run metadata</strong><p>Store repository, pipeline definition/name, ADO build URL, branch, commit, blob name, and ETag.</p></li>
+    <li><strong>Ingest and clean temporary files</strong><p>Call Vally's existing <code>ingestDirectory()</code>. Delete downloaded ZIPs and extracted directories after successful ingestion; retain only SQLite and diagnostic failure files.</p></li>
+    <li><strong>Serve multi-repo index</strong><p>Generate repository and pipeline cards from metadata. Place tools first, then alphabetically. Route to <code>/p/:repository/:pipeline</code>.</p></li>
+    <li><strong>Reuse Vally pages</strong><p>Filter the Vally run list by exact dashboard run IDs. Preserve its charts, tables, ranking, graders, tools, and comparisons.</p></li>
+    <li><strong>Enforce cache retention</strong><p>At startup and daily at 02:00 UTC, remove SQLite runs and related outcome/grader/tool metadata older than 731 days, then checkpoint WAL.</p></li>
+    <li><strong>Add observability</strong><p>Emit structured logs and metrics for last successful sync, next scheduled sync, listed/downloaded/skipped/failed bundles, ingest duration, newest build age, DB size, and disk usage. Surface last successful sync in the index UI.</p></li>
+  </ol>
+</section>
+
+<section id="history-policy">
+  <h2><span class="n">10</span>History boundary and continuous-only policy</h2>
+  <div class="callout"><strong>Approved direction</strong>Do not download, normalize, or import past Azure DevOps runs. Dashboard history begins with the first successful production bundle upload and grows automatically from that point forward.</div>
+  <h3>Implementation consequences</h3>
+  <ol class="step-list">
+    <li><strong>No backfill utility</strong><p>Do not build ADO build enumeration, artifact download, old-format conversion, or historical gap reporting.</p></li>
+    <li><strong>One continuous producer</strong><p>Every onboarded eval pipeline uses the shared Summary template to create and upload one immutable bundle for each new completed run.</p></li>
+    <li><strong>Define go-live per pipeline</strong><p>A pipeline's history begins when its first valid bundle reaches Blob. Until then, the repository/pipeline card is absent or shows no runs.</p></li>
+    <li><strong>Recover missed current uploads</strong><p>If a new run's Blob upload fails, retry the publishing job while its ADO artifact is still available. This is operational retry, not historical backfill.</p></li>
+    <li><strong>Use future accumulated history</strong><p>Vally's history and comparison diagrams operate over all continuously published bundles retained in Blob.</p></li>
+  </ol>
+</section>
+
+<section id="security">
+  <h2><span class="n">11</span>Security and reliability</h2>
+  <div class="grid-2">
+    <article class="card"><h3>Pipeline identity</h3><ul><li>Workload identity federation.</li><li><code>Storage Blob Data Contributor</code>.</li><li>Scope to one container.</li><li>No account keys or long-lived SAS tokens.</li></ul></article>
+    <article class="card"><h3>Dashboard identity</h3><ul><li>App Service managed identity.</li><li><code>Storage Blob Data Reader</code>.</li><li>Entra authentication on the website.</li><li>Preserve Vally host-header protection.</li></ul></article>
+    <article class="card"><h3>Data safety</h3><ul><li>Private container.</li><li>HTTPS only.</li><li>Validate ZIP paths and maximum uncompressed size.</li><li>Never render raw HTML from trajectories.</li></ul></article>
+    <article class="card"><h3>Reliability</h3><ul><li>One App Service instance for v1.</li><li>Atomic ingestion transaction.</li><li>Idempotent Blob-to-run identity.</li><li>Database rebuild runbook.</li></ul></article>
+  </div>
+</section>
+
+<section id="capacity">
+  <h2><span class="n">12</span>Capacity and retention</h2>
+  <p>The current POC provides a baseline, not a production upper bound:</p>
+  <div class="table-wrap"><table class="metric-table"><thead><tr><th>Measured POC data</th><th>Size</th></tr></thead><tbody>
+    <tr><td>18 raw run folders</td><td>5.94 MB</td></tr>
+    <tr><td>SQLite database</td><td>6.52 MB</td></tr>
+    <tr><td>SQLite WAL while running</td><td>5.05 MB</td></tr>
+    <tr><td>226 outcomes' <code>raw_json</code></td><td>5.80 MB</td></tr>
+  </tbody></table></div>
+  <p>At the measured average, 9 daily pipelines over two years would consume roughly 4.5 GB if both extracted raw data and SQLite were retained. Production should avoid that duplication by deleting temporary downloads after ingestion.</p>
+  <div class="grid-2">
+    <article class="card"><h3>Blob policy</h3><ul><li>Hot: upload through day 30.</li><li>Cool: day 31 through day 731.</li><li>Delete: after day 731.</li><li>All continuously published run types use the same policy in v1.</li></ul></article>
+    <article class="card"><h3>App Service policy</h3><ul><li>B1 is sufficient for pilot.</li><li>Prune SQLite to the same 731-day horizon daily.</li><li>Alert at 70% and 80% disk use.</li><li>Checkpoint WAL daily and after bulk rebuild.</li><li>Upgrade tier before sustained multi-year growth requires it.</li></ul></article>
+  </div>
+  <h3>Retention by storage layer</h3>
+  <div class="table-wrap"><table><thead><tr><th>Layer</th><th>Retention</th><th>Reason</th></tr></thead><tbody>
+    <tr><td>Blob bundles</td><td>731 days</td><td>Authoritative two-year trend and recovery history.</td></tr>
+    <tr><td>SQLite cache</td><td>731 days</td><td>Matches Blob so displayed data never outlives recoverable source data.</td></tr>
+    <tr><td>Temporary ZIP/extraction</td><td>Delete immediately after each attempt</td><td>Avoids doubling App Service disk usage.</td></tr>
+    <tr><td>ADO pipeline artifact</td><td>30 days or existing longer repository policy</td><td>Short-term build debugging only; not used by the dashboard.</td></tr>
+  </tbody></table></div>
+</section>
+
+<section id="rollout">
+  <h2><span class="n">13</span>Delivery plan and action items</h2>
+  <article class="phase" style="--phase:var(--blue)"><div class="phase-title"><strong>Phase 0</strong><span>Azure ownership and resources</span></div><div class="phase-body"><ul><li>Choose subscription, resource group, storage account, container, region, and owners.</li><li>Configure the approved 30-day hot / 731-day delete lifecycle.</li><li>Create service identities and RBAC assignments.</li><li>Confirm the initial pipelines that will begin publishing at go-live.</li></ul></div></article>
+  <article class="phase" style="--phase:var(--green)"><div class="phase-title"><strong>Phase 1</strong><span>Canonical producer</span></div><div class="phase-body"><ul><li>Always publish shard JSONL.</li><li>Implement highest-attempt merge.</li><li>Generate manifest v1 and dashboard bundle.</li><li>Add unit/contract fixtures for retries, missing shards, and malformed records.</li></ul></div></article>
+  <article class="phase" style="--phase:var(--accent)"><div class="phase-title"><strong>Phase 2</strong><span>Blob publishing pilot</span></div><div class="phase-body"><ul><li>Add workload-identity upload template.</li><li>Enable tools and specs pipelines.</li><li>Verify paths, metadata, immutability, and lifecycle policy.</li><li>Continue publishing ADO artifacts for debugging.</li></ul></div></article>
+  <article class="phase" style="--phase:var(--red)"><div class="phase-title"><strong>Phase 3</strong><span>Hosted dashboard ingestion</span></div><div class="phase-body"><ul><li>Productionize POC metadata/index.</li><li>Add Blob adapter and temporary-file cleanup.</li><li>Enable managed identity and Entra auth.</li><li>Deploy one-instance App Service and validate recovery.</li></ul></div></article>
+  <article class="phase" style="--phase:var(--amber)"><div class="phase-title"><strong>Phase 4</strong><span>Language rollout and hardening</span></div><div class="phase-body"><ul><li>Onboard remaining repositories through the shared publishing template.</li><li>Verify the first continuously published run for each pipeline.</li><li>Monitor disk, ingestion lag, and failed bundles.</li><li>Publish support/runbook documentation.</li></ul></div></article>
+  <article class="phase" style="--phase:#57534e"><div class="phase-title"><strong>Phase 5</strong><span>Trend reports</span></div><div class="phase-body"><ul><li>Add deterministic regression/recovery queries.</li><li>Generate daily/weekly reports with build links.</li><li>Keep AI recommendations review-only.</li></ul></div></article>
+</section>
+
+<section id="testing">
+  <h2><span class="n">14</span>Test and acceptance plan</h2>
+  <div class="table-wrap"><table><thead><tr><th>Layer</th><th>Required checks</th></tr></thead><tbody>
+    <tr><td>Contract</td><td>Manifest schema, stable identity, invalid fields, unknown schema version, and go-live history boundary.</td></tr>
+    <tr><td>Shard merge</td><td>Highest attempt wins, no duplicate trials, missing shard fails, deterministic ordering.</td></tr>
+    <tr><td>Blob sync</td><td>New/known/replaced blobs, transient failures, corrupt ZIP, path traversal, maximum size, retry.</td></tr>
+    <tr><td>Scheduling</td><td>Immediate startup sync, five-minute recurring sync with fake timers, no overlapping cycles, and maximum two concurrent downloads.</td></tr>
+    <tr><td>Database</td><td>Atomic ingest, metadata upsert, duplicate Blob name, DB rebuild from empty state.</td></tr>
+    <tr><td>Retention</td><td>Rows at 730 days remain, rows older than 731 days are removed with dependent outcomes/graders/tools, WAL checkpoint succeeds.</td></tr>
+    <tr><td>Vally runtime</td><td>Vally API/UI starts on Node 22, host validation remains active, SQLite schema is compatible, and Chart.js loads under the selected network policy.</td></tr>
+    <tr><td>UI</td><td>Repository/pipeline ordering, exact filtering, latest/history charts, desktop/mobile overflow, build links.</td></tr>
+    <tr><td>End to end</td><td>Completed ADO build appears automatically in the dashboard within the ingestion SLO.</td></tr>
+    <tr><td>Recovery</td><td>Delete local DB and staging; rebuild complete history from Blob and compare counts/hashes.</td></tr>
+  </tbody></table></div>
+  <h3>Release acceptance criteria</h3>
+  <ul><li>Tools and specs pipelines publish valid immutable bundles.</li><li>A new build appears without manual upload and 95% appear within 10 minutes of Summary completion.</li><li>Dashboard restarts do not re-download known immutable bundles.</li><li>Deleting SQLite and replaying post-launch Blob history reproduces run/outcome counts.</li><li>SQLite and Blob both enforce the 731-day history boundary.</li><li>Repository/pipeline pages show only their own runs.</li><li>No pre-launch runs are expected or imported.</li><li>No credentials are stored in repository or App Service settings as long-lived secrets.</li></ul>
+</section>
+
+<section id="operations">
+  <h2><span class="n">15</span>Operations and runbooks</h2>
+  <div class="grid-2">
+    <article class="card"><h3>Health signals</h3><ul><li>HTTP health endpoint.</li><li>Last successful Blob listing.</li><li>Newest ingested build age.</li><li>Failed bundle count and reason.</li><li>SQLite and disk byte size.</li></ul></article>
+    <article class="card"><h3>Recovery runbook</h3><ul><li>Stop the app.</li><li>Move/delete <code>eval.db</code>, WAL, and SHM.</li><li>Start in rebuild mode.</li><li>Replay all retained Blob bundles.</li><li>Compare manifest, run, and outcome counts.</li></ul></article>
+    <article class="card"><h3>Corrupt bundle</h3><ul><li>Do not record successful ingestion.</li><li>Move diagnostic copy to quarantine prefix or log exact blob.</li><li>Alert owner with source build URL.</li><li>Allow retry after corrected immutable attempt is published.</li></ul></article>
+    <article class="card"><h3>Upgrade Vally</h3><ul><li>Pin exact package version.</li><li>Test old/new JSONL fixtures.</li><li>Check SQLite schema compatibility.</li><li>Rebuild cache if Vally has no migration path.</li></ul></article>
+  </div>
+</section>
+
+<section id="decisions">
+  <h2><span class="n">16</span>Remaining decisions before implementation</h2>
+  <div class="question"><strong>1. Azure ownership</strong><p>Which subscription, resource group, storage account, App Service plan, and operational team own the production service?</p></div>
+  <div class="question"><strong>2. Pipeline scope</strong><p>Confirm the initial definition IDs and whether PR runs are published or only main/scheduled/manual runs.</p></div>
+  <div class="question"><strong>3. Authentication audience</strong><p>Should access be limited to Azure SDK organization users, a broader Microsoft tenant group, or public read access?</p></div>
+  <div class="question"><strong>4. App Service tier</strong><p>Use B1 for pilot; decide the production tier after measuring real ingestion volume and memory usage.</p></div>
+  <div class="question"><strong>5. Browser asset policy</strong><p>Allow Vally's current Chart.js CDN dependency, or vendor the asset so the dashboard can operate with restricted outbound network access?</p></div>
+</section>
+
+</main>
+</div>
+<footer class="footer">Draft implementation plan. Existing, POC, and proposed behaviors are labeled separately. No production resource changes are implied by this document.</footer>
+</body>
+</html>

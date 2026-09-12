@@ -3,7 +3,52 @@ import { SpecConfig, SdkRepoConfig } from '../types/SpecConfig';
 import { toolError } from '../utils/messageUtils';
 import { getRepoKey, RepoKey } from '../utils/repo';
 import { readFileSync } from 'fs';
+import * as path from 'path';
 import * as winston from 'winston';
+
+/**
+ * Resolves a repository-relative path that came from configuration, refusing any
+ * value that would read outside the repository it is declared against.
+ *
+ * `path.join` and `path.resolve` leak through different inputs -- `join` follows
+ * `..` out of the root while treating `/etc/passwd` as a relative segment, and
+ * `resolve` honours absolute, drive-relative and UNC values instead -- so the
+ * containment check below is what actually holds the boundary, rather than the
+ * choice of joining function.
+ *
+ * Absolute values are rejected with their own message, and both path flavours
+ * take part in every decision, so that a given configuration is accepted or
+ * refused identically on Linux and Windows agents. Without that, a value such
+ * as `..\..\config.json` would climb out of the root on a Windows agent while
+ * landing inside it as a literal filename on a Linux one.
+ */
+export const resolveRepoRelativePath = (repoRootPath: string, configuredPath: string, settingName: string): string => {
+  const normalizedPath = configuredPath.split('\\').join('/');
+
+  if (path.posix.isAbsolute(normalizedPath) || path.win32.isAbsolute(normalizedPath)) {
+    throw new Error(
+      toolError(
+        `The '${settingName}' value '${configuredPath}' must be a path relative to the repository root, but it is absolute. ` +
+        `Please correct the config at the 'specificationRepositoryConfiguration.json' file under the root folder of the azure-rest-api-specs(-pr) repository`
+      )
+    );
+  }
+
+  const repoRoot = path.resolve(repoRootPath);
+  const resolved = path.resolve(repoRoot, normalizedPath);
+  const repoRootPrefix = repoRoot.endsWith(path.sep) ? repoRoot : `${repoRoot}${path.sep}`;
+
+  if (resolved !== repoRoot && !resolved.startsWith(repoRootPrefix)) {
+    throw new Error(
+      toolError(
+        `The '${settingName}' value '${configuredPath}' resolves outside the repository at '${repoRoot}'. ` +
+        `Please correct the config at the 'specificationRepositoryConfiguration.json' file under the root folder of the azure-rest-api-specs(-pr) repository`
+      )
+    );
+  }
+
+  return resolved;
+};
 
 export const setFailureType = (context: WorkflowContext, failureType: FailureType) => {
   if (context.failureType !== FailureType.CodegenFailed) {

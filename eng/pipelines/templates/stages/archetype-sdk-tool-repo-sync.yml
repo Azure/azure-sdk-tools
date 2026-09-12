@@ -157,7 +157,7 @@ stages:
                           -UserReviewers $(System.PullRequest.Creator)
                           -Assignees $(System.PullRequest.Creator)
                           -PRBody "Sync ${{ parameters.DirectoryToSync }} directory with azure-sdk-tools for PR https://github.com/Azure/azure-sdk-tools/pull/$(System.PullRequest.PullRequestNumber) `
-                          See [eng/common workflow](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/README.md#workflow)"
+                          See [eng/common workflow]`(https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/README.md#workflow`)"
 
                     - ${{ each prValidationPipeline in parameters.PRValidationPipelines }}:
                       - ${{ if eq(prValidationPipeline.Repository, repo.RepoName) }}:

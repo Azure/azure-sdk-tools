@@ -34,8 +34,8 @@ jobs:
             Branch: ${{ parameters.BranchToMergeFrom }}
             TargetBranches:
               ${{ parameters.BranchToMergeTo }}:
-                  Theirs: '@("**")'
-                  Ours: '@("specification")'
-                  Merge: '@("specification/common-types")'
+                  Theirs: '"**"'
+                  Ours: '"specification"'
+                  Merge: '"specification/common-types"'
                   AcceptTheirsForFinalMerge: true
 

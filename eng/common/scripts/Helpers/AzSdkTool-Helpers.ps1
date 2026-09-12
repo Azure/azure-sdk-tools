@@ -107,6 +107,52 @@ function isNewVersion(
 
 <#
 .SYNOPSIS
+Gets GitHub authorization headers from the GitHub CLI or GITHUB_TOKEN.
+.OUTPUTS
+A hashtable containing authorization headers, or null when no token is available.
+#>
+function Get-GitHubApiHeaders {
+    $token = $null
+
+    if (Get-Command gh -ErrorAction SilentlyContinue) {
+        try {
+            $global:LASTEXITCODE = 0
+            $output = gh auth token 2>$null
+            if ($LASTEXITCODE -ne 0) {
+                Write-Host "Failed to get GitHub CLI auth token (exit code $LASTEXITCODE); falling back to GITHUB_TOKEN."
+            }
+            else {
+                foreach ($line in $output) {
+                    if ($line) {
+                        $token = [string]$line
+                        break
+                    }
+                }
+                if ($token) {
+                    $token = $token.Trim()
+                }
+            }
+        }
+        catch {
+            Write-Host "Failed to get GitHub CLI auth token ($($_.Exception.Message)); falling back to GITHUB_TOKEN."
+        }
+    }
+
+    if (!$token) {
+        $token = $env:GITHUB_TOKEN
+    }
+
+    if ($token) {
+        return @{
+            Authorization = ("Bearer " + $token)
+        }
+    }
+
+    return $null
+}
+
+<#
+.SYNOPSIS
 Installs a standalone version of an engsys tool.
 .PARAMETER Version
 The version of the tool to install. Requires a full version to be provided. EG "1.0.0-dev.20240617.1"
@@ -135,11 +181,16 @@ function Install-Standalone-Tool (
     }
 
     $tag = "${Package}_${Version}"
+    $headers = Get-GitHubApiHeaders
+    $githubRequestParameters = @{}
+    if ($headers) {
+        $githubRequestParameters.Headers = $headers
+    }
 
     if (!$Version -or $Version -eq "*") {
         Write-Host "Attempting to find latest version for package '$Package'"
         $releasesUrl = "https://api.github.com/repos/$Repository/releases"
-        $releases = Invoke-RestMethod -Uri $releasesUrl
+        $releases = Invoke-RestMethod -Uri $releasesUrl @githubRequestParameters
         $found = $false
         foreach ($release in $releases) {
             if ($release.tag_name -like "$Package*") {
@@ -163,7 +214,7 @@ function Install-Standalone-Tool (
 
     if (isNewVersion $version $downloadFolder) {
         Write-Host "Installing '$Package' '$Version' to '$downloadFolder' from $downloadUrl"
-        Invoke-WebRequest -Uri $downloadUrl -OutFile $downloadLocation
+        Invoke-WebRequest -Uri $downloadUrl -OutFile $downloadLocation @githubRequestParameters
 
         if ($downloadFile -like "*.zip") {
             Expand-Archive -Path $downloadLocation -DestinationPath $downloadFolder -Force

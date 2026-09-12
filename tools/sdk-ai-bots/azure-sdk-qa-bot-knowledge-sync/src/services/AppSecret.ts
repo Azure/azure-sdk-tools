@@ -17,9 +17,9 @@ export async function initSecrets(): Promise<void> {
         
         // Create a credential
         const credential = new ChainedTokenCredential(
+            new WorkloadIdentityCredential(),
             new ManagedIdentityCredential(),
-            new AzureCliCredential(),
-            new WorkloadIdentityCredential()
+            new AzureCliCredential()
         );
 
         // Establish a connection to the Key Vault client

@@ -1,0 +1,14 @@
+default:
+  tenant: general_qa_bot
+  endpoint: ${SERVER_BASE_URL}
+
+channels:
+  - name: Azure SDK Onboarding and E2E SDK
+    id: 19:de3fce22c2994be18cac50502c55f717@thread.skype
+    endpoint: ${SERVER_BASE_URL}
+    tenant: azure_sdk_onboarding
+
+  - name: TypeSpec Discussion
+    id: 19:906c1efbbec54dc8949ac736633e6bdf@thread.skype
+    endpoint: ${SERVER_BASE_URL}
+    tenant: typespec_channel_qa_bot

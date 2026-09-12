@@ -1,0 +1,65 @@
+# Pipeline template — Bicep build, parameter build, and lint.
+#
+# Runs as part of every provision pipeline and on PR validation for any
+# change to infra/**.
+
+parameters:
+    - name: bicepLayersDirectory
+      type: string
+      default: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/deployment/infra/layers'
+    - name: layer
+      type: string
+      default: ''
+
+steps:
+    - bash: |
+          set -euo pipefail
+          az bicep install
+          az bicep version
+      displayName: 'Install bicep CLI'
+
+    - bash: |
+          set -euo pipefail
+          LAYER='${{ parameters.layer }}'
+          if [ -n "$LAYER" ]; then
+            BICEP_FILES=("${{ parameters.bicepLayersDirectory }}/$LAYER/main.bicep")
+          else
+            BICEP_FILES=("${{ parameters.bicepLayersDirectory }}"/*/main.bicep)
+          fi
+          for bicep_file in "${BICEP_FILES[@]}"; do
+            echo "Building $bicep_file"
+            az bicep build --file "$bicep_file"
+          done
+          echo "✓ layered bicep build succeeded"
+      displayName: 'bicep build'
+
+    - bash: |
+          set -euo pipefail
+          LAYER='${{ parameters.layer }}'
+          if [ -n "$LAYER" ]; then
+            PARAMETER_FILES=("${{ parameters.bicepLayersDirectory }}/$LAYER/main.bicepparam")
+          else
+            PARAMETER_FILES=("${{ parameters.bicepLayersDirectory }}"/*/main.bicepparam)
+          fi
+          for parameter_file in "${PARAMETER_FILES[@]}"; do
+            echo "Building $parameter_file"
+            az bicep build-params --file "$parameter_file" --stdout >/dev/null
+          done
+          echo "✓ layered bicep parameter build succeeded"
+      displayName: 'bicep build-params'
+
+    - bash: |
+          set -euo pipefail
+          LAYER='${{ parameters.layer }}'
+          if [ -n "$LAYER" ]; then
+            BICEP_FILES=("${{ parameters.bicepLayersDirectory }}/$LAYER/main.bicep")
+          else
+            BICEP_FILES=("${{ parameters.bicepLayersDirectory }}"/*/main.bicep)
+          fi
+          for bicep_file in "${BICEP_FILES[@]}"; do
+            echo "Linting $bicep_file"
+            az bicep lint --file "$bicep_file"
+          done
+          echo "✓ layered bicep lint succeeded"
+      displayName: 'bicep lint'
+      continueOnError: true

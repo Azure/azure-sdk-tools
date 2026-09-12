@@ -1,0 +1,73 @@
+# Reusable stage for a single azd provisioning layer.
+
+parameters:
+    - name: layer
+      type: string
+      values: [resource-group, shared-resources, agent, frontend, agent-server, function-app, logic-app]
+    - name: dependencyLayers
+      type: string
+      default: ''
+    - name: provisionResourceGroup
+      type: boolean
+      default: false
+    - name: environment
+      type: string
+      default: dev
+      values: [dev, preview, prod]
+    - name: operation
+      type: string
+      default: preview
+      values: [preview, apply]
+    - name: stageName
+      type: string
+      default: ProvisionLayer
+    - name: dependsOn
+      type: string
+      default: ''
+
+stages:
+    - stage: ${{ parameters.stageName }}
+      displayName: '${{ parameters.operation }} ${{ parameters.layer }} (${{ parameters.environment }})'
+      ${{ if ne(parameters.dependsOn, '') }}:
+          dependsOn: ${{ parameters.dependsOn }}
+      jobs:
+          - job: AzdProvisionLayer
+            pool:
+                name: $(LINUXPOOL)
+                image: $(LINUXVMIMAGE)
+                os: linux
+            steps:
+                - checkout: self
+                - template: /tools/sdk-ai-bots/deployment/pipelines/templates/load-environment-suite.yml
+                  parameters:
+                      environment: ${{ parameters.environment }}
+                - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-auth.yml
+                - ${{ if eq(parameters.operation, 'preview') }}:
+                      - bash: |
+                            set -euo pipefail
+                            : > "$(Agent.TempDirectory)/sdk-ai-bots-preflight-summary.md"
+                        displayName: 'Initialize preflight result'
+                - ${{ if parameters.provisionResourceGroup }}:
+                      - template: /tools/sdk-ai-bots/deployment/pipelines/templates/bicep-validate.yml
+                        parameters:
+                            layer: resource-group
+                      - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-provision.yml
+                        parameters:
+                            operation: ${{ parameters.operation }}
+                            layer: resource-group
+                - template: /tools/sdk-ai-bots/deployment/pipelines/templates/bicep-validate.yml
+                  parameters:
+                      layer: ${{ parameters.layer }}
+                - template: /tools/sdk-ai-bots/deployment/pipelines/templates/azd-provision.yml
+                  parameters:
+                      operation: ${{ parameters.operation }}
+                      layer: ${{ parameters.layer }}
+                      dependencyLayers: ${{ parameters.dependencyLayers }}
+                - ${{ if eq(parameters.operation, 'preview') }}:
+                      - template: /tools/sdk-ai-bots/deployment/pipelines/templates/publish-preview-summary.yml
+
+          - ${{ if and(eq(parameters.operation, 'apply'), eq(parameters.layer, 'logic-app')) }}:
+                - template: /tools/sdk-ai-bots/deployment/pipelines/templates/logic-app-consent-jobs.yml
+                  parameters:
+                      environment: ${{ parameters.environment }}
+                      dependsOn: AzdProvisionLayer

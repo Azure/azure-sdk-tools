@@ -1,0 +1,114 @@
+parameters:
+  - name: agentName
+    type: string
+    values: [chat_agent, chatbot_evolution_agent]
+  - name: environment
+    type: string
+    values: [dev, preview, prod]
+  - name: imageTag
+    type: string
+    default: auto
+  - name: workingDirectory
+    type: string
+    default: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-agent'
+
+steps:
+  - checkout: self
+    displayName: 'Checkout repository'
+
+  - template: /tools/sdk-ai-bots/deployment/pipelines/templates/load-environment-suite.yml
+    parameters:
+      environment: ${{ parameters.environment }}
+
+  - task: PipAuthenticate@1
+    displayName: 'Authenticate pip to Azure Artifacts'
+    inputs:
+      artifactFeeds: 'public/azure-sdk-for-python'
+
+  - bash: |
+      set -euo pipefail
+      if [ "$REQUESTED_IMAGE_TAG" = "auto" ]; then
+        REQUESTED_IMAGE_TAG=""
+      fi
+      IMAGE_VERSION="${REQUESTED_IMAGE_TAG:-$(Build.BuildId)}"
+      if [[ ! "$IMAGE_VERSION" =~ ^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$ ]]; then
+        echo "##[error]Invalid image tag: $IMAGE_VERSION"
+        exit 1
+      fi
+      echo "Image version: $IMAGE_VERSION"
+      echo "##vso[task.setvariable variable=AZD_IMAGE_TAG]$IMAGE_VERSION"
+    displayName: 'Show image version'
+    env:
+      REQUESTED_IMAGE_TAG: '${{ parameters.imageTag }}'
+
+  - task: AzureCLI@2
+    displayName: 'Build, push, and deploy ${{ parameters.agentName }}'
+    inputs:
+      azureSubscription: $(AZURE_SERVICE_CONNECTION)
+      scriptType: bash
+      scriptLocation: inlineScript
+      workingDirectory: ${{ parameters.workingDirectory }}
+      inlineScript: |
+        set -euo pipefail
+
+        if [ '${{ parameters.agentName }}' = 'chatbot_evolution_agent' ] && [ '${{ parameters.environment }}' != 'prod' ]; then
+          echo 'chatbot_evolution_agent is production-only.'
+          exit 1
+        fi
+
+        export AZURE_CORE_WELCOME_MESSAGE=false
+        az version >/dev/null 2>&1 || true
+        az config set core.welcome_message=false 2>/dev/null || true
+
+        python -m pip install --upgrade pip
+        python -m pip install keyring artifacts-keyring --retries 5 --timeout 60
+        python -m pip config set global.index-url "$PIP_INDEX_URL"
+        pip install -r requirements.txt --retries 5 --timeout 60
+
+        python scripts/deploy_hosted_agent.py \
+          '${{ parameters.agentName }}' \
+          --tag '$(AZD_IMAGE_TAG)' \
+          --appconfig-endpoint '$(AZURE_APPCONFIG_ENDPOINT)'
+    env:
+      AZURE_CORE_WELCOME_MESSAGE: 'false'
+      CANDIDATE_APPCONFIG_ENDPOINT: $(CANDIDATE_APPCONFIG_ENDPOINT)
+      SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+
+  - ${{ if and(eq(parameters.agentName, 'chatbot_evolution_agent'), eq(parameters.environment, 'prod')) }}:
+    - task: AzureCLI@2
+      displayName: 'Grant evolution agent primary access'
+      inputs:
+        azureSubscription: $(AZURE_SERVICE_CONNECTION)
+        scriptType: bash
+        scriptLocation: inlineScript
+        inlineScript: |
+          set -euo pipefail
+          az appconfig kv set \
+            --name "$APP_CONFIG_NAME" \
+            --auth-mode login \
+            --key AI_FOUNDRY_CHATBOT_EVOLUTION_AGENT_VERSION \
+            --value "$HOSTED_AGENT_VERSION" \
+            --yes \
+            --output none
+          bash "$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/deployment/scripts/grant-agent-data-access.sh" primary
+      env:
+        AGENT_PRINCIPAL_ID: $(HOSTED_AGENT_PRINCIPAL_ID)
+        APP_CONFIG_NAME: $(APP_CONFIG_NAME)
+        AZURE_RESOURCE_GROUP: $(AZURE_RESOURCE_GROUP)
+        AZURE_SUBSCRIPTION_ID: $(AZURE_SUBSCRIPTION_ID)
+        HOSTED_AGENT_VERSION: $(HOSTED_AGENT_VERSION)
+
+    - task: AzureCLI@2
+      displayName: 'Grant evolution agent candidate access'
+      inputs:
+        azureSubscription: $(CANDIDATE_AZURE_SERVICE_CONNECTION)
+        scriptType: bash
+        scriptLocation: inlineScript
+        inlineScript: |
+          set -euo pipefail
+          bash "$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/deployment/scripts/grant-agent-data-access.sh" candidate
+      env:
+        AGENT_PRINCIPAL_ID: $(HOSTED_AGENT_PRINCIPAL_ID)
+        APP_CONFIG_NAME: $(CANDIDATE_APP_CONFIG_NAME)
+        AZURE_RESOURCE_GROUP: $(CANDIDATE_AZURE_RESOURCE_GROUP)
+        AZURE_SUBSCRIPTION_ID: $(CANDIDATE_AZURE_SUBSCRIPTION_ID)

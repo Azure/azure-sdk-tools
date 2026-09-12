@@ -25,10 +25,9 @@ parameters:
 variables:
   - template: /eng/pipelines/templates/variables/globals.yml
   - template: /eng/pipelines/templates/variables/image.yml
-  - ${{ if eq(parameters.environment, 'dev') }}:
-    - group: 'Azure SDK QA Bot Dev Variables'
-  - ${{ if eq(parameters.environment, 'prod') }}:
-    - group: 'Azure SDK QA Bot Prod Variables'
+  - template: /tools/sdk-ai-bots/deployment/pipelines/templates/service-connection.yml
+    parameters:
+      environment: ${{ parameters.environment }}
   - name: workingDirectory
     value: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-agent'
   - name: PythonIndexUrl
@@ -49,50 +48,7 @@ extends:
               image: $(LINUXVMIMAGE)
               os: linux
             steps:
-              - checkout: self
-                displayName: 'Checkout repository'
-
-              - task: PipAuthenticate@1
-                displayName: 'Authenticate pip to Azure Artifacts'
-                inputs:
-                  artifactFeeds: 'public/azure-sdk-for-python'
-
-              - task: AzureCLI@2
-                displayName: 'Build, Push & Deploy Agent'
-                inputs:
-                  azureSubscription: $(SERVICE_CONNECTION)
-                  scriptType: bash
-                  scriptLocation: inlineScript
-                  workingDirectory: $(workingDirectory)
-                  inlineScript: |
-                    set -euo pipefail
-
-                    if [ "${{ parameters.agentName }}" = "chatbot_evolution_agent" ] && [ "${{ parameters.environment }}" != "prod" ]; then
-                      echo "chatbot_evolution_agent is production-only."
-                      exit 1
-                    fi
-
-                    # Suppress Azure CLI welcome banner on fresh CI agents.
-                    export AZURE_CORE_WELCOME_MESSAGE=false
-                    az version > /dev/null 2>&1 || true
-                    az config set core.welcome_message=false 2>/dev/null || true
-
-                    python -m pip install --upgrade pip
-                    python -m pip install keyring artifacts-keyring --retries 5 --timeout 60
-
-                    python -m pip config set global.index-url "$PIP_INDEX_URL"
-
-                    pip install -r requirements.txt --retries 5 --timeout 60
-
-                    python scripts/deploy_hosted_agent.py \
-                      ${{ parameters.agentName }} \
-                      --tag "$(Build.BuildId)" \
-                      --appconfig-endpoint "$(AZURE_APPCONFIG_ENDPOINT)"
-                env:
-                  AZURE_CORE_WELCOME_MESSAGE: 'false'
-                  AI_FOUNDRY_RAI_POLICY_ID: $(AI_FOUNDRY_RAI_POLICY_ID)
-                  AI_FOUNDRY_PROJECT_NAME: $(AI_FOUNDRY_PROJECT_NAME)
-                  ACR_NAME: $(ACR_NAME)
-                  ACR_RESOURCE_GROUP: $(ACR_RESOURCE_GROUP)
-                  CANDIDATE_APPCONFIG_ENDPOINT: $(CANDIDATE_APPCONFIG_ENDPOINT)
-                  SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+              - template: /tools/sdk-ai-bots/deployment/pipelines/templates/hosted-agent-deploy-steps.yml
+                parameters:
+                  agentName: ${{ parameters.agentName }}
+                  environment: ${{ parameters.environment }}

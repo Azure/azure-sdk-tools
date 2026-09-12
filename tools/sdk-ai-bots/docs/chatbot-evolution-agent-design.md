@@ -22,7 +22,7 @@ The architecture has five execution planes and three resource roles. Production 
 - **Detection:** the daily feedback job ingests QA threads, and the Evolution Agent identifies concluded conversations with an incorrect or unconfirmed bot answer.
 - **Evolution loop:** the Evolution Agent diagnoses the failure. For a KB issue, it writes a candidate to the dev knowledge source, validates the original bad case against the dev Chat Agent, and revises until the case passes or the attempt limit is reached.
 - **Issue creation:** after KB validation passes, the same Evolution agent creates the GitHub issue with the diagnosis, proposed source change, answer, trace ID, and validation evidence. For chatbot self-issues, it creates the issue immediately after diagnosis without validation.
-- **Restoration:** the feedback orchestrator queues the configured knowledge-sync pipeline at most once per run when an Evolution-agent session mutated the dev KB or a closed KB issue is ready for validation, then waits for authoritative content to be restored or promoted before continuing.
+- **Candidate cleanup:** the feedback orchestrator does not queue knowledge sync. Operators use the existing knowledge-sync process when temporary candidate content must be restored from authoritative sources.
 - **Closed-issue validation:** for an agent-created issue whose QA record is `pending_validation`, the pipeline waits for closure and the required production rollout, then the Evolution Agent reruns the original bad case against the production Chat Agent, comments the result and trace ID on the issue, labels the fix as passed or failed, and persists the terminal Cosmos state.
 
 ```text
@@ -193,8 +193,7 @@ The feedback loop is driven by a **daily batch job** over a durable status table
     - finished + problem + remediation blocker → keep `qa_status=failed`, persist the Agent's failure reason, and set `feedback.status=failed`.
     - processing failure before a verdict → set `qa_status=failed` with an unknown verdict and `feedback.status=failed`; the Dashboard distinguishes this from an incorrect bot answer.
 3. **Closed-issue scan** — read `pending_validation` records and find issues whose stored GitHub issue is closed. Issue closure, not labels, determines validation eligibility.
-4. **Restore** — if any analysis session mutated the KB or a closed KB issue needs validation, queue the knowledge-sync pipeline once and wait for successful restoration.
-5. **Validate fixes** — rerun each closed issue's original bad case, comment the evidence, replace `fix-validation:pending` with `fix-validation:passed` or `fix-validation:failed`, and persist `feedback.status=done` or terminal `failed`.
+4. **Validate fixes** — rerun each closed issue's original bad case, comment the evidence, replace `fix-validation:pending` with `fix-validation:passed` or `fix-validation:failed`, and persist `feedback.status=done` or terminal `failed`.
 
 The whole feature is gated by `CHATBOT_EVOLUTION_AGENT_ENABLED` so it can be disabled without a code rollback.
 
@@ -204,7 +203,7 @@ The production daily batch job (`scripts/run_feedback_jobs.py`) invokes `Chatbot
 
 The Agent is invoked through the Responses API (`store=True`) with bounded analysis and iteration limits. Its fixed-schema result drives the production Cosmos status transition. The guarded tools own dev-storage writes, indexing, explicitly routed chatbot invocation, and evidence collection. No public issue is created for an unvalidated KB candidate. Interrupted `created` or `running` records and terminal `failed` records are not retried automatically.
 
-The feedback orchestrator runs mutating sessions serially and validates each case immediately after its candidate update. Before `update_knowledge` writes anything, its wrapper sets a run-scoped `restore_required` Azure Pipelines output variable to `true`, ensuring that partial writes or later failures still trigger cleanup without adding fields to `QARecord`. After those sessions finish, the orchestrator queues `sync_knowledge.yml` once through the Azure DevOps Build REST API using `$(System.AccessToken)` when `restore_required` is `true` or a closed KB issue needs validation, waits for completion, and then validates the closed issues. The feedback job is not complete until required restoration and closed-issue validation finish.
+The feedback orchestrator runs mutating sessions serially and validates each case immediately after its candidate update. It does not queue a knowledge-sync pipeline; candidate cleanup remains an external operational responsibility. Closed issues are validated against the current production index.
 
 #### QA record
 
@@ -310,7 +309,7 @@ The Evolution agent owns the loop through two guarded tools:
 2. Call `validate_agent_response` with `target="candidate"` and the original bad case.
 3. If validation fails, revise the candidate and repeat within the attempt limit. If it passes, create the issue with the answer and trace ID as evidence.
 
-After all agent sessions finish, fail, or time out, the feedback pipeline triggers the knowledge-sync pipeline once if any session mutated the KB. The feedback job waits for restoration from the authoritative sources and is marked failed if restoration does not succeed.
+The feedback pipeline does not trigger knowledge sync after candidate mutation. Operators must use the existing knowledge-sync process when candidate content needs to be restored from authoritative sources.
 
 ### 2.6 Issue creation
 
@@ -341,6 +340,6 @@ evidence.
 
 ### 2.7 Closed-issue validation
 
-The daily feedback job reads production `pending_validation` QA records and checks their stored issues for closure; labels do not gate validation eligibility. For a KB issue, it first waits for the configured knowledge-sync or rollout pipeline so the production Chat Agent uses the authoritative fixed content rather than the temporary candidate. The Evolution Agent refetches the production conversation using the coordinates persisted in the QA record, recovers the original question, and calls `validate_agent_response` with `target="prod"`. The issue supplies the concise expected behavior used for comparison.
+The daily feedback job reads production `pending_validation` QA records and checks their stored issues for closure; labels do not gate validation eligibility. The Evolution Agent refetches the production conversation using the coordinates persisted in the QA record, recovers the original question, and calls `validate_agent_response` with `target="prod"`. The issue supplies the concise expected behavior used for comparison.
 
 The Agent comments the returned answer, trace ID, and pass/fail evidence on the closed issue. It replaces the pending label with `fix-validation:passed` when the original case now succeeds or `fix-validation:failed` when it does not; a failed validation does not automatically reopen the issue. The backend also persists `feedback.status=done` for a pass or terminal `feedback.status=failed` for a failure. The historical `qa_status` remains `failed` because the original answer was wrong. The terminal Cosmos status and issue label prevent the same closed issue from being validated again on later daily runs.

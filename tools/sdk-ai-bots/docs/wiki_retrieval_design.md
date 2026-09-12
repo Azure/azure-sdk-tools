@@ -32,7 +32,7 @@ flowchart LR
 ```
 
 - **Build (offline).** A map-reduce over the markdown corpus produces three page types: `summary` (one per document, from its full text), `entity` (one per recurring named symbol), and `concept` (one per cross-cutting topic). Entity/concept pages aggregate mentions across documents with alias/near-duplicate merging and record the source docs they were built from (`chunk_refs`) for query-time routing. Named decorators and framework templates (`@`-prefixed names, `Azure.ResourceManager.Legacy.*`) are always extracted — even from a single document — and their constraints and anti-patterns captured, so symbol-specific questions route to a consolidated page. Pages are written as markdown blobs plus a reconcile manifest. All three LLM prompts live as markdown under `prompts/`.
-- **Indexer (blobs → index).** A dedicated indexer projects the wiki blobs into the **shared** KB index, so one index serves both layers. Raw chunks leave `page_type` null; wiki pages set it. `chunk_refs` are carried as a JSON-array string (index projections cannot populate a collection from a scalar) and parsed back at query time. Soft-deletes propagate to the index. `setup_indexer.py` (re)creates the datasource / skillset / indexer.
+- **Indexer (blobs → index).** A dedicated indexer projects the wiki blobs into the **shared** KB index, so one index serves both layers. Raw chunks leave `page_type` null; wiki pages set it. `chunk_refs` are carried as a JSON-array string (index projections cannot populate a collection from a scalar) and parsed back at query time. Soft-deletes propagate to the index. The deployment `setup-search.ts` hook owns the datasource / skillset / indexer; `setup_indexer.py` is a compatible repair path.
 
 ## Two-track retrieval
 
@@ -92,7 +92,7 @@ The first run against an empty manifest is a full build. A run over an unchanged
 
 Operational requirements:
 
-- **The build only writes blobs.** `azure-sdk-knowledge-wiki-indexer` projects them into the shared index on its own daily schedule, so a fresh build is not queryable until the indexer runs. Trigger it explicitly when the new pages are needed immediately.
+- **The build writes and indexes.** After writing blobs, the pipeline starts `azure-sdk-knowledge-wiki-indexer`; its daily schedule remains a fallback.
 - **A clean physical rebuild is still operationally distinct.** Prompt/model/build changes invalidate cached generation automatically, but recreating the blob and search state still requires clearing the wiki container, deleting only index documents matching `page_type ne null`, rebuilding, then running the dedicated indexer.
 
 ## Scheduling

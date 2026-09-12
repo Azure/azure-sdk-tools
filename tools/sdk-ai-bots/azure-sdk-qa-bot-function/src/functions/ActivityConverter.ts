@@ -2,11 +2,17 @@ import { app, HttpRequest, HttpResponseInit, InvocationContext } from "@azure/fu
 import { ChatMessage} from '@microsoft/microsoft-graph-types';
 import { Activity } from 'botframework-schema';
 
+const TEAMS_SERVICE_URL = 'https://smba.trafficmanager.net/teams/';
+
 export class ActivityConverter {
 
-  constructor() {}
+  constructor(private readonly botId = process.env.BOT_ID || '') {}
 
   ConvertToActivity(chatMessage: ChatMessage): Activity {
+    if (!this.botId) {
+      throw new Error('BOT_ID is required to convert a Teams message into a Bot Framework activity.');
+    }
+
     // extract tenantID from query parameters of chatMessage.webUrl
     const url = new URL(chatMessage.webUrl || '');
     const tenantId = url.searchParams.get('tenantId') || '';
@@ -23,7 +29,7 @@ export class ActivityConverter {
 
       // Channel information
       channelId: 'msteams',
-      serviceUrl: 'https://smba.trafficmanager.net/apac/' + tenantId,
+      serviceUrl: TEAMS_SERVICE_URL,
       
       // Text content
       text: chatMessage.body?.content || '',
@@ -57,7 +63,7 @@ export class ActivityConverter {
       
       // Recipient information (bot)
       recipient: {
-        id: '28:189f38c2-e2a7-433d-944e-b1166e5402c2',
+        id: `28:${this.botId}`,
         name: 'Azure SDK Q&A Bot'
       },
       

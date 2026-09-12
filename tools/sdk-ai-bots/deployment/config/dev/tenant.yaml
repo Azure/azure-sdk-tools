@@ -1,0 +1,4 @@
+tenants:
+  - tenant: typespec_channel_qa_bot
+    channel_name: chatbot deployment testing - TypeSpec
+    channel_link: https://teams.cloud.microsoft/l/channel/19%3AZK2wSwDjcdWUr_0jR1njUWFbnTCzKJ8QnyyDkNURqUE1%40thread.tacv2/chatbot%20deployment%20testing%20-%20TypeSpec?groupId=e33c7fe9-84fa-47c8-a288-1a23b7b92ea5&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47&allowXTenantAccess=False

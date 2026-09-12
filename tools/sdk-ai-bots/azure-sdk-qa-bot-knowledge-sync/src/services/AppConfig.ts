@@ -39,9 +39,9 @@ export async function initConfiguration(): Promise<void> {
         
         // Create a credential
         const credential = new ChainedTokenCredential(
+            new WorkloadIdentityCredential(),
             new ManagedIdentityCredential(),
-            new AzureCliCredential(),
-            new WorkloadIdentityCredential()
+            new AzureCliCredential()
         );
 
         // Create the App Configuration client

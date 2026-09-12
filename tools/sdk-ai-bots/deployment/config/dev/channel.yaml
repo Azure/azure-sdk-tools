@@ -1,0 +1,9 @@
+default:
+  tenant: typespec_channel_qa_bot
+  endpoint: ${SERVER_BASE_URL}
+
+channels:
+  - name: chatbot deployment testing - TypeSpec
+    id: 19:ZK2wSwDjcdWUr_0jR1njUWFbnTCzKJ8QnyyDkNURqUE1@thread.tacv2
+    endpoint: ${SERVER_BASE_URL}
+    tenant: typespec_channel_qa_bot

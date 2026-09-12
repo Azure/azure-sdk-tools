@@ -1,0 +1,81 @@
+# Reusable stage template for the full-stack orchestrator.
+#
+# Encapsulates the application deployment graph:
+#   Provision -> FunctionApp
+#   Provision -> Agent -> AgentServer -> Readiness -> Frontend
+#                      -> EvolutionAgent (prod)
+# so independent services deploy in parallel without losing runtime ordering.
+#
+# Azure authorization and deployment checks belong to each component's service
+# connection; component CD pipelines use normal jobs.
+
+parameters:
+    - name: environment
+      type: string
+      values: [dev, preview, prod]
+    - name: imageTag
+      type: string
+      default: auto
+    - name: dependsOn
+      type: string
+      default: ''
+
+stages:
+    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/component-deploy-stage.yml
+      parameters:
+          stageName: DeployFunctionApp
+          component: function-app
+          environment: ${{ parameters.environment }}
+          imageTag: ${{ parameters.imageTag }}
+          dependsOn: ${{ parameters.dependsOn }}
+
+    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/component-deploy-stage.yml
+      parameters:
+          stageName: DeployAgent
+          component: agent
+          environment: ${{ parameters.environment }}
+          imageTag: ${{ parameters.imageTag }}
+          dependsOn: ${{ parameters.dependsOn }}
+
+    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/component-deploy-stage.yml
+      parameters:
+          stageName: DeployAgentServer
+          component: agent-server
+          environment: ${{ parameters.environment }}
+          imageTag: ${{ parameters.imageTag }}
+          dependsOn: DeployAgent
+
+    - stage: VerifyAgentServer
+      displayName: 'Verify agent-server readiness'
+      dependsOn: DeployAgentServer
+      jobs:
+          - job: Readiness
+            pool:
+                name: $(LINUXPOOL)
+                image: $(LINUXVMIMAGE)
+                os: linux
+            steps:
+                - checkout: self
+                - template: /tools/sdk-ai-bots/deployment/pipelines/templates/load-environment-suite.yml
+                  parameters:
+                      environment: ${{ parameters.environment }}
+                - template: /tools/sdk-ai-bots/deployment/pipelines/templates/smoke-test.yml
+                  parameters:
+                      appName: '$(AGENT_SERVER_SITE_NAME)'
+                      healthPath: '$(AGENT_SERVER_HEALTH_PATH)'
+                      easyAuthAudience: '$(SERVER_APPLICATION_ID_URI)'
+
+    - ${{ if eq(parameters.environment, 'prod') }}:
+          - template: /tools/sdk-ai-bots/deployment/pipelines/templates/evolution-agent-deploy-stage.yml
+            parameters:
+                environment: prod
+                imageTag: ${{ parameters.imageTag }}
+                dependsOn: DeployAgent
+
+    - template: /tools/sdk-ai-bots/deployment/pipelines/templates/component-deploy-stage.yml
+      parameters:
+          stageName: DeployFrontend
+          component: frontend
+          environment: ${{ parameters.environment }}
+          imageTag: ${{ parameters.imageTag }}
+          dependsOn: VerifyAgentServer

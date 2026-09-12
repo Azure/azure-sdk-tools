@@ -1,0 +1,199 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-dev/main/schemas/v1.0/azure.yaml.json
+
+requiredVersions:
+    azd: '>= 1.32.0'
+    extensions:
+        azure.ai.agents: '=1.0.0-beta.13'
+name: sdk-ai-bots
+metadata:
+    template: sdk-ai-bots@1.0.0
+services:
+    agent:
+        project: azure-sdk-qa-bot-agent/agents/chat_agent
+        host: azure.ai.agent
+        language: python
+        docker:
+            path: Dockerfile
+            context: ../..
+            image: sdk-ai-bots/agent-${AZURE_ENV_NAME}
+            registry: ${AZURE_CONTAINER_REGISTRY_ENDPOINT}
+            tag: ${AZD_IMAGE_TAG}
+            remoteBuild: true
+        hooks:
+            postdeploy:
+                shell: sh
+                run: cd ../../../deployment && ./node_modules/.bin/tsx hooks/agent-postdeploy.ts
+                interactive: true
+        config:
+            container:
+                resources:
+                    cpu: "0.5"
+                    memory: 1Gi
+        container:
+            resources:
+                cpu: "0.5"
+                memory: 1Gi
+        kind: hosted
+        name: azure-sdk-chat-agent
+        protocols:
+            - protocol: responses
+              version: 2.0.0
+        startupCommand: python init.py
+    agent-server:
+        resourceName: ${AGENT_SERVER_SITE_NAME}
+        project: azure-sdk-qa-bot-agent
+        host: appservice
+        language: docker
+        docker:
+            path: Dockerfile
+            context: .
+            image: azure-sdk-qa-bot-agent-server
+            registry: ${AZURE_CONTAINER_REGISTRY_ENDPOINT}
+            tag: ${AZD_IMAGE_TAG}
+            remoteBuild: true
+    frontend:
+        project: azure-sdk-qa-bot
+        host: appservice
+        language: docker
+        docker:
+            path: Dockerfile
+            context: .
+            image: azure-sdk-qa-bot
+            registry: ${AZURE_CONTAINER_REGISTRY_ENDPOINT}
+            tag: ${AZD_IMAGE_TAG}
+            remoteBuild: true
+        hooks:
+            postdeploy:
+                shell: sh
+                run: cd ../deployment && ./node_modules/.bin/tsx hooks/frontend-postdeploy.ts
+                interactive: true
+    function-app:
+        project: azure-sdk-qa-bot-function
+        host: function
+        language: docker
+        docker:
+            path: Dockerfile
+            context: .
+            image: azure-sdk-qa-bot-function
+            registry: ${AZURE_CONTAINER_REGISTRY_ENDPOINT}
+            tag: ${AZD_IMAGE_TAG}
+            remoteBuild: true
+        hooks:
+            postdeploy:
+                shell: sh
+                run: cd ../deployment && ./node_modules/.bin/tsx hooks/function-postdeploy.ts
+                interactive: true
+infra:
+    provider: bicep
+    layers:
+        - provider: bicep
+          path: deployment/infra/layers/resource-group
+          name: resource-group
+          hooks:
+            preprovision:
+                shell: sh
+                dir: ../../..
+                run: ./node_modules/.bin/tsx hooks/preprovision.ts
+                interactive: true
+        - provider: bicep
+          path: deployment/infra/layers/shared-resources
+          name: shared-resources
+          hooks:
+            preprovision:
+                shell: sh
+                dir: ../../..
+                run: ./node_modules/.bin/tsx hooks/layer-preprovision.ts
+                interactive: true
+          dependsOn:
+            - resource-group
+        - provider: bicep
+          path: deployment/infra/layers/agent
+          name: agent
+          hooks:
+            postprovision:
+                shell: sh
+                dir: ../../..
+                run: ./node_modules/.bin/tsx hooks/agent-postprovision.ts
+                interactive: true
+            preprovision:
+                shell: sh
+                dir: ../../..
+                run: ./node_modules/.bin/tsx hooks/layer-preprovision.ts
+                interactive: true
+          dependsOn:
+            - resource-group
+            - shared-resources
+        - provider: bicep
+          path: deployment/infra/layers/frontend
+          name: frontend
+          hooks:
+            postprovision:
+                shell: sh
+                dir: ../../..
+                run: ./node_modules/.bin/tsx hooks/frontend-postprovision.ts
+                interactive: true
+            preprovision:
+                shell: sh
+                dir: ../../..
+                run: ./node_modules/.bin/tsx hooks/layer-preprovision.ts
+                interactive: true
+          dependsOn:
+            - resource-group
+            - shared-resources
+        - provider: bicep
+          path: deployment/infra/layers/agent-server
+          name: agent-server
+          hooks:
+            preprovision:
+                shell: sh
+                dir: ../../..
+                run: ./node_modules/.bin/tsx hooks/layer-preprovision.ts
+                interactive: true
+          dependsOn:
+            - shared-resources
+            - agent
+            - frontend
+        - provider: bicep
+          path: deployment/infra/layers/function-app
+          name: function-app
+          hooks:
+            preprovision:
+                shell: sh
+                dir: ../../..
+                run: ./node_modules/.bin/tsx hooks/layer-preprovision.ts
+                interactive: true
+          dependsOn:
+            - shared-resources
+            - frontend
+        - provider: bicep
+          path: deployment/infra/layers/logic-app
+          name: logic-app
+          hooks:
+            postprovision:
+                shell: sh
+                dir: ../../..
+                run: ./node_modules/.bin/tsx hooks/postprovision.ts
+                interactive: true
+            preprovision:
+                shell: sh
+                dir: ../../..
+                run: ./node_modules/.bin/tsx hooks/logic-app-preprovision.ts
+                interactive: true
+          dependsOn:
+            - shared-resources
+            - frontend
+            - agent-server
+            - function-app
+hooks:
+    postdown:
+        shell: sh
+        run: cd deployment && ./node_modules/.bin/tsx hooks/postdown.ts
+        interactive: true
+    predeploy:
+        shell: sh
+        run: cd deployment && ./node_modules/.bin/tsx hooks/predeploy.ts
+        interactive: true
+    predown:
+        shell: sh
+        run: cd deployment && ./node_modules/.bin/tsx hooks/predown.ts
+        interactive: true

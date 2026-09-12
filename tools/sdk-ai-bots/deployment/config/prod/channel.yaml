@@ -1,0 +1,44 @@
+default:
+  tenant: general_qa_bot
+  endpoint: ${SERVER_BASE_URL}
+
+channels:
+  - name: Azure SDK Onboarding and E2E SDK
+    id: 19:de3fce22c2994be18cac50502c55f717@thread.skype
+    endpoint: ${SERVER_BASE_URL}
+    tenant: azure_sdk_onboarding
+
+  - name: TypeSpec Discussion
+    id: 19:906c1efbbec54dc8949ac736633e6bdf@thread.skype
+    endpoint: ${SERVER_BASE_URL}
+    tenant: typespec_channel_qa_bot
+
+  - name: Language - Python
+    id: 19:b97d98e6d22c41e0970a1150b484d935@thread.skype
+    endpoint: ${SERVER_BASE_URL}
+    tenant: python_channel_qa_bot
+
+  - name: API Spec Review
+    id: 19:0351f5f9404446e4b4fd4eaf2c27448d@thread.skype
+    endpoint: ${SERVER_BASE_URL}
+    tenant: api_spec_review_bot
+
+  - name: General
+    id: 19:f6d52ac6465c40ea80dc86b8be3825aa@thread.skype
+    endpoint: ${SERVER_BASE_URL}
+    tenant: general_qa_bot
+
+  - name: SDK release support
+    id: 19:084875bb626242ed95f3ac8dddfaa12a@thread.skype
+    endpoint: ${SERVER_BASE_URL}
+    tenant: azure_sdk_onboarding
+
+  - name: Language - Java
+    id: 19:5e673e41085f4a7eaaf20823b85b2b53@thread.skype
+    endpoint: ${SERVER_BASE_URL}
+    tenant: java_channel_qa_bot
+
+  - name: AzSDK Tools Agent
+    id: 19:6d2c19322c254a80bcc521675134da03@thread.skype
+    endpoint: ${SERVER_BASE_URL}
+    tenant: azsdk_tools_agent_qa_bot

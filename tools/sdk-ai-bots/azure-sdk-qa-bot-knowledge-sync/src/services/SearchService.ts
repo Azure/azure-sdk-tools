@@ -33,9 +33,9 @@ export class SearchService {
 
         // Use managed identity authentication
         const credential = new ChainedTokenCredential(
+            new WorkloadIdentityCredential(),
             new ManagedIdentityCredential(),
-            new AzureCliCredential(),
-            new WorkloadIdentityCredential()
+            new AzureCliCredential()
         );
 
         this.searchClient = new SearchClient(

@@ -7,6 +7,7 @@
     "rootDir": ".",
     "sourceMap": true,
     "strict": false,
+    "skipLibCheck": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true
   },

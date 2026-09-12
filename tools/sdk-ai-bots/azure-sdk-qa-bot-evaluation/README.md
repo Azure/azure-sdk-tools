@@ -84,9 +84,7 @@ contributors don't re-curate the same cases); `evaluation_datasets/basic/`, `eva
 
 ## Part 2 — Running evaluations
 
-We call the bot `/completion` endpoint **concurrently** (`--max_concurrency`, default
-8), collect each answer + context, then grade them inline. Reads cases from the local
-`evaluation_datasets/<target>/<scenario>.jsonl`.
+We call the bot `/completion` endpoint **concurrently** (`--max_concurrency`, default 8), collect each answer + context, then grade the collected responses inline in payload-bounded batches of at most 20 cases and merge the results. Batching keeps large perf datasets under Foundry's inline run-history payload limit; an individual case above the byte limit fails locally with its testcase name instead of submitting an oversized request. Reads cases from the local `evaluation_datasets/<target>/<scenario>.jsonl`.
 
 ```bash
 # Concurrent /completion collection + inline grading:
@@ -105,9 +103,9 @@ or `BOT_AGENT_ACCESS_TOKEN`) for the deployed bot, or run the agent `server.py` 
 (defaults to `http://localhost:8089`). Tenant routing is resolved from
 `BOT_CONFIG_CONTAINER` / `BOT_CONFIG_CHANNEL_BLOB`.
 
-Results appear on the Evaluation tab of the Azure AI Foundry portal (each run prints
-its `report_url`). `--cache_result full` writes per-case JSON + failed-cases JSON
-under `cache/`.
+Results appear on the Evaluation tab of the Azure AI Foundry portal (each run prints its `report_url`). `--cache_result full` writes per-case JSON + failed-cases JSON under `cache/`.
+
+Each cached case preserves an `execution` block with the hosted-agent response ID, Foundry trace ID, agent conversation ID, latency, response length, and ordered tool calls. Tool calls record redacted arguments, output size/hash, and bounded output for evidence-bearing file/web tools; trace content is capped at 32K characters per response, with at most 32 calls and 8K characters from one output. The raw `actual.context` used by the groundedness evaluator is also retained, so a score can be audited against the exact bounded evidence supplied to the grader. The final summary reports `traced_cases` from Foundry trace IDs, `response_id_cases`, `tool_call_count`, `file_access_cases`, and per-tool call/case counts.
 
 ### Evaluators
 
@@ -121,7 +119,7 @@ All evaluators are builtin LLM evaluators that read the collected bot answer via
 | `relevance` | builtin LLM (model) | answer vs `query` |
 | `coherence` | builtin LLM (model) | answer vs `query` |
 | `fluency` | builtin LLM (model) | answer vs `query` |
-| `groundedness` | builtin LLM (model) | answer vs retrieved context (`{{item.context}}`) |
+| `groundedness` | builtin LLM (model) | answer vs retrieved documentation plus bounded execution evidence (`{{item.context}}`) |
 | `bot_evals` | local composite | weighted `similarity` + `response_completeness` |
 
 LLM-graded evaluators use the 1-5 `EVALUATE_THRESHOLD`.

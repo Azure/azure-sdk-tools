@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from datetime import datetime, timezone
+import hashlib
 import json
 import logging
 import re
@@ -50,12 +51,13 @@ from openai.types.responses import Response as OpenAIResponse
 from utils.azure_ai_foundry_agent import HostedAgentClient, ConversationBrokenError
 from openai.types.responses import (
     ResponseFunctionToolCall,
+    ResponseFunctionToolCallOutputItem,
     ResponseOutputItem,
     ResponseOutputMessage,
 )
 from openai.types.responses.response_input_item_param import ResponseInputItemParam
 from config.tenant_config import TenantID
-from typing import cast
+from typing import Any, cast
 from utils.background_tasks import BackgroundTaskTracker
 
 logger = logging.getLogger(__name__)
@@ -68,6 +70,91 @@ BOT_SENDER_ID = "azure-sdk-qa-bot"
 BOT_SENDER_NAME = "Azure SDK Q&A Bot"
 
 _CITATION_RE = re.compile(r"[^\w\s]*cite[^\w\s]*turn\d+\S*")
+_TRACE_SENSITIVE_KEY_PATTERN = (
+    r"(?:access[-_ ]?key|access[-_ ]?token|account[-_ ]?key|api[-_ ]?key|"
+    r"authorization|client[-_ ]?secret|connection[-_ ]?string|credential|"
+    r"id[-_ ]?token|password|refresh[-_ ]?token|secret|shared[-_ ]?access[-_ ]?key|"
+    r"sig|signature|subscription[-_ ]?key|token)"
+)
+_TRACE_SENSITIVE_KEY_RE = re.compile(
+    _TRACE_SENSITIVE_KEY_PATTERN,
+    re.IGNORECASE,
+)
+_TRACE_SENSITIVE_QUERY_RE = re.compile(
+    rf"(?P<prefix>[?&](?:{_TRACE_SENSITIVE_KEY_PATTERN}|code|key)=)"
+    r"[^&#\s\"'<>]*",
+    re.IGNORECASE,
+)
+_TRACE_AUTHORIZATION_VALUE_RE = re.compile(
+    r"(?P<prefix>\bauthorization\b\s*[:=]\s*)"
+    r"(?:\"[^\"\r\n]*\"|'[^'\r\n]*'|[^\r\n,;}]+)",
+    re.IGNORECASE,
+)
+_TRACE_AUTH_SCHEME_RE = re.compile(
+    r"(?P<prefix>\b(?:basic|bearer)\s+)[A-Za-z0-9._~+/=-]+",
+    re.IGNORECASE,
+)
+_TRACE_SENSITIVE_ASSIGNMENT_RE = re.compile(
+    rf"(?P<prefix>\b{_TRACE_SENSITIVE_KEY_PATTERN}\b\s*[:=]\s*)"
+    r"(?:\"[^\"\r\n]*\"|'[^'\r\n]*'|[^\s,;&}]+)",
+    re.IGNORECASE,
+)
+_TRACE_REDACTED_VALUE = "[REDACTED]"
+_TRACE_MAX_CALLS = 32
+_TRACE_MAX_ARGUMENT_CHARS = 2_000
+_TRACE_MAX_OUTPUT_CHARS = 8_000
+_TRACE_MAX_TOTAL_CHARS = 32_000
+_TRACE_OUTPUT_TOOLS = frozenset(
+    {
+        "file_access_grep",
+        "file_access_ls",
+        "file_access_read",
+        "web_fetch",
+        "web_search",
+    }
+)
+
+
+def _redact_trace_string(value: str) -> str:
+    value = _TRACE_AUTHORIZATION_VALUE_RE.sub(
+        rf"\g<prefix>{_TRACE_REDACTED_VALUE}", value
+    )
+    value = _TRACE_AUTH_SCHEME_RE.sub(
+        rf"\g<prefix>{_TRACE_REDACTED_VALUE}", value
+    )
+    value = _TRACE_SENSITIVE_QUERY_RE.sub(
+        rf"\g<prefix>{_TRACE_REDACTED_VALUE}", value
+    )
+    return _TRACE_SENSITIVE_ASSIGNMENT_RE.sub(
+        rf"\g<prefix>{_TRACE_REDACTED_VALUE}", value
+    )
+
+
+def _redact_trace_value(value: Any) -> Any:
+    if isinstance(value, dict):
+        return {
+            str(key): (
+                _TRACE_REDACTED_VALUE
+                if _TRACE_SENSITIVE_KEY_RE.search(str(key))
+                else _redact_trace_value(item)
+            )
+            for key, item in value.items()
+        }
+    if isinstance(value, list):
+        return [_redact_trace_value(item) for item in value]
+    if isinstance(value, str):
+        return _redact_trace_string(value)
+    return value
+
+
+def _truncate_trace_text(text: str, limit: int) -> tuple[str, bool]:
+    if len(text) <= limit:
+        return text, False
+    marker = "\n... [trace truncated] ...\n"
+    remaining = max(limit - len(marker), 0)
+    head = remaining * 2 // 3
+    tail = remaining - head
+    return f"{text[:head]}{marker}{text[-tail:] if tail else ''}", True
 
 
 class ChatService:
@@ -515,11 +602,8 @@ class ChatService:
         agent_conversation_id: str | None,
     ) -> ChatResponse:
         """Map hosted-agent response to `ChatResponse`."""
-        tool_results = self._extract_tool_results(response.output)
-        search = tool_results.get("search_knowledge_base")
-        tool_references = (
-            search.results if isinstance(search, SearchKnowledgeBaseResult) else []
-        )
+        tool_result_entries = self._extract_tool_result_entries(response.output)
+        tool_references = self._collect_tool_references(tool_result_entries)
         tenant = self._extract_routed_tenant(response.output)
 
         output_text = response.output_text or ""
@@ -533,15 +617,19 @@ class ChatService:
             output_text, tool_references
         )
 
-        # Build full_context from search tool results when requested.
-        # Keys use "document_" prefix for compatibility with the eval pipeline.
         full_context = None
-        if req.with_full_context and tool_references:
+        if req.with_full_context:
+            contexts = self._build_tool_trace_contexts(response.output, response.id)
+            contexts.extend(
+                DocumentContext.from_reference(reference)
+                for reference in tool_references
+            )
+        else:
+            contexts = []
+        if contexts:
             full_context = json.dumps(
-                [
-                    DocumentContext.from_reference(r).model_dump(mode="json")
-                    for r in tool_references
-                ]
+                [context.model_dump(mode="json") for context in contexts],
+                ensure_ascii=False,
             )
 
         resp = ChatResponse(
@@ -654,33 +742,36 @@ class ChatService:
             return json.dumps(value)
         return None
 
-    def _extract_tool_results(
-        self, items: list[ResponseOutputItem]
+    @staticmethod
+    def _tool_outputs_by_call_id(
+        items: list[ResponseOutputItem],
     ) -> dict[str, object]:
-        """Decode tool outputs using TOOL_REGISTRY models.
+        outputs: dict[str, object] = {}
+        for item in items:
+            if isinstance(item, ResponseFunctionToolCallOutputItem):
+                outputs[item.call_id] = item.output
+            elif isinstance(item, ResponseOutputMessage):
+                extras = item.model_extra or {}
+                call_id = extras.get("call_id") or ""
+                if call_id and extras.get("output") is not None:
+                    outputs[call_id] = extras["output"]
+        return outputs
 
-        Returns a dict mapping tool name to its decoded Pydantic model instance.
-        """
-        results: dict[str, object] = {}
+    def _extract_tool_result_entries(
+        self, items: list[ResponseOutputItem]
+    ) -> list[tuple[str, object]]:
+        """Decode registered tool outputs while preserving call order."""
+        results: list[tuple[str, object]] = []
 
         if not items:
             return results
 
-        # Build mapping from call_id to tool name
-        call_id_to_name: dict[str, str] = {}
+        outputs = self._tool_outputs_by_call_id(items)
         for item in items:
-            if isinstance(item, ResponseFunctionToolCall):
-                if item.call_id and item.name:
-                    call_id_to_name[item.call_id] = item.name
-
-        # Decode each tool output using its registered response model
-        for item in items:
-            if not isinstance(item, ResponseOutputMessage):
+            if not isinstance(item, ResponseFunctionToolCall):
                 continue
-            extras = item.model_extra or {}
-            call_id = extras.get("call_id") or ""
-            output = extras.get("output", None)
-            tool_name = call_id_to_name.get(call_id, "") if call_id else ""
+            tool_name = item.name
+            output = outputs.get(item.call_id)
             if not tool_name or not output:
                 continue
 
@@ -691,11 +782,143 @@ class ChatService:
             try:
                 json_str = self._unwrap_json(output)
                 if json_str:
-                    results[tool_name] = response_model.model_validate_json(json_str)
+                    results.append(
+                        (tool_name, response_model.model_validate_json(json_str))
+                    )
             except Exception as e:
                 logger.warning("Failed to decode tool output for %s: %s", tool_name, e)
 
         return results
+
+    def _extract_tool_results(
+        self, items: list[ResponseOutputItem]
+    ) -> dict[str, object]:
+        """Decode registered tool outputs, retaining the last result per tool."""
+        return dict(self._extract_tool_result_entries(items))
+
+    @staticmethod
+    def _collect_tool_references(
+        entries: list[tuple[str, object]],
+    ) -> list[Reference]:
+        references: list[Reference] = []
+        seen: set[tuple[str, str, str, str, str]] = set()
+        for _, result in entries:
+            if not isinstance(result, SearchKnowledgeBaseResult):
+                continue
+            for reference in result.results:
+                key = (
+                    reference.source,
+                    reference.blob_path,
+                    reference.link,
+                    reference.title,
+                    reference.content,
+                )
+                if key in seen:
+                    continue
+                seen.add(key)
+                references.append(reference)
+        return references
+
+    @staticmethod
+    def _serialize_trace_value(value: object) -> str:
+        if isinstance(value, str):
+            return value
+        model_dump = getattr(value, "model_dump", None)
+        if callable(model_dump):
+            value = model_dump(mode="json")
+        try:
+            return json.dumps(value, ensure_ascii=False, default=str)
+        except (TypeError, ValueError):
+            return str(value)
+
+    @staticmethod
+    def _parse_trace_arguments(arguments: str) -> object:
+        try:
+            value = json.loads(arguments)
+        except (json.JSONDecodeError, TypeError):
+            value = arguments
+        redacted = _redact_trace_value(value)
+        serialized = ChatService._serialize_trace_value(redacted)
+        truncated, was_truncated = _truncate_trace_text(
+            serialized, _TRACE_MAX_ARGUMENT_CHARS
+        )
+        if not was_truncated:
+            return redacted
+        return {"text": truncated, "truncated": True}
+
+    def _build_tool_trace_contexts(
+        self,
+        items: list[ResponseOutputItem],
+        response_id: str,
+    ) -> list[DocumentContext]:
+        outputs = self._tool_outputs_by_call_id(items)
+        contexts: list[DocumentContext] = []
+        remaining_trace_chars = _TRACE_MAX_TOTAL_CHARS
+        sequence = 0
+        for item in items:
+            if not isinstance(item, ResponseFunctionToolCall):
+                continue
+            sequence += 1
+            if sequence > _TRACE_MAX_CALLS:
+                break
+
+            raw_output = outputs.get(item.call_id)
+            output_text = (
+                self._serialize_trace_value(raw_output)
+                if raw_output is not None
+                else ""
+            )
+            output_hash = (
+                hashlib.sha256(output_text.encode("utf-8")).hexdigest()
+                if output_text
+                else ""
+            )
+            trace = {
+                "sequence": sequence,
+                "tool_name": item.name,
+                "call_id": item.call_id,
+                "arguments": self._parse_trace_arguments(item.arguments),
+                "output": "",
+                "output_chars": len(output_text),
+                "output_sha256": output_hash,
+                "output_captured": False,
+                "output_truncated": (
+                    item.name in _TRACE_OUTPUT_TOOLS and bool(output_text)
+                ),
+            }
+            trace_content = json.dumps(trace, ensure_ascii=False)
+            if len(trace_content) >= remaining_trace_chars:
+                break
+
+            if item.name in _TRACE_OUTPUT_TOOLS and output_text:
+                available_output_chars = min(
+                    _TRACE_MAX_OUTPUT_CHARS,
+                    max((remaining_trace_chars - len(trace_content)) // 2, 0),
+                )
+                if available_output_chars:
+                    captured_output, output_truncated = _truncate_trace_text(
+                        output_text, available_output_chars
+                    )
+                    trace["output"] = captured_output
+                    trace["output_captured"] = True
+                    trace["output_truncated"] = output_truncated
+                    trace_content = json.dumps(trace, ensure_ascii=False)
+                    if len(trace_content) > remaining_trace_chars:
+                        trace["output"] = ""
+                        trace["output_captured"] = False
+                        trace["output_truncated"] = bool(output_text)
+                        trace_content = json.dumps(trace, ensure_ascii=False)
+
+            contexts.append(
+                DocumentContext(
+                    document_title=f"Tool call {sequence}: {item.name}",
+                    document_link=f"agent-trace://{response_id}/{item.call_id}",
+                    document_source="agent_tool_trace",
+                    document_content=trace_content,
+                )
+            )
+            remaining_trace_chars -= len(trace_content)
+        return contexts
 
     @staticmethod
     def _extract_routed_tenant(items: list[ResponseOutputItem]) -> TenantID | None:

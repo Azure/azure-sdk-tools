@@ -13,9 +13,13 @@ the built jar files, one of which will take the form `<library-name>-sources.jar
 
 The application is run using the following structure:
 </br>
-`java -jar apiview-java-processor-1.0.0.jar <comma-separated list of jar files> <outputDirectory>` 
+`java -jar apiview-java-processor-<version>.jar [--renderer=json|markdown] <comma-separated list of jar files> <outputDirectory>`
 
 For example:</br>
 
-* **One Jar File:** `java -jar apiview-java-processor-1.0.0.jar application-sources.jar temp`
-* **Multiple Jar Files:** `java -jar apiview-java-processor-1.0.0.jar application-sources.jar,test-library-sources.jar,other-library-sources.jar temp`
+* **One Jar File:** `java -jar apiview-java-processor-<version>.jar application-sources.jar temp`
+* **Multiple Jar Files:** `java -jar apiview-java-processor-<version>.jar application-sources.jar,test-library-sources.jar,other-library-sources.jar temp`
+* **Markdown without JavaDoc:** `java -jar apiview-java-processor-<version>.jar --renderer=markdown application-sources.jar temp`
+
+The default renderer is `json`. The `markdown` renderer writes a fenced Java API snapshot directly and omits
+JavaDoc so that the result contains only the public API surface.

@@ -1,0 +1,2066 @@
+{
+  "facts": {
+    "sdk-fact-0fe1b1a5aece7cad": {
+      "projectId": "project-14b3babacb1d",
+      "comparisonRole": "target",
+      "sourceRevision": "current",
+      "sourceCommit": "71ce7d0c524c4bea7bc737836684acd53f343147",
+      "apiVersion": "2025-03-31",
+      "factKind": "model",
+      "id": "sdk-fact-0fe1b1a5aece7cad",
+      "identity": "Microsoft.HardwareSecurityModules.CloudHsmCluster",
+      "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmCluster",
+      "name": "CloudHsmCluster",
+      "access": "public",
+      "usage": 10502,
+      "properties": [
+        {
+          "name": "properties",
+          "serializedName": "properties",
+          "type": {
+            "kind": "model",
+            "id": "Microsoft.HardwareSecurityModules.CloudHsmClusterProperties",
+            "name": "CloudHsmClusterProperties"
+          },
+          "optional": true,
+          "flatten": true,
+          "access": "public",
+          "discriminator": false,
+          "visibility": [
+            1,
+            2,
+            4,
+            8,
+            16
+          ],
+          "serialization": {
+            "json": {
+              "name": "properties"
+            }
+          },
+          "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmCluster.properties"
+        },
+        {
+          "name": "name",
+          "serializedName": "name",
+          "type": {
+            "kind": "string"
+          },
+          "optional": false,
+          "flatten": false,
+          "access": "public",
+          "discriminator": false,
+          "visibility": [
+            1
+          ],
+          "serialization": {
+            "json": {
+              "name": "name"
+            }
+          },
+          "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmCluster.name"
+        },
+        {
+          "name": "identity",
+          "serializedName": "identity",
+          "type": {
+            "kind": "model",
+            "id": "Azure.ResourceManager.CommonTypes.ManagedServiceIdentity",
+            "name": "ManagedServiceIdentity"
+          },
+          "optional": true,
+          "flatten": false,
+          "access": "public",
+          "discriminator": false,
+          "visibility": [
+            1,
+            2,
+            4,
+            8,
+            16
+          ],
+          "serialization": {
+            "json": {
+              "name": "identity"
+            }
+          },
+          "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmCluster.identity"
+        },
+        {
+          "name": "sku",
+          "serializedName": "sku",
+          "type": {
+            "kind": "model",
+            "id": "Microsoft.HardwareSecurityModules.CloudHsmClusterSku",
+            "name": "CloudHsmClusterSku"
+          },
+          "optional": true,
+          "flatten": false,
+          "access": "public",
+          "discriminator": false,
+          "visibility": [
+            1,
+            2
+          ],
+          "serialization": {
+            "json": {
+              "name": "sku"
+            }
+          },
+          "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmCluster.sku"
+        }
+      ],
+      "baseModel": "Azure.ResourceManager.CommonTypes.TrackedResource",
+      "discriminatedSubtypes": [],
+      "serialization": {
+        "json": {
+          "name": "CloudHsmCluster"
+        }
+      },
+      "reachable": true
+    },
+    "sdk-fact-1e19664673e9ed21": {
+      "projectId": "project-14b3babacb1d",
+      "comparisonRole": "target",
+      "sourceRevision": "current",
+      "sourceCommit": "71ce7d0c524c4bea7bc737836684acd53f343147",
+      "apiVersion": "2025-03-31",
+      "factKind": "model",
+      "id": "sdk-fact-1e19664673e9ed21",
+      "identity": "Microsoft.HardwareSecurityModules.CloudHsmClusterSku",
+      "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmClusterSku",
+      "name": "CloudHsmClusterSku",
+      "access": "public",
+      "usage": 10502,
+      "properties": [
+        {
+          "name": "family",
+          "serializedName": "family",
+          "type": {
+            "kind": "enum",
+            "id": "Microsoft.HardwareSecurityModules.CloudHsmClusterSkuFamily",
+            "name": "CloudHsmClusterSkuFamily"
+          },
+          "optional": false,
+          "flatten": false,
+          "access": "public",
+          "discriminator": false,
+          "visibility": [
+            1,
+            2,
+            4,
+            8,
+            16
+          ],
+          "serialization": {
+            "json": {
+              "name": "family"
+            }
+          },
+          "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmClusterSku.family"
+        },
+        {
+          "name": "name",
+          "serializedName": "name",
+          "type": {
+            "kind": "enum",
+            "id": "Microsoft.HardwareSecurityModules.CloudHsmClusterSkuName",
+            "name": "CloudHsmClusterSkuName"
+          },
+          "optional": false,
+          "flatten": false,
+          "access": "public",
+          "discriminator": false,
+          "visibility": [
+            1,
+            2,
+            4,
+            8,
+            16
+          ],
+          "serialization": {
+            "json": {
+              "name": "name"
+            }
+          },
+          "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmClusterSku.name"
+        },
+        {
+          "name": "capacity",
+          "serializedName": "capacity",
+          "type": {
+            "kind": "int32"
+          },
+          "optional": true,
+          "flatten": false,
+          "access": "public",
+          "discriminator": false,
+          "visibility": [
+            1,
+            2,
+            4,
+            8,
+            16
+          ],
+          "serialization": {
+            "json": {
+              "name": "capacity"
+            }
+          },
+          "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmClusterSku.capacity"
+        }
+      ],
+      "discriminatedSubtypes": [],
+      "serialization": {
+        "json": {
+          "name": "CloudHsmClusterSku"
+        }
+      },
+      "reachable": true
+    },
+    "sdk-fact-1e5b00819a5f7c8e": {
+      "projectId": "project-14b3babacb1d",
+      "comparisonRole": "target",
+      "sourceRevision": "current",
+      "sourceCommit": "71ce7d0c524c4bea7bc737836684acd53f343147",
+      "apiVersion": "2025-03-31",
+      "factKind": "method",
+      "id": "sdk-fact-1e5b00819a5f7c8e",
+      "identity": "Microsoft.HardwareSecurityModules.CloudHsmClusters.createOrUpdate",
+      "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmClusters.createOrUpdate",
+      "client": "Microsoft.HardwareSecurityModules.CloudHsmClusters.CloudHsmClusters",
+      "clientName": "CloudHsmClusters",
+      "name": "createOrUpdate",
+      "kind": "lro",
+      "access": "public",
+      "parameters": [
+        {
+          "position": 0,
+          "name": "resourceGroupName",
+          "kind": "method",
+          "type": {
+            "kind": "string"
+          },
+          "optional": false,
+          "onClient": false,
+          "isApiVersionParam": false,
+          "access": "public",
+          "flatten": false,
+          "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmClusters.createOrUpdate.resourceGroupName"
+        },
+        {
+          "position": 1,
+          "name": "cloudHsmClusterName",
+          "kind": "method",
+          "type": {
+            "kind": "string"
+          },
+          "optional": false,
+          "onClient": false,
+          "isApiVersionParam": false,
+          "access": "public",
+          "flatten": false,
+          "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmClusters.createOrUpdate.cloudHsmClusterName"
+        },
+        {
+          "position": 2,
+          "name": "body",
+          "kind": "method",
+          "type": {
+            "kind": "model",
+            "id": "Microsoft.HardwareSecurityModules.CloudHsmCluster",
+            "name": "CloudHsmCluster"
+          },
+          "optional": false,
+          "onClient": false,
+          "isApiVersionParam": false,
+          "access": "public",
+          "flatten": false,
+          "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmClusters.createOrUpdate.resource"
+        },
+        {
+          "position": 3,
+          "name": "contentType",
+          "kind": "method",
+          "type": {
+            "kind": "constant",
+            "value": "application/json",
+            "valueType": {
+              "kind": "string"
+            }
+          },
+          "optional": false,
+          "onClient": false,
+          "isApiVersionParam": false,
+          "access": "public",
+          "flatten": false,
+          "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmClusters.createOrUpdate.contentType"
+        },
+        {
+          "position": 4,
+          "name": "accept",
+          "kind": "method",
+          "type": {
+            "kind": "constant",
+            "value": "application/json",
+            "valueType": {
+              "kind": "string"
+            }
+          },
+          "optional": false,
+          "onClient": false,
+          "isApiVersionParam": false,
+          "access": "public",
+          "flatten": false,
+          "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmClusters.createOrUpdate.accept"
+        }
+      ],
+      "responseType": {
+        "kind": "model",
+        "id": "Microsoft.HardwareSecurityModules.CloudHsmCluster",
+        "name": "CloudHsmCluster"
+      },
+      "apiVersions": [
+        "2025-03-31"
+      ],
+      "generateConvenient": true,
+      "generateProtocol": true,
+      "isOverride": false,
+      "operation": {
+        "kind": "http",
+        "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.HardwareSecurityModules/cloudHsmClusters/{cloudHsmClusterName}",
+        "uriTemplate": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.HardwareSecurityModules/cloudHsmClusters/{cloudHsmClusterName}{?api%2Dversion}",
+        "verb": "put",
+        "parameters": [
+          {
+            "position": 0,
+            "name": "apiVersion",
+            "serializedName": "api-version",
+            "kind": "query",
+            "type": {
+              "kind": "string"
+            },
+            "optional": false,
+            "onClient": true,
+            "isApiVersionParam": true,
+            "access": "public",
+            "flatten": false,
+            "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmClusters.createOrUpdate.apiVersion",
+            "serialization": {
+              "serializedName": "api-version"
+            },
+            "methodParameterSegments": [
+              [
+                "Microsoft.HardwareSecurityModules.CloudHsmClusters.get.apiVersion"
+              ]
+            ],
+            "explode": false
+          },
+          {
+            "position": 1,
+            "name": "subscriptionId",
+            "serializedName": "subscriptionId",
+            "kind": "path",
+            "type": {
+              "kind": "string"
+            },
+            "optional": false,
+            "onClient": true,
+            "isApiVersionParam": false,
+            "access": "public",
+            "flatten": false,
+            "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmClusters.createOrUpdate.subscriptionId",
+            "serialization": {
+              "serializedName": "subscriptionId"
+            },
+            "methodParameterSegments": [
+              [
+                "Microsoft.HardwareSecurityModules.CloudHsmClusters.get.subscriptionId"
+              ]
+            ],
+            "explode": false,
+            "style": "simple",
+            "allowReserved": false
+          },
+          {
+            "position": 2,
+            "name": "resourceGroupName",
+            "serializedName": "resourceGroupName",
+            "kind": "path",
+            "type": {
+              "kind": "string"
+            },
+            "optional": false,
+            "onClient": false,
+            "isApiVersionParam": false,
+            "access": "public",
+            "flatten": false,
+            "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmClusters.createOrUpdate.resourceGroupName",
+            "serialization": {
+              "serializedName": "resourceGroupName"
+            },
+            "methodParameterSegments": [
+              [
+                "Microsoft.HardwareSecurityModules.CloudHsmClusters.createOrUpdate.resourceGroupName"
+              ]
+            ],
+            "explode": false,
+            "style": "simple",
+            "allowReserved": false
+          },
+          {
+            "position": 3,
+            "name": "cloudHsmClusterName",
+            "serializedName": "cloudHsmClusterName",
+            "kind": "path",
+            "type": {
+              "kind": "string"
+            },
+            "optional": false,
+            "onClient": false,
+            "isApiVersionParam": false,
+            "access": "public",
+            "flatten": false,
+            "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmClusters.createOrUpdate.cloudHsmClusterName",
+            "serialization": {
+              "serializedName": "cloudHsmClusterName"
+            },
+            "methodParameterSegments": [
+              [
+                "Microsoft.HardwareSecurityModules.CloudHsmClusters.createOrUpdate.cloudHsmClusterName"
+              ]
+            ],
+            "explode": false,
+            "style": "simple",
+            "allowReserved": false
+          },
+          {
+            "position": 4,
+            "name": "contentType",
+            "serializedName": "Content-Type",
+            "kind": "header",
+            "type": {
+              "kind": "constant",
+              "value": "application/json",
+              "valueType": {
+                "kind": "string"
+              }
+            },
+            "optional": false,
+            "onClient": false,
+            "isApiVersionParam": false,
+            "access": "public",
+            "flatten": false,
+            "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmClusters.createOrUpdate.contentType",
+            "serialization": {
+              "serializedName": "Content-Type"
+            },
+            "methodParameterSegments": [
+              [
+                "Microsoft.HardwareSecurityModules.CloudHsmClusters.createOrUpdate.contentType"
+              ]
+            ]
+          },
+          {
+            "position": 5,
+            "name": "accept",
+            "serializedName": "Accept",
+            "kind": "header",
+            "type": {
+              "kind": "constant",
+              "value": "application/json",
+              "valueType": {
+                "kind": "string"
+              }
+            },
+            "optional": false,
+            "onClient": false,
+            "isApiVersionParam": false,
+            "access": "public",
+            "flatten": false,
+            "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmClusters.createOrUpdate.accept",
+            "serialization": {
+              "serializedName": "Accept"
+            },
+            "methodParameterSegments": [
+              [
+                "Microsoft.HardwareSecurityModules.CloudHsmClusters.createOrUpdate.accept"
+              ]
+            ]
+          }
+        ],
+        "bodyParam": {
+          "position": 0,
+          "name": "body",
+          "serializedName": "resource",
+          "kind": "body",
+          "type": {
+            "kind": "model",
+            "id": "Microsoft.HardwareSecurityModules.CloudHsmCluster",
+            "name": "CloudHsmCluster"
+          },
+          "optional": false,
+          "onClient": false,
+          "isApiVersionParam": false,
+          "access": "public",
+          "flatten": false,
+          "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmClusters.createOrUpdate.resource",
+          "serialization": {
+            "json": {
+              "name": "resource"
+            }
+          },
+          "methodParameterSegments": [
+            [
+              "Microsoft.HardwareSecurityModules.CloudHsmClusters.createOrUpdate.resource"
+            ]
+          ]
+        },
+        "responses": [
+          {
+            "statusCodes": 200,
+            "type": {
+              "kind": "model",
+              "id": "Microsoft.HardwareSecurityModules.CloudHsmCluster",
+              "name": "CloudHsmCluster"
+            },
+            "headers": [],
+            "contentTypes": [
+              "application/json"
+            ],
+            "defaultContentType": "application/json"
+          },
+          {
+            "statusCodes": 201,
+            "type": {
+              "kind": "model",
+              "id": "Microsoft.HardwareSecurityModules.CloudHsmCluster",
+              "name": "CloudHsmCluster"
+            },
+            "headers": [
+              {
+                "position": 0,
+                "name": "azureAsyncOperation",
+                "serializedName": "Azure-AsyncOperation",
+                "kind": "responseheader",
+                "type": {
+                  "kind": "string"
+                },
+                "optional": true,
+                "onClient": false,
+                "isApiVersionParam": false,
+                "access": "public",
+                "flatten": false,
+                "crossLanguageDefinitionId": "Azure.ResourceManager.ArmResourceCreatedResponse.azureAsyncOperation",
+                "serialization": {
+                  "serializedName": "Azure-AsyncOperation"
+                }
+              },
+              {
+                "position": 1,
+                "name": "retryAfter",
+                "serializedName": "Retry-After",
+                "kind": "responseheader",
+                "type": {
+                  "kind": "int32"
+                },
+                "optional": true,
+                "onClient": false,
+                "isApiVersionParam": false,
+                "access": "public",
+                "flatten": false,
+                "crossLanguageDefinitionId": "Azure.ResourceManager.ArmResourceCreatedResponse.retryAfter",
+                "serialization": {
+                  "serializedName": "Retry-After"
+                }
+              }
+            ],
+            "contentTypes": [
+              "application/json"
+            ],
+            "defaultContentType": "application/json"
+          }
+        ],
+        "exceptions": [
+          {
+            "statusCodes": "*",
+            "type": {
+              "kind": "model",
+              "id": "Azure.ResourceManager.CommonTypes.ErrorResponse",
+              "name": "ErrorResponse"
+            },
+            "headers": [],
+            "contentTypes": [
+              "application/json"
+            ],
+            "defaultContentType": "application/json"
+          }
+        ]
+      },
+      "lro": {
+        "finalStateVia": "original-uri",
+        "pollingStep": {
+          "responseBody": {
+            "kind": "model",
+            "id": "Azure.ResourceManager.ArmOperationStatus",
+            "name": "ArmOperationStatusResourceProvisioningState"
+          }
+        },
+        "finalStep": {
+          "kind": "finalOperationLink",
+          "target": {
+            "kind": "link",
+            "location": "ResponseHeader",
+            "property": "Azure.ResourceManager.ArmResourceCreatedResponse.azureAsyncOperation"
+          }
+        },
+        "statusMonitorStep": {
+          "kind": "nextOperationLink",
+          "responseModel": {
+            "kind": "model",
+            "id": "Azure.ResourceManager.ArmOperationStatus",
+            "name": "ArmOperationStatusResourceProvisioningState"
+          },
+          "target": {
+            "kind": "link",
+            "location": "ResponseHeader",
+            "property": "Azure.ResourceManager.ArmResourceCreatedResponse.azureAsyncOperation"
+          }
+        },
+        "operation": {
+          "kind": "http",
+          "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.HardwareSecurityModules/cloudHsmClusters/{cloudHsmClusterName}",
+          "verb": "put",
+          "uriTemplate": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.HardwareSecurityModules/cloudHsmClusters/{cloudHsmClusterName}{?api%2Dversion}"
+        },
+        "logicalResult": {
+          "kind": "model",
+          "id": "Microsoft.HardwareSecurityModules.CloudHsmCluster",
+          "name": "CloudHsmCluster"
+        },
+        "pollingInfo": {
+          "kind": "pollingOperationStep",
+          "responseModel": {
+            "kind": "model",
+            "id": "Azure.ResourceManager.ArmOperationStatus",
+            "name": "ArmOperationStatusResourceProvisioningState"
+          },
+          "terminationStatus": {
+            "kind": "model-property",
+            "property": "Azure.ResourceManager.ArmOperationStatus.status",
+            "succeededState": [
+              "Succeeded"
+            ],
+            "failedState": [
+              "Failed"
+            ],
+            "canceledState": [
+              "Canceled"
+            ]
+          },
+          "errorProperty": "Azure.ResourceManager.ArmOperationStatus.error"
+        },
+        "envelopeResult": {
+          "kind": "model",
+          "id": "Azure.ResourceManager.ArmOperationStatus",
+          "name": "ArmOperationStatusResourceProvisioningState"
+        },
+        "finalEnvelopeResult": {
+          "kind": "model",
+          "id": "Microsoft.HardwareSecurityModules.CloudHsmCluster",
+          "name": "CloudHsmCluster"
+        },
+        "finalResponse": {
+          "envelopeResult": {
+            "kind": "model",
+            "id": "Microsoft.HardwareSecurityModules.CloudHsmCluster",
+            "name": "CloudHsmCluster"
+          },
+          "result": {
+            "kind": "model",
+            "id": "Microsoft.HardwareSecurityModules.CloudHsmCluster",
+            "name": "CloudHsmCluster"
+          }
+        }
+      }
+    },
+    "sdk-fact-25cf3836ca43865e": {
+      "projectId": "project-14b3babacb1d",
+      "comparisonRole": "target",
+      "sourceRevision": "current",
+      "sourceCommit": "71ce7d0c524c4bea7bc737836684acd53f343147",
+      "apiVersion": "2025-03-31",
+      "factKind": "enum",
+      "id": "sdk-fact-25cf3836ca43865e",
+      "identity": "Microsoft.HardwareSecurityModules.CloudHsmClusterSkuName",
+      "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmClusterSkuName",
+      "name": "CloudHsmClusterSkuName",
+      "access": "public",
+      "usage": 10502,
+      "isFixed": false,
+      "isFlags": false,
+      "isUnionAsEnum": true,
+      "valueType": {
+        "kind": "string"
+      },
+      "values": [
+        {
+          "name": "StandardB10",
+          "value": "Standard B10"
+        },
+        {
+          "name": "Standard_B1",
+          "value": "Standard_B1"
+        }
+      ],
+      "reachable": true
+    },
+    "sdk-fact-28ef5aff8bd2aa1a": {
+      "projectId": "project-14b3babacb1d",
+      "comparisonRole": "target",
+      "sourceRevision": "current",
+      "sourceCommit": "71ce7d0c524c4bea7bc737836684acd53f343147",
+      "apiVersion": "2025-03-31",
+      "factKind": "method",
+      "id": "sdk-fact-28ef5aff8bd2aa1a",
+      "identity": "Microsoft.HardwareSecurityModules.CloudHsmClusters.update",
+      "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmClusters.update",
+      "client": "Microsoft.HardwareSecurityModules.CloudHsmClusters.CloudHsmClusters",
+      "clientName": "CloudHsmClusters",
+      "name": "update",
+      "kind": "lro",
+      "access": "public",
+      "parameters": [
+        {
+          "position": 0,
+          "name": "resourceGroupName",
+          "kind": "method",
+          "type": {
+            "kind": "string"
+          },
+          "optional": false,
+          "onClient": false,
+          "isApiVersionParam": false,
+          "access": "public",
+          "flatten": false,
+          "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmClusters.update.resourceGroupName"
+        },
+        {
+          "position": 1,
+          "name": "cloudHsmClusterName",
+          "kind": "method",
+          "type": {
+            "kind": "string"
+          },
+          "optional": false,
+          "onClient": false,
+          "isApiVersionParam": false,
+          "access": "public",
+          "flatten": false,
+          "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmClusters.update.cloudHsmClusterName"
+        },
+        {
+          "position": 2,
+          "name": "body",
+          "kind": "method",
+          "type": {
+            "kind": "model",
+            "id": "Microsoft.HardwareSecurityModules.CloudHsmClusterPatchParameters",
+            "name": "CloudHsmClusterPatchParameters"
+          },
+          "optional": false,
+          "onClient": false,
+          "isApiVersionParam": false,
+          "access": "public",
+          "flatten": false,
+          "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmClusters.update.properties"
+        },
+        {
+          "position": 3,
+          "name": "contentType",
+          "kind": "method",
+          "type": {
+            "kind": "constant",
+            "value": "application/json",
+            "valueType": {
+              "kind": "string"
+            }
+          },
+          "optional": false,
+          "onClient": false,
+          "isApiVersionParam": false,
+          "access": "public",
+          "flatten": false,
+          "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmClusters.update.contentType"
+        },
+        {
+          "position": 4,
+          "name": "accept",
+          "kind": "method",
+          "type": {
+            "kind": "constant",
+            "value": "application/json",
+            "valueType": {
+              "kind": "string"
+            }
+          },
+          "optional": false,
+          "onClient": false,
+          "isApiVersionParam": false,
+          "access": "public",
+          "flatten": false,
+          "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmClusters.update.accept"
+        }
+      ],
+      "responseType": {
+        "kind": "model",
+        "id": "Microsoft.HardwareSecurityModules.CloudHsmCluster",
+        "name": "CloudHsmCluster"
+      },
+      "apiVersions": [
+        "2025-03-31"
+      ],
+      "generateConvenient": true,
+      "generateProtocol": true,
+      "isOverride": false,
+      "operation": {
+        "kind": "http",
+        "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.HardwareSecurityModules/cloudHsmClusters/{cloudHsmClusterName}",
+        "uriTemplate": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.HardwareSecurityModules/cloudHsmClusters/{cloudHsmClusterName}{?api%2Dversion}",
+        "verb": "patch",
+        "parameters": [
+          {
+            "position": 0,
+            "name": "apiVersion",
+            "serializedName": "api-version",
+            "kind": "query",
+            "type": {
+              "kind": "string"
+            },
+            "optional": false,
+            "onClient": true,
+            "isApiVersionParam": true,
+            "access": "public",
+            "flatten": false,
+            "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmClusters.update.apiVersion",
+            "serialization": {
+              "serializedName": "api-version"
+            },
+            "methodParameterSegments": [
+              [
+                "Microsoft.HardwareSecurityModules.CloudHsmClusters.get.apiVersion"
+              ]
+            ],
+            "explode": false
+          },
+          {
+            "position": 1,
+            "name": "subscriptionId",
+            "serializedName": "subscriptionId",
+            "kind": "path",
+            "type": {
+              "kind": "string"
+            },
+            "optional": false,
+            "onClient": true,
+            "isApiVersionParam": false,
+            "access": "public",
+            "flatten": false,
+            "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmClusters.update.subscriptionId",
+            "serialization": {
+              "serializedName": "subscriptionId"
+            },
+            "methodParameterSegments": [
+              [
+                "Microsoft.HardwareSecurityModules.CloudHsmClusters.get.subscriptionId"
+              ]
+            ],
+            "explode": false,
+            "style": "simple",
+            "allowReserved": false
+          },
+          {
+            "position": 2,
+            "name": "resourceGroupName",
+            "serializedName": "resourceGroupName",
+            "kind": "path",
+            "type": {
+              "kind": "string"
+            },
+            "optional": false,
+            "onClient": false,
+            "isApiVersionParam": false,
+            "access": "public",
+            "flatten": false,
+            "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmClusters.update.resourceGroupName",
+            "serialization": {
+              "serializedName": "resourceGroupName"
+            },
+            "methodParameterSegments": [
+              [
+                "Microsoft.HardwareSecurityModules.CloudHsmClusters.update.resourceGroupName"
+              ]
+            ],
+            "explode": false,
+            "style": "simple",
+            "allowReserved": false
+          },
+          {
+            "position": 3,
+            "name": "cloudHsmClusterName",
+            "serializedName": "cloudHsmClusterName",
+            "kind": "path",
+            "type": {
+              "kind": "string"
+            },
+            "optional": false,
+            "onClient": false,
+            "isApiVersionParam": false,
+            "access": "public",
+            "flatten": false,
+            "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmClusters.update.cloudHsmClusterName",
+            "serialization": {
+              "serializedName": "cloudHsmClusterName"
+            },
+            "methodParameterSegments": [
+              [
+                "Microsoft.HardwareSecurityModules.CloudHsmClusters.update.cloudHsmClusterName"
+              ]
+            ],
+            "explode": false,
+            "style": "simple",
+            "allowReserved": false
+          },
+          {
+            "position": 4,
+            "name": "contentType",
+            "serializedName": "Content-Type",
+            "kind": "header",
+            "type": {
+              "kind": "constant",
+              "value": "application/json",
+              "valueType": {
+                "kind": "string"
+              }
+            },
+            "optional": false,
+            "onClient": false,
+            "isApiVersionParam": false,
+            "access": "public",
+            "flatten": false,
+            "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmClusters.update.contentType",
+            "serialization": {
+              "serializedName": "Content-Type"
+            },
+            "methodParameterSegments": [
+              [
+                "Microsoft.HardwareSecurityModules.CloudHsmClusters.update.contentType"
+              ]
+            ]
+          },
+          {
+            "position": 5,
+            "name": "accept",
+            "serializedName": "Accept",
+            "kind": "header",
+            "type": {
+              "kind": "constant",
+              "value": "application/json",
+              "valueType": {
+                "kind": "string"
+              }
+            },
+            "optional": false,
+            "onClient": false,
+            "isApiVersionParam": false,
+            "access": "public",
+            "flatten": false,
+            "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmClusters.update.accept",
+            "serialization": {
+              "serializedName": "Accept"
+            },
+            "methodParameterSegments": [
+              [
+                "Microsoft.HardwareSecurityModules.CloudHsmClusters.update.accept"
+              ]
+            ]
+          }
+        ],
+        "bodyParam": {
+          "position": 0,
+          "name": "body",
+          "serializedName": "properties",
+          "kind": "body",
+          "type": {
+            "kind": "model",
+            "id": "Microsoft.HardwareSecurityModules.CloudHsmClusterPatchParameters",
+            "name": "CloudHsmClusterPatchParameters"
+          },
+          "optional": false,
+          "onClient": false,
+          "isApiVersionParam": false,
+          "access": "public",
+          "flatten": false,
+          "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmClusters.update.properties",
+          "serialization": {
+            "json": {
+              "name": "properties"
+            }
+          },
+          "methodParameterSegments": [
+            [
+              "Microsoft.HardwareSecurityModules.CloudHsmClusters.update.properties"
+            ]
+          ]
+        },
+        "responses": [
+          {
+            "statusCodes": 200,
+            "type": {
+              "kind": "model",
+              "id": "Microsoft.HardwareSecurityModules.CloudHsmCluster",
+              "name": "CloudHsmCluster"
+            },
+            "headers": [],
+            "contentTypes": [
+              "application/json"
+            ],
+            "defaultContentType": "application/json"
+          },
+          {
+            "statusCodes": 202,
+            "headers": [
+              {
+                "position": 0,
+                "name": "location",
+                "serializedName": "Location",
+                "kind": "responseheader",
+                "type": {
+                  "kind": "string"
+                },
+                "optional": true,
+                "onClient": false,
+                "isApiVersionParam": false,
+                "access": "public",
+                "flatten": false,
+                "crossLanguageDefinitionId": "Azure.ResourceManager.ArmAcceptedLroResponse.location",
+                "serialization": {
+                  "serializedName": "Location"
+                }
+              },
+              {
+                "position": 1,
+                "name": "retryAfter",
+                "serializedName": "Retry-After",
+                "kind": "responseheader",
+                "type": {
+                  "kind": "int32"
+                },
+                "optional": true,
+                "onClient": false,
+                "isApiVersionParam": false,
+                "access": "public",
+                "flatten": false,
+                "crossLanguageDefinitionId": "Azure.ResourceManager.ArmAcceptedLroResponse.retryAfter",
+                "serialization": {
+                  "serializedName": "Retry-After"
+                }
+              }
+            ],
+            "contentTypes": []
+          }
+        ],
+        "exceptions": [
+          {
+            "statusCodes": "*",
+            "type": {
+              "kind": "model",
+              "id": "Azure.ResourceManager.CommonTypes.ErrorResponse",
+              "name": "ErrorResponse"
+            },
+            "headers": [],
+            "contentTypes": [
+              "application/json"
+            ],
+            "defaultContentType": "application/json"
+          }
+        ]
+      },
+      "lro": {
+        "finalStateVia": "location",
+        "pollingStep": {
+          "responseBody": {
+            "kind": "model",
+            "id": "Azure.ResourceManager.ArmOperationStatus",
+            "name": "ArmOperationStatusResourceProvisioningState"
+          }
+        },
+        "finalStep": {
+          "kind": "finalOperationLink",
+          "target": {
+            "kind": "link",
+            "location": "ResponseHeader",
+            "property": "Azure.ResourceManager.ArmAcceptedLroResponse.location"
+          }
+        },
+        "statusMonitorStep": {
+          "kind": "nextOperationLink",
+          "responseModel": {
+            "kind": "model",
+            "id": "Azure.ResourceManager.ArmOperationStatus",
+            "name": "ArmOperationStatusResourceProvisioningState"
+          },
+          "target": {
+            "kind": "link",
+            "location": "ResponseHeader",
+            "property": "Azure.ResourceManager.ArmAcceptedLroResponse.location"
+          }
+        },
+        "operation": {
+          "kind": "http",
+          "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.HardwareSecurityModules/cloudHsmClusters/{cloudHsmClusterName}",
+          "verb": "patch",
+          "uriTemplate": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.HardwareSecurityModules/cloudHsmClusters/{cloudHsmClusterName}{?api%2Dversion}"
+        },
+        "logicalResult": {
+          "kind": "model",
+          "id": "Microsoft.HardwareSecurityModules.CloudHsmCluster",
+          "name": "CloudHsmCluster"
+        },
+        "pollingInfo": {
+          "kind": "pollingOperationStep",
+          "responseModel": {
+            "kind": "model",
+            "id": "Azure.ResourceManager.ArmOperationStatus",
+            "name": "ArmOperationStatusResourceProvisioningState"
+          },
+          "terminationStatus": {
+            "kind": "model-property",
+            "property": "Azure.ResourceManager.ArmOperationStatus.status",
+            "succeededState": [
+              "Succeeded"
+            ],
+            "failedState": [
+              "Failed"
+            ],
+            "canceledState": [
+              "Canceled"
+            ]
+          },
+          "errorProperty": "Azure.ResourceManager.ArmOperationStatus.error"
+        },
+        "envelopeResult": {
+          "kind": "model",
+          "id": "Azure.ResourceManager.ArmOperationStatus",
+          "name": "ArmOperationStatusResourceProvisioningState"
+        },
+        "finalEnvelopeResult": {
+          "kind": "model",
+          "id": "Microsoft.HardwareSecurityModules.CloudHsmCluster",
+          "name": "CloudHsmCluster"
+        },
+        "finalResponse": {
+          "envelopeResult": {
+            "kind": "model",
+            "id": "Microsoft.HardwareSecurityModules.CloudHsmCluster",
+            "name": "CloudHsmCluster"
+          },
+          "result": {
+            "kind": "model",
+            "id": "Microsoft.HardwareSecurityModules.CloudHsmCluster",
+            "name": "CloudHsmCluster"
+          }
+        }
+      }
+    },
+    "sdk-fact-357891986ad7ed7a": {
+      "projectId": "project-14b3babacb1d",
+      "comparisonRole": "target",
+      "sourceRevision": "current",
+      "sourceCommit": "71ce7d0c524c4bea7bc737836684acd53f343147",
+      "apiVersion": "2025-03-31",
+      "factKind": "method",
+      "id": "sdk-fact-357891986ad7ed7a",
+      "identity": "Microsoft.HardwareSecurityModules.CloudHsmClusters.listBySubscription",
+      "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmClusters.listBySubscription",
+      "client": "Microsoft.HardwareSecurityModules.CloudHsmClusters.CloudHsmClusters",
+      "clientName": "CloudHsmClusters",
+      "name": "listBySubscription",
+      "kind": "paging",
+      "access": "public",
+      "parameters": [
+        {
+          "position": 0,
+          "name": "$skiptoken",
+          "kind": "method",
+          "type": {
+            "kind": "string"
+          },
+          "optional": true,
+          "onClient": false,
+          "isApiVersionParam": false,
+          "access": "public",
+          "flatten": false,
+          "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmClusters.listBySubscription.$skiptoken"
+        },
+        {
+          "position": 1,
+          "name": "accept",
+          "kind": "method",
+          "type": {
+            "kind": "constant",
+            "value": "application/json",
+            "valueType": {
+              "kind": "string"
+            }
+          },
+          "optional": false,
+          "onClient": false,
+          "isApiVersionParam": false,
+          "access": "public",
+          "flatten": false,
+          "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmClusters.listBySubscription.accept"
+        }
+      ],
+      "responseType": {
+        "kind": "array",
+        "valueType": {
+          "kind": "model",
+          "id": "Microsoft.HardwareSecurityModules.CloudHsmCluster",
+          "name": "CloudHsmCluster"
+        }
+      },
+      "apiVersions": [
+        "2025-03-31"
+      ],
+      "generateConvenient": true,
+      "generateProtocol": true,
+      "isOverride": false,
+      "operation": {
+        "kind": "http",
+        "path": "/subscriptions/{subscriptionId}/providers/Microsoft.HardwareSecurityModules/cloudHsmClusters",
+        "uriTemplate": "/subscriptions/{subscriptionId}/providers/Microsoft.HardwareSecurityModules/cloudHsmClusters{?api%2Dversion,%24skiptoken}",
+        "verb": "get",
+        "parameters": [
+          {
+            "position": 0,
+            "name": "apiVersion",
+            "serializedName": "api-version",
+            "kind": "query",
+            "type": {
+              "kind": "string"
+            },
+            "optional": false,
+            "onClient": true,
+            "isApiVersionParam": true,
+            "access": "public",
+            "flatten": false,
+            "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmClusters.listBySubscription.apiVersion",
+            "serialization": {
+              "serializedName": "api-version"
+            },
+            "methodParameterSegments": [
+              [
+                "Microsoft.HardwareSecurityModules.CloudHsmClusters.get.apiVersion"
+              ]
+            ],
+            "explode": false
+          },
+          {
+            "position": 1,
+            "name": "subscriptionId",
+            "serializedName": "subscriptionId",
+            "kind": "path",
+            "type": {
+              "kind": "string"
+            },
+            "optional": false,
+            "onClient": true,
+            "isApiVersionParam": false,
+            "access": "public",
+            "flatten": false,
+            "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmClusters.listBySubscription.subscriptionId",
+            "serialization": {
+              "serializedName": "subscriptionId"
+            },
+            "methodParameterSegments": [
+              [
+                "Microsoft.HardwareSecurityModules.CloudHsmClusters.get.subscriptionId"
+              ]
+            ],
+            "explode": false,
+            "style": "simple",
+            "allowReserved": false
+          },
+          {
+            "position": 2,
+            "name": "$skiptoken",
+            "serializedName": "$skiptoken",
+            "kind": "query",
+            "type": {
+              "kind": "string"
+            },
+            "optional": true,
+            "onClient": false,
+            "isApiVersionParam": false,
+            "access": "public",
+            "flatten": false,
+            "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmClusters.listBySubscription.$skiptoken",
+            "serialization": {
+              "serializedName": "$skiptoken"
+            },
+            "methodParameterSegments": [
+              [
+                "Microsoft.HardwareSecurityModules.CloudHsmClusters.listBySubscription.$skiptoken"
+              ]
+            ],
+            "explode": false
+          },
+          {
+            "position": 3,
+            "name": "accept",
+            "serializedName": "Accept",
+            "kind": "header",
+            "type": {
+              "kind": "constant",
+              "value": "application/json",
+              "valueType": {
+                "kind": "string"
+              }
+            },
+            "optional": false,
+            "onClient": false,
+            "isApiVersionParam": false,
+            "access": "public",
+            "flatten": false,
+            "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmClusters.listBySubscription.accept",
+            "serialization": {
+              "serializedName": "Accept"
+            },
+            "methodParameterSegments": [
+              [
+                "Microsoft.HardwareSecurityModules.CloudHsmClusters.listBySubscription.accept"
+              ]
+            ]
+          }
+        ],
+        "responses": [
+          {
+            "statusCodes": 200,
+            "type": {
+              "kind": "model",
+              "id": "Azure.ResourceManager.ResourceListResult",
+              "name": "CloudHsmClusterListResult"
+            },
+            "headers": [],
+            "contentTypes": [
+              "application/json"
+            ],
+            "defaultContentType": "application/json"
+          }
+        ],
+        "exceptions": [
+          {
+            "statusCodes": "*",
+            "type": {
+              "kind": "model",
+              "id": "Azure.ResourceManager.CommonTypes.ErrorResponse",
+              "name": "ErrorResponse"
+            },
+            "headers": [],
+            "contentTypes": [
+              "application/json"
+            ],
+            "defaultContentType": "application/json"
+          }
+        ]
+      },
+      "paging": {
+        "pageItemsSegments": [
+          "Azure.ResourceManager.ResourceListResult.value"
+        ],
+        "nextLinkSegments": [
+          "Azure.ResourceManager.ResourceListResult.nextLink"
+        ],
+        "pageSizeParameterSegments": [],
+        "nextLinkReInjectedParametersSegments": [],
+        "nextLinkVerb": "GET"
+      }
+    },
+    "sdk-fact-798b65c2657d56c0": {
+      "projectId": "project-14b3babacb1d",
+      "comparisonRole": "target",
+      "sourceRevision": "current",
+      "sourceCommit": "71ce7d0c524c4bea7bc737836684acd53f343147",
+      "apiVersion": "2025-03-31",
+      "factKind": "method",
+      "id": "sdk-fact-798b65c2657d56c0",
+      "identity": "Microsoft.HardwareSecurityModules.CloudHsmClusters.get",
+      "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmClusters.get",
+      "client": "Microsoft.HardwareSecurityModules.CloudHsmClusters.CloudHsmClusters",
+      "clientName": "CloudHsmClusters",
+      "name": "get",
+      "kind": "basic",
+      "access": "public",
+      "parameters": [
+        {
+          "position": 0,
+          "name": "resourceGroupName",
+          "kind": "method",
+          "type": {
+            "kind": "string"
+          },
+          "optional": false,
+          "onClient": false,
+          "isApiVersionParam": false,
+          "access": "public",
+          "flatten": false,
+          "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmClusters.get.resourceGroupName"
+        },
+        {
+          "position": 1,
+          "name": "cloudHsmClusterName",
+          "kind": "method",
+          "type": {
+            "kind": "string"
+          },
+          "optional": false,
+          "onClient": false,
+          "isApiVersionParam": false,
+          "access": "public",
+          "flatten": false,
+          "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmClusters.get.cloudHsmClusterName"
+        },
+        {
+          "position": 2,
+          "name": "accept",
+          "kind": "method",
+          "type": {
+            "kind": "constant",
+            "value": "application/json",
+            "valueType": {
+              "kind": "string"
+            }
+          },
+          "optional": false,
+          "onClient": false,
+          "isApiVersionParam": false,
+          "access": "public",
+          "flatten": false,
+          "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmClusters.get.accept"
+        }
+      ],
+      "responseType": {
+        "kind": "model",
+        "id": "Microsoft.HardwareSecurityModules.CloudHsmCluster",
+        "name": "CloudHsmCluster"
+      },
+      "apiVersions": [
+        "2025-03-31"
+      ],
+      "generateConvenient": true,
+      "generateProtocol": true,
+      "isOverride": false,
+      "operation": {
+        "kind": "http",
+        "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.HardwareSecurityModules/cloudHsmClusters/{cloudHsmClusterName}",
+        "uriTemplate": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.HardwareSecurityModules/cloudHsmClusters/{cloudHsmClusterName}{?api%2Dversion}",
+        "verb": "get",
+        "parameters": [
+          {
+            "position": 0,
+            "name": "apiVersion",
+            "serializedName": "api-version",
+            "kind": "query",
+            "type": {
+              "kind": "string"
+            },
+            "optional": false,
+            "onClient": true,
+            "isApiVersionParam": true,
+            "access": "public",
+            "flatten": false,
+            "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmClusters.get.apiVersion",
+            "serialization": {
+              "serializedName": "api-version"
+            },
+            "methodParameterSegments": [
+              [
+                "Microsoft.HardwareSecurityModules.CloudHsmClusters.get.apiVersion"
+              ]
+            ],
+            "explode": false
+          },
+          {
+            "position": 1,
+            "name": "subscriptionId",
+            "serializedName": "subscriptionId",
+            "kind": "path",
+            "type": {
+              "kind": "string"
+            },
+            "optional": false,
+            "onClient": true,
+            "isApiVersionParam": false,
+            "access": "public",
+            "flatten": false,
+            "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmClusters.get.subscriptionId",
+            "serialization": {
+              "serializedName": "subscriptionId"
+            },
+            "methodParameterSegments": [
+              [
+                "Microsoft.HardwareSecurityModules.CloudHsmClusters.get.subscriptionId"
+              ]
+            ],
+            "explode": false,
+            "style": "simple",
+            "allowReserved": false
+          },
+          {
+            "position": 2,
+            "name": "resourceGroupName",
+            "serializedName": "resourceGroupName",
+            "kind": "path",
+            "type": {
+              "kind": "string"
+            },
+            "optional": false,
+            "onClient": false,
+            "isApiVersionParam": false,
+            "access": "public",
+            "flatten": false,
+            "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmClusters.get.resourceGroupName",
+            "serialization": {
+              "serializedName": "resourceGroupName"
+            },
+            "methodParameterSegments": [
+              [
+                "Microsoft.HardwareSecurityModules.CloudHsmClusters.get.resourceGroupName"
+              ]
+            ],
+            "explode": false,
+            "style": "simple",
+            "allowReserved": false
+          },
+          {
+            "position": 3,
+            "name": "cloudHsmClusterName",
+            "serializedName": "cloudHsmClusterName",
+            "kind": "path",
+            "type": {
+              "kind": "string"
+            },
+            "optional": false,
+            "onClient": false,
+            "isApiVersionParam": false,
+            "access": "public",
+            "flatten": false,
+            "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmClusters.get.cloudHsmClusterName",
+            "serialization": {
+              "serializedName": "cloudHsmClusterName"
+            },
+            "methodParameterSegments": [
+              [
+                "Microsoft.HardwareSecurityModules.CloudHsmClusters.get.cloudHsmClusterName"
+              ]
+            ],
+            "explode": false,
+            "style": "simple",
+            "allowReserved": false
+          },
+          {
+            "position": 4,
+            "name": "accept",
+            "serializedName": "Accept",
+            "kind": "header",
+            "type": {
+              "kind": "constant",
+              "value": "application/json",
+              "valueType": {
+                "kind": "string"
+              }
+            },
+            "optional": false,
+            "onClient": false,
+            "isApiVersionParam": false,
+            "access": "public",
+            "flatten": false,
+            "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmClusters.get.accept",
+            "serialization": {
+              "serializedName": "Accept"
+            },
+            "methodParameterSegments": [
+              [
+                "Microsoft.HardwareSecurityModules.CloudHsmClusters.get.accept"
+              ]
+            ]
+          }
+        ],
+        "responses": [
+          {
+            "statusCodes": 200,
+            "type": {
+              "kind": "model",
+              "id": "Microsoft.HardwareSecurityModules.CloudHsmCluster",
+              "name": "CloudHsmCluster"
+            },
+            "headers": [],
+            "contentTypes": [
+              "application/json"
+            ],
+            "defaultContentType": "application/json"
+          }
+        ],
+        "exceptions": [
+          {
+            "statusCodes": "*",
+            "type": {
+              "kind": "model",
+              "id": "Azure.ResourceManager.CommonTypes.ErrorResponse",
+              "name": "ErrorResponse"
+            },
+            "headers": [],
+            "contentTypes": [
+              "application/json"
+            ],
+            "defaultContentType": "application/json"
+          }
+        ]
+      }
+    },
+    "sdk-fact-7ae880bb3a345ff3": {
+      "projectId": "project-14b3babacb1d",
+      "comparisonRole": "baseline",
+      "sourceRevision": "base",
+      "sourceCommit": "a6887d2260f26285d4b1f5fba97da370be9200b4",
+      "apiVersion": "2025-03-31",
+      "factKind": "enum",
+      "id": "sdk-fact-7ae880bb3a345ff3",
+      "identity": "Microsoft.HardwareSecurityModules.CloudHsmClusterSkuName",
+      "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmClusterSkuName",
+      "name": "CloudHsmClusterSkuName",
+      "access": "public",
+      "usage": 10502,
+      "isFixed": true,
+      "isFlags": false,
+      "isUnionAsEnum": false,
+      "valueType": {
+        "kind": "string"
+      },
+      "values": [
+        {
+          "name": "Standard B10",
+          "value": "Standard B10"
+        },
+        {
+          "name": "Standard_B1",
+          "value": "Standard_B1"
+        }
+      ],
+      "reachable": true
+    },
+    "sdk-fact-a122e2d593dce71d": {
+      "projectId": "project-14b3babacb1d",
+      "comparisonRole": "target",
+      "sourceRevision": "current",
+      "sourceCommit": "71ce7d0c524c4bea7bc737836684acd53f343147",
+      "apiVersion": "2025-03-31",
+      "factKind": "method",
+      "id": "sdk-fact-a122e2d593dce71d",
+      "identity": "Microsoft.HardwareSecurityModules.CloudHsmClusters.listByResourceGroup",
+      "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmClusters.listByResourceGroup",
+      "client": "Microsoft.HardwareSecurityModules.CloudHsmClusters.CloudHsmClusters",
+      "clientName": "CloudHsmClusters",
+      "name": "listByResourceGroup",
+      "kind": "paging",
+      "access": "public",
+      "parameters": [
+        {
+          "position": 0,
+          "name": "resourceGroupName",
+          "kind": "method",
+          "type": {
+            "kind": "string"
+          },
+          "optional": false,
+          "onClient": false,
+          "isApiVersionParam": false,
+          "access": "public",
+          "flatten": false,
+          "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmClusters.listByResourceGroup.resourceGroupName"
+        },
+        {
+          "position": 1,
+          "name": "$skiptoken",
+          "kind": "method",
+          "type": {
+            "kind": "string"
+          },
+          "optional": true,
+          "onClient": false,
+          "isApiVersionParam": false,
+          "access": "public",
+          "flatten": false,
+          "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmClusters.listByResourceGroup.$skiptoken"
+        },
+        {
+          "position": 2,
+          "name": "accept",
+          "kind": "method",
+          "type": {
+            "kind": "constant",
+            "value": "application/json",
+            "valueType": {
+              "kind": "string"
+            }
+          },
+          "optional": false,
+          "onClient": false,
+          "isApiVersionParam": false,
+          "access": "public",
+          "flatten": false,
+          "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmClusters.listByResourceGroup.accept"
+        }
+      ],
+      "responseType": {
+        "kind": "array",
+        "valueType": {
+          "kind": "model",
+          "id": "Microsoft.HardwareSecurityModules.CloudHsmCluster",
+          "name": "CloudHsmCluster"
+        }
+      },
+      "apiVersions": [
+        "2025-03-31"
+      ],
+      "generateConvenient": true,
+      "generateProtocol": true,
+      "isOverride": false,
+      "operation": {
+        "kind": "http",
+        "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.HardwareSecurityModules/cloudHsmClusters",
+        "uriTemplate": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.HardwareSecurityModules/cloudHsmClusters{?api%2Dversion,%24skiptoken}",
+        "verb": "get",
+        "parameters": [
+          {
+            "position": 0,
+            "name": "apiVersion",
+            "serializedName": "api-version",
+            "kind": "query",
+            "type": {
+              "kind": "string"
+            },
+            "optional": false,
+            "onClient": true,
+            "isApiVersionParam": true,
+            "access": "public",
+            "flatten": false,
+            "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmClusters.listByResourceGroup.apiVersion",
+            "serialization": {
+              "serializedName": "api-version"
+            },
+            "methodParameterSegments": [
+              [
+                "Microsoft.HardwareSecurityModules.CloudHsmClusters.get.apiVersion"
+              ]
+            ],
+            "explode": false
+          },
+          {
+            "position": 1,
+            "name": "subscriptionId",
+            "serializedName": "subscriptionId",
+            "kind": "path",
+            "type": {
+              "kind": "string"
+            },
+            "optional": false,
+            "onClient": true,
+            "isApiVersionParam": false,
+            "access": "public",
+            "flatten": false,
+            "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmClusters.listByResourceGroup.subscriptionId",
+            "serialization": {
+              "serializedName": "subscriptionId"
+            },
+            "methodParameterSegments": [
+              [
+                "Microsoft.HardwareSecurityModules.CloudHsmClusters.get.subscriptionId"
+              ]
+            ],
+            "explode": false,
+            "style": "simple",
+            "allowReserved": false
+          },
+          {
+            "position": 2,
+            "name": "resourceGroupName",
+            "serializedName": "resourceGroupName",
+            "kind": "path",
+            "type": {
+              "kind": "string"
+            },
+            "optional": false,
+            "onClient": false,
+            "isApiVersionParam": false,
+            "access": "public",
+            "flatten": false,
+            "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmClusters.listByResourceGroup.resourceGroupName",
+            "serialization": {
+              "serializedName": "resourceGroupName"
+            },
+            "methodParameterSegments": [
+              [
+                "Microsoft.HardwareSecurityModules.CloudHsmClusters.listByResourceGroup.resourceGroupName"
+              ]
+            ],
+            "explode": false,
+            "style": "simple",
+            "allowReserved": false
+          },
+          {
+            "position": 3,
+            "name": "$skiptoken",
+            "serializedName": "$skiptoken",
+            "kind": "query",
+            "type": {
+              "kind": "string"
+            },
+            "optional": true,
+            "onClient": false,
+            "isApiVersionParam": false,
+            "access": "public",
+            "flatten": false,
+            "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmClusters.listByResourceGroup.$skiptoken",
+            "serialization": {
+              "serializedName": "$skiptoken"
+            },
+            "methodParameterSegments": [
+              [
+                "Microsoft.HardwareSecurityModules.CloudHsmClusters.listByResourceGroup.$skiptoken"
+              ]
+            ],
+            "explode": false
+          },
+          {
+            "position": 4,
+            "name": "accept",
+            "serializedName": "Accept",
+            "kind": "header",
+            "type": {
+              "kind": "constant",
+              "value": "application/json",
+              "valueType": {
+                "kind": "string"
+              }
+            },
+            "optional": false,
+            "onClient": false,
+            "isApiVersionParam": false,
+            "access": "public",
+            "flatten": false,
+            "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmClusters.listByResourceGroup.accept",
+            "serialization": {
+              "serializedName": "Accept"
+            },
+            "methodParameterSegments": [
+              [
+                "Microsoft.HardwareSecurityModules.CloudHsmClusters.listByResourceGroup.accept"
+              ]
+            ]
+          }
+        ],
+        "responses": [
+          {
+            "statusCodes": 200,
+            "type": {
+              "kind": "model",
+              "id": "Azure.ResourceManager.ResourceListResult",
+              "name": "CloudHsmClusterListResult"
+            },
+            "headers": [],
+            "contentTypes": [
+              "application/json"
+            ],
+            "defaultContentType": "application/json"
+          }
+        ],
+        "exceptions": [
+          {
+            "statusCodes": "*",
+            "type": {
+              "kind": "model",
+              "id": "Azure.ResourceManager.CommonTypes.ErrorResponse",
+              "name": "ErrorResponse"
+            },
+            "headers": [],
+            "contentTypes": [
+              "application/json"
+            ],
+            "defaultContentType": "application/json"
+          }
+        ]
+      },
+      "paging": {
+        "pageItemsSegments": [
+          "Azure.ResourceManager.ResourceListResult.value"
+        ],
+        "nextLinkSegments": [
+          "Azure.ResourceManager.ResourceListResult.nextLink"
+        ],
+        "pageSizeParameterSegments": [],
+        "nextLinkReInjectedParametersSegments": [],
+        "nextLinkVerb": "GET"
+      }
+    }
+  },
+  "candidates": [
+    {
+      "id": "downstream-24adebf95043e303",
+      "rule": "enum-values-removed",
+      "defaultSeverity": "high",
+      "actual": "Microsoft.HardwareSecurityModules.CloudHsmClusterSkuName removed enum values: Standard B10.",
+      "expected": "Microsoft.HardwareSecurityModules.CloudHsmClusterSkuName preserves its existing language-neutral generated SDK contract.",
+      "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmClusterSkuName",
+      "sourceChangeIds": [
+        "source-9a813171a81d57c2"
+      ],
+      "declarationIds": [
+        "declaration-4db70df1e4ae8531",
+        "declaration-6f59f326dfa59a93",
+        "declaration-aa4fa48fc7239de9",
+        "declaration-b248c9fd9eb008fb",
+        "declaration-d7759b7ca4dd59aa",
+        "declaration-ec7b99f0e7bc0b26"
+      ],
+      "evidenceFactIds": [
+        "sdk-fact-7ae880bb3a345ff3",
+        "sdk-fact-25cf3836ca43865e"
+      ],
+      "reviewRequired": true,
+      "rootCauseIds": [
+        "downstream-root-cause-f185af50af31dba1"
+      ]
+    },
+    {
+      "id": "downstream-d2b61f0e1a91d387",
+      "rule": "enum-extensibility-changed",
+      "defaultSeverity": "high",
+      "actual": "Microsoft.HardwareSecurityModules.CloudHsmClusterSkuName changed enum extensibility.",
+      "expected": "Microsoft.HardwareSecurityModules.CloudHsmClusterSkuName preserves its existing language-neutral generated SDK contract.",
+      "crossLanguageDefinitionId": "Microsoft.HardwareSecurityModules.CloudHsmClusterSkuName",
+      "sourceChangeIds": [
+        "source-9a813171a81d57c2"
+      ],
+      "declarationIds": [
+        "declaration-4db70df1e4ae8531",
+        "declaration-6f59f326dfa59a93",
+        "declaration-aa4fa48fc7239de9",
+        "declaration-b248c9fd9eb008fb",
+        "declaration-d7759b7ca4dd59aa",
+        "declaration-ec7b99f0e7bc0b26"
+      ],
+      "evidenceFactIds": [
+        "sdk-fact-7ae880bb3a345ff3",
+        "sdk-fact-25cf3836ca43865e"
+      ],
+      "reviewRequired": true,
+      "rootCauseIds": [
+        "downstream-root-cause-f185af50af31dba1"
+      ]
+    }
+  ],
+  "rootCauses": [
+    {
+      "id": "downstream-root-cause-f185af50af31dba1",
+      "kind": "enum-union-propagation",
+      "directCandidateIds": [
+        "downstream-24adebf95043e303",
+        "downstream-d2b61f0e1a91d387"
+      ],
+      "propagatedCandidateIds": [],
+      "methodFactIds": [
+        "sdk-fact-1e5b00819a5f7c8e",
+        "sdk-fact-28ef5aff8bd2aa1a",
+        "sdk-fact-357891986ad7ed7a",
+        "sdk-fact-798b65c2657d56c0",
+        "sdk-fact-a122e2d593dce71d"
+      ],
+      "typeFactIds": [
+        "sdk-fact-0fe1b1a5aece7cad",
+        "sdk-fact-1e19664673e9ed21",
+        "sdk-fact-25cf3836ca43865e",
+        "sdk-fact-7ae880bb3a345ff3"
+      ],
+      "referenceEvidence": [
+        {
+          "fromFactId": "sdk-fact-1e5b00819a5f7c8e",
+          "toFactId": "sdk-fact-0fe1b1a5aece7cad",
+          "kind": "parameter",
+          "memberName": "body",
+          "location": "request-body"
+        },
+        {
+          "fromFactId": "sdk-fact-0fe1b1a5aece7cad",
+          "toFactId": "sdk-fact-1e19664673e9ed21",
+          "kind": "property",
+          "memberName": "sku",
+          "location": "request-body"
+        },
+        {
+          "fromFactId": "sdk-fact-1e19664673e9ed21",
+          "toFactId": "sdk-fact-25cf3836ca43865e",
+          "kind": "property",
+          "memberName": "name",
+          "location": "request-body"
+        },
+        {
+          "fromFactId": "sdk-fact-1e5b00819a5f7c8e",
+          "toFactId": "sdk-fact-0fe1b1a5aece7cad",
+          "kind": "response",
+          "location": "response-body"
+        },
+        {
+          "fromFactId": "sdk-fact-0fe1b1a5aece7cad",
+          "toFactId": "sdk-fact-1e19664673e9ed21",
+          "kind": "property",
+          "memberName": "sku",
+          "location": "response-body"
+        },
+        {
+          "fromFactId": "sdk-fact-1e19664673e9ed21",
+          "toFactId": "sdk-fact-25cf3836ca43865e",
+          "kind": "property",
+          "memberName": "name",
+          "location": "response-body"
+        },
+        {
+          "fromFactId": "sdk-fact-798b65c2657d56c0",
+          "toFactId": "sdk-fact-0fe1b1a5aece7cad",
+          "kind": "response",
+          "location": "response-body"
+        },
+        {
+          "fromFactId": "sdk-fact-a122e2d593dce71d",
+          "toFactId": "sdk-fact-0fe1b1a5aece7cad",
+          "kind": "response",
+          "location": "response-body"
+        },
+        {
+          "fromFactId": "sdk-fact-357891986ad7ed7a",
+          "toFactId": "sdk-fact-0fe1b1a5aece7cad",
+          "kind": "response",
+          "location": "response-body"
+        },
+        {
+          "fromFactId": "sdk-fact-28ef5aff8bd2aa1a",
+          "toFactId": "sdk-fact-0fe1b1a5aece7cad",
+          "kind": "response",
+          "location": "response-body"
+        }
+      ],
+      "rootKey": "project-14b3babacb1d:Microsoft.HardwareSecurityModules.CloudHsmClusterSkuName"
+    }
+  ]
+}

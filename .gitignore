@@ -581,3 +581,9 @@ tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/auth.json
 # sdk-sample-generator artifacts
 .artifacts/
 tools/tsp-client/test/examples/sdk/alternate-entrypoint/test-results.browser.xml
+
+# Local TypeSpec assessment artifacts
+.github/skills/azure-typespec-assessment/evals/.workspaces/
+.github/skills/azure-typespec-assessment/evals/outputs/
+.github/skills/azure-typespec-assessment/evals/results/
+.github/skills/azure-typespec-assessment/test-evidence/*

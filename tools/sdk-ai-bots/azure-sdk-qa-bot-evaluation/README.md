@@ -84,7 +84,7 @@ contributors don't re-curate the same cases); `evaluation_datasets/basic/`, `eva
 
 ## Part 2 — Running evaluations
 
-We call the bot `/completion` endpoint **concurrently** (`--max_concurrency`, default 8), collect each answer + context, then grade the collected responses inline in payload-bounded batches of at most 20 cases and merge the results. Batching keeps large perf datasets under Foundry's inline run-history payload limit; an individual case above the byte limit fails locally with its testcase name instead of submitting an oversized request. Reads cases from the local `evaluation_datasets/<target>/<scenario>.jsonl`.
+We call the bot `/completion` endpoint **concurrently** (`--max_concurrency`, default 8), retrieve each stored Agent response from Foundry by its response ID, then grade the collected answers inline in payload-bounded batches of at most 20 cases and merge the results. The bot's `full_context` remains documentation-only; tool outputs from the stored response are appended to the groundedness context by the evaluation runner. Batching keeps large perf datasets under Foundry's inline run-history payload limit; an individual case above the byte limit fails locally with its testcase name instead of submitting an oversized request. Reads cases from the local `evaluation_datasets/<target>/<scenario>.jsonl`.
 
 ```bash
 # Concurrent /completion collection + inline grading:
@@ -98,14 +98,11 @@ python evals_run.py \
 python evals_run.py --dataset evaluation_datasets/basic/typespec.jsonl --is_ci False
 ```
 
-Set the bot `/completion` endpoint via `BOT_SERVICE_ENDPOINT` (+ `BOT_AGENT_TOKEN_RESOURCE`
-or `BOT_AGENT_ACCESS_TOKEN`) for the deployed bot, or run the agent `server.py` locally
-(defaults to `http://localhost:8089`). Tenant routing is resolved from
-`BOT_CONFIG_CONTAINER` / `BOT_CONFIG_CHANNEL_BLOB`.
+Set the bot `/completion` endpoint via `BOT_SERVICE_ENDPOINT` (+ `BOT_AGENT_TOKEN_RESOURCE` or `BOT_AGENT_ACCESS_TOKEN`) for the deployed bot, or run the agent `server.py` locally (defaults to `http://localhost:8089`). `AI_FOUNDRY_AGENT_NAME` selects the Hosted Agent whose stored responses are retrieved and defaults to `azure-sdk-chat-agent`. Tenant routing is resolved from `BOT_CONFIG_CONTAINER` / `BOT_CONFIG_CHANNEL_BLOB`.
 
 Results appear on the Evaluation tab of the Azure AI Foundry portal (each run prints its `report_url`). `--cache_result full` writes per-case JSON + failed-cases JSON under `cache/`.
 
-Each cached case preserves an `execution` block with the hosted-agent response ID, Foundry trace ID, agent conversation ID, latency, response length, and ordered tool calls. Tool calls retain their original arguments and complete outputs. The raw `actual.context` used by the groundedness evaluator is also retained, so a score can be audited against the exact execution data supplied to the grader. The final summary reports `traced_cases` from Foundry trace IDs, `response_id_cases`, `tool_call_count`, `file_access_cases`, and per-tool call/case counts.
+Each cached case preserves an `execution` block with the hosted-agent response ID, Foundry trace ID, agent conversation ID, latency, response length, the complete ordered stored `response.output`, and normalized tool calls joined to their outputs by `call_id`. Tool calls retain their original arguments and complete outputs. The raw `actual.context` used by the groundedness evaluator is also retained, so a score can be audited against the exact execution data supplied to the grader. The final summary reports `traced_cases` from Foundry trace IDs, `response_id_cases`, `tool_call_count`, `file_access_cases`, and per-tool call/case counts.
 
 ### Evaluators
 

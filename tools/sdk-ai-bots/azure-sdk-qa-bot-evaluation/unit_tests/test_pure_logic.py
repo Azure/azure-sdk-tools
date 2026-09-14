@@ -30,15 +30,18 @@ from dataset.schema import (  # noqa: E402
 )
 from dataset.review import review  # noqa: E402
 from _evals_runner import (  # noqa: E402
+    FoundryEvalsRunner,
     _batch_completion_items,
     _completion_item,
     _combine_batch_results,
     _inline_run_request_bytes,
+    append_tool_evidence_to_context,
+    extract_tool_trace_from_response,
     output_items_to_rows,
     extract_title_and_link_from_references,
     extract_title_and_link_from_context,
-    extract_tool_trace_from_context,
     resolve_tenant_for_scenario,
+    serialize_response_output,
 )
 from eval.criteria import build_testing_criteria, BUILTIN_EVALUATORS  # noqa: E402
 
@@ -427,28 +430,87 @@ def test_extract_references():
 def test_extract_context_from_full_context_json():
     import json as _json
 
-    trace = {
-        "sequence": 1,
-        "tool_name": "file_access_grep",
-        "call_id": "call-1",
-    }
     ctx = _json.dumps([
         {"document_title": "D", "document_link": "http://d"},
         {"title": "E", "link": "http://e"},
-        {
-            "document_title": "Tool call 1: file_access_grep",
-            "document_link": "agent-trace://response/call-1",
-            "document_source": "agent_tool_trace",
-            "document_content": _json.dumps(trace),
-        },
     ])
     out = extract_title_and_link_from_context(ctx)
     assert out == [{"title": "D", "link": "http://d"}, {"title": "E", "link": "http://e"}]
-    assert extract_tool_trace_from_context(ctx) == [trace]
     assert extract_title_and_link_from_context("") == []
-    assert extract_tool_trace_from_context("") == []
     assert extract_title_and_link_from_context("not-json") == []
-    assert extract_tool_trace_from_context("not-json") == []
+
+
+def test_retrieve_stored_response_history_and_tool_evidence():
+    response = {
+        "output": [
+            {"type": "reasoning", "id": "reasoning-1", "summary": []},
+            {
+                "type": "function_call",
+                "id": "function-1",
+                "call_id": "call-1",
+                "name": "file_access_read",
+                "arguments": '{"path":"README.md"}',
+            },
+            {
+                "type": "function_call_output",
+                "id": "output-1",
+                "call_id": "call-1",
+                "output": "file contents",
+            },
+            {
+                "type": "web_search_call",
+                "id": "web-1",
+                "status": "completed",
+                "action": {
+                    "type": "search",
+                    "query": "Azure SDK",
+                    "sources": [{"url": "https://example.com"}],
+                },
+            },
+            {"type": "message", "id": "message-1", "role": "assistant", "content": []},
+        ]
+    }
+
+    class FakeResponses:
+        @staticmethod
+        def retrieve(response_id):
+            assert response_id == "response-1"
+            return response
+
+    class FakeClient:
+        responses = FakeResponses()
+
+    items = [{"testcase": "traceable", "response_id": "response-1", "context": "documents"}]
+    history = FoundryEvalsRunner._retrieve_response_history(FakeClient(), items)
+
+    assert serialize_response_output(response) == response["output"]
+    assert history["response-1"]["response_output"] == response["output"]
+    assert history["response-1"]["tool_trace"] == extract_tool_trace_from_response(response)
+    assert history["response-1"]["tool_trace"] == [
+        {
+            "sequence": 1,
+            "tool_type": "function_call",
+            "tool_name": "file_access_read",
+            "call_id": "call-1",
+            "arguments": {"path": "README.md"},
+            "output": "file contents",
+        },
+        {
+            "sequence": 2,
+            "tool_type": "web_search_call",
+            "tool_name": "web_search",
+            "call_id": "web-1",
+            "arguments": {
+                "type": "search",
+                "query": "Azure SDK",
+            },
+            "output": [{"url": "https://example.com"}],
+        },
+    ]
+    assert items[0]["context"] == append_tool_evidence_to_context(
+        "documents",
+        history["response-1"]["tool_trace"],
+    )
 
 
 def test_completion_item_preserves_execution_metadata():
@@ -487,17 +549,9 @@ def test_resolve_tenant_for_scenario():
 
 def test_output_items_to_rows_completion_item_response():
     # In completion mode the answer/references live in the datasource_item.
-    import json as _json
-
     trace = {"tool_name": "file_access_read"}
-    context = _json.dumps(
-        [
-            {
-                "document_source": "agent_tool_trace",
-                "document_content": _json.dumps(trace),
-            }
-        ]
-    )
+    response_output = [{"type": "function_call", "name": "file_access_read"}]
+    context = "grounding context"
     output_items = [
         {
             "datasource_item": {
@@ -516,7 +570,16 @@ def test_output_items_to_rows_completion_item_response():
             "sample": None,
         }
     ]
-    rows = output_items_to_rows(output_items, ["similarity"])["rows"]
+    rows = output_items_to_rows(
+        output_items,
+        ["similarity"],
+        response_history_by_id={
+            "response-1": {
+                "tool_trace": [trace],
+                "response_output": response_output,
+            }
+        },
+    )["rows"]
     assert rows[0]["inputs.query"] == "question"
     assert rows[0]["inputs.response"] == "collected answer"
     assert rows[0]["inputs.context"] == context
@@ -526,6 +589,7 @@ def test_output_items_to_rows_completion_item_response():
     assert rows[0]["inputs.latency"] == 1.5
     assert rows[0]["inputs.response_length"] == 16
     assert rows[0]["inputs.tool_trace"] == [trace]
+    assert rows[0]["inputs.response_output"] == response_output
     assert rows[0]["inputs.references"] == [{"title": "R", "link": "http://r"}]
     assert rows[0]["inputs.knowledges"] == [{"title": "K", "link": "http://k"}]
 
@@ -555,6 +619,9 @@ def test_record_run_result_preserves_trace_and_summarizes_tool_usage():
                         {"tool_name": "file_access_grep"},
                         {"tool_name": "file_access_read"},
                     ],
+                    "inputs.response_output": [
+                        {"type": "message", "role": "assistant"}
+                    ],
                     "inputs.references": [],
                     "inputs.knowledges": [],
                     "outputs.similarity.similarity": 5.0,
@@ -578,6 +645,7 @@ def test_record_run_result_preserves_trace_and_summarizes_tool_usage():
             {"tool_name": "file_access_grep"},
             {"tool_name": "file_access_read"},
         ],
+        "response_output": [{"type": "message", "role": "assistant"}],
     }
     assert recorded[-1]["traced_cases"] == 1
     assert recorded[-1]["response_id_cases"] == 1
@@ -624,7 +692,7 @@ def test_failed_row_counts_as_failure_in_gate():
     from _evals_result import EvalsResult
 
     evaluators = ["bot_evals", "groundedness"]
-    metrics = {e: None for e in evaluators}
+    metrics: dict[str, list[str] | None] = {e: None for e in evaluators}
     er = EvalsResult(metrics=metrics, suppressions=None)
     runner = FoundryEvalsRunner(evaluators, er, model="m")
     row = runner._failed_row({"testcase": "lost", "ground_truth": "gt"})

@@ -50,8 +50,6 @@ from openai.types.responses import Response as OpenAIResponse
 from utils.azure_ai_foundry_agent import HostedAgentClient, ConversationBrokenError
 from openai.types.responses import (
     ResponseFunctionToolCall,
-    ResponseFunctionToolCallOutputItem,
-    ResponseFunctionWebSearch,
     ResponseOutputItem,
     ResponseOutputMessage,
 )
@@ -517,8 +515,11 @@ class ChatService:
         agent_conversation_id: str | None,
     ) -> ChatResponse:
         """Map hosted-agent response to `ChatResponse`."""
-        tool_result_entries = self._extract_tool_result_entries(response.output)
-        tool_references = self._collect_tool_references(tool_result_entries)
+        tool_results = self._extract_tool_results(response.output)
+        search = tool_results.get("search_knowledge_base")
+        tool_references = (
+            search.results if isinstance(search, SearchKnowledgeBaseResult) else []
+        )
         tenant = self._extract_routed_tenant(response.output)
 
         output_text = response.output_text or ""
@@ -532,19 +533,15 @@ class ChatService:
             output_text, tool_references
         )
 
+        # Build full_context from search tool results when requested.
+        # Keys use "document_" prefix for compatibility with the eval pipeline.
         full_context = None
-        if req.with_full_context:
-            contexts = self._build_tool_trace_contexts(response.output, response.id)
-            contexts.extend(
-                DocumentContext.from_reference(reference)
-                for reference in tool_references
-            )
-        else:
-            contexts = []
-        if contexts:
+        if req.with_full_context and tool_references:
             full_context = json.dumps(
-                [context.model_dump(mode="json") for context in contexts],
-                ensure_ascii=False,
+                [
+                    DocumentContext.from_reference(r).model_dump(mode="json")
+                    for r in tool_references
+                ]
             )
 
         resp = ChatResponse(
@@ -657,36 +654,33 @@ class ChatService:
             return json.dumps(value)
         return None
 
-    @staticmethod
-    def _tool_outputs_by_call_id(
-        items: list[ResponseOutputItem],
-    ) -> dict[str, object]:
-        outputs: dict[str, object] = {}
-        for item in items:
-            if isinstance(item, ResponseFunctionToolCallOutputItem):
-                outputs[item.call_id] = item.output
-            elif isinstance(item, ResponseOutputMessage):
-                extras = item.model_extra or {}
-                call_id = extras.get("call_id") or ""
-                if call_id and extras.get("output") is not None:
-                    outputs[call_id] = extras["output"]
-        return outputs
-
-    def _extract_tool_result_entries(
+    def _extract_tool_results(
         self, items: list[ResponseOutputItem]
-    ) -> list[tuple[str, object]]:
-        """Decode registered tool outputs while preserving call order."""
-        results: list[tuple[str, object]] = []
+    ) -> dict[str, object]:
+        """Decode tool outputs using TOOL_REGISTRY models.
+
+        Returns a dict mapping tool name to its decoded Pydantic model instance.
+        """
+        results: dict[str, object] = {}
 
         if not items:
             return results
 
-        outputs = self._tool_outputs_by_call_id(items)
+        # Build mapping from call_id to tool name
+        call_id_to_name: dict[str, str] = {}
         for item in items:
-            if not isinstance(item, ResponseFunctionToolCall):
+            if isinstance(item, ResponseFunctionToolCall):
+                if item.call_id and item.name:
+                    call_id_to_name[item.call_id] = item.name
+
+        # Decode each tool output using its registered response model
+        for item in items:
+            if not isinstance(item, ResponseOutputMessage):
                 continue
-            tool_name = item.name
-            output = outputs.get(item.call_id)
+            extras = item.model_extra or {}
+            call_id = extras.get("call_id") or ""
+            output = extras.get("output", None)
+            tool_name = call_id_to_name.get(call_id, "") if call_id else ""
             if not tool_name or not output:
                 continue
 
@@ -697,109 +691,11 @@ class ChatService:
             try:
                 json_str = self._unwrap_json(output)
                 if json_str:
-                    results.append(
-                        (tool_name, response_model.model_validate_json(json_str))
-                    )
+                    results[tool_name] = response_model.model_validate_json(json_str)
             except Exception as e:
                 logger.warning("Failed to decode tool output for %s: %s", tool_name, e)
 
         return results
-
-    def _extract_tool_results(
-        self, items: list[ResponseOutputItem]
-    ) -> dict[str, object]:
-        """Decode registered tool outputs, retaining the last result per tool."""
-        return dict(self._extract_tool_result_entries(items))
-
-    @staticmethod
-    def _collect_tool_references(
-        entries: list[tuple[str, object]],
-    ) -> list[Reference]:
-        references: list[Reference] = []
-        seen: set[tuple[str, str, str, str, str]] = set()
-        for _, result in entries:
-            if not isinstance(result, SearchKnowledgeBaseResult):
-                continue
-            for reference in result.results:
-                key = (
-                    reference.source,
-                    reference.blob_path,
-                    reference.link,
-                    reference.title,
-                    reference.content,
-                )
-                if key in seen:
-                    continue
-                seen.add(key)
-                references.append(reference)
-        return references
-
-    @staticmethod
-    def _serialize_trace_value(value: object) -> str:
-        if isinstance(value, str):
-            return value
-        model_dump = getattr(value, "model_dump", None)
-        if callable(model_dump):
-            value = model_dump(mode="json")
-        try:
-            return json.dumps(value, ensure_ascii=False, default=str)
-        except (TypeError, ValueError):
-            return str(value)
-
-    @staticmethod
-    def _parse_trace_arguments(arguments: str) -> object:
-        try:
-            return json.loads(arguments)
-        except (json.JSONDecodeError, TypeError):
-            return arguments
-
-    def _build_tool_trace_contexts(
-        self,
-        items: list[ResponseOutputItem],
-        response_id: str,
-    ) -> list[DocumentContext]:
-        outputs = self._tool_outputs_by_call_id(items)
-        contexts: list[DocumentContext] = []
-        sequence = 0
-        for item in items:
-            if isinstance(item, ResponseFunctionToolCall):
-                tool_name = item.name
-                call_id = item.call_id
-                arguments = self._parse_trace_arguments(item.arguments)
-                raw_output = outputs.get(item.call_id)
-            elif isinstance(item, ResponseFunctionWebSearch):
-                tool_name = "web_search"
-                call_id = item.id
-                action = item.action.model_dump(mode="json", exclude_none=True)
-                raw_output = action.pop("sources", None)
-                arguments = action
-            else:
-                continue
-            sequence += 1
-
-            output_text = (
-                self._serialize_trace_value(raw_output)
-                if raw_output is not None
-                else ""
-            )
-            trace = {
-                "sequence": sequence,
-                "tool_name": tool_name,
-                "call_id": call_id,
-                "arguments": arguments,
-                "output": output_text,
-            }
-            trace_content = json.dumps(trace, ensure_ascii=False)
-
-            contexts.append(
-                DocumentContext(
-                    document_title=f"Tool call {sequence}: {tool_name}",
-                    document_link=f"agent-trace://{response_id}/{call_id}",
-                    document_source="agent_tool_trace",
-                    document_content=trace_content,
-                )
-            )
-        return contexts
 
     @staticmethod
     def _extract_routed_tenant(items: list[ResponseOutputItem]) -> TenantID | None:

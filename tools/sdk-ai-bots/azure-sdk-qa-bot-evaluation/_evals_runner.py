@@ -1,14 +1,15 @@
 """Foundry evaluation runner (completion mode).
 
 We call the bot ``/completion`` HTTP endpoint **concurrently** (bounded by
-``max_concurrency``), collect each answer + ``full_context`` + references, then grade
-them as **inline** eval data where the builtin LLM evaluators read
-``{{item.response}}`` / ``{{item.context}}``. Driving the slow answer-generation step
-ourselves is the main lever for evaluation speed.
+``max_concurrency``), collect each answer + ``full_context`` + references, retrieve
+the stored Agent response by response ID, then grade the collected data inline.
+The builtin LLM evaluators read ``{{item.response}}`` / ``{{item.context}}``.
+Driving the slow answer-generation step ourselves is the main lever for evaluation
+speed.
 
-Flow: concurrent ``/completion`` collection -> ``evals.create`` (inline item source)
--> ``evals.runs.create`` -> poll -> ``output_items.list`` -> ``output_items_to_rows``
--> the existing ``EvalsResult`` gate/baseline logic.
+Flow: concurrent ``/completion`` collection -> ``responses.retrieve`` -> ``evals.create``
+(inline item source) -> ``evals.runs.create`` -> poll -> ``output_items.list`` ->
+``output_items_to_rows`` -> the existing ``EvalsResult`` gate/baseline logic.
 
 """
 
@@ -236,47 +237,12 @@ def extract_title_and_link_from_context(context: str) -> list[dict[str, Any]]:
             title = ""
             link = ""
             if isinstance(doc, dict):
-                if doc.get("document_source") == "agent_tool_trace":
-                    continue
                 title = doc.get("document_title") or doc.get("title") or ""
                 link = doc.get("document_link") or doc.get("link") or ""
             docs.append({"title": title, "link": link})
     except (json.JSONDecodeError, TypeError) as exc:
         logger.warning("Failed to parse full_context JSON: %s", exc)
     return docs
-
-
-def extract_tool_trace_from_context(context: str) -> list[dict[str, Any]]:
-    """Extract structured hosted-agent tool calls from ``full_context``."""
-    if not context:
-        return []
-    traces: list[dict[str, Any]] = []
-    try:
-        docs_obj = json.loads(context)
-    except (json.JSONDecodeError, TypeError) as exc:
-        logger.warning("Failed to parse tool trace JSON: %s", exc)
-        return traces
-    if not isinstance(docs_obj, list):
-        return traces
-    for doc in docs_obj:
-        if not isinstance(doc, dict):
-            continue
-        if doc.get("document_source") != "agent_tool_trace":
-            continue
-        content = doc.get("document_content", "")
-        if not isinstance(content, str):
-            continue
-        try:
-            trace = json.loads(content)
-        except (json.JSONDecodeError, TypeError):
-            logger.warning(
-                "Failed to parse tool trace entry: %s",
-                doc.get("document_title", "unknown"),
-            )
-            continue
-        if isinstance(trace, dict):
-            traces.append(trace)
-    return traces
 
 
 class CompletionCollector:
@@ -455,11 +421,122 @@ def _get(obj: Any, attr: str, default: Any) -> Any:
     return getattr(obj, attr, default)
 
 
+def _serialize_response_item(item: Any) -> dict[str, Any]:
+    """Convert a stored Responses API output item into JSON-safe data."""
+    if isinstance(item, dict):
+        return dict(item)
+    model_dump = getattr(item, "model_dump", None)
+    if not callable(model_dump):
+        raise TypeError(f"Unsupported stored response item type: {type(item).__name__}")
+    data = model_dump(mode="json", exclude_none=True)
+    if not isinstance(data, dict):
+        raise TypeError(f"Stored response item did not serialize to an object: {type(item).__name__}")
+    return data
+
+
+def serialize_response_output(response: Any) -> list[dict[str, Any]]:
+    """Preserve the complete ordered ``response.output`` from Foundry."""
+    output = _get(response, "output", []) or []
+    return [_serialize_response_item(item) for item in output]
+
+
+def _extract_tool_trace(output_items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    outputs_by_call_id: dict[str, Any] = {}
+    for item in output_items:
+        item_type = str(item.get("type", ""))
+        call_id = item.get("call_id")
+        if (
+            isinstance(call_id, str)
+            and call_id
+            and "output" in item
+            and (item_type.endswith("_call_output") or not item_type.endswith("_call"))
+        ):
+            outputs_by_call_id[call_id] = item["output"]
+
+    traces: list[dict[str, Any]] = []
+    for item in output_items:
+        item_type = str(item.get("type", ""))
+        if not item_type.endswith("_call"):
+            continue
+
+        call_id = item.get("call_id") or item.get("id") or ""
+        arguments: Any = item.get("arguments")
+        if isinstance(arguments, str):
+            try:
+                arguments = json.loads(arguments)
+            except json.JSONDecodeError:
+                pass
+        if arguments is None:
+            for field in ("action", "input", "query", "queries"):
+                if field in item:
+                    arguments = item[field]
+                    break
+        if arguments is None:
+            arguments = {}
+
+        native_output: Any = None
+        if item_type == "web_search_call" and isinstance(arguments, dict):
+            native_output = arguments.get("sources")
+            if native_output is not None:
+                arguments = {
+                    key: value
+                    for key, value in arguments.items()
+                    if key != "sources"
+                }
+
+        output = outputs_by_call_id.get(str(call_id))
+        if output is None:
+            output = native_output
+        if output is None:
+            for field in ("output", "result", "results", "error"):
+                if field in item:
+                    output = item[field]
+                    break
+        if output is None and item_type != "function_call":
+            output = {
+                key: value
+                for key, value in item.items()
+                if key not in {"type", "id", "call_id", "name", "response_id", "status"}
+            }
+
+        tool_name = item.get("name")
+        if not isinstance(tool_name, str) or not tool_name:
+            tool_name = item_type.removesuffix("_call")
+        traces.append(
+            {
+                "sequence": len(traces) + 1,
+                "tool_type": item_type,
+                "tool_name": tool_name,
+                "call_id": call_id,
+                "arguments": arguments,
+                "output": output,
+            }
+        )
+    return traces
+
+
+def extract_tool_trace_from_response(response: Any) -> list[dict[str, Any]]:
+    """Normalize stored response tool calls and join explicit outputs by ``call_id``."""
+    return _extract_tool_trace(serialize_response_output(response))
+
+
+def append_tool_evidence_to_context(context: str, tool_trace: list[dict[str, Any]]) -> str:
+    """Add complete tool evidence to the text supplied to the groundedness evaluator."""
+    if not tool_trace:
+        return context
+    prefix = f"{context.rstrip()}\n\n" if context else ""
+    return (
+        f"{prefix}Agent tool evidence retrieved from the stored response:\n"
+        f"{json.dumps(tool_trace, ensure_ascii=False)}"
+    )
+
+
 def output_items_to_rows(
     output_items: list[Any],
     evaluators: list[str],
     *,
     threshold: float = 3.0,
+    response_history_by_id: dict[str, dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Adapt OpenAI-evals ``output_items`` into the legacy ``{"rows": [...]}`` shape.
 
@@ -476,6 +553,8 @@ def output_items_to_rows(
         item = _get(oi, "datasource_item", {}) or {}
         results = _get(oi, "results", []) or []
         context = item.get("context", "") or ""
+        response_id = item.get("response_id", "") or ""
+        response_history = (response_history_by_id or {}).get(response_id, {})
 
         row: dict[str, Any] = {
             "inputs.testcase": item.get("testcase", item.get("query", "unknown")),
@@ -485,7 +564,7 @@ def output_items_to_rows(
             "inputs.expected_knowledges": item.get("expected_knowledges", []),
             "inputs.response": item.get("response", ""),
             "inputs.context": context,
-            "inputs.response_id": item.get("response_id", "") or "",
+            "inputs.response_id": response_id,
             "inputs.trace_id": item.get("trace_id", "") or "",
             "inputs.agent_conversation_id": item.get(
                 "agent_conversation_id", ""
@@ -493,7 +572,8 @@ def output_items_to_rows(
             or "",
             "inputs.latency": float(item.get("latency", 0.0) or 0.0),
             "inputs.response_length": int(item.get("response_length", 0) or 0),
-            "inputs.tool_trace": extract_tool_trace_from_context(context),
+            "inputs.tool_trace": response_history.get("tool_trace", []),
+            "inputs.response_output": response_history.get("response_output", []),
             "inputs.references": item.get("references", []) or [],
             "inputs.knowledges": item.get("knowledges", []) or [],
         }
@@ -562,6 +642,7 @@ class FoundryEvalsRunner:
         eval_id: str,
         run_id: str,
         scenario: str,
+        response_history_by_id: dict[str, dict[str, Any]],
         extra_failed_rows: list[dict[str, Any]] | None = None,
     ) -> dict[str, Any]:
         """Shared poll-to-terminal + output_items -> rows -> record step.
@@ -586,10 +667,41 @@ class FoundryEvalsRunner:
             raise RuntimeError(f"Eval run {run_id} failed")
 
         output_items = list(openai_client.evals.runs.output_items.list(run_id=run_id, eval_id=eval_id))
-        raw = output_items_to_rows(output_items, self._evaluators, threshold=float(self._threshold))
+        raw = output_items_to_rows(
+            output_items,
+            self._evaluators,
+            threshold=float(self._threshold),
+            response_history_by_id=response_history_by_id,
+        )
         if extra_failed_rows:
             raw["rows"].extend(extra_failed_rows)
         return {f"{scenario}_{run_id}": self._evals_result.record_run_result(raw)}
+
+    @staticmethod
+    def _retrieve_response_history(
+        response_client: Any,
+        items: list[dict[str, Any]],
+    ) -> dict[str, dict[str, Any]]:
+        """Retrieve each stored response and attach its tool evidence to grading context."""
+        response_history_by_id: dict[str, dict[str, Any]] = {}
+        for item in items:
+            response_id = item.get("response_id", "") or ""
+            testcase = item.get("testcase", "unknown")
+            if not response_id:
+                raise ValueError(f"Bot response for testcase {testcase!r} has no response ID")
+            response = response_client.responses.retrieve(response_id)
+            response_output = serialize_response_output(response)
+            tool_trace = _extract_tool_trace(response_output)
+            response_history_by_id[response_id] = {
+                "response_output": response_output,
+                "tool_trace": tool_trace,
+            }
+            item["context"] = append_tool_evidence_to_context(
+                item.get("context", "") or "",
+                tool_trace,
+            )
+        logger.info("Retrieved %d stored Agent responses.", len(response_history_by_id))
+        return response_history_by_id
 
     def _failed_row(self, record: dict[str, Any]) -> dict[str, Any]:
         """A synthetic result row that fails every requested metric (uncollected case)."""
@@ -607,6 +719,7 @@ class FoundryEvalsRunner:
             "inputs.latency": 0.0,
             "inputs.response_length": 0,
             "inputs.tool_trace": [],
+            "inputs.response_output": [],
             "inputs.references": [],
             "inputs.knowledges": [],
         }
@@ -621,6 +734,7 @@ class FoundryEvalsRunner:
         records: list[dict[str, Any]],
         scenario: str,
         *,
+        response_client: Any,
         tenant_id: str | None = None,
         evaluation_name: Optional[str] = None,
     ) -> dict[str, Any]:
@@ -673,6 +787,11 @@ class FoundryEvalsRunner:
             raw = {"rows": failed_rows}
             return {f"{scenario}_no-responses": self._evals_result.record_run_result(raw)}
 
+        # 3) Retrieve the exact stored Agent responses. Tool evidence augments the
+        # groundedness context, while complete response output remains local and is
+        # joined back into cached results after Foundry grading.
+        response_history_by_id = self._retrieve_response_history(response_client, items)
+
         data_source_config = DataSourceConfigCustom(
             type="custom", item_schema=COMPLETION_ITEM_SCHEMA, include_sample_schema=False
         )
@@ -684,7 +803,7 @@ class FoundryEvalsRunner:
         )
         logger.info("Evaluation created (id=%s, name=%s)", eval_object.id, name)
 
-        # 3) Grade the pre-collected answers as bounded inline batches. Foundry
+        # 4) Grade the pre-collected answers as bounded inline batches. Foundry
         # run-history rejects oversized inline documents before grading starts.
         batch_results: list[list[dict[str, Any]]] = []
         batches = _batch_completion_items(items, run_name_prefix=name)
@@ -713,6 +832,7 @@ class FoundryEvalsRunner:
                 eval_object.id,
                 run.id,
                 f"{scenario}-batch-{batch_index:02d}",
+                response_history_by_id,
                 failed_rows if batch_index == batch_count else None,
             )
             batch_results.append(next(iter(adapted.values())))
@@ -771,6 +891,8 @@ __all__ = [
     "resolve_tenant_for_scenario",
     "extract_title_and_link_from_references",
     "extract_title_and_link_from_context",
-    "extract_tool_trace_from_context",
+    "serialize_response_output",
+    "extract_tool_trace_from_response",
+    "append_tool_evidence_to_context",
     "COMPLETION_ITEM_SCHEMA",
 ]

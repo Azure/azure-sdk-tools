@@ -341,8 +341,9 @@ def test_retrieve_and_normalize_stored_response_tool_calls():
 
     class FakeResponses:
         @staticmethod
-        def retrieve(response_id):
+        def retrieve(response_id, *, include):
             assert response_id == "response-1"
+            assert include == ["web_search_call.action.sources"]
             return response
 
     class FakeClient:

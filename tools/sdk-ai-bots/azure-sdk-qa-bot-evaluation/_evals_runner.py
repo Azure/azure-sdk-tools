@@ -507,7 +507,10 @@ class FoundryEvalsRunner:
             if response_id == "content-filter":
                 tool_calls_by_response_id[response_id] = []
                 continue
-            response = response_client.responses.retrieve(response_id)
+            response = response_client.responses.retrieve(
+                response_id,
+                include=["web_search_call.action.sources"],
+            )
             output_items = [
                 _serialize_response_item(output_item)
                 for output_item in (_get(response, "output", []) or [])

@@ -47,7 +47,9 @@ jobs:
           SYSTEM_PULLREQUEST_TARGETBRANCH: ${{ github.base_ref }}
           SYSTEM_PULLREQUEST_SOURCECOMMITID: ${{ github.event.pull_request.head.sha }}
         run: |
-          $urls = & ./eng/common/scripts/get-markdown-files-from-changed-files.ps1
+          # Downloaded fixture links target azure-rest-api-specs, not this repository.
+          $urls = & ./eng/common/scripts/get-markdown-files-from-changed-files.ps1 `
+            -ExcludePaths '.github/skills/azure-typespec-author/evaluate/fixtures/instructions-test/copilot-instructions.md'
           if (-not $urls -or $urls.Count -eq 0) {
             Write-Host "No changed markdown files; nothing to verify."
             exit 0

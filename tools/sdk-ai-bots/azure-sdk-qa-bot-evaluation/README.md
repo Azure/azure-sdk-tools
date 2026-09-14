@@ -102,7 +102,7 @@ Set the bot `/completion` endpoint via `BOT_SERVICE_ENDPOINT` (+ `BOT_AGENT_TOKE
 
 Results appear on the Evaluation tab of the Azure AI Foundry portal (each run prints its `report_url`). `--cache_result full` writes per-case JSON + failed-cases JSON under `cache/`.
 
-Each cached case preserves an `execution` block with the hosted-agent response ID, Foundry trace ID, agent conversation ID, latency, response length, the complete ordered stored `response.output`, and normalized tool calls joined to their outputs by `call_id`. Tool calls retain their original arguments and complete outputs. The raw `actual.context` used by the groundedness evaluator is also retained, so a score can be audited against the exact execution data supplied to the grader. The final summary reports `traced_cases` from Foundry trace IDs, `response_id_cases`, `tool_call_count`, `file_access_cases`, and per-tool call/case counts.
+Each cached case preserves an `execution` block with the hosted-agent response ID, Foundry trace ID, agent conversation ID, latency, response length, and normalized tool calls joined to their outputs by `call_id`. Tool calls retain their original arguments and complete outputs; JSON results from `search_knowledge_base` and `wiki_search` are stored as objects. The raw `actual.context` used by the groundedness evaluator is also retained, so a score can be audited against the exact execution data supplied to the grader. The response ID can retrieve the original stored response on demand. The final summary reports `traced_cases` from Foundry trace IDs, `response_id_cases`, `tool_call_count`, `file_access_cases`, and per-tool call/case counts.
 
 ### Evaluators
 

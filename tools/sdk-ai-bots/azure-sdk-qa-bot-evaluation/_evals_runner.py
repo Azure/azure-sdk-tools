@@ -435,7 +435,7 @@ def _serialize_response_item(item: Any) -> dict[str, Any]:
     return data
 
 
-def serialize_response_output(response: Any) -> list[dict[str, Any]]:
+def _serialize_response_output(response: Any) -> list[dict[str, Any]]:
     """Preserve the complete ordered ``response.output`` from Foundry."""
     output = _get(response, "output", []) or []
     return [_serialize_response_item(item) for item in output]
@@ -574,7 +574,6 @@ def output_items_to_rows(
             "inputs.latency": float(item.get("latency", 0.0) or 0.0),
             "inputs.response_length": int(item.get("response_length", 0) or 0),
             "inputs.tool_trace": response_history.get("tool_trace", []),
-            "inputs.response_output": response_history.get("response_output", []),
             "inputs.references": item.get("references", []) or [],
             "inputs.knowledges": item.get("knowledges", []) or [],
         }
@@ -691,10 +690,9 @@ class FoundryEvalsRunner:
             if not response_id:
                 raise ValueError(f"Bot response for testcase {testcase!r} has no response ID")
             response = response_client.responses.retrieve(response_id)
-            response_output = serialize_response_output(response)
+            response_output = _serialize_response_output(response)
             tool_trace = _extract_tool_trace(response_output)
             response_history_by_id[response_id] = {
-                "response_output": response_output,
                 "tool_trace": tool_trace,
             }
             item["context"] = append_tool_evidence_to_context(
@@ -720,7 +718,6 @@ class FoundryEvalsRunner:
             "inputs.latency": 0.0,
             "inputs.response_length": 0,
             "inputs.tool_trace": [],
-            "inputs.response_output": [],
             "inputs.references": [],
             "inputs.knowledges": [],
         }
@@ -892,7 +889,6 @@ __all__ = [
     "resolve_tenant_for_scenario",
     "extract_title_and_link_from_references",
     "extract_title_and_link_from_context",
-    "serialize_response_output",
     "append_tool_evidence_to_context",
     "COMPLETION_ITEM_SCHEMA",
 ]

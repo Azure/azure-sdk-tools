@@ -86,7 +86,6 @@ class EvalsResult:
                 "response_length": row.get("inputs.response_length", 0),
                 "used_file_access": used_file_access,
                 "tool_calls": tool_trace,
-                "response_output": row.get("inputs.response_output", []) or [],
             }
             pattern = r"^outputs\.(\w+)\.(\w+)$"
             for index, (key, value) in enumerate(row.items()):

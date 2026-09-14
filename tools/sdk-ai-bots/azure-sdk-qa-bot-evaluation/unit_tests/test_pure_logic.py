@@ -43,7 +43,6 @@ from _evals_runner import (  # noqa: E402
     extract_title_and_link_from_references,
     extract_title_and_link_from_context,
     resolve_tenant_for_scenario,
-    serialize_response_output,
 )
 from eval.criteria import build_testing_criteria, BUILTIN_EVALUATORS  # noqa: E402
 
@@ -518,8 +517,6 @@ def test_retrieve_stored_response_history_and_tool_evidence():
     items = [{"testcase": "traceable", "response_id": "response-1", "context": "documents"}]
     history = FoundryEvalsRunner._retrieve_response_history(FakeClient(), items)
 
-    assert serialize_response_output(response) == response["output"]
-    assert history["response-1"]["response_output"] == response["output"]
     assert history["response-1"]["tool_trace"] == [
         {
             "sequence": 1,
@@ -605,7 +602,6 @@ def test_resolve_tenant_for_scenario():
 def test_output_items_to_rows_completion_item_response():
     # In completion mode the answer/references live in the datasource_item.
     trace = {"tool_name": "file_access_read"}
-    response_output = [{"type": "function_call", "name": "file_access_read"}]
     context = "grounding context"
     output_items = [
         {
@@ -631,7 +627,6 @@ def test_output_items_to_rows_completion_item_response():
         response_history_by_id={
             "response-1": {
                 "tool_trace": [trace],
-                "response_output": response_output,
             }
         },
     )["rows"]
@@ -644,7 +639,6 @@ def test_output_items_to_rows_completion_item_response():
     assert rows[0]["inputs.latency"] == 1.5
     assert rows[0]["inputs.response_length"] == 16
     assert rows[0]["inputs.tool_trace"] == [trace]
-    assert rows[0]["inputs.response_output"] == response_output
     assert rows[0]["inputs.references"] == [{"title": "R", "link": "http://r"}]
     assert rows[0]["inputs.knowledges"] == [{"title": "K", "link": "http://k"}]
 
@@ -674,9 +668,6 @@ def test_record_run_result_preserves_trace_and_summarizes_tool_usage():
                         {"tool_name": "file_access_grep"},
                         {"tool_name": "file_access_read"},
                     ],
-                    "inputs.response_output": [
-                        {"type": "message", "role": "assistant"}
-                    ],
                     "inputs.references": [],
                     "inputs.knowledges": [],
                     "outputs.similarity.similarity": 5.0,
@@ -700,7 +691,6 @@ def test_record_run_result_preserves_trace_and_summarizes_tool_usage():
             {"tool_name": "file_access_grep"},
             {"tool_name": "file_access_read"},
         ],
-        "response_output": [{"type": "message", "role": "assistant"}],
     }
     assert recorded[-1]["traced_cases"] == 1
     assert recorded[-1]["response_id_cases"] == 1

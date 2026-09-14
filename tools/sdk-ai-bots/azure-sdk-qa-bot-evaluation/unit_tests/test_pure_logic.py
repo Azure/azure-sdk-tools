@@ -311,7 +311,7 @@ def test_resolve_tenant_for_scenario():
     m = {
         "default": "tenant-default",
         "TypeSpec Discussion": "tenant-ts",
-        "Azure MCP": "azure_mcp_server",
+        "Azure MCP Server - General": "azure_mcp_server",
         "AzSDK Tools Agent": "tenant-sdkagent",
     }
     assert resolve_tenant_for_scenario("typespec", m) == "tenant-ts"

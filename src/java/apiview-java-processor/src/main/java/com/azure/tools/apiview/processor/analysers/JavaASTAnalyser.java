@@ -1419,6 +1419,9 @@ public class JavaASTAnalyser implements Analyser {
             }
         }
 
+        // close declaration
+        definitionLine.addToken(PUNCTUATION, ")");
+
         // FIXME this is a bit hacky - it would be nice to have 'MethodRule' like we do for Annotations.
         // we want to special-case here for methods called `getLatest()` which are within a class that implements the
         // `ServiceVersion` interface. We want to add a comment to the method to indicate that it is a special method
@@ -1438,9 +1441,6 @@ public class JavaASTAnalyser implements Analyser {
                 }
             }
         }
-
-        // close declaration
-        definitionLine.addToken(PUNCTUATION, ")");
     }
 
     private boolean visitTypeParameters(NodeList<TypeParameter> typeParameters, ReviewLine reviewLine) {

@@ -64,10 +64,6 @@ COMPLETION_ITEM_SCHEMA: dict[str, Any] = {
         "response": {"type": "string"},
         "context": {"type": "string"},
         "response_id": {"type": "string"},
-        "trace_id": {"type": "string"},
-        "agent_conversation_id": {"type": "string"},
-        "latency": {"type": "number"},
-        "response_length": {"type": "integer"},
         "expected_references": {"type": "array", "items": {"type": "object"}},
         "expected_knowledges": {"type": "array", "items": {"type": "object"}},
         "references": {"type": "array", "items": {"type": "object"}},
@@ -86,10 +82,6 @@ def _completion_item(it: dict[str, Any]) -> dict[str, Any]:
         "response": it.get("response", ""),
         "context": it.get("context", "") or "",
         "response_id": it.get("response_id", "") or "",
-        "trace_id": it.get("trace_id", "") or "",
-        "agent_conversation_id": it.get("agent_conversation_id", "") or "",
-        "latency": float(it.get("latency", 0.0) or 0.0),
-        "response_length": int(it.get("response_length", 0) or 0),
         "expected_references": it.get("expected_references", []),
         "expected_knowledges": it.get("expected_knowledges", []),
         "references": it.get("references", []),
@@ -342,7 +334,7 @@ def _serialize_response_output(response: Any) -> list[dict[str, Any]]:
     return [_serialize_response_item(item) for item in output]
 
 
-def _extract_tool_trace(output_items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def _extract_tool_calls(output_items: list[dict[str, Any]]) -> list[dict[str, Any]]:
     outputs_by_call_id: dict[str, Any] = {}
     for item in output_items:
         item_type = str(item.get("type", ""))
@@ -427,7 +419,7 @@ def output_items_to_rows(
     evaluators: list[str],
     *,
     threshold: float = 3.0,
-    response_history_by_id: dict[str, dict[str, Any]] | None = None,
+    execution_by_response_id: dict[str, dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Adapt OpenAI-evals ``output_items`` into the legacy ``{"rows": [...]}`` shape.
 
@@ -445,7 +437,7 @@ def output_items_to_rows(
         results = _get(oi, "results", []) or []
         context = item.get("context", "") or ""
         response_id = item.get("response_id", "") or ""
-        response_history = (response_history_by_id or {}).get(response_id, {})
+        execution = (execution_by_response_id or {}).get(response_id, {})
 
         row: dict[str, Any] = {
             "inputs.testcase": item.get("testcase", item.get("query", "unknown")),
@@ -456,14 +448,13 @@ def output_items_to_rows(
             "inputs.response": item.get("response", ""),
             "inputs.context": context,
             "inputs.response_id": response_id,
-            "inputs.trace_id": item.get("trace_id", "") or "",
-            "inputs.agent_conversation_id": item.get(
+            "inputs.trace_id": execution.get("trace_id", ""),
+            "inputs.agent_conversation_id": execution.get(
                 "agent_conversation_id", ""
-            )
-            or "",
-            "inputs.latency": float(item.get("latency", 0.0) or 0.0),
-            "inputs.response_length": int(item.get("response_length", 0) or 0),
-            "inputs.tool_trace": response_history.get("tool_trace", []),
+            ),
+            "inputs.latency": execution.get("latency", 0.0),
+            "inputs.response_length": execution.get("response_length", 0),
+            "inputs.tool_calls": execution.get("tool_calls", []),
             "inputs.references": item.get("references", []) or [],
             "inputs.knowledges": item.get("knowledges", []) or [],
         }
@@ -532,7 +523,7 @@ class FoundryEvalsRunner:
         eval_id: str,
         run_id: str,
         scenario: str,
-        response_history_by_id: dict[str, dict[str, Any]],
+        execution_by_response_id: dict[str, dict[str, Any]],
         extra_failed_rows: list[dict[str, Any]] | None = None,
     ) -> dict[str, Any]:
         """Shared poll-to-terminal + output_items -> rows -> record step.
@@ -561,19 +552,19 @@ class FoundryEvalsRunner:
             output_items,
             self._evaluators,
             threshold=float(self._threshold),
-            response_history_by_id=response_history_by_id,
+            execution_by_response_id=execution_by_response_id,
         )
         if extra_failed_rows:
             raw["rows"].extend(extra_failed_rows)
         return {f"{scenario}_{run_id}": self._evals_result.record_run_result(raw)}
 
     @staticmethod
-    def _retrieve_response_history(
+    def _retrieve_tool_calls(
         response_client: Any,
         items: list[dict[str, Any]],
     ) -> dict[str, dict[str, Any]]:
-        """Retrieve each stored response and retain normalized tool calls for local results."""
-        response_history_by_id: dict[str, dict[str, Any]] = {}
+        """Retrieve stored responses and build local execution records."""
+        execution_by_response_id: dict[str, dict[str, Any]] = {}
         for item in items:
             response_id = item.get("response_id", "") or ""
             testcase = item.get("testcase", "unknown")
@@ -581,12 +572,15 @@ class FoundryEvalsRunner:
                 raise ValueError(f"Bot response for testcase {testcase!r} has no response ID")
             response = response_client.responses.retrieve(response_id)
             response_output = _serialize_response_output(response)
-            tool_trace = _extract_tool_trace(response_output)
-            response_history_by_id[response_id] = {
-                "tool_trace": tool_trace,
+            execution_by_response_id[response_id] = {
+                "trace_id": item.get("trace_id", "") or "",
+                "agent_conversation_id": item.get("agent_conversation_id", "") or "",
+                "latency": float(item.get("latency", 0.0) or 0.0),
+                "response_length": int(item.get("response_length", 0) or 0),
+                "tool_calls": _extract_tool_calls(response_output),
             }
-        logger.info("Retrieved %d stored Agent responses.", len(response_history_by_id))
-        return response_history_by_id
+        logger.info("Retrieved %d stored Agent responses.", len(execution_by_response_id))
+        return execution_by_response_id
 
     def _failed_row(self, record: dict[str, Any]) -> dict[str, Any]:
         """A synthetic result row that fails every requested metric (uncollected case)."""
@@ -603,7 +597,7 @@ class FoundryEvalsRunner:
             "inputs.agent_conversation_id": "",
             "inputs.latency": 0.0,
             "inputs.response_length": 0,
-            "inputs.tool_trace": [],
+            "inputs.tool_calls": [],
             "inputs.references": [],
             "inputs.knowledges": [],
         }
@@ -673,7 +667,7 @@ class FoundryEvalsRunner:
 
         # 3) Retrieve the exact stored Agent responses. Tool history remains local
         # and is joined back into cached results after Foundry grading.
-        response_history_by_id = self._retrieve_response_history(response_client, items)
+        execution_by_response_id = self._retrieve_tool_calls(response_client, items)
 
         data_source_config = DataSourceConfigCustom(
             type="custom", item_schema=COMPLETION_ITEM_SCHEMA, include_sample_schema=False
@@ -708,7 +702,7 @@ class FoundryEvalsRunner:
             eval_object.id,
             run.id,
             scenario,
-            response_history_by_id,
+            execution_by_response_id,
             failed_rows,
         )
 

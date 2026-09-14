@@ -69,12 +69,12 @@ class EvalsResult:
                 "knowledges": row["inputs.knowledges"],
                 "context": row.get("inputs.context", ""),
             }
-            tool_trace = row.get("inputs.tool_trace", []) or []
+            tool_calls = row.get("inputs.tool_calls", []) or []
             used_file_access = any(
-                isinstance(trace, dict)
-                and isinstance(trace.get("tool_name"), str)
-                and trace["tool_name"].startswith("file_access_")
-                for trace in tool_trace
+                isinstance(call, dict)
+                and isinstance(call.get("tool_name"), str)
+                and call["tool_name"].startswith("file_access_")
+                for call in tool_calls
             )
             row_result["execution"] = {
                 "response_id": row.get("inputs.response_id", ""),
@@ -85,7 +85,7 @@ class EvalsResult:
                 "latency_seconds": row.get("inputs.latency", 0.0),
                 "response_length": row.get("inputs.response_length", 0),
                 "used_file_access": used_file_access,
-                "tool_calls": tool_trace,
+                "tool_calls": tool_calls,
             }
             pattern = r"^outputs\.(\w+)\.(\w+)$"
             for index, (key, value) in enumerate(row.items()):
@@ -119,16 +119,16 @@ class EvalsResult:
         file_access_cases = 0
         tool_call_count = 0
         for row in result["rows"]:
-            traces = row.get("inputs.tool_trace", []) or []
+            tool_calls = row.get("inputs.tool_calls", []) or []
             if row.get("inputs.trace_id"):
                 traced_cases += 1
             if row.get("inputs.response_id"):
                 response_id_cases += 1
             case_tools: set[str] = set()
-            for trace in traces:
-                if not isinstance(trace, dict):
+            for call in tool_calls:
+                if not isinstance(call, dict):
                     continue
-                tool_name = trace.get("tool_name")
+                tool_name = call.get("tool_name")
                 if not isinstance(tool_name, str) or not tool_name:
                     continue
                 tool_call_count += 1
@@ -349,7 +349,9 @@ class EvalsResult:
                         "reference_match_exact_matches",
                         "reference_match_unexpected_refs",
                         "reference_match_missing_refs",
-                        "knowledges"]
+                        "knowledges",
+                        "context",
+                        "execution"]
         if is_ci is False:
             establish_baseline = input("\nDo you want to establish this as the new baseline? (y/n): ")
             if establish_baseline.lower() == "y":

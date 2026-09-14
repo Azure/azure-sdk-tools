@@ -31,7 +31,7 @@ from dataset.review import review  # noqa: E402
 from _evals_runner import (  # noqa: E402
     FoundryEvalsRunner,
     _completion_item,
-    _extract_tool_trace,
+    _extract_tool_calls,
     output_items_to_rows,
     extract_title_and_link_from_references,
     extract_title_and_link_from_context,
@@ -313,7 +313,7 @@ def test_extract_context_from_full_context_json():
     assert extract_title_and_link_from_context("not-json") == []
 
 
-def test_retrieve_stored_response_history_and_tool_evidence():
+def test_retrieve_stored_response_tool_calls():
     response = {
         "output": [
             {"type": "reasoning", "id": "reasoning-1", "summary": []},
@@ -354,9 +354,9 @@ def test_retrieve_stored_response_history_and_tool_evidence():
         responses = FakeResponses()
 
     items = [{"testcase": "traceable", "response_id": "response-1", "context": "documents"}]
-    history = FoundryEvalsRunner._retrieve_response_history(FakeClient(), items)
+    execution = FoundryEvalsRunner._retrieve_tool_calls(FakeClient(), items)
 
-    assert history["response-1"]["tool_trace"] == [
+    assert execution["response-1"]["tool_calls"] == [
         {
             "sequence": 1,
             "tool_type": "function_call",
@@ -382,7 +382,7 @@ def test_retrieve_stored_response_history_and_tool_evidence():
 
 def test_search_tool_json_outputs_are_objects():
     for tool_name in ("search_knowledge_base", "wiki_search"):
-        traces = _extract_tool_trace(
+        tool_calls = _extract_tool_calls(
             [
                 {
                     "type": "function_call",
@@ -398,10 +398,10 @@ def test_search_tool_json_outputs_are_objects():
             ]
         )
 
-        assert traces[0]["output"] == {"results": [{"title": "Document"}]}
+        assert tool_calls[0]["output"] == {"results": [{"title": "Document"}]}
 
 
-def test_completion_item_preserves_execution_metadata():
+def test_completion_item_keeps_execution_metadata_local():
     item = _completion_item(
         {
             "testcase": "traceable",
@@ -416,11 +416,11 @@ def test_completion_item_preserves_execution_metadata():
     )
 
     assert item["response_id"] == "response-1"
-    assert item["trace_id"] == "trace-1"
-    assert item["agent_conversation_id"] == "conversation-1"
-    assert item["latency"] == 1.25
-    assert item["response_length"] == 6
-    assert "tool_trace" not in item
+    assert "trace_id" not in item
+    assert "agent_conversation_id" not in item
+    assert "latency" not in item
+    assert "response_length" not in item
+    assert "tool_calls" not in item
 
 
 def test_resolve_tenant_for_scenario():
@@ -446,10 +446,6 @@ def test_output_items_to_rows_completion_item_response():
                 "response": "collected answer",
                 "context": context,
                 "response_id": "response-1",
-                "trace_id": "trace-1",
-                "agent_conversation_id": "conversation-1",
-                "latency": 1.5,
-                "response_length": 16,
                 "references": [{"title": "R", "link": "http://r"}],
                 "knowledges": [{"title": "K", "link": "http://k"}],
             },
@@ -460,9 +456,13 @@ def test_output_items_to_rows_completion_item_response():
     rows = output_items_to_rows(
         output_items,
         ["similarity"],
-        response_history_by_id={
+        execution_by_response_id={
             "response-1": {
-                "tool_trace": [trace],
+                "trace_id": "trace-1",
+                "agent_conversation_id": "conversation-1",
+                "latency": 1.5,
+                "response_length": 16,
+                "tool_calls": [trace],
             }
         },
     )["rows"]
@@ -474,7 +474,7 @@ def test_output_items_to_rows_completion_item_response():
     assert rows[0]["inputs.agent_conversation_id"] == "conversation-1"
     assert rows[0]["inputs.latency"] == 1.5
     assert rows[0]["inputs.response_length"] == 16
-    assert rows[0]["inputs.tool_trace"] == [trace]
+    assert rows[0]["inputs.tool_calls"] == [trace]
     assert rows[0]["inputs.references"] == [{"title": "R", "link": "http://r"}]
     assert rows[0]["inputs.knowledges"] == [{"title": "K", "link": "http://k"}]
 
@@ -499,7 +499,7 @@ def test_record_run_result_preserves_trace_and_summarizes_tool_usage():
                     "inputs.agent_conversation_id": "conversation-1",
                     "inputs.latency": 1.25,
                     "inputs.response_length": 6,
-                    "inputs.tool_trace": [
+                    "inputs.tool_calls": [
                         {"tool_name": "search_knowledge_base"},
                         {"tool_name": "file_access_grep"},
                         {"tool_name": "file_access_read"},

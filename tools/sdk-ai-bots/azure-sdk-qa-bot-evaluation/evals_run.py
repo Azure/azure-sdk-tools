@@ -159,29 +159,30 @@ def main(argv: list[str] | None = None) -> int:
             credential=credential,
             allow_preview=True,
         ) as project_client:
-            openai_client = project_client.get_openai_client()
-            response_client = project_client.get_openai_client(agent_name=agent_name)
-
-            records, scenario = resolve_records(args.dataset, script_dir=script_dir)
-            logging.info("Resolved %d records for scenario=%s", len(records), scenario)
-            # Stable evaluation name = dataset identity + run context (local / pipeline),
-            # so the Foundry list is not flooded with date/build/random-suffixed entries.
-            dataset_label = _dataset_label(args.dataset, scenario)
-            name = f"{dataset_label}-{args.run_context}"
-            tenant_map = None
-            try:
-                tenant_map = retrieve_channel_tenant_map(credential)
-            except Exception as exc:  # noqa: BLE001
-                logging.warning("Could not load channel->tenant map (using default routing): %s", exc)
-            tenant_id = resolve_tenant_for_scenario(scenario, tenant_map)
-            all_results = runner.evaluate_run_completion(
-                openai_client,
-                records,
-                scenario,
-                tenant_id=tenant_id,
-                evaluation_name=name,
-                response_client=response_client,
-            )
+            with (
+                project_client.get_openai_client() as evals_client,
+                project_client.get_openai_client(agent_name=agent_name) as response_client,
+            ):
+                records, scenario = resolve_records(args.dataset, script_dir=script_dir)
+                logging.info("Resolved %d records for scenario=%s", len(records), scenario)
+                # Stable evaluation name = dataset identity + run context (local / pipeline),
+                # so the Foundry list is not flooded with date/build/random-suffixed entries.
+                dataset_label = _dataset_label(args.dataset, scenario)
+                name = f"{dataset_label}-{args.run_context}"
+                tenant_map = None
+                try:
+                    tenant_map = retrieve_channel_tenant_map(credential)
+                except Exception as exc:  # noqa: BLE001
+                    logging.warning("Could not load channel->tenant map (using default routing): %s", exc)
+                tenant_id = resolve_tenant_for_scenario(scenario, tenant_map)
+                all_results = runner.evaluate_run_completion(
+                    evals_client,
+                    records,
+                    scenario,
+                    tenant_id=tenant_id,
+                    evaluation_name=name,
+                    response_client=response_client,
+                )
 
         _cache_results(args.cache_result, script_dir, all_results, metrics, suppression, evals_result)
 

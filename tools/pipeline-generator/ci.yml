@@ -25,6 +25,3 @@ extends:
   template: /eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
   parameters:
     ToolDirectory: tools/pipeline-generator
-    # Match azsdk-cli's CFS workaround (#16609): skip the blocked nuget.org lookup.
-    # Packages publish to the Azure DevOps feed; GitHub tag/SHA validation still runs.
-    ForceCreate: true

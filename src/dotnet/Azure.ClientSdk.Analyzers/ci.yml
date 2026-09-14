@@ -25,9 +25,6 @@ extends:
   template: /eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
   parameters:
     ToolDirectory: src/dotnet/Azure.ClientSdk.Analyzers
-    # Match azsdk-cli's CFS workaround (#16609): skip the blocked nuget.org lookup.
-    # Packages publish to the Azure DevOps feed; GitHub tag/SHA validation still runs.
-    ForceCreate: true
     # nuget.org is blocked on the CI agents (network isolation). The Roslyn analyzer test framework
     # (Microsoft.CodeAnalysis.Testing.ReferenceAssemblies) resolves reference-package dependencies at
     # test runtime by querying each configured NuGet source's service index, loading sources from the

@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from json import JSONDecodeError
 from typing import Any
 
 from openai import (
@@ -194,7 +195,7 @@ class HostedAgentClient:
                     ex,
                     exc_info=True,
                 )
-            except (APIConnectionError, APITimeoutError, APIStatusError) as ex:
+            except (APIConnectionError, APITimeoutError, APIStatusError, JSONDecodeError) as ex:
                 last_error = ex
                 await self.close_stream(stream)
                 logger.warning(

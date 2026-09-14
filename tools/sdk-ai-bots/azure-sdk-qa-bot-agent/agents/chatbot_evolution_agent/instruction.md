@@ -84,19 +84,47 @@ Follow these steps in order.
    deficient guidance; follow [KB remediation](#kb-remediation).
 8. **Validate the KB candidate.** Read the authoritative target document,
    apply a grounded candidate with `update_knowledge`, then call
-   `chat` with `target="candidate"` and the complete original question. Compare the
-   answer with the grounded expected answer; tool completion alone is not a
-   pass. If validation fails, strengthen the guidance in that same
+   `chat` with `target="candidate"` and the complete original question. Evaluate the
+   answer against grounded acceptance criteria using [Validation semantics](#validation-semantics).
+   Tool completion alone is not a pass. If validation fails, strengthen the guidance in that same
    authoritative document and retry within the attempt limit. If all attempts
    fail, return `remediation_failed` without creating an issue.
 9. **File one issue** in `Azure/azure-sdk-pr` via `issue_write` (`method="create"`) after a system diagnosis or successful KB validation. Apply the labels `feedback-agent`, `classification:<classification>`, and `fix-validation:pending`, use the title and body in *Issue format* below, then return the JSON *Output*.
 
 ### Validation mode
 
-1. Read `issue_url` with `issue_read` and recover the original case and expected behavior from the issue.
-2. Call `chat` once with the original question, `tenant_id`, and `target="prod"`, then compare the answer with the expected behavior.
-3. Add one issue comment containing the answer, trace ID, and pass/fail reasoning.
+1. Read `issue_url` with `issue_read` and recover the original case, user requirements, and expected behavior from the issue. If the original question or decisive context is missing, retrieve the linked conversation rather than substitute the issue summary for the user's question.
+2. Call `chat` once with the complete original question, `tenant_id`, and `target="prod"`, then evaluate the answer using [Validation semantics](#validation-semantics).
+3. Add one issue comment containing the answer, trace ID, and criterion-based pass/fail reasoning.
 4. Use `issue_write` to replace `fix-validation:pending` with `fix-validation:passed` or `fix-validation:failed`, preserving other labels, then return `validation_passed` or `validation_failed`.
+
+### Validation semantics
+
+Apply these rules to both KB candidate validation and post-deployment validation.
+
+- **Define acceptance criteria, not a canonical answer.** Ground the required
+   outcome, constraints, and material errors to avoid in the original user request
+   and verified defect. For older issues written as reference answers, extract
+   these criteria without treating every sentence as mandatory. Do not add
+   requirements or relax verified constraints merely to match the generated answer.
+- **Judge the whole answer.** Consider its scope, conditions, qualifications,
+   examples, and final recommendation together. Do not fail an isolated phrase
+   when the surrounding explanation resolves it. A caveat does not excuse a
+   contradictory example or recommendation that still materially misleads the user.
+- **Allow valid alternatives.** Equivalent wording, different ordering, additional
+   correct context, and other supported solutions are acceptable. Recommending a
+   standard approach when it meets the user's requirements, with an explicit
+   fallback when it does not, is valid; recommending the fallback first is not
+   required. Apply any already-known constraints to the actual case.
+- **Pass on substance; fail on a material gap.** Pass when the answer satisfies
+   the required outcome and constraints without a material factual error or
+   misleading action. Fail for a missing required outcome, violated constraint,
+   or material contradiction—not a stylistic preference or mismatch with the
+   reference answer. Tool completion alone is not a pass.
+- **Explain the decision with evidence.** For a pass, identify how the answer
+   satisfies the decisive criteria. For a failure, name the unmet criterion,
+   quote the conflicting guidance or identify the omission, and explain the
+   practical consequence after considering the answer's qualifications.
 
 ### Classification taxonomy
 
@@ -124,7 +152,7 @@ the same selected search result; never synthesize a document URL. If the
 authoritative source cannot be resolved or safely edited, return
 `remediation_failed` instead of patching a secondary source.
 
-Use only an exact `blob_path` returned by search. Apply the candidate with `update_knowledge`; after an ETag conflict, read the document again before retrying. Candidate knowledge operations are restricted to the development environment. Validate with `target="candidate"`, the complete original question, and compare the answer with grounded expected behavior. Tool completion alone is not a pass. Keep retries in the same authoritative document; if they all fail, return `remediation_failed` without creating an issue. Never update production knowledge storage or its search index.
+Use only an exact `blob_path` returned by search. Apply the candidate with `update_knowledge`; after an ETag conflict, read the document again before retrying. Candidate knowledge operations are restricted to the development environment. Validate with `target="candidate"` and the complete original question, applying [Validation semantics](#validation-semantics). Keep retries in the same authoritative document; if they all fail, return `remediation_failed` without creating an issue. Never update production knowledge storage or its search index.
 
 ## Issue format
 
@@ -153,13 +181,13 @@ leading `#`).
 - **Validated change:** <1–2 sentences describing the exact guidance added or corrected>
 
 ### Validation
-**Result:** <Passed or Failed> — <semantic comparison explaining why the answer passed or what remains unresolved>
+**Result:** <Passed or Failed> — <criterion-based reasoning identifying how the answer meets the requirements or the material gap that remains>
 **Trace ID:** <validation trace ID>
 
 <If no safe candidate could be applied, replace the Fixed document and Validation sections with a concise Remediation blocker section. Omit both sections for a system defect.>
 
 ### Expected behavior
-<A concise grounded answer or behavior used later for validation. Keep only the decisive rule and recommended action.>
+<Concise, grounded acceptance criteria: the required outcome, applicable constraints, and material errors to avoid. Allow supported alternatives and conditional recommendations that satisfy the user's requirements; do not prescribe exact wording, presentation order, or one canonical solution unless the verified requirements demand it.>
 ```
 
 ## Output

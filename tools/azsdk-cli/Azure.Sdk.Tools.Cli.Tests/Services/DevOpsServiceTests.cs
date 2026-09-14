@@ -969,6 +969,44 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             Assert.IsNull(result, "Should return null when API version is empty");
         }
 
+        [Test]
+        public void GetActiveReleasePlansByTypeSpecProjectPathAsync_PropagatesCancellationWhileMapping()
+        {
+            var releasePlanWorkItem = CreateReleasePlanWorkItem(100, "In Progress");
+            releasePlanWorkItem.Fields["Custom.ApiSpecProjectPath"] = "specification/contoso/Contoso.Management";
+            _connection.AddWorkItemToQuery(releasePlanWorkItem);
+            using var cts = new CancellationTokenSource();
+            cts.Cancel();
+
+            Assert.ThrowsAsync<TaskCanceledException>(async () =>
+                await _devOpsService.GetActiveReleasePlansByTypeSpecProjectPathAsync(
+                    "specification/contoso/Contoso.Management",
+                    ct: cts.Token));
+        }
+
+        [Test]
+        public void GetActiveReleasePlansByTypeSpecProjectPathAsync_PropagatesCancellationFromQuery()
+        {
+            _connection.CancelQuery();
+
+            Assert.ThrowsAsync<TaskCanceledException>(async () =>
+                await _devOpsService.GetActiveReleasePlansByTypeSpecProjectPathAsync(
+                    "specification/contoso/Contoso.Management"));
+        }
+
+        [Test]
+        public void GetActiveReleasePlansByTypeSpecProjectPathAsync_PropagatesCancellationFromBulkFetch()
+        {
+            var releasePlanWorkItem = CreateReleasePlanWorkItem(100, "In Progress");
+            releasePlanWorkItem.Fields["Custom.ApiSpecProjectPath"] = "specification/contoso/Contoso.Management";
+            _connection.AddWorkItemToQuery(releasePlanWorkItem);
+            _connection.CancelBulkFetch();
+
+            Assert.ThrowsAsync<TaskCanceledException>(async () =>
+                await _devOpsService.GetActiveReleasePlansByTypeSpecProjectPathAsync(
+                    "specification/contoso/Contoso.Management"));
+        }
+
         #endregion
         #region TestDevOpsConnection
 
@@ -1014,6 +1052,16 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             {
                 _workItemClient.AddWorkItem(workItem);
             }
+
+            public void CancelQuery()
+            {
+                _workItemClient.CancelQuery = true;
+            }
+
+            public void CancelBulkFetch()
+            {
+                _workItemClient.CancelBulkFetch = true;
+            }
         }
 
         private class TestWorkItemClient : WorkItemTrackingHttpClient
@@ -1024,6 +1072,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             public string? LastCapturedQuery { get; private set; }
 
             public Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument? LastCapturedPatchDocument { get; private set; }
+
+            public bool CancelQuery { get; set; }
+
+            public bool CancelBulkFetch { get; set; }
 
             public TestWorkItemClient() : base(new Uri("https://dev.azure.com/test"), null)
             {
@@ -1051,6 +1103,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                 CancellationToken cancellationToken = default)
             {
                 LastCapturedQuery = wiql?.Query;
+                if (CancelQuery)
+                {
+                    return Task.FromCanceled<WorkItemQueryResult>(new CancellationToken(canceled: true));
+                }
                 var result = new WorkItemQueryResult
                 {
                     WorkItems = _queryWorkItems.Select(wi => new WorkItemReference { Id = wi.Id ?? 0 }).ToList()
@@ -1067,6 +1123,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                 CancellationToken cancellationToken = default)
             {
                 LastCapturedQuery = wiql?.Query;
+                if (CancelQuery)
+                {
+                    return Task.FromCanceled<WorkItemQueryResult>(new CancellationToken(canceled: true));
+                }
                 var result = new WorkItemQueryResult
                 {
                     WorkItems = _queryWorkItems.Select(wi => new WorkItemReference { Id = wi.Id ?? 0 }).ToList()
@@ -1077,6 +1137,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
 
             public override Task<List<WorkItem>> GetWorkItemsAsync(IEnumerable<int> ids, IEnumerable<string>? fields = null, DateTime? asOf = null, WorkItemExpand? expand = null, WorkItemErrorPolicy? errorPolicy = null, object? userState = null, CancellationToken cancellationToken = default(CancellationToken))
             {
+                if (CancelBulkFetch)
+                {
+                    return Task.FromCanceled<List<WorkItem>>(new CancellationToken(canceled: true));
+                }
                 var workItems = _queryWorkItems.Where(wi => ids.Contains(wi.Id ?? 0)).ToList();
                 return Task.FromResult(workItems);
             }
@@ -1099,6 +1163,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                 object? userState = null,
                 CancellationToken cancellationToken = default)
             {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    return Task.FromCanceled<WorkItem>(cancellationToken);
+                }
                 if (_workItems.TryGetValue(id, out var workItem))
                 {
                     return Task.FromResult(workItem);

@@ -7,7 +7,7 @@ area: "versioning"
 environment: azsdk-mcp
 
 # Execution configuration
-config:
+defaults:
   runs: 1 # Trials per stimulus
   timeout: "660s" # Seconds per trial
   model: gpt-5.6-sol # Model for agent execution
@@ -160,6 +160,10 @@ stimuli:
       mode: "no-skill"
     prompt: "Add a new stable version `2025-01-01` to my service. Carry over all the features from previous stable version."
     environment: *shared_environment
+    rubric:
+      - API version 2025-01-01 is added as a stable version after the previous stable version.
+      - The new stable version carries forward all features and examples from 2024-10-01 without removing existing versions.
+      - Changes are limited to adding and correctly configuring the requested API version.
     graders:
       - type: "tool-calls"
         config:

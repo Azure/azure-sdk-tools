@@ -70,12 +70,6 @@ class EvalsResult:
                 "context": row.get("inputs.context", ""),
             }
             tool_calls = row.get("inputs.tool_calls", []) or []
-            used_file_access = any(
-                isinstance(call, dict)
-                and isinstance(call.get("tool_name"), str)
-                and call["tool_name"].startswith("file_access_")
-                for call in tool_calls
-            )
             row_result["execution"] = {
                 "response_id": row.get("inputs.response_id", ""),
                 "trace_id": row.get("inputs.trace_id", ""),
@@ -84,7 +78,6 @@ class EvalsResult:
                 ),
                 "latency_seconds": row.get("inputs.latency", 0.0),
                 "response_length": row.get("inputs.response_length", 0),
-                "used_file_access": used_file_access,
                 "tool_calls": tool_calls,
             }
             pattern = r"^outputs\.(\w+)\.(\w+)$"
@@ -116,7 +109,6 @@ class EvalsResult:
         tool_usage: dict[str, dict[str, int]] = {}
         traced_cases = 0
         response_id_cases = 0
-        file_access_cases = 0
         tool_call_count = 0
         for row in result["rows"]:
             tool_calls = row.get("inputs.tool_calls", []) or []
@@ -137,15 +129,12 @@ class EvalsResult:
                 usage["calls"] += 1
             for tool_name in case_tools:
                 tool_usage[tool_name]["cases"] += 1
-            if any(name.startswith("file_access_") for name in case_tools):
-                file_access_cases += 1
 
         summary_result: dict[str, Any] = {
             "total_evals": len(result["rows"]),
             "traced_cases": traced_cases,
             "response_id_cases": response_id_cases,
             "tool_call_count": tool_call_count,
-            "file_access_cases": file_access_cases,
             "tool_usage": tool_usage,
         }
         for index, (key, value) in enumerate(pass_rates.items()):

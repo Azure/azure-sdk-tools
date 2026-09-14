@@ -521,7 +521,6 @@ def test_record_run_result_preserves_trace_and_summarizes_tool_usage():
         "agent_conversation_id": "conversation-1",
         "latency_seconds": 1.25,
         "response_length": 6,
-        "used_file_access": True,
         "tool_calls": [
             {"tool_name": "search_knowledge_base"},
             {"tool_name": "file_access_grep"},
@@ -531,7 +530,6 @@ def test_record_run_result_preserves_trace_and_summarizes_tool_usage():
     assert recorded[-1]["traced_cases"] == 1
     assert recorded[-1]["response_id_cases"] == 1
     assert recorded[-1]["tool_call_count"] == 3
-    assert recorded[-1]["file_access_cases"] == 1
     assert recorded[-1]["tool_usage"] == {
         "search_knowledge_base": {"calls": 1, "cases": 1},
         "file_access_grep": {"calls": 1, "cases": 1},

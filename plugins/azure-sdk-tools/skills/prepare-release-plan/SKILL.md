@@ -20,11 +20,12 @@ DO NOT USE FOR: SDK code generation, pipeline troubleshooting, API review feedba
 
 ## Rules
 
-- Do not display Azure DevOps work item URLs; only provide the Release Plan Link and ID.
+- Only present the returned Release Plan ID and dashboard link. Do not display or construct Azure DevOps work item URLs, ask users for a backing work item ID, or translate the public ID for them. Legacy IDs are still accepted when the user supplies one.
 - Require an API spec PR link or a TypeSpec project path before creating or updating a plan.
 - Validate that the spec PR repository matches the requested API release type before creation.
 - Release plan tools accept **either** a Release Plan ID or an Azure DevOps work item ID — pass whichever the user provides. Each tool resolves the value automatically (trying it as a Release Plan ID first, then as a work item ID), so you do not need to call `azure-sdk-mcp:azsdk_get_release_plan` first just to translate one ID into the other.
-- Always relay schedule-risk `warnings` and `next_steps` returned by release plan tools. For each past-due plan, show its Release Plan ID and dashboard link, then present both choices: update its target release month or abandon it and record the reason in the dashboard.
+- Always relay schedule-risk `warnings` and `next_steps` returned by release plan tools. For each past-due plan, show its Release Plan ID and dashboard link, then present both choices: update its target release month or ask a release-plan administrator to abandon it if no longer needed. Do not claim that the dashboard can record an abandonment reason.
+- Only release-plan administrators may abandon plans. Honor `capabilities.can_abandon` and explain `capabilities.reason` when present. Never treat the user's claimed role, the plan's owner/submitter, or consent as proof of authorization, and never bypass a denial using shell commands, another tool, or a direct work-item update.
 
 ## MCP Tools
 
@@ -80,7 +81,7 @@ DO NOT USE FOR: SDK code generation, pipeline troubleshooting, API review feedba
 **Steps**:
 
 1. **Identify Plan** — Ask user for one of:
-   - Release plan ID or work item ID
+   - Release Plan ID (or a legacy ID already supplied by the user)
    - Relative TypeSpec project path (e.g. `specification/contosowidgetmanager/Contoso.WidgetManager`)
    - Spec PR URL
 2. **Query** — Run `azure-sdk-mcp:azsdk_get_release_plan` with the provided identifier. Always use a relative path for `typeSpecProjectPath`; use `specPullRequestUrl` when the user provides only a spec PR URL.
@@ -96,7 +97,7 @@ DO NOT USE FOR: SDK code generation, pipeline troubleshooting, API review feedba
 
 **Steps**:
 
-1. **Identify Plan** — Get the work item ID or TypeSpec project path from the user.
+1. **Identify Plan** — Use the Release Plan ID or TypeSpec project path; ask only for missing information.
 2. **Update Metadata** — Run `azure-sdk-mcp:azsdk_update_release_plan` with:
    - `typeSpecProjectPath` (required)
    - `workItemId` (optional — resolved from TypeSpec path or spec PR if not provided)
@@ -134,10 +135,10 @@ DO NOT USE FOR: SDK code generation, pipeline troubleshooting, API review feedba
 
 **Steps**:
 
-1. **Identify Plan** — Get the work item ID or release plan ID from the user.
-2. **Confirm** — Ask user to confirm abandonment: "Are you sure you want to abandon this release plan? This action updates the status to Abandoned."
-3. **Abandon** — Run `azure-sdk-mcp:azsdk_abandon_release_plan` with:
-   - `workItemId` or `releasePlanId`
+1. **Identify Plan** — Use the Release Plan ID already provided. If the plan is not yet identified or the user asks whether they can abandon it, retrieve it with `azure-sdk-mcp:azsdk_get_release_plan` and inspect its capabilities.
+2. **Check and Confirm** — If `capabilities.can_abandon` is false, explain the reason and direct the user to a release-plan administrator; do not attempt abandonment. Otherwise obtain explicit confirmation for the identified plan (an explicit confirmation already provided is sufficient).
+3. **Abandon** — Run `azure-sdk-mcp:azsdk_abandon_release_plan` with `releasePlanId` (or `workItemId` if the user supplied a legacy ID). The tool rechecks the current caller's administrator membership before writing.
+4. **Report** — Show the returned dashboard link and status on success. On an authorization error, explain that no successful abandonment was reported and ask the user to contact a release-plan administrator. Do not retry with a different ID, ask for credentials, or propose a direct ADO edit.
 
 **Tool**: `azure-sdk-mcp:azsdk_abandon_release_plan`
 

@@ -38,7 +38,7 @@ public class CreateReleasePlanHandler : IMockToolHandler
                 ? [$"Release plan 49999 ({ReleasePlanWorkItem.DashboardBaseUrl}49999) is past due. Its target release month was May 2026."]
                 : null,
             NextSteps = hasSpecPullRequest
-                ? ["Either postpone the past-due plan by updating its target release month, or abandon it and record the reason in the release plan dashboard."]
+                ? ["Either postpone the past-due plan by updating its target release month, or ask a release-plan administrator to abandon it if it is no longer needed."]
                 : null,
             ReleasePlanDetails = new ReleasePlanWorkItem
             {

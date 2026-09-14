@@ -1043,6 +1043,16 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                 throw new NotImplementedException();
             }
 
+            public Microsoft.VisualStudio.Services.Identity.Client.IdentityHttpClient GetIdentityClient(CancellationToken ct)
+            {
+                throw new NotImplementedException();
+            }
+
+            public Task<Microsoft.VisualStudio.Services.Identity.Identity> GetAuthenticatedIdentityAsync(CancellationToken ct)
+            {
+                throw new NotImplementedException();
+            }
+
             public void AddWorkItemToQuery(WorkItem workItem)
             {
                 _workItemClient.AddWorkItemToQuery(workItem);

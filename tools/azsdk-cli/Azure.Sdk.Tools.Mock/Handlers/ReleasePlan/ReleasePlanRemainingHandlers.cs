@@ -43,8 +43,14 @@ internal static class ReleasePlanMockResponses
 public class AbandonReleasePlanHandler : IMockToolHandler
 {
     public string ToolName => "azsdk_abandon_release_plan";
-    public CommandResponse Handle(Dictionary<string, object?>? arguments) =>
-        ReleasePlanMockResponses.Workflow("Abandoned", "Release plan abandoned (mock)");
+    public CommandResponse Handle(Dictionary<string, object?>? arguments)
+    {
+        var releasePlanId = arguments?.GetValueOrDefault("releasePlanId")?.ToString() ?? "0";
+        var workItemId = arguments?.GetValueOrDefault("workItemId")?.ToString() ?? "0";
+        return ReleasePlanAuthorizationFixture.Matches(releasePlanId, workItemId)
+            ? ReleasePlanAuthorizationFixture.AbandonResponse(ReleasePlanAuthorizationFixture.IsAdmin(releasePlanId, workItemId))
+            : ReleasePlanMockResponses.Workflow("Abandoned", "Release plan abandoned (mock)");
+    }
 }
 
 /// <summary>Mock handler for azsdk_update_release_plan.</summary>

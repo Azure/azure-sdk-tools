@@ -1,5 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+using System.Text.Json.Serialization;
 using Azure.Sdk.Tools.Cli.Attributes;
 using Azure.Sdk.Tools.Cli.Models;
 using Microsoft.VisualStudio.Services.WebApi.Patch.Json;
@@ -54,6 +55,10 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
         public bool IsTestReleasePlan { get; set; } = false;
 
         public int ReleasePlanId { get; set; }
+
+        // Legacy plans without a separate plan number use their dashboard ID.
+        [JsonIgnore]
+        public int DisplayId => ReleasePlanId > 0 ? ReleasePlanId : WorkItemId;
 
         [FieldName("Custom.SDKtypetobereleased")]
         public string SDKReleaseType { get; set; } = string.Empty;

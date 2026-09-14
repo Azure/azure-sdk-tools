@@ -33,7 +33,7 @@ stimuli:
             - name: "^azure-sdk-mcp-azsdk_get_release_plan$"
       - type: output-matches
         config:
-          pattern: "(?is)(?=.*past[- ]due)(?=.*(?:postpone|update).*(?:target|release month))(?=.*(?:abandon|close).*(?:reason|dashboard))"
+          pattern: "(?is)(?=.*past[- ]due)(?=.*(?:postpone|update).*(?:target|release month))(?=.*abandon)(?=.*admin)"
 
   - name: spec-pr-lookup-relays-past-due-guidance
     environment:
@@ -50,7 +50,7 @@ stimuli:
             - name: "^azure-sdk-mcp-azsdk_get_release_plan$"
       - type: output-matches
         config:
-          pattern: "(?is)(?=.*past[- ]due)(?=.*(?:postpone|update).*(?:target|release month))(?=.*(?:abandon|close).*(?:reason|dashboard))"
+          pattern: "(?is)(?=.*past[- ]due)(?=.*(?:postpone|update).*(?:target|release month))(?=.*abandon)(?=.*admin)"
       - type: output-contains
         config:
           substring: "https://github.com/Azure/azure-rest-api-specs/pull/38387"
@@ -80,4 +80,4 @@ stimuli:
             - name: "^azure-sdk-mcp-azsdk_create_release_plan$"
       - type: output-matches
         config:
-          pattern: "(?is)(?=.*past[- ]due)(?=.*(?:postpone|update).*(?:target|release month))(?=.*(?:abandon|close).*(?:reason|dashboard))"
+          pattern: "(?is)(?=.*past[- ]due)(?=.*(?:postpone|update).*(?:target|release month))(?=.*abandon)(?=.*admin)"

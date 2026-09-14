@@ -2,7 +2,9 @@ name: code-review-eval
 description: Routing and boundary tests for the azsdk-cli code-review skill
 type: capability
 
-environment: azsdk-mcp-mock
+# Routing reviews need only this skill, not a running release-management server.
+environment:
+  skills: [..]
 
 tags:
   area: code-review

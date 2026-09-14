@@ -38,7 +38,6 @@ from _evals_runner import (  # noqa: E402
     _combine_batch_results,
     _extract_tool_trace,
     _inline_run_request_bytes,
-    append_tool_evidence_to_context,
     output_items_to_rows,
     extract_title_and_link_from_references,
     extract_title_and_link_from_context,
@@ -538,10 +537,7 @@ def test_retrieve_stored_response_history_and_tool_evidence():
             "output": [{"url": "https://example.com"}],
         },
     ]
-    assert items[0]["context"] == append_tool_evidence_to_context(
-        "documents",
-        history["response-1"]["tool_trace"],
-    )
+    assert items[0]["context"] == "documents"
 
 
 def test_search_tool_json_outputs_are_objects():

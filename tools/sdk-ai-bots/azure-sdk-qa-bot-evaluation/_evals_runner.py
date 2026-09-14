@@ -521,17 +521,6 @@ def _extract_tool_trace(output_items: list[dict[str, Any]]) -> list[dict[str, An
     return traces
 
 
-def append_tool_evidence_to_context(context: str, tool_trace: list[dict[str, Any]]) -> str:
-    """Add complete tool evidence to the text supplied to the groundedness evaluator."""
-    if not tool_trace:
-        return context
-    prefix = f"{context.rstrip()}\n\n" if context else ""
-    return (
-        f"{prefix}Agent tool evidence retrieved from the stored response:\n"
-        f"{json.dumps(tool_trace, ensure_ascii=False)}"
-    )
-
-
 def output_items_to_rows(
     output_items: list[Any],
     evaluators: list[str],
@@ -682,7 +671,7 @@ class FoundryEvalsRunner:
         response_client: Any,
         items: list[dict[str, Any]],
     ) -> dict[str, dict[str, Any]]:
-        """Retrieve each stored response and attach its tool evidence to grading context."""
+        """Retrieve each stored response and retain normalized tool calls for local results."""
         response_history_by_id: dict[str, dict[str, Any]] = {}
         for item in items:
             response_id = item.get("response_id", "") or ""
@@ -695,10 +684,6 @@ class FoundryEvalsRunner:
             response_history_by_id[response_id] = {
                 "tool_trace": tool_trace,
             }
-            item["context"] = append_tool_evidence_to_context(
-                item.get("context", "") or "",
-                tool_trace,
-            )
         logger.info("Retrieved %d stored Agent responses.", len(response_history_by_id))
         return response_history_by_id
 
@@ -785,9 +770,8 @@ class FoundryEvalsRunner:
             raw = {"rows": failed_rows}
             return {f"{scenario}_no-responses": self._evals_result.record_run_result(raw)}
 
-        # 3) Retrieve the exact stored Agent responses. Tool evidence augments the
-        # groundedness context, while complete response output remains local and is
-        # joined back into cached results after Foundry grading.
+        # 3) Retrieve the exact stored Agent responses. Tool history remains local
+        # and is joined back into cached results after Foundry grading.
         response_history_by_id = self._retrieve_response_history(response_client, items)
 
         data_source_config = DataSourceConfigCustom(
@@ -889,6 +873,5 @@ __all__ = [
     "resolve_tenant_for_scenario",
     "extract_title_and_link_from_references",
     "extract_title_and_link_from_context",
-    "append_tool_evidence_to_context",
     "COMPLETION_ITEM_SCHEMA",
 ]

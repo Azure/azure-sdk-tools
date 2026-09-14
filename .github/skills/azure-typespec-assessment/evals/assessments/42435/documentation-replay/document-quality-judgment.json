@@ -1,0 +1,3 @@
+{"schemaVersion":1,"documentQualityDecisions":[
+{"reviewUnitId":"semantic-1e7d20fcf8db2c04","documentId":"document-0d592cacea2ab4db","check":"description","decision":"pass","rationale":"The description still explains the batch outbound-rule update action; adding @list does not contradict that purpose."}
+]}

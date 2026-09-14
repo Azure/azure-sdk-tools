@@ -351,6 +351,9 @@ function documentDeclarations(script, program, compiler, source, revision) {
   if (!compiler.SyntaxKind || typeof compiler.visitChildren !== "function") {
     throw new Error("This TypeSpec compiler does not expose the required AST traversal API.");
   }
+  if (typeof compiler.getDoc !== "function" || typeof compiler.getDocData !== "function") {
+    throw new Error("This TypeSpec compiler does not expose the required documentation resolution API.");
+  }
   const kinds = {
     NamespaceStatement: "namespace", ModelStatement: "model", ModelProperty: "property",
     OperationStatement: "operation", InterfaceStatement: "interface", ScalarStatement: "scalar",
@@ -398,32 +401,80 @@ function documentDeclarations(script, program, compiler, source, revision) {
       (target?.base && target?.id ? `${targetName(target.base)}.${target.id.sv}` : "");
     const candidates = decorators.filter((decorator) =>
       ["doc", "TypeSpec.doc"].includes(targetName(decorator.target)));
-    if (candidates.length) {
-      const startLine = file.getLineAndCharacterOfPosition(node.pos).line + 1;
+    const comments = node.docs ?? [];
+    // Tag bodies are not local main descriptions and must not hide inherited documentation.
+    const hasDescription = comments.some((comment) =>
+      comment.content.some((content) => content.text?.trim()));
+    const type = kind && name ? program.checker.getTypeForNode(node) : undefined;
+    const data = type ? compiler.getDocData(program, type) : undefined;
+    const resolved = type ? compiler.getDoc(program, type) : undefined;
+    const parentsOf = (value) => [
+      value.sourceOperation, value.sourceModel, value.sourceProperty, value.baseModel,
+      ...(value.sourceModels ?? []).map((source) => source.model),
+    ].filter(Boolean);
+    const ancestors = [];
+    const visited = new Set([type]);
+    const parents = type ? parentsOf(type) : [];
+    const pending = candidates.length || hasDescription ? [...parents] : [];
+    while (pending.length) {
+      const parent = pending.pop();
+      if (visited.has(parent)) continue;
+      visited.add(parent);
+      ancestors.push(parent);
+      pending.push(...parentsOf(parent));
+    }
+    const inherited = !candidates.length && !hasDescription &&
+      typeof resolved === "string" && resolved.trim().length > 0 && parents.length > 0;
+    if (candidates.length || hasDescription || inherited) {
+      const start = Math.min(node.pos, ...comments.map((comment) => comment.pos));
+      const startLine = file.getLineAndCharacterOfPosition(start).line + 1;
       const endLine = file.getLineAndCharacterOfPosition(Math.max(node.pos, node.end - 1)).line + 1;
       let doc = null;
       let blocker;
-      if (candidates.length && (!kind || !name)) {
+      if (!kind || !name) {
         blocker = "Cannot establish a supported named declaration context for this @doc.";
-      } else if (candidates.length) {
-        const type = program.checker.getTypeForNode(node);
+      } else if (inherited) {
+        // V1 records compiler-known presence only; inherited quality is not reviewed.
+        doc = resolved;
+      } else {
         const applications = (type.decorators ?? []).filter((item) => item.decorator === compiler.$doc);
         const docs = candidates.filter((candidate) =>
           applications.some((application) => application.node === candidate));
-        if (docs.length !== candidates.length) {
+        const inheritedDocNodes = new Set();
+        for (const parent of ancestors) {
+          for (const application of parent.decorators ?? []) {
+            if (application.decorator === compiler.$doc && application.node) inheritedDocNodes.add(application.node);
+          }
+        }
+        const nonlocalDocs = applications.filter((application) => !candidates.includes(application.node));
+        if (type.node !== node || nonlocalDocs.some((application) => !inheritedDocNodes.has(application.node))) {
+          blocker = "Cannot establish documentation ownership; unresolved generated or augmented @doc is unsupported.";
+        } else if (docs.length !== candidates.length) {
           blocker = "Cannot establish that the documentation decorator resolves to TypeSpec @doc.";
-        } else if (docs.length !== 1 || docs[0].arguments.length !== 1 ||
-          docs[0].arguments[0].kind !== compiler.SyntaxKind.StringLiteral) {
+        } else if (docs.length && (docs.length !== 1 || docs[0].arguments.length !== 1 ||
+          docs[0].arguments[0].kind !== compiler.SyntaxKind.StringLiteral)) {
           blocker = "Only a single literal TypeSpec @doc argument is supported; dynamic or formatted documentation cannot be evaluated.";
+        } else if (data?.source !== (docs.length ? "decorator" : "comment") || typeof resolved !== "string") {
+          blocker = "Cannot establish that the local description resolves to TypeSpec @doc.";
         } else {
-          doc = docs[0].arguments[0].value;
+          // Template decorators may remain attached after a local description overrides them.
+          const content = comments.flatMap((comment) => comment.content);
+          const localDoc = docs.length ? docs[0].arguments[0].value
+            : content.every((part) => part.kind === compiler.SyntaxKind.DocText && typeof part.text === "string")
+              ? content.map((part) => part.text).join("").trim() : undefined;
+          if (nonlocalDocs.length && resolved !== localDoc) {
+            blocker = "The resolved template documentation does not match the locally attached description.";
+          } else {
+            doc = resolved;
+          }
         }
       }
       records.push({
         key: kind && name ? `${kind}:${qualifiedName}` : `unsupported:${qualifiedName}:${node.pos}`,
         qualifiedName: qualifiedName || compiler.SyntaxKind[node.kind],
         kind: kind ?? "unsupported", doc, blocker,
-        declaration: file.text.slice(node.pos, node.end),
+        ...(inherited ? { documentationOrigin: "inherited" } : {}),
+        declaration: file.text.slice(start, node.end),
         source: { path: source.path, revision, startLine, endLine },
         hunkIds: edits.filter((hunk) =>
           hunk.lines.some((line) => line >= startLine && line <= endLine)).map((hunk) => hunk.id),
@@ -455,6 +506,7 @@ function changedDocumentEvidence(source, revisions) {
     if (!hunkIds.length) continue;
     const snapshot = (record) => record?.doc !== null && record?.doc !== undefined ? {
       doc: record.doc, declaration: record.declaration, source: record.source,
+      ...(record.documentationOrigin ? { documentationOrigin: record.documentationOrigin } : {}),
     } : null;
     documents.push({
       id: id("document", `${source.path}:${key}`),
@@ -672,6 +724,7 @@ export async function addCompilerEvidence({
       }
     }
     source.documentEvidence = {
+      schemaVersion: 3,
       status: evidenceBlockers.length ? "blocked" : "ready",
       blockers: evidenceBlockers,
       documents,

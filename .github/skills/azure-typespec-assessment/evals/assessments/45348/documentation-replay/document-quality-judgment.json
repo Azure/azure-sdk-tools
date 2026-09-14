@@ -1,0 +1,5 @@
+{"schemaVersion":1,"documentQualityDecisions":[
+{"reviewUnitId":"semantic-19dbeda22c08823b","documentId":"document-165253ba8fd0298e","check":"description","decision":"pass","rationale":"The description correctly identifies the unchanged 2026-11-01-preview API version; changing ARM common types does not alter that version."},
+{"reviewUnitId":"semantic-19dbeda22c08823b","documentId":"document-ada8d3d230cd3e8b","check":"description","decision":"pass","rationale":"The description matches the 2026-11-02-preview value and preview marker despite the common-types change."},
+{"reviewUnitId":"semantic-19dbeda22c08823b","documentId":"document-b25123da6c848270","check":"description","decision":"pass","rationale":"Supported Device Registry API versions accurately describes the enum; dependency changes do not invalidate it."}
+]}

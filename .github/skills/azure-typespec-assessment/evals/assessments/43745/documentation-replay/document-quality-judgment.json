@@ -1,0 +1,5 @@
+{"schemaVersion":1,"documentQualityDecisions":[
+{"reviewUnitId":"semantic-6c953bac4d5ca5b2","documentId":"document-103a403932241354","check":"description","decision":"pass","rationale":"The short SKU description exactly identifies the Standard B10 literal."},
+{"reviewUnitId":"semantic-6c953bac4d5ca5b2","documentId":"document-430a51ef0fa6982c","check":"description","decision":"pass","rationale":"The description accurately identifies the Standard_B1 SKU literal."},
+{"reviewUnitId":"semantic-6c953bac4d5ca5b2","documentId":"document-8a4fcb8604275f81","check":"description","decision":"pass","rationale":"Cloud HSM cluster SKU names accurately describes this extensible string union."}
+]}

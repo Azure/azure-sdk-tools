@@ -1,0 +1,111 @@
+{
+  "schemaVersion": 1,
+  "analysis": {
+    "status": "ready",
+    "authority": "typespec-compiler",
+    "compilerVersions": [
+      "1.13.0"
+    ],
+    "operationProjectionStats": [
+      {
+        "revision": "base",
+        "project": "specification/elastic/Elastic.Management",
+        "operationCount": 101,
+        "changedNameCount": 0,
+        "matchedOperationCount": 0
+      },
+      {
+        "revision": "current",
+        "project": "specification/elastic/Elastic.Management",
+        "operationCount": 101,
+        "changedNameCount": 0,
+        "matchedOperationCount": 0
+      }
+    ],
+    "blockers": []
+  },
+  "sourceChanges": [
+    {
+      "id": "source-c1e49e3c867c88fb",
+      "path": "specification/elastic/Elastic.Management/back-compatible.tsp",
+      "status": "modified",
+      "origins": [
+        "committed"
+      ],
+      "hunks": [
+        {
+          "id": "hunk-083033f3d0862b87",
+          "base": {
+            "startLine": 94,
+            "endLine": 106
+          },
+          "current": {
+            "startLine": 94,
+            "endLine": 116
+          },
+          "lines": [
+            " @@clientLocation(",
+            "   ElasticMonitorResources.listAssociatedTrafficFiltersList,",
+            "   \"listAssociatedTrafficFilters\",",
+            "-  \"!csharp\"",
+            "+  \"!csharp,!python\"",
+            "+);",
+            "+@@clientLocation(",
+            "+  ElasticMonitorResources.listAssociatedTrafficFiltersList,",
+            "+  \"ListAssociatedTrafficFilters\",",
+            "+  \"python\"",
+            " );",
+            " @@clientName(ElasticMonitorResources.listAssociatedTrafficFiltersList, \"list\");",
+            " @@clientLocation(",
+            "   ElasticMonitorResources.createAndAssociateIPFilterCreate,",
+            "   \"createAndAssociateIPFilter\",",
+            "-  \"!csharp,!java\"",
+            "+  \"!csharp,!java,!python\"",
+            "+);",
+            "+@@clientLocation(",
+            "+  ElasticMonitorResources.createAndAssociateIPFilterCreate,",
+            "+  \"CreateAndAssociateIPFilter\",",
+            "+  \"python\"",
+            " );",
+            " @@clientName(",
+            "   ElasticMonitorResources.createAndAssociateIPFilterCreate,"
+          ]
+        },
+        {
+          "id": "hunk-9834454183c6cab6",
+          "base": {
+            "startLine": 109,
+            "endLine": 115
+          },
+          "current": {
+            "startLine": 119,
+            "endLine": 130
+          },
+          "lines": [
+            " @@clientLocation(",
+            "   ElasticMonitorResources.createAndAssociatePLFilterCreate,",
+            "   \"createAndAssociatePLFilter\",",
+            "-  \"!csharp\"",
+            "+  \"!csharp,!python\"",
+            "+);",
+            "+@@clientLocation(",
+            "+  ElasticMonitorResources.createAndAssociatePLFilterCreate,",
+            "+  \"CreateAndAssociatePLFilter\",",
+            "+  \"python\"",
+            " );",
+            " @@clientName(",
+            "   ElasticMonitorResources.createAndAssociatePLFilterCreate,",
+            ""
+          ]
+        }
+      ],
+      "declarations": [],
+      "documentEvidence": {
+        "schemaVersion": 3,
+        "status": "ready",
+        "blockers": [],
+        "documents": []
+      }
+    }
+  ]
+}

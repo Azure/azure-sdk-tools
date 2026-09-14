@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "documentQualityAssessmentVersion": 3,
+  "documentQualityCriterion": "Does the @doc description clearly and accurately explain the associated TypeSpec code?",
+  "context": {
+    "mode": "source-documentation-replay",
+    "comparison": {
+      "baseRef": "b7170cade07f615426eb153b7035ecf8a1cab4e4",
+      "baseCommit": "b7170cade07f615426eb153b7035ecf8a1cab4e4",
+      "headCommit": "1395797d6112cb083837b3772083bafe0a91460c",
+      "workingTree": {
+        "staged": false,
+        "unstaged": false,
+        "untracked": false
+      }
+    },
+    "retainedDimensions": [
+      "semantic",
+      "rest",
+      "downstream",
+      "compliance"
+    ]
+  },
+  "artifactReferences": {
+    "sourceIndex": "source/source-index.json",
+    "documentQuality": "dimensions/document-quality-input.json"
+  },
+  "documentQualityReviewUnits": [
+    {
+      "reviewUnitId": "semantic-5c37e529c22fc782",
+      "status": "not-applicable",
+      "reason": "No changed, associated nonempty @doc with a current target; absent, deleted, empty, or whitespace-only @doc is outside documentation coverage scope.",
+      "documentIds": [],
+      "evidenceSetId": "evidence-document-semantic-5c37e529c22fc782"
+    }
+  ],
+  "evidenceSets": {
+    "evidence-document-semantic-5c37e529c22fc782": {
+      "sourceChangeIds": [
+        "source-c1e2c387eea01645"
+      ],
+      "hunkIds": [
+        "hunk-eecc1413cf4aeedb"
+      ],
+      "declarationCount": 0,
+      "evidenceFactIds": [],
+      "evidenceRef": {
+        "artifact": "dimensions/document-quality-input.json",
+        "id": "semantic-5c37e529c22fc782"
+      }
+    }
+  }
+}

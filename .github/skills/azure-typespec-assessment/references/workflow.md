@@ -76,9 +76,13 @@ and `compliance-assessment.mjs` later consumes and validates the evidence.
 
 For every `documentQualityReviewUnits` entry, resolve its canonical unit in
 `dimensions/document-quality-input.json` through the declared evidence set.
-For each document in a `ready` unit, judge Correctness and Meaning exactly
-once. Use only its `@doc` and associated baseline/target declaration source;
-no additional searches or generated descriptions. Retain blocked reasons and
+For each document in a `ready` unit, make one `description` judgment: does its
+description clearly and accurately explain the associated TypeSpec code?
+Use canonical local `@doc` or main documentation-comment text and
+baseline/target declaration source. Inherited descriptions alone count as
+documented; local overrides win, but tag-only comments do not mask inheritance.
+No additional searches, fabricated descriptions, or generated SDK/OpenAPI prose.
+Retain blocked reasons and
 do not assess absent/empty/deleted documentation. These checks run even when
 the hunk has no REST/downstream impact and inference is unnecessary.
 

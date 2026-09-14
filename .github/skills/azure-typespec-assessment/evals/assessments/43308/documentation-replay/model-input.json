@@ -1,0 +1,138 @@
+{
+  "schemaVersion": 1,
+  "documentQualityAssessmentVersion": 3,
+  "documentQualityCriterion": "Does the @doc description clearly and accurately explain the associated TypeSpec code?",
+  "context": {
+    "mode": "source-documentation-replay",
+    "comparison": {
+      "baseRef": "232dfa71843fd574be49ba91a918ee7d3e7bfec3",
+      "baseCommit": "232dfa71843fd574be49ba91a918ee7d3e7bfec3",
+      "headCommit": "a3b8933eb6ce030faa6abc6d354fc97e30f02e96",
+      "workingTree": {
+        "staged": false,
+        "unstaged": false,
+        "untracked": false
+      }
+    },
+    "retainedDimensions": [
+      "semantic",
+      "rest",
+      "downstream",
+      "compliance"
+    ]
+  },
+  "artifactReferences": {
+    "sourceIndex": "source/source-index.json",
+    "documentQuality": "dimensions/document-quality-input.json"
+  },
+  "documentQualityReviewUnits": [
+    {
+      "reviewUnitId": "semantic-6b421b1ce7dd8d19",
+      "status": "ready",
+      "documentIds": [
+        "document-03c59cf5a0a7b330",
+        "document-250cb6d0701b146c",
+        "document-39f39ee6ddd0e5f9",
+        "document-4b67929fcc7c14fe",
+        "document-4d760f764d669270",
+        "document-60238ea4d91f0589",
+        "document-a98f6a8fc599c2ae",
+        "document-d6f8b19c0d442fa8",
+        "document-f8e2d65c11d83904"
+      ],
+      "evidenceSetId": "evidence-document-semantic-6b421b1ce7dd8d19"
+    },
+    {
+      "reviewUnitId": "semantic-88b01455dd806f7b",
+      "status": "not-applicable",
+      "reason": "No changed, associated nonempty @doc with a current target; absent, deleted, empty, or whitespace-only @doc is outside documentation coverage scope.",
+      "documentIds": [],
+      "evidenceSetId": "evidence-document-semantic-88b01455dd806f7b"
+    },
+    {
+      "reviewUnitId": "semantic-c7e95ecf235ee418",
+      "status": "blocked",
+      "reason": "Microsoft.Chaos.ArmResourceActionAsyncWithLocation: Cannot establish that the local description resolves to TypeSpec @doc. Microsoft.Chaos.ArmResourceActionNoBodyAsyncWithLocation: Cannot establish that the local description resolves to TypeSpec @doc. Microsoft.Chaos.ArmResourceActionNoContentAsyncWithLocationResult: Cannot establish that the local description resolves to TypeSpec @doc.",
+      "documentIds": [
+        "document-0afb4ad255cbe5d6",
+        "document-162418e98505f8e5",
+        "document-2b4d08f39bfe0935",
+        "document-54421276dbb0a4c4",
+        "document-5ec317bbd666abdf",
+        "document-831bde059abd35ff",
+        "document-93a8c82410c5c8c8",
+        "document-9706fb759b340d67",
+        "document-b8545853dd033711",
+        "document-c3c3de5e90456420",
+        "document-dfc17109b6c23d0e"
+      ],
+      "evidenceSetId": "evidence-document-semantic-c7e95ecf235ee418"
+    }
+  ],
+  "evidenceSets": {
+    "evidence-document-semantic-6b421b1ce7dd8d19": {
+      "sourceChangeIds": [
+        "source-445ac39004e671ef",
+        "source-e69ddc949601a3eb"
+      ],
+      "hunkIds": [
+        "hunk-5aa33c961a49d6c7",
+        "hunk-5f7834dcc951e2e3",
+        "hunk-6adc2f483edb150b",
+        "hunk-995b8bf1e599f1a7",
+        "hunk-fe6a3ee26eca43f6"
+      ],
+      "declarationCount": 28,
+      "evidenceFactIds": [],
+      "evidenceRef": {
+        "artifact": "dimensions/document-quality-input.json",
+        "id": "semantic-6b421b1ce7dd8d19"
+      }
+    },
+    "evidence-document-semantic-88b01455dd806f7b": {
+      "sourceChangeIds": [
+        "source-b87f3a5e3fa341ca"
+      ],
+      "hunkIds": [
+        "hunk-6427bb1a68cb07d6",
+        "hunk-b7cfd28859536ed6"
+      ],
+      "declarationCount": 0,
+      "evidenceFactIds": [],
+      "evidenceRef": {
+        "artifact": "dimensions/document-quality-input.json",
+        "id": "semantic-88b01455dd806f7b"
+      }
+    },
+    "evidence-document-semantic-c7e95ecf235ee418": {
+      "sourceChangeIds": [
+        "source-07d51f7284c81844",
+        "source-5872d934af0ffb74",
+        "source-69a2ddc47ac80abd",
+        "source-aca736d134f3b4c4",
+        "source-cb13d5cecbd1acfb"
+      ],
+      "hunkIds": [
+        "hunk-01f45d5aed4d7b62",
+        "hunk-0ca3bf7536e0d80a",
+        "hunk-2e4a7da67fc3730f",
+        "hunk-349961572456cb8d",
+        "hunk-382feea9f72c3005",
+        "hunk-3e1defef9a255227",
+        "hunk-4073fd3bb79c9f96",
+        "hunk-44dd52563cb70ae1",
+        "hunk-579b9c3ab2d0f182",
+        "hunk-72c5a83f61377cf6",
+        "hunk-8bba970ccf3af6ef",
+        "hunk-9bd6d022e944c48c",
+        "hunk-cbbce09d5e224510"
+      ],
+      "declarationCount": 33,
+      "evidenceFactIds": [],
+      "evidenceRef": {
+        "artifact": "dimensions/document-quality-input.json",
+        "id": "semantic-c7e95ecf235ee418"
+      }
+    }
+  }
+}

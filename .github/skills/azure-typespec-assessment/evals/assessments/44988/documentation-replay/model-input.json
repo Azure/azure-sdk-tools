@@ -1,0 +1,667 @@
+{
+  "schemaVersion": 1,
+  "documentQualityAssessmentVersion": 3,
+  "documentQualityCriterion": "Does the @doc description clearly and accurately explain the associated TypeSpec code?",
+  "context": {
+    "mode": "source-documentation-replay",
+    "comparison": {
+      "baseRef": "9f0ad696cc186c2d16cb522abc0fbd4aa3854ca5",
+      "baseCommit": "9f0ad696cc186c2d16cb522abc0fbd4aa3854ca5",
+      "headCommit": "780a61ace56c22ce10dd01caa8ab95ca4514ac2e",
+      "workingTree": {
+        "staged": false,
+        "unstaged": false,
+        "untracked": false
+      }
+    },
+    "retainedDimensions": [
+      "semantic",
+      "rest",
+      "downstream",
+      "compliance"
+    ]
+  },
+  "artifactReferences": {
+    "sourceIndex": "source/source-index.json",
+    "documentQuality": "dimensions/document-quality-input.json"
+  },
+  "documentQualityReviewUnits": [
+    {
+      "reviewUnitId": "semantic-19b6a61a83d34134",
+      "status": "blocked",
+      "reason": "Microsoft.Network: Cannot establish a supported named declaration context for this @doc.",
+      "documentIds": [
+        "document-1a0ffb4bfdb1ab96",
+        "document-30e19d42e0cedbd9",
+        "document-46c16a9bfb424fcd",
+        "document-aa55bcd30c1c03b7"
+      ],
+      "evidenceSetId": "evidence-document-semantic-19b6a61a83d34134"
+    },
+    {
+      "reviewUnitId": "semantic-23cf6865c336a2a8",
+      "status": "ready",
+      "documentIds": [
+        "document-027176dd2b032c61",
+        "document-043705bd5b708a02",
+        "document-0a35b3537e0277f9",
+        "document-112ba9a38f420a04",
+        "document-17ab78c71f05e2c8",
+        "document-17b026960067dac5",
+        "document-1e220dac8c1d3d18",
+        "document-1f75efe798337888",
+        "document-208cbd75ddb8c854",
+        "document-20f3295dddb38269",
+        "document-20fda01dee4f06d6",
+        "document-216f9b78fd28d207",
+        "document-277388681d3c5f18",
+        "document-28d405a39d81f340",
+        "document-2fea34cf10631994",
+        "document-331770d00f8b8eed",
+        "document-345a8e6dbaacc895",
+        "document-35077276dd1eac20",
+        "document-3551bab176b65786",
+        "document-39197b89057e260b",
+        "document-39d600991cb5e8fa",
+        "document-3a3b775f2e728123",
+        "document-3da18c11b5409c0b",
+        "document-441d49a4bc5e5e76",
+        "document-45b15fd3bf0c1776",
+        "document-45b2dccf3ec3bcd5",
+        "document-4b15c5953e7e2acb",
+        "document-51b66c53ebeca142",
+        "document-520fa4b6c33f798e",
+        "document-5228462b8b11c64d",
+        "document-549c818d2be8ed10",
+        "document-5b24cef60c63e7f2",
+        "document-5bde9d8454a30d26",
+        "document-5c134be381a54b32",
+        "document-5c352e600a305918",
+        "document-5cc1215164fd32f8",
+        "document-5cc626fad0331e22",
+        "document-60833f2e8b122ee6",
+        "document-64c573709026adc7",
+        "document-654cba6c0b3d573a",
+        "document-65c2c0c72d2172f2",
+        "document-676330389fd78704",
+        "document-68657f46864d1797",
+        "document-688495d4fcc33854",
+        "document-6f6eb9fb68258a07",
+        "document-711c53d46ef39af2",
+        "document-7304f88d7dc5664b",
+        "document-7d50487c7b1504b5",
+        "document-7f09a2b3ed16b3bb",
+        "document-7f44cea7fe12c017",
+        "document-82788a279d0c5fdf",
+        "document-8c208969f18c8982",
+        "document-8e3d9a306800e9b5",
+        "document-8ea2e8dd6835e6f6",
+        "document-9202d5765fd5ad68",
+        "document-92e44b67adfb3ec9",
+        "document-9a59b5ffe4fdeb59",
+        "document-a1785aa21d06bd36",
+        "document-a575ef9c5a06c136",
+        "document-b0d1a7466e7b2571",
+        "document-b5f6001222d8f84a",
+        "document-b64a2e420fbdf927",
+        "document-ba4e8a199bdffcec",
+        "document-bec7a2c4b21c63f3",
+        "document-bf5a3c3a185cc407",
+        "document-c2fb26eeb35e04f4",
+        "document-c7a8d88785906b63",
+        "document-ca557416842cfb9c",
+        "document-cc84750f80dc6951",
+        "document-d54f665b3728d572",
+        "document-d728c2bf0dcff788",
+        "document-d8f99608bbb4f2db",
+        "document-db65ac4930c195e9",
+        "document-dd4f94ac725950d9",
+        "document-de76fb92878586ca",
+        "document-e1e05515d6dad2d4",
+        "document-e33149978c0ff614",
+        "document-e3cd039b6bb5f989",
+        "document-e66fd92f1faa784c",
+        "document-e88d17de4cf5c5f1",
+        "document-ed8460a044e17610",
+        "document-ed8b83985a8b2a84",
+        "document-f2a034ffe52add86",
+        "document-f3cf16ce5c02e79a",
+        "document-f4c2f7201c342636",
+        "document-f73d119a69f3d7d4",
+        "document-f864ff6d585a5009",
+        "document-fbec73d068417337"
+      ],
+      "evidenceSetId": "evidence-document-semantic-23cf6865c336a2a8"
+    },
+    {
+      "reviewUnitId": "semantic-39306d50134f94c0",
+      "status": "ready",
+      "documentIds": [
+        "document-13b080afeaff683e",
+        "document-1f4cb12408ca2aff",
+        "document-43a993d91ca42642",
+        "document-48cc5f5ec1f9ff1b",
+        "document-4a62ffde0b6a8664",
+        "document-6db0b72da6798942",
+        "document-a33a929d6b71e599",
+        "document-b3001397f3b1bd8d",
+        "document-cbc556321abf3d48",
+        "document-d268bca5d7befb46",
+        "document-f11471f06df6f8f4"
+      ],
+      "evidenceSetId": "evidence-document-semantic-39306d50134f94c0"
+    },
+    {
+      "reviewUnitId": "semantic-4ebd789676a2e275",
+      "status": "ready",
+      "documentIds": [
+        "document-c5c7998334e7304b",
+        "document-fd3d71343b2b26bf"
+      ],
+      "evidenceSetId": "evidence-document-semantic-4ebd789676a2e275"
+    },
+    {
+      "reviewUnitId": "semantic-6c82b99519c5512d",
+      "status": "ready",
+      "documentIds": [
+        "document-e5dc50b439acd5ad"
+      ],
+      "evidenceSetId": "evidence-document-semantic-6c82b99519c5512d"
+    },
+    {
+      "reviewUnitId": "semantic-719ad7123f9b3ae0",
+      "status": "blocked",
+      "reason": "Microsoft.Network: Cannot establish a supported named declaration context for this @doc.",
+      "documentIds": [
+        "document-07ba74e4742bb82f",
+        "document-08d78d82ef8a6f72",
+        "document-0cf45e9783880e15",
+        "document-4254c37a2067c758",
+        "document-83a7ae3dac61629d",
+        "document-9314a8a46bc41f14",
+        "document-973ecc651a76184b",
+        "document-9dc91b7d1137f271",
+        "document-ade02076a2c6e8ab",
+        "document-c1c29cd3b155a6ac",
+        "document-d1a572f1ca1dc545",
+        "document-f0ac9b5c8b986ea2"
+      ],
+      "evidenceSetId": "evidence-document-semantic-719ad7123f9b3ae0"
+    },
+    {
+      "reviewUnitId": "semantic-7871d3941bf461df",
+      "status": "blocked",
+      "reason": "Microsoft.Network.FirewallPolicyKubeSelectorGroup.name: Cannot establish documentation ownership; unresolved generated or augmented @doc is unsupported. Microsoft.Network: Cannot establish a supported named declaration context for this @doc.",
+      "documentIds": [
+        "document-112e4fea1a5cbc7c",
+        "document-2387c82236344f49",
+        "document-3ac0f3fddc2f755e",
+        "document-51e11c0092c5ca6d",
+        "document-894f73ee3ecf7581",
+        "document-8e6b4c5fe4f2040a"
+      ],
+      "evidenceSetId": "evidence-document-semantic-7871d3941bf461df"
+    },
+    {
+      "reviewUnitId": "semantic-9e1ae8c664f60144",
+      "status": "blocked",
+      "reason": "Microsoft.Network: Cannot establish a supported named declaration context for this @doc.",
+      "documentIds": [
+        "document-0c467a811ce66c62",
+        "document-1045ae7fb2404b4e",
+        "document-1083e499a473ce5e",
+        "document-1090bcb5dfc62dfb",
+        "document-14f801ae7e8d3d13",
+        "document-151754b484c7ccb4",
+        "document-15719144351f0469",
+        "document-170503eeea14bbd0",
+        "document-190dc2ddb2029921",
+        "document-1997811e65a4ffd7",
+        "document-1a7c85bff9ed0155",
+        "document-2409321ab6ccf3a2",
+        "document-2409d2f9960dc3f7",
+        "document-2f73a81c33a3d912",
+        "document-31170512df58288a",
+        "document-32bcd3d12149fb3d",
+        "document-32d3478b2ed45c66",
+        "document-32f2b48dc4f7c213",
+        "document-375ff507e46baf10",
+        "document-449d8258aa560489",
+        "document-4ae4163964fef768",
+        "document-4bfcdd74cfd9db9c",
+        "document-4c7d1d03a5119e28",
+        "document-4d42ed6770bc9928",
+        "document-53f7216254674db5",
+        "document-56f90e5b7831903b",
+        "document-57217b5938a0710f",
+        "document-5950440a63800828",
+        "document-5a86e2400b4fa21e",
+        "document-615176c57a14cc29",
+        "document-651d933b2197b122",
+        "document-6746cfc3926d3bb8",
+        "document-6c1e17ff618de5c6",
+        "document-7685b243a65bd57a",
+        "document-792ab2c4996224de",
+        "document-7971010e15e003d2",
+        "document-7b202986d578c12a",
+        "document-7b3d3fa5c9e096d6",
+        "document-7cb8a94f3b0be79c",
+        "document-7cce6d4a0a8d8d46",
+        "document-7e032198d513fad1",
+        "document-82098dfe0c914e0d",
+        "document-853382dc3dd3f833",
+        "document-8b9d56bc14d3e301",
+        "document-8f6df0d78280d29e",
+        "document-9543ab39d90799d9",
+        "document-95594cad58b85651",
+        "document-99e69ea63c4535a7",
+        "document-9b025f4595f9630d",
+        "document-9e37e28bb76c013d",
+        "document-a0291e6988210002",
+        "document-a1bc45102874d9da",
+        "document-a7562d421bad8b11",
+        "document-aa7d5b63be7befb8",
+        "document-acc40ecc242171d2",
+        "document-aff7bbcabdbf9d34",
+        "document-b1d6ab4742f336df",
+        "document-b5653b00b2f1c862",
+        "document-baf362643231ee74",
+        "document-bb7463b019724e80",
+        "document-bd3a82e88a78cecc",
+        "document-c33d5e110c5778eb",
+        "document-cad594e8d5230fa2",
+        "document-cc53bf0ff154e652",
+        "document-ce5d322a4d7e1234",
+        "document-d03b110874768419",
+        "document-d49185c1becf272f",
+        "document-dc8a3079b0f9c737",
+        "document-df0ea9c3080666b6",
+        "document-e331c4ec04169182",
+        "document-e424f482a7f9b6ee",
+        "document-e79db800b22617c0",
+        "document-e8967ebb265a1b9a",
+        "document-eae085b2868db6ca",
+        "document-eae1c6259a841597",
+        "document-edba8c1259d6a763",
+        "document-f0172d459d4415dc",
+        "document-f27d062c5b93f781",
+        "document-f89effe26fa1162f",
+        "document-fa01273841e84f3e",
+        "document-fd10c24b81946e13",
+        "document-fe7284511d27ab53"
+      ],
+      "evidenceSetId": "evidence-document-semantic-9e1ae8c664f60144"
+    },
+    {
+      "reviewUnitId": "semantic-a5f89c525f92f8f5",
+      "status": "blocked",
+      "reason": "Microsoft.Network.ExpressRouteLag.name: Cannot establish documentation ownership; unresolved generated or augmented @doc is unsupported. Microsoft.Network.ExpressRouteLag.properties: Cannot establish documentation ownership; unresolved generated or augmented @doc is unsupported. Microsoft.Network: Cannot establish a supported named declaration context for this @doc.",
+      "documentIds": [
+        "document-00940c132b0a890e",
+        "document-06bc3e536d7dc6d7",
+        "document-088d5da86333da46",
+        "document-0f622194511a5867",
+        "document-1125d547b24da612",
+        "document-1471ad6fc5501155",
+        "document-1617424933e4c96f",
+        "document-1967e7f447c60750",
+        "document-1b42cd82af6afc51",
+        "document-1eb116b8bb979772",
+        "document-22ce73bb7c419261",
+        "document-253d5e5f1848340c",
+        "document-28d23119651f213c",
+        "document-2e41536012fb07fb",
+        "document-2fdadad5d3f5dcdb",
+        "document-363129edaee22e42",
+        "document-36537a6844346386",
+        "document-39f9a9c07f4f69a4",
+        "document-3c4ee224c10b5ad7",
+        "document-3c5bbe97f1ef7dc1",
+        "document-4c02dd54115ea7b3",
+        "document-4e8d4bb8311985df",
+        "document-4e96446a13484e1f",
+        "document-555f451959038b6d",
+        "document-55c7cf3ed5041879",
+        "document-593e96be30279cf3",
+        "document-5bbf512124d3cafe",
+        "document-5c4d43b1257fa6b5",
+        "document-5d2ee59a882e2dec",
+        "document-5f1e84ede6540ddc",
+        "document-6330a08edf26e12f",
+        "document-6cb3e864ab73629a",
+        "document-6f582adf66d29bb1",
+        "document-751ba203314e0c66",
+        "document-751d622225097108",
+        "document-75f639afef1fb907",
+        "document-77fb77b38eea8200",
+        "document-7a837929e83832d6",
+        "document-7c7009ed1ba2f941",
+        "document-7ea3d12ff8c5c9ea",
+        "document-7ed257c52efc6999",
+        "document-81ce802e01625eff",
+        "document-84618159f8fb336f",
+        "document-848e32d688ffa403",
+        "document-856b9d1de6097120",
+        "document-86723d1ee6597813",
+        "document-8847bd515fe71204",
+        "document-89e2a2881f430dee",
+        "document-89f61554f1116a08",
+        "document-8b17ff65be3b5115",
+        "document-8c48b1a271cd0351",
+        "document-8e0460d5175fdcfc",
+        "document-902c7fa88b20f38f",
+        "document-9140d1592ce24bd8",
+        "document-923129b8130eb72d",
+        "document-94c0882656c258f2",
+        "document-9712ad7eea4c29b6",
+        "document-995a7f4b21688380",
+        "document-9eb5edf8510ec191",
+        "document-a0c205c5044329ad",
+        "document-a14e1f62bb5a0f34",
+        "document-a9a82fe67318d0ee",
+        "document-ad7b8401812a1272",
+        "document-b269a93a1d3285a9",
+        "document-b2c1c671066a0be4",
+        "document-b400975290984a29",
+        "document-b4577c96a3088f0b",
+        "document-b92339c42f4365e7",
+        "document-baf194554a82d199",
+        "document-bb5add881d1e3a12",
+        "document-bd5c444adfcd26e0",
+        "document-bd8f7d55d5727701",
+        "document-bf73df3794e8aabb",
+        "document-c2a4a83fa2559577",
+        "document-c38ee0e1ab29326d",
+        "document-c4a94775c34e2668",
+        "document-cc0216ca107cf574",
+        "document-d4a5907d27e6c452",
+        "document-d57a96fc41114c0e",
+        "document-d76c07eadea5d058",
+        "document-db0c598da5deecbf",
+        "document-dba40806b7f1a6ec",
+        "document-dbd0e8227643cf91",
+        "document-dd50029198b94e5b",
+        "document-dfcca3b62e271684",
+        "document-dfedd410ba6a50e0",
+        "document-e454a5ca1a3e868e",
+        "document-e90801085142493a",
+        "document-ebf2324fb3a4877f",
+        "document-ee3a4ba3474845cf",
+        "document-ef8bde3e616030d9",
+        "document-f39aebbef2477512",
+        "document-f6adec82ed207361",
+        "document-f8cabea8ae774a44",
+        "document-fd9cb8b987c10388",
+        "document-feaed8b4b3cea18b"
+      ],
+      "inheritedDocumentCount": 3,
+      "evidenceSetId": "evidence-document-semantic-a5f89c525f92f8f5"
+    },
+    {
+      "reviewUnitId": "semantic-ba5c64982aa9eea2",
+      "status": "blocked",
+      "reason": "Microsoft.Network.AddressPrefixSet.name: Cannot establish documentation ownership; unresolved generated or augmented @doc is unsupported. Microsoft.Network.AddressPrefixSet.properties: Cannot establish documentation ownership; unresolved generated or augmented @doc is unsupported. Microsoft.Network: Cannot establish a supported named declaration context for this @doc.",
+      "documentIds": [
+        "document-212bc411e6b1fde7",
+        "document-29cedf8b02001870",
+        "document-3d3345da035ea8ba",
+        "document-6244cfb17c119eca",
+        "document-631e86dac2a92e2e",
+        "document-9f45e196ac4eb663",
+        "document-d16d688b6e6555b2",
+        "document-f7ec1361082f9fe7"
+      ],
+      "evidenceSetId": "evidence-document-semantic-ba5c64982aa9eea2"
+    },
+    {
+      "reviewUnitId": "semantic-c407807c969d3377",
+      "status": "blocked",
+      "reason": "Compiler @doc context unavailable for specification/network/resource-manager/Microsoft.Network/Network/client.tsp: Changed source was not available in a successfully compiled TypeSpec program. Changed source was not available in a successfully compiled TypeSpec program. Microsoft.Network.FirstPartyServiceTag.name: Cannot establish documentation ownership; unresolved generated or augmented @doc is unsupported. Microsoft.Network.FirstPartyServiceTag.properties: Cannot establish documentation ownership; unresolved generated or augmented @doc is unsupported. Microsoft.Network: Cannot establish a supported named declaration context for this @doc.",
+      "documentIds": [
+        "document-14c701b00d0554d8",
+        "document-186d6b7a1fec2e90",
+        "document-18bf31b487ddb76b",
+        "document-247db0a57667f233",
+        "document-3242d89cf7cd8e1b",
+        "document-3eb2912c8e26b712",
+        "document-40eda1aa4f6bc68c",
+        "document-4538e6b3a26cdfe0",
+        "document-55fb2d616bbc4ba6",
+        "document-8aa436436ec3cf9e",
+        "document-98f6325503bdee61",
+        "document-9a7dc2b6b8f62c89",
+        "document-bd56f0d40510dc71",
+        "document-db07fb922d535062",
+        "document-ec2ae3b2e0b8c118"
+      ],
+      "evidenceSetId": "evidence-document-semantic-c407807c969d3377"
+    }
+  ],
+  "evidenceSets": {
+    "evidence-document-semantic-19b6a61a83d34134": {
+      "sourceChangeIds": [
+        "source-6d14f4cf9fbf54b4"
+      ],
+      "hunkIds": [
+        "hunk-862f9c0645edcb6d",
+        "hunk-938f0f18975ca25a",
+        "hunk-fc626dc9225462d6"
+      ],
+      "declarationCount": 8,
+      "evidenceFactIds": [],
+      "evidenceRef": {
+        "artifact": "dimensions/document-quality-input.json",
+        "id": "semantic-19b6a61a83d34134"
+      }
+    },
+    "evidence-document-semantic-23cf6865c336a2a8": {
+      "sourceChangeIds": [
+        "source-456cc6472b40ed53",
+        "source-6acbfbc9de80c8e3",
+        "source-ba7c30ed09e79afd",
+        "source-f973a11878a8f86a"
+      ],
+      "hunkIds": [
+        "hunk-08740ffc6091e8b6",
+        "hunk-20e387e9aa583821",
+        "hunk-2889fc2c52971c8a",
+        "hunk-2cd6cbc886218ec2",
+        "hunk-334f46d1b1047b28",
+        "hunk-3851b39df6ce2107",
+        "hunk-3c5424ce72f94851",
+        "hunk-4109b7ce34a5007b",
+        "hunk-444a743825a3a99f",
+        "hunk-559f4cc1a2b8a8cc",
+        "hunk-55fbbb4a7c5eacb6",
+        "hunk-6b1977f093ce60c5",
+        "hunk-6ee1d91e7ea61826",
+        "hunk-6eef4a91413db0ae",
+        "hunk-75c136d12f954e66",
+        "hunk-77038a4cb6740bcb",
+        "hunk-8210da1e3dd4688d",
+        "hunk-85d9409a35cdb471",
+        "hunk-8d6550629a1c68da",
+        "hunk-91e4527d621c93d6",
+        "hunk-964243b560ed44c2",
+        "hunk-9a802311afa29b26",
+        "hunk-9ad3f13a4aebad90",
+        "hunk-a792470dd0369c14",
+        "hunk-b3db50a238f72c5f",
+        "hunk-bd49bcd809e8d64c",
+        "hunk-c2c5f53cff8833df",
+        "hunk-c6d98fdd08697933",
+        "hunk-d7166c34ff283599",
+        "hunk-dcd0cea3c80d7ac6",
+        "hunk-ead102f0ef5ef6d0",
+        "hunk-ebced97db39a55c4",
+        "hunk-ed24906fed467bc8",
+        "hunk-f491e1bb8b69037a"
+      ],
+      "declarationCount": 523,
+      "evidenceFactIds": [],
+      "evidenceRef": {
+        "artifact": "dimensions/document-quality-input.json",
+        "id": "semantic-23cf6865c336a2a8"
+      }
+    },
+    "evidence-document-semantic-39306d50134f94c0": {
+      "sourceChangeIds": [
+        "source-f2303fdcec438853"
+      ],
+      "hunkIds": [
+        "hunk-06222f498b3e0785",
+        "hunk-13b627dd0b435203",
+        "hunk-221947686ed72b6d",
+        "hunk-80499bc1d4c6cd9e",
+        "hunk-8733f23cbdde717e",
+        "hunk-ac0ac132410d40ec",
+        "hunk-efe9851850671816"
+      ],
+      "declarationCount": 19,
+      "evidenceFactIds": [],
+      "evidenceRef": {
+        "artifact": "dimensions/document-quality-input.json",
+        "id": "semantic-39306d50134f94c0"
+      }
+    },
+    "evidence-document-semantic-4ebd789676a2e275": {
+      "sourceChangeIds": [
+        "source-48cb9e7079aa971b"
+      ],
+      "hunkIds": [
+        "hunk-53e18c003cba1ed1",
+        "hunk-a57d17be8dc6c16b",
+        "hunk-cec0c4cb5c9b3fc3"
+      ],
+      "declarationCount": 5,
+      "evidenceFactIds": [],
+      "evidenceRef": {
+        "artifact": "dimensions/document-quality-input.json",
+        "id": "semantic-4ebd789676a2e275"
+      }
+    },
+    "evidence-document-semantic-6c82b99519c5512d": {
+      "sourceChangeIds": [
+        "source-69d4683c95a9cd15"
+      ],
+      "hunkIds": [
+        "hunk-13a176a05bad499a",
+        "hunk-92d31f11bdc62b14"
+      ],
+      "declarationCount": 7,
+      "evidenceFactIds": [],
+      "evidenceRef": {
+        "artifact": "dimensions/document-quality-input.json",
+        "id": "semantic-6c82b99519c5512d"
+      }
+    },
+    "evidence-document-semantic-719ad7123f9b3ae0": {
+      "sourceChangeIds": [
+        "source-456cc6472b40ed53",
+        "source-e2afde3ae87f8480"
+      ],
+      "hunkIds": [
+        "hunk-0563412519fa2a2d",
+        "hunk-191ad5175402175e",
+        "hunk-375376fece3ba0aa",
+        "hunk-99326df3a7ada8ed",
+        "hunk-adf6a4ddcebfb074"
+      ],
+      "declarationCount": 455,
+      "evidenceFactIds": [],
+      "evidenceRef": {
+        "artifact": "dimensions/document-quality-input.json",
+        "id": "semantic-719ad7123f9b3ae0"
+      }
+    },
+    "evidence-document-semantic-7871d3941bf461df": {
+      "sourceChangeIds": [
+        "source-de24dd18ff280c17"
+      ],
+      "hunkIds": [
+        "hunk-b7a85b7c2ad59798"
+      ],
+      "declarationCount": 10,
+      "evidenceFactIds": [],
+      "evidenceRef": {
+        "artifact": "dimensions/document-quality-input.json",
+        "id": "semantic-7871d3941bf461df"
+      }
+    },
+    "evidence-document-semantic-9e1ae8c664f60144": {
+      "sourceChangeIds": [
+        "source-3edd0143deb20670",
+        "source-456cc6472b40ed53"
+      ],
+      "hunkIds": [
+        "hunk-4d79960f6c4a3225",
+        "hunk-b905c376b2c72e63",
+        "hunk-c611b318562fe1f1",
+        "hunk-cd128a4f615b37e8",
+        "hunk-d6687b7ce6b85fdc"
+      ],
+      "declarationCount": 195,
+      "evidenceFactIds": [],
+      "evidenceRef": {
+        "artifact": "dimensions/document-quality-input.json",
+        "id": "semantic-9e1ae8c664f60144"
+      }
+    },
+    "evidence-document-semantic-a5f89c525f92f8f5": {
+      "sourceChangeIds": [
+        "source-456cc6472b40ed53",
+        "source-d8aff88aab48e03c",
+        "source-f973a11878a8f86a"
+      ],
+      "hunkIds": [
+        "hunk-3a4127fb31b39dc3",
+        "hunk-769469c094a29a27",
+        "hunk-afc0fb2c043e83af",
+        "hunk-d10686c33535cc65",
+        "hunk-d3fdccad3d7c155a"
+      ],
+      "declarationCount": 318,
+      "evidenceFactIds": [],
+      "evidenceRef": {
+        "artifact": "dimensions/document-quality-input.json",
+        "id": "semantic-a5f89c525f92f8f5"
+      }
+    },
+    "evidence-document-semantic-ba5c64982aa9eea2": {
+      "sourceChangeIds": [
+        "source-c76c29455065794d",
+        "source-f973a11878a8f86a"
+      ],
+      "hunkIds": [
+        "hunk-3a7fc0cfb0205207",
+        "hunk-c0b3b34af9f839ad"
+      ],
+      "declarationCount": 12,
+      "evidenceFactIds": [],
+      "evidenceRef": {
+        "artifact": "dimensions/document-quality-input.json",
+        "id": "semantic-ba5c64982aa9eea2"
+      }
+    },
+    "evidence-document-semantic-c407807c969d3377": {
+      "sourceChangeIds": [
+        "source-167aa4146b14fa79",
+        "source-40d771c890348659",
+        "source-6f7f225b89dc0db8",
+        "source-f2303fdcec438853"
+      ],
+      "hunkIds": [
+        "hunk-0c1af52e167bbeac",
+        "hunk-4589a86b8e352a6f",
+        "hunk-e06663d18b23ee98",
+        "hunk-f5712742965be8f3"
+      ],
+      "declarationCount": 19,
+      "evidenceFactIds": [],
+      "evidenceRef": {
+        "artifact": "dimensions/document-quality-input.json",
+        "id": "semantic-c407807c969d3377"
+      }
+    }
+  }
+}

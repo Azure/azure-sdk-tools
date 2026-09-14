@@ -8,7 +8,7 @@ import { analyzeDownstreamBreaking } from "./analyze-downstream-breaking.mjs";
 import { validateAssessment } from "./validate-assessment.mjs";
 import { renderAssessmentHtml } from "./render-assessment-html.mjs";
 import { buildComplianceSearchRequests } from "./compliance-search-request.mjs";
-import { buildDocumentQualityInput } from "./document-quality-input.mjs";
+import { buildDocumentQualityInput, DOCUMENT_QUALITY_CRITERION } from "./document-quality-input.mjs";
 import { stableId } from "./stable-id.mjs";
 
 const BUDGET_TIERS = [
@@ -1303,6 +1303,7 @@ export function buildModelInput({
       status: unit.status,
       ...(unit.reason ? { reason: unit.reason } : {}),
       documentIds: unit.documents.map((document) => document.id),
+      ...(unit.inheritedDocumentIds?.length ? { inheritedDocumentCount: unit.inheritedDocumentIds.length } : {}),
       qualifiedNames: bounded(
         unit.documents.map((document) => document.qualifiedName),
         QUALIFIED_NAME_LIMIT,
@@ -1369,6 +1370,10 @@ export function buildModelInput({
       downstream.status === "ready" ? (downstream.rootCauses ?? []) : [],
     complianceSearchRequests,
     documentQualityReviewUnits,
+    ...(documentation.schemaVersion >= 2 ? {
+      documentQualityAssessmentVersion: documentation.schemaVersion,
+      documentQualityCriterion: DOCUMENT_QUALITY_CRITERION,
+    } : {}),
     inferenceRequests,
     blockers: [
       ...manifest.blockers,

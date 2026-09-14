@@ -46,6 +46,6 @@ remain `not-assessed`; do not turn missing evidence into a pass. Azure
 Guidelines follows the fetched-document evidence contract. A completed search
 with no governing document is assessed as `no-applicable-guidance`, not blocked
 or `not-assessed`. Document Quality and Agent Friendliness follows the separate
-[source-only Correctness and Meaning checks](document-quality.md); derive its
+[source-only description-versus-code criterion](document-quality.md); derive its
 status from confirmed findings and explicit document/check coverage, without
 severity or runtime-agent claims.

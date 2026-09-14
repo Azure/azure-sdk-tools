@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-11T04:09:58.823Z",
+  "generatedAt": "2026-09-11T10:30:09.891Z",
   "title": "TypeSpec assessment: specification/elastic/Elastic.Management",
   "repository": {
     "root": "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\.workspaces\\44454\\head",
@@ -175,7 +175,13 @@
                   ]
                 }
               ],
-              "declarations": []
+              "declarations": [],
+              "documentEvidence": {
+                "schemaVersion": 3,
+                "status": "ready",
+                "blockers": [],
+                "documents": []
+              }
             }
           ],
           "relatedFindings": {
@@ -292,7 +298,13 @@
                   ]
                 }
               ],
-              "declarations": []
+              "declarations": [],
+              "documentEvidence": {
+                "schemaVersion": 3,
+                "status": "ready",
+                "blockers": [],
+                "documents": []
+              }
             }
           ],
           "relatedFindings": {
@@ -1458,8 +1470,41 @@
       "blockers": []
     },
     "documentQuality": {
-      "status": "not-assessed",
-      "summary": "Document Quality and Agent Friendliness is not assessed."
+      "assessmentVersion": 3,
+      "status": "not-applicable",
+      "summary": "No applicable current source @doc declarations in the changed semantic scope.",
+      "coverage": {
+        "semanticIntentCount": 2,
+        "assessedIntentCount": 2,
+        "documentCount": 0,
+        "assessedDocumentCount": 0,
+        "checkCount": 0,
+        "assessedCheckCount": 0,
+        "inheritedDocumentCount": 0,
+        "unassessedIntentIds": [],
+        "notApplicableIntentIds": [
+          "semantic-3d8a84ab0984f292",
+          "semantic-a3ce2a2ef2e5fba3"
+        ]
+      },
+      "intentAssessments": [
+        {
+          "reviewUnitId": "semantic-3d8a84ab0984f292",
+          "status": "not-applicable",
+          "reason": "No changed, associated nonempty @doc with a current target; absent, deleted, empty, or whitespace-only @doc is outside documentation coverage scope.",
+          "documents": [],
+          "checks": []
+        },
+        {
+          "reviewUnitId": "semantic-a3ce2a2ef2e5fba3",
+          "status": "not-applicable",
+          "reason": "No changed, associated nonempty @doc with a current target; absent, deleted, empty, or whitespace-only @doc is outside documentation coverage scope.",
+          "documents": [],
+          "checks": []
+        }
+      ],
+      "findings": [],
+      "blockers": []
     }
   },
   "changedFiles": [
@@ -1670,7 +1715,15 @@
     "inference": "inference.json",
     "complianceSearchEvidence": "compliance-search-evidence.json",
     "judgment": "assessment-judgment.json",
-    "preparationManifest": "preparation-manifest.json"
+    "preparationManifest": "preparation-manifest.json",
+    "documentQualityReplay": {
+      "preparedAt": "2026-09-11T10:12:29.278Z",
+      "sourceAssessmentHash": "f652b630f20f5940d7583ebb9d01335053ec11b2dad19e85ac74464aab5e6d64",
+      "sourceIndex": "documentation-replay/source/source-index.json",
+      "modelInput": "documentation-replay/model-input.json",
+      "input": "documentation-replay/dimensions/document-quality-input.json",
+      "judgment": "documentation-replay/document-quality-judgment.json"
+    }
   },
   "inputAccounting": {
     "budgetTier": "small",

@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 3,
+  "status": "ready",
+  "blockers": [],
+  "reviewUnits": [
+    {
+      "reviewUnitId": "semantic-1e7d20fcf8db2c04",
+      "status": "ready",
+      "sourceChangeIds": [
+        "source-dd5d3368a3071e94"
+      ],
+      "hunkIds": [
+        "hunk-fb0a715dd0f0909b"
+      ],
+      "declarationIds": [
+        "declaration-0219a32726f5ea2e",
+        "declaration-6ab6c44b437678cb",
+        "declaration-d4d7348e90a9bf1c",
+        "declaration-e54c2e2399e5428a"
+      ],
+      "documents": [
+        {
+          "id": "document-0d592cacea2ab4db",
+          "sourceChangeId": "source-dd5d3368a3071e94",
+          "qualifiedName": "Microsoft.CognitiveServices.ManagedNetworkSettingsPropertiesBasicResources.post",
+          "kind": "operation",
+          "before": {
+            "doc": "The POST API for updating the outbound rules of the managed network associated with the cognitive services account.",
+            "declaration": "/**\n   * The POST API for updating the outbound rules of the managed network associated with the cognitive services account.\n   */\n  @tag(\"ManagedNetwork\")\n  @action(\"batchOutboundRules\")\n  post is ArmResourceActionAsync<\n    ManagedNetworkSettingsPropertiesBasicResource,\n    Request = ManagedNetworkSettingsBasicResource,\n    Response = OutboundRuleListResult\n  >",
+            "source": {
+              "path": "specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp",
+              "revision": "base",
+              "startLine": 79,
+              "endLine": 88
+            }
+          },
+          "after": {
+            "doc": "The POST API for updating the outbound rules of the managed network associated with the cognitive services account.",
+            "declaration": "/**\n   * The POST API for updating the outbound rules of the managed network associated with the cognitive services account.\n   */\n  @tag(\"ManagedNetwork\")\n  @action(\"batchOutboundRules\")\n  @list\n  post is ArmResourceActionAsync<\n    ManagedNetworkSettingsPropertiesBasicResource,\n    Request = ManagedNetworkSettingsBasicResource,\n    Response = OutboundRuleListResult\n  >",
+            "source": {
+              "path": "specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp",
+              "revision": "current",
+              "startLine": 79,
+              "endLine": 89
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

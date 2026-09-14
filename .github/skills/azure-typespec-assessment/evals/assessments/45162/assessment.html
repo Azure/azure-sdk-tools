@@ -10,6 +10,7 @@
 .compliance-finding-group>summary{flex-wrap:wrap}.compliance-affected-intents{display:grid;gap:12px}.compliance-affected-intent{margin:0;padding:14px 16px;border:1px solid var(--line);border-radius:10px}.compliance-affected-intent h4{margin:0 0 8px}.compliance-affected-intent h5{margin:14px 0 6px}
 .intent-finding-badge{font:inherit;font-size:13px;cursor:pointer}.intent-impact-trigger{position:relative}.intent-impact-popover{position:absolute;z-index:20;top:calc(100% + 8px);right:0;display:none;width:min(480px,88vw);overflow:hidden;border:1px solid var(--line);border-radius:10px;background:var(--panel);box-shadow:0 14px 34px rgb(31 42 68 / 18%)}.intent-impact-trigger.open .intent-impact-popover{display:grid}.intent-impact-popover a{display:grid;grid-template-columns:minmax(240px,1fr) auto;gap:12px;align-items:center;padding:12px 14px;border-top:1px solid var(--line);color:var(--text)!important;text-decoration:none}.intent-impact-popover a:first-child{border-top:0}.intent-impact-popover a:hover,.intent-impact-popover a:focus-visible{background:color-mix(in srgb,var(--panel) 92%,var(--accent))}.intent-impact-popover a span{color:var(--muted);font-size:13px}.intent h3,.representative-example>summary{font-size:17px;font-weight:750;line-height:1.35}.impact-highlight{outline:3px solid #ef4444;outline-offset:3px}
 .affected-methods{margin:20px 0}.affected-methods>summary{font-size:18px}.affected-method-list{display:grid;gap:7px;margin-top:10px}.affected-method{display:grid;grid-template-columns:minmax(180px,.6fr) minmax(280px,1.4fr);align-items:center;gap:12px;padding:9px 12px;border:1px solid var(--line);border-radius:8px}@media(max-width:700px){.affected-method{grid-template-columns:1fr}}
+.summary-value{white-space:nowrap}
 .report-section-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin:0 0 14px}
 .report-section-head>div:first-child{min-width:0;flex:1}
 .report-section-head h2{margin:0}
@@ -60,6 +61,37 @@
 .report-guideline-section{min-width:0;overflow-wrap:anywhere}
 .report-guideline-section h3{margin:0 0 10px;font-size:16px}
 .report-guideline-section+.report-guideline-section{margin-top:20px;padding-top:20px;border-top:1px solid var(--line)}
+.report-document-snapshots{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.report-document-snapshots.single-snapshot{grid-template-columns:minmax(0,1fr)}
+.report-document-context{min-width:0}
+.report-document-related{margin-top:20px;padding-top:14px;border-top:1px solid var(--line)}
+.report-document-related-type>h5{font-size:13px;margin:15px 0 8px;overflow-wrap:anywhere}
+.report-document-related pre{max-height:400px;overflow:auto}
+.report-document-snapshot{min-width:0}
+.report-document-snapshot h4,.report-document-snapshot h5{margin:12px 0 6px}
+.document-quality-check pre{margin:0;padding:12px;border:1px solid var(--line);border-radius:8px;background:color-mix(in srgb,var(--panel) 94%,var(--accent));white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.5 ui-monospace,Consolas,monospace}
+.report-document-rationale{margin-top:20px;padding-top:16px;border-top:1px solid var(--line)}
+.report-document-rationale p{margin:5px 0 0}
+.document-quality-scope{margin-top:14px}
+.document-quality-intent-link{margin-bottom:12px}
+.document-quality-file{margin:10px 0;padding:12px;border:1px solid var(--line);border-radius:8px}
+.document-quality-file-count{font-weight:400;color:var(--muted)}
+.document-quality-list{max-height:300px;overflow:auto;margin-top:10px;overscroll-behavior:contain}
+.document-quality-row,.document-quality-document>summary{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:11px 4px;border-bottom:1px solid var(--line);font-size:13px}
+.document-quality-document>summary{cursor:pointer}
+.document-quality-document>summary:before{content:"+";color:var(--accent)}
+.document-quality-document[open]>summary:before{content:"-"}
+.document-quality-document>summary>span:first-of-type{flex:1}
+.document-quality-document>summary>span:first-child,.document-quality-row>a{min-width:0;overflow-wrap:anywhere}
+.document-quality-document>summary>.report-badge,.document-quality-row>.report-badge{flex:none}
+.document-quality-document-body{padding:12px}
+.document-quality-document-body h4{font-size:13px;margin:0 0 8px}
+.document-quality-document-body blockquote{margin:0 0 15px;padding:10px 14px;border-left:3px solid var(--accent);background:color-mix(in srgb,var(--panel) 94%,var(--accent));font-size:13px}
+.document-quality-source pre{white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.5 ui-monospace,Consolas,monospace}
+.report-badge.neutral{background:color-mix(in srgb,var(--panel) 85%,var(--muted));color:var(--muted)}
+.document-quality-neutral>summary{padding:12px 18px}
+.document-quality-neutral .report-card-title strong{font-size:13px}
+.document-quality-list:focus-visible,.document-quality-file>summary:focus-visible,.document-quality-document>summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .report-source{margin-bottom:16px}
 .report-source>summary,.report-subdetails>summary{cursor:pointer;color:var(--accent);font-size:13px;font-weight:700}
 .report-http{color:#075cab;font:800 12px ui-monospace,monospace}
@@ -75,6 +107,7 @@ body{overflow-wrap:anywhere}
 #appendix pre{white-space:pre-wrap;overflow-wrap:anywhere}
 #appendix table{display:block;overflow-x:auto}
 @media(max-width:760px){
+  .report-document-snapshots{grid-template-columns:1fr}
   .report-section-head{display:block}
   .report-section-meta{justify-content:flex-start;margin-top:8px}
   .report-card>summary{flex-wrap:wrap}
@@ -101,12 +134,12 @@ body{overflow-wrap:anywhere}
 <header class="hero"><div class="container"><div class="eyebrow">TypeSpec Assessment</div><h1>2 TypeSpec changes for ConfidentialLedger</h1>
 <p class="hero-meta">TypeSpec source diff: <code>5874aa28fcfbbddafa82b52c02f2622ed0862a8b</code> → <code>31a6e2baccd0c4f42d10e66df95c1706fc97cc25</code></p>
 <div class="summary-grid">
-<a class="summary-card" href="#rest-breaking"><div class="summary-value"><span class="pass">✓</span> Passed</div><div class="summary-label">Overall code quality</div><div class="summary-detail">REST, downstream, and Azure Guidelines</div></a>
-<a class="summary-card" href="#rest-breaking"><div class="summary-value"><span class="pass">✓</span> 0</div><div class="summary-label">REST breaking changes</div></a>
-<a class="summary-card" href="#downstream-breaking"><div class="summary-value"><span class="pass">✓</span> 0</div><div class="summary-label">Downstream breaking changes</div><div class="summary-detail">Generated SDK contract changes</div></a>
-<a class="summary-card" href="#azure-compliance"><div class="summary-value"><span class="pass">✓</span> 0</div><div class="summary-label">Azure Guidelines</div><div class="summary-detail">0 guideline issues<br>2/2 intents assessed</div></a>
-<a class="summary-card" href="#document-quality"><div class="summary-value"><span>i</span> Not assessed</div><div class="summary-label">Document Quality and Agent Friendliness</div><div class="summary-detail">Document Quality and Agent Friendliness is not assessed.</div></a>
-<a class="summary-card" href="#semantic-intents"><div class="summary-value"><span>i</span> 2</div><div class="summary-label">Semantic intents</div><div class="summary-detail">33 operations<br>0 Added, 2 Modified, 0 Removed</div></a>
+<a class="summary-card" href="#rest-breaking"><div class="summary-value"><span class="pass">✓</span> Pass</div><div class="summary-label">Overall code quality</div><div class="summary-detail">REST, downstream, Azure Guidelines, and Document Quality</div></a>
+<a class="summary-card" href="#rest-breaking"><div class="summary-value"><span class="pass">✓</span> Pass</div><div class="summary-label">REST breaking changes</div><div class="summary-detail">0 breaking changes</div></a>
+<a class="summary-card" href="#downstream-breaking"><div class="summary-value"><span class="pass">✓</span> Pass</div><div class="summary-label">Downstream breaking changes</div><div class="summary-detail">0 generated SDK contract changes</div></a>
+<a class="summary-card" href="#azure-compliance"><div class="summary-value"><span class="pass">✓</span> Pass</div><div class="summary-label">Azure Guidelines</div><div class="summary-detail">0 guideline issues<br>2/2 intents assessed</div></a>
+<a class="summary-card" href="#document-quality"><div class="summary-value"><span class="pass">✓</span> Pass</div><div class="summary-label">Document Quality and Agent Friendliness</div><div class="summary-detail">0 findings · 17/17 descriptions assessed · 2/2 intent scopes resolved</div></a>
+<a class="summary-card" href="#semantic-intents"><div class="summary-value"><span class="pass">✓</span> Pass</div><div class="summary-label">Semantic intents</div><div class="summary-detail">2 intents assessed · 33 operations<br>0 Added, 2 Modified, 0 Removed</div></a>
 </div></div></header>
 <details class="notice"><summary class="container"><span class="notice-title">Preview Notice</span><span class="notice-summary">The TypeSpec Assessment Assistant is in preview; official validation and review remain the source of truth.</span></summary>
 <div class="container notice-body"><p>The TypeSpec Assessment Assistant is currently in preview. Its goal is to help service developers build confidence earlier in the TypeSpec authoring workflow by providing contextual analysis, risk identification, and guidance on potential downstream impacts.</p>
@@ -115,7 +148,198 @@ body{overflow-wrap:anywhere}
 <section id="rest-breaking"><div class="report-section-head"><div><h2>REST breaking changes</h2><p>Operation impact and affected intents at a glance; expand for before/after evidence.</p></div><div class="report-section-meta"><span class="report-badge add">passed</span><span class="report-count">0 operations · 0 findings</span></div></div><div class="report-empty">No confirmed REST breaking changes.</div></section>
 <section id="downstream-breaking"><div class="report-section-head"><div><h2>Downstream breaking changes</h2><p>Method impact and affected intents at a glance; expand for before/after evidence.</p></div><div class="report-section-meta"><span class="report-badge add">passed</span><span class="report-count">0 mapped methods · 0 changed types</span></div></div><div class="report-empty">No downstream breaking changes detected.</div></section>
 <section id="azure-compliance"><div class="report-section-head"><div><h2>Azure Guidelines</h2><p>Findings and affected intents at a glance; expand for expected guidance and actual changes.</p></div><div class="report-section-meta"><span class="report-badge add">passed</span><span class="report-count">0 findings</span></div></div><p class="report-small">2 of 2 semantic intents assessed · 8 documents selected</p><div class="report-empty">No Azure Guidelines findings.</div></section>
-<section id="document-quality"><div class="report-section-head"><div><h2>Document Quality and Agent Friendliness</h2><p>Documentation assessment status.</p></div><div class="report-section-meta"><span class="report-badge unknown">not assessed</span></div></div><div class="report-empty">Document Quality and Agent Friendliness is not assessed.</div></section>
+<section id="document-quality"><div class="report-section-head"><div><h2>Document Quality and Agent Friendliness</h2><p>Does the @doc description clearly and accurately explain the associated TypeSpec code? Examples, external documentation, and agent execution are not assessed.</p></div><div class="report-section-meta"><span class="report-badge add">passed</span><span class="report-count">0 findings</span></div></div><p class="report-small">0 findings · 17/17 descriptions assessed · 2/2 intent scopes resolved</p><p class="report-small">All assessed descriptions clearly and accurately explain their associated TypeSpec code.</p><div class="document-quality-scope"><details class="report-card document-quality-passed-group" id="document-quality-passed-intents"><summary><div class="report-card-title"><strong>Passed intents (2)</strong><small>All reviewed descriptions passed. Expand to view these intents.</small></div><div class="report-badges"><span class="report-badge add">Passed</span></div></summary><div class="report-card-body"><details class="report-card document-quality-intent"><summary><div class="report-card-title"><strong>Add a preview ledger-write result contract</strong><small>11 local descriptions / 2 files</small></div><div class="report-badges"><span class="report-badge add">11 passed</span></div></summary><div class="report-card-body"><div class="document-quality-intent-link"><a class="report-link" href="#intent-semantic-14845e93054010a4">Add a preview ledger-write result contract</a></div><details class="report-subdetails document-quality-file"><summary title="specification/confidentialledger/data-plane/ConfidentialLedger/main.tsp">main.tsp <span class="document-quality-file-count">/ 2 descriptions</span></summary><div class="document-quality-list" role="region" aria-label="Descriptions in main.tsp" tabindex="0"><details class="document-quality-document"><summary><span title="ConfidentialLedger.Versions.v2026_07_31_preview">Versions.v2026_07_31_preview</span><span class="report-badge add">passed</span></summary><div class="document-quality-document-body"><h4>Current local description</h4><blockquote>The 2026-07-31-preview API version.</blockquote><details class="report-subdetails document-quality-source"><summary>View TypeSpec and full source path</summary><p class="sources"><code>specification/confidentialledger/data-plane/ConfidentialLedger/main.tsp:48-52</code></p><pre><code>/**
+   * The 2026-07-31-preview API version.
+   */
+  @Azure.Core.previewVersion
+  v2026_07_31_preview: &quot;2026-07-31-preview&quot;</code></pre></details></div></details><details class="document-quality-document"><summary><span title="ConfidentialLedger.Versions">Versions</span><span class="report-badge add">passed</span></summary><div class="document-quality-document-body"><h4>Current local description</h4><blockquote>The available API versions.</blockquote><details class="report-subdetails document-quality-source"><summary>View TypeSpec and full source path</summary><p class="sources"><code>specification/confidentialledger/data-plane/ConfidentialLedger/main.tsp:34-53</code></p><pre><code>/**
+ * The available API versions.
+ */
+enum Versions {
+  /**
+   * The 2024-12-09-preview API version.
+   */
+  v2024_12_09_preview: &quot;2024-12-09-preview&quot;,
+
+  /**
+   * The 2026-02-23 API version.
+   */
+  v2026_02_23: &quot;2026-02-23&quot;,
+
+  /**
+   * The 2026-07-31-preview API version.
+   */
+  @Azure.Core.previewVersion
+  v2026_07_31_preview: &quot;2026-07-31-preview&quot;,
+}</code></pre></details></div></details></div></details><details class="report-subdetails document-quality-file"><summary title="specification/confidentialledger/data-plane/ConfidentialLedger/models.tsp">models.tsp <span class="document-quality-file-count">/ 9 descriptions</span></summary><div class="document-quality-list" role="region" aria-label="Descriptions in models.tsp" tabindex="0"><details class="document-quality-document"><summary><span title="ConfidentialLedger.LedgerWriteResultBeforeV20260731Preview">LedgerWriteResultBeforeV20260731Preview</span><span class="report-badge add">passed</span></summary><div class="document-quality-document-body"><h4>Current local description</h4><blockquote>Returned as a result of a write to the Confidential Ledger, the transaction id
+in the response indicates when the write will become durable.</blockquote><details class="report-subdetails document-quality-source"><summary>View TypeSpec and full source path</summary><p class="sources"><code>specification/confidentialledger/data-plane/ConfidentialLedger/models.tsp:427-440</code></p><pre><code>/**
+ * Returned as a result of a write to the Confidential Ledger, the transaction id
+ * in the response indicates when the write will become durable.
+ */
+@removed(Versions.v2026_07_31_preview)
+@renamedFrom(Versions.v2026_07_31_preview, &quot;LedgerWriteResult&quot;)
+model LedgerWriteResultBeforeV20260731Preview {
+  ...CCFTransactionIdHeader;
+
+  /**
+   * The collection identifier of the ledger entry.
+   */
+  collectionId: string;
+}</code></pre></details></div></details><details class="document-quality-document"><summary><span title="ConfidentialLedger.LedgerWriteResult.state">LedgerWriteResult.state</span><span class="report-badge add">passed</span></summary><div class="document-quality-document-body"><h4>Current local description</h4><blockquote>State of the write transaction.</blockquote><details class="report-subdetails document-quality-source"><summary>View TypeSpec and full source path</summary><p class="sources"><code>specification/confidentialledger/data-plane/ConfidentialLedger/models.tsp:471-474</code></p><pre><code>/**
+   * State of the write transaction.
+   */
+  state: TransactionState</code></pre></details></div></details><details class="document-quality-document"><summary><span title="ConfidentialLedger.TransactionRolledBackErrorResponse.statusCode">TransactionRolledBackErrorResponse.statusCode</span><span class="report-badge add">passed</span></summary><div class="document-quality-document-body"><h4>Current local description</h4><blockquote>The HTTP status code.</blockquote><details class="report-subdetails document-quality-source"><summary>View TypeSpec and full source path</summary><p class="sources"><code>specification/confidentialledger/data-plane/ConfidentialLedger/models.tsp:488-492</code></p><pre><code>/**
+   * The HTTP status code.
+   */
+  @statusCode
+  statusCode: 503</code></pre></details></div></details><details class="document-quality-document"><summary><span title="ConfidentialLedger.LedgerWriteResultWithReceipt.body">LedgerWriteResultWithReceipt.body</span><span class="report-badge add">passed</span></summary><div class="document-quality-document-body"><h4>Current local description</h4><blockquote>The response body.</blockquote><details class="report-subdetails document-quality-source"><summary>View TypeSpec and full source path</summary><p class="sources"><code>specification/confidentialledger/data-plane/ConfidentialLedger/models.tsp:449-453</code></p><pre><code>/**
+   * The response body.
+   */
+  @bodyRoot
+  body: LedgerWriteResult</code></pre></details></div></details><details class="document-quality-document"><summary><span title="ConfidentialLedger.TransactionRolledBackErrorResponse">TransactionRolledBackErrorResponse</span><span class="report-badge add">passed</span></summary><div class="document-quality-document-body"><h4>Current local description</h4><blockquote>The transaction was rolled back before it could be committed.</blockquote><details class="report-subdetails document-quality-source"><summary>View TypeSpec and full source path</summary><p class="sources"><code>specification/confidentialledger/data-plane/ConfidentialLedger/models.tsp:482-495</code></p><pre><code>/**
+ * The transaction was rolled back before it could be committed.
+ */
+@added(Versions.v2026_07_31_preview)
+@error
+model TransactionRolledBackErrorResponse {
+  /**
+   * The HTTP status code.
+   */
+  @statusCode
+  statusCode: 503;
+
+  ...ConfidentialLedgerCommon.ConfidentialLedgerError;
+}</code></pre></details></div></details><details class="document-quality-document"><summary><span title="ConfidentialLedger.LedgerWriteResult.applicationClaims">LedgerWriteResult.applicationClaims</span><span class="report-badge add">passed</span></summary><div class="document-quality-document-body"><h4>Current local description</h4><blockquote>The list of application claims.</blockquote><details class="report-subdetails document-quality-source"><summary>View TypeSpec and full source path</summary><p class="sources"><code>specification/confidentialledger/data-plane/ConfidentialLedger/models.tsp:476-479</code></p><pre><code>/**
+   * The list of application claims.
+   */
+  applicationClaims?: ApplicationClaim[]</code></pre></details></div></details><details class="document-quality-document"><summary><span title="ConfidentialLedger.LedgerWriteResult">LedgerWriteResult</span><span class="report-badge add">passed</span></summary><div class="document-quality-document-body"><h4>Current local description</h4><blockquote>The result of writing a ledger entry.</blockquote><details class="report-subdetails document-quality-source"><summary>View TypeSpec and full source path</summary><p class="sources"><code>specification/confidentialledger/data-plane/ConfidentialLedger/models.tsp:456-480</code></p><pre><code>/**
+ * The result of writing a ledger entry.
+ */
+@added(Versions.v2026_07_31_preview)
+model LedgerWriteResult {
+  /**
+   * The collection identifier of the ledger entry.
+   */
+  collectionId: string;
+
+  /**
+   * The receipt certifying the committed transaction.
+   */
+  receipt?: ReceiptContents;
+
+  /**
+   * State of the write transaction.
+   */
+  state: TransactionState;
+
+  /**
+   * The list of application claims.
+   */
+  applicationClaims?: ApplicationClaim[];
+}</code></pre></details></div></details><details class="document-quality-document"><summary><span title="ConfidentialLedger.LedgerWriteResultWithReceipt">LedgerWriteResultWithReceipt</span><span class="report-badge add">passed</span></summary><div class="document-quality-document-body"><h4>Current local description</h4><blockquote>Returned as a result of writing to the Confidential Ledger.</blockquote><details class="report-subdetails document-quality-source"><summary>View TypeSpec and full source path</summary><p class="sources"><code>specification/confidentialledger/data-plane/ConfidentialLedger/models.tsp:442-454</code></p><pre><code>/**
+ * Returned as a result of writing to the Confidential Ledger.
+ */
+@added(Versions.v2026_07_31_preview)
+model LedgerWriteResultWithReceipt {
+  ...CCFTransactionIdHeader;
+
+  /**
+   * The response body.
+   */
+  @bodyRoot
+  body: LedgerWriteResult;
+}</code></pre></details></div></details><details class="document-quality-document"><summary><span title="ConfidentialLedger.LedgerWriteResult.receipt">LedgerWriteResult.receipt</span><span class="report-badge add">passed</span></summary><div class="document-quality-document-body"><h4>Current local description</h4><blockquote>The receipt certifying the committed transaction.</blockquote><details class="report-subdetails document-quality-source"><summary>View TypeSpec and full source path</summary><p class="sources"><code>specification/confidentialledger/data-plane/ConfidentialLedger/models.tsp:466-469</code></p><pre><code>/**
+   * The receipt certifying the committed transaction.
+   */
+  receipt?: ReceiptContents</code></pre></details></div></details></div></details></div></details><details class="report-card document-quality-intent"><summary><div class="report-card-title"><strong>Add optional wait-for-commit ledger writes</strong><small>6 local descriptions / 1 file</small></div><div class="report-badges"><span class="report-badge add">6 passed</span></div></summary><div class="report-card-body"><div class="document-quality-intent-link"><a class="report-link" href="#intent-semantic-f7f018d1d5eec36c">Add optional wait-for-commit ledger writes</a></div><details class="report-subdetails document-quality-file"><summary title="specification/confidentialledger/data-plane/ConfidentialLedger/routes.tsp">routes.tsp <span class="document-quality-file-count">/ 6 descriptions</span></summary><div class="document-quality-list" role="region" aria-label="Descriptions in routes.tsp" tabindex="0"><details class="document-quality-document"><summary><span title="ConfidentialLedger.createLedgerEntryAsync">ConfidentialLedger.createLedgerEntryAsync</span><span class="report-badge add">passed</span></summary><div class="document-quality-document-body"><h4>Current local description</h4><blockquote>A collection id may optionally be specified.</blockquote><details class="report-subdetails document-quality-source"><summary>View TypeSpec and full source path</summary><p class="sources"><code>specification/confidentialledger/data-plane/ConfidentialLedger/routes.tsp:123-154</code></p><pre><code>/**
+ * A collection id may optionally be specified.
+ */
+#suppress &quot;@azure-tools/typespec-azure-core/use-standard-operations&quot; &quot;Existing API&quot;
+@removed(Versions.v2026_07_31_preview)
+@renamedFrom(Versions.v2026_07_31_preview, &quot;createLedgerEntry&quot;)
+@summary(&quot;Writes a ledger entry.&quot;)
+@sharedRoute
+@route(&quot;/app/transactions&quot;)
+@post
+op createLedgerEntryAsync is ConfidentialLedgerCommon.LedgerOperation&lt;
+  {
+    /**
+     * The collection id.
+     */
+    @query(&quot;collectionId&quot;)
+    collectionId?: string;
+
+    /**
+     * Comma separated tags.
+     */
+    @query(&quot;tags&quot;)
+    tags?: string;
+
+    /**
+     * Ledger entry.
+     */
+    @bodyRoot
+    entry: LedgerEntry;
+  },
+  LedgerWriteResultBeforeV20260731Preview
+&gt;;</code></pre></details></div></details><details class="document-quality-document"><summary><span title="ConfidentialLedger.createLedgerEntryAsync.collectionId">createLedgerEntryAsync.collectionId</span><span class="report-badge add">passed</span></summary><div class="document-quality-document-body"><h4>Current local description</h4><blockquote>The collection id.</blockquote><details class="report-subdetails document-quality-source"><summary>View TypeSpec and full source path</summary><p class="sources"><code>specification/confidentialledger/data-plane/ConfidentialLedger/routes.tsp:135-139</code></p><pre><code>/**
+     * The collection id.
+     */
+    @query(&quot;collectionId&quot;)
+    collectionId?: string</code></pre></details></div></details><details class="document-quality-document"><summary><span title="ConfidentialLedger.createLedgerEntryAsync.entry">createLedgerEntryAsync.entry</span><span class="report-badge add">passed</span></summary><div class="document-quality-document-body"><h4>Current local description</h4><blockquote>Ledger entry.</blockquote><details class="report-subdetails document-quality-source"><summary>View TypeSpec and full source path</summary><p class="sources"><code>specification/confidentialledger/data-plane/ConfidentialLedger/routes.tsp:147-151</code></p><pre><code>/**
+     * Ledger entry.
+     */
+    @bodyRoot
+    entry: LedgerEntry</code></pre></details></div></details><details class="document-quality-document"><summary><span title="ConfidentialLedger.createLedgerEntryAsync.tags">createLedgerEntryAsync.tags</span><span class="report-badge add">passed</span></summary><div class="document-quality-document-body"><h4>Current local description</h4><blockquote>Comma separated tags.</blockquote><details class="report-subdetails document-quality-source"><summary>View TypeSpec and full source path</summary><p class="sources"><code>specification/confidentialledger/data-plane/ConfidentialLedger/routes.tsp:141-145</code></p><pre><code>/**
+     * Comma separated tags.
+     */
+    @query(&quot;tags&quot;)
+    tags?: string</code></pre></details></div></details><details class="document-quality-document"><summary><span title="ConfidentialLedger.createLedgerEntry">ConfidentialLedger.createLedgerEntry</span><span class="report-badge add">passed</span></summary><div class="document-quality-document-body"><h4>Current local description</h4><blockquote>A collection id may optionally be specified.</blockquote><details class="report-subdetails document-quality-source"><summary>View TypeSpec and full source path</summary><p class="sources"><code>specification/confidentialledger/data-plane/ConfidentialLedger/routes.tsp:156-195</code></p><pre><code>/**
+ * A collection id may optionally be specified.
+ */
+#suppress &quot;@azure-tools/typespec-azure-core/use-standard-operations&quot; &quot;The versioned ledger write route requires both the service default error and a 503 TransactionRolledBack response.&quot;
+@added(Versions.v2026_07_31_preview)
+@summary(&quot;Writes a ledger entry.&quot;)
+@sharedRoute
+@route(&quot;/app/transactions&quot;)
+@post
+op createLedgerEntry is ConfidentialLedgerCommon.LedgerOperation&lt;
+  {
+    /**
+     * The collection id.
+     */
+    @query(&quot;collectionId&quot;)
+    collectionId?: string;
+
+    /**
+     * Comma separated tags.
+     */
+    @query(&quot;tags&quot;)
+    tags?: string;
+
+    /**
+     * Ledger entry.
+     */
+    @bodyRoot
+    entry: LedgerEntry;
+
+    /**
+     * Whether to wait for the transaction to be globally committed before
+     * returning. When true, the response includes the transaction receipt.
+     */
+    @query(&quot;waitForCommit&quot;)
+    waitForCommit?: boolean = false;
+  },
+  LedgerWriteResultWithReceipt,
+  | ConfidentialLedgerCommon.ConfidentialLedgerError
+  | TransactionRolledBackErrorResponse
+&gt;;</code></pre></details></div></details><details class="document-quality-document"><summary><span title="ConfidentialLedger.createLedgerEntry.waitForCommit">createLedgerEntry.waitForCommit</span><span class="report-badge add">passed</span></summary><div class="document-quality-document-body"><h4>Current local description</h4><blockquote>Whether to wait for the transaction to be globally committed before
+returning. When true, the response includes the transaction receipt.</blockquote><details class="report-subdetails document-quality-source"><summary>View TypeSpec and full source path</summary><p class="sources"><code>specification/confidentialledger/data-plane/ConfidentialLedger/routes.tsp:185-190</code></p><pre><code>/**
+     * Whether to wait for the transaction to be globally committed before
+     * returning. When true, the response includes the transaction receipt.
+     */
+    @query(&quot;waitForCommit&quot;)
+    waitForCommit?: boolean = false</code></pre></details></div></details></div></details></div></details></div></details><p class="report-small">Description explains code. Complete judgments remain in assessment.json.</p></div></section>
 <section id="semantic-intents"><div class="report-section-head"><div><h2>Semantic intents</h2><p>Impact links are visible at a glance; expand for changed TypeSpec source, followed by affected operations.</p></div><div class="report-section-meta"><span class="report-count">2 intents · 0 added · 2 modified · 0 removed</span></div></div><details class="report-card intent" id="intent-semantic-14845e93054010a4"><summary><div class="report-card-title"><strong>Add a preview ledger-write result contract</strong><small>Adds the 2026-07-31-preview version and versions the ledger-write response into a transaction-id response wrapper plus a body model containing collectionId, optional receipt and application claims, and required transaction state; it also adds a typed 503 rollback error while preserving the earlier result model for older API versions.</small></div><div class="report-badges"><span class="report-badge modify">modify</span></div></summary><div class="report-card-body"><details class="report-source" open><summary>Changed TypeSpec source (2)</summary><div class="diff"><div class="diff-path">specification/confidentialledger/data-plane/ConfidentialLedger/main.tsp</div><pre><span class="context">    * The 2026-02-23 API version.</span>
 <span class="context">    */</span>
 <span class="context">   v2026_02_23: &quot;2026-02-23&quot;,</span>
@@ -1535,7 +1759,7 @@ body{overflow-wrap:anywhere}
     }
   }
 }</pre>
-<p><strong>Provenance:</strong> model-input.json, inference.json, compliance-search-evidence.json, assessment-judgment.json, preparation-manifest.json</p></div></details></section>
+<p><strong>Provenance:</strong> model-input.json, inference.json, compliance-search-evidence.json, assessment-judgment.json, preparation-manifest.json, [object Object]</p></div></details></section>
 </main>
 <script>
 function revealHashTarget() {

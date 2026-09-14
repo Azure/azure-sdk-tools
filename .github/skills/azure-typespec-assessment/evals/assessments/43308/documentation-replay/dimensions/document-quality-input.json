@@ -1,0 +1,621 @@
+{
+  "schemaVersion": 3,
+  "status": "blocked",
+  "blockers": [
+    {
+      "reviewUnitId": "semantic-c7e95ecf235ee418",
+      "reason": "Microsoft.Chaos.ArmResourceActionAsyncWithLocation: Cannot establish that the local description resolves to TypeSpec @doc. Microsoft.Chaos.ArmResourceActionNoBodyAsyncWithLocation: Cannot establish that the local description resolves to TypeSpec @doc. Microsoft.Chaos.ArmResourceActionNoContentAsyncWithLocationResult: Cannot establish that the local description resolves to TypeSpec @doc."
+    }
+  ],
+  "reviewUnits": [
+    {
+      "reviewUnitId": "semantic-6b421b1ce7dd8d19",
+      "status": "ready",
+      "sourceChangeIds": [
+        "source-445ac39004e671ef",
+        "source-e69ddc949601a3eb"
+      ],
+      "hunkIds": [
+        "hunk-5aa33c961a49d6c7",
+        "hunk-5f7834dcc951e2e3",
+        "hunk-6adc2f483edb150b",
+        "hunk-995b8bf1e599f1a7",
+        "hunk-fe6a3ee26eca43f6"
+      ],
+      "declarationIds": [
+        "declaration-093010d621963a62",
+        "declaration-16ca792cc2133bb6",
+        "declaration-2e1900676b35bd4f",
+        "declaration-356d7b4d5795d51a",
+        "declaration-456c2aa54f019a46",
+        "declaration-4cc91b5c06fd7a4d",
+        "declaration-60ebf3b787a982bd",
+        "declaration-66a1234b5a48a459",
+        "declaration-6f39280bdde8fec2",
+        "declaration-75b41b9222358fbd",
+        "declaration-78652b14e0a95fe6",
+        "declaration-809805ebcbf61f0c",
+        "declaration-86c0febfaaed02f2",
+        "declaration-8a7be003eed2e097",
+        "declaration-8ce42704b5b649ae",
+        "declaration-8fd1a078a66e6ef7",
+        "declaration-9b091cf09f8b2ce6",
+        "declaration-a2f244fafa7aace9",
+        "declaration-a7370cc63cd38c57",
+        "declaration-a84d808458be9955",
+        "declaration-bf85818faf90d08b",
+        "declaration-c7e26d0e1780a407",
+        "declaration-d7366994d879d315",
+        "declaration-d9e1c130690b2ee0",
+        "declaration-f1e636e2050f7207",
+        "declaration-f621899f16bc0e1c",
+        "declaration-f97d81908b0321f0",
+        "declaration-ff86b930100df79b"
+      ],
+      "documents": [
+        {
+          "id": "document-03c59cf5a0a7b330",
+          "sourceChangeId": "source-445ac39004e671ef",
+          "qualifiedName": "Microsoft.Chaos.PermissionError.resourceId",
+          "kind": "property",
+          "before": {
+            "doc": "The resource id for the affected resource.",
+            "declaration": "/**\n   * The resource id for the affected resource.\n   */\n  @visibility(Lifecycle.Read)\n  resourceId: string",
+            "source": {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
+              "revision": "base",
+              "startLine": 222,
+              "endLine": 226
+            }
+          },
+          "after": {
+            "doc": "The resource id for the affected resource.",
+            "declaration": "/**\n   * The resource id for the affected resource.\n   */\n  @visibility(Lifecycle.Read)\n  resourceId: Azure.Core.armResourceIdentifier",
+            "source": {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
+              "revision": "current",
+              "startLine": 222,
+              "endLine": 226
+            }
+          }
+        },
+        {
+          "id": "document-250cb6d0701b146c",
+          "sourceChangeId": "source-445ac39004e671ef",
+          "qualifiedName": "Microsoft.Chaos.RoleAssignmentResult.roleAssignmentId",
+          "kind": "property",
+          "before": {
+            "doc": "The created role assignment resource ID (null if failed or what-if mode).",
+            "declaration": "/**\n   * The created role assignment resource ID (null if failed or what-if mode).\n   */\n  @visibility(Lifecycle.Read)\n  roleAssignmentId?: string",
+            "source": {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
+              "revision": "base",
+              "startLine": 453,
+              "endLine": 457
+            }
+          },
+          "after": {
+            "doc": "The created role assignment resource ID (null if failed or what-if mode).",
+            "declaration": "/**\n   * The created role assignment resource ID (null if failed or what-if mode).\n   */\n  @visibility(Lifecycle.Read)\n  roleAssignmentId?: Azure.Core.armResourceIdentifier",
+            "source": {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
+              "revision": "current",
+              "startLine": 453,
+              "endLine": 457
+            }
+          }
+        },
+        {
+          "id": "document-39f39ee6ddd0e5f9",
+          "sourceChangeId": "source-e69ddc949601a3eb",
+          "qualifiedName": "Microsoft.Chaos.WorkspaceEvaluationProperties.workspaceId",
+          "kind": "property",
+          "before": {
+            "doc": "The workspace ID this evaluation belongs to.",
+            "declaration": "/**\n   * The workspace ID this evaluation belongs to.\n   */\n  @visibility(Lifecycle.Read)\n  workspaceId: string",
+            "source": {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspaceEvaluation.models.tsp",
+              "revision": "base",
+              "startLine": 59,
+              "endLine": 63
+            }
+          },
+          "after": {
+            "doc": "The workspace ID this evaluation belongs to.",
+            "declaration": "/**\n   * The workspace ID this evaluation belongs to.\n   */\n  @visibility(Lifecycle.Read)\n  workspaceId: Azure.Core.armResourceIdentifier",
+            "source": {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspaceEvaluation.models.tsp",
+              "revision": "current",
+              "startLine": 59,
+              "endLine": 63
+            }
+          }
+        },
+        {
+          "id": "document-4b67929fcc7c14fe",
+          "sourceChangeId": "source-445ac39004e671ef",
+          "qualifiedName": "Microsoft.Chaos.PermissionError",
+          "kind": "model",
+          "before": {
+            "doc": "Model that represents the permission error.",
+            "declaration": "/**\n * Model that represents the permission error.\n */\nmodel PermissionError {\n  /**\n   * The resource id for the affected resource.\n   */\n  @visibility(Lifecycle.Read)\n  resourceId: string;\n\n  /**\n   * The missing permissions.\n   */\n  @visibility(Lifecycle.Read)\n  missingPermissions: string[];\n\n  /**\n   * The required permissions.\n   */\n  @visibility(Lifecycle.Read)\n  requiredPermissions: string[];\n\n  /**\n   * The recommended roles.\n   */\n  @visibility(Lifecycle.Read)\n  recommendedRoles: string[];\n\n  /**\n   * The identity.\n   */\n  @visibility(Lifecycle.Read)\n  identity?: EntraIdentity;\n}",
+            "source": {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
+              "revision": "base",
+              "startLine": 218,
+              "endLine": 251
+            }
+          },
+          "after": {
+            "doc": "Model that represents the permission error.",
+            "declaration": "/**\n * Model that represents the permission error.\n */\nmodel PermissionError {\n  /**\n   * The resource id for the affected resource.\n   */\n  @visibility(Lifecycle.Read)\n  resourceId: Azure.Core.armResourceIdentifier;\n\n  /**\n   * The missing permissions.\n   */\n  @visibility(Lifecycle.Read)\n  missingPermissions: string[];\n\n  /**\n   * The required permissions.\n   */\n  @visibility(Lifecycle.Read)\n  requiredPermissions: string[];\n\n  /**\n   * The recommended roles.\n   */\n  @visibility(Lifecycle.Read)\n  recommendedRoles: string[];\n\n  /**\n   * The identity.\n   */\n  @visibility(Lifecycle.Read)\n  identity?: EntraIdentity;\n}",
+            "source": {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
+              "revision": "current",
+              "startLine": 218,
+              "endLine": 251
+            }
+          }
+        },
+        {
+          "id": "document-4d760f764d669270",
+          "sourceChangeId": "source-445ac39004e671ef",
+          "qualifiedName": "Microsoft.Chaos.ResourceStateError.resourceId",
+          "kind": "property",
+          "before": {
+            "doc": "The resource id for the affected resource.",
+            "declaration": "/**\n   * The resource id for the affected resource.\n   */\n  @visibility(Lifecycle.Read)\n  resourceId: string",
+            "source": {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
+              "revision": "base",
+              "startLine": 274,
+              "endLine": 278
+            }
+          },
+          "after": {
+            "doc": "The resource id for the affected resource.",
+            "declaration": "/**\n   * The resource id for the affected resource.\n   */\n  @visibility(Lifecycle.Read)\n  resourceId: Azure.Core.armResourceIdentifier",
+            "source": {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
+              "revision": "current",
+              "startLine": 274,
+              "endLine": 278
+            }
+          }
+        },
+        {
+          "id": "document-60238ea4d91f0589",
+          "sourceChangeId": "source-445ac39004e671ef",
+          "qualifiedName": "Microsoft.Chaos.RoleAssignmentResult.targetResourceId",
+          "kind": "property",
+          "before": {
+            "doc": "The target Azure resource ID.",
+            "declaration": "/**\n   * The target Azure resource ID.\n   */\n  @visibility(Lifecycle.Read)\n  targetResourceId: string",
+            "source": {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
+              "revision": "base",
+              "startLine": 417,
+              "endLine": 421
+            }
+          },
+          "after": {
+            "doc": "The target Azure resource ID.",
+            "declaration": "/**\n   * The target Azure resource ID.\n   */\n  @visibility(Lifecycle.Read)\n  targetResourceId: Azure.Core.armResourceIdentifier",
+            "source": {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
+              "revision": "current",
+              "startLine": 417,
+              "endLine": 421
+            }
+          }
+        },
+        {
+          "id": "document-a98f6a8fc599c2ae",
+          "sourceChangeId": "source-445ac39004e671ef",
+          "qualifiedName": "Microsoft.Chaos.ResourceStateError",
+          "kind": "model",
+          "before": {
+            "doc": "Model that represents the resource state error.",
+            "declaration": "/**\n * Model that represents the resource state error.\n */\nmodel ResourceStateError {\n  /**\n   * The resource id for the affected resource.\n   */\n  @visibility(Lifecycle.Read)\n  resourceId: string;\n\n  /**\n   * The error code.\n   */\n  @visibility(Lifecycle.Read)\n  errorCode: int32;\n\n  /**\n   * The error message.\n   */\n  @visibility(Lifecycle.Read)\n  errorMessage: string;\n\n  /**\n   * The remediation uri.\n   */\n  @visibility(Lifecycle.Read)\n  remediationUri: string;\n}",
+            "source": {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
+              "revision": "base",
+              "startLine": 270,
+              "endLine": 297
+            }
+          },
+          "after": {
+            "doc": "Model that represents the resource state error.",
+            "declaration": "/**\n * Model that represents the resource state error.\n */\nmodel ResourceStateError {\n  /**\n   * The resource id for the affected resource.\n   */\n  @visibility(Lifecycle.Read)\n  resourceId: Azure.Core.armResourceIdentifier;\n\n  /**\n   * The error code.\n   */\n  @visibility(Lifecycle.Read)\n  errorCode: int32;\n\n  /**\n   * The error message.\n   */\n  @visibility(Lifecycle.Read)\n  errorMessage: string;\n\n  /**\n   * The remediation uri.\n   */\n  @visibility(Lifecycle.Read)\n  remediationUri: string;\n}",
+            "source": {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
+              "revision": "current",
+              "startLine": 270,
+              "endLine": 297
+            }
+          }
+        },
+        {
+          "id": "document-d6f8b19c0d442fa8",
+          "sourceChangeId": "source-445ac39004e671ef",
+          "qualifiedName": "Microsoft.Chaos.RoleAssignmentResult",
+          "kind": "model",
+          "before": {
+            "doc": "Result of a single role assignment operation.",
+            "declaration": "/**\n * Result of a single role assignment operation.\n */\nmodel RoleAssignmentResult {\n  /**\n   * The target Azure resource ID.\n   */\n  @visibility(Lifecycle.Read)\n  targetResourceId: string;\n\n  /**\n   * The managed identity principal ID.\n   */\n  @visibility(Lifecycle.Read)\n  principalId: string;\n\n  /**\n   * The Azure RBAC role definition ID.\n   */\n  @visibility(Lifecycle.Read)\n  roleDefinitionId: string;\n\n  /**\n   * Human-readable role name.\n   */\n  @visibility(Lifecycle.Read)\n  roleDefinitionName: string;\n\n  /**\n   * The scope at which the role was/will be assigned.\n   */\n  @visibility(Lifecycle.Read)\n  scope: string;\n\n  /**\n   * The status of the role assignment operation.\n   */\n  @visibility(Lifecycle.Read)\n  status: RoleAssignmentStatus;\n\n  /**\n   * The created role assignment resource ID (null if failed or what-if mode).\n   */\n  @visibility(Lifecycle.Read)\n  roleAssignmentId?: string;\n\n  /**\n   * Error details if the assignment failed.\n   */\n  @visibility(Lifecycle.Read)\n  error?: RoleAssignmentError;\n}",
+            "source": {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
+              "revision": "base",
+              "startLine": 413,
+              "endLine": 464
+            }
+          },
+          "after": {
+            "doc": "Result of a single role assignment operation.",
+            "declaration": "/**\n * Result of a single role assignment operation.\n */\nmodel RoleAssignmentResult {\n  /**\n   * The target Azure resource ID.\n   */\n  @visibility(Lifecycle.Read)\n  targetResourceId: Azure.Core.armResourceIdentifier;\n\n  /**\n   * The managed identity principal ID.\n   */\n  @visibility(Lifecycle.Read)\n  principalId: string;\n\n  /**\n   * The Azure RBAC role definition ID.\n   */\n  @visibility(Lifecycle.Read)\n  roleDefinitionId: string;\n\n  /**\n   * Human-readable role name.\n   */\n  @visibility(Lifecycle.Read)\n  roleDefinitionName: string;\n\n  /**\n   * The scope at which the role was/will be assigned.\n   */\n  @visibility(Lifecycle.Read)\n  scope: string;\n\n  /**\n   * The status of the role assignment operation.\n   */\n  @visibility(Lifecycle.Read)\n  status: RoleAssignmentStatus;\n\n  /**\n   * The created role assignment resource ID (null if failed or what-if mode).\n   */\n  @visibility(Lifecycle.Read)\n  roleAssignmentId?: Azure.Core.armResourceIdentifier;\n\n  /**\n   * Error details if the assignment failed.\n   */\n  @visibility(Lifecycle.Read)\n  error?: RoleAssignmentError;\n}",
+            "source": {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
+              "revision": "current",
+              "startLine": 413,
+              "endLine": 464
+            }
+          }
+        },
+        {
+          "id": "document-f8e2d65c11d83904",
+          "sourceChangeId": "source-e69ddc949601a3eb",
+          "qualifiedName": "Microsoft.Chaos.WorkspaceEvaluationProperties",
+          "kind": "model",
+          "before": {
+            "doc": "Model that represents the properties of the workspace evaluation.",
+            "declaration": "/**\n * Model that represents the properties of the workspace evaluation.\n */\n#suppress \"@azure-tools/typespec-azure-resource-manager/arm-resource-provisioning-state\" \"Read-only singleton resource representing latest evaluation status\"\nmodel WorkspaceEvaluationProperties {\n  /**\n   * The evaluation status.\n   */\n  @visibility(Lifecycle.Read)\n  status: WorkspaceEvaluationStatus;\n\n  /**\n   * The evaluation UTC start time.\n   */\n  @visibility(Lifecycle.Read)\n  startTime?: utcDateTime;\n\n  /**\n   * The evaluation UTC end time.\n   */\n  @visibility(Lifecycle.Read)\n  endTime?: utcDateTime;\n\n  /**\n   * System or infrastructure errors encountered during evaluation.\n   */\n  @visibility(Lifecycle.Read)\n  @identifiers(#[])\n  errors?: OperationError[];\n\n  /**\n   * The workspace ID this evaluation belongs to.\n   */\n  @visibility(Lifecycle.Read)\n  workspaceId: string;\n\n  /**\n   * The number of scenarios to evaluate.\n   */\n  @visibility(Lifecycle.Read)\n  numScenariosToEvaluate?: int32;\n\n  /**\n   * The number of scenarios that evaluated successfully.\n   */\n  @visibility(Lifecycle.Read)\n  numScenariosEvaluatedSucceeded?: int32;\n\n  /**\n   * The number of scenarios that failed evaluation.\n   */\n  @visibility(Lifecycle.Read)\n  numScenariosEvaluatedFailed?: int32;\n\n  /**\n   * The number of scenarios that were cancelled during evaluation.\n   */\n  @visibility(Lifecycle.Read)\n  numScenariosEvaluatedCancelled?: int32;\n\n  /**\n   * The overall evaluation result.\n   */\n  @visibility(Lifecycle.Read)\n  evaluationResult?: RecommendationStatus;\n\n  /**\n   * Per-scenario evaluation results.\n   */\n  @visibility(Lifecycle.Read)\n  @identifiers(#[\"scenarioName\"])\n  results?: ScenarioEvaluationResultItem[];\n}",
+            "source": {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspaceEvaluation.models.tsp",
+              "revision": "base",
+              "startLine": 29,
+              "endLine": 101
+            }
+          },
+          "after": {
+            "doc": "Model that represents the properties of the workspace evaluation.",
+            "declaration": "/**\n * Model that represents the properties of the workspace evaluation.\n */\n#suppress \"@azure-tools/typespec-azure-resource-manager/arm-resource-provisioning-state\" \"Read-only singleton resource representing latest evaluation status\"\nmodel WorkspaceEvaluationProperties {\n  /**\n   * The evaluation status.\n   */\n  @visibility(Lifecycle.Read)\n  status: WorkspaceEvaluationStatus;\n\n  /**\n   * The evaluation UTC start time.\n   */\n  @visibility(Lifecycle.Read)\n  startTime?: utcDateTime;\n\n  /**\n   * The evaluation UTC end time.\n   */\n  @visibility(Lifecycle.Read)\n  endTime?: utcDateTime;\n\n  /**\n   * System or infrastructure errors encountered during evaluation.\n   */\n  @visibility(Lifecycle.Read)\n  @identifiers(#[])\n  errors?: OperationError[];\n\n  /**\n   * The workspace ID this evaluation belongs to.\n   */\n  @visibility(Lifecycle.Read)\n  workspaceId: Azure.Core.armResourceIdentifier;\n\n  /**\n   * The number of scenarios to evaluate.\n   */\n  @visibility(Lifecycle.Read)\n  numScenariosToEvaluate?: int32;\n\n  /**\n   * The number of scenarios that evaluated successfully.\n   */\n  @visibility(Lifecycle.Read)\n  numScenariosEvaluatedSucceeded?: int32;\n\n  /**\n   * The number of scenarios that failed evaluation.\n   */\n  @visibility(Lifecycle.Read)\n  numScenariosEvaluatedFailed?: int32;\n\n  /**\n   * The number of scenarios that were cancelled during evaluation.\n   */\n  @visibility(Lifecycle.Read)\n  numScenariosEvaluatedCancelled?: int32;\n\n  /**\n   * The overall evaluation result.\n   */\n  @visibility(Lifecycle.Read)\n  evaluationResult?: RecommendationStatus;\n\n  /**\n   * Per-scenario evaluation results.\n   */\n  @visibility(Lifecycle.Read)\n  @identifiers(#[\"scenarioName\"])\n  results?: ScenarioEvaluationResultItem[];\n}",
+            "source": {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspaceEvaluation.models.tsp",
+              "revision": "current",
+              "startLine": 29,
+              "endLine": 101
+            }
+          }
+        }
+      ]
+    },
+    {
+      "reviewUnitId": "semantic-88b01455dd806f7b",
+      "status": "not-applicable",
+      "sourceChangeIds": [
+        "source-b87f3a5e3fa341ca"
+      ],
+      "hunkIds": [
+        "hunk-6427bb1a68cb07d6",
+        "hunk-b7cfd28859536ed6"
+      ],
+      "declarationIds": [],
+      "documents": [],
+      "reason": "No changed, associated nonempty @doc with a current target; absent, deleted, empty, or whitespace-only @doc is outside documentation coverage scope."
+    },
+    {
+      "reviewUnitId": "semantic-c7e95ecf235ee418",
+      "status": "blocked",
+      "sourceChangeIds": [
+        "source-07d51f7284c81844",
+        "source-5872d934af0ffb74",
+        "source-69a2ddc47ac80abd",
+        "source-aca736d134f3b4c4",
+        "source-cb13d5cecbd1acfb"
+      ],
+      "hunkIds": [
+        "hunk-01f45d5aed4d7b62",
+        "hunk-0ca3bf7536e0d80a",
+        "hunk-2e4a7da67fc3730f",
+        "hunk-349961572456cb8d",
+        "hunk-382feea9f72c3005",
+        "hunk-3e1defef9a255227",
+        "hunk-4073fd3bb79c9f96",
+        "hunk-44dd52563cb70ae1",
+        "hunk-579b9c3ab2d0f182",
+        "hunk-72c5a83f61377cf6",
+        "hunk-8bba970ccf3af6ef",
+        "hunk-9bd6d022e944c48c",
+        "hunk-cbbce09d5e224510"
+      ],
+      "declarationIds": [
+        "declaration-10d22b15e206689e",
+        "declaration-1cc0be619df94550",
+        "declaration-2a9c165196e7ae37",
+        "declaration-2caa7e8c582fa254",
+        "declaration-342190062fe21bef",
+        "declaration-3cd1eef2631d85ab",
+        "declaration-42d22d744dbadac0",
+        "declaration-462b286c48e80b14",
+        "declaration-4e6785e3fd6c14b6",
+        "declaration-50be709541f82f96",
+        "declaration-51f8321feaf63705",
+        "declaration-65b119489a810bb0",
+        "declaration-6772621d58825c99",
+        "declaration-6d2e0ea2549ab9de",
+        "declaration-6ed9fe17dabb3ec4",
+        "declaration-6f3e2daa7ea1e1aa",
+        "declaration-76f31b8a81dcb8e5",
+        "declaration-81da35f0f9a5fa26",
+        "declaration-823592290fb24168",
+        "declaration-871e0c8b5e7c783f",
+        "declaration-8c838b3ab5483a90",
+        "declaration-95c44a3c3deaa986",
+        "declaration-99e7eb4caeecae4f",
+        "declaration-9b95bc954ac86876",
+        "declaration-9b980b9dfb429790",
+        "declaration-a6040788c889759b",
+        "declaration-b724ffb86d553126",
+        "declaration-b83be927db86cf01",
+        "declaration-bb6863688e9f4caf",
+        "declaration-c860d1800e203a3b",
+        "declaration-d4a1b51bd36bdcc3",
+        "declaration-d7d34ee7cb83cb00",
+        "declaration-f449301f3ea800f9"
+      ],
+      "documents": [
+        {
+          "id": "document-0afb4ad255cbe5d6",
+          "sourceChangeId": "source-07d51f7284c81844",
+          "qualifiedName": "Microsoft.Chaos.ScenarioRunInProgressResponse",
+          "kind": "model",
+          "before": null,
+          "after": {
+            "doc": "Indicates the scenario run is still in progress. Clients polling via the\nLocation header should continue polling until a 200 response is returned.\nThe body reflects the current run state at the time of the poll.",
+            "declaration": "/**\n * Indicates the scenario run is still in progress. Clients polling via the\n * Location header should continue polling until a 200 response is returned.\n * The body reflects the current run state at the time of the poll.\n */\nmodel ScenarioRunInProgressResponse {\n  ...AcceptedResponse;\n\n  /**\n   * The URL where the status of the long-running operation can be polled.\n   */\n  @header(\"Location\")\n  location: url;\n\n  /**\n   * The number of seconds the client should wait before polling again.\n   */\n  @minValue(0)\n  @maxValue(2147483647)\n  @header(\"Retry-After\")\n  retryAfter?: int32;\n\n  /**\n   * The current scenario run state at the time of the poll.\n   */\n  @bodyRoot body: ScenarioRun;\n}",
+            "source": {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.models.tsp",
+              "revision": "current",
+              "startLine": 15,
+              "endLine": 41
+            }
+          }
+        },
+        {
+          "id": "document-162418e98505f8e5",
+          "sourceChangeId": "source-07d51f7284c81844",
+          "qualifiedName": "Microsoft.Chaos.ScenarioRunInProgressResponse.body",
+          "kind": "property",
+          "before": null,
+          "after": {
+            "doc": "The current scenario run state at the time of the poll.",
+            "declaration": "/**\n   * The current scenario run state at the time of the poll.\n   */\n  @bodyRoot body: ScenarioRun",
+            "source": {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.models.tsp",
+              "revision": "current",
+              "startLine": 37,
+              "endLine": 40
+            }
+          }
+        },
+        {
+          "id": "document-2b4d08f39bfe0935",
+          "sourceChangeId": "source-aca736d134f3b4c4",
+          "qualifiedName": "Microsoft.Chaos.ScenarioConfigurations.validate",
+          "kind": "operation",
+          "before": {
+            "doc": "Validate the given scenario configuration.",
+            "declaration": "/**\n   * Validate the given scenario configuration.\n   */\n  #suppress \"@azure-tools/typespec-azure-resource-manager/arm-post-operation-response-codes\" \"LRO POST returns 202 with Location header for polling; final result obtained by polling the Location URL\"\n  validate is ArmResourceActionNoContentAsyncWithLocationResult<\n    ScenarioConfiguration,\n    void,\n    Validation\n  >",
+            "source": {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
+              "revision": "base",
+              "startLine": 71,
+              "endLine": 79
+            }
+          },
+          "after": {
+            "doc": "Validate the given scenario configuration.",
+            "declaration": "/**\n   * Validate the given scenario configuration.\n   */\n  validate is ArmResourceActionNoContentAsyncWithLocationResult<\n    ScenarioConfiguration,\n    void,\n    Validation\n  >",
+            "source": {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
+              "revision": "current",
+              "startLine": 67,
+              "endLine": 74
+            }
+          }
+        },
+        {
+          "id": "document-54421276dbb0a4c4",
+          "sourceChangeId": "source-aca736d134f3b4c4",
+          "qualifiedName": "Microsoft.Chaos.ScenarioConfigurations.execute",
+          "kind": "operation",
+          "before": {
+            "doc": "Execute the scenario execution with the given scenario configuration.",
+            "declaration": "/**\n   * Execute the scenario execution with the given scenario configuration.\n   */\n  #suppress \"@azure-tools/typespec-azure-resource-manager/arm-post-operation-response-codes\" \"LRO POST returns 202 with Location header for polling; final result obtained by polling the Location URL\"\n  @pollingOperation(ScenarioRuns.get)\n  execute is ArmResourceActionNoContentAsyncWithLocationResult<\n    ScenarioConfiguration,\n    void,\n    ScenarioRun\n  >",
+            "source": {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
+              "revision": "base",
+              "startLine": 48,
+              "endLine": 57
+            }
+          },
+          "after": {
+            "doc": "Execute the scenario execution with the given scenario configuration.",
+            "declaration": "/**\n   * Execute the scenario execution with the given scenario configuration.\n   */\n  execute is ArmResourceActionNoContentAsyncWithLocationResult<\n    ScenarioConfiguration,\n    void,\n    ScenarioRun\n  >",
+            "source": {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
+              "revision": "current",
+              "startLine": 48,
+              "endLine": 55
+            }
+          }
+        },
+        {
+          "id": "document-5ec317bbd666abdf",
+          "sourceChangeId": "source-aca736d134f3b4c4",
+          "qualifiedName": "Microsoft.Chaos.ScenarioConfigurations.cancel",
+          "kind": "operation",
+          "before": {
+            "doc": "Cancel the currently running scenario execution.",
+            "declaration": "/**\n   * Cancel the currently running scenario execution.\n   */\n  #suppress \"@azure-tools/typespec-azure-resource-manager/arm-post-operation-response-codes\" \"LRO POST returns 202 with Location header for polling; final result obtained by polling the Location URL\"\n  @removed(Microsoft.Chaos.Versions.v2026_05_01_preview)\n  @pollingOperation(ScenarioRuns.get)\n  cancel is ArmResourceActionNoContentAsyncWithLocationResult<\n    ScenarioConfiguration,\n    void,\n    Azure.ResourceManager.Foundations.OperationStatusResult\n  >",
+            "source": {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
+              "revision": "base",
+              "startLine": 59,
+              "endLine": 69
+            }
+          },
+          "after": {
+            "doc": "Cancel the currently running scenario execution.",
+            "declaration": "/**\n   * Cancel the currently running scenario execution.\n   */\n  @removed(Microsoft.Chaos.Versions.v2026_05_01_preview)\n  cancel is ArmResourceActionNoContentAsyncWithLocationResult<\n    ScenarioConfiguration,\n    void,\n    Azure.ResourceManager.Foundations.OperationStatusResult\n  >",
+            "source": {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
+              "revision": "current",
+              "startLine": 57,
+              "endLine": 65
+            }
+          }
+        },
+        {
+          "id": "document-831bde059abd35ff",
+          "sourceChangeId": "source-69a2ddc47ac80abd",
+          "qualifiedName": "Microsoft.Chaos.ScenarioRuns.cancel",
+          "kind": "operation",
+          "before": {
+            "doc": "Cancel the currently running scenario execution.",
+            "declaration": "/**\n   * Cancel the currently running scenario execution.\n   */\n  #suppress \"@azure-tools/typespec-azure-resource-manager/arm-post-operation-response-codes\" \"LRO POST returns 202 with Location header for polling; final result obtained by polling the Location URL\"\n  #suppress \"@azure-tools/typespec-azure-core/polling-operation-no-status-monitor\" \"LRO uses final-state-via:location pattern\"\n  @added(Microsoft.Chaos.Versions.v2026_05_01_preview)\n  @pollingOperation(ScenarioRuns.get)\n  cancel is ArmResourceActionNoContentAsyncWithLocationResult<\n    ScenarioRun,\n    void,\n    ScenarioRun\n  >",
+            "source": {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
+              "revision": "base",
+              "startLine": 54,
+              "endLine": 65
+            }
+          },
+          "after": {
+            "doc": "Cancel the currently running scenario execution.",
+            "declaration": "/**\n   * Cancel the currently running scenario execution.\n   */\n  @added(Microsoft.Chaos.Versions.v2026_05_01_preview)\n  cancel is ArmResourceActionNoContentAsyncWithLocationResult<\n    ScenarioRun,\n    void,\n    ScenarioRun\n  >",
+            "source": {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
+              "revision": "current",
+              "startLine": 44,
+              "endLine": 52
+            }
+          }
+        },
+        {
+          "id": "document-93a8c82410c5c8c8",
+          "sourceChangeId": "source-69a2ddc47ac80abd",
+          "qualifiedName": "Microsoft.Chaos.ScenarioRuns.get",
+          "kind": "operation",
+          "before": {
+            "doc": "Get a scenario run.",
+            "declaration": "/**\n   * Get a scenario run.\n   */\n  #suppress \"@azure-tools/typespec-azure-resource-manager/arm-resource-operation\" \"LRO polling endpoint that returns body in both 200 and 202\"\n  #suppress \"@azure-tools/typespec-azure-resource-manager/no-response-body\" \"LRO polling endpoint returns body in 202 to reflect current status\"\n  #suppress \"@azure-tools/typespec-azure-core/polling-operation-no-status-monitor\" \"LRO uses final-state-via:location pattern, not status monitor\"\n  @summary(\"Get a scenario run.\")\n  @autoRoute\n  @armResourceRead(ScenarioRun)\n  @get\n  get(...ResourceInstanceParameters<ScenarioRun>):\n    | ArmResponse<ScenarioRun>\n    | (AcceptedResponse & {\n        @doc(\"The Location header contains the URL where the status of the long running operation can be checked.\")\n        @header(\"Location\")\n        location: string;\n\n        @doc(\"The Retry-After header can indicate how long the client should wait before polling the operation status.\")\n        @header(\"Retry-After\")\n        retryAfter?: int32;\n\n        @bodyRoot body: ScenarioRun;\n      })\n    | ErrorResponse",
+            "source": {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
+              "revision": "base",
+              "startLine": 21,
+              "endLine": 44
+            }
+          },
+          "after": {
+            "doc": "Get a scenario run.\n\nThis endpoint is also the polling target for ScenarioConfigurations.execute\nand ScenarioRuns.cancel (final-state-via: location). While the run is in\nprogress the service returns 202 with a Location header pointing back to\nthis URL; clients must keep polling until they receive 200, which carries\nthe final ScenarioRun body.",
+            "declaration": "/**\n   * Get a scenario run.\n   *\n   * This endpoint is also the polling target for ScenarioConfigurations.execute\n   * and ScenarioRuns.cancel (final-state-via: location). While the run is in\n   * progress the service returns 202 with a Location header pointing back to\n   * this URL; clients must keep polling until they receive 200, which carries\n   * the final ScenarioRun body.\n   */\n  #suppress \"@azure-tools/typespec-azure-resource-manager/arm-resource-operation\" \"LRO polling endpoint that returns body in both 200 and 202 responses.\"\n  #suppress \"@azure-tools/typespec-azure-resource-manager/no-response-body\" \"LRO polling endpoint returns body in 202 to reflect the current run state.\"\n  get is ArmResourceRead<\n    ScenarioRun,\n    Response = ArmResponse<ScenarioRun> | ScenarioRunInProgressResponse\n  >",
+            "source": {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
+              "revision": "current",
+              "startLine": 20,
+              "endLine": 34
+            }
+          }
+        },
+        {
+          "id": "document-9706fb759b340d67",
+          "sourceChangeId": "source-07d51f7284c81844",
+          "qualifiedName": "Microsoft.Chaos.ScenarioRunInProgressResponse.location",
+          "kind": "property",
+          "before": null,
+          "after": {
+            "doc": "The URL where the status of the long-running operation can be polled.",
+            "declaration": "/**\n   * The URL where the status of the long-running operation can be polled.\n   */\n  @header(\"Location\")\n  location: url",
+            "source": {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.models.tsp",
+              "revision": "current",
+              "startLine": 23,
+              "endLine": 27
+            }
+          }
+        },
+        {
+          "id": "document-b8545853dd033711",
+          "sourceChangeId": "source-aca736d134f3b4c4",
+          "qualifiedName": "Microsoft.Chaos.ScenarioConfigurations.fixResourcePermissions",
+          "kind": "operation",
+          "before": {
+            "doc": "Fixes resource permissions for the given scenario configuration.",
+            "declaration": "/**\n   * Fixes resource permissions for the given scenario configuration.\n   */\n  #suppress \"@azure-tools/typespec-azure-resource-manager/arm-post-operation-response-codes\" \"LRO POST returns 202 with Location header for polling; final result obtained by polling the Location URL\"\n  fixResourcePermissions is ArmResourceActionNoContentAsyncWithLocationResult<\n    ScenarioConfiguration,\n    FixResourcePermissionsRequest,\n    PermissionsFix\n  >",
+            "source": {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
+              "revision": "base",
+              "startLine": 81,
+              "endLine": 89
+            }
+          },
+          "after": {
+            "doc": "Fixes resource permissions for the given scenario configuration.",
+            "declaration": "/**\n   * Fixes resource permissions for the given scenario configuration.\n   */\n  fixResourcePermissions is ArmResourceActionNoContentAsyncWithLocationResult<\n    ScenarioConfiguration,\n    FixResourcePermissionsRequest,\n    PermissionsFix\n  >",
+            "source": {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
+              "revision": "current",
+              "startLine": 76,
+              "endLine": 83
+            }
+          }
+        },
+        {
+          "id": "document-c3c3de5e90456420",
+          "sourceChangeId": "source-07d51f7284c81844",
+          "qualifiedName": "Microsoft.Chaos.ScenarioRunInProgressResponse.retryAfter",
+          "kind": "property",
+          "before": null,
+          "after": {
+            "doc": "The number of seconds the client should wait before polling again.",
+            "declaration": "/**\n   * The number of seconds the client should wait before polling again.\n   */\n  @minValue(0)\n  @maxValue(2147483647)\n  @header(\"Retry-After\")\n  retryAfter?: int32",
+            "source": {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.models.tsp",
+              "revision": "current",
+              "startLine": 29,
+              "endLine": 35
+            }
+          }
+        },
+        {
+          "id": "document-dfc17109b6c23d0e",
+          "sourceChangeId": "source-cb13d5cecbd1acfb",
+          "qualifiedName": "Microsoft.Chaos.Workspaces.refreshRecommendations",
+          "kind": "operation",
+          "before": {
+            "doc": "Refreshes recommendation status for all scenarios in a given workspace.",
+            "declaration": "/**\n   * Refreshes recommendation status for all scenarios in a given workspace.\n   */\n  #suppress \"@azure-tools/typespec-azure-resource-manager/arm-post-operation-response-codes\" \"Async LRO POST returning 202 + Location, not a synchronous POST\"\n  refreshRecommendations is ArmResourceActionNoContentAsyncWithLocationResult<\n    Workspace,\n    void,\n    WorkspaceEvaluation\n  >",
+            "source": {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspace.tsp",
+              "revision": "base",
+              "startLine": 71,
+              "endLine": 79
+            }
+          },
+          "after": {
+            "doc": "Refreshes recommendation status for all scenarios in a given workspace.",
+            "declaration": "/**\n   * Refreshes recommendation status for all scenarios in a given workspace.\n   */\n  refreshRecommendations is ArmResourceActionNoContentAsyncWithLocationResult<\n    Workspace,\n    void,\n    WorkspaceEvaluation\n  >",
+            "source": {
+              "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspace.tsp",
+              "revision": "current",
+              "startLine": 71,
+              "endLine": 78
+            }
+          }
+        }
+      ],
+      "reason": "Microsoft.Chaos.ArmResourceActionAsyncWithLocation: Cannot establish that the local description resolves to TypeSpec @doc. Microsoft.Chaos.ArmResourceActionNoBodyAsyncWithLocation: Cannot establish that the local description resolves to TypeSpec @doc. Microsoft.Chaos.ArmResourceActionNoContentAsyncWithLocationResult: Cannot establish that the local description resolves to TypeSpec @doc."
+    }
+  ]
+}

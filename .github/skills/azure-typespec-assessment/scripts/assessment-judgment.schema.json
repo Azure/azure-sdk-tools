@@ -38,7 +38,7 @@
         "properties": {
           "reviewUnitId": { "type": "string", "pattern": "^semantic-" },
           "documentId": { "type": "string", "pattern": "^document-" },
-          "check": { "enum": ["correctness", "meaning"] },
+          "check": { "enum": ["description", "correctness", "meaning"] },
           "decision": { "enum": ["pass", "fail", "not-assessed"] },
           "rationale": { "type": "string", "pattern": "\\S" },
           "title": { "type": "string", "pattern": "\\S" },

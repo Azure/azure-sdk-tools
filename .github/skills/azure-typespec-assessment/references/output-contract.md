@@ -78,19 +78,12 @@ Write one `assessment-judgment.json` conforming to `scripts\assessment-judgment.
     {
       "reviewUnitId": "semantic-...",
       "documentId": "document-...",
-      "check": "correctness",
-      "decision": "pass",
-      "rationale": "No contradiction with the associated declaration."
-    },
-    {
-      "reviewUnitId": "semantic-...",
-      "documentId": "document-...",
-      "check": "meaning",
+      "check": "description",
       "decision": "fail",
-      "title": "Description only repeats the parameter name",
-      "expected": "Explain what the timeout controls.",
-      "docQuote": "The timeout.",
-      "rationale": "The caller cannot identify which activity is limited."
+      "title": "Response description incorrectly says the body is empty",
+      "expected": "Describe the optional status carried by the response body.",
+      "docQuote": "Empty success response.",
+      "rationale": "The associated response-body model declares a status property."
     }
   ],
   "blockers": []
@@ -109,14 +102,24 @@ output. Every `applicable-fail` decision must also provide a concise finding
 title and `high`, `medium`, or `low` severity for structured assessment data.
 
 For `documentQualityReviewUnits`, resolve the canonical artifact through its
-dedicated evidence set. Cover each document in every `ready` unit exactly once
-per check (`correctness`, `meaning`), following the
+dedicated evidence set. For input `schemaVersion: 3` (or historical v2), cover each document in
+every `ready` unit exactly once with `check: "description"`, following the
 [documentation rules](document-quality.md). `fail` requires `title`,
 `expected`, `rationale`, and a nonempty exact target `docQuote`; `pass` and
 `not-assessed` require rationale. Do not include severity. Units that are
 `not-applicable` or `blocked` require no Agent document decisions. Missing
 decisions for new inputs are errors; legacy inputs without the documentation
 field may omit this decision array.
+V3 reviews local descriptions only. Inherited-only descriptions count as
+documented but are excluded from `documents` and Agent decisions. Unit-level
+`inheritedDocumentIds` and coverage `inheritedDocumentCount` preserve this distinction.
+Model summaries include `inheritedDocumentCount` when nonzero, not inherited text.
+An inherited baseline snapshot may accompany a new local override; it adds
+`documentationOrigin: "inherited"` and preserves compiler-resolved text.
+Other origin values or origin markers in v1/v2 are invalid.
+For v2/v3 input, model metadata `documentQualityAssessmentVersion` equals the
+input version and `documentQualityCriterion` retains the same description question.
+The enclosing report's top-level `schemaVersion` remains 1.
 
 ## Final data
 
@@ -144,16 +147,25 @@ Dimension statuses are derived, not authored:
 - REST/downstream: `passed`, `failed`, or `not-assessed`;
 - Azure Guidelines: `passed`, `failed`, or `not-assessed`, derived from
   Semantic intent coverage and applicable fetched guidance;
-- Document Quality and Agent Friendliness: `passed`, `failed`, or
-  `not-assessed`, with separate semantic-unit, document, and check coverage;
+- Document Quality and Agent Friendliness: `passed`, `failed`, `not-assessed`,
+  or `not-applicable`, with `assessmentVersion: 3` for v3 input and separate semantic-unit,
+  document, and check coverage (one check per eligible description);
 - safety scope: `rest-and-downstream-only`, never Azure Guidelines or document quality.
 
 A blocked implemented dimension cannot pass. Documentation is `failed` when
 there are confirmed failures, otherwise `not-assessed` when coverage is
-incomplete, otherwise `passed`. Retain partial coverage even when failures are
+incomplete, otherwise `not-applicable` if no descriptions are eligible,
+otherwise `passed`. Retain partial coverage even when failures are
 confirmed. A documentation unit with no eligible target `@doc` is explicitly
 `not-applicable`; it counts as assessed scope but not as an assessed document.
 Legacy documentation dimensions without input remain `not-assessed`.
+Historical v1 results keep their separate correctness/meaning checks and absent
+assessment version; v2 results retain `assessmentVersion: 2` and their original
+coverage. V2/v3 inputs require matching source evidence versions. Do not relabel
+legacy inputs or silently add inherited coverage; recollect evidence for v3.
+HTML labels inherited-only coverage **Inherited documentation not reviewed**,
+not passed, failed, blocked, or missing. Baseline inherited text, when relevant
+to a local-description finding, remains separate from exact declaration source.
 A completed Azure Guidelines search with no governing guidance is represented by an
 intent-level `no-applicable-guidance` decision. It counts as assessed and does
 not create a blocker. `not-assessed` is reserved for missing evidence,
@@ -217,7 +229,9 @@ render the unchanged outcome without a redundant duplicate statement.
 
 All REST, Semantic operation, SDK method, and SDK type contract tables use the
 same two-line contract-area cell: a human-readable area kind above the concrete
-member name or path. SDK rows derive concise before/after values and location
+member name or path. Omit rows whose displayed before and after values are
+identical; omit the table if no rows remain. Keep underlying findings and
+evidence unchanged. SDK rows derive concise before/after values and location
 from retained TCGC facts and method-to-type reference paths. Allowed SDK
 locations are `(path)`, `(query)`, `(header)`, and `(body input)` beside
 numbered caller inputs, with a `Return type (body output)` row. Constant headers
@@ -251,12 +265,34 @@ anchors. Do not duplicate these sections with a comparison table or a second
 source-evidence block. Preserve pass/fail/not-assessed and no-applicable-guidance
 states without severity labels.
 
-Documentation uses the same collapsed cards with readable affected-intent
-links, a Correctness/Meaning label, and Expected/Actual sections. Actual
-retains exact target `@doc` and associated source declarations, including
-baseline context when available. Show canonical evidence, not invented fixes
-or generated descriptions. Preserve pass/fail/not-assessed and explicit
-no-applicable-documentation outcomes with coverage. Documentation links are
+Documentation failures use the same collapsed cards with readable affected-intent
+links, a "Description explains code" label, and Expected/Actual sections. Actual
+retains exact target descriptions and associated source declarations, including
+baseline context when available. If only one snapshot exists, show it full-width
+without an empty comparison column. Include retained related type definitions
+from the same intent and revision when compiler-recorded references resolve
+unambiguously to their source declarations. Do not infer type links from prose
+or identifier text, or duplicate declarations already inside the displayed code.
+Show canonical evidence, not invented fixes
+or generated descriptions. Do not render individual passed cards or rationales.
+Show a compact group per intent directly below the section's existing summary,
+without an extra group heading or repeated aggregate counts. Passed
+groups are collapsed; groups with failures or incomplete checks are expanded.
+Each summary shows the intent title, description/file counts, and result counts
+(explicit check counts for legacy judgments). Within a group, collapse files and
+bound declaration lists to a keyboard-scrollable region. Use short declaration
+names and unambiguous file suffixes; expose full identities on hover and full
+source paths with the selected description's expandable TypeSpec source.
+Passing descriptions can be inspected without a judgment card or rationale;
+failed declarations link to their existing Expected/Actual cards in the intent.
+Keep non-applicable and inherited-only groups neutral, separate from failures.
+Retain all judgments and stable finding anchors in JSON/HTML.
+Label description/check counts separately from blocked, incomplete, and
+non-applicable intent counts; zero pending decisions does not mean all scopes
+were assessed.
+Keep unassessed reasons visible as compact notes. Preserve pass/fail/not-assessed and explicit
+no-applicable-documentation outcomes with coverage, never a green pass for zero
+descriptions. Historical two-check results are labeled legacy. Documentation links are
 separate from REST/downstream `Impacts (N)` and do not affect scoped safety.
 Active documentation results participate in overall code quality. Legacy
 documentation placeholders without coverage remain excluded from that

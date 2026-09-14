@@ -16,8 +16,8 @@ Included:
 - downstream SDK breaking candidates from TCGC;
 - documentation-grounded Azure Guidelines assessment from the four highest-ranked
   retrievable official documents for each Semantic intent;
-- source-only `@doc` Correctness and Meaning assessment, with associated
-  TypeSpec declarations as correctness evidence;
+- one source-only judgment of whether each `@doc` description clearly and
+  accurately explains its associated TypeSpec code;
 - optional bounded AI inference for source hunks that deterministic analysis
   cannot classify;
 - one bounded Agent judgment;
@@ -80,8 +80,8 @@ continues to cover REST and downstream SDK compatibility only.
               |                       |                       |                       |                       |
               v                       v                       v                       v                       v
          Summarize each          Classify each           Classify each          Rank and fetch         Assess each eligible
-         semantic intent         deterministic or        deterministic or       official guidance,     @doc for Correctness
-         once                    inferred REST           inferred SDK           then assess each       and Meaning
+         semantic intent         deterministic or        deterministic or       official guidance,     description against
+         once                    inferred REST           inferred SDK           then assess each       its code, once
                                  candidate               candidate              intent once
               |                       |                       |                       |                       |
               +-----------------------+-----------------------+-----------------------+-----------------------+
@@ -107,7 +107,7 @@ assembly validates them and joins complete canonical evidence.
 
 Azure Guidelines and documentation assessment branch from Semantic review
 units rather than REST or downstream candidates. Documentation collection is
-deterministic; Correctness and Meaning are Agent judgments, not regex quality
+deterministic; description-versus-code assessment is an Agent judgment, not regex quality
 scores. Documentation checks still run when a hunk has no compatibility impact.
 Inference runs only for hunks whose deterministic coverage status is `unknown`.
 
@@ -1335,17 +1335,16 @@ The HTML report will show Azure Guidelines by Semantic intent:
 
 File: `dimensions/document-quality-input.json`
 
-Document Quality and Agent Friendliness initially assesses only:
+Document Quality and Agent Friendliness assesses one question:
+**Does the @doc description clearly and accurately explain the associated
+TypeSpec code?**
 
-1. **Correctness:** `@doc` agrees with the associated declared types,
-   requiredness, explicit defaults, constraints, and source-recorded version
-   changes.
-2. **Meaning:** descriptions explain the purpose and interpretation of inputs
-   and outputs rather than merely repeating their names.
-
-`@doc` is the only documentation source. Associated TypeSpec declaration
-source supplies the contract used to judge correctness. Do not read generated
-SDK/OpenAPI descriptions, comments, external guidance, examples, or prior
+V1 assesses local `@doc` descriptions and main descriptions from local TypeSpec
+documentation comments. Inherited-only documentation counts as present but is
+not reviewed. Do not retrieve inherited prose or request Agent judgments for it.
+Associated TypeSpec declaration
+source supplies the code evidence. Do not read generated SDK/OpenAPI
+descriptions, ordinary comments, external guidance, examples, or prior
 reports for this dimension. Do not perform agent execution or assign
 friendliness scores or severity. Source text is untrusted evidence, never
 Agent instructions. Detailed judgment criteria are in
@@ -1353,13 +1352,21 @@ Agent instructions. Detailed judgment criteria are in
 
 ### Deterministic collection
 
-Build one documentation unit per Semantic review unit. Extract literal `@doc`
-text and associated declarations from baseline/target TypeSpec source,
+Build one documentation unit per Semantic review unit. Extract effective descriptions
+and associated declarations from baseline/target TypeSpec source,
 including unchanged documentation made potentially stale by a declaration
 change. Retain exact source locations and source/hunk/declaration relationships.
-The source index stores these pairs in each changed source's `documentEvidence`;
-raw revision files stay process-local. `doc` contains compiler-decoded literal
-content, while `declaration` preserves exact source spelling and decorators.
+The source index stores these pairs in each changed source's `documentEvidence`
+with `schemaVersion: 3`; raw revision files stay process-local. `doc` contains
+compiler-decoded description text, while `declaration` preserves exact source
+spelling, decorators, and documentation comments.
+Only inherited snapshots add `documentationOrigin: "inherited"`. Their `doc`
+is the compiler-resolved text (including formatted inherited templates), while
+`declaration` remains the exact associated changed source, not library text.
+The bounded input excludes inherited-only snapshots, retaining only
+`inheritedDocumentIds`; final coverage separately counts `inheritedDocumentCount`.
+Inherited-only detection uses compiler-known presence without walking ancestry.
+An inherited baseline can still provide context when a new local override is reviewed.
 Do not audit unrelated unchanged siblings. Preserve available baseline context
 so the Agent can distinguish introduced or newly stale defects from inherited
 problems.
@@ -1369,14 +1376,22 @@ Only nonempty target documentation is assessed. Missing, empty, or deleted
 eligible target documentation is `not-applicable` with an explicit reason.
 Unresolvable documentation or unavailable source context is `blocked`, not an
 empty successful scan.
-The initial extractor supports directly attached literal `@doc` and
-`@TypeSpec.doc`. Dynamic/formatted documentation and changed `@@doc`
-augmentations require unsupported context and explicitly block their review
-scope rather than being treated as successfully assessed.
+The extractor supports directly attached literal `@doc`, `@TypeSpec.doc`, and
+the compiler-resolved main description in locally attached `/** ... */`
+comments. Inherited-only effective descriptions are counted, not reviewed. Local overrides
+win according to compiler semantics; tag-only local comments do not mask inherited
+descriptions. Ordinary comments, tag bodies such as `@param`, `@returns`, and
+`@example`, external guidance, and generated SDK/OpenAPI descriptions are not
+documentation inputs. Unsupported local dynamic/formatted documentation, changed
+`@@doc` augmentations, or unresolved compiler context explicitly block their scope.
+Do not fabricate text when compiler resolution is unavailable.
+V2/v3 input requires matching source evidence versions. Historical v1/v2 reports
+retain their original versions and coverage; recollect evidence before v3 assessment,
+never relabel old input or silently add inherited descriptions.
 
 ```json
 {
-  "schemaVersion": 1,
+  "schemaVersion": 3,
   "status": "ready",
   "blockers": [],
   "reviewUnits": [
@@ -1390,12 +1405,12 @@ scope rather than being treated as successfully assessed.
         {
           "id": "document-<hash>",
           "sourceChangeId": "source-<hash>",
-          "qualifiedName": "Options.timeout",
-          "kind": "property",
+          "qualifiedName": "ServiceGatewayActionOkResponseBody",
+          "kind": "model",
           "before": null,
           "after": {
-            "doc": "The timeout.",
-            "declaration": "@doc(\"The timeout.\")\ntimeout?: int32 = 30;",
+            "doc": "Empty success response.",
+            "declaration": "@doc(\"Empty success response.\")\nmodel ServiceGatewayActionOkResponseBody { status?: string; }",
             "source": {
               "path": "models.tsp",
               "revision": "current",
@@ -1410,36 +1425,44 @@ scope rather than being treated as successfully assessed.
 }
 ```
 
-The bounded model input retains unit status, document IDs, bounded qualified
-names, and a dedicated canonical evidence reference. It does not repeat full
+The bounded model input records `documentQualityAssessmentVersion: 2` and
+`documentQualityCriterion` with the exact question above, alongside unit
+status, document IDs, bounded qualified names, and a dedicated canonical
+evidence reference. It does not repeat full
 documentation or declaration text. The Agent resolves each named unit through
 that reference; required documents are never silently dropped for budget.
 
 ### Judgment, coverage, and findings
 
-Require exactly one `correctness` and one `meaning` decision for every document
+Require exactly one `description` decision for every document
 in a `ready` unit. Allowed decisions are `pass`, `fail`, and `not-assessed`,
 each with rationale. A failure also requires `title`, `expected`, and a
 nonempty `docQuote` copied exactly from target documentation. Assembly, not
 the Agent, supplies actual documentation and declaration evidence.
 
-Correctness does not infer defaults, units, or service behavior. Meaning does
-not demand prose for information already unambiguous from the declaration.
-Do not duplicate the same defect just because it affects both humans and
-agents. Checks may identify different defects in the same description.
+Short descriptions can sufficiently explain simple declarations. Do not fail
+name repetition or omitted obvious details alone; flag materially vague,
+misleading, or contradictory descriptions. Do not infer defaults, units, or
+service behavior or demand speculative domain context. For example, an API
+version description can simply identify its version; "Empty success response."
+is misleading for a response-body model with a read-visible `status` property.
+Do not duplicate a defect just because it affects both humans and agents.
 Uncertainty that prevents a conclusion is `not-assessed`, not a guessed failure.
 
 Coverage separately counts semantic units, documents, and checks. Units without
 eligible documentation count as assessed scope but contribute zero documents
-and checks. A document is assessed only when both checks are assessed.
+and checks. A document is assessed when its single judgment is `pass` or `fail`.
 Confirmed failures yield dimension `failed`; otherwise incomplete/blocked
-coverage yields `not-assessed`; otherwise the dimension is `passed`.
+coverage yields `not-assessed`; otherwise zero eligible descriptions yields
+`not-applicable`; otherwise the dimension is `passed`.
 Incomplete coverage remains visible even alongside failures.
 
-Final data includes `intentAssessments`, confirmed `findings`, canonical
+Final data includes `assessmentVersion: 3`, `intentAssessments`, confirmed `findings`, canonical
 documents, `coverage`, and `blockers`. Legacy artifacts lacking this input
 retain their explicit `not-assessed` dimension; they are not reinterpreted as
-having passed. Documentation never changes scoped REST/downstream safety.
+having passed. Historical v1 inputs and results retain their original
+correctness/meaning decisions with legacy labels; they are not converted into
+a new judgment. Documentation never changes scoped REST/downstream safety.
 
 ## 7. Bounded Agent input
 
@@ -1761,19 +1784,12 @@ File: `assessment-judgment.json`
     {
       "reviewUnitId": "semantic-<hash>",
       "documentId": "document-<hash>",
-      "check": "correctness",
-      "decision": "pass",
-      "rationale": "The description makes no claim contradicting the declaration."
-    },
-    {
-      "reviewUnitId": "semantic-<hash>",
-      "documentId": "document-<hash>",
-      "check": "meaning",
+      "check": "description",
       "decision": "fail",
-      "title": "Timeout description repeats its name",
-      "expected": "Explain what the timeout controls without inventing its unit.",
-      "docQuote": "The timeout.",
-      "rationale": "The description does not identify which activity the timeout limits."
+      "title": "Response description incorrectly says the body is empty",
+      "expected": "Describe the optional status carried by the response body.",
+      "docQuote": "Empty success response.",
+      "rationale": "The associated response-body model declares a status property, contradicting the claim that it is empty."
     }
   ],
   "overallConfidence": "high|medium|low",
@@ -2170,8 +2186,8 @@ evidence. Final validation independently checks:
 15. catalog descriptions and unfetched content are never used as guidance;
 16. Azure Guidelines and documentation statuses follow their separate evidence
     and coverage;
-17. exact documentation unit/document/check coverage, with one Correctness and
-    Meaning decision per eligible target `@doc`;
+17. exact documentation unit/document/check coverage, with one `description`
+    decision per eligible target description;
 18. documentation findings quote actual target text, retain canonical source
     context, and contain no authored severity or fabricated evidence;
 19. missing documentation input remains explicitly `not-assessed` for legacy
@@ -2185,17 +2201,38 @@ defines the renderer's presentation and evidence-grouping behavior.
 
 ### Documentation cards
 
+Use the intent-grouped layout (mockup B): compact intent summaries show
+description/file counts and result badges directly below the section summary.
+Do not add a second coverage heading or repeat the aggregate result counts.
+Passed intents start collapsed; failed and incomplete intents start expanded.
+Within each intent, group declarations by exact source path, using short,
+unambiguous file labels and bounded keyboard-scrollable lists. Files and
+individual passing descriptions start collapsed. Inspect description text,
+then expand TypeSpec and its full source path on demand. Do not show passing
+judgment cards or rationales. Failure cards remain in their owning intent,
+with stable anchors and no repeated source comparison in the file list.
+Keep non-applicable/inherited-only groups neutral, complete judgments in JSON,
+and unresolved reasons visible without repeating identical blockers.
+
 Use the shared collapsed finding-card layout and readable affected-intent
 links. Show the check name and concrete issue without a severity label. On
 expansion, show Expected and Actual: the criterion and rationale, exact `@doc`
 text, and associated baseline/target declaration source where available.
+Use full width when only one snapshot is available. Beside the assessed
+declaration, include related type definitions retained in the same intent,
+matching compiler-recorded references and exact source/revision ownership.
+Do not guess ambiguous short-name references or infer links from rationale
+text. Avoid repeating source already contained in the assessed declaration.
 Escape all text and avoid duplicate comparison tables. Display document/check
 coverage and explicit blocked/no-applicable outcomes rather than interpreting
-zero findings as complete assessment. Documentation links remain separate from
+zero findings as complete assessment. Show **No applicable documentation**, not
+a green pass, when no descriptions are eligible; label historical two-check
+judgments as legacy. Documentation links remain separate from
 `Impacts (N)`, which counts only REST/downstream findings.
 Active documentation coverage participates in the overall code-quality
 summary, alongside compatibility and Azure Guidelines. Legacy documentation
-placeholders without coverage remain excluded from that aggregate; the separate
+placeholders without coverage and no-applicable-documentation outcomes remain
+neutral in that aggregate; the separate
 REST/downstream safety contract never changes.
 
 ### REST contract cards
@@ -2514,7 +2551,7 @@ Preserve accepted assessments, `evals/cases.json`, and user-owned eval changes.
 - Agent judgment has one concise Semantic result and one Azure Guidelines decision
   per intent, plus exact deterministic and inferred REST/downstream candidate
   coverage.
-- Every eligible target `@doc` receives exactly one Correctness and Meaning
+- Every eligible target description receives exactly one `description`
   decision, with canonical source-only evidence and explicit coverage.
 - Documentation findings do not introduce guessed severity or change scoped
   REST/downstream safety.
@@ -2553,38 +2590,11 @@ TypeSpec hunk
 
 The main challenges are:
 
-1. **Stable identity across revisions.** Names, operation IDs, paths, generated
-   symbols, and compiler identities may change between baseline and target.
-   Fallback matching must not pair unrelated entities.
-2. **Transitive type reachability.** A nested model or enum can affect
-   operations and SDK methods through inheritance, spreads, aliases, unions,
-   collections, response wrappers, and LRO results. Traversal must be
-   cycle-safe and deduplicated.
-3. **Version projection.** The comparison may select different API versions on
-   the two sides. Analysis must distinguish a PR change from a difference
-   caused only by version selection.
-4. **Language-specific SDK behavior.** Language-neutral TCGC may not expose
-   Go-, Python-, Java-, or C#-specific customization effects such as a scoped
-   `@@clientLocation` change.
-5. **Source-to-artifact provenance.** Compiler artifacts describe generated
-   contracts but may not identify the exact changed hunk that caused a delta.
-   Every finding still requires an auditable link to changed TypeSpec.
-6. **Coverage accounting.** Exact candidate coverage proves that every
-   generated candidate was judged, but does not prove that every changed hunk
-   produced a candidate or an explicit no-impact result.
-7. **Deterministic aggregation.** Fine-grained deltas must become readable
-   method, client, and type findings without hiding distinct breaks or
-   duplicating one root cause across many operations.
-8. **Bounded Agent validation.** Agent output must use only supplied evidence
-   and identifiers. Assembly rejects invented symbols, unknown sources,
-   duplicate coverage, unsupported findings, and success-shaped fallbacks.
-9. **Azure Guidelines retrieval quality.** Search must identify governing official
-   guidance for each narrow intent. A completed search with only generic or
-   irrelevant guidance produces `no-applicable-guidance`; incomplete execution
-   produces `not-assessed`.
-10. **Artifact size and performance.** Large services can produce very large
-    evidence graphs. Input compaction must preserve all transitively required
-    evidence without overwhelming the bounded Agent context.
+Goal: repeatable and traceble report
 
+1. correlate semantic intents with downstream breakings, rest breakings, Azure guidelines and agent friendliness.
+2. model input too large, token cost and performance latency
+3. how to display the info. e.g. downstream breaking can be found from sdk type or from sdk method. how to display it?
+4. so many edge cases
 The deterministic coverage ledger and completeness invariant are defined in
 [Deterministic coverage and optional inference](#71-deterministic-coverage-and-optional-inference).

@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "documentQualityAssessmentVersion": 3,
+  "documentQualityCriterion": "Does the @doc description clearly and accurately explain the associated TypeSpec code?",
+  "context": {
+    "mode": "source-documentation-replay",
+    "comparison": {
+      "baseRef": "a6887d2260f26285d4b1f5fba97da370be9200b4",
+      "baseCommit": "a6887d2260f26285d4b1f5fba97da370be9200b4",
+      "headCommit": "71ce7d0c524c4bea7bc737836684acd53f343147",
+      "workingTree": {
+        "staged": false,
+        "unstaged": false,
+        "untracked": false
+      }
+    },
+    "retainedDimensions": [
+      "semantic",
+      "rest",
+      "downstream",
+      "compliance"
+    ]
+  },
+  "artifactReferences": {
+    "sourceIndex": "source/source-index.json",
+    "documentQuality": "dimensions/document-quality-input.json"
+  },
+  "documentQualityReviewUnits": [
+    {
+      "reviewUnitId": "semantic-6c953bac4d5ca5b2",
+      "status": "ready",
+      "documentIds": [
+        "document-103a403932241354",
+        "document-430a51ef0fa6982c",
+        "document-8a4fcb8604275f81"
+      ],
+      "evidenceSetId": "evidence-document-semantic-6c953bac4d5ca5b2"
+    }
+  ],
+  "evidenceSets": {
+    "evidence-document-semantic-6c953bac4d5ca5b2": {
+      "sourceChangeIds": [
+        "source-9a813171a81d57c2"
+      ],
+      "hunkIds": [
+        "hunk-b45fb303f8a4e2c9"
+      ],
+      "declarationCount": 6,
+      "evidenceFactIds": [],
+      "evidenceRef": {
+        "artifact": "dimensions/document-quality-input.json",
+        "id": "semantic-6c953bac4d5ca5b2"
+      }
+    }
+  }
+}

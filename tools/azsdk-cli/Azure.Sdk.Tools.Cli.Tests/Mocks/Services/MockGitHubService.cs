@@ -6,6 +6,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
 {
     public class MockGitHubService : IGitHubService
     {
+        // When set, controls whether pull requests returned by GetPullRequestAsync report as merged.
+        public bool ConfiguredPullRequestMerged { get; set; }
+
         public string GetAuthToken() => "mock-github-token";
 
         public Task<CreateBranchStatus> CreateBranchAsync(string repoOwner, string repoName, string branchName, string baseBranchName = "main", CancellationToken ct = default)
@@ -197,8 +200,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
                 body: "This is a test pull request",
                 createdAt: DateTimeOffset.Now.AddDays(-1),
                 updatedAt: DateTimeOffset.Now,
-                closedAt: null,
-                mergedAt: null,
+                closedAt: ConfiguredPullRequestMerged ? DateTimeOffset.Now : (DateTimeOffset?)null,
+                mergedAt: ConfiguredPullRequestMerged ? DateTimeOffset.Now : (DateTimeOffset?)null,
                 head: CreateMockGitReference($"{repoOwner}:feature-branch", "feature-branch", "abc123", user),
                 @base: CreateMockGitReference($"{repoOwner}:main", "main", "def456", user),
                 user: user,
@@ -207,8 +210,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
                 draft: false,
                 mergeable: true,
                 mergeableState: MergeableState.Clean,
-                mergedBy: null,
-                mergeCommitSha: null,
+                mergedBy: ConfiguredPullRequestMerged ? user : null,
+                mergeCommitSha: ConfiguredPullRequestMerged ? "abc123" : null,
                 comments: 0,
                 maintainerCanModify: true,
                 commits: 3,

@@ -399,6 +399,22 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         }
 
         [Test]
+        public async Task Test_Create_releasePlan_private_preview_marks_finished_when_spec_pr_merged()
+        {
+            var mockGitHubService = (MockGitHubService)gitHubService;
+            mockGitHubService.ConfiguredPullRequestMerged = true;
+
+            var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
+            var releaseplan = await releasePlanTool.CreateReleasePlan(null, testCodeFilePath, "July 2025", "Private Preview", specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs-pr/pull/35446", isTestReleasePlan: true);
+
+            Assert.IsNotNull(releaseplan);
+            Assert.IsNull(releaseplan.ResponseError, $"Unexpected error: {releaseplan.ResponseError}");
+            var details = releaseplan.ReleasePlanDetails as ReleasePlanWorkItem;
+            Assert.IsNotNull(details);
+            Assert.That(details.Status, Is.EqualTo("Finished"));
+        }
+
+        [Test]
         public async Task Test_Create_releasePlan_private_preview_rejects_public_spec_pr()
         {
             var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";

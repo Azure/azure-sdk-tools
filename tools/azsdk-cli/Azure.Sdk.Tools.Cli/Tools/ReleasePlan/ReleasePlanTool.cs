@@ -876,20 +876,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                         }
 
                         // For private preview release plans, mark as finished if spec PR is merged
-                        if (releasePlan.ApiReleaseType == ApiReleaseType.PrivatePreview)
-                        {
-                            var isPrivateSpec = activeSpecPr.Contains(PRIVATE_SPECS_REPO, StringComparison.OrdinalIgnoreCase);
-                            var specRepoName = isPrivateSpec ? PRIVATE_SPECS_REPO : PUBLIC_SPECS_REPO;
-                            var specPr = await githubService.GetPullRequestAsync(REPO_OWNER, specRepoName, prNumber, ct);
-                            if (specPr?.Merged == true)
-                            {
-                                await devOpsService.UpdateWorkItemAsync(releasePlan.WorkItemId, new Dictionary<string, string>
-                                    {
-                                        { "System.State", "Finished" }
-                                    }, ct);
-                                logger.LogInformation("Private preview release plan {WorkItemId} marked as Finished because spec PR is merged", releasePlan.WorkItemId);
-                            }
-                        }
+                        releasePlan = await MarkPrivatePreviewReleasePlanFinishedIfSpecMergedAsync(releasePlan, specPullRequestUrl, ct);
                     }
                 }
 
@@ -944,6 +931,46 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
             var match = Regex.Match(pullRequestUrl, @"/pull/(\d+)");
             return match.Success ? int.Parse(match.Groups[1].Value) : 0;
+        }
+
+        /// <summary>
+        /// For private preview release plans, checks whether the associated spec pull request has been merged
+        /// and, if so, marks the release plan work item as Finished. This only applies to private preview
+        /// release plans with an available spec PR.
+        /// </summary>
+        private async Task<ReleasePlanWorkItem> MarkPrivatePreviewReleasePlanFinishedIfSpecMergedAsync(ReleasePlanWorkItem releasePlan, string specPullRequestUrl, CancellationToken ct)
+        {
+            if (releasePlan.ApiReleaseType != ApiReleaseType.PrivatePreview)
+            {
+                return releasePlan;
+            }
+
+            var activeSpecPr = !string.IsNullOrEmpty(releasePlan.ActiveSpecPullRequest) ? releasePlan.ActiveSpecPullRequest : specPullRequestUrl;
+            if (string.IsNullOrEmpty(activeSpecPr))
+            {
+                return releasePlan;
+            }
+
+            var prNumber = ParsePullRequestNumberFromUrl(activeSpecPr);
+            if (prNumber <= 0)
+            {
+                return releasePlan;
+            }
+
+            var isPrivateSpec = activeSpecPr.Contains(PRIVATE_SPECS_REPO, StringComparison.OrdinalIgnoreCase);
+            var specRepoName = isPrivateSpec ? PRIVATE_SPECS_REPO : PUBLIC_SPECS_REPO;
+            var specPr = await githubService.GetPullRequestAsync(REPO_OWNER, specRepoName, prNumber, ct);
+            if (specPr?.Merged == true)
+            {
+                await devOpsService.UpdateWorkItemAsync(releasePlan.WorkItemId, new Dictionary<string, string>
+                    {
+                        { "System.State", "Finished" }
+                    }, ct);
+                logger.LogInformation("Private preview release plan {WorkItemId} marked as Finished because spec PR is merged", releasePlan.WorkItemId);
+                releasePlan.Status = "Finished";
+            }
+
+            return releasePlan;
         }
 
         /// <summary>
@@ -1324,6 +1351,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                         //Refresh release plan to get latest details
                         releasePlan = await devOpsService.GetReleasePlanForWorkItemAsync(releasePlan.WorkItemId, ct);
 
+                        // For private preview release plans, mark as finished if the spec PR is already merged.
+                        if (releasePlan != null)
+                        {
+                            releasePlan = await MarkPrivatePreviewReleasePlanFinishedIfSpecMergedAsync(releasePlan, specPullRequestUrl, ct);
+                        }
+
                         // Recipient routing (To/CC) is owned by the email template.
                         // Silently completes when notifications are disabled.
                         var releasePlanEmail = new NewReleasePlanEmail(releasePlan);
@@ -1331,7 +1364,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     }
                     catch (Exception notifyEx)
                     {
-                        logger.LogWarning(notifyEx, "Failed to refresh release plan or send release plan notification.");
+                        logger.LogWarning(notifyEx, "Failed to refresh release plan, mark it finished, or send release plan notification.");
                     }
 
                     var response = new ReleasePlanResponse

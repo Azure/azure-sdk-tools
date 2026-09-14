@@ -504,6 +504,9 @@ class FoundryEvalsRunner:
             testcase = item.get("testcase", "unknown")
             if not response_id:
                 raise ValueError(f"Bot response for testcase {testcase!r} has no response ID")
+            if response_id == "content-filter":
+                tool_calls_by_response_id[response_id] = []
+                continue
             response = response_client.responses.retrieve(response_id)
             output_items = [
                 _serialize_response_item(output_item)

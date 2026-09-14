@@ -348,9 +348,13 @@ def test_retrieve_and_normalize_stored_response_tool_calls():
     class FakeClient:
         responses = FakeResponses()
 
-    items = [{"testcase": "traceable", "response_id": "response-1", "context": "documents"}]
+    items = [
+        {"testcase": "traceable", "response_id": "response-1", "context": "documents"},
+        {"testcase": "blocked", "response_id": "content-filter", "context": ""},
+    ]
     tool_calls_by_response_id = FoundryEvalsRunner._retrieve_tool_calls(FakeClient(), items)
 
+    assert tool_calls_by_response_id["content-filter"] == []
     assert tool_calls_by_response_id["response-1"] == [
         {
             "tool_name": "search_knowledge_base",

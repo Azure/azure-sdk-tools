@@ -1,7 +1,7 @@
 # Azure SDK QA Bot Evaluations
 
 Evaluation for the Azure SDK QA bot, built on the **Azure AI Foundry** evaluation
-framework (`azure-ai-projects >= 2.0`, the OpenAI-evals surface).
+framework (`azure-ai-projects >= 2.1`, the OpenAI-evals surface).
 
 We call the bot `/completion` endpoint **concurrently**, collect each answer +
 retrieved context + references, then grade them inline with the Foundry builtin LLM
@@ -102,7 +102,7 @@ Set the bot `/completion` endpoint via `BOT_SERVICE_ENDPOINT` (+ `BOT_AGENT_TOKE
 
 Results appear on the Evaluation tab of the Azure AI Foundry portal (each run prints its `report_url`). `--cache_result full` writes per-case JSON + failed-cases JSON under `cache/`.
 
-Each cached case preserves the hosted-agent response ID and ordered tool calls under `execution`. Tool calls contain the tool name, original arguments, and complete output; JSON results from `search_knowledge_base` and `wiki_search` are stored as objects. Tool calls are not sent to Foundry evaluators. The raw `actual.context` used by the groundedness evaluator is retained separately, and the response ID can retrieve the original stored response on demand.
+Each cached case preserves the hosted-agent response ID and ordered tool calls under `execution`. Tool calls contain the tool name, original arguments, and complete output; JSON results from `search_knowledge_base` and `wiki_search` are stored as objects. Tool calls are not sent to Foundry evaluators. The raw `actual.context` used by the groundedness evaluator is retained separately. A normal response ID can retrieve the original stored response on demand; synthetic IDs such as `content-filter` have no stored response.
 
 ### Evaluators
 

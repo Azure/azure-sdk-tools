@@ -84,7 +84,7 @@ contributors don't re-curate the same cases); `evaluation_datasets/basic/`, `eva
 
 ## Part 2 — Running evaluations
 
-We call the bot `/completion` endpoint **concurrently** (`--max_concurrency`, default 8), retrieve each stored Agent response from Foundry by its response ID, then grade the collected answers inline in payload-bounded batches of at most 20 cases and merge the results. The bot's documentation-only `full_context` is sent to the evaluators unchanged; tool calls and their results remain local and are joined into cached execution records after grading. Batching keeps large perf datasets under Foundry's inline run-history payload limit; an individual case above the byte limit fails locally with its testcase name instead of submitting an oversized request. Reads cases from the local `evaluation_datasets/<target>/<scenario>.jsonl`.
+We call the bot `/completion` endpoint **concurrently** (`--max_concurrency`, default 8), retrieve each stored Agent response from Foundry by its response ID, then grade the collected answers in one inline evaluation run. The bot's documentation-only `full_context` is sent to the evaluators unchanged; tool calls and their results remain local and are joined into cached execution records after grading. Reads cases from the local `evaluation_datasets/<target>/<scenario>.jsonl`.
 
 ```bash
 # Concurrent /completion collection + inline grading:

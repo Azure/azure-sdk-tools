@@ -51,8 +51,6 @@ SCENARIO_TO_CHANNEL: dict[str, str] = {
 
 # Composite weights
 BOT_EVALS_WEIGHTS = {"similarity": 0.6, "response_completeness": 0.4}
-INLINE_EVAL_BATCH_SIZE = 20
-INLINE_EVAL_BATCH_MAX_BYTES = 400_000
 _JSON_OUTPUT_TOOLS = {"search_knowledge_base", "wiki_search"}
 
 # Item schema for the inline eval data: the answer/context are collected from
@@ -113,103 +111,6 @@ def _inline_run_request(
             },
         },
     }
-
-
-def _inline_run_request_bytes(
-    items: list[dict[str, Any]],
-    run_name: str,
-) -> int:
-    return len(
-        json.dumps(
-            _inline_run_request(items, run_name),
-            ensure_ascii=False,
-        ).encode("utf-8")
-    )
-
-
-def _combine_batch_results(
-    batch_results: list[list[dict[str, Any]]],
-    evaluators: list[str],
-) -> list[dict[str, Any]]:
-    combined: list[dict[str, Any]] = []
-    summary: dict[str, Any] = {"total_evals": 0}
-    for evaluator in evaluators:
-        summary[f"{evaluator}_pass_rate"] = 0
-        summary[f"{evaluator}_fail_rate"] = 0
-    summary["traced_cases"] = 0
-    summary["response_id_cases"] = 0
-    summary["tool_call_count"] = 0
-    summary["file_access_cases"] = 0
-    summary["tool_usage"] = {}
-    for result in batch_results:
-        if not result:
-            raise ValueError("evaluation batch result must include a summary")
-        combined.extend(result[:-1])
-        batch_summary = result[-1]
-        summary["total_evals"] += batch_summary["total_evals"]
-        for evaluator in evaluators:
-            summary[f"{evaluator}_pass_rate"] += batch_summary[
-                f"{evaluator}_pass_rate"
-            ]
-            summary[f"{evaluator}_fail_rate"] += batch_summary[
-                f"{evaluator}_fail_rate"
-            ]
-        summary["traced_cases"] += batch_summary.get("traced_cases", 0)
-        summary["response_id_cases"] += batch_summary.get(
-            "response_id_cases", 0
-        )
-        summary["tool_call_count"] += batch_summary.get("tool_call_count", 0)
-        summary["file_access_cases"] += batch_summary.get("file_access_cases", 0)
-        for tool_name, usage in batch_summary.get("tool_usage", {}).items():
-            combined_usage = summary["tool_usage"].setdefault(
-                tool_name, {"calls": 0, "cases": 0}
-            )
-            combined_usage["calls"] += usage.get("calls", 0)
-            combined_usage["cases"] += usage.get("cases", 0)
-    combined.append(summary)
-    return combined
-
-
-def _batch_completion_items(
-    items: list[dict[str, Any]],
-    *,
-    max_items: int = INLINE_EVAL_BATCH_SIZE,
-    max_bytes: int = INLINE_EVAL_BATCH_MAX_BYTES,
-    run_name_prefix: str = "evaluation",
-) -> list[list[dict[str, Any]]]:
-    if max_items <= 0:
-        raise ValueError("max_items must be positive")
-    if max_bytes <= 0:
-        raise ValueError("max_bytes must be positive")
-
-    batches: list[list[dict[str, Any]]] = []
-    current: list[dict[str, Any]] = []
-    max_batch_index_digits = max(2, len(str(len(items))))
-    longest_run_name = (
-        f"{run_name_prefix}-run-{'9' * max_batch_index_digits}"
-    )
-    for item in items:
-        projected = _completion_item(item)
-        item_bytes = _inline_run_request_bytes(
-            [projected],
-            longest_run_name,
-        )
-        if item_bytes > max_bytes:
-            raise ValueError(
-                f"Evaluation item {projected['testcase']!r} is {item_bytes} bytes, "
-                f"which exceeds the {max_bytes}-byte inline batch limit"
-            )
-        candidate_bytes = _inline_run_request_bytes(
-            [*current, projected],
-            longest_run_name,
-        )
-        if current and (len(current) >= max_items or candidate_bytes > max_bytes):
-            batches.append(current)
-            current = []
-        current.append(projected)
-    if current:
-        batches.append(current)
-    return batches
 
 
 def extract_title_and_link_from_references(references: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -778,7 +679,6 @@ class FoundryEvalsRunner:
             type="custom", item_schema=COMPLETION_ITEM_SCHEMA, include_sample_schema=False
         )
         name = evaluation_name or f"qa-bot-{scenario}"
-        batches = _batch_completion_items(items, run_name_prefix=name)
         eval_object = openai_client.evals.create(
             name=name,
             data_source_config=data_source_config,
@@ -786,45 +686,31 @@ class FoundryEvalsRunner:
         )
         logger.info("Evaluation created (id=%s, name=%s)", eval_object.id, name)
 
-        # 4) Grade the pre-collected answers as bounded inline batches. Foundry
-        # run-history rejects oversized inline documents before grading starts.
-        batch_results: list[list[dict[str, Any]]] = []
-        batch_count = len(batches)
-        for batch_index, batch in enumerate(batches, start=1):
-            run_name = f"{name}-run-{batch_index:02d}"
-            request = _inline_run_request(batch, run_name)
-            batch_bytes = len(
-                json.dumps(request, ensure_ascii=False).encode("utf-8")
-            )
-            run = openai_client.evals.runs.create(
-                eval_id=eval_object.id,
-                name=run_name,
-                data_source=request["data_source"],  # type: ignore[arg-type]
-            )
-            logger.info(
-                "Evaluation batch %d/%d created (id=%s, cases=%d, bytes=%d)",
-                batch_index,
-                batch_count,
-                run.id,
-                len(batch),
-                batch_bytes,
-            )
-            adapted = self._poll_and_adapt(
-                openai_client,
-                eval_object.id,
-                run.id,
-                f"{scenario}-batch-{batch_index:02d}",
-                response_history_by_id,
-                failed_rows if batch_index == batch_count else None,
-            )
-            batch_results.append(next(iter(adapted.values())))
-
-        return {
-            f"{scenario}_batched": _combine_batch_results(
-                batch_results,
-                self._evaluators,
-            )
-        }
+        # 4) Grade all pre-collected answers in one inline run, matching the
+        # evaluation behavior that predates execution-trace capture.
+        run_name = f"{name}-run"
+        request = _inline_run_request(
+            [_completion_item(item) for item in items],
+            run_name,
+        )
+        run = openai_client.evals.runs.create(
+            eval_id=eval_object.id,
+            name=run_name,
+            data_source=request["data_source"],  # type: ignore[arg-type]
+        )
+        logger.info(
+            "Evaluation run created (id=%s, cases=%d)",
+            run.id,
+            len(items),
+        )
+        return self._poll_and_adapt(
+            openai_client,
+            eval_object.id,
+            run.id,
+            scenario,
+            response_history_by_id,
+            failed_rows,
+        )
 
 
 def resolve_records(dataset_spec: str, *, script_dir: Path) -> tuple[list[dict[str, Any]], str]:

@@ -11,10 +11,8 @@ Run:
 
 from __future__ import annotations
 
-import json
 import os
 import sys
-from unittest.mock import Mock, patch
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -31,13 +29,9 @@ from dataset.schema import (  # noqa: E402
 )
 from dataset.review import review  # noqa: E402
 from _evals_runner import (  # noqa: E402
-    CompletionCollector,
     FoundryEvalsRunner,
-    _batch_completion_items,
     _completion_item,
-    _combine_batch_results,
     _extract_tool_trace,
-    _inline_run_request_bytes,
     output_items_to_rows,
     extract_title_and_link_from_references,
     extract_title_and_link_from_context,
@@ -261,160 +255,6 @@ def test_output_items_to_rows_groundedness_fail():
     ]
     rows = output_items_to_rows(output_items, ["groundedness"])["rows"]
     assert rows[0]["outputs.groundedness.groundedness_result"] == "fail"
-
-
-def test_combine_batch_results_sums_summaries():
-    combined = _combine_batch_results(
-        [
-            [
-                {"testcase": "one"},
-                {
-                    "total_evals": 1,
-                    "similarity_pass_rate": 1,
-                    "similarity_fail_rate": 0,
-                    "traced_cases": 1,
-                    "response_id_cases": 1,
-                    "tool_call_count": 2,
-                    "file_access_cases": 1,
-                    "tool_usage": {
-                        "search_knowledge_base": {"calls": 1, "cases": 1},
-                        "file_access_grep": {"calls": 1, "cases": 1},
-                    },
-                },
-            ],
-            [
-                {"testcase": "two"},
-                {
-                    "total_evals": 1,
-                    "similarity_pass_rate": 0,
-                    "similarity_fail_rate": 1,
-                    "traced_cases": 1,
-                    "response_id_cases": 1,
-                    "tool_call_count": 1,
-                    "file_access_cases": 0,
-                    "tool_usage": {
-                        "search_knowledge_base": {"calls": 1, "cases": 1},
-                    },
-                },
-            ],
-        ],
-        ["similarity"],
-    )
-
-    assert combined[:-1] == [{"testcase": "one"}, {"testcase": "two"}]
-    assert combined[-1] == {
-        "total_evals": 2,
-        "similarity_pass_rate": 1,
-        "similarity_fail_rate": 1,
-        "traced_cases": 2,
-        "response_id_cases": 2,
-        "tool_call_count": 3,
-        "file_access_cases": 1,
-        "tool_usage": {
-            "search_knowledge_base": {"calls": 2, "cases": 2},
-            "file_access_grep": {"calls": 1, "cases": 1},
-        },
-    }
-
-
-def test_batch_completion_items_respects_count_and_payload_limits():
-    items = [
-        {"testcase": f"case-{index}", "query": "q", "response": "x" * 80}
-        for index in range(5)
-    ]
-
-    count_batches = _batch_completion_items(items, max_items=2, max_bytes=10_000)
-    assert [len(batch) for batch in count_batches] == [2, 2, 1]
-
-    payload_batches = _batch_completion_items(
-        items, max_items=20, max_bytes=500
-    )
-    assert len(payload_batches) > 1
-    assert [
-        item["testcase"] for batch in payload_batches for item in batch
-    ] == [item["testcase"] for item in items]
-    assert all(
-        _inline_run_request_bytes(batch, "evaluation-run-99") <= 500
-        for batch in payload_batches
-    )
-
-    envelope_items = [
-        {"testcase": "one", "response": "x" * 40},
-        {"testcase": "two", "response": "x" * 40},
-    ]
-    one_item_request_bytes = _inline_run_request_bytes(
-        [_completion_item(envelope_items[0])],
-        "evaluation-run-99",
-    )
-    bare_items_bytes = len(
-        json.dumps(
-            [_completion_item(item) for item in envelope_items],
-            ensure_ascii=False,
-        ).encode("utf-8")
-    )
-    two_item_request_bytes = _inline_run_request_bytes(
-        [_completion_item(item) for item in envelope_items],
-        "evaluation-run-99",
-    )
-    envelope_limit = max(one_item_request_bytes, bare_items_bytes)
-    assert envelope_limit < two_item_request_bytes
-    envelope_batches = _batch_completion_items(
-        envelope_items,
-        max_items=20,
-        max_bytes=envelope_limit,
-    )
-    assert [len(batch) for batch in envelope_batches] == [1, 1]
-
-    try:
-        _batch_completion_items(items, max_items=0)
-    except ValueError as exc:
-        assert "max_items" in str(exc)
-    else:
-        raise AssertionError("expected max_items validation")
-
-    try:
-        _batch_completion_items(
-            [{"testcase": "too-large", "response": "x" * 1_000}],
-            max_bytes=200,
-        )
-    except ValueError as exc:
-        assert "too-large" in str(exc)
-        assert "200-byte" in str(exc)
-    else:
-        raise AssertionError("expected oversized item validation")
-
-
-def test_oversized_completion_does_not_create_evaluation():
-    runner = FoundryEvalsRunner(
-        ["similarity"],
-        Mock(),
-        model="gpt-4o",
-        completion_url="https://example.test/completion",
-    )
-    item = {
-        "testcase": "too-large",
-        "query": "q",
-        "response": "x" * 500_000,
-        "response_id": "response-1",
-    }
-    openai_client = Mock()
-    response_client = Mock()
-    response_client.responses.retrieve.return_value = {"output": []}
-
-    with patch.object(CompletionCollector, "collect", return_value=[item]):
-        try:
-            runner.evaluate_run_completion(
-                openai_client,
-                [{"testcase": "too-large", "query": "q"}],
-                "test",
-                response_client=response_client,
-            )
-        except ValueError as exc:
-            assert "too-large" in str(exc)
-        else:
-            raise AssertionError("expected oversized item validation")
-
-    openai_client.evals.create.assert_not_called()
 
 
 def test_build_testing_criteria_all_builtins():

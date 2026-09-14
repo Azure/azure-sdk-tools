@@ -54,9 +54,15 @@ class EvalsResult:
             pass_rates[metric] = 0
             fail_rates[metric] = 0
 
+        latencies: list[float] = []
         for row in result["rows"]:
             row_result: dict[str, Any] = {}
             row_result["testcase"] = row["inputs.testcase"]
+            latency = row.get("inputs.latency")
+            if isinstance(latency, (int, float)):
+                row_result["latency"] = float(latency)
+                latencies.append(float(latency))
+            row_result["trace_id"] = row.get("inputs.trace_id", "")
             row_result["expected"] = {
                 "answer": row["inputs.ground_truth"],
                 "references": row["inputs.expected_references"],
@@ -93,7 +99,10 @@ class EvalsResult:
                         row_result[metric_name] = value
             run_result.append(row_result)
 
-        summary_result: dict[str, Any] = {"total_evals": len(result["rows"])}
+        summary_result: dict[str, Any] = {
+            "total_evals": len(result["rows"]),
+            "average_latency_seconds": sum(latencies) / len(latencies) if latencies else None,
+        }
         for index, (key, value) in enumerate(pass_rates.items()):
             summary_result[f"{key}_pass_rate"] = value
         for index, (key, value) in enumerate(fail_rates.items()):
@@ -123,6 +132,8 @@ class EvalsResult:
         metrics = self._metrics.keys()
         headers = [
             "Test Case",
+            "Latency (s)",
+            "Trace ID",
         ]
         for metric in metrics:
             headers.append(metric)
@@ -140,7 +151,12 @@ class EvalsResult:
             logging.debug(json.dumps(result, ensure_ascii=False))
             testcase = result["testcase"]
 
-            terminal_row = [testcase]
+            latency = result.get("latency")
+            terminal_row = [
+                testcase,
+                f"{latency:.2f}" if latency is not None else "N/A",
+                result.get("trace_id") or "N/A",
+            ]
             values = []
             if baseline_results is not None and testcase in baseline_results:
                 base = baseline_results[testcase]

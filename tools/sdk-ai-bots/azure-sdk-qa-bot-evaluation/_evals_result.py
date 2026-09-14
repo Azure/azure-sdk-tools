@@ -69,17 +69,7 @@ class EvalsResult:
                 "knowledges": row["inputs.knowledges"],
                 "context": row.get("inputs.context", ""),
             }
-            tool_calls = row.get("inputs.tool_calls", []) or []
-            row_result["execution"] = {
-                "response_id": row.get("inputs.response_id", ""),
-                "trace_id": row.get("inputs.trace_id", ""),
-                "agent_conversation_id": row.get(
-                    "inputs.agent_conversation_id", ""
-                ),
-                "latency_seconds": row.get("inputs.latency", 0.0),
-                "response_length": row.get("inputs.response_length", 0),
-                "tool_calls": tool_calls,
-            }
+            row_result["execution"] = row.get("inputs.execution", {})
             pattern = r"^outputs\.(\w+)\.(\w+)$"
             for index, (key, value) in enumerate(row.items()):
                 match = re.match(pattern, key)
@@ -106,37 +96,7 @@ class EvalsResult:
                         row_result[metric_name] = value
             run_result.append(row_result)
 
-        tool_usage: dict[str, dict[str, int]] = {}
-        traced_cases = 0
-        response_id_cases = 0
-        tool_call_count = 0
-        for row in result["rows"]:
-            tool_calls = row.get("inputs.tool_calls", []) or []
-            if row.get("inputs.trace_id"):
-                traced_cases += 1
-            if row.get("inputs.response_id"):
-                response_id_cases += 1
-            case_tools: set[str] = set()
-            for call in tool_calls:
-                if not isinstance(call, dict):
-                    continue
-                tool_name = call.get("tool_name")
-                if not isinstance(tool_name, str) or not tool_name:
-                    continue
-                tool_call_count += 1
-                case_tools.add(tool_name)
-                usage = tool_usage.setdefault(tool_name, {"calls": 0, "cases": 0})
-                usage["calls"] += 1
-            for tool_name in case_tools:
-                tool_usage[tool_name]["cases"] += 1
-
-        summary_result: dict[str, Any] = {
-            "total_evals": len(result["rows"]),
-            "traced_cases": traced_cases,
-            "response_id_cases": response_id_cases,
-            "tool_call_count": tool_call_count,
-            "tool_usage": tool_usage,
-        }
+        summary_result: dict[str, Any] = {"total_evals": len(result["rows"])}
         for index, (key, value) in enumerate(pass_rates.items()):
             summary_result[f"{key}_pass_rate"] = value
         for index, (key, value) in enumerate(fail_rates.items()):

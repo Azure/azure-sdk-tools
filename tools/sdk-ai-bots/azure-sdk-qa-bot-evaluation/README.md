@@ -84,7 +84,7 @@ contributors don't re-curate the same cases); `evaluation_datasets/basic/`, `eva
 
 ## Part 2 — Running evaluations
 
-We call the bot `/completion` endpoint **concurrently** (`--max_concurrency`, default 8), retrieve each stored Agent response from Foundry by its response ID, then grade the collected answers in one inline evaluation run. The bot's documentation-only `full_context` is sent to the evaluators unchanged; tool calls and their results remain local and are joined into cached execution records after grading. Reads cases from the local `evaluation_datasets/<target>/<scenario>.jsonl`.
+We call the bot `/completion` endpoint **concurrently** (`--max_concurrency`, default 8), retrieve each stored Agent response from Foundry by its response ID, then grade the collected answers in one inline evaluation run. The bot's documentation-only `full_context` is sent to the evaluators unchanged; tool calls and their results remain local and are joined into cached results after grading. Reads cases from the local `evaluation_datasets/<target>/<scenario>.jsonl`.
 
 ```bash
 # Concurrent /completion collection + inline grading:
@@ -102,7 +102,7 @@ Set the bot `/completion` endpoint via `BOT_SERVICE_ENDPOINT` (+ `BOT_AGENT_TOKE
 
 Results appear on the Evaluation tab of the Azure AI Foundry portal (each run prints its `report_url`). `--cache_result full` writes per-case JSON + failed-cases JSON under `cache/`.
 
-Each cached case preserves an `execution` block with the hosted-agent response ID, Foundry trace ID, agent conversation ID, latency, response length, and normalized tool calls joined to their outputs by `call_id`. Tool calls retain their original arguments and complete outputs; JSON results from `search_knowledge_base` and `wiki_search` are stored as objects. Tool calls are not sent to Foundry evaluators. The raw `actual.context` used by the groundedness evaluator is retained separately, and the response ID can retrieve the original stored response on demand. The final summary reports `traced_cases` from Foundry trace IDs, `response_id_cases`, `tool_call_count`, and per-tool call/case counts.
+Each cached case preserves the hosted-agent response ID and ordered tool calls under `execution`. Tool calls contain the tool name, original arguments, and complete output; JSON results from `search_knowledge_base` and `wiki_search` are stored as objects. Tool calls are not sent to Foundry evaluators. The raw `actual.context` used by the groundedness evaluator is retained separately, and the response ID can retrieve the original stored response on demand.
 
 ### Evaluators
 
@@ -116,7 +116,7 @@ All evaluators are builtin LLM evaluators that read the collected bot answer via
 | `relevance` | builtin LLM (model) | answer vs `query` |
 | `coherence` | builtin LLM (model) | answer vs `query` |
 | `fluency` | builtin LLM (model) | answer vs `query` |
-| `groundedness` | builtin LLM (model) | answer vs retrieved documentation plus bounded execution evidence (`{{item.context}}`) |
+| `groundedness` | builtin LLM (model) | answer vs retrieved context (`{{item.context}}`) |
 | `bot_evals` | local composite | weighted `similarity` + `response_completeness` |
 
 LLM-graded evaluators use the 1-5 `EVALUATE_THRESHOLD`.

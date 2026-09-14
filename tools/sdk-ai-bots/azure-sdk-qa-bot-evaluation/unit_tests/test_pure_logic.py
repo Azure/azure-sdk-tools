@@ -36,6 +36,7 @@ from _evals_runner import (  # noqa: E402
     _batch_completion_items,
     _completion_item,
     _combine_batch_results,
+    _extract_tool_trace,
     _inline_run_request_bytes,
     append_tool_evidence_to_context,
     output_items_to_rows,
@@ -544,6 +545,27 @@ def test_retrieve_stored_response_history_and_tool_evidence():
         "documents",
         history["response-1"]["tool_trace"],
     )
+
+
+def test_search_tool_json_outputs_are_objects():
+    for tool_name in ("search_knowledge_base", "wiki_search"):
+        traces = _extract_tool_trace(
+            [
+                {
+                    "type": "function_call",
+                    "call_id": "call-1",
+                    "name": tool_name,
+                    "arguments": '{"queries":["q"]}',
+                },
+                {
+                    "type": "function_call_output",
+                    "call_id": "call-1",
+                    "output": '{"results":[{"title":"Document"}]}',
+                },
+            ]
+        )
+
+        assert traces[0]["output"] == {"results": [{"title": "Document"}]}
 
 
 def test_completion_item_preserves_execution_metadata():

@@ -53,6 +53,7 @@ SCENARIO_TO_CHANNEL: dict[str, str] = {
 BOT_EVALS_WEIGHTS = {"similarity": 0.6, "response_completeness": 0.4}
 INLINE_EVAL_BATCH_SIZE = 20
 INLINE_EVAL_BATCH_MAX_BYTES = 400_000
+_JSON_OUTPUT_TOOLS = {"search_knowledge_base", "wiki_search"}
 
 # Item schema for the inline eval data: the answer/context are collected from
 # /completion and carried in the item (read via {{item.response}} / {{item.context}}).
@@ -474,6 +475,10 @@ def _extract_tool_trace(output_items: list[dict[str, Any]]) -> list[dict[str, An
         if arguments is None:
             arguments = {}
 
+        tool_name = item.get("name")
+        if not isinstance(tool_name, str) or not tool_name:
+            tool_name = item_type.removesuffix("_call")
+
         native_output: Any = None
         if item_type == "web_search_call" and isinstance(arguments, dict):
             native_output = arguments.get("sources")
@@ -498,10 +503,11 @@ def _extract_tool_trace(output_items: list[dict[str, Any]]) -> list[dict[str, An
                 for key, value in item.items()
                 if key not in {"type", "id", "call_id", "name", "response_id", "status"}
             }
-
-        tool_name = item.get("name")
-        if not isinstance(tool_name, str) or not tool_name:
-            tool_name = item_type.removesuffix("_call")
+        if tool_name in _JSON_OUTPUT_TOOLS and isinstance(output, str):
+            try:
+                output = json.loads(output)
+            except json.JSONDecodeError as exc:
+                logger.warning("Failed to parse %s output as JSON: %s", tool_name, exc)
         traces.append(
             {
                 "sequence": len(traces) + 1,

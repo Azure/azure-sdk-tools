@@ -54,8 +54,6 @@ class FeedbackStatus(str, Enum):
     running = "running"
     #: An issue was created; wait for it to close before validating the fix.
     pending_validation = "pending_validation"
-    #: Analysis completed without requiring remediation.
-    done = "done"
     #: Validation completed and confirmed the remediation.
     validation_passed = "validation_passed"
     #: Validation completed but rejected the remediation.
@@ -107,6 +105,7 @@ class QARecord(BaseModel):
     message_count: int = 0
 
     # -- Layer 2: evolution lifecycle -------------------------------------
+    #: No feedback is retained when analysis finishes with a correct answer.
     feedback: FeedbackState | None = None
 
     # -- Bookkeeping ------------------------------------------------------
@@ -139,6 +138,15 @@ class QARecord(BaseModel):
     def from_cosmos(cls, doc: dict[str, Any]) -> "QARecord":
         """Deserialize a Cosmos document, stripping system (``_``) fields."""
         cleaned = {k: v for k, v in doc.items() if not k.startswith("_")}
+        feedback = cleaned.get("feedback")
+        if isinstance(feedback, dict) and feedback.get("status") == "done":
+            # Older records used done for both no-issue analysis and passed
+            # validation. Preserve issue history without retaining that status.
+            cleaned["feedback"] = (
+                {**feedback, "status": FeedbackStatus.validation_passed.value}
+                if feedback.get("issue_url")
+                else None
+            )
         return cls.model_validate(cleaned)
 
 

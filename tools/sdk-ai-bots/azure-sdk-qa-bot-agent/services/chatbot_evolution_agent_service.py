@@ -239,7 +239,7 @@ class ChatbotEvolutionAgentService:
             if result.outcome == ChatbotEvolutionAgentOutcome.no_issue:
                 record.qa_status = QAStatus.finished
                 record.verdict = BotAnswerVerdict.Correct
-                record.feedback.status = FeedbackStatus.done
+                record.feedback = None
                 return
 
             if result.outcome == ChatbotEvolutionAgentOutcome.issue_created:

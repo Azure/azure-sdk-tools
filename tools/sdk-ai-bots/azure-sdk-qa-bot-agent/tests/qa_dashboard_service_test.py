@@ -260,10 +260,31 @@ async def test_list_records_filters_not_started_feedback() -> None:
             feedback_status=FeedbackStatusFilter.not_started,
         )
 
-    assert "NOT IS_DEFINED(c.feedback) OR IS_NULL(c.feedback)" in (
-        container.calls[0]["query"]
-    )
+    for call in container.calls[:2]:
+        assert "NOT IS_DEFINED(c.feedback) OR IS_NULL(c.feedback)" in call["query"]
+        assert "c.qa_status = @not_started_qa_status" in call["query"]
+        parameters = {item["name"]: item["value"] for item in call["parameters"]}
+        assert parameters["@not_started_qa_status"] == "ongoing"
     assert "partition_key" not in container.calls[0]
+
+
+def test_validation_passed_filter_includes_legacy_done_with_issue() -> None:
+    conditions, parameters = QADashboardService._build_filters(
+        tenant_id=None,
+        channel_id=None,
+        qa_status=None,
+        feedback_status=FeedbackStatusFilter.validation_passed,
+        updated_from=None,
+        updated_to=None,
+        conversation_id=None,
+    )
+    query = " AND ".join(conditions)
+    assert "c.feedback.status = @feedback_status" in query
+    assert "c.feedback.status = 'done'" in query
+    assert "IS_STRING(c.feedback.issue_url)" in query
+    assert {item["name"]: item["value"] for item in parameters} == {
+        "@feedback_status": "validation_passed"
+    }
 
 
 @pytest.mark.asyncio

@@ -222,8 +222,54 @@ def test_no_issue_result_finishes_record() -> None:
         _result(ChatbotEvolutionAgentOutcome.no_issue),
     )
     assert record.qa_status == QAStatus.finished
+    assert record.verdict == BotAnswerVerdict.Correct
+    assert record.feedback is None
+    assert record.reasoning == "Grounded result."
+    assert record.confidence == 0.9
+    assert record.evaluated_at is not None
+    assert QARecord.from_cosmos(record.to_cosmos()).feedback is None
+    for mode in ChatbotEvolutionAgentMode:
+        assert not ChatbotEvolutionAgentService._can_run(record, mode)
+
+
+def test_legacy_done_without_issue_becomes_no_feedback() -> None:
+    record = _record(qa_status=QAStatus.finished)
+    record.verdict = BotAnswerVerdict.Correct
+    doc = record.to_cosmos()
+    doc["feedback"]["status"] = "done"
+
+    restored = QARecord.from_cosmos(doc)
+
+    assert restored.qa_status == QAStatus.finished
+    assert restored.verdict == BotAnswerVerdict.Correct
+    assert restored.feedback is None
+    assert restored.to_cosmos()["feedback"] is None
+    assert doc["feedback"]["status"] == "done"
+
+
+def test_legacy_done_with_issue_preserves_validation_history() -> None:
+    record = _record(qa_status=QAStatus.failed)
+    record.verdict = BotAnswerVerdict.Incorrect
     assert record.feedback is not None
-    assert record.feedback.status == FeedbackStatus.done
+    record.feedback.issue_url = "https://github.com/Azure/azure-sdk-pr/issues/123"
+    record.feedback.classification = RootCauseClassification.reasoning_gap
+    record.feedback.validation_reasoning = "Fix confirmed."
+    record.feedback.validated_at = _BASE_TIME
+    doc = record.to_cosmos()
+    doc["feedback"]["status"] = "done"
+
+    restored = QARecord.from_cosmos(doc)
+
+    assert restored.qa_status == QAStatus.failed
+    assert restored.verdict == BotAnswerVerdict.Incorrect
+    assert restored.feedback is not None
+    assert restored.feedback.status == FeedbackStatus.validation_passed
+    assert restored.feedback.issue_url == record.feedback.issue_url
+    assert restored.feedback.classification == record.feedback.classification
+    assert restored.feedback.validation_reasoning == "Fix confirmed."
+    assert restored.feedback.validated_at == _BASE_TIME
+    assert restored.to_cosmos()["feedback"]["status"] == "validation_passed"
+    assert doc["feedback"]["status"] == "done"
 
 
 def test_issue_result_waits_for_validation() -> None:

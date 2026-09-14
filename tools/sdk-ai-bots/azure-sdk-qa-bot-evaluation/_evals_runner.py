@@ -97,6 +97,34 @@ def _completion_item(it: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _inline_run_request(
+    items: list[dict[str, Any]],
+    run_name: str,
+) -> dict[str, Any]:
+    return {
+        "name": run_name,
+        "data_source": {
+            "type": "jsonl",
+            "source": {
+                "type": "file_content",
+                "content": [{"item": item} for item in items],
+            },
+        },
+    }
+
+
+def _inline_run_request_bytes(
+    items: list[dict[str, Any]],
+    run_name: str,
+) -> int:
+    return len(
+        json.dumps(
+            _inline_run_request(items, run_name),
+            ensure_ascii=False,
+        ).encode("utf-8")
+    )
+
+
 def _combine_batch_results(
     batch_results: list[list[dict[str, Any]]],
     evaluators: list[str],
@@ -145,6 +173,7 @@ def _batch_completion_items(
     *,
     max_items: int = INLINE_EVAL_BATCH_SIZE,
     max_bytes: int = INLINE_EVAL_BATCH_MAX_BYTES,
+    run_name_prefix: str = "evaluation",
 ) -> list[list[dict[str, Any]]]:
     if max_items <= 0:
         raise ValueError("max_items must be positive")
@@ -153,18 +182,24 @@ def _batch_completion_items(
 
     batches: list[list[dict[str, Any]]] = []
     current: list[dict[str, Any]] = []
+    max_batch_index_digits = max(2, len(str(len(items))))
+    longest_run_name = (
+        f"{run_name_prefix}-run-{'9' * max_batch_index_digits}"
+    )
     for item in items:
         projected = _completion_item(item)
-        item_bytes = len(
-            json.dumps([projected], ensure_ascii=False).encode("utf-8")
+        item_bytes = _inline_run_request_bytes(
+            [projected],
+            longest_run_name,
         )
         if item_bytes > max_bytes:
             raise ValueError(
                 f"Evaluation item {projected['testcase']!r} is {item_bytes} bytes, "
                 f"which exceeds the {max_bytes}-byte inline batch limit"
             )
-        candidate_bytes = len(
-            json.dumps([*current, projected], ensure_ascii=False).encode("utf-8")
+        candidate_bytes = _inline_run_request_bytes(
+            [*current, projected],
+            longest_run_name,
         )
         if current and (len(current) >= max_items or candidate_bytes > max_bytes):
             batches.append(current)
@@ -591,11 +626,6 @@ class FoundryEvalsRunner:
     ) -> dict[str, Any]:
         """Completion mode: concurrently collect bot answers, then grade them inline."""
         from openai.types.eval_create_params import DataSourceConfigCustom
-        from openai.types.evals.create_eval_jsonl_run_data_source_param import (
-            CreateEvalJSONLRunDataSourceParam,
-            SourceFileContent,
-            SourceFileContentContent,
-        )
 
         # 1) Collect bot answers concurrently (the slow, now-parallelized step).
         collector = CompletionCollector(
@@ -657,25 +687,18 @@ class FoundryEvalsRunner:
         # 3) Grade the pre-collected answers as bounded inline batches. Foundry
         # run-history rejects oversized inline documents before grading starts.
         batch_results: list[list[dict[str, Any]]] = []
-        batches = _batch_completion_items(items)
+        batches = _batch_completion_items(items, run_name_prefix=name)
         batch_count = len(batches)
         for batch_index, batch in enumerate(batches, start=1):
-            batch_bytes = sum(
-                len(json.dumps(item, ensure_ascii=False).encode("utf-8"))
-                for item in batch
-            )
-            content = [
-                SourceFileContentContent(item=item)
-                for item in batch
-            ]
-            data_source = CreateEvalJSONLRunDataSourceParam(
-                type="jsonl",
-                source=SourceFileContent(type="file_content", content=content),
+            run_name = f"{name}-run-{batch_index:02d}"
+            request = _inline_run_request(batch, run_name)
+            batch_bytes = len(
+                json.dumps(request, ensure_ascii=False).encode("utf-8")
             )
             run = openai_client.evals.runs.create(
                 eval_id=eval_object.id,
-                name=f"{name}-run-{batch_index:02d}",
-                data_source=data_source,  # type: ignore[arg-type]
+                name=run_name,
+                data_source=request["data_source"],  # type: ignore[arg-type]
             )
             logger.info(
                 "Evaluation batch %d/%d created (id=%s, cases=%d, bytes=%d)",

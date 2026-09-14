@@ -33,6 +33,7 @@ from _evals_runner import (  # noqa: E402
     _batch_completion_items,
     _completion_item,
     _combine_batch_results,
+    _inline_run_request_bytes,
     output_items_to_rows,
     extract_title_and_link_from_references,
     extract_title_and_link_from_context,
@@ -330,9 +331,36 @@ def test_batch_completion_items_respects_count_and_payload_limits():
         item["testcase"] for batch in payload_batches for item in batch
     ] == [item["testcase"] for item in items]
     assert all(
-        len(json.dumps(batch, ensure_ascii=False).encode("utf-8")) <= 500
+        _inline_run_request_bytes(batch, "evaluation-run-99") <= 500
         for batch in payload_batches
     )
+
+    envelope_items = [
+        {"testcase": "one", "response": "x" * 40},
+        {"testcase": "two", "response": "x" * 40},
+    ]
+    one_item_request_bytes = _inline_run_request_bytes(
+        [_completion_item(envelope_items[0])],
+        "evaluation-run-99",
+    )
+    bare_items_bytes = len(
+        json.dumps(
+            [_completion_item(item) for item in envelope_items],
+            ensure_ascii=False,
+        ).encode("utf-8")
+    )
+    two_item_request_bytes = _inline_run_request_bytes(
+        [_completion_item(item) for item in envelope_items],
+        "evaluation-run-99",
+    )
+    envelope_limit = max(one_item_request_bytes, bare_items_bytes)
+    assert envelope_limit < two_item_request_bytes
+    envelope_batches = _batch_completion_items(
+        envelope_items,
+        max_items=20,
+        max_bytes=envelope_limit,
+    )
+    assert [len(batch) for batch in envelope_batches] == [1, 1]
 
     try:
         _batch_completion_items(items, max_items=0)

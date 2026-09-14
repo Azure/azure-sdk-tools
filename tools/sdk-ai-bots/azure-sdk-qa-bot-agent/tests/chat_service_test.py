@@ -12,6 +12,7 @@ import pytest
 from openai.types.responses import (
     ResponseFunctionToolCall,
     ResponseFunctionToolCallOutputItem,
+    ResponseFunctionWebSearch,
     ResponseOutputMessage,
 )
 
@@ -107,11 +108,7 @@ def test_postprocess_captures_ordered_tool_trace_and_all_knowledge() -> None:
     )
     items = [
         ResponseFunctionToolCall(
-            arguments=(
-                '{"queries":["operation id"],"access_token":"secret",'
-                '"url":"https://storage.test/blob?sv=1&sig=sas-secret&se=tomorrow",'
-                '"nested":{"api-key":"api-secret"}}'
-            ),
+            arguments='{"queries":["operation id"],"mode":"hybrid"}',
             call_id="call-search",
             name="search_knowledge_base",
             type="function_call",
@@ -137,6 +134,21 @@ def test_postprocess_captures_ordered_tool_trace_and_all_knowledge() -> None:
             output="packages/compiler/src/checker.ts:42: clientLocation",
             status="completed",
             type="function_call_output",
+        ),
+        ResponseFunctionWebSearch(
+            id="web-search-1",
+            action={
+                "type": "search",
+                "query": "TypeSpec implementation",
+                "sources": [
+                    {
+                        "type": "url",
+                        "url": "https://example.test/source",
+                    }
+                ],
+            },
+            status="completed",
+            type="web_search_call",
         ),
     ]
     req = ChatRequest(
@@ -167,17 +179,19 @@ def test_postprocess_captures_ordered_tool_trace_and_all_knowledge() -> None:
     assert [trace["tool_name"] for trace in traces] == [
         "search_knowledge_base",
         "file_access_grep",
+        "web_search",
     ]
-    assert traces[0]["arguments"]["access_token"] == "[REDACTED]"
-    assert traces[0]["arguments"]["nested"]["api-key"] == "[REDACTED]"
-    assert "sas-secret" not in traces[0]["arguments"]["url"]
-    assert "sig=[REDACTED]" in traces[0]["arguments"]["url"]
-    assert "se=tomorrow" in traces[0]["arguments"]["url"]
-    assert traces[0]["output_captured"] is False
-    assert traces[0]["output_chars"] > 0
-    assert traces[1]["output_captured"] is True
+    assert traces[0]["arguments"] == {
+        "queries": ["operation id"],
+        "mode": "hybrid",
+    }
+    assert "Authoritative guidance." in traces[0]["output"]
     assert "clientLocation" in traces[1]["output"]
-    assert traces[1]["output_sha256"]
+    assert traces[2]["arguments"] == {
+        "type": "search",
+        "query": "TypeSpec implementation",
+    }
+    assert "https://example.test/source" in traces[2]["output"]
     assert evidence == [
         {
             "document_title": "TypeSpec guide",
@@ -196,52 +210,29 @@ def test_postprocess_captures_ordered_tool_trace_and_all_knowledge() -> None:
     ]
 
 
-def test_tool_trace_redacts_non_json_credentials() -> None:
+def test_tool_trace_preserves_full_output() -> None:
     service = ChatService(settings=lambda _key, default="": default)
-
-    arguments = service._parse_trace_arguments(
-        "url=https://storage.test/blob?sv=1&sig=sas-secret "
-        "Authorization: Bearer bearer-secret, api_key=api-secret"
-    )
-
-    assert isinstance(arguments, str)
-    assert "sas-secret" not in arguments
-    assert "bearer-secret" not in arguments
-    assert "api-secret" not in arguments
-    assert arguments.count("[REDACTED]") == 3
-
-
-def test_tool_trace_content_has_a_total_budget() -> None:
-    service = ChatService(settings=lambda _key, default="": default)
-    items = []
-    for index in range(10):
-        call_id = f"call-{index}"
-        items.extend(
-            [
-                ResponseFunctionToolCall(
-                    arguments='{"url":"https://example.test"}',
-                    call_id=call_id,
-                    name="web_fetch",
-                    type="function_call",
-                ),
-                ResponseFunctionToolCallOutputItem(
-                    id=f"output-{index}",
-                    call_id=call_id,
-                    output="x" * 10_000,
-                    status="completed",
-                    type="function_call_output",
-                ),
-            ]
-        )
+    output = "x" * 10_000
+    items = [
+        ResponseFunctionToolCall(
+            arguments='{"url":"https://example.test"}',
+            call_id="call-1",
+            name="web_fetch",
+            type="function_call",
+        ),
+        ResponseFunctionToolCallOutputItem(
+            id="output-1",
+            call_id="call-1",
+            output=output,
+            status="completed",
+            type="function_call_output",
+        ),
+    ]
 
     contexts = service._build_tool_trace_contexts(items, "response-1")
 
-    assert contexts
-    assert sum(len(context.document_content) for context in contexts) <= 32_000
-    assert all(
-        json.loads(context.document_content)["output_sha256"]
-        for context in contexts
-    )
+    assert len(contexts) == 1
+    assert json.loads(contexts[0].document_content)["output"] == output
 
 
 @pytest.mark.asyncio

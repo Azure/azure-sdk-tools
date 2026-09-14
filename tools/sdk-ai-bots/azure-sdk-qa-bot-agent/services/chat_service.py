@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import asyncio
 from datetime import datetime, timezone
-import hashlib
 import json
 import logging
 import re
@@ -52,12 +51,13 @@ from utils.azure_ai_foundry_agent import HostedAgentClient, ConversationBrokenEr
 from openai.types.responses import (
     ResponseFunctionToolCall,
     ResponseFunctionToolCallOutputItem,
+    ResponseFunctionWebSearch,
     ResponseOutputItem,
     ResponseOutputMessage,
 )
 from openai.types.responses.response_input_item_param import ResponseInputItemParam
 from config.tenant_config import TenantID
-from typing import Any, cast
+from typing import cast
 from utils.background_tasks import BackgroundTaskTracker
 
 logger = logging.getLogger(__name__)
@@ -70,91 +70,6 @@ BOT_SENDER_ID = "azure-sdk-qa-bot"
 BOT_SENDER_NAME = "Azure SDK Q&A Bot"
 
 _CITATION_RE = re.compile(r"[^\w\s]*cite[^\w\s]*turn\d+\S*")
-_TRACE_SENSITIVE_KEY_PATTERN = (
-    r"(?:access[-_ ]?key|access[-_ ]?token|account[-_ ]?key|api[-_ ]?key|"
-    r"authorization|client[-_ ]?secret|connection[-_ ]?string|credential|"
-    r"id[-_ ]?token|password|refresh[-_ ]?token|secret|shared[-_ ]?access[-_ ]?key|"
-    r"sig|signature|subscription[-_ ]?key|token)"
-)
-_TRACE_SENSITIVE_KEY_RE = re.compile(
-    _TRACE_SENSITIVE_KEY_PATTERN,
-    re.IGNORECASE,
-)
-_TRACE_SENSITIVE_QUERY_RE = re.compile(
-    rf"(?P<prefix>[?&](?:{_TRACE_SENSITIVE_KEY_PATTERN}|code|key)=)"
-    r"[^&#\s\"'<>]*",
-    re.IGNORECASE,
-)
-_TRACE_AUTHORIZATION_VALUE_RE = re.compile(
-    r"(?P<prefix>\bauthorization\b\s*[:=]\s*)"
-    r"(?:\"[^\"\r\n]*\"|'[^'\r\n]*'|[^\r\n,;}]+)",
-    re.IGNORECASE,
-)
-_TRACE_AUTH_SCHEME_RE = re.compile(
-    r"(?P<prefix>\b(?:basic|bearer)\s+)[A-Za-z0-9._~+/=-]+",
-    re.IGNORECASE,
-)
-_TRACE_SENSITIVE_ASSIGNMENT_RE = re.compile(
-    rf"(?P<prefix>\b{_TRACE_SENSITIVE_KEY_PATTERN}\b\s*[:=]\s*)"
-    r"(?:\"[^\"\r\n]*\"|'[^'\r\n]*'|[^\s,;&}]+)",
-    re.IGNORECASE,
-)
-_TRACE_REDACTED_VALUE = "[REDACTED]"
-_TRACE_MAX_CALLS = 32
-_TRACE_MAX_ARGUMENT_CHARS = 2_000
-_TRACE_MAX_OUTPUT_CHARS = 8_000
-_TRACE_MAX_TOTAL_CHARS = 32_000
-_TRACE_OUTPUT_TOOLS = frozenset(
-    {
-        "file_access_grep",
-        "file_access_ls",
-        "file_access_read",
-        "web_fetch",
-        "web_search",
-    }
-)
-
-
-def _redact_trace_string(value: str) -> str:
-    value = _TRACE_AUTHORIZATION_VALUE_RE.sub(
-        rf"\g<prefix>{_TRACE_REDACTED_VALUE}", value
-    )
-    value = _TRACE_AUTH_SCHEME_RE.sub(
-        rf"\g<prefix>{_TRACE_REDACTED_VALUE}", value
-    )
-    value = _TRACE_SENSITIVE_QUERY_RE.sub(
-        rf"\g<prefix>{_TRACE_REDACTED_VALUE}", value
-    )
-    return _TRACE_SENSITIVE_ASSIGNMENT_RE.sub(
-        rf"\g<prefix>{_TRACE_REDACTED_VALUE}", value
-    )
-
-
-def _redact_trace_value(value: Any) -> Any:
-    if isinstance(value, dict):
-        return {
-            str(key): (
-                _TRACE_REDACTED_VALUE
-                if _TRACE_SENSITIVE_KEY_RE.search(str(key))
-                else _redact_trace_value(item)
-            )
-            for key, item in value.items()
-        }
-    if isinstance(value, list):
-        return [_redact_trace_value(item) for item in value]
-    if isinstance(value, str):
-        return _redact_trace_string(value)
-    return value
-
-
-def _truncate_trace_text(text: str, limit: int) -> tuple[str, bool]:
-    if len(text) <= limit:
-        return text, False
-    marker = "\n... [trace truncated] ...\n"
-    remaining = max(limit - len(marker), 0)
-    head = remaining * 2 // 3
-    tail = remaining - head
-    return f"{text[:head]}{marker}{text[-tail:] if tail else ''}", True
 
 
 class ChatService:
@@ -834,17 +749,9 @@ class ChatService:
     @staticmethod
     def _parse_trace_arguments(arguments: str) -> object:
         try:
-            value = json.loads(arguments)
+            return json.loads(arguments)
         except (json.JSONDecodeError, TypeError):
-            value = arguments
-        redacted = _redact_trace_value(value)
-        serialized = ChatService._serialize_trace_value(redacted)
-        truncated, was_truncated = _truncate_trace_text(
-            serialized, _TRACE_MAX_ARGUMENT_CHARS
-        )
-        if not was_truncated:
-            return redacted
-        return {"text": truncated, "truncated": True}
+            return arguments
 
     def _build_tool_trace_contexts(
         self,
@@ -853,71 +760,45 @@ class ChatService:
     ) -> list[DocumentContext]:
         outputs = self._tool_outputs_by_call_id(items)
         contexts: list[DocumentContext] = []
-        remaining_trace_chars = _TRACE_MAX_TOTAL_CHARS
         sequence = 0
         for item in items:
-            if not isinstance(item, ResponseFunctionToolCall):
+            if isinstance(item, ResponseFunctionToolCall):
+                tool_name = item.name
+                call_id = item.call_id
+                arguments = self._parse_trace_arguments(item.arguments)
+                raw_output = outputs.get(item.call_id)
+            elif isinstance(item, ResponseFunctionWebSearch):
+                tool_name = "web_search"
+                call_id = item.id
+                action = item.action.model_dump(mode="json", exclude_none=True)
+                raw_output = action.pop("sources", None)
+                arguments = action
+            else:
                 continue
             sequence += 1
-            if sequence > _TRACE_MAX_CALLS:
-                break
 
-            raw_output = outputs.get(item.call_id)
             output_text = (
                 self._serialize_trace_value(raw_output)
                 if raw_output is not None
                 else ""
             )
-            output_hash = (
-                hashlib.sha256(output_text.encode("utf-8")).hexdigest()
-                if output_text
-                else ""
-            )
             trace = {
                 "sequence": sequence,
-                "tool_name": item.name,
-                "call_id": item.call_id,
-                "arguments": self._parse_trace_arguments(item.arguments),
-                "output": "",
-                "output_chars": len(output_text),
-                "output_sha256": output_hash,
-                "output_captured": False,
-                "output_truncated": (
-                    item.name in _TRACE_OUTPUT_TOOLS and bool(output_text)
-                ),
+                "tool_name": tool_name,
+                "call_id": call_id,
+                "arguments": arguments,
+                "output": output_text,
             }
             trace_content = json.dumps(trace, ensure_ascii=False)
-            if len(trace_content) >= remaining_trace_chars:
-                break
-
-            if item.name in _TRACE_OUTPUT_TOOLS and output_text:
-                available_output_chars = min(
-                    _TRACE_MAX_OUTPUT_CHARS,
-                    max((remaining_trace_chars - len(trace_content)) // 2, 0),
-                )
-                if available_output_chars:
-                    captured_output, output_truncated = _truncate_trace_text(
-                        output_text, available_output_chars
-                    )
-                    trace["output"] = captured_output
-                    trace["output_captured"] = True
-                    trace["output_truncated"] = output_truncated
-                    trace_content = json.dumps(trace, ensure_ascii=False)
-                    if len(trace_content) > remaining_trace_chars:
-                        trace["output"] = ""
-                        trace["output_captured"] = False
-                        trace["output_truncated"] = bool(output_text)
-                        trace_content = json.dumps(trace, ensure_ascii=False)
 
             contexts.append(
                 DocumentContext(
-                    document_title=f"Tool call {sequence}: {item.name}",
-                    document_link=f"agent-trace://{response_id}/{item.call_id}",
+                    document_title=f"Tool call {sequence}: {tool_name}",
+                    document_link=f"agent-trace://{response_id}/{call_id}",
                     document_source="agent_tool_trace",
                     document_content=trace_content,
                 )
             )
-            remaining_trace_chars -= len(trace_content)
         return contexts
 
     @staticmethod

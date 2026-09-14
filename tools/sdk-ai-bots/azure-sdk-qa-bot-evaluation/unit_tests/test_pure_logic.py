@@ -14,6 +14,7 @@ from __future__ import annotations
 import json
 import os
 import sys
+from unittest.mock import Mock, patch
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -30,6 +31,7 @@ from dataset.schema import (  # noqa: E402
 )
 from dataset.review import review  # noqa: E402
 from _evals_runner import (  # noqa: E402
+    CompletionCollector,
     FoundryEvalsRunner,
     _batch_completion_items,
     _completion_item,
@@ -382,6 +384,39 @@ def test_batch_completion_items_respects_count_and_payload_limits():
         assert "200-byte" in str(exc)
     else:
         raise AssertionError("expected oversized item validation")
+
+
+def test_oversized_completion_does_not_create_evaluation():
+    runner = FoundryEvalsRunner(
+        ["similarity"],
+        Mock(),
+        model="gpt-4o",
+        completion_url="https://example.test/completion",
+    )
+    item = {
+        "testcase": "too-large",
+        "query": "q",
+        "response": "x" * 500_000,
+        "response_id": "response-1",
+    }
+    openai_client = Mock()
+    response_client = Mock()
+    response_client.responses.retrieve.return_value = {"output": []}
+
+    with patch.object(CompletionCollector, "collect", return_value=[item]):
+        try:
+            runner.evaluate_run_completion(
+                openai_client,
+                [{"testcase": "too-large", "query": "q"}],
+                "test",
+                response_client=response_client,
+            )
+        except ValueError as exc:
+            assert "too-large" in str(exc)
+        else:
+            raise AssertionError("expected oversized item validation")
+
+    openai_client.evals.create.assert_not_called()
 
 
 def test_build_testing_criteria_all_builtins():

@@ -796,6 +796,7 @@ class FoundryEvalsRunner:
             type="custom", item_schema=COMPLETION_ITEM_SCHEMA, include_sample_schema=False
         )
         name = evaluation_name or f"qa-bot-{scenario}"
+        batches = _batch_completion_items(items, run_name_prefix=name)
         eval_object = openai_client.evals.create(
             name=name,
             data_source_config=data_source_config,
@@ -806,7 +807,6 @@ class FoundryEvalsRunner:
         # 4) Grade the pre-collected answers as bounded inline batches. Foundry
         # run-history rejects oversized inline documents before grading starts.
         batch_results: list[list[dict[str, Any]]] = []
-        batches = _batch_completion_items(items, run_name_prefix=name)
         batch_count = len(batches)
         for batch_index, batch in enumerate(batches, start=1):
             run_name = f"{name}-run-{batch_index:02d}"

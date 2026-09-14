@@ -1,6 +1,7 @@
 using System.CommandLine;
 using System.CommandLine.Parsing;
 using System.ComponentModel;
+using System.Text.RegularExpressions;
 using Microsoft.TeamFoundation.Build.WebApi;
 using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Commands;
@@ -15,7 +16,7 @@ using Azure.Sdk.Tools.Cli.Tools.Core;
 namespace Azure.Sdk.Tools.Cli.Tools.Package
 {
     [McpServerToolType, Description("This type contains the tools to release SDK package")]
-    public class SdkReleaseTool(
+    public partial class SdkReleaseTool(
         IDevOpsService devopsService,
         IAPIViewService apiViewService,
         ILogger<SdkReleaseTool> logger,
@@ -24,6 +25,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
     {
         private const string ReleaseSdkToolName = "azsdk_release_sdk";
         private const string Pipeline_Success_Status = "Succeeded";
+
+        // PEP 440 release, prerelease, post-release, and development segments.
+        // Local metadata is removed before matching and does not change release kind.
+        [GeneratedRegex(@"\Av?(?:[0-9]+!)?[0-9]+(?:\.[0-9]+)*" +
+            @"(?<prerelease>[-_.]?(?:alpha|beta|preview|pre|rc|a|b|c)[-_.]?[0-9]*)?" +
+            @"(?:-[0-9]+|[-_.]?(?:post|rev|r)[-_.]?[0-9]*)?" +
+            @"(?<development>[-_.]?dev[-_.]?[0-9]*)?\z", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+        private static partial Regex PythonPackageVersionRegex();
 
         public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package];
 
@@ -257,8 +266,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     package.PackageReadinessDetails = $"No planned release date found in package details for current package version {package.Version}. Please check the package version and verify that change log file is correct. ";
                 }
 
-                var releaseType = plannedRelease?.ReleaseType ?? "Unknown";
-                bool isPreviewRelease = releaseType.Equals("Beta");
+                // Classify the version, not the planned-release label. Stable post-releases and
+                // build metadata must not skip the GA APIView approval gate.
+                bool isPreviewRelease = IsPreviewVersion(package.Version, language);
                 bool isDataPlanePackage = package.PackageType == SdkType.Dataplane;
                 // Check for namespace approval if preview release for data plane
                 if (isDataPlanePackage && isPreviewRelease)
@@ -354,6 +364,22 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 package.SetLanguage(language);
                 return package;
             }
+        }
+
+        private static bool IsPreviewVersion(string? version, string language)
+        {
+            var publicVersion = version?.Split('+', 2)[0] ?? string.Empty;
+            if (language.Equals("Python", StringComparison.OrdinalIgnoreCase))
+            {
+                var pythonVersion = PythonPackageVersionRegex().Match(publicVersion);
+                if (pythonVersion.Success)
+                {
+                    return pythonVersion.Groups["prerelease"].Success || pythonVersion.Groups["development"].Success;
+                }
+            }
+
+            // SemVer prereleases have a hyphen before any +build metadata.
+            return publicVersion.Contains('-');
         }
 
         private async Task<string> GetPipelineRunDetails(string pipelineRunUrl, CancellationToken ct)

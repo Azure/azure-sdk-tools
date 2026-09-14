@@ -7,7 +7,7 @@ area: "armtemplate"
 environment: azsdk-mcp
 
 # Execution configuration
-config:
+defaults:
   runs: 1 # Trials per stimulus
   timeout: "660s" # Seconds per trial
   model: gpt-5.6-sol # Model for agent execution
@@ -134,6 +134,10 @@ stimuli:
     prompt: |
       In API version `2024-10-01-preview`, add a tracked Employee ARM resource to the Microsoft.Widget service. It should have optional age, city, and binary profile data, along with a read-only provisioning state. Support the standard operations for a tracked ARM resource. Follow TypeSpec Azure guidelines. I've already made the design decisions, so go ahead with the change.
     environment: *shared_environment
+    rubric:
+      - Employee is defined under Microsoft.Widget as a tracked ARM resource with optional age, city, and binary profile properties plus a read-only provisioning state.
+      - The provisioning state incorporates the standard ARM ResourceProvisioningState type.
+      - The Employees interface provides standard tracked-resource CRUD and list-by-resource-group and list-by-subscription operations.
     graders:
       - type: "tool-calls"
         config:

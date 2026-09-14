@@ -37,7 +37,12 @@ GitHub lookup errors (including inaccessible private PRs) are reported and the
 affected plan is skipped. An unreadable Private Preview API-spec work item
 fails the initial scan rather than being treated as a missing spec. Other
 per-plan update and reminder failures are reported while the batch continues.
-Cancellation stops processing. Successful abandonment sends a confirmation
+Each abandonment atomically tests the scanned Azure DevOps work-item revision.
+If an owner or release automation changes the plan during the scan, the update
+is rejected and reported without retrying or sending a confirmation for that plan.
+The next scan re-evaluates its current state. Missing revisions also prevent updates.
+Cancellation stops processing without waiting for a stalled GitHub read to finish.
+Successful abandonment sends a confirmation
 email; the subsequent reminder query excludes the newly abandoned plan.
 
 ## Operations
@@ -52,6 +57,9 @@ email; the subsequent reminder query excludes the newly abandoned plan.
   must be authorized for this pipeline. Email delivery uses the existing emailer secret.
 - The pipeline installs the latest released `azsdk` binary. Publish a CLI
   version containing this policy before enabling the monthly schedule.
+- Cleanup failures leave the pipeline partially succeeded and do not suppress
+  the following reminders. Authentication or installation failures still stop
+  processing, and cancellation does not start new reminder work.
 - Abandonment confirmation uses the existing best-effort notification service;
   mail delivery errors are logged and do not roll back the state update.
 

@@ -101,6 +101,38 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         }
 
         [Test]
+        public async Task Test_Create_releasePlan_warns_about_project_schedule_risks()
+        {
+            const string typeSpecProjectPath = "specification/testcontoso/Contoso.Management";
+            var mockDevOpsService = (MockDevOpsService)devOpsService;
+            mockDevOpsService.ConfiguredActiveReleasePlansForTypeSpecPath =
+            [
+                new ReleasePlanWorkItem
+                {
+                    WorkItemId = 801,
+                    ReleasePlanId = 81,
+                    APISpecProjectPath = typeSpecProjectPath,
+                    SDKReleaseMonth = "August 2026"
+                }
+            ];
+            var timeProvider = new FixedTimeProvider(new DateTimeOffset(2026, 9, 25, 0, 0, 0, TimeSpan.Zero));
+            var tool = new ReleasePlanTool(devOpsService, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>(), timeProvider);
+
+            var response = await tool.CreateReleasePlan(
+                null,
+                "TypeSpecTestData/specification/testcontoso/Contoso.Management",
+                "October 2026",
+                "GA",
+                specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446",
+                isTestReleasePlan: true);
+
+            Assert.That(response.ResponseError, Is.Null);
+            Assert.That(response.ReleasePlanDetails, Is.Not.Null);
+            Assert.That(response.Warnings, Has.Some.Contains("Release plan 81").And.Contains("past due"));
+            Assert.That(response.NextSteps, Has.Some.Contains("azsdk_update_release_plan_target"));
+        }
+
+        [Test]
         public async Task Test_Create_releasePlan_copies_product_details_from_previous_release_plan()
         {
             var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
@@ -484,7 +516,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 APISpecProjectPath = "specification/testcontoso/Contoso.Management",
                 SpecAPIVersion = "2024-01-01",
                 ApiReleaseType = ApiReleaseType.GA,
-                Status = "In Progress"
+                Status = "In Progress",
+                SDKReleaseMonth = "August 2026"
             };
 
             // The API version must match what CreateDummyTypeSpecProject returns ("2026-05-02-preview")
@@ -492,9 +525,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             ((MockDevOpsService)devOpsService).ConfiguredReleasePlanForTypeSpecPathAndApiVersion = existingReleasePlan;
             ((MockDevOpsService)devOpsService).ConfiguredReleasePlanForTypeSpecPathAndApiVersionKey = "specification/testcontoso/Contoso.Management";
             ((MockDevOpsService)devOpsService).ConfiguredApiVersionForTypeSpecPathAndApiVersion = "2026-05-02-preview";
+            ((MockDevOpsService)devOpsService).ConfiguredActiveReleasePlansForTypeSpecPath = [existingReleasePlan];
+            var timeProvider = new FixedTimeProvider(new DateTimeOffset(2026, 9, 25, 0, 0, 0, TimeSpan.Zero));
+            var tool = new ReleasePlanTool(devOpsService, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>(), timeProvider);
 
             // Act
-            var releaseplan = await releasePlanTool.CreateReleasePlan(null, 
+            var releaseplan = await tool.CreateReleasePlan(null,
                 testCodeFilePath, 
                 "July 2025", 
                 "GA", 
@@ -511,12 +547,17 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(releasePlanDetails.SpecAPIVersion, Is.EqualTo("2026-05-02-preview"));
             Assert.IsNotNull(releaseplan.Message, "Response should contain a message about existing plan");
             Assert.That(releaseplan.Message, Does.Contain("existing release plan"), "Message should indicate plan already exists");
+            Assert.That(releaseplan.Warnings, Has.Some.Contains("Release plan 50001").And.Contains("past due"));
         }
 
         [Test]
         public async Task Test_Create_releasePlan_without_spec_pr_sets_empty_spec_pull_requests()
         {
             var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
+            ((MockDevOpsService)devOpsService).ConfiguredActiveReleasePlansForTypeSpecPath =
+            [
+                new ReleasePlanWorkItem { WorkItemId = 801, ReleasePlanId = 81, SDKReleaseMonth = "January 2020" }
+            ];
             var releaseplan = await releasePlanTool.CreateReleasePlan(null, 
                 testCodeFilePath,
                 "July 2025",
@@ -529,6 +570,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             var releasePlanDetails = releaseplan.ReleasePlanDetails as ReleasePlanWorkItem;
             Assert.IsNotNull(releasePlanDetails);
             Assert.That(releasePlanDetails.SpecPullRequests, Is.Empty);
+            Assert.That(releaseplan.Warnings, Is.Null);
         }
 
         [Test]
@@ -655,6 +697,149 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         }
 
         [Test]
+        public async Task Test_Get_Release_Plan_warns_about_project_schedule_risks()
+        {
+            const string typeSpecProjectPath = "specification/testcontoso/Contoso.Management";
+            var mockDevOps = new Mock<IDevOpsService>();
+            var expectedReleasePlan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 777,
+                ReleasePlanId = 77,
+                APISpecProjectPath = typeSpecProjectPath,
+                SDKReleaseMonth = "October 2026"
+            };
+            var pastDuePlan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 801,
+                ReleasePlanId = 81,
+                APISpecProjectPath = typeSpecProjectPath,
+                SDKReleaseMonth = "August 2026",
+                SDKInfo =
+                [
+                    new SDKInfo
+                    {
+                        Language = "Python",
+                        SdkPullRequestUrl = "https://github.com/Azure/azure-sdk-for-python/pull/1",
+                        PullRequestStatus = "Open"
+                    }
+                ]
+            };
+            var dueSoonPlan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 802,
+                ReleasePlanId = 82,
+                APISpecProjectPath = typeSpecProjectPath,
+                SDKReleaseMonth = "September 2026"
+            };
+            mockDevOps.Setup(x => x.GetReleasePlanByTypeSpecProjectPathAsync(typeSpecProjectPath, It.IsAny<bool>(), It.IsAny<ApiReleaseType>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(expectedReleasePlan);
+            mockDevOps.Setup(x => x.GetActiveReleasePlansByTypeSpecProjectPathAsync(typeSpecProjectPath, ApiReleaseType.Unknown, It.IsAny<CancellationToken>()))
+                .ReturnsAsync([pastDuePlan, dueSoonPlan, expectedReleasePlan]);
+            var timeProvider = new FixedTimeProvider(new DateTimeOffset(2026, 9, 24, 0, 0, 0, TimeSpan.Zero));
+            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>(), timeProvider);
+
+            var response = await tool.GetReleasePlan(typeSpecProjectPath: typeSpecProjectPath);
+
+            Assert.That(response.Warnings, Has.Some.Contains("Release plan 81").And.Contains("past due"));
+            Assert.That(response.Warnings, Has.Some.Contains("Release plan 82").And.Contains("October 1, 2026"));
+            Assert.That(response.Warnings, Has.None.Contains("Release plan 77"));
+            Assert.That(response.NextSteps, Has.Some.Contains("azsdk_update_release_plan_target"));
+            Assert.That(response.NextSteps, Has.Some.Contains("abandon"));
+        }
+
+        [TestCase("work-item")]
+        [TestCase("release-plan")]
+        [TestCase("spec-pr")]
+        public async Task Test_Get_Release_Plan_warns_for_each_identifier(string identifier)
+        {
+            const string typeSpecProjectPath = "specification/testcontoso/Contoso.Management";
+            const string specPullRequestUrl = "https://github.com/Azure/azure-rest-api-specs/pull/35446";
+            var mockDevOps = new Mock<IDevOpsService>();
+            var releasePlan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 777,
+                ReleasePlanId = 77,
+                APISpecProjectPath = typeSpecProjectPath,
+                SDKReleaseMonth = "August 2026"
+            };
+            mockDevOps.Setup(x => x.GetReleasePlanForWorkItemAsync(releasePlan.WorkItemId, It.IsAny<CancellationToken>())).ReturnsAsync(releasePlan);
+            mockDevOps.Setup(x => x.GetReleasePlanAsync(releasePlan.ReleasePlanId, It.IsAny<CancellationToken>())).ReturnsAsync(releasePlan);
+            mockDevOps.Setup(x => x.GetReleasePlanAsync(specPullRequestUrl, ApiReleaseType.Unknown, It.IsAny<CancellationToken>())).ReturnsAsync(releasePlan);
+            mockDevOps.Setup(x => x.GetActiveReleasePlansByTypeSpecProjectPathAsync(typeSpecProjectPath, ApiReleaseType.Unknown, It.IsAny<CancellationToken>())).ReturnsAsync([releasePlan]);
+            var timeProvider = new FixedTimeProvider(new DateTimeOffset(2026, 9, 24, 0, 0, 0, TimeSpan.Zero));
+            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>(), timeProvider);
+
+            var response = identifier switch
+            {
+                "work-item" => await tool.GetReleasePlan(workItemId: releasePlan.WorkItemId),
+                "release-plan" => await tool.GetReleasePlan(releasePlanId: releasePlan.ReleasePlanId),
+                _ => await tool.GetReleasePlan(specPullRequestUrl: specPullRequestUrl)
+            };
+
+            Assert.That(response.ResponseError, Is.Null);
+            Assert.That(response.Warnings, Has.Some.Contains("Release plan 77").And.Contains("past due"));
+        }
+
+        [TestCase(23, false)]
+        [TestCase(24, true)]
+        public async Task Test_Get_Release_Plan_due_soon_window_is_inclusive(int dayOfMonth, bool expectedWarning)
+        {
+            const string typeSpecProjectPath = "specification/testcontoso/Contoso.Management";
+            var mockDevOps = new Mock<IDevOpsService>();
+            var requestedPlan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 777,
+                ReleasePlanId = 77,
+                APISpecProjectPath = typeSpecProjectPath,
+                SDKReleaseMonth = "October 2026"
+            };
+            var septemberPlan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 802,
+                ReleasePlanId = 82,
+                APISpecProjectPath = typeSpecProjectPath,
+                SDKReleaseMonth = "September 2026"
+            };
+            mockDevOps.Setup(x => x.GetReleasePlanByTypeSpecProjectPathAsync(typeSpecProjectPath, It.IsAny<bool>(), It.IsAny<ApiReleaseType>(), It.IsAny<CancellationToken>())).ReturnsAsync(requestedPlan);
+            mockDevOps.Setup(x => x.GetActiveReleasePlansByTypeSpecProjectPathAsync(typeSpecProjectPath, ApiReleaseType.Unknown, It.IsAny<CancellationToken>())).ReturnsAsync([requestedPlan, septemberPlan]);
+            var timeProvider = new FixedTimeProvider(new DateTimeOffset(2026, 9, dayOfMonth, 0, 0, 0, TimeSpan.Zero));
+            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>(), timeProvider);
+
+            var response = await tool.GetReleasePlan(typeSpecProjectPath: typeSpecProjectPath);
+
+            Assert.That(response.Warnings?.Any(warning => warning.Contains("Release plan 82", StringComparison.Ordinal)) ?? false, Is.EqualTo(expectedWarning));
+        }
+
+        [Test]
+        public async Task Test_Get_Release_Plan_reports_schedule_scan_failure_as_warning()
+        {
+            const string typeSpecProjectPath = "specification/testcontoso/Contoso.Management";
+            var mockDevOps = new Mock<IDevOpsService>();
+            var releasePlan = new ReleasePlanWorkItem { WorkItemId = 777, APISpecProjectPath = typeSpecProjectPath };
+            mockDevOps.Setup(x => x.GetReleasePlanByTypeSpecProjectPathAsync(typeSpecProjectPath, It.IsAny<bool>(), It.IsAny<ApiReleaseType>(), It.IsAny<CancellationToken>())).ReturnsAsync(releasePlan);
+            mockDevOps.Setup(x => x.GetActiveReleasePlansByTypeSpecProjectPathAsync(typeSpecProjectPath, ApiReleaseType.Unknown, It.IsAny<CancellationToken>())).ThrowsAsync(new InvalidOperationException("query failed"));
+            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
+
+            var response = await tool.GetReleasePlan(typeSpecProjectPath: typeSpecProjectPath);
+
+            Assert.That(response.ResponseError, Is.Null);
+            Assert.That(response.Warnings, Has.Some.Contains("Unable to check other release plans"));
+        }
+
+        [Test]
+        public void Test_Get_Release_Plan_propagates_schedule_scan_cancellation()
+        {
+            const string typeSpecProjectPath = "specification/testcontoso/Contoso.Management";
+            var mockDevOps = new Mock<IDevOpsService>();
+            var releasePlan = new ReleasePlanWorkItem { WorkItemId = 777, APISpecProjectPath = typeSpecProjectPath };
+            mockDevOps.Setup(x => x.GetReleasePlanByTypeSpecProjectPathAsync(typeSpecProjectPath, It.IsAny<bool>(), It.IsAny<ApiReleaseType>(), It.IsAny<CancellationToken>())).ReturnsAsync(releasePlan);
+            mockDevOps.Setup(x => x.GetActiveReleasePlansByTypeSpecProjectPathAsync(typeSpecProjectPath, ApiReleaseType.Unknown, It.IsAny<CancellationToken>())).ThrowsAsync(new OperationCanceledException());
+            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>(), Mock.Of<IRawOutputHelper>(), Mock.Of<INotificationService>());
+
+            Assert.ThrowsAsync<OperationCanceledException>(async () => await tool.GetReleasePlan(typeSpecProjectPath: typeSpecProjectPath));
+        }
+
+        [Test]
         public async Task Test_Get_Release_Plan_by_absolute_typespec_project_path()
         {
             var mockDevOps = new Mock<IDevOpsService>();
@@ -693,6 +878,13 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.IsNotNull(result);
             Assert.IsNotNull(result.ResponseError);
             Assert.That(result.ResponseError, Does.Contain("Failed to get release plan details"));
+        }
+
+        private sealed class FixedTimeProvider(DateTimeOffset now) : TimeProvider
+        {
+            public override DateTimeOffset GetUtcNow() => now;
+
+            public override TimeZoneInfo LocalTimeZone => TimeZoneInfo.Utc;
         }
 
         [Test]
@@ -1248,6 +1440,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             {
                 plan.ApiReleaseType = ApiReleaseType.GA;
                 plan.SDKReleaseMonth = "September 2026";
+                plan.Revision = 7;
             }
             mockDevOps.Setup(x => x.ListOverdueReleasePlansAsync(It.IsAny<CancellationToken>())).ReturnsAsync(
                 plans);
@@ -1256,8 +1449,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             mockDevOps.Setup(x => x.UpdateWorkItemAsync(
                     It.IsAny<int>(),
                     It.Is<Dictionary<string, string>>(fields => fields["System.State"] == "Abandoned"),
+                    7,
                     It.IsAny<CancellationToken>()))
-                .Callback<int, Dictionary<string, string>, CancellationToken>((workItemId, _, _) => updatedWorkItemIds.Add(workItemId))
+                .Callback<int, Dictionary<string, string>, int, CancellationToken>((workItemId, _, _, _) => updatedWorkItemIds.Add(workItemId))
                 .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem());
 
             var mockNotificationService = new Mock<INotificationService>();
@@ -1292,10 +1486,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         public async Task Test_abandon_overdue_release_plans_requires_calendar_month_grace_period(
             ApiReleaseType releaseType, string targetMonth, string today, bool expectedAbandonment)
         {
-            var plan = new ReleasePlanWorkItem { WorkItemId = 300, ApiReleaseType = releaseType, SDKReleaseMonth = targetMonth };
+            var plan = new ReleasePlanWorkItem { WorkItemId = 300, Revision = 7, ApiReleaseType = releaseType, SDKReleaseMonth = targetMonth };
             var mockDevOps = new Mock<IDevOpsService>();
             mockDevOps.Setup(x => x.ListOverdueReleasePlansAsync(It.IsAny<CancellationToken>())).ReturnsAsync([plan]);
-            mockDevOps.Setup(x => x.UpdateWorkItemAsync(plan.WorkItemId, It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()))
+            mockDevOps.Setup(x => x.UpdateWorkItemAsync(plan.WorkItemId, It.IsAny<Dictionary<string, string>>(), 7, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem());
             var mockNotification = new Mock<INotificationService>();
             var now = DateTimeOffset.Parse(today, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AssumeUniversal);
@@ -1305,7 +1499,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
 
             Assert.That(response.ExitCode, Is.Zero);
             Assert.That(response.ReleasePlanDetailsList, Has.Count.EqualTo(expectedAbandonment ? 1 : 0));
-            mockDevOps.Verify(x => x.UpdateWorkItemAsync(It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()), Times.Exactly(expectedAbandonment ? 1 : 0));
+            mockDevOps.Verify(x => x.UpdateWorkItemAsync(It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), 7, It.IsAny<CancellationToken>()), Times.Exactly(expectedAbandonment ? 1 : 0));
             mockNotification.Verify(x => x.SendEmailNotificationAsync(It.IsAny<EmailPayload>(), It.IsAny<CancellationToken>()), Times.Exactly(expectedAbandonment ? 1 : 0));
         }
 
@@ -1317,6 +1511,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             var plan = new ReleasePlanWorkItem
             {
                 WorkItemId = 301,
+                Revision = 7,
                 ApiReleaseType = ApiReleaseType.PrivatePreview,
                 SDKReleaseMonth = "September 2026",
                 ActiveSpecPullRequest = "https://github.com/Azure/azure-rest-api-specs-pr/pull/42",
@@ -1324,7 +1519,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             };
             var mockDevOps = new Mock<IDevOpsService>();
             mockDevOps.Setup(x => x.ListOverdueReleasePlansAsync(It.IsAny<CancellationToken>())).ReturnsAsync([plan]);
-            mockDevOps.Setup(x => x.UpdateWorkItemAsync(plan.WorkItemId, It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()))
+            mockDevOps.Setup(x => x.UpdateWorkItemAsync(plan.WorkItemId, It.IsAny<Dictionary<string, string>>(), 7, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem());
             var mockGitHub = new Mock<IGitHubService>();
             mockGitHub.Setup(x => x.GetPullRequestAsync("Azure", "azure-rest-api-specs-pr", 42, It.IsAny<CancellationToken>()))
@@ -1363,7 +1558,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
 
             Assert.That(response.ExitCode, Is.Zero);
             Assert.That(response.ReleasePlanDetailsList, Is.Empty);
-            mockDevOps.Verify(x => x.UpdateWorkItemAsync(It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()), Times.Never);
+            mockDevOps.Verify(x => x.UpdateWorkItemAsync(It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
         }
 
         [Test]
@@ -1374,10 +1569,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 WorkItemId = 303, ApiReleaseType = ApiReleaseType.PrivatePreview, SDKReleaseMonth = "September 2026",
                 ActiveSpecPullRequest = "https://github.com/Azure/azure-rest-api-specs-pr/pull/42"
             };
-            var inactive = new ReleasePlanWorkItem { WorkItemId = 304, ApiReleaseType = ApiReleaseType.GA, SDKReleaseMonth = "September 2026" };
+            var inactive = new ReleasePlanWorkItem { WorkItemId = 304, Revision = 7, ApiReleaseType = ApiReleaseType.GA, SDKReleaseMonth = "September 2026" };
             var mockDevOps = new Mock<IDevOpsService>();
             mockDevOps.Setup(x => x.ListOverdueReleasePlansAsync(It.IsAny<CancellationToken>())).ReturnsAsync([unreadable, inactive]);
-            mockDevOps.Setup(x => x.UpdateWorkItemAsync(inactive.WorkItemId, It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()))
+            mockDevOps.Setup(x => x.UpdateWorkItemAsync(inactive.WorkItemId, It.IsAny<Dictionary<string, string>>(), 7, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem());
             var mockGitHub = new Mock<IGitHubService>();
             mockGitHub.Setup(x => x.GetPullRequestAsync("Azure", "azure-rest-api-specs-pr", 42, It.IsAny<CancellationToken>()))
@@ -1388,7 +1583,76 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(response.ExitCode, Is.EqualTo(1));
             Assert.That(response.ResponseErrors, Has.Some.Contains("303"));
             Assert.That(response.ReleasePlanDetailsList, Is.EqualTo(new[] { inactive }));
-            mockDevOps.Verify(x => x.UpdateWorkItemAsync(unreadable.WorkItemId, It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()), Times.Never);
+            mockDevOps.Verify(x => x.UpdateWorkItemAsync(unreadable.WorkItemId, It.IsAny<Dictionary<string, string>>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
+
+        [Test]
+        public async Task Test_abandon_overdue_revision_conflict_skips_plan_without_notification_and_continues()
+        {
+            var changed = new ReleasePlanWorkItem { WorkItemId = 320, Revision = 7, Status = "In Progress", ApiReleaseType = ApiReleaseType.GA, SDKReleaseMonth = "September 2026" };
+            var unchanged = new ReleasePlanWorkItem { WorkItemId = 321, Revision = 9, ApiReleaseType = ApiReleaseType.GA, SDKReleaseMonth = "September 2026" };
+            var mockDevOps = new Mock<IDevOpsService>();
+            mockDevOps.Setup(x => x.ListOverdueReleasePlansAsync(It.IsAny<CancellationToken>())).ReturnsAsync([changed, unchanged]);
+            mockDevOps.Setup(x => x.UpdateWorkItemAsync(changed.WorkItemId, It.IsAny<Dictionary<string, string>>(), changed.Revision, It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new InvalidOperationException("Work item revision conflict."));
+            mockDevOps.Setup(x => x.UpdateWorkItemAsync(unchanged.WorkItemId, It.IsAny<Dictionary<string, string>>(), unchanged.Revision, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem());
+            var notification = new Mock<INotificationService>();
+
+            var response = await CreateOverdueMaintenanceTool(mockDevOps.Object, notification: notification.Object).AbandonOverdueReleasePlans();
+
+            Assert.That(response.ExitCode, Is.EqualTo(1));
+            Assert.That(response.ResponseErrors, Has.Some.Contains("320").And.Contains("revision conflict"));
+            Assert.That(response.ReleasePlanDetailsList, Is.EqualTo(new[] { unchanged }));
+            Assert.That(changed.Status, Is.EqualTo("In Progress"));
+            mockDevOps.Verify(x => x.UpdateWorkItemAsync(changed.WorkItemId, It.IsAny<Dictionary<string, string>>(), changed.Revision, It.IsAny<CancellationToken>()), Times.Once);
+            mockDevOps.Verify(x => x.UpdateWorkItemAsync(It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()), Times.Never);
+            notification.Verify(x => x.SendEmailNotificationAsync(It.Is<EmailPayload>(email => email.Subject.Contains("(321)")), It.IsAny<CancellationToken>()), Times.Once);
+            notification.Verify(x => x.SendEmailNotificationAsync(It.IsAny<EmailPayload>(), It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [TestCase(ApiReleaseType.PrivatePreview, false)]
+        [TestCase(ApiReleaseType.PublicPreview, false)]
+        [TestCase(ApiReleaseType.PrivatePreview, true)]
+        [TestCase(ApiReleaseType.PublicPreview, true)]
+        public async Task Test_overdue_maintenance_cancellation_does_not_wait_for_stalled_github(ApiReleaseType releaseType, bool notifyOnly)
+        {
+            var plan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 322, Revision = 7, ApiReleaseType = releaseType, SDKReleaseMonth = "September 2026",
+                ReleasePlanSubmittedByEmail = "owner@microsoft.com",
+                ActiveSpecPullRequest = "https://github.com/Azure/azure-rest-api-specs-pr/pull/42",
+                SDKInfo = [new SDKInfo { SdkPullRequestUrl = "https://github.com/Azure/azure-sdk-for-python/pull/42", PullRequestStatus = "Closed" }]
+            };
+            var mockDevOps = new Mock<IDevOpsService>();
+            mockDevOps.Setup(x => x.ListOverdueReleasePlansAsync(It.IsAny<CancellationToken>())).ReturnsAsync([plan]);
+            var github = new Mock<IGitHubService>();
+            var pendingRead = new TaskCompletionSource<Octokit.PullRequest>(TaskCreationOptions.RunContinuationsAsynchronously);
+            github.Setup(x => x.GetPullRequestAsync(It.IsAny<string>(), It.IsAny<string>(), 42, It.IsAny<CancellationToken>()))
+                .Returns(pendingRead.Task); // Emulate an Octokit request that ignores cancellation.
+            var notifications = new Mock<INotificationService>();
+            var captured = new List<JsonElement>();
+            using var client = CreateMaintenanceEmailClient(captured);
+            using var cts = new CancellationTokenSource();
+            var tool = CreateOverdueMaintenanceTool(mockDevOps.Object, github.Object, notifications.Object, client: client);
+            var operation = notifyOnly
+                ? tool.ListOverdueReleasePlans(notifyOwners: true, emailerUri: "https://notifications.example.com/send", ct: cts.Token)
+                : tool.AbandonOverdueReleasePlans(cts.Token);
+            try
+            {
+                github.Verify(x => x.GetPullRequestAsync(It.IsAny<string>(), It.IsAny<string>(), 42, cts.Token), Times.Once);
+                cts.Cancel();
+                Assert.That(async () => await operation.WaitAsync(TimeSpan.FromSeconds(5)), Throws.InstanceOf<OperationCanceledException>());
+                Assert.That(pendingRead.Task.IsCompleted, Is.False);
+                Assert.That(captured, Is.Empty);
+                mockDevOps.Verify(x => x.UpdateWorkItemAsync(It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
+                notifications.Verify(x => x.SendEmailNotificationAsync(It.IsAny<EmailPayload>(), It.IsAny<CancellationToken>()), Times.Never);
+            }
+            finally
+            {
+                pendingRead.TrySetResult(CreateMaintenancePullRequest("closed", merged: false));
+                await operation.ContinueWith(_ => { }, TaskScheduler.Default);
+            }
         }
 
         private ReleasePlanTool CreateOverdueMaintenanceTool(IDevOpsService service, IGitHubService? github = null,
@@ -1522,12 +1786,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         public async Task Test_abandon_overdue_release_plans_reports_partial_failures()
         {
             var mockDevOps = new Mock<IDevOpsService>();
-            var failedPlan = new ReleasePlanWorkItem { WorkItemId = 211, ApiReleaseType = ApiReleaseType.GA, SDKReleaseMonth = "September 2026" };
-            var abandonedPlan = new ReleasePlanWorkItem { WorkItemId = 212, ApiReleaseType = ApiReleaseType.GA, SDKReleaseMonth = "September 2026" };
+            var failedPlan = new ReleasePlanWorkItem { WorkItemId = 211, Revision = 7, ApiReleaseType = ApiReleaseType.GA, SDKReleaseMonth = "September 2026" };
+            var abandonedPlan = new ReleasePlanWorkItem { WorkItemId = 212, Revision = 7, ApiReleaseType = ApiReleaseType.GA, SDKReleaseMonth = "September 2026" };
             mockDevOps.Setup(x => x.ListOverdueReleasePlansAsync(It.IsAny<CancellationToken>())).ReturnsAsync([failedPlan, abandonedPlan]);
-            mockDevOps.Setup(x => x.UpdateWorkItemAsync(failedPlan.WorkItemId, It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()))
+            mockDevOps.Setup(x => x.UpdateWorkItemAsync(failedPlan.WorkItemId, It.IsAny<Dictionary<string, string>>(), 7, It.IsAny<CancellationToken>()))
                 .ReturnsAsync((Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem)null!);
-            mockDevOps.Setup(x => x.UpdateWorkItemAsync(abandonedPlan.WorkItemId, It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()))
+            mockDevOps.Setup(x => x.UpdateWorkItemAsync(abandonedPlan.WorkItemId, It.IsAny<Dictionary<string, string>>(), 7, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem());
 
             var tool = CreateOverdueMaintenanceTool(mockDevOps.Object);
@@ -1543,9 +1807,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         public void Test_abandon_overdue_release_plans_propagates_cancellation()
         {
             var mockDevOps = new Mock<IDevOpsService>();
-            var plan = new ReleasePlanWorkItem { WorkItemId = 213, ApiReleaseType = ApiReleaseType.GA, SDKReleaseMonth = "September 2026" };
+            var plan = new ReleasePlanWorkItem { WorkItemId = 213, Revision = 7, ApiReleaseType = ApiReleaseType.GA, SDKReleaseMonth = "September 2026" };
             mockDevOps.Setup(x => x.ListOverdueReleasePlansAsync(It.IsAny<CancellationToken>())).ReturnsAsync([plan]);
-            mockDevOps.Setup(x => x.UpdateWorkItemAsync(plan.WorkItemId, It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()))
+            mockDevOps.Setup(x => x.UpdateWorkItemAsync(plan.WorkItemId, It.IsAny<Dictionary<string, string>>(), 7, It.IsAny<CancellationToken>()))
                 .ThrowsAsync(new OperationCanceledException());
 
             var tool = CreateOverdueMaintenanceTool(mockDevOps.Object);

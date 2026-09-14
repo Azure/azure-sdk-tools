@@ -38,6 +38,8 @@ jobs:
       - task: AzureCLI@2
         displayName: Abandon inactive release plans after the overdue grace period
         condition: and(succeeded(), eq(variables['Build.Reason'], 'Schedule'))
+        # Keep failures visible as partially succeeded without suppressing overdue reminders.
+        continueOnError: true
         env:
           AZSDKTOOLS_NOTIFICATION_SERVICE_URL: $(AzureSDKEmailerSasURL)
           GITHUB_TOKEN: $(GH_TOKEN)

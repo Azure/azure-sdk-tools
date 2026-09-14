@@ -166,6 +166,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<Timeline> GetBuildTimelineAsync(string project, int buildId, CancellationToken ct);
         public Task<List<string>> GetBuildLogLinesAsync(string project, int buildId, int logId, CancellationToken ct);
         public Task<WorkItem> UpdateWorkItemAsync(int workItemId, Dictionary<string, string> fields, CancellationToken ct);
+        public Task<WorkItem> UpdateWorkItemAsync(int workItemId, Dictionary<string, string> fields, int expectedRevision, CancellationToken ct);
         public Task<WorkItem> UpdateWorkItemAsync(int workItemId, Dictionary<string, string> fields, Dictionary<string, string> multilineFieldFormats, CancellationToken ct);
         public Task<List<GitHubLableWorkItem>> GetGitHubLableWorkItemsAsync(CancellationToken ct);
         public Task<GitHubLableWorkItem> CreateGitHubLableWorkItemAsync(string label, CancellationToken ct);
@@ -206,7 +207,10 @@ namespace Azure.Sdk.Tools.Cli.Services
                    or HttpStatusCode.Found                    // 302 (sign-in redirect)
                    or HttpStatusCode.NonAuthoritativeInformation; // 203 (DevOps anonymous-needs-auth)
 
-        [GeneratedRegex("\\|\\s(Beta|Stable|GA)\\s\\|\\s([\\S]+)\\s\\|\\s([\\S]+)\\s\\|")]
+        // Accept any release-type label, but require a numeric version (optionally v-prefixed)
+        // so the production "Type | Version | Date" header and separator are not releases.
+        // Keep fields within their cells and rows; callers classify preview/stable by version.
+        [GeneratedRegex(@"\|[ \t]+([^\s|]+)[ \t]+\|[ \t]+([vV]?[0-9][^\s|]*)[ \t]+\|[ \t]+([^\s|]+)[ \t]+\|")]
         private static partial Regex SdkReleaseDetailsRegex();
 
         private async Task<List<WorkItemRelationType>> GetCachedRelationTypes(CancellationToken ct)
@@ -249,7 +253,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "Failed to list overdue release plans");
-                throw new Exception("Failed to list overdue release plans. Error: {ex}", ex);
+                throw new Exception($"Failed to list overdue release plans. Error: {ex.Message}", ex);
             }
         }
 
@@ -403,6 +407,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             var releasePlan = new ReleasePlanWorkItem()
             {
                 WorkItemId = workItem.Id ?? 0,
+                Revision = workItem.Rev ?? 0,
                 WorkItemUrl = workItem.Url,
                 WorkItemHtmlUrl = workItem.Url?.Replace("_apis/wit/workItems", "_workitems/edit") ?? string.Empty,
                 Title = workItem.Fields.TryGetValue("System.Title", out object? value) ? value?.ToString() ?? string.Empty : string.Empty,
@@ -915,6 +920,10 @@ namespace Azure.Sdk.Tools.Cli.Services
                     logger.LogWarning("No work items found.");
                     return [];
                 }
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
             }
             catch (Exception ex)
             {
@@ -1812,9 +1821,32 @@ namespace Azure.Sdk.Tools.Cli.Services
             return await UpdateWorkItemAsync(workItemId, fields, new Dictionary<string, string>(), ct);
         }
 
+        public async Task<WorkItem> UpdateWorkItemAsync(int workItemId, Dictionary<string, string> fields, int expectedRevision, CancellationToken ct)
+        {
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(expectedRevision);
+            return await UpdateWorkItemCoreAsync(workItemId, fields, new Dictionary<string, string>(), expectedRevision, ct);
+        }
+
         public async Task<WorkItem> UpdateWorkItemAsync(int workItemId, Dictionary<string, string> fields, Dictionary<string, string> multilineFieldFormats, CancellationToken ct)
         {
+            return await UpdateWorkItemCoreAsync(workItemId, fields, multilineFieldFormats, expectedRevision: null, ct);
+        }
+
+        private async Task<WorkItem> UpdateWorkItemCoreAsync(int workItemId, Dictionary<string, string> fields,
+            Dictionary<string, string> multilineFieldFormats, int? expectedRevision, CancellationToken ct)
+        {
             var jsonLinkDocument = new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument();
+            if (expectedRevision.HasValue)
+            {
+                // ADO evaluates this test atomically with the field updates. Never refresh/retry an
+                // automatic abandonment here: a new revision requires re-evaluating the release policy.
+                jsonLinkDocument.Add(new JsonPatchOperation
+                {
+                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Test,
+                    Path = "/rev",
+                    Value = expectedRevision.Value
+                });
+            }
             foreach (var item in fields)
             {
                 logger.LogDebug("Updating field {field} to {value}", item.Key, item.Value);
@@ -2113,6 +2145,10 @@ namespace Azure.Sdk.Tools.Cli.Services
 
                 var releasePlans = await Task.WhenAll(releasePlanWorkItems.Select(workItem => MapWorkItemToReleasePlanAsync(workItem, ct)));
                 return releasePlans.ToList();
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
             }
             catch (Exception ex)
             {

@@ -34,6 +34,7 @@
 ###########
 /tools/                                 @azure/azure-sdk-eng
 /tools/azure-rest-api-specs-examples-automation/ @weidongxu-microsoft
+/tools/codeowners-migration/            @danieljurek
 /tools/codeowners-utils/                @danieljurek
 /tools/fxlister/                        @KrzysztofCwalina
 /tools/github/                          @jsquire @lmazuel

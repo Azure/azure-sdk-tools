@@ -1,0 +1,358 @@
+{
+  "schemaVersion": 1,
+  "analysis": {
+    "status": "ready",
+    "authority": "typespec-compiler",
+    "compilerVersions": [
+      "1.11.0"
+    ],
+    "operationProjectionStats": [
+      {
+        "revision": "base",
+        "project": "specification/cognitiveservices/CognitiveServices.Management",
+        "operationCount": 372,
+        "changedNameCount": 2,
+        "matchedOperationCount": 0
+      },
+      {
+        "revision": "current",
+        "project": "specification/cognitiveservices/CognitiveServices.Management",
+        "operationCount": 372,
+        "changedNameCount": 2,
+        "matchedOperationCount": 0
+      }
+    ],
+    "blockers": []
+  },
+  "sourceChanges": [
+    {
+      "id": "source-dd5d3368a3071e94",
+      "path": "specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp",
+      "status": "modified",
+      "origins": [
+        "committed"
+      ],
+      "hunks": [
+        {
+          "id": "hunk-fb0a715dd0f0909b",
+          "base": {
+            "startLine": 81,
+            "endLine": 86
+          },
+          "current": {
+            "startLine": 81,
+            "endLine": 87
+          },
+          "lines": [
+            "    */",
+            "   @tag(\"ManagedNetwork\")",
+            "   @action(\"batchOutboundRules\")",
+            "+  @list",
+            "   post is ArmResourceActionAsync<",
+            "     ManagedNetworkSettingsPropertiesBasicResource,",
+            "     Request = ManagedNetworkSettingsBasicResource,",
+            ""
+          ]
+        }
+      ],
+      "declarations": [
+        {
+          "id": "declaration-0219a32726f5ea2e",
+          "kind": "interface",
+          "qualifiedName": "ManagedNetworkSettingsPropertiesBasicResources",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-fb0a715dd0f0909b"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Interface",
+            "sourceFile": "specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp",
+            "position": {
+              "start": 771,
+              "end": 4008
+            },
+            "referencedNames": []
+          },
+          "source": {
+            "revision": "base",
+            "startLine": 28,
+            "endLine": 103
+          }
+        },
+        {
+          "id": "declaration-e54c2e2399e5428a",
+          "kind": "interface",
+          "qualifiedName": "ManagedNetworkSettingsPropertiesBasicResources",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-fb0a715dd0f0909b"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Interface",
+            "sourceFile": "specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp",
+            "position": {
+              "start": 771,
+              "end": 4016
+            },
+            "referencedNames": []
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 28,
+            "endLine": 104
+          }
+        },
+        {
+          "id": "declaration-d4d7348e90a9bf1c",
+          "kind": "operation",
+          "qualifiedName": "ManagedNetworkSettingsPropertiesBasicResources.post",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-fb0a715dd0f0909b"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Operation",
+            "sourceFile": "specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp",
+            "position": {
+              "start": 3133,
+              "end": 3498
+            },
+            "referencedNames": [
+              "AllowInternetOutbound",
+              "AllowOnlyApprovedOutbound",
+              "ArmAcceptedLroResponse",
+              "ArmAcceptedLroResponse.location",
+              "ArmAcceptedLroResponse.retryAfter",
+              "ArmAcceptedLroResponse.statusCode",
+              "Array",
+              "Basic",
+              "Deferred",
+              "Deleted",
+              "Deleting",
+              "Disabled",
+              "ErrorAdditionalInfo",
+              "ErrorDetail",
+              "ErrorDetail.additionalInfo",
+              "ErrorDetail.code",
+              "ErrorDetail.details",
+              "ErrorDetail.message",
+              "ErrorDetail.target",
+              "ErrorResponse",
+              "ErrorResponse.error",
+              "Failed",
+              "FirewallSku",
+              "IsolationMode",
+              "ManagedNetworkKind",
+              "ManagedNetworkProvisionStatus",
+              "ManagedNetworkProvisionStatus.status",
+              "ManagedNetworkProvisioningState",
+              "ManagedNetworkSettings",
+              "ManagedNetworkSettings.firewallPublicIpAddress",
+              "ManagedNetworkSettings.firewallSku",
+              "ManagedNetworkSettings.isolationMode",
+              "ManagedNetworkSettings.managedNetworkKind",
+              "ManagedNetworkSettings.networkId",
+              "ManagedNetworkSettings.outboundRules",
+              "ManagedNetworkSettings.provisioningState",
+              "ManagedNetworkSettings.status",
+              "ManagedNetworkSettingsBasicResource",
+              "ManagedNetworkSettingsBasicResource.properties",
+              "OutboundRule",
+              "OutboundRuleBasicResource",
+              "OutboundRuleBasicResource.name",
+              "OutboundRuleBasicResource.properties",
+              "OutboundRuleListResult",
+              "OutboundRuleListResult.nextLink",
+              "OutboundRuleListResult.value",
+              "ProxyResource",
+              "ProxyResource.properties",
+              "Resource",
+              "Resource.id",
+              "Resource.name",
+              "Resource.systemData",
+              "Resource.type",
+              "Standard",
+              "Succeeded",
+              "SystemData",
+              "SystemData.createdAt",
+              "SystemData.createdBy",
+              "SystemData.createdByType",
+              "SystemData.lastModifiedAt",
+              "SystemData.lastModifiedBy",
+              "SystemData.lastModifiedByType",
+              "Updating",
+              "V1",
+              "V2",
+              "accountName",
+              "apiVersion",
+              "armResourceIdentifier",
+              "armResourceType",
+              "body",
+              "createdByType",
+              "int32",
+              "managedNetworkName",
+              "provider",
+              "resourceGroupName",
+              "string",
+              "subscriptionId",
+              "utcDateTime",
+              "uuid"
+            ]
+          },
+          "source": {
+            "revision": "base",
+            "startLine": 79,
+            "endLine": 88
+          }
+        },
+        {
+          "id": "declaration-6ab6c44b437678cb",
+          "kind": "operation",
+          "qualifiedName": "ManagedNetworkSettingsPropertiesBasicResources.post",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-fb0a715dd0f0909b"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Operation",
+            "sourceFile": "specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp",
+            "position": {
+              "start": 3133,
+              "end": 3506
+            },
+            "referencedNames": [
+              "AllowInternetOutbound",
+              "AllowOnlyApprovedOutbound",
+              "ArmAcceptedLroResponse",
+              "ArmAcceptedLroResponse.location",
+              "ArmAcceptedLroResponse.retryAfter",
+              "ArmAcceptedLroResponse.statusCode",
+              "Array",
+              "Basic",
+              "Deferred",
+              "Deleted",
+              "Deleting",
+              "Disabled",
+              "ErrorAdditionalInfo",
+              "ErrorDetail",
+              "ErrorDetail.additionalInfo",
+              "ErrorDetail.code",
+              "ErrorDetail.details",
+              "ErrorDetail.message",
+              "ErrorDetail.target",
+              "ErrorResponse",
+              "ErrorResponse.error",
+              "Failed",
+              "FirewallSku",
+              "IsolationMode",
+              "ManagedNetworkKind",
+              "ManagedNetworkProvisionStatus",
+              "ManagedNetworkProvisionStatus.status",
+              "ManagedNetworkProvisioningState",
+              "ManagedNetworkSettings",
+              "ManagedNetworkSettings.firewallPublicIpAddress",
+              "ManagedNetworkSettings.firewallSku",
+              "ManagedNetworkSettings.isolationMode",
+              "ManagedNetworkSettings.managedNetworkKind",
+              "ManagedNetworkSettings.networkId",
+              "ManagedNetworkSettings.outboundRules",
+              "ManagedNetworkSettings.provisioningState",
+              "ManagedNetworkSettings.status",
+              "ManagedNetworkSettingsBasicResource",
+              "ManagedNetworkSettingsBasicResource.properties",
+              "OutboundRule",
+              "OutboundRuleBasicResource",
+              "OutboundRuleBasicResource.name",
+              "OutboundRuleBasicResource.properties",
+              "OutboundRuleListResult",
+              "OutboundRuleListResult.nextLink",
+              "OutboundRuleListResult.value",
+              "ProxyResource",
+              "ProxyResource.properties",
+              "Resource",
+              "Resource.id",
+              "Resource.name",
+              "Resource.systemData",
+              "Resource.type",
+              "Standard",
+              "Succeeded",
+              "SystemData",
+              "SystemData.createdAt",
+              "SystemData.createdBy",
+              "SystemData.createdByType",
+              "SystemData.lastModifiedAt",
+              "SystemData.lastModifiedBy",
+              "SystemData.lastModifiedByType",
+              "Updating",
+              "V1",
+              "V2",
+              "accountName",
+              "apiVersion",
+              "armResourceIdentifier",
+              "armResourceType",
+              "body",
+              "createdByType",
+              "int32",
+              "managedNetworkName",
+              "provider",
+              "resourceGroupName",
+              "string",
+              "subscriptionId",
+              "utcDateTime",
+              "uuid"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 79,
+            "endLine": 89
+          }
+        }
+      ],
+      "documentEvidence": {
+        "schemaVersion": 3,
+        "status": "ready",
+        "blockers": [],
+        "documents": [
+          {
+            "id": "document-0d592cacea2ab4db",
+            "sourceChangeId": "source-dd5d3368a3071e94",
+            "qualifiedName": "Microsoft.CognitiveServices.ManagedNetworkSettingsPropertiesBasicResources.post",
+            "kind": "operation",
+            "before": {
+              "doc": "The POST API for updating the outbound rules of the managed network associated with the cognitive services account.",
+              "declaration": "/**\n   * The POST API for updating the outbound rules of the managed network associated with the cognitive services account.\n   */\n  @tag(\"ManagedNetwork\")\n  @action(\"batchOutboundRules\")\n  post is ArmResourceActionAsync<\n    ManagedNetworkSettingsPropertiesBasicResource,\n    Request = ManagedNetworkSettingsBasicResource,\n    Response = OutboundRuleListResult\n  >",
+              "source": {
+                "path": "specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp",
+                "revision": "base",
+                "startLine": 79,
+                "endLine": 88
+              }
+            },
+            "after": {
+              "doc": "The POST API for updating the outbound rules of the managed network associated with the cognitive services account.",
+              "declaration": "/**\n   * The POST API for updating the outbound rules of the managed network associated with the cognitive services account.\n   */\n  @tag(\"ManagedNetwork\")\n  @action(\"batchOutboundRules\")\n  @list\n  post is ArmResourceActionAsync<\n    ManagedNetworkSettingsPropertiesBasicResource,\n    Request = ManagedNetworkSettingsBasicResource,\n    Response = OutboundRuleListResult\n  >",
+              "source": {
+                "path": "specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp",
+                "revision": "current",
+                "startLine": 79,
+                "endLine": 89
+              }
+            },
+            "hunkIds": [
+              "hunk-fb0a715dd0f0909b"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

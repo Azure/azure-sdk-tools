@@ -10,6 +10,7 @@
 .compliance-finding-group>summary{flex-wrap:wrap}.compliance-affected-intents{display:grid;gap:12px}.compliance-affected-intent{margin:0;padding:14px 16px;border:1px solid var(--line);border-radius:10px}.compliance-affected-intent h4{margin:0 0 8px}.compliance-affected-intent h5{margin:14px 0 6px}
 .intent-finding-badge{font:inherit;font-size:13px;cursor:pointer}.intent-impact-trigger{position:relative}.intent-impact-popover{position:absolute;z-index:20;top:calc(100% + 8px);right:0;display:none;width:min(480px,88vw);overflow:hidden;border:1px solid var(--line);border-radius:10px;background:var(--panel);box-shadow:0 14px 34px rgb(31 42 68 / 18%)}.intent-impact-trigger.open .intent-impact-popover{display:grid}.intent-impact-popover a{display:grid;grid-template-columns:minmax(240px,1fr) auto;gap:12px;align-items:center;padding:12px 14px;border-top:1px solid var(--line);color:var(--text)!important;text-decoration:none}.intent-impact-popover a:first-child{border-top:0}.intent-impact-popover a:hover,.intent-impact-popover a:focus-visible{background:color-mix(in srgb,var(--panel) 92%,var(--accent))}.intent-impact-popover a span{color:var(--muted);font-size:13px}.intent h3,.representative-example>summary{font-size:17px;font-weight:750;line-height:1.35}.impact-highlight{outline:3px solid #ef4444;outline-offset:3px}
 .affected-methods{margin:20px 0}.affected-methods>summary{font-size:18px}.affected-method-list{display:grid;gap:7px;margin-top:10px}.affected-method{display:grid;grid-template-columns:minmax(180px,.6fr) minmax(280px,1.4fr);align-items:center;gap:12px;padding:9px 12px;border:1px solid var(--line);border-radius:8px}@media(max-width:700px){.affected-method{grid-template-columns:1fr}}
+.summary-value{white-space:nowrap}
 .report-section-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin:0 0 14px}
 .report-section-head>div:first-child{min-width:0;flex:1}
 .report-section-head h2{margin:0}
@@ -60,6 +61,37 @@
 .report-guideline-section{min-width:0;overflow-wrap:anywhere}
 .report-guideline-section h3{margin:0 0 10px;font-size:16px}
 .report-guideline-section+.report-guideline-section{margin-top:20px;padding-top:20px;border-top:1px solid var(--line)}
+.report-document-snapshots{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.report-document-snapshots.single-snapshot{grid-template-columns:minmax(0,1fr)}
+.report-document-context{min-width:0}
+.report-document-related{margin-top:20px;padding-top:14px;border-top:1px solid var(--line)}
+.report-document-related-type>h5{font-size:13px;margin:15px 0 8px;overflow-wrap:anywhere}
+.report-document-related pre{max-height:400px;overflow:auto}
+.report-document-snapshot{min-width:0}
+.report-document-snapshot h4,.report-document-snapshot h5{margin:12px 0 6px}
+.document-quality-check pre{margin:0;padding:12px;border:1px solid var(--line);border-radius:8px;background:color-mix(in srgb,var(--panel) 94%,var(--accent));white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.5 ui-monospace,Consolas,monospace}
+.report-document-rationale{margin-top:20px;padding-top:16px;border-top:1px solid var(--line)}
+.report-document-rationale p{margin:5px 0 0}
+.document-quality-scope{margin-top:14px}
+.document-quality-intent-link{margin-bottom:12px}
+.document-quality-file{margin:10px 0;padding:12px;border:1px solid var(--line);border-radius:8px}
+.document-quality-file-count{font-weight:400;color:var(--muted)}
+.document-quality-list{max-height:300px;overflow:auto;margin-top:10px;overscroll-behavior:contain}
+.document-quality-row,.document-quality-document>summary{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:11px 4px;border-bottom:1px solid var(--line);font-size:13px}
+.document-quality-document>summary{cursor:pointer}
+.document-quality-document>summary:before{content:"+";color:var(--accent)}
+.document-quality-document[open]>summary:before{content:"-"}
+.document-quality-document>summary>span:first-of-type{flex:1}
+.document-quality-document>summary>span:first-child,.document-quality-row>a{min-width:0;overflow-wrap:anywhere}
+.document-quality-document>summary>.report-badge,.document-quality-row>.report-badge{flex:none}
+.document-quality-document-body{padding:12px}
+.document-quality-document-body h4{font-size:13px;margin:0 0 8px}
+.document-quality-document-body blockquote{margin:0 0 15px;padding:10px 14px;border-left:3px solid var(--accent);background:color-mix(in srgb,var(--panel) 94%,var(--accent));font-size:13px}
+.document-quality-source pre{white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.5 ui-monospace,Consolas,monospace}
+.report-badge.neutral{background:color-mix(in srgb,var(--panel) 85%,var(--muted));color:var(--muted)}
+.document-quality-neutral>summary{padding:12px 18px}
+.document-quality-neutral .report-card-title strong{font-size:13px}
+.document-quality-list:focus-visible,.document-quality-file>summary:focus-visible,.document-quality-document>summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .report-source{margin-bottom:16px}
 .report-source>summary,.report-subdetails>summary{cursor:pointer;color:var(--accent);font-size:13px;font-weight:700}
 .report-http{color:#075cab;font:800 12px ui-monospace,monospace}
@@ -75,6 +107,7 @@ body{overflow-wrap:anywhere}
 #appendix pre{white-space:pre-wrap;overflow-wrap:anywhere}
 #appendix table{display:block;overflow-x:auto}
 @media(max-width:760px){
+  .report-document-snapshots{grid-template-columns:1fr}
   .report-section-head{display:block}
   .report-section-meta{justify-content:flex-start;margin-top:8px}
   .report-card>summary{flex-wrap:wrap}
@@ -101,37 +134,25 @@ body{overflow-wrap:anywhere}
 <header class="hero"><div class="container"><div class="eyebrow">TypeSpec Assessment</div><h1>3 TypeSpec changes for Chaos</h1>
 <p class="hero-meta">TypeSpec source diff: <code>232dfa71843fd574be49ba91a918ee7d3e7bfec3</code> → <code>a3b8933eb6ce030faa6abc6d354fc97e30f02e96</code></p>
 <div class="summary-grid">
-<a class="summary-card" href="#downstream-breaking"><div class="summary-value"><span class="fail">×</span> Failed</div><div class="summary-label">Overall code quality</div><div class="summary-detail">REST, downstream, and Azure Guidelines</div></a>
-<a class="summary-card" href="#rest-breaking"><div class="summary-value"><span class="pass">✓</span> 0</div><div class="summary-label">REST breaking changes</div></a>
-<a class="summary-card" href="#downstream-breaking"><div class="summary-value"><span class="fail">×</span> 2</div><div class="summary-label">Downstream breaking changes</div><div class="summary-detail">Generated SDK contract changes</div></a>
-<a class="summary-card" href="#azure-compliance"><div class="summary-value"><span class="pass">✓</span> 0</div><div class="summary-label">Azure Guidelines</div><div class="summary-detail">0 guideline issues<br>3/3 intents assessed</div></a>
-<a class="summary-card" href="#document-quality"><div class="summary-value"><span>i</span> Not assessed</div><div class="summary-label">Document Quality and Agent Friendliness</div><div class="summary-detail">Document Quality and Agent Friendliness is not assessed.</div></a>
-<a class="summary-card" href="#semantic-intents"><div class="summary-value"><span>i</span> 3</div><div class="summary-label">Semantic intents</div><div class="summary-detail">2 operations<br>0 Added, 3 Modified, 0 Removed</div></a>
+<a class="summary-card" href="#downstream-breaking"><div class="summary-value"><span class="fail">×</span> Fail</div><div class="summary-label">Overall code quality</div><div class="summary-detail">REST, downstream, Azure Guidelines, and Document Quality</div></a>
+<a class="summary-card" href="#rest-breaking"><div class="summary-value"><span class="pass">✓</span> Pass</div><div class="summary-label">REST breaking changes</div><div class="summary-detail">0 breaking changes</div></a>
+<a class="summary-card" href="#downstream-breaking"><div class="summary-value"><span class="fail">×</span> Fail</div><div class="summary-label">Downstream breaking changes</div><div class="summary-detail">2 generated SDK contract changes</div></a>
+<a class="summary-card" href="#azure-compliance"><div class="summary-value"><span class="pass">✓</span> Pass</div><div class="summary-label">Azure Guidelines</div><div class="summary-detail">0 guideline issues<br>3/3 intents assessed</div></a>
+<a class="summary-card" href="#document-quality"><div class="summary-value"><span class="">i</span> N/A</div><div class="summary-label">Document Quality and Agent Friendliness</div><div class="summary-detail">Not assessed<br>0 findings · 9/9 descriptions assessed · 2/3 intent scopes resolved · 1 intents with no applicable @doc</div></a>
+<a class="summary-card" href="#semantic-intents"><div class="summary-value"><span class="pass">✓</span> Pass</div><div class="summary-label">Semantic intents</div><div class="summary-detail">3 intents assessed · 2 operations<br>0 Added, 3 Modified, 0 Removed</div></a>
 </div></div></header>
 <details class="notice"><summary class="container"><span class="notice-title">Preview Notice</span><span class="notice-summary">The TypeSpec Assessment Assistant is in preview; official validation and review remain the source of truth.</span></summary>
 <div class="container notice-body"><p>The TypeSpec Assessment Assistant is currently in preview. Its goal is to help service developers build confidence earlier in the TypeSpec authoring workflow by providing contextual analysis, risk identification, and guidance on potential downstream impacts.</p>
 <p>This report is intended as a review reference and learning aid only. It does not replace official ARM API, Azure API Stewardship, Azure Breaking Change reviews, and should not be treated as authoritative review feedback or approval for specification changes. Official validation tools, generated artifacts, and reviewer feedback remain the source of truth for merge and release decisions.</p></div></details>
 <main class="container">
 <section id="rest-breaking"><div class="report-section-head"><div><h2>REST breaking changes</h2><p>Operation impact and affected intents at a glance; expand for before/after evidence.</p></div><div class="report-section-meta"><span class="report-badge add">passed</span><span class="report-count">0 operations · 0 findings</span></div></div><div class="report-empty">No confirmed REST breaking changes.</div></section>
-<section id="downstream-breaking"><div class="report-section-head"><div><h2>Downstream breaking changes</h2><p>Method impact and affected intents at a glance; expand for before/after evidence.</p></div><div class="report-section-meta"><span class="report-badge remove">failed</span><span class="report-count">2 mapped methods · 0 changed types</span></div></div><details class="report-card sdk-method-card" id="downstream-method-project-a3a154cb066a-Microsoft-Chaos-ScenarioConfigurations-execute"><summary><div class="report-card-title"><strong>ScenarioConfigurations.execute</strong><small>The normalized SDK method contract changes directly.</small><div class="report-intent-relations"><span class="report-relation-label">Affected intents (1)</span><div class="report-link-row"><a class="report-link" href="#intent-semantic-c7e95ecf235ee418">Model scenario actions as Location-polled long-running operations</a></div></div></div><div class="report-badges"><span class="report-badge direct">Direct method change</span></div></summary><div class="report-card-body"><span id="downstream-downstream-group-b3fd338076b896e8"></span><span id="downstream-downstream-0f8ea9813cabb7c3"></span><span id="finding-downstream-0f8ea9813cabb7c3"></span><span id="downstream-downstream-1da83823ff97a8a6"></span><span id="finding-downstream-1da83823ff97a8a6"></span><span id="downstream-downstream-d8a42c8eb28f141c"></span><span id="finding-downstream-d8a42c8eb28f141c"></span><p class="report-small"><strong>Target normalized SDK method:</strong> <code>Microsoft.Chaos.ScenarioConfigurations.execute</code></p><div class="report-table-wrap"><table class="report-table"><thead><tr><th>Contract area</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td><span class="contract-area-kind">SDK method</span><strong>Normalized input order</strong></td><td><pre>1. resourceGroupName (path): string
-2. workspaceName (path): string
-3. scenarioName (path): string
-4. scenarioConfigurationName (path): string</pre></td><td><pre>1. resourceGroupName (path): string
-2. workspaceName (path): string
-3. scenarioName (path): string
-4. scenarioConfigurationName (path): string</pre></td></tr><tr><td><span class="contract-area-kind">SDK method</span><strong>Method kind</strong><span class="report-detail">ScenarioConfigurations.execute becomes a long-running operation. Callers must wait for final completion rather than treating the initial response as completion.</span></td><td><pre>basic</pre></td><td><pre>lro</pre></td></tr><tr><td><span class="contract-area-kind">SDK method</span><strong>Long-running behavior</strong><span class="report-detail">ScenarioConfigurations.execute now requires status polling and a final-result request. Callers must follow this completion process instead of treating the initial execution response as final.</span></td><td><pre>none</pre></td><td><pre>{
+<section id="downstream-breaking"><div class="report-section-head"><div><h2>Downstream breaking changes</h2><p>Method impact and affected intents at a glance; expand for before/after evidence.</p></div><div class="report-section-meta"><span class="report-badge remove">failed</span><span class="report-count">2 mapped methods · 0 changed types</span></div></div><details class="report-card sdk-method-card" id="downstream-method-project-a3a154cb066a-Microsoft-Chaos-ScenarioConfigurations-execute"><summary><div class="report-card-title"><strong>ScenarioConfigurations.execute</strong><small>The normalized SDK method contract changes directly.</small><div class="report-intent-relations"><span class="report-relation-label">Affected intents (1)</span><div class="report-link-row"><a class="report-link" href="#intent-semantic-c7e95ecf235ee418">Model scenario actions as Location-polled long-running operations</a></div></div></div><div class="report-badges"><span class="report-badge direct">Direct method change</span></div></summary><div class="report-card-body"><span id="downstream-downstream-group-b3fd338076b896e8"></span><span id="downstream-downstream-0f8ea9813cabb7c3"></span><span id="finding-downstream-0f8ea9813cabb7c3"></span><span id="downstream-downstream-1da83823ff97a8a6"></span><span id="finding-downstream-1da83823ff97a8a6"></span><span id="downstream-downstream-d8a42c8eb28f141c"></span><span id="finding-downstream-d8a42c8eb28f141c"></span><p class="report-small"><strong>Target normalized SDK method:</strong> <code>Microsoft.Chaos.ScenarioConfigurations.execute</code></p><div class="report-table-wrap"><table class="report-table"><thead><tr><th>Contract area</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td><span class="contract-area-kind">SDK method</span><strong>Method kind</strong><span class="report-detail">ScenarioConfigurations.execute becomes a long-running operation. Callers must wait for final completion rather than treating the initial response as completion.</span></td><td><pre>basic</pre></td><td><pre>lro</pre></td></tr><tr><td><span class="contract-area-kind">SDK method</span><strong>Long-running behavior</strong><span class="report-detail">ScenarioConfigurations.execute now requires status polling and a final-result request. Callers must follow this completion process instead of treating the initial execution response as final.</span></td><td><pre>none</pre></td><td><pre>{
   &quot;finalStateVia&quot;: &quot;location&quot;,
   &quot;logicalResult&quot;: &quot;Microsoft.Chaos.ScenarioRun&quot;,
   &quot;pollingStep&quot;: &quot;model&quot;,
   &quot;finalStep&quot;: &quot;finalOperationLink&quot;,
   &quot;statusMonitorStep&quot;: &quot;nextOperationLink&quot;
-}</pre></td></tr><tr><td><span class="contract-area-kind">SDK method</span><strong>Return type (body output)</strong></td><td><pre>void</pre></td><td><pre>ScenarioRun</pre></td></tr></tbody></table></div><div class="breaking-rationale"><strong>Why this is breaking:</strong> <ul><li>ScenarioConfigurations.execute becomes a long-running operation. Callers must wait for final completion rather than treating the initial response as completion.</li><li>ScenarioConfigurations.execute now produces ScenarioRun after long-running completion instead of no result. Code tied to its previous no-result completion contract must adapt; callers that discard results are less affected.</li><li>ScenarioConfigurations.execute now requires status polling and a final-result request. Callers must follow this completion process instead of treating the initial execution response as final.</li></ul></div><p class="report-small">Language-neutral TCGC evidence is shown; generated language signatures are not fabricated.</p></div></details><details class="report-card sdk-method-card" id="downstream-method-project-a3a154cb066a-Microsoft-Chaos-ScenarioRuns-cancel"><summary><div class="report-card-title"><strong>ScenarioRuns.cancel</strong><small>The normalized SDK method contract changes directly.</small><div class="report-intent-relations"><span class="report-relation-label">Affected intents (1)</span><div class="report-link-row"><a class="report-link" href="#intent-semantic-c7e95ecf235ee418">Model scenario actions as Location-polled long-running operations</a></div></div></div><div class="report-badges"><span class="report-badge direct">Direct method change</span></div></summary><div class="report-card-body"><span id="downstream-downstream-group-e5c51b2794bebaf5"></span><span id="downstream-downstream-21eed4dcd37aaa7b"></span><span id="finding-downstream-21eed4dcd37aaa7b"></span><span id="downstream-downstream-578996bf97a09e93"></span><span id="finding-downstream-578996bf97a09e93"></span><span id="downstream-downstream-a8f727287fb9c61e"></span><span id="finding-downstream-a8f727287fb9c61e"></span><p class="report-small"><strong>Target normalized SDK method:</strong> <code>Microsoft.Chaos.ScenarioRuns.cancel</code></p><div class="report-table-wrap"><table class="report-table"><thead><tr><th>Contract area</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td><span class="contract-area-kind">SDK method</span><strong>Normalized input order</strong></td><td><pre>1. resourceGroupName (path): string
-2. workspaceName (path): string
-3. scenarioName (path): string
-4. runId (path): string</pre></td><td><pre>1. resourceGroupName (path): string
-2. workspaceName (path): string
-3. scenarioName (path): string
-4. runId (path): string</pre></td></tr><tr><td><span class="contract-area-kind">SDK method</span><strong>Long-running behavior</strong><span class="report-detail">ScenarioRuns.cancel now requires status polling and a final-result request. Callers must follow this completion process instead of treating the initial cancellation response as final.</span></td><td><pre>none</pre></td><td><pre>{
+}</pre></td></tr><tr><td><span class="contract-area-kind">SDK method</span><strong>Return type (body output)</strong></td><td><pre>void</pre></td><td><pre>ScenarioRun</pre></td></tr></tbody></table></div><div class="breaking-rationale"><strong>Why this is breaking:</strong> <ul><li>ScenarioConfigurations.execute becomes a long-running operation. Callers must wait for final completion rather than treating the initial response as completion.</li><li>ScenarioConfigurations.execute now produces ScenarioRun after long-running completion instead of no result. Code tied to its previous no-result completion contract must adapt; callers that discard results are less affected.</li><li>ScenarioConfigurations.execute now requires status polling and a final-result request. Callers must follow this completion process instead of treating the initial execution response as final.</li></ul></div><p class="report-small">Language-neutral TCGC evidence is shown; generated language signatures are not fabricated.</p></div></details><details class="report-card sdk-method-card" id="downstream-method-project-a3a154cb066a-Microsoft-Chaos-ScenarioRuns-cancel"><summary><div class="report-card-title"><strong>ScenarioRuns.cancel</strong><small>The normalized SDK method contract changes directly.</small><div class="report-intent-relations"><span class="report-relation-label">Affected intents (1)</span><div class="report-link-row"><a class="report-link" href="#intent-semantic-c7e95ecf235ee418">Model scenario actions as Location-polled long-running operations</a></div></div></div><div class="report-badges"><span class="report-badge direct">Direct method change</span></div></summary><div class="report-card-body"><span id="downstream-downstream-group-e5c51b2794bebaf5"></span><span id="downstream-downstream-21eed4dcd37aaa7b"></span><span id="finding-downstream-21eed4dcd37aaa7b"></span><span id="downstream-downstream-578996bf97a09e93"></span><span id="finding-downstream-578996bf97a09e93"></span><span id="downstream-downstream-a8f727287fb9c61e"></span><span id="finding-downstream-a8f727287fb9c61e"></span><p class="report-small"><strong>Target normalized SDK method:</strong> <code>Microsoft.Chaos.ScenarioRuns.cancel</code></p><div class="report-table-wrap"><table class="report-table"><thead><tr><th>Contract area</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td><span class="contract-area-kind">SDK method</span><strong>Long-running behavior</strong><span class="report-detail">ScenarioRuns.cancel now requires status polling and a final-result request. Callers must follow this completion process instead of treating the initial cancellation response as final.</span></td><td><pre>none</pre></td><td><pre>{
   &quot;finalStateVia&quot;: &quot;location&quot;,
   &quot;logicalResult&quot;: &quot;Microsoft.Chaos.ScenarioRun&quot;,
   &quot;pollingStep&quot;: &quot;model&quot;,
@@ -139,7 +160,210 @@ body{overflow-wrap:anywhere}
   &quot;statusMonitorStep&quot;: &quot;nextOperationLink&quot;
 }</pre></td></tr><tr><td><span class="contract-area-kind">SDK method</span><strong>Method kind</strong><span class="report-detail">ScenarioRuns.cancel becomes a long-running operation. Callers must wait for final completion rather than treating the initial response as completion.</span></td><td><pre>basic</pre></td><td><pre>lro</pre></td></tr><tr><td><span class="contract-area-kind">SDK method</span><strong>Return type (body output)</strong></td><td><pre>void</pre></td><td><pre>ScenarioRun</pre></td></tr></tbody></table></div><div class="breaking-rationale"><strong>Why this is breaking:</strong> <ul><li>ScenarioRuns.cancel now produces ScenarioRun after long-running completion instead of no result. Code tied to its previous no-result completion contract must adapt; callers that discard results are less affected.</li><li>ScenarioRuns.cancel now requires status polling and a final-result request. Callers must follow this completion process instead of treating the initial cancellation response as final.</li><li>ScenarioRuns.cancel becomes a long-running operation. Callers must wait for final completion rather than treating the initial response as completion.</li></ul></div><p class="report-small">Language-neutral TCGC evidence is shown; generated language signatures are not fabricated.</p></div></details></section>
 <section id="azure-compliance"><div class="report-section-head"><div><h2>Azure Guidelines</h2><p>Findings and affected intents at a glance; expand for expected guidance and actual changes.</p></div><div class="report-section-meta"><span class="report-badge add">passed</span><span class="report-count">0 findings</span></div></div><p class="report-small">3 of 3 semantic intents assessed · 12 documents selected</p><div class="report-empty">No Azure Guidelines findings.</div><p class="report-small">No applicable guideline was found for: <a class="report-link" href="#intent-semantic-6b421b1ce7dd8d19">Use ARM resource identifier scalars for resource references</a><a class="report-link" href="#intent-semantic-88b01455dd806f7b">Apply C# client naming customizations</a>.</p></section>
-<section id="document-quality"><div class="report-section-head"><div><h2>Document Quality and Agent Friendliness</h2><p>Documentation assessment status.</p></div><div class="report-section-meta"><span class="report-badge unknown">not assessed</span></div></div><div class="report-empty">Document Quality and Agent Friendliness is not assessed.</div></section>
+<section id="document-quality"><div class="report-section-head"><div><h2>Document Quality and Agent Friendliness</h2><p>Does the @doc description clearly and accurately explain the associated TypeSpec code? Examples, external documentation, and agent execution are not assessed.</p></div><div class="report-section-meta"><span class="report-badge unknown">not assessed</span><span class="report-count">0 findings</span></div></div><p class="report-small">0 findings · 9/9 descriptions assessed · 2/3 intent scopes resolved · 1 intents with no applicable @doc</p><p class="report-small">Source @doc assessment is incomplete; blocked or not-assessed checks are not passes.</p><div class="document-quality-scope"><details class="report-card document-quality-not-assessed-group" id="document-quality-not-assessed-intents"><summary><div class="report-card-title"><strong>Not assessed intents (1)</strong><small>Expand for assessment blockers and per-intent rationale.</small></div><div class="report-badges"><span class="report-badge unknown">Not assessed</span></div></summary><div class="report-card-body"><p class="report-small">These documentation reviews are incomplete. The blockers or unresolved checks below explain why; an incomplete review is not itself a documentation-quality failure.</p><details class="report-card document-quality-intent" open><summary><div class="report-card-title"><strong>Model scenario actions as Location-polled long-running operations</strong><small>Documentation review is incomplete.</small></div><div class="report-badges"><span class="report-badge unknown">Not assessed</span></div></summary><div class="report-card-body"><div class="document-quality-intent-link"><a class="report-link" href="#intent-semantic-c7e95ecf235ee418">Model scenario actions as Location-polled long-running operations</a></div><p class="report-small"><strong>Assessment blocker / rationale:</strong> Microsoft.Chaos.ArmResourceActionAsyncWithLocation: Cannot establish that the local description resolves to TypeSpec @doc. Microsoft.Chaos.ArmResourceActionNoBodyAsyncWithLocation: Cannot establish that the local description resolves to TypeSpec @doc. Microsoft.Chaos.ArmResourceActionNoContentAsyncWithLocationResult: Cannot establish that the local description resolves to TypeSpec @doc.</p></div></details></div></details><details class="report-card document-quality-passed-group" id="document-quality-passed-intents"><summary><div class="report-card-title"><strong>Passed intents (1)</strong><small>All reviewed descriptions passed. Expand to view these intents.</small></div><div class="report-badges"><span class="report-badge add">Passed</span></div></summary><div class="report-card-body"><details class="report-card document-quality-intent"><summary><div class="report-card-title"><strong>Use ARM resource identifier scalars for resource references</strong><small>9 local descriptions / 2 files</small></div><div class="report-badges"><span class="report-badge add">9 passed</span></div></summary><div class="report-card-body"><div class="document-quality-intent-link"><a class="report-link" href="#intent-semantic-6b421b1ce7dd8d19">Use ARM resource identifier scalars for resource references</a></div><details class="report-subdetails document-quality-file"><summary title="specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp">scenarioConfiguration.models.tsp <span class="document-quality-file-count">/ 7 descriptions</span></summary><div class="document-quality-list" role="region" aria-label="Descriptions in scenarioConfiguration.models.tsp" tabindex="0"><details class="document-quality-document"><summary><span title="Microsoft.Chaos.PermissionError.resourceId">PermissionError.resourceId</span><span class="report-badge add">passed</span></summary><div class="document-quality-document-body"><h4>Current local description</h4><blockquote>The resource id for the affected resource.</blockquote><details class="report-subdetails document-quality-source"><summary>View TypeSpec and full source path</summary><p class="sources"><code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp:222-226</code></p><pre><code>/**
+   * The resource id for the affected resource.
+   */
+  @visibility(Lifecycle.Read)
+  resourceId: Azure.Core.armResourceIdentifier</code></pre></details></div></details><details class="document-quality-document"><summary><span title="Microsoft.Chaos.RoleAssignmentResult.roleAssignmentId">RoleAssignmentResult.roleAssignmentId</span><span class="report-badge add">passed</span></summary><div class="document-quality-document-body"><h4>Current local description</h4><blockquote>The created role assignment resource ID (null if failed or what-if mode).</blockquote><details class="report-subdetails document-quality-source"><summary>View TypeSpec and full source path</summary><p class="sources"><code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp:453-457</code></p><pre><code>/**
+   * The created role assignment resource ID (null if failed or what-if mode).
+   */
+  @visibility(Lifecycle.Read)
+  roleAssignmentId?: Azure.Core.armResourceIdentifier</code></pre></details></div></details><details class="document-quality-document"><summary><span title="Microsoft.Chaos.PermissionError">PermissionError</span><span class="report-badge add">passed</span></summary><div class="document-quality-document-body"><h4>Current local description</h4><blockquote>Model that represents the permission error.</blockquote><details class="report-subdetails document-quality-source"><summary>View TypeSpec and full source path</summary><p class="sources"><code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp:218-251</code></p><pre><code>/**
+ * Model that represents the permission error.
+ */
+model PermissionError {
+  /**
+   * The resource id for the affected resource.
+   */
+  @visibility(Lifecycle.Read)
+  resourceId: Azure.Core.armResourceIdentifier;
+
+  /**
+   * The missing permissions.
+   */
+  @visibility(Lifecycle.Read)
+  missingPermissions: string[];
+
+  /**
+   * The required permissions.
+   */
+  @visibility(Lifecycle.Read)
+  requiredPermissions: string[];
+
+  /**
+   * The recommended roles.
+   */
+  @visibility(Lifecycle.Read)
+  recommendedRoles: string[];
+
+  /**
+   * The identity.
+   */
+  @visibility(Lifecycle.Read)
+  identity?: EntraIdentity;
+}</code></pre></details></div></details><details class="document-quality-document"><summary><span title="Microsoft.Chaos.ResourceStateError.resourceId">ResourceStateError.resourceId</span><span class="report-badge add">passed</span></summary><div class="document-quality-document-body"><h4>Current local description</h4><blockquote>The resource id for the affected resource.</blockquote><details class="report-subdetails document-quality-source"><summary>View TypeSpec and full source path</summary><p class="sources"><code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp:274-278</code></p><pre><code>/**
+   * The resource id for the affected resource.
+   */
+  @visibility(Lifecycle.Read)
+  resourceId: Azure.Core.armResourceIdentifier</code></pre></details></div></details><details class="document-quality-document"><summary><span title="Microsoft.Chaos.RoleAssignmentResult.targetResourceId">RoleAssignmentResult.targetResourceId</span><span class="report-badge add">passed</span></summary><div class="document-quality-document-body"><h4>Current local description</h4><blockquote>The target Azure resource ID.</blockquote><details class="report-subdetails document-quality-source"><summary>View TypeSpec and full source path</summary><p class="sources"><code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp:417-421</code></p><pre><code>/**
+   * The target Azure resource ID.
+   */
+  @visibility(Lifecycle.Read)
+  targetResourceId: Azure.Core.armResourceIdentifier</code></pre></details></div></details><details class="document-quality-document"><summary><span title="Microsoft.Chaos.ResourceStateError">ResourceStateError</span><span class="report-badge add">passed</span></summary><div class="document-quality-document-body"><h4>Current local description</h4><blockquote>Model that represents the resource state error.</blockquote><details class="report-subdetails document-quality-source"><summary>View TypeSpec and full source path</summary><p class="sources"><code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp:270-297</code></p><pre><code>/**
+ * Model that represents the resource state error.
+ */
+model ResourceStateError {
+  /**
+   * The resource id for the affected resource.
+   */
+  @visibility(Lifecycle.Read)
+  resourceId: Azure.Core.armResourceIdentifier;
+
+  /**
+   * The error code.
+   */
+  @visibility(Lifecycle.Read)
+  errorCode: int32;
+
+  /**
+   * The error message.
+   */
+  @visibility(Lifecycle.Read)
+  errorMessage: string;
+
+  /**
+   * The remediation uri.
+   */
+  @visibility(Lifecycle.Read)
+  remediationUri: string;
+}</code></pre></details></div></details><details class="document-quality-document"><summary><span title="Microsoft.Chaos.RoleAssignmentResult">RoleAssignmentResult</span><span class="report-badge add">passed</span></summary><div class="document-quality-document-body"><h4>Current local description</h4><blockquote>Result of a single role assignment operation.</blockquote><details class="report-subdetails document-quality-source"><summary>View TypeSpec and full source path</summary><p class="sources"><code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp:413-464</code></p><pre><code>/**
+ * Result of a single role assignment operation.
+ */
+model RoleAssignmentResult {
+  /**
+   * The target Azure resource ID.
+   */
+  @visibility(Lifecycle.Read)
+  targetResourceId: Azure.Core.armResourceIdentifier;
+
+  /**
+   * The managed identity principal ID.
+   */
+  @visibility(Lifecycle.Read)
+  principalId: string;
+
+  /**
+   * The Azure RBAC role definition ID.
+   */
+  @visibility(Lifecycle.Read)
+  roleDefinitionId: string;
+
+  /**
+   * Human-readable role name.
+   */
+  @visibility(Lifecycle.Read)
+  roleDefinitionName: string;
+
+  /**
+   * The scope at which the role was/will be assigned.
+   */
+  @visibility(Lifecycle.Read)
+  scope: string;
+
+  /**
+   * The status of the role assignment operation.
+   */
+  @visibility(Lifecycle.Read)
+  status: RoleAssignmentStatus;
+
+  /**
+   * The created role assignment resource ID (null if failed or what-if mode).
+   */
+  @visibility(Lifecycle.Read)
+  roleAssignmentId?: Azure.Core.armResourceIdentifier;
+
+  /**
+   * Error details if the assignment failed.
+   */
+  @visibility(Lifecycle.Read)
+  error?: RoleAssignmentError;
+}</code></pre></details></div></details></div></details><details class="report-subdetails document-quality-file"><summary title="specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspaceEvaluation.models.tsp">workspaceEvaluation.models.tsp <span class="document-quality-file-count">/ 2 descriptions</span></summary><div class="document-quality-list" role="region" aria-label="Descriptions in workspaceEvaluation.models.tsp" tabindex="0"><details class="document-quality-document"><summary><span title="Microsoft.Chaos.WorkspaceEvaluationProperties.workspaceId">WorkspaceEvaluationProperties.workspaceId</span><span class="report-badge add">passed</span></summary><div class="document-quality-document-body"><h4>Current local description</h4><blockquote>The workspace ID this evaluation belongs to.</blockquote><details class="report-subdetails document-quality-source"><summary>View TypeSpec and full source path</summary><p class="sources"><code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspaceEvaluation.models.tsp:59-63</code></p><pre><code>/**
+   * The workspace ID this evaluation belongs to.
+   */
+  @visibility(Lifecycle.Read)
+  workspaceId: Azure.Core.armResourceIdentifier</code></pre></details></div></details><details class="document-quality-document"><summary><span title="Microsoft.Chaos.WorkspaceEvaluationProperties">WorkspaceEvaluationProperties</span><span class="report-badge add">passed</span></summary><div class="document-quality-document-body"><h4>Current local description</h4><blockquote>Model that represents the properties of the workspace evaluation.</blockquote><details class="report-subdetails document-quality-source"><summary>View TypeSpec and full source path</summary><p class="sources"><code>specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspaceEvaluation.models.tsp:29-101</code></p><pre><code>/**
+ * Model that represents the properties of the workspace evaluation.
+ */
+#suppress &quot;@azure-tools/typespec-azure-resource-manager/arm-resource-provisioning-state&quot; &quot;Read-only singleton resource representing latest evaluation status&quot;
+model WorkspaceEvaluationProperties {
+  /**
+   * The evaluation status.
+   */
+  @visibility(Lifecycle.Read)
+  status: WorkspaceEvaluationStatus;
+
+  /**
+   * The evaluation UTC start time.
+   */
+  @visibility(Lifecycle.Read)
+  startTime?: utcDateTime;
+
+  /**
+   * The evaluation UTC end time.
+   */
+  @visibility(Lifecycle.Read)
+  endTime?: utcDateTime;
+
+  /**
+   * System or infrastructure errors encountered during evaluation.
+   */
+  @visibility(Lifecycle.Read)
+  @identifiers(#[])
+  errors?: OperationError[];
+
+  /**
+   * The workspace ID this evaluation belongs to.
+   */
+  @visibility(Lifecycle.Read)
+  workspaceId: Azure.Core.armResourceIdentifier;
+
+  /**
+   * The number of scenarios to evaluate.
+   */
+  @visibility(Lifecycle.Read)
+  numScenariosToEvaluate?: int32;
+
+  /**
+   * The number of scenarios that evaluated successfully.
+   */
+  @visibility(Lifecycle.Read)
+  numScenariosEvaluatedSucceeded?: int32;
+
+  /**
+   * The number of scenarios that failed evaluation.
+   */
+  @visibility(Lifecycle.Read)
+  numScenariosEvaluatedFailed?: int32;
+
+  /**
+   * The number of scenarios that were cancelled during evaluation.
+   */
+  @visibility(Lifecycle.Read)
+  numScenariosEvaluatedCancelled?: int32;
+
+  /**
+   * The overall evaluation result.
+   */
+  @visibility(Lifecycle.Read)
+  evaluationResult?: RecommendationStatus;
+
+  /**
+   * Per-scenario evaluation results.
+   */
+  @visibility(Lifecycle.Read)
+  @identifiers(#[&quot;scenarioName&quot;])
+  results?: ScenarioEvaluationResultItem[];
+}</code></pre></details></div></details></div></details></div></details></div></details><details class="report-card document-quality-intent document-quality-neutral"><summary><div class="report-card-title"><strong>Apply C# client naming customizations</strong><small>No associated description to review. Not a failure.</small></div><div class="report-badges"><span class="report-badge neutral">No applicable documentation</span></div></summary><div class="report-card-body"><div class="document-quality-intent-link"><a class="report-link" href="#intent-semantic-88b01455dd806f7b">Apply C# client naming customizations</a></div><p class="report-small">No changed, associated nonempty @doc with a current target; absent, deleted, empty, or whitespace-only @doc is outside documentation coverage scope.</p></div></details><p class="report-small">Description explains code. Complete judgments remain in assessment.json.</p></div></section>
 <section id="semantic-intents"><div class="report-section-head"><div><h2>Semantic intents</h2><p>Impact links are visible at a glance; expand for changed TypeSpec source, followed by affected operations.</p></div><div class="report-section-meta"><span class="report-count">3 intents · 0 added · 3 modified · 0 removed</span></div></div><details class="report-card intent" id="intent-semantic-6b421b1ce7dd8d19"><summary><div class="report-card-title"><strong>Use ARM resource identifier scalars for resource references</strong><small>Retype resource ID properties from string to Azure.Core.armResourceIdentifier while preserving the emitted 2026-05-01-preview REST and language-neutral SDK contracts.</small></div><div class="report-badges"><span class="report-badge modify">modify</span></div></summary><div class="report-card-body"><details class="report-source" open><summary>Changed TypeSpec source (2)</summary><div class="diff"><div class="diff-path">specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp</div><pre><span class="context">    * The resource id for the affected resource.</span>
 <span class="context">    */</span>
 <span class="context">   @visibility(Lifecycle.Read)</span>
@@ -2219,7 +2443,7 @@ body{overflow-wrap:anywhere}
     }
   }
 }</pre>
-<p><strong>Provenance:</strong> model-input.json, inference.json, compliance-search-evidence.json, assessment-judgment.json, preparation-manifest.json</p></div></details></section>
+<p><strong>Provenance:</strong> model-input.json, inference.json, compliance-search-evidence.json, assessment-judgment.json, preparation-manifest.json, [object Object]</p></div></details></section>
 </main>
 <script>
 function revealHashTarget() {

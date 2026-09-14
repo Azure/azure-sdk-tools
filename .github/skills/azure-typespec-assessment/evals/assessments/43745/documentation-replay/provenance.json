@@ -1,0 +1,20 @@
+{
+  "pr": 43745,
+  "preparedAt": "2026-09-11T10:11:33.511Z",
+  "sourceAssessmentHash": "09df7e233f5aae6fe7fb2407085ca43308f90a3209fcc1bc2edc3f30ca1e457d",
+  "comparison": {
+    "baseRef": "a6887d2260f26285d4b1f5fba97da370be9200b4",
+    "baseCommit": "a6887d2260f26285d4b1f5fba97da370be9200b4",
+    "headCommit": "71ce7d0c524c4bea7bc737836684acd53f343147",
+    "workingTree": {
+      "staged": false,
+      "unstaged": false,
+      "untracked": false
+    }
+  },
+  "baseWorktree": "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\.workspaces\\43745\\base",
+  "headWorktree": "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\.workspaces\\43745\\head",
+  "compilerVersions": [
+    "1.12.0"
+  ]
+}

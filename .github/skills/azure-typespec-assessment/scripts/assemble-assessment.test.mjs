@@ -473,6 +473,9 @@ test("canonical doc input flows through coordinator, assembly, validation, and H
     const manifest = readJson(path.join(work, "preparation-manifest.json"));
     const sourceIndex = readJson(path.join(work, "source", "source-index.json"));
     const semantic = readJson(path.join(work, "dimensions", "semantic-intents-input.json"));
+    sourceIndex.sourceChanges[0].documentEvidence.schemaVersion = 3;
+    writeJson(path.join(work, "source", "source-index.json"), sourceIndex);
+    judgment.documentQualityDecisions = [{ ...judgment.documentQualityDecisions[1], check: "description" }];
     semantic.reviewUnits[0].declarationIds = ["declaration-1"];
     writeJson(path.join(work, "dimensions", "semantic-intents-input.json"), semantic);
     const rest = readJson(path.join(work, "dimensions", "rest-breaking-input.json"));
@@ -510,6 +513,8 @@ test("canonical doc input flows through coordinator, assembly, validation, and H
     const assessment = assembleAssessment({ work, judgment });
     assert.deepEqual(validateAssessment(assessment), []);
     assert.equal(assessment.dimensions.documentQuality.status, "failed");
+    assert.equal(assessment.dimensions.documentQuality.assessmentVersion, 3);
+    assert.equal(assessment.dimensions.documentQuality.coverage.checkCount, 1);
     assert.equal(assessment.dimensions.rest.status, "passed");
     assert.equal(assessment.dimensions.downstream.status, "passed");
     assert.equal(assessment.dimensions.compliance.status, "passed");
@@ -531,6 +536,8 @@ test("canonical doc input flows through coordinator, assembly, validation, and H
     const legacyInput = structuredClone(modelInput);
     delete legacyInput.artifactReferences.documentQuality;
     delete legacyInput.documentQualityReviewUnits;
+    delete legacyInput.documentQualityAssessmentVersion;
+    delete legacyInput.documentQualityCriterion;
     writeJson(path.join(work, "model-input.json"), legacyInput);
     delete judgment.documentQualityDecisions;
     const legacy = assembleAssessment({ work, judgment });

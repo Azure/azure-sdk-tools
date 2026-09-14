@@ -1,0 +1,8 @@
+{"schemaVersion":1,"documentQualityDecisions":[
+{"reviewUnitId":"semantic-106722e15dc2d25d","documentId":"document-4c819471d3e4b790","check":"description","decision":"pass","rationale":"Listed file item remains accurate after removing link-count and file-type fields."},
+{"reviewUnitId":"semantic-259f67bc56ae9c3d","documentId":"document-5ee05fa0fcd53f46","check":"description","decision":"pass","rationale":"Directory-listing entries accurately summarizes the remaining directory and file arrays; removed special-file arrays do not make it stale."},
+{"reviewUnitId":"semantic-259f67bc56ae9c3d","documentId":"document-b445ae21b614188a","check":"description","decision":"pass","rationale":"Information included in a listing accurately describes the remaining timestamps, ETag, attributes and permission-key options."},
+{"reviewUnitId":"semantic-259f67bc56ae9c3d","documentId":"document-cbab6ef9cf3f8bef","check":"description","decision":"pass","rationale":"Listed directory item remains accurate after removing linkCount."},
+{"reviewUnitId":"semantic-bdd43786bf6adae0","documentId":"document-976014d0b8cb1967","check":"description","decision":"pass","rationale":"File properties accurately summarizes the remaining size, time and ETag fields without promising removed NFS ownership fields."},
+{"reviewUnitId":"semantic-eed96d1f60797ccb","documentId":"document-4f1fce0e9aca00aa","check":"description","decision":"pass","rationale":"NFS file type still accurately describes Regular, Directory and SymLink after removing other variants."}
+]}

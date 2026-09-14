@@ -1,0 +1,7 @@
+{"schemaVersion":1,"documentQualityDecisions":[
+{"reviewUnitId":"semantic-2f3dcd5a82870702","documentId":"document-2fb430ce22fb9702","check":"description","decision":"pass","rationale":"User email adequately identifies the userEmail query string."},
+{"reviewUnitId":"semantic-2f3dcd5a82870702","documentId":"document-5e1069f4027479b7","check":"description","decision":"pass","rationale":"The description explains the monitor-delete operation consistently with its subscription, resource group and monitor-name inputs and void result."},
+{"reviewUnitId":"semantic-2f3dcd5a82870702","documentId":"document-6b4707e73b9dfbe2","check":"description","decision":"pass","rationale":"Monitor resource name clearly identifies the monitorName path parameter."},
+{"reviewUnitId":"semantic-2f3dcd5a82870702","documentId":"document-ab52b0bc96e17042","check":"description","decision":"pass","rationale":"The date description exactly matches the 2026-06-01 API-version literal."},
+{"reviewUnitId":"semantic-2f3dcd5a82870702","documentId":"document-ea53755874a3e066","check":"description","decision":"pass","rationale":"Available API versions remains accurate after adding the stable member."}
+]}

@@ -1,0 +1,101 @@
+{
+  "schemaVersion": 3,
+  "status": "ready",
+  "blockers": [],
+  "reviewUnits": [
+    {
+      "reviewUnitId": "semantic-19dbeda22c08823b",
+      "status": "ready",
+      "sourceChangeIds": [
+        "source-c2c94e5d884d2317"
+      ],
+      "hunkIds": [
+        "hunk-6f7cbb36779ac486"
+      ],
+      "declarationIds": [
+        "declaration-2216badbb8c3488e",
+        "declaration-66275f6b9ba818c6"
+      ],
+      "documents": [
+        {
+          "id": "document-165253ba8fd0298e",
+          "sourceChangeId": "source-c2c94e5d884d2317",
+          "qualifiedName": "Microsoft.DeviceRegistry.Versions.v2026_11_01_preview",
+          "kind": "enum-member",
+          "before": {
+            "doc": "Microsoft.DeviceRegistry Resource Provider management API version 2026-11-01-preview.",
+            "declaration": "@doc(\"Microsoft.DeviceRegistry Resource Provider management API version 2026-11-01-preview.\")\n  @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v6)\n  v2026_11_01_preview: \"2026-11-01-preview\"",
+            "source": {
+              "path": "specification/deviceregistry/DeviceRegistry.Management/main.tsp",
+              "revision": "base",
+              "startLine": 77,
+              "endLine": 79
+            }
+          },
+          "after": {
+            "doc": "Microsoft.DeviceRegistry Resource Provider management API version 2026-11-01-preview.",
+            "declaration": "@doc(\"Microsoft.DeviceRegistry Resource Provider management API version 2026-11-01-preview.\")\n  @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)\n  v2026_11_01_preview: \"2026-11-01-preview\"",
+            "source": {
+              "path": "specification/deviceregistry/DeviceRegistry.Management/main.tsp",
+              "revision": "current",
+              "startLine": 77,
+              "endLine": 79
+            }
+          }
+        },
+        {
+          "id": "document-ada8d3d230cd3e8b",
+          "sourceChangeId": "source-c2c94e5d884d2317",
+          "qualifiedName": "Microsoft.DeviceRegistry.Versions.v2026_11_02_preview",
+          "kind": "enum-member",
+          "before": {
+            "doc": "Microsoft.DeviceRegistry Resource Provider management API version 2026-11-02-preview.",
+            "declaration": "@doc(\"Microsoft.DeviceRegistry Resource Provider management API version 2026-11-02-preview.\")\n  @Azure.Core.previewVersion\n  @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v6)\n  v2026_11_02_preview: \"2026-11-02-preview\"",
+            "source": {
+              "path": "specification/deviceregistry/DeviceRegistry.Management/main.tsp",
+              "revision": "base",
+              "startLine": 81,
+              "endLine": 84
+            }
+          },
+          "after": {
+            "doc": "Microsoft.DeviceRegistry Resource Provider management API version 2026-11-02-preview.",
+            "declaration": "@doc(\"Microsoft.DeviceRegistry Resource Provider management API version 2026-11-02-preview.\")\n  @Azure.Core.previewVersion\n  @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)\n  v2026_11_02_preview: \"2026-11-02-preview\"",
+            "source": {
+              "path": "specification/deviceregistry/DeviceRegistry.Management/main.tsp",
+              "revision": "current",
+              "startLine": 81,
+              "endLine": 84
+            }
+          }
+        },
+        {
+          "id": "document-b25123da6c848270",
+          "sourceChangeId": "source-c2c94e5d884d2317",
+          "qualifiedName": "Microsoft.DeviceRegistry.Versions",
+          "kind": "enum",
+          "before": {
+            "doc": "Microsoft.DeviceRegistry Resource Provider supported API versions.",
+            "declaration": "/** API versions */\n@doc(\"Microsoft.DeviceRegistry Resource Provider supported API versions.\")\nenum Versions {\n  @doc(\"Microsoft.DeviceRegistry Resource Provider management API version 2023-11-01-preview.\")\n  @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v3)\n  v2023_11_01_preview: \"2023-11-01-preview\",\n\n  @doc(\"Microsoft.DeviceRegistry Resource Provider management API version 2024-09-01-preview.\")\n  @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)\n  v2024_09_01_preview: \"2024-09-01-preview\",\n\n  @doc(\"Microsoft.DeviceRegistry Resource Provider management API version 2024-11-01.\")\n  @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)\n  v2024_11_01: \"2024-11-01\",\n\n  @doc(\"Microsoft.DeviceRegistry Resource Provider management API version 2025-07-01-preview.\")\n  @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)\n  v2025_07_01_preview: \"2025-07-01-preview\",\n\n  @doc(\"Microsoft.DeviceRegistry Resource Provider management API version 2025-10-01.\")\n  @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)\n  v2025_10_01: \"2025-10-01\",\n\n  @doc(\"Microsoft.DeviceRegistry Resource Provider management API version 2025-11-01-preview.\")\n  @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)\n  v2025_11_01_preview: \"2025-11-01-preview\",\n\n  @doc(\"Microsoft.DeviceRegistry Resource Provider management API version 2026-03-01-preview.\")\n  @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)\n  v2026_03_01_preview: \"2026-03-01-preview\",\n\n  @doc(\"Microsoft.DeviceRegistry Resource Provider management API version 2026-04-01.\")\n  @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)\n  v2026_04_01: \"2026-04-01\",\n\n  @doc(\"Microsoft.DeviceRegistry Resource Provider management API version 2026-11-01-preview.\")\n  @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v6)\n  v2026_11_01_preview: \"2026-11-01-preview\",\n\n  @doc(\"Microsoft.DeviceRegistry Resource Provider management API version 2026-11-02-preview.\")\n  @Azure.Core.previewVersion\n  @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v6)\n  v2026_11_02_preview: \"2026-11-02-preview\",\n}",
+            "source": {
+              "path": "specification/deviceregistry/DeviceRegistry.Management/main.tsp",
+              "revision": "base",
+              "startLine": 42,
+              "endLine": 85
+            }
+          },
+          "after": {
+            "doc": "Microsoft.DeviceRegistry Resource Provider supported API versions.",
+            "declaration": "/** API versions */\n@doc(\"Microsoft.DeviceRegistry Resource Provider supported API versions.\")\nenum Versions {\n  @doc(\"Microsoft.DeviceRegistry Resource Provider management API version 2023-11-01-preview.\")\n  @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v3)\n  v2023_11_01_preview: \"2023-11-01-preview\",\n\n  @doc(\"Microsoft.DeviceRegistry Resource Provider management API version 2024-09-01-preview.\")\n  @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)\n  v2024_09_01_preview: \"2024-09-01-preview\",\n\n  @doc(\"Microsoft.DeviceRegistry Resource Provider management API version 2024-11-01.\")\n  @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)\n  v2024_11_01: \"2024-11-01\",\n\n  @doc(\"Microsoft.DeviceRegistry Resource Provider management API version 2025-07-01-preview.\")\n  @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)\n  v2025_07_01_preview: \"2025-07-01-preview\",\n\n  @doc(\"Microsoft.DeviceRegistry Resource Provider management API version 2025-10-01.\")\n  @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)\n  v2025_10_01: \"2025-10-01\",\n\n  @doc(\"Microsoft.DeviceRegistry Resource Provider management API version 2025-11-01-preview.\")\n  @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)\n  v2025_11_01_preview: \"2025-11-01-preview\",\n\n  @doc(\"Microsoft.DeviceRegistry Resource Provider management API version 2026-03-01-preview.\")\n  @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)\n  v2026_03_01_preview: \"2026-03-01-preview\",\n\n  @doc(\"Microsoft.DeviceRegistry Resource Provider management API version 2026-04-01.\")\n  @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)\n  v2026_04_01: \"2026-04-01\",\n\n  @doc(\"Microsoft.DeviceRegistry Resource Provider management API version 2026-11-01-preview.\")\n  @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)\n  v2026_11_01_preview: \"2026-11-01-preview\",\n\n  @doc(\"Microsoft.DeviceRegistry Resource Provider management API version 2026-11-02-preview.\")\n  @Azure.Core.previewVersion\n  @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)\n  v2026_11_02_preview: \"2026-11-02-preview\",\n}",
+            "source": {
+              "path": "specification/deviceregistry/DeviceRegistry.Management/main.tsp",
+              "revision": "current",
+              "startLine": 42,
+              "endLine": 85
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

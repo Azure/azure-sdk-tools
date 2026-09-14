@@ -95,9 +95,10 @@ function headerSummary(assessment) {
   const complianceMaterialCount = compliance.coverage?.semanticIntentCount ?? 0;
   const documentQuality = assessment.dimensions.documentQuality;
   const documentQualityActive = documentQuality?.coverage !== undefined;
+  const documentQualityApplicable = documentQualityActive && documentQualitySummary(documentQuality).status !== "not-applicable";
   const qualityStatuses = [
     assessment.safety.status, compliance.status,
-    ...(documentQualityActive ? [documentQuality.status] : []),
+    ...(documentQualityApplicable ? [documentQuality.status] : []),
   ];
   const codeQuality =
     qualityStatuses.includes("failed")
@@ -116,7 +117,7 @@ function headerSummary(assessment) {
           ? "#document-quality"
           : compliance.status !== "passed"
             ? "#azure-compliance"
-            : documentQualityActive && documentQuality.status !== "passed"
+            : documentQualityApplicable && documentQuality.status !== "passed"
               ? "#document-quality"
               : "#rest-breaking";
   return {
@@ -143,17 +144,17 @@ function headerSummary(assessment) {
       codeQuality === "passed" ? "✓" : codeQuality === "failed" ? "×" : "i",
     codeQualityLabel:
       codeQuality === "passed"
-        ? "Passed"
+        ? "Pass"
         : codeQuality === "failed"
-          ? "Failed"
-          : "Not assessed",
+          ? "Fail"
+          : "N/A",
   };
 }
 
 function complianceStatus(status) {
-  if (status === "passed") return { icon: "✓", className: "pass" };
-  if (status === "failed") return { icon: "×", className: "fail" };
-  return { icon: "i", className: "" };
+  if (status === "passed" || status === "assessed") return { icon: "✓", className: "pass", label: "Pass" };
+  if (status === "failed") return { icon: "×", className: "fail", label: "Fail" };
+  return { icon: "i", className: "", label: "N/A" };
 }
 
 function githubRepositoryUrl(remoteUrl) {
@@ -2196,6 +2197,7 @@ function renderCurrent(assessment, options = {}) {
   const downstreamStatus = complianceStatus(dimensions.downstream.status ?? (summary.downstreamCount ? "failed" : "not-assessed"));
   const documentQuality = documentQualitySummary(dimensions.documentQuality);
   const documentStatus = complianceStatus(documentQuality.status);
+  const semanticStatus = complianceStatus(dimensions.semantic.status);
   const comparisons = new Map(
     (assessment.artifactComparisons ?? []).map((item) => [
       item.projectId,
@@ -2231,12 +2233,12 @@ ${reportStyles}
 <header class="hero"><div class="container"><div class="eyebrow">TypeSpec Assessment</div><h1>${escapeHtml(headerTitle(assessment))}</h1>
 <p class="hero-meta">TypeSpec source diff: ${comparisonHeader}</p>
 <div class="summary-grid">
-<a class="summary-card" href="${summary.codeQualityTarget}"><div class="summary-value"><span class="${summary.codeQuality === "passed" ? "pass" : summary.codeQuality === "failed" ? "fail" : ""}">${summary.codeQualityIcon}</span> ${escapeHtml(summary.codeQualityLabel)}</div><div class="summary-label">Overall code quality</div><div class="summary-detail">${escapeHtml(summary.codeQualityDetail)}</div></a>
-<a class="summary-card" href="#rest-breaking"><div class="summary-value"><span class="${restStatus.className}">${restStatus.icon}</span> ${summary.restCount}</div><div class="summary-label">REST breaking changes</div></a>
-<a class="summary-card" href="#downstream-breaking"><div class="summary-value"><span class="${downstreamStatus.className}">${downstreamStatus.icon}</span> ${summary.downstreamCount}</div><div class="summary-label">Downstream breaking changes</div><div class="summary-detail">Generated SDK contract changes</div></a>
-<a class="summary-card" href="#azure-compliance"><div class="summary-value"><span class="${complianceStatus(summary.complianceStatus).className}">${complianceStatus(summary.complianceStatus).icon}</span> ${summary.complianceIssueCount}</div><div class="summary-label">Azure Guidelines</div><div class="summary-detail">${summary.complianceIssueCount} guideline ${summary.complianceIssueCount === 1 ? "issue" : "issues"}<br>${escapeHtml(summary.complianceCoverageDetail)}</div></a>
-<a class="summary-card" href="#document-quality"><div class="summary-value"><span class="${documentStatus.className}">${documentStatus.icon}</span> ${escapeHtml(documentQuality.label)}</div><div class="summary-label">Document Quality and Agent Friendliness</div><div class="summary-detail">${escapeHtml(documentQuality.detail)}</div></a>
-<a class="summary-card" href="#semantic-intents"><div class="summary-value"><span>i</span> ${summary.semanticItems.length}</div><div class="summary-label">Semantic intents</div><div class="summary-detail">${summary.operationCount} operations<br>${summary.actionCounts.add} Added, ${summary.actionCounts.modify} Modified, ${summary.actionCounts.remove} Removed</div></a>
+<a class="summary-card" href="${summary.codeQualityTarget}"><div class="summary-value"><span class="${summary.codeQuality === "passed" ? "pass" : summary.codeQuality === "failed" ? "fail" : ""}">${summary.codeQualityIcon}</span> ${escapeHtml(summary.codeQualityLabel)}</div><div class="summary-label">Overall code quality</div><div class="summary-detail">${summary.codeQuality === "not-assessed" ? "Not fully assessed<br>" : ""}${escapeHtml(summary.codeQualityDetail)}</div></a>
+<a class="summary-card" href="#rest-breaking"><div class="summary-value"><span class="${restStatus.className}">${restStatus.icon}</span> ${restStatus.label}</div><div class="summary-label">REST breaking changes</div><div class="summary-detail">${restStatus.label === "N/A" ? "Not assessed<br>" : ""}${summary.restCount} breaking ${summary.restCount === 1 ? "change" : "changes"}</div></a>
+<a class="summary-card" href="#downstream-breaking"><div class="summary-value"><span class="${downstreamStatus.className}">${downstreamStatus.icon}</span> ${downstreamStatus.label}</div><div class="summary-label">Downstream breaking changes</div><div class="summary-detail">${downstreamStatus.label === "N/A" ? "Not assessed<br>" : ""}${summary.downstreamCount} generated SDK contract ${summary.downstreamCount === 1 ? "change" : "changes"}</div></a>
+<a class="summary-card" href="#azure-compliance"><div class="summary-value"><span class="${complianceStatus(summary.complianceStatus).className}">${complianceStatus(summary.complianceStatus).icon}</span> ${complianceStatus(summary.complianceStatus).label}</div><div class="summary-label">Azure Guidelines</div><div class="summary-detail">${complianceStatus(summary.complianceStatus).label === "N/A" ? "Not assessed<br>" : ""}${summary.complianceIssueCount} guideline ${summary.complianceIssueCount === 1 ? "issue" : "issues"}<br>${escapeHtml(summary.complianceCoverageDetail)}</div></a>
+<a class="summary-card" href="#document-quality"><div class="summary-value"><span class="${documentStatus.className}">${documentStatus.icon}</span> ${documentStatus.label}</div><div class="summary-label">Document Quality and Agent Friendliness</div><div class="summary-detail">${documentStatus.label === "N/A" ? `${escapeHtml(documentQuality.label)}<br>` : ""}${escapeHtml(documentQuality.detail)}</div></a>
+<a class="summary-card" href="#semantic-intents"><div class="summary-value"><span class="${semanticStatus.className}">${semanticStatus.icon}</span> ${semanticStatus.label}</div><div class="summary-label">Semantic intents</div><div class="summary-detail">${summary.semanticItems.length} ${summary.semanticItems.length === 1 ? "intent" : "intents"}${semanticStatus.label === "Pass" ? " assessed" : ""} · ${summary.operationCount} operations<br>${semanticStatus.label === "N/A" ? "Not assessed<br>" : ""}${summary.actionCounts.add} Added, ${summary.actionCounts.modify} Modified, ${summary.actionCounts.remove} Removed</div></a>
 </div></div></header>
 <details class="notice"><summary class="container"><span class="notice-title">Preview Notice</span><span class="notice-summary">The TypeSpec Assessment Assistant is in preview; official validation and review remain the source of truth.</span></summary>
 <div class="container notice-body"><p>The TypeSpec Assessment Assistant is currently in preview. Its goal is to help service developers build confidence earlier in the TypeSpec authoring workflow by providing contextual analysis, risk identification, and guidance on potential downstream impacts.</p>

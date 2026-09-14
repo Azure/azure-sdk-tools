@@ -198,6 +198,8 @@ test("legacy operationGroups and sharedTypeImpacts retain unmapped confirmed typ
 
 test("normalized method inputs exclude constants, retain locations and preserve unknown returns", () => {
   const { dimension } = fixture();
+  dimension.methodGroups[0].before.parameters = dimension.methodGroups[0].before.parameters.filter((parameter) => parameter.name !== "afcManagedSync");
+  dimension.methodGroups[0].before.responseType = null;
   const html = renderAssessmentHtml(assessment(dimension));
   assert.match(html, /1\. name \(path\): string/);
   assert.match(html, /2\. afcManagedSync\? \(query\): boolean/);
@@ -213,6 +215,35 @@ test("normalized method inputs exclude constants, retain locations and preserve 
   group.after.responseType = null;
   const rows = downstreamMethodData(dimension).methods.find((item) => item.group).rows;
   assert.deepEqual(rows.at(-1), { area: "SDK method", label: "Return type (body output)", before: "Not recorded", after: "void" });
+});
+
+test("comparison tables omit identical fields while retaining actual changes and evidence", () => {
+  const { dimension } = fixture();
+  const original = structuredClone(dimension);
+  const html = renderAssessmentHtml(assessment(dimension));
+  assert.doesNotMatch(html, /<strong>Normalized input order<\/strong>|<strong>Return type \(body output\)<\/strong>/);
+  assert.match(html, /<strong>Normalized method name<\/strong>/);
+  assert.match(html, /<strong>Method kind<\/strong>/);
+  assert.match(html, /Why this is breaking/);
+  for (const [, before, after] of html.matchAll(/<tr><td>[\s\S]*?<\/td><td><pre>([\s\S]*?)<\/pre><\/td><td><pre>([\s\S]*?)<\/pre><\/td><\/tr>/g)) {
+    assert.notEqual(before, after);
+  }
+  assert.deepEqual(dimension, original);
+});
+
+test("comparison tables are omitted when all their fields are unchanged", () => {
+  const { dimension } = fixture();
+  const group = dimension.methodGroups[0];
+  group.before.name = group.after.name;
+  group.before.kind = group.after.kind;
+  group.deltas[0].before = group.deltas[0].after;
+  group.deltas[0].rationale = "Retained recorded explanation.";
+  dimension.typeImpacts = [];
+  dimension.findings = dimension.findings.filter((finding) => finding.id === "method-change");
+  const html = renderAssessmentHtml(assessment(dimension));
+  const downstream = html.slice(html.indexOf('<section id="downstream-breaking">'), html.indexOf('<section id="azure-compliance">'));
+  assert.doesNotMatch(downstream, /class="report-table"|<tbody><\/tbody>/);
+  assert.match(downstream, /Why this is breaking/);
 });
 
 test("semantic relationships are static, title-based and independent of operations", () => {
@@ -398,14 +429,104 @@ function documentDimension(decision = "fail") {
   };
 }
 
-function presentationWithDocuments(dimension, downstream) {
+function presentationWithDocuments(dimension, downstream, sources) {
   const input = assessment(downstream);
   input.dimensions.documentQuality = dimension;
+  if (sources) input.dimensions.semantic.items[0].sources = sources;
   return renderReportSections(input, {
     escapeHtml, operationContractRows: () => [], complianceFindingGroups: () => [],
     renderSourceHunks: () => "", sourceLinks: () => "", directLegacyDownstreamFindings: () => [],
   }).html;
 }
+
+function referencedDocumentationFixture() {
+  const dimension = documentDimension();
+  dimension.assessmentVersion = 2;
+  const unit = dimension.intentAssessments[0];
+  const document = unit.documents[0];
+  Object.assign(document, {
+    qualifiedName: "Contoso.Response.body", before: null,
+    after: {
+      doc: "Empty response body.",
+      declaration: '/** Empty response body. */\n@body\nbody: ResponseBody;',
+      source: { path: "models.tsp", revision: "current", startLine: 69, endLine: 71 },
+    },
+  });
+  const related = {
+    id: "doc-response-body", sourceChangeId: document.sourceChangeId,
+    qualifiedName: "Contoso.ResponseBody", kind: "model", before: null,
+    after: {
+      doc: "Empty success response.",
+      declaration: '@doc("Empty success response.")\nmodel ResponseBody {\n  /** Operation status. */\n  @visibility(Lifecycle.Read)\n  status?: string;\n}',
+      source: { path: "models.tsp", revision: "current", startLine: 56, endLine: 61 },
+    },
+  };
+  unit.documents.push(related);
+  unit.checks[0].check = dimension.findings[0].check = "description";
+  unit.checks.push({ documentId: related.id, check: "description", decision: "pass", rationale: "Not displayed." });
+  const sources = [{
+    id: document.sourceChangeId, path: "models.tsp",
+    declarations: [document, related].map((item) => ({
+      kind: item.kind, qualifiedName: item.qualifiedName.replace("Contoso.", ""),
+      source: { ...item.after.source },
+      compilerEvidence: { kind: "semantic-type", referencedNames: item === document ? ["ResponseBody", "ResponseBody.status", "string"] : ["ResponseBody.status", "string"] },
+    })),
+  }];
+  return { dimension, sources, document, related };
+}
+
+test("new documentation failures show current code full-width with referenced model evidence", () => {
+  const { dimension, sources, document, related } = referencedDocumentationFixture();
+  const original = structuredClone({ dimension, sources });
+  const html = presentationWithDocuments(dimension, undefined, sources);
+  const card = html.slice(html.indexOf('id="document-quality-document-finding-widget"'), html.indexOf('<details class="report-subdetails document-quality-file">'));
+  assert.match(card, /class="report-document-snapshots single-snapshot"/);
+  assert.match(card, /<h4>Current declaration<\/h4>/);
+  assert.doesNotMatch(card, /No before snapshot|<h4>Before<\/h4>/);
+  assert.match(card, /Related type definitions/);
+  assert.ok(card.includes(escapeHtml(document.after.declaration)));
+  assert.ok(card.includes(escapeHtml(related.after.declaration)));
+  assert.match(card, /status\?: string;/);
+  assert.match(card, /models.tsp:56-61 \(current\)/);
+  assert.equal((card.match(/model ResponseBody/g) ?? []).length, 1);
+  assert.deepEqual({ dimension, sources }, original);
+});
+
+test("documentation type context never substitutes current source into a baseline snapshot", () => {
+  const { dimension, sources, document } = referencedDocumentationFixture();
+  document.before = { ...structuredClone(document.after), source: { ...document.after.source, revision: "base" } };
+  const html = presentationWithDocuments(dimension, undefined, sources);
+  const card = html.slice(html.indexOf('id="document-quality-document-finding-widget"'), html.indexOf('<details class="report-subdetails document-quality-file">'));
+  assert.doesNotMatch(card, /single-snapshot/);
+  assert.doesNotMatch(card.slice(0, card.indexOf("<h4>After</h4>")), /Related type definitions|model ResponseBody/);
+  assert.match(card.slice(card.indexOf("<h4>After</h4>")), /Related type definitions/);
+});
+
+test("documentation context requires unambiguous compiler references and exact source ownership", () => {
+  for (const invalidate of [
+    ({ sources }) => { sources[0].declarations[0].compilerEvidence.referencedNames = []; },
+    ({ sources }) => { sources[0].declarations[1].source.revision = "base"; },
+    ({ sources }) => { sources[0].declarations[1].source.startLine = 1; },
+    ({ related }) => { related.after.source.path = "different.tsp"; },
+    ({ dimension, sources, related }) => {
+      const duplicate = structuredClone(related);
+      duplicate.id = "ambiguous-doc";
+      duplicate.qualifiedName = "Other.ResponseBody";
+      duplicate.sourceChangeId = "other-source";
+      duplicate.after.source.path = "other.tsp";
+      dimension.intentAssessments[0].documents.push(duplicate);
+      sources.push({
+        id: "other-source", path: "other.tsp",
+        declarations: [{ ...sources[0].declarations[1], source: { ...duplicate.after.source } }],
+      });
+    },
+  ]) {
+    const fixture = referencedDocumentationFixture();
+    invalidate(fixture);
+    const html = presentationWithDocuments(fixture.dimension, undefined, fixture.sources);
+    assert.doesNotMatch(html, /Related type definitions/);
+  }
+});
 
 test("document issues use collapsed Expected/Actual cards and readable bidirectional intent links", () => {
   const dimension = documentDimension();
@@ -456,13 +577,225 @@ test("document coverage distinguishes passed checks, no applicable docs, and leg
   assert.match(noDocsHtml, /1 intents with no applicable @doc/);
   assert.match(noDocsHtml, /not applicable/);
   assert.match(noDocsHtml, /No @doc is attached to the changed declaration/);
-  assert.equal(documentQualitySummary(noDocs).label, "Passed");
+  assert.equal(documentQualitySummary(noDocs).label, "No applicable documentation");
+  const noDocsQuality = noDocsHtml.slice(noDocsHtml.indexOf('<section id="document-quality">'), noDocsHtml.indexOf('<section id="semantic-intents">'));
+  assert.doesNotMatch(noDocsQuality, /report-badge add|>passed</);
+  assert.match(noDocsQuality, /No applicable documentation/);
   assert.doesNotMatch(noDocsHtml, /Document Quality and Agent Friendliness is not assessed/);
   const legacy = presentationWithDocuments({ status: "not-assessed", summary: "Historical documentation evidence unavailable." });
   const legacyQuality = legacy.slice(legacy.indexOf('<section id="document-quality">'), legacy.indexOf('<section id="semantic-intents">'));
   assert.match(legacyQuality, /Historical documentation evidence unavailable/);
   assert.doesNotMatch(legacyQuality, /0 findings|checks assessed|passed/);
   assert.equal(documentQualitySummary().label, "Not assessed");
+});
+
+test("41 passing descriptions stay inside collapsed intent and bounded file groups", () => {
+  const dimension = documentDimension("pass");
+  dimension.assessmentVersion = 3;
+  const intent = dimension.intentAssessments[0];
+  const document = intent.documents[0];
+  const check = intent.checks[0];
+  intent.documents = Array.from({ length: 41 }, (_, index) => ({
+    ...document, id: `document-${index}`, qualifiedName: `Contoso.Model${index}`, kind: "model",
+  }));
+  intent.checks = intent.documents.map((item) => ({
+    ...check, documentId: item.id, check: "description", rationale: "Individual passing rationale.",
+  }));
+  Object.assign(dimension.coverage, {
+    documentCount: 41, assessedDocumentCount: 41, checkCount: 41, assessedCheckCount: 41,
+  });
+  const original = structuredClone(dimension);
+  const html = presentationWithDocuments(dimension);
+  const quality = html.slice(html.indexOf('<section id="document-quality">'), html.indexOf('<section id="semantic-intents">'));
+  assert.equal((quality.match(/class="report-card document-quality-intent"/g) ?? []).length, 1);
+  assert.equal((quality.match(/class="report-subdetails document-quality-file"/g) ?? []).length, 1);
+  assert.equal((quality.match(/class="document-quality-document"/g) ?? []).length, 41);
+  assert.match(quality, /<div class="document-quality-scope"><details class="report-card document-quality-passed-group" id="document-quality-passed-intents">/);
+  assert.match(quality, /Passed intents \(1\)/);
+  assert.doesNotMatch(quality, /Coverage by change intent|41 descriptions passed/);
+  assert.match(quality, /class="report-badge add">41 passed/);
+  assert.match(quality, /41 local descriptions \/ 1 file/);
+  assert.match(quality, /class="document-quality-list" role="region" aria-label="Descriptions in models.tsp" tabindex="0"/);
+  assert.doesNotMatch(quality, /<details[^>]*\bopen|Check results:|Individual passing rationale|document-quality-check|No recorded documentation checks/);
+  assert.match(quality, /41\/41 descriptions assessed/);
+  assert.match(quality, /title="Contoso.Model0">Model0<\/span>/);
+  assert.match(quality, /Current local description|View TypeSpec and full source path/);
+  for (const item of intent.documents) assert.ok(quality.includes(item.qualifiedName));
+  assert.deepEqual(dimension, original);
+});
+
+test("mixed documentation hides passes but retains failures and unresolved reasons", () => {
+  const dimension = documentDimension();
+  const intent = dimension.intentAssessments[0];
+  const passed = { ...intent.checks[0], check: "correctness", decision: "pass", rationale: "Hidden passing rationale." };
+  const pending = { ...intent.checks[0], documentId: "document-pending", decision: "not-assessed", rationale: "Distinct missing contract." };
+  intent.checks.push(passed, pending);
+  intent.documents.push({ ...intent.documents[0], id: pending.documentId, qualifiedName: "Contoso.Pending" });
+  const html = presentationWithDocuments(dimension);
+  const quality = html.slice(html.indexOf('<section id="document-quality">'), html.indexOf('<section id="semantic-intents">'));
+  assert.equal((quality.match(/class="report-card document-quality-check"/g) ?? []).length, 1);
+  assert.doesNotMatch(quality, /Hidden passing rationale|document-quality-check-summary/);
+  assert.match(quality, /1 check passed \/ 1 failed \/ 1 not assessed/);
+  assert.match(quality, /<h3>Expected|<h3>Actual|Distinct missing contract/);
+  assert.match(quality, /class="report-card document-quality-intent" open/);
+  assert.doesNotMatch(quality, /class="report-card document-quality-check"[^>]* open/);
+});
+
+test("intent groups distinguish same-named files and keep full paths out of declaration summaries", () => {
+  const dimension = documentDimension("pass");
+  dimension.assessmentVersion = 3;
+  const intent = dimension.intentAssessments[0];
+  intent.checks[0].check = "description";
+  intent.documents[0].after.source.path = "specification/service/Alpha/main.tsp";
+  const second = structuredClone(intent.documents[0]);
+  second.id = "doc-other";
+  second.after.source.path = "specification/service/Beta/main.tsp";
+  intent.documents.push(second);
+  intent.checks.push({ ...intent.checks[0], documentId: second.id });
+  Object.assign(dimension.coverage, { documentCount: 2, assessedDocumentCount: 2, checkCount: 2, assessedCheckCount: 2 });
+  const original = structuredClone(dimension);
+  const html = presentationWithDocuments(dimension);
+  const quality = html.slice(html.indexOf('<section id="document-quality">'), html.indexOf('<section id="semantic-intents">'));
+  assert.match(quality, /2 local descriptions \/ 2 files/);
+  assert.match(quality, /<summary title="specification\/service\/Alpha\/main.tsp">Alpha\/main.tsp /);
+  assert.match(quality, /<summary title="specification\/service\/Beta\/main.tsp">Beta\/main.tsp /);
+  const summaries = [...quality.matchAll(/<details class="document-quality-document">(<summary>[\s\S]*?<\/summary>)/g)];
+  assert.equal(summaries.length, 2);
+  for (const [, text] of summaries) {
+    assert.match(text, /title="Contoso.Widget.count">Widget.count/);
+    assert.doesNotMatch(text, /specification\/|<pre|rationale/);
+  }
+  assert.deepEqual(dimension, original);
+});
+
+test("failure cards without an intent assessment remain visible with their stable anchors", () => {
+  const dimension = documentDimension();
+  dimension.intentAssessments = [];
+  const html = presentationWithDocuments(dimension);
+  assert.match(html, /id="document-quality-document-finding-widget"/);
+  assert.match(html, /<h3>Expected<\/h3>/);
+  assert.match(html, /Widget count documentation omits/);
+});
+
+test("mixed local and inherited coverage does not count inherited descriptions as passed", () => {
+  const dimension = documentDimension("pass");
+  dimension.assessmentVersion = 3;
+  dimension.coverage.inheritedDocumentCount = 2;
+  dimension.intentAssessments[0].inheritedDocumentIds = ["inherited-one", "inherited-two"];
+  const html = presentationWithDocuments(dimension);
+  assert.match(html, /1 local description \/ 1 file \/ 2 inherited descriptions not reviewed/);
+  assert.match(html, /class="report-badge add">1 passed/);
+  assert.doesNotMatch(html, /3 passed|3 local descriptions/);
+});
+
+test("a blocked intent reason is shown once while distinct blockers remain visible", () => {
+  const dimension = documentDimension("not-assessed");
+  const intent = dimension.intentAssessments[0];
+  intent.reason = "Unique unresolved declaration.";
+  dimension.blockers = [
+    { reviewUnitId: intent.reviewUnitId, reason: intent.reason },
+    { reason: "Separate source-read failure." },
+  ];
+  const html = presentationWithDocuments(dimension);
+  assert.equal(html.split(intent.reason).length - 1, 1);
+  assert.match(html, /Separate source-read failure/);
+});
+
+test("documentation status groups collapse passes and blockers without hiding mixed failures", () => {
+  const dimension = documentDimension("fail");
+  const passed = documentDimension("pass").intentAssessments[0];
+  passed.reviewUnitId = "semantic-pass";
+  const pending = documentDimension("not-assessed").intentAssessments[0];
+  pending.reviewUnitId = "semantic-pending";
+  pending.reason = "Missing <compiler> context.";
+  dimension.intentAssessments.unshift(passed, pending);
+  dimension.intentAssessments.push({
+    reviewUnitId: "semantic-blocked", status: "not-assessed",
+    reason: "Unresolved documentation ownership.", documents: [], checks: [],
+  });
+  const original = structuredClone(dimension);
+  const html = presentationWithDocuments(dimension);
+  const quality = html.slice(html.indexOf('<section id="document-quality">'), html.indexOf('<section id="semantic-intents">'));
+  assert.match(quality, /<div class="document-quality-scope"><details class="report-card document-quality-intent" open>/);
+  assert.match(quality, /<details class="report-card document-quality-not-assessed-group" id="document-quality-not-assessed-intents">/);
+  assert.match(quality, /<details class="report-card document-quality-passed-group" id="document-quality-passed-intents">/);
+  assert.match(quality, /Not assessed intents \(2\)/);
+  assert.match(quality, /Passed intents \(1\)/);
+  const blockedGroup = quality.slice(quality.indexOf('id="document-quality-not-assessed-intents"'), quality.indexOf('id="document-quality-passed-intents"'));
+  assert.match(blockedGroup, /Assessment blocker \/ rationale:.*Missing &lt;compiler&gt; context/);
+  assert.match(blockedGroup, /Unresolved documentation ownership/);
+  assert.match(blockedGroup, /Not assessed reason:/);
+  assert.doesNotMatch(blockedGroup, /document-quality-check"/);
+  assert.ok(quality.indexOf('id="document-quality-document-finding-widget"') < quality.indexOf('id="document-quality-not-assessed-intents"'));
+  assert.deepEqual(dimension, original);
+});
+
+test("passing description counts distinguish blocked and non-applicable intent scopes", () => {
+  const dimension = documentDimension("pass");
+  dimension.assessmentVersion = 3;
+  dimension.status = "not-assessed";
+  dimension.intentAssessments.push(
+    { reviewUnitId: "semantic-blocked", status: "not-assessed", reason: "Unresolved documentation ownership.", documents: [], checks: [] },
+    { reviewUnitId: "semantic-empty", status: "not-applicable", reason: "No local description.", documents: [], checks: [] },
+  );
+  Object.assign(dimension.coverage, {
+    semanticIntentCount: 3, assessedIntentCount: 2,
+    unassessedIntentIds: ["semantic-blocked"], notApplicableIntentIds: ["semantic-empty"],
+  });
+  const html = presentationWithDocuments(dimension);
+  assert.match(html, /2\/3 intent scopes resolved/);
+  assert.match(html, /class="report-badge add">1 passed/);
+  assert.match(html, /class="report-badge unknown">Not assessed/);
+  assert.match(html, /class="report-badge neutral">No applicable documentation/);
+  assert.doesNotMatch(html, /0 not assessed|0 descriptions not assessed/);
+  assert.match(html, /Unresolved documentation ownership|No local description/);
+});
+
+test("inherited-only documentation is present but not reviewed, never missing or passed", () => {
+  const dimension = {
+    assessmentVersion: 3, status: "not-applicable",
+    summary: "Inherited documentation is present; its quality is not reviewed in v1.",
+    coverage: {
+      semanticIntentCount: 1, assessedIntentCount: 1, documentCount: 0,
+      assessedDocumentCount: 0, checkCount: 0, assessedCheckCount: 0,
+      inheritedDocumentCount: 1, unassessedIntentIds: [], notApplicableIntentIds: ["semantic-1"],
+    },
+    intentAssessments: [{
+      reviewUnitId: "semantic-1", status: "not-applicable", reason: "Inherited description not reviewed.",
+      documents: [], checks: [], inheritedDocumentIds: ["document-inherited"],
+    }],
+    findings: [], blockers: [],
+  };
+  assert.equal(documentQualitySummary(dimension).label, "Inherited documentation not reviewed");
+  const html = presentationWithDocuments(dimension);
+  const quality = html.slice(html.indexOf('<section id="document-quality">'), html.indexOf('<section id="semantic-intents">'));
+  assert.match(quality, /1 inherited descriptions not reviewed|inherited not reviewed/);
+  assert.doesNotMatch(quality, /No applicable documentation|no applicable @doc|>passed<|Assessment blocked|document-quality-check/);
+});
+
+test("v3 inherited descriptions are labeled and shown separately despite tag-only declaration comments", () => {
+  const dimension = documentDimension();
+  dimension.assessmentVersion = 3;
+  const intent = dimension.intentAssessments[0];
+  intent.checks[0].check = dimension.findings[0].check = "description";
+  for (const side of ["before", "after"]) {
+    Object.assign(intent.documents[0][side], {
+      documentationOrigin: "inherited",
+      doc: "Gets the <Widget> resource.",
+      declaration: "/** @param id Resource identifier. */\nop get is Read<Widget>;",
+    });
+  }
+  const html = presentationWithDocuments(dimension);
+  assert.match(html, /title="Contoso.Widget.count">Widget.count<\/span> <span class="report-small">Inherited description/);
+  assert.match(html, /1\/1 descriptions assessed/);
+  assert.doesNotMatch(html, /Legacy Correctness|Meaning \(legacy\)/);
+  assert.equal((html.match(/Compiler-resolved inherited @doc text/g) ?? []).length, 2);
+  assert.equal((html.match(/Exact associated declaration source/g) ?? []).length, 2);
+  assert.equal((html.match(/<code>Gets the &lt;Widget&gt; resource\.<\/code>/g) ?? []).length, 2);
+  assert.ok(html.includes(escapeHtml(intent.documents[0].after.declaration)));
+  const quality = html.slice(html.indexOf('<section id="document-quality">'), html.indexOf('<section id="semantic-intents">'));
+  assert.match(quality, /class="report-card document-quality-intent" open/);
+  assert.doesNotMatch(quality, /class="report-card document-quality-check"[^>]*\bopen/);
 });
 
 test("incomplete doc evidence renders recorded checks and blocked reasons without fabricating source", () => {
@@ -521,7 +854,7 @@ test("failed doc findings retain incomplete-check coverage and blocked intent re
   const html = presentationWithDocuments(dimension);
   assert.equal(documentQualitySummary(dimension).label, "Failed");
   assert.match(html, /1\/2 checks assessed/);
-  assert.match(html, /0\/1 intents assessed/);
+  assert.match(html, /0\/1 intent scopes resolved/);
   assert.match(html, /meaning review is blocked by missing evidence/);
   assert.match(html, /Documentation not assessed for:/);
   assert.match(html, /The full contract is unavailable/);
@@ -530,6 +863,7 @@ test("failed doc findings retain incomplete-check coverage and blocked intent re
 test("document snapshots show exact declaration source once when leading decorators already include @doc", () => {
   for (const declaration of [
     '@doc("The number of widgets.")\ncount: int32;',
+    '/** The number of widgets. */\ncount: int32;',
     '/* source context */\n@extension("literal @doc(\\"unrelated\\")")\n@TypeSpec . doc("""\n  The number of widgets.\n  """)\ncount: int32;',
     '@extension(fn("nested"), { value: ")" })\n// context\n@doc ("The number of widgets.")\ncount: int32;',
   ]) {

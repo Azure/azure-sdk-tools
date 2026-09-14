@@ -231,7 +231,9 @@ node --test `
 
 Without `TYPESPEC_COMPILER_ENTRY`, the real-compiler test is explicitly skipped;
 the deterministic input/coverage tests still run. Documentation extraction
-uses literal `@doc` and associated declarations only; assessment criteria are
+uses literal `@doc`, local compiler-resolved documentation comments, and their
+associated declarations. One judgment assesses whether each description
+clearly and accurately explains its code; the criterion is
 in [documentation checks](../references/document-quality.md).
 
 The skill eval at `assessment.eval.yaml` covers routing boundaries and uses PR

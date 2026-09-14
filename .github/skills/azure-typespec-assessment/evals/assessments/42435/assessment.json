@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-11T04:18:45.831Z",
+  "generatedAt": "2026-09-11T10:30:09.543Z",
   "title": "TypeSpec assessment: specification/cognitiveservices/CognitiveServices.Management",
   "repository": {
     "root": "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\.workspaces\\42435\\head",
@@ -414,7 +414,43 @@
                     "endLine": 89
                   }
                 }
-              ]
+              ],
+              "documentEvidence": {
+                "schemaVersion": 3,
+                "status": "ready",
+                "blockers": [],
+                "documents": [
+                  {
+                    "id": "document-0d592cacea2ab4db",
+                    "sourceChangeId": "source-dd5d3368a3071e94",
+                    "qualifiedName": "Microsoft.CognitiveServices.ManagedNetworkSettingsPropertiesBasicResources.post",
+                    "kind": "operation",
+                    "before": {
+                      "doc": "The POST API for updating the outbound rules of the managed network associated with the cognitive services account.",
+                      "declaration": "/**\n   * The POST API for updating the outbound rules of the managed network associated with the cognitive services account.\n   */\n  @tag(\"ManagedNetwork\")\n  @action(\"batchOutboundRules\")\n  post is ArmResourceActionAsync<\n    ManagedNetworkSettingsPropertiesBasicResource,\n    Request = ManagedNetworkSettingsBasicResource,\n    Response = OutboundRuleListResult\n  >",
+                      "source": {
+                        "path": "specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp",
+                        "revision": "base",
+                        "startLine": 79,
+                        "endLine": 88
+                      }
+                    },
+                    "after": {
+                      "doc": "The POST API for updating the outbound rules of the managed network associated with the cognitive services account.",
+                      "declaration": "/**\n   * The POST API for updating the outbound rules of the managed network associated with the cognitive services account.\n   */\n  @tag(\"ManagedNetwork\")\n  @action(\"batchOutboundRules\")\n  @list\n  post is ArmResourceActionAsync<\n    ManagedNetworkSettingsPropertiesBasicResource,\n    Request = ManagedNetworkSettingsBasicResource,\n    Response = OutboundRuleListResult\n  >",
+                      "source": {
+                        "path": "specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp",
+                        "revision": "current",
+                        "startLine": 79,
+                        "endLine": 89
+                      }
+                    },
+                    "hunkIds": [
+                      "hunk-fb0a715dd0f0909b"
+                    ]
+                  }
+                ]
+              }
             }
           ],
           "relatedFindings": {
@@ -10167,8 +10203,65 @@
       "blockers": []
     },
     "documentQuality": {
-      "status": "not-assessed",
-      "summary": "Document Quality and Agent Friendliness is not assessed."
+      "assessmentVersion": 3,
+      "status": "passed",
+      "summary": "All assessed descriptions clearly and accurately explain their associated TypeSpec code.",
+      "coverage": {
+        "semanticIntentCount": 1,
+        "assessedIntentCount": 1,
+        "documentCount": 1,
+        "assessedDocumentCount": 1,
+        "checkCount": 1,
+        "assessedCheckCount": 1,
+        "inheritedDocumentCount": 0,
+        "unassessedIntentIds": [],
+        "notApplicableIntentIds": []
+      },
+      "intentAssessments": [
+        {
+          "reviewUnitId": "semantic-1e7d20fcf8db2c04",
+          "status": "passed",
+          "documents": [
+            {
+              "id": "document-0d592cacea2ab4db",
+              "sourceChangeId": "source-dd5d3368a3071e94",
+              "qualifiedName": "Microsoft.CognitiveServices.ManagedNetworkSettingsPropertiesBasicResources.post",
+              "kind": "operation",
+              "before": {
+                "doc": "The POST API for updating the outbound rules of the managed network associated with the cognitive services account.",
+                "declaration": "/**\n   * The POST API for updating the outbound rules of the managed network associated with the cognitive services account.\n   */\n  @tag(\"ManagedNetwork\")\n  @action(\"batchOutboundRules\")\n  post is ArmResourceActionAsync<\n    ManagedNetworkSettingsPropertiesBasicResource,\n    Request = ManagedNetworkSettingsBasicResource,\n    Response = OutboundRuleListResult\n  >",
+                "source": {
+                  "path": "specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp",
+                  "revision": "base",
+                  "startLine": 79,
+                  "endLine": 88
+                }
+              },
+              "after": {
+                "doc": "The POST API for updating the outbound rules of the managed network associated with the cognitive services account.",
+                "declaration": "/**\n   * The POST API for updating the outbound rules of the managed network associated with the cognitive services account.\n   */\n  @tag(\"ManagedNetwork\")\n  @action(\"batchOutboundRules\")\n  @list\n  post is ArmResourceActionAsync<\n    ManagedNetworkSettingsPropertiesBasicResource,\n    Request = ManagedNetworkSettingsBasicResource,\n    Response = OutboundRuleListResult\n  >",
+                "source": {
+                  "path": "specification/cognitiveservices/CognitiveServices.Management/ManagedNetworkSettingsPropertiesBasicResource.tsp",
+                  "revision": "current",
+                  "startLine": 79,
+                  "endLine": 89
+                }
+              }
+            }
+          ],
+          "checks": [
+            {
+              "reviewUnitId": "semantic-1e7d20fcf8db2c04",
+              "documentId": "document-0d592cacea2ab4db",
+              "check": "description",
+              "decision": "pass",
+              "rationale": "The description still explains the batch outbound-rule update action; adding @list does not contradict that purpose."
+            }
+          ]
+        }
+      ],
+      "findings": [],
+      "blockers": []
     }
   },
   "changedFiles": [
@@ -10390,7 +10483,15 @@
     "modelInput": "model-input.json",
     "complianceSearchEvidence": "compliance-search-evidence.json",
     "judgment": "assessment-judgment.json",
-    "preparationManifest": "preparation-manifest.json"
+    "preparationManifest": "preparation-manifest.json",
+    "documentQualityReplay": {
+      "preparedAt": "2026-09-11T10:09:04.886Z",
+      "sourceAssessmentHash": "667646cd51354342fabdde8f81f18338273bc29746ca95ba8a333412eb9b3959",
+      "sourceIndex": "documentation-replay/source/source-index.json",
+      "modelInput": "documentation-replay/model-input.json",
+      "input": "documentation-replay/dimensions/document-quality-input.json",
+      "judgment": "documentation-replay/document-quality-judgment.json"
+    }
   },
   "inputAccounting": {
     "budgetTier": "small",

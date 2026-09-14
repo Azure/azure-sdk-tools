@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-11T04:21:43.077Z",
+  "generatedAt": "2026-09-11T10:30:13.601Z",
   "title": "TypeSpec assessment: specification/confidentialledger/data-plane/ConfidentialLedger",
   "repository": {
     "root": "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\.workspaces\\45162\\head",
@@ -13028,7 +13028,63 @@
                     "endLine": 53
                   }
                 }
-              ]
+              ],
+              "documentEvidence": {
+                "schemaVersion": 3,
+                "status": "ready",
+                "blockers": [],
+                "documents": [
+                  {
+                    "id": "document-190beeb89494d3e1",
+                    "sourceChangeId": "source-2a6a8cd1c1b06810",
+                    "qualifiedName": "ConfidentialLedger.Versions.v2026_07_31_preview",
+                    "kind": "enum-member",
+                    "before": null,
+                    "after": {
+                      "doc": "The 2026-07-31-preview API version.",
+                      "declaration": "/**\n   * The 2026-07-31-preview API version.\n   */\n  @Azure.Core.previewVersion\n  v2026_07_31_preview: \"2026-07-31-preview\"",
+                      "source": {
+                        "path": "specification/confidentialledger/data-plane/ConfidentialLedger/main.tsp",
+                        "revision": "current",
+                        "startLine": 48,
+                        "endLine": 52
+                      }
+                    },
+                    "hunkIds": [
+                      "hunk-dbd2632f5370c750"
+                    ]
+                  },
+                  {
+                    "id": "document-2983c460d2a59f04",
+                    "sourceChangeId": "source-2a6a8cd1c1b06810",
+                    "qualifiedName": "ConfidentialLedger.Versions",
+                    "kind": "enum",
+                    "before": {
+                      "doc": "The available API versions.",
+                      "declaration": "/**\n * The available API versions.\n */\nenum Versions {\n  /**\n   * The 2024-12-09-preview API version.\n   */\n  v2024_12_09_preview: \"2024-12-09-preview\",\n\n  /**\n   * The 2026-02-23 API version.\n   */\n  v2026_02_23: \"2026-02-23\",\n}",
+                      "source": {
+                        "path": "specification/confidentialledger/data-plane/ConfidentialLedger/main.tsp",
+                        "revision": "base",
+                        "startLine": 34,
+                        "endLine": 47
+                      }
+                    },
+                    "after": {
+                      "doc": "The available API versions.",
+                      "declaration": "/**\n * The available API versions.\n */\nenum Versions {\n  /**\n   * The 2024-12-09-preview API version.\n   */\n  v2024_12_09_preview: \"2024-12-09-preview\",\n\n  /**\n   * The 2026-02-23 API version.\n   */\n  v2026_02_23: \"2026-02-23\",\n\n  /**\n   * The 2026-07-31-preview API version.\n   */\n  @Azure.Core.previewVersion\n  v2026_07_31_preview: \"2026-07-31-preview\",\n}",
+                      "source": {
+                        "path": "specification/confidentialledger/data-plane/ConfidentialLedger/main.tsp",
+                        "revision": "current",
+                        "startLine": 34,
+                        "endLine": 53
+                      }
+                    },
+                    "hunkIds": [
+                      "hunk-dbd2632f5370c750"
+                    ]
+                  }
+                ]
+              }
             },
             {
               "id": "source-a1b03decaab4b3df",
@@ -13750,7 +13806,204 @@
                     "endLine": 512
                   }
                 }
-              ]
+              ],
+              "documentEvidence": {
+                "schemaVersion": 3,
+                "status": "ready",
+                "blockers": [],
+                "documents": [
+                  {
+                    "id": "document-5866ed2c7fcbd819",
+                    "sourceChangeId": "source-a1b03decaab4b3df",
+                    "qualifiedName": "ConfidentialLedger.LedgerWriteResultBeforeV20260731Preview",
+                    "kind": "model",
+                    "before": null,
+                    "after": {
+                      "doc": "Returned as a result of a write to the Confidential Ledger, the transaction id\nin the response indicates when the write will become durable.",
+                      "declaration": "/**\n * Returned as a result of a write to the Confidential Ledger, the transaction id\n * in the response indicates when the write will become durable.\n */\n@removed(Versions.v2026_07_31_preview)\n@renamedFrom(Versions.v2026_07_31_preview, \"LedgerWriteResult\")\nmodel LedgerWriteResultBeforeV20260731Preview {\n  ...CCFTransactionIdHeader;\n\n  /**\n   * The collection identifier of the ledger entry.\n   */\n  collectionId: string;\n}",
+                      "source": {
+                        "path": "specification/confidentialledger/data-plane/ConfidentialLedger/models.tsp",
+                        "revision": "current",
+                        "startLine": 427,
+                        "endLine": 440
+                      }
+                    },
+                    "hunkIds": [
+                      "hunk-679b78323c1526ce"
+                    ]
+                  },
+                  {
+                    "id": "document-6750661af895522b",
+                    "sourceChangeId": "source-a1b03decaab4b3df",
+                    "qualifiedName": "ConfidentialLedger.LedgerWriteResult.state",
+                    "kind": "property",
+                    "before": null,
+                    "after": {
+                      "doc": "State of the write transaction.",
+                      "declaration": "/**\n   * State of the write transaction.\n   */\n  state: TransactionState",
+                      "source": {
+                        "path": "specification/confidentialledger/data-plane/ConfidentialLedger/models.tsp",
+                        "revision": "current",
+                        "startLine": 471,
+                        "endLine": 474
+                      }
+                    },
+                    "hunkIds": [
+                      "hunk-b41f912614f7bb21"
+                    ]
+                  },
+                  {
+                    "id": "document-83ad3cc4e286518e",
+                    "sourceChangeId": "source-a1b03decaab4b3df",
+                    "qualifiedName": "ConfidentialLedger.TransactionRolledBackErrorResponse.statusCode",
+                    "kind": "property",
+                    "before": null,
+                    "after": {
+                      "doc": "The HTTP status code.",
+                      "declaration": "/**\n   * The HTTP status code.\n   */\n  @statusCode\n  statusCode: 503",
+                      "source": {
+                        "path": "specification/confidentialledger/data-plane/ConfidentialLedger/models.tsp",
+                        "revision": "current",
+                        "startLine": 488,
+                        "endLine": 492
+                      }
+                    },
+                    "hunkIds": [
+                      "hunk-b41f912614f7bb21"
+                    ]
+                  },
+                  {
+                    "id": "document-95b0cb05be05645d",
+                    "sourceChangeId": "source-a1b03decaab4b3df",
+                    "qualifiedName": "ConfidentialLedger.LedgerWriteResultWithReceipt.body",
+                    "kind": "property",
+                    "before": null,
+                    "after": {
+                      "doc": "The response body.",
+                      "declaration": "/**\n   * The response body.\n   */\n  @bodyRoot\n  body: LedgerWriteResult",
+                      "source": {
+                        "path": "specification/confidentialledger/data-plane/ConfidentialLedger/models.tsp",
+                        "revision": "current",
+                        "startLine": 449,
+                        "endLine": 453
+                      }
+                    },
+                    "hunkIds": [
+                      "hunk-b41f912614f7bb21"
+                    ]
+                  },
+                  {
+                    "id": "document-a43bf93f1764ab29",
+                    "sourceChangeId": "source-a1b03decaab4b3df",
+                    "qualifiedName": "ConfidentialLedger.TransactionRolledBackErrorResponse",
+                    "kind": "model",
+                    "before": null,
+                    "after": {
+                      "doc": "The transaction was rolled back before it could be committed.",
+                      "declaration": "/**\n * The transaction was rolled back before it could be committed.\n */\n@added(Versions.v2026_07_31_preview)\n@error\nmodel TransactionRolledBackErrorResponse {\n  /**\n   * The HTTP status code.\n   */\n  @statusCode\n  statusCode: 503;\n\n  ...ConfidentialLedgerCommon.ConfidentialLedgerError;\n}",
+                      "source": {
+                        "path": "specification/confidentialledger/data-plane/ConfidentialLedger/models.tsp",
+                        "revision": "current",
+                        "startLine": 482,
+                        "endLine": 495
+                      }
+                    },
+                    "hunkIds": [
+                      "hunk-b41f912614f7bb21"
+                    ]
+                  },
+                  {
+                    "id": "document-a5e7a1ecedfa1603",
+                    "sourceChangeId": "source-a1b03decaab4b3df",
+                    "qualifiedName": "ConfidentialLedger.LedgerWriteResult.applicationClaims",
+                    "kind": "property",
+                    "before": null,
+                    "after": {
+                      "doc": "The list of application claims.",
+                      "declaration": "/**\n   * The list of application claims.\n   */\n  applicationClaims?: ApplicationClaim[]",
+                      "source": {
+                        "path": "specification/confidentialledger/data-plane/ConfidentialLedger/models.tsp",
+                        "revision": "current",
+                        "startLine": 476,
+                        "endLine": 479
+                      }
+                    },
+                    "hunkIds": [
+                      "hunk-b41f912614f7bb21"
+                    ]
+                  },
+                  {
+                    "id": "document-e3f29d89fc88a8f0",
+                    "sourceChangeId": "source-a1b03decaab4b3df",
+                    "qualifiedName": "ConfidentialLedger.LedgerWriteResult",
+                    "kind": "model",
+                    "before": {
+                      "doc": "Returned as a result of a write to the Confidential Ledger, the transaction id\nin the response indicates when the write will become durable.",
+                      "declaration": "/**\n * Returned as a result of a write to the Confidential Ledger, the transaction id\n * in the response indicates when the write will become durable.\n */\nmodel LedgerWriteResult {\n  ...CCFTransactionIdHeader;\n\n  /**\n   * The collection identifier of the ledger entry.\n   */\n  collectionId: string;\n}",
+                      "source": {
+                        "path": "specification/confidentialledger/data-plane/ConfidentialLedger/models.tsp",
+                        "revision": "base",
+                        "startLine": 427,
+                        "endLine": 438
+                      }
+                    },
+                    "after": {
+                      "doc": "The result of writing a ledger entry.",
+                      "declaration": "/**\n * The result of writing a ledger entry.\n */\n@added(Versions.v2026_07_31_preview)\nmodel LedgerWriteResult {\n  /**\n   * The collection identifier of the ledger entry.\n   */\n  collectionId: string;\n\n  /**\n   * The receipt certifying the committed transaction.\n   */\n  receipt?: ReceiptContents;\n\n  /**\n   * State of the write transaction.\n   */\n  state: TransactionState;\n\n  /**\n   * The list of application claims.\n   */\n  applicationClaims?: ApplicationClaim[];\n}",
+                      "source": {
+                        "path": "specification/confidentialledger/data-plane/ConfidentialLedger/models.tsp",
+                        "revision": "current",
+                        "startLine": 456,
+                        "endLine": 480
+                      }
+                    },
+                    "hunkIds": [
+                      "hunk-679b78323c1526ce",
+                      "hunk-b41f912614f7bb21"
+                    ]
+                  },
+                  {
+                    "id": "document-f30cca12d1d11c1e",
+                    "sourceChangeId": "source-a1b03decaab4b3df",
+                    "qualifiedName": "ConfidentialLedger.LedgerWriteResultWithReceipt",
+                    "kind": "model",
+                    "before": null,
+                    "after": {
+                      "doc": "Returned as a result of writing to the Confidential Ledger.",
+                      "declaration": "/**\n * Returned as a result of writing to the Confidential Ledger.\n */\n@added(Versions.v2026_07_31_preview)\nmodel LedgerWriteResultWithReceipt {\n  ...CCFTransactionIdHeader;\n\n  /**\n   * The response body.\n   */\n  @bodyRoot\n  body: LedgerWriteResult;\n}",
+                      "source": {
+                        "path": "specification/confidentialledger/data-plane/ConfidentialLedger/models.tsp",
+                        "revision": "current",
+                        "startLine": 442,
+                        "endLine": 454
+                      }
+                    },
+                    "hunkIds": [
+                      "hunk-b41f912614f7bb21"
+                    ]
+                  },
+                  {
+                    "id": "document-f649c807ede2c474",
+                    "sourceChangeId": "source-a1b03decaab4b3df",
+                    "qualifiedName": "ConfidentialLedger.LedgerWriteResult.receipt",
+                    "kind": "property",
+                    "before": null,
+                    "after": {
+                      "doc": "The receipt certifying the committed transaction.",
+                      "declaration": "/**\n   * The receipt certifying the committed transaction.\n   */\n  receipt?: ReceiptContents",
+                      "source": {
+                        "path": "specification/confidentialledger/data-plane/ConfidentialLedger/models.tsp",
+                        "revision": "current",
+                        "startLine": 466,
+                        "endLine": 469
+                      }
+                    },
+                    "hunkIds": [
+                      "hunk-b41f912614f7bb21"
+                    ]
+                  }
+                ]
+              }
             }
           ],
           "relatedFindings": {
@@ -16357,7 +16610,144 @@
                     "endLine": 226
                   }
                 }
-              ]
+              ],
+              "documentEvidence": {
+                "schemaVersion": 3,
+                "status": "ready",
+                "blockers": [],
+                "documents": [
+                  {
+                    "id": "document-1f6e02803ab19701",
+                    "sourceChangeId": "source-6b90b1a5f4c3ae2a",
+                    "qualifiedName": "ConfidentialLedger.createLedgerEntryAsync",
+                    "kind": "operation",
+                    "before": null,
+                    "after": {
+                      "doc": "A collection id may optionally be specified.",
+                      "declaration": "/**\n * A collection id may optionally be specified.\n */\n#suppress \"@azure-tools/typespec-azure-core/use-standard-operations\" \"Existing API\"\n@removed(Versions.v2026_07_31_preview)\n@renamedFrom(Versions.v2026_07_31_preview, \"createLedgerEntry\")\n@summary(\"Writes a ledger entry.\")\n@sharedRoute\n@route(\"/app/transactions\")\n@post\nop createLedgerEntryAsync is ConfidentialLedgerCommon.LedgerOperation<\n  {\n    /**\n     * The collection id.\n     */\n    @query(\"collectionId\")\n    collectionId?: string;\n\n    /**\n     * Comma separated tags.\n     */\n    @query(\"tags\")\n    tags?: string;\n\n    /**\n     * Ledger entry.\n     */\n    @bodyRoot\n    entry: LedgerEntry;\n  },\n  LedgerWriteResultBeforeV20260731Preview\n>;",
+                      "source": {
+                        "path": "specification/confidentialledger/data-plane/ConfidentialLedger/routes.tsp",
+                        "revision": "current",
+                        "startLine": 123,
+                        "endLine": 154
+                      }
+                    },
+                    "hunkIds": [
+                      "hunk-a09507a339750d2f"
+                    ]
+                  },
+                  {
+                    "id": "document-33eb819607ca740b",
+                    "sourceChangeId": "source-6b90b1a5f4c3ae2a",
+                    "qualifiedName": "ConfidentialLedger.createLedgerEntryAsync.collectionId",
+                    "kind": "property",
+                    "before": null,
+                    "after": {
+                      "doc": "The collection id.",
+                      "declaration": "/**\n     * The collection id.\n     */\n    @query(\"collectionId\")\n    collectionId?: string",
+                      "source": {
+                        "path": "specification/confidentialledger/data-plane/ConfidentialLedger/routes.tsp",
+                        "revision": "current",
+                        "startLine": 135,
+                        "endLine": 139
+                      }
+                    },
+                    "hunkIds": [
+                      "hunk-a09507a339750d2f"
+                    ]
+                  },
+                  {
+                    "id": "document-78ac2915b0c84620",
+                    "sourceChangeId": "source-6b90b1a5f4c3ae2a",
+                    "qualifiedName": "ConfidentialLedger.createLedgerEntryAsync.entry",
+                    "kind": "property",
+                    "before": null,
+                    "after": {
+                      "doc": "Ledger entry.",
+                      "declaration": "/**\n     * Ledger entry.\n     */\n    @bodyRoot\n    entry: LedgerEntry",
+                      "source": {
+                        "path": "specification/confidentialledger/data-plane/ConfidentialLedger/routes.tsp",
+                        "revision": "current",
+                        "startLine": 147,
+                        "endLine": 151
+                      }
+                    },
+                    "hunkIds": [
+                      "hunk-a09507a339750d2f"
+                    ]
+                  },
+                  {
+                    "id": "document-79b03c167bd61315",
+                    "sourceChangeId": "source-6b90b1a5f4c3ae2a",
+                    "qualifiedName": "ConfidentialLedger.createLedgerEntryAsync.tags",
+                    "kind": "property",
+                    "before": null,
+                    "after": {
+                      "doc": "Comma separated tags.",
+                      "declaration": "/**\n     * Comma separated tags.\n     */\n    @query(\"tags\")\n    tags?: string",
+                      "source": {
+                        "path": "specification/confidentialledger/data-plane/ConfidentialLedger/routes.tsp",
+                        "revision": "current",
+                        "startLine": 141,
+                        "endLine": 145
+                      }
+                    },
+                    "hunkIds": [
+                      "hunk-a09507a339750d2f"
+                    ]
+                  },
+                  {
+                    "id": "document-88934088fa699914",
+                    "sourceChangeId": "source-6b90b1a5f4c3ae2a",
+                    "qualifiedName": "ConfidentialLedger.createLedgerEntry",
+                    "kind": "operation",
+                    "before": {
+                      "doc": "A collection id may optionally be specified.",
+                      "declaration": "/**\n * A collection id may optionally be specified.\n */\n#suppress \"@azure-tools/typespec-azure-core/use-standard-operations\" \"Existing API\"\n@summary(\"Writes a ledger entry.\")\n@route(\"/app/transactions\")\n@post\nop createLedgerEntry is ConfidentialLedgerCommon.LedgerOperation<\n  {\n    /**\n     * The collection id.\n     */\n    @query(\"collectionId\")\n    collectionId?: string;\n\n    /**\n     * Comma separated tags.\n     */\n    @query(\"tags\")\n    tags?: string;\n\n    /**\n     * Ledger entry.\n     */\n    @bodyRoot\n    entry: LedgerEntry;\n  },\n  LedgerWriteResult\n>;",
+                      "source": {
+                        "path": "specification/confidentialledger/data-plane/ConfidentialLedger/routes.tsp",
+                        "revision": "base",
+                        "startLine": 123,
+                        "endLine": 151
+                      }
+                    },
+                    "after": {
+                      "doc": "A collection id may optionally be specified.",
+                      "declaration": "/**\n * A collection id may optionally be specified.\n */\n#suppress \"@azure-tools/typespec-azure-core/use-standard-operations\" \"The versioned ledger write route requires both the service default error and a 503 TransactionRolledBack response.\"\n@added(Versions.v2026_07_31_preview)\n@summary(\"Writes a ledger entry.\")\n@sharedRoute\n@route(\"/app/transactions\")\n@post\nop createLedgerEntry is ConfidentialLedgerCommon.LedgerOperation<\n  {\n    /**\n     * The collection id.\n     */\n    @query(\"collectionId\")\n    collectionId?: string;\n\n    /**\n     * Comma separated tags.\n     */\n    @query(\"tags\")\n    tags?: string;\n\n    /**\n     * Ledger entry.\n     */\n    @bodyRoot\n    entry: LedgerEntry;\n\n    /**\n     * Whether to wait for the transaction to be globally committed before\n     * returning. When true, the response includes the transaction receipt.\n     */\n    @query(\"waitForCommit\")\n    waitForCommit?: boolean = false;\n  },\n  LedgerWriteResultWithReceipt,\n  | ConfidentialLedgerCommon.ConfidentialLedgerError\n  | TransactionRolledBackErrorResponse\n>;",
+                      "source": {
+                        "path": "specification/confidentialledger/data-plane/ConfidentialLedger/routes.tsp",
+                        "revision": "current",
+                        "startLine": 156,
+                        "endLine": 195
+                      }
+                    },
+                    "hunkIds": [
+                      "hunk-6e7df05713d29f27",
+                      "hunk-a09507a339750d2f"
+                    ]
+                  },
+                  {
+                    "id": "document-ef299e8d58482f7f",
+                    "sourceChangeId": "source-6b90b1a5f4c3ae2a",
+                    "qualifiedName": "ConfidentialLedger.createLedgerEntry.waitForCommit",
+                    "kind": "property",
+                    "before": null,
+                    "after": {
+                      "doc": "Whether to wait for the transaction to be globally committed before\nreturning. When true, the response includes the transaction receipt.",
+                      "declaration": "/**\n     * Whether to wait for the transaction to be globally committed before\n     * returning. When true, the response includes the transaction receipt.\n     */\n    @query(\"waitForCommit\")\n    waitForCommit?: boolean = false",
+                      "source": {
+                        "path": "specification/confidentialledger/data-plane/ConfidentialLedger/routes.tsp",
+                        "revision": "current",
+                        "startLine": 185,
+                        "endLine": 190
+                      }
+                    },
+                    "hunkIds": [
+                      "hunk-6e7df05713d29f27"
+                    ]
+                  }
+                ]
+              }
             }
           ],
           "relatedFindings": {
@@ -17921,8 +18311,475 @@
       "blockers": []
     },
     "documentQuality": {
-      "status": "not-assessed",
-      "summary": "Document Quality and Agent Friendliness is not assessed."
+      "assessmentVersion": 3,
+      "status": "passed",
+      "summary": "All assessed descriptions clearly and accurately explain their associated TypeSpec code.",
+      "coverage": {
+        "semanticIntentCount": 2,
+        "assessedIntentCount": 2,
+        "documentCount": 17,
+        "assessedDocumentCount": 17,
+        "checkCount": 17,
+        "assessedCheckCount": 17,
+        "inheritedDocumentCount": 0,
+        "unassessedIntentIds": [],
+        "notApplicableIntentIds": []
+      },
+      "intentAssessments": [
+        {
+          "reviewUnitId": "semantic-14845e93054010a4",
+          "status": "passed",
+          "documents": [
+            {
+              "id": "document-190beeb89494d3e1",
+              "sourceChangeId": "source-2a6a8cd1c1b06810",
+              "qualifiedName": "ConfidentialLedger.Versions.v2026_07_31_preview",
+              "kind": "enum-member",
+              "before": null,
+              "after": {
+                "doc": "The 2026-07-31-preview API version.",
+                "declaration": "/**\n   * The 2026-07-31-preview API version.\n   */\n  @Azure.Core.previewVersion\n  v2026_07_31_preview: \"2026-07-31-preview\"",
+                "source": {
+                  "path": "specification/confidentialledger/data-plane/ConfidentialLedger/main.tsp",
+                  "revision": "current",
+                  "startLine": 48,
+                  "endLine": 52
+                }
+              }
+            },
+            {
+              "id": "document-2983c460d2a59f04",
+              "sourceChangeId": "source-2a6a8cd1c1b06810",
+              "qualifiedName": "ConfidentialLedger.Versions",
+              "kind": "enum",
+              "before": {
+                "doc": "The available API versions.",
+                "declaration": "/**\n * The available API versions.\n */\nenum Versions {\n  /**\n   * The 2024-12-09-preview API version.\n   */\n  v2024_12_09_preview: \"2024-12-09-preview\",\n\n  /**\n   * The 2026-02-23 API version.\n   */\n  v2026_02_23: \"2026-02-23\",\n}",
+                "source": {
+                  "path": "specification/confidentialledger/data-plane/ConfidentialLedger/main.tsp",
+                  "revision": "base",
+                  "startLine": 34,
+                  "endLine": 47
+                }
+              },
+              "after": {
+                "doc": "The available API versions.",
+                "declaration": "/**\n * The available API versions.\n */\nenum Versions {\n  /**\n   * The 2024-12-09-preview API version.\n   */\n  v2024_12_09_preview: \"2024-12-09-preview\",\n\n  /**\n   * The 2026-02-23 API version.\n   */\n  v2026_02_23: \"2026-02-23\",\n\n  /**\n   * The 2026-07-31-preview API version.\n   */\n  @Azure.Core.previewVersion\n  v2026_07_31_preview: \"2026-07-31-preview\",\n}",
+                "source": {
+                  "path": "specification/confidentialledger/data-plane/ConfidentialLedger/main.tsp",
+                  "revision": "current",
+                  "startLine": 34,
+                  "endLine": 53
+                }
+              }
+            },
+            {
+              "id": "document-5866ed2c7fcbd819",
+              "sourceChangeId": "source-a1b03decaab4b3df",
+              "qualifiedName": "ConfidentialLedger.LedgerWriteResultBeforeV20260731Preview",
+              "kind": "model",
+              "before": null,
+              "after": {
+                "doc": "Returned as a result of a write to the Confidential Ledger, the transaction id\nin the response indicates when the write will become durable.",
+                "declaration": "/**\n * Returned as a result of a write to the Confidential Ledger, the transaction id\n * in the response indicates when the write will become durable.\n */\n@removed(Versions.v2026_07_31_preview)\n@renamedFrom(Versions.v2026_07_31_preview, \"LedgerWriteResult\")\nmodel LedgerWriteResultBeforeV20260731Preview {\n  ...CCFTransactionIdHeader;\n\n  /**\n   * The collection identifier of the ledger entry.\n   */\n  collectionId: string;\n}",
+                "source": {
+                  "path": "specification/confidentialledger/data-plane/ConfidentialLedger/models.tsp",
+                  "revision": "current",
+                  "startLine": 427,
+                  "endLine": 440
+                }
+              }
+            },
+            {
+              "id": "document-6750661af895522b",
+              "sourceChangeId": "source-a1b03decaab4b3df",
+              "qualifiedName": "ConfidentialLedger.LedgerWriteResult.state",
+              "kind": "property",
+              "before": null,
+              "after": {
+                "doc": "State of the write transaction.",
+                "declaration": "/**\n   * State of the write transaction.\n   */\n  state: TransactionState",
+                "source": {
+                  "path": "specification/confidentialledger/data-plane/ConfidentialLedger/models.tsp",
+                  "revision": "current",
+                  "startLine": 471,
+                  "endLine": 474
+                }
+              }
+            },
+            {
+              "id": "document-83ad3cc4e286518e",
+              "sourceChangeId": "source-a1b03decaab4b3df",
+              "qualifiedName": "ConfidentialLedger.TransactionRolledBackErrorResponse.statusCode",
+              "kind": "property",
+              "before": null,
+              "after": {
+                "doc": "The HTTP status code.",
+                "declaration": "/**\n   * The HTTP status code.\n   */\n  @statusCode\n  statusCode: 503",
+                "source": {
+                  "path": "specification/confidentialledger/data-plane/ConfidentialLedger/models.tsp",
+                  "revision": "current",
+                  "startLine": 488,
+                  "endLine": 492
+                }
+              }
+            },
+            {
+              "id": "document-95b0cb05be05645d",
+              "sourceChangeId": "source-a1b03decaab4b3df",
+              "qualifiedName": "ConfidentialLedger.LedgerWriteResultWithReceipt.body",
+              "kind": "property",
+              "before": null,
+              "after": {
+                "doc": "The response body.",
+                "declaration": "/**\n   * The response body.\n   */\n  @bodyRoot\n  body: LedgerWriteResult",
+                "source": {
+                  "path": "specification/confidentialledger/data-plane/ConfidentialLedger/models.tsp",
+                  "revision": "current",
+                  "startLine": 449,
+                  "endLine": 453
+                }
+              }
+            },
+            {
+              "id": "document-a43bf93f1764ab29",
+              "sourceChangeId": "source-a1b03decaab4b3df",
+              "qualifiedName": "ConfidentialLedger.TransactionRolledBackErrorResponse",
+              "kind": "model",
+              "before": null,
+              "after": {
+                "doc": "The transaction was rolled back before it could be committed.",
+                "declaration": "/**\n * The transaction was rolled back before it could be committed.\n */\n@added(Versions.v2026_07_31_preview)\n@error\nmodel TransactionRolledBackErrorResponse {\n  /**\n   * The HTTP status code.\n   */\n  @statusCode\n  statusCode: 503;\n\n  ...ConfidentialLedgerCommon.ConfidentialLedgerError;\n}",
+                "source": {
+                  "path": "specification/confidentialledger/data-plane/ConfidentialLedger/models.tsp",
+                  "revision": "current",
+                  "startLine": 482,
+                  "endLine": 495
+                }
+              }
+            },
+            {
+              "id": "document-a5e7a1ecedfa1603",
+              "sourceChangeId": "source-a1b03decaab4b3df",
+              "qualifiedName": "ConfidentialLedger.LedgerWriteResult.applicationClaims",
+              "kind": "property",
+              "before": null,
+              "after": {
+                "doc": "The list of application claims.",
+                "declaration": "/**\n   * The list of application claims.\n   */\n  applicationClaims?: ApplicationClaim[]",
+                "source": {
+                  "path": "specification/confidentialledger/data-plane/ConfidentialLedger/models.tsp",
+                  "revision": "current",
+                  "startLine": 476,
+                  "endLine": 479
+                }
+              }
+            },
+            {
+              "id": "document-e3f29d89fc88a8f0",
+              "sourceChangeId": "source-a1b03decaab4b3df",
+              "qualifiedName": "ConfidentialLedger.LedgerWriteResult",
+              "kind": "model",
+              "before": {
+                "doc": "Returned as a result of a write to the Confidential Ledger, the transaction id\nin the response indicates when the write will become durable.",
+                "declaration": "/**\n * Returned as a result of a write to the Confidential Ledger, the transaction id\n * in the response indicates when the write will become durable.\n */\nmodel LedgerWriteResult {\n  ...CCFTransactionIdHeader;\n\n  /**\n   * The collection identifier of the ledger entry.\n   */\n  collectionId: string;\n}",
+                "source": {
+                  "path": "specification/confidentialledger/data-plane/ConfidentialLedger/models.tsp",
+                  "revision": "base",
+                  "startLine": 427,
+                  "endLine": 438
+                }
+              },
+              "after": {
+                "doc": "The result of writing a ledger entry.",
+                "declaration": "/**\n * The result of writing a ledger entry.\n */\n@added(Versions.v2026_07_31_preview)\nmodel LedgerWriteResult {\n  /**\n   * The collection identifier of the ledger entry.\n   */\n  collectionId: string;\n\n  /**\n   * The receipt certifying the committed transaction.\n   */\n  receipt?: ReceiptContents;\n\n  /**\n   * State of the write transaction.\n   */\n  state: TransactionState;\n\n  /**\n   * The list of application claims.\n   */\n  applicationClaims?: ApplicationClaim[];\n}",
+                "source": {
+                  "path": "specification/confidentialledger/data-plane/ConfidentialLedger/models.tsp",
+                  "revision": "current",
+                  "startLine": 456,
+                  "endLine": 480
+                }
+              }
+            },
+            {
+              "id": "document-f30cca12d1d11c1e",
+              "sourceChangeId": "source-a1b03decaab4b3df",
+              "qualifiedName": "ConfidentialLedger.LedgerWriteResultWithReceipt",
+              "kind": "model",
+              "before": null,
+              "after": {
+                "doc": "Returned as a result of writing to the Confidential Ledger.",
+                "declaration": "/**\n * Returned as a result of writing to the Confidential Ledger.\n */\n@added(Versions.v2026_07_31_preview)\nmodel LedgerWriteResultWithReceipt {\n  ...CCFTransactionIdHeader;\n\n  /**\n   * The response body.\n   */\n  @bodyRoot\n  body: LedgerWriteResult;\n}",
+                "source": {
+                  "path": "specification/confidentialledger/data-plane/ConfidentialLedger/models.tsp",
+                  "revision": "current",
+                  "startLine": 442,
+                  "endLine": 454
+                }
+              }
+            },
+            {
+              "id": "document-f649c807ede2c474",
+              "sourceChangeId": "source-a1b03decaab4b3df",
+              "qualifiedName": "ConfidentialLedger.LedgerWriteResult.receipt",
+              "kind": "property",
+              "before": null,
+              "after": {
+                "doc": "The receipt certifying the committed transaction.",
+                "declaration": "/**\n   * The receipt certifying the committed transaction.\n   */\n  receipt?: ReceiptContents",
+                "source": {
+                  "path": "specification/confidentialledger/data-plane/ConfidentialLedger/models.tsp",
+                  "revision": "current",
+                  "startLine": 466,
+                  "endLine": 469
+                }
+              }
+            }
+          ],
+          "checks": [
+            {
+              "reviewUnitId": "semantic-14845e93054010a4",
+              "documentId": "document-190beeb89494d3e1",
+              "check": "description",
+              "decision": "pass",
+              "rationale": "The preview-version description exactly matches the literal and preview marker."
+            },
+            {
+              "reviewUnitId": "semantic-14845e93054010a4",
+              "documentId": "document-2983c460d2a59f04",
+              "check": "description",
+              "decision": "pass",
+              "rationale": "Available API versions remains accurate after adding the July preview."
+            },
+            {
+              "reviewUnitId": "semantic-14845e93054010a4",
+              "documentId": "document-5866ed2c7fcbd819",
+              "check": "description",
+              "decision": "pass",
+              "rationale": "The historical write-result description remains consistent with its CCF transaction-ID header and version removal."
+            },
+            {
+              "reviewUnitId": "semantic-14845e93054010a4",
+              "documentId": "document-6750661af895522b",
+              "check": "description",
+              "decision": "pass",
+              "rationale": "Write transaction state clearly explains the required TransactionState field."
+            },
+            {
+              "reviewUnitId": "semantic-14845e93054010a4",
+              "documentId": "document-83ad3cc4e286518e",
+              "check": "description",
+              "decision": "pass",
+              "rationale": "HTTP status code accurately describes the @statusCode 503 literal without requiring repetition of the value."
+            },
+            {
+              "reviewUnitId": "semantic-14845e93054010a4",
+              "documentId": "document-95b0cb05be05645d",
+              "check": "description",
+              "decision": "pass",
+              "rationale": "Response body adequately describes the @bodyRoot LedgerWriteResult property."
+            },
+            {
+              "reviewUnitId": "semantic-14845e93054010a4",
+              "documentId": "document-a43bf93f1764ab29",
+              "check": "description",
+              "decision": "pass",
+              "rationale": "The description explains the rollback error represented by this 503 error response."
+            },
+            {
+              "reviewUnitId": "semantic-14845e93054010a4",
+              "documentId": "document-a5e7a1ecedfa1603",
+              "check": "description",
+              "decision": "pass",
+              "rationale": "Application claims list accurately describes the optional ApplicationClaim array."
+            },
+            {
+              "reviewUnitId": "semantic-14845e93054010a4",
+              "documentId": "document-e3f29d89fc88a8f0",
+              "check": "description",
+              "decision": "pass",
+              "rationale": "The new write-result summary fits collectionId, state, optional receipt and claims, and no longer promises a header inside this body model."
+            },
+            {
+              "reviewUnitId": "semantic-14845e93054010a4",
+              "documentId": "document-f30cca12d1d11c1e",
+              "check": "description",
+              "decision": "pass",
+              "rationale": "Returned ledger-write result accurately describes the transaction-ID header and body wrapper."
+            },
+            {
+              "reviewUnitId": "semantic-14845e93054010a4",
+              "documentId": "document-f649c807ede2c474",
+              "check": "description",
+              "decision": "pass",
+              "rationale": "The description explains the ReceiptContents field's purpose without asserting it is always present."
+            }
+          ]
+        },
+        {
+          "reviewUnitId": "semantic-f7f018d1d5eec36c",
+          "status": "passed",
+          "documents": [
+            {
+              "id": "document-1f6e02803ab19701",
+              "sourceChangeId": "source-6b90b1a5f4c3ae2a",
+              "qualifiedName": "ConfidentialLedger.createLedgerEntryAsync",
+              "kind": "operation",
+              "before": null,
+              "after": {
+                "doc": "A collection id may optionally be specified.",
+                "declaration": "/**\n * A collection id may optionally be specified.\n */\n#suppress \"@azure-tools/typespec-azure-core/use-standard-operations\" \"Existing API\"\n@removed(Versions.v2026_07_31_preview)\n@renamedFrom(Versions.v2026_07_31_preview, \"createLedgerEntry\")\n@summary(\"Writes a ledger entry.\")\n@sharedRoute\n@route(\"/app/transactions\")\n@post\nop createLedgerEntryAsync is ConfidentialLedgerCommon.LedgerOperation<\n  {\n    /**\n     * The collection id.\n     */\n    @query(\"collectionId\")\n    collectionId?: string;\n\n    /**\n     * Comma separated tags.\n     */\n    @query(\"tags\")\n    tags?: string;\n\n    /**\n     * Ledger entry.\n     */\n    @bodyRoot\n    entry: LedgerEntry;\n  },\n  LedgerWriteResultBeforeV20260731Preview\n>;",
+                "source": {
+                  "path": "specification/confidentialledger/data-plane/ConfidentialLedger/routes.tsp",
+                  "revision": "current",
+                  "startLine": 123,
+                  "endLine": 154
+                }
+              }
+            },
+            {
+              "id": "document-33eb819607ca740b",
+              "sourceChangeId": "source-6b90b1a5f4c3ae2a",
+              "qualifiedName": "ConfidentialLedger.createLedgerEntryAsync.collectionId",
+              "kind": "property",
+              "before": null,
+              "after": {
+                "doc": "The collection id.",
+                "declaration": "/**\n     * The collection id.\n     */\n    @query(\"collectionId\")\n    collectionId?: string",
+                "source": {
+                  "path": "specification/confidentialledger/data-plane/ConfidentialLedger/routes.tsp",
+                  "revision": "current",
+                  "startLine": 135,
+                  "endLine": 139
+                }
+              }
+            },
+            {
+              "id": "document-78ac2915b0c84620",
+              "sourceChangeId": "source-6b90b1a5f4c3ae2a",
+              "qualifiedName": "ConfidentialLedger.createLedgerEntryAsync.entry",
+              "kind": "property",
+              "before": null,
+              "after": {
+                "doc": "Ledger entry.",
+                "declaration": "/**\n     * Ledger entry.\n     */\n    @bodyRoot\n    entry: LedgerEntry",
+                "source": {
+                  "path": "specification/confidentialledger/data-plane/ConfidentialLedger/routes.tsp",
+                  "revision": "current",
+                  "startLine": 147,
+                  "endLine": 151
+                }
+              }
+            },
+            {
+              "id": "document-79b03c167bd61315",
+              "sourceChangeId": "source-6b90b1a5f4c3ae2a",
+              "qualifiedName": "ConfidentialLedger.createLedgerEntryAsync.tags",
+              "kind": "property",
+              "before": null,
+              "after": {
+                "doc": "Comma separated tags.",
+                "declaration": "/**\n     * Comma separated tags.\n     */\n    @query(\"tags\")\n    tags?: string",
+                "source": {
+                  "path": "specification/confidentialledger/data-plane/ConfidentialLedger/routes.tsp",
+                  "revision": "current",
+                  "startLine": 141,
+                  "endLine": 145
+                }
+              }
+            },
+            {
+              "id": "document-88934088fa699914",
+              "sourceChangeId": "source-6b90b1a5f4c3ae2a",
+              "qualifiedName": "ConfidentialLedger.createLedgerEntry",
+              "kind": "operation",
+              "before": {
+                "doc": "A collection id may optionally be specified.",
+                "declaration": "/**\n * A collection id may optionally be specified.\n */\n#suppress \"@azure-tools/typespec-azure-core/use-standard-operations\" \"Existing API\"\n@summary(\"Writes a ledger entry.\")\n@route(\"/app/transactions\")\n@post\nop createLedgerEntry is ConfidentialLedgerCommon.LedgerOperation<\n  {\n    /**\n     * The collection id.\n     */\n    @query(\"collectionId\")\n    collectionId?: string;\n\n    /**\n     * Comma separated tags.\n     */\n    @query(\"tags\")\n    tags?: string;\n\n    /**\n     * Ledger entry.\n     */\n    @bodyRoot\n    entry: LedgerEntry;\n  },\n  LedgerWriteResult\n>;",
+                "source": {
+                  "path": "specification/confidentialledger/data-plane/ConfidentialLedger/routes.tsp",
+                  "revision": "base",
+                  "startLine": 123,
+                  "endLine": 151
+                }
+              },
+              "after": {
+                "doc": "A collection id may optionally be specified.",
+                "declaration": "/**\n * A collection id may optionally be specified.\n */\n#suppress \"@azure-tools/typespec-azure-core/use-standard-operations\" \"The versioned ledger write route requires both the service default error and a 503 TransactionRolledBack response.\"\n@added(Versions.v2026_07_31_preview)\n@summary(\"Writes a ledger entry.\")\n@sharedRoute\n@route(\"/app/transactions\")\n@post\nop createLedgerEntry is ConfidentialLedgerCommon.LedgerOperation<\n  {\n    /**\n     * The collection id.\n     */\n    @query(\"collectionId\")\n    collectionId?: string;\n\n    /**\n     * Comma separated tags.\n     */\n    @query(\"tags\")\n    tags?: string;\n\n    /**\n     * Ledger entry.\n     */\n    @bodyRoot\n    entry: LedgerEntry;\n\n    /**\n     * Whether to wait for the transaction to be globally committed before\n     * returning. When true, the response includes the transaction receipt.\n     */\n    @query(\"waitForCommit\")\n    waitForCommit?: boolean = false;\n  },\n  LedgerWriteResultWithReceipt,\n  | ConfidentialLedgerCommon.ConfidentialLedgerError\n  | TransactionRolledBackErrorResponse\n>;",
+                "source": {
+                  "path": "specification/confidentialledger/data-plane/ConfidentialLedger/routes.tsp",
+                  "revision": "current",
+                  "startLine": 156,
+                  "endLine": 195
+                }
+              }
+            },
+            {
+              "id": "document-ef299e8d58482f7f",
+              "sourceChangeId": "source-6b90b1a5f4c3ae2a",
+              "qualifiedName": "ConfidentialLedger.createLedgerEntry.waitForCommit",
+              "kind": "property",
+              "before": null,
+              "after": {
+                "doc": "Whether to wait for the transaction to be globally committed before\nreturning. When true, the response includes the transaction receipt.",
+                "declaration": "/**\n     * Whether to wait for the transaction to be globally committed before\n     * returning. When true, the response includes the transaction receipt.\n     */\n    @query(\"waitForCommit\")\n    waitForCommit?: boolean = false",
+                "source": {
+                  "path": "specification/confidentialledger/data-plane/ConfidentialLedger/routes.tsp",
+                  "revision": "current",
+                  "startLine": 185,
+                  "endLine": 190
+                }
+              }
+            }
+          ],
+          "checks": [
+            {
+              "reviewUnitId": "semantic-f7f018d1d5eec36c",
+              "documentId": "document-1f6e02803ab19701",
+              "check": "description",
+              "decision": "pass",
+              "rationale": "The description accurately states collectionId is optional on the historical write operation; the same narrow description exists on the baseline operation."
+            },
+            {
+              "reviewUnitId": "semantic-f7f018d1d5eec36c",
+              "documentId": "document-33eb819607ca740b",
+              "check": "description",
+              "decision": "pass",
+              "rationale": "Collection ID clearly identifies the optional query parameter."
+            },
+            {
+              "reviewUnitId": "semantic-f7f018d1d5eec36c",
+              "documentId": "document-78ac2915b0c84620",
+              "check": "description",
+              "decision": "pass",
+              "rationale": "Ledger entry adequately describes the LedgerEntry request body."
+            },
+            {
+              "reviewUnitId": "semantic-f7f018d1d5eec36c",
+              "documentId": "document-79b03c167bd61315",
+              "check": "description",
+              "decision": "pass",
+              "rationale": "Comma-separated tags clearly explains how this string query value is represented."
+            },
+            {
+              "reviewUnitId": "semantic-f7f018d1d5eec36c",
+              "documentId": "document-88934088fa699914",
+              "check": "description",
+              "decision": "pass",
+              "rationale": "The unchanged statement about optional collectionId remains true; omission of the new wait option is not a contradictory or newly stale claim."
+            },
+            {
+              "reviewUnitId": "semantic-f7f018d1d5eec36c",
+              "documentId": "document-ef299e8d58482f7f",
+              "check": "description",
+              "decision": "pass",
+              "rationale": "The description explains the boolean wait option and conditional receipt consistently with the false default and optional receipt field."
+            }
+          ]
+        }
+      ],
+      "findings": [],
+      "blockers": []
     }
   },
   "changedFiles": [
@@ -18161,7 +19018,15 @@
     "inference": "inference.json",
     "complianceSearchEvidence": "compliance-search-evidence.json",
     "judgment": "assessment-judgment.json",
-    "preparationManifest": "preparation-manifest.json"
+    "preparationManifest": "preparation-manifest.json",
+    "documentQualityReplay": {
+      "preparedAt": "2026-09-11T10:17:39.292Z",
+      "sourceAssessmentHash": "dfee48022e9a3a7a752e5cde5d964f566ac3221bb8d8a7f5bc1214a80958494b",
+      "sourceIndex": "documentation-replay/source/source-index.json",
+      "modelInput": "documentation-replay/model-input.json",
+      "input": "documentation-replay/dimensions/document-quality-input.json",
+      "judgment": "documentation-replay/document-quality-judgment.json"
+    }
   },
   "inputAccounting": {
     "budgetTier": "small",

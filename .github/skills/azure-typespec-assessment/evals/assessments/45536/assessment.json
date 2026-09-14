@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-11T04:10:00.509Z",
+  "generatedAt": "2026-09-11T10:30:13.743Z",
   "title": "TypeSpec assessment: specification/consumption/resource-manager/Microsoft.Consumption/Consumption",
   "repository": {
     "root": "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\.workspaces\\45536\\head",
@@ -151,7 +151,13 @@
                   ]
                 }
               ],
-              "declarations": []
+              "declarations": [],
+              "documentEvidence": {
+                "schemaVersion": 3,
+                "status": "ready",
+                "blockers": [],
+                "documents": []
+              }
             }
           ],
           "relatedFindings": {
@@ -755,8 +761,33 @@
       "blockers": []
     },
     "documentQuality": {
-      "status": "not-assessed",
-      "summary": "Document Quality and Agent Friendliness is not assessed."
+      "assessmentVersion": 3,
+      "status": "not-applicable",
+      "summary": "No applicable current source @doc declarations in the changed semantic scope.",
+      "coverage": {
+        "semanticIntentCount": 1,
+        "assessedIntentCount": 1,
+        "documentCount": 0,
+        "assessedDocumentCount": 0,
+        "checkCount": 0,
+        "assessedCheckCount": 0,
+        "inheritedDocumentCount": 0,
+        "unassessedIntentIds": [],
+        "notApplicableIntentIds": [
+          "semantic-5c37e529c22fc782"
+        ]
+      },
+      "intentAssessments": [
+        {
+          "reviewUnitId": "semantic-5c37e529c22fc782",
+          "status": "not-applicable",
+          "reason": "No changed, associated nonempty @doc with a current target; absent, deleted, empty, or whitespace-only @doc is outside documentation coverage scope.",
+          "documents": [],
+          "checks": []
+        }
+      ],
+      "findings": [],
+      "blockers": []
     }
   },
   "changedFiles": [
@@ -971,7 +1002,15 @@
     "inference": "inference.json",
     "complianceSearchEvidence": "compliance-search-evidence.json",
     "judgment": "assessment-judgment.json",
-    "preparationManifest": "preparation-manifest.json"
+    "preparationManifest": "preparation-manifest.json",
+    "documentQualityReplay": {
+      "preparedAt": "2026-09-11T10:18:36.721Z",
+      "sourceAssessmentHash": "f175a4ee3e03a241e7cd1021df92da2c6ad5d4503bd67cb26a0c3f85c663ca10",
+      "sourceIndex": "documentation-replay/source/source-index.json",
+      "modelInput": "documentation-replay/model-input.json",
+      "input": "documentation-replay/dimensions/document-quality-input.json",
+      "judgment": "documentation-replay/document-quality-judgment.json"
+    }
   },
   "inputAccounting": {
     "budgetTier": "small",

@@ -1,0 +1,3959 @@
+{
+  "schemaVersion": 1,
+  "analysis": {
+    "status": "ready",
+    "authority": "typespec-compiler",
+    "compilerVersions": [
+      "1.12.0"
+    ],
+    "operationProjectionStats": [
+      {
+        "revision": "base",
+        "project": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos",
+        "operationCount": 177,
+        "changedNameCount": 30,
+        "matchedOperationCount": 51
+      },
+      {
+        "revision": "current",
+        "project": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos",
+        "operationCount": 179,
+        "changedNameCount": 31,
+        "matchedOperationCount": 6
+      }
+    ],
+    "blockers": []
+  },
+  "sourceChanges": [
+    {
+      "id": "source-445ac39004e671ef",
+      "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
+      "status": "modified",
+      "origins": [
+        "committed"
+      ],
+      "hunks": [
+        {
+          "id": "hunk-5f7834dcc951e2e3",
+          "base": {
+            "startLine": 223,
+            "endLine": 229
+          },
+          "current": {
+            "startLine": 223,
+            "endLine": 229
+          },
+          "lines": [
+            "    * The resource id for the affected resource.",
+            "    */",
+            "   @visibility(Lifecycle.Read)",
+            "-  resourceId: string;",
+            "+  resourceId: Azure.Core.armResourceIdentifier;",
+            " ",
+            "   /**",
+            "    * The missing permissions."
+          ]
+        },
+        {
+          "id": "hunk-5aa33c961a49d6c7",
+          "base": {
+            "startLine": 275,
+            "endLine": 281
+          },
+          "current": {
+            "startLine": 275,
+            "endLine": 281
+          },
+          "lines": [
+            "    * The resource id for the affected resource.",
+            "    */",
+            "   @visibility(Lifecycle.Read)",
+            "-  resourceId: string;",
+            "+  resourceId: Azure.Core.armResourceIdentifier;",
+            " ",
+            "   /**",
+            "    * The error code."
+          ]
+        },
+        {
+          "id": "hunk-fe6a3ee26eca43f6",
+          "base": {
+            "startLine": 418,
+            "endLine": 424
+          },
+          "current": {
+            "startLine": 418,
+            "endLine": 424
+          },
+          "lines": [
+            "    * The target Azure resource ID.",
+            "    */",
+            "   @visibility(Lifecycle.Read)",
+            "-  targetResourceId: string;",
+            "+  targetResourceId: Azure.Core.armResourceIdentifier;",
+            " ",
+            "   /**",
+            "    * The managed identity principal ID."
+          ]
+        },
+        {
+          "id": "hunk-995b8bf1e599f1a7",
+          "base": {
+            "startLine": 454,
+            "endLine": 460
+          },
+          "current": {
+            "startLine": 454,
+            "endLine": 460
+          },
+          "lines": [
+            "    * The created role assignment resource ID (null if failed or what-if mode).",
+            "    */",
+            "   @visibility(Lifecycle.Read)",
+            "-  roleAssignmentId?: string;",
+            "+  roleAssignmentId?: Azure.Core.armResourceIdentifier;",
+            " ",
+            "   /**",
+            "    * Error details if the assignment failed.",
+            ""
+          ]
+        }
+      ],
+      "declarations": [
+        {
+          "id": "declaration-a84d808458be9955",
+          "kind": "model",
+          "qualifiedName": "PermissionError",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-5f7834dcc951e2e3"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Model",
+            "sourceFile": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
+            "position": {
+              "start": 5699,
+              "end": 6294
+            },
+            "referencedNames": [
+              "Array",
+              "EntraIdentity",
+              "EntraIdentity.objectId",
+              "EntraIdentity.tenantId",
+              "PermissionError.identity",
+              "PermissionError.missingPermissions",
+              "PermissionError.recommendedRoles",
+              "PermissionError.requiredPermissions",
+              "PermissionError.resourceId",
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "base",
+            "startLine": 218,
+            "endLine": 251
+          }
+        },
+        {
+          "id": "declaration-c7e26d0e1780a407",
+          "kind": "model",
+          "qualifiedName": "PermissionError",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-5f7834dcc951e2e3"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Model",
+            "sourceFile": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
+            "position": {
+              "start": 5699,
+              "end": 6320
+            },
+            "referencedNames": [
+              "Array",
+              "EntraIdentity",
+              "EntraIdentity.objectId",
+              "EntraIdentity.tenantId",
+              "PermissionError.identity",
+              "PermissionError.missingPermissions",
+              "PermissionError.recommendedRoles",
+              "PermissionError.requiredPermissions",
+              "PermissionError.resourceId",
+              "armResourceIdentifier",
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 218,
+            "endLine": 251
+          }
+        },
+        {
+          "id": "declaration-a2f244fafa7aace9",
+          "kind": "property",
+          "qualifiedName": "PermissionError.resourceId",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-5f7834dcc951e2e3"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
+            "position": {
+              "start": 5780,
+              "end": 5888
+            },
+            "referencedNames": [
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "base",
+            "startLine": 222,
+            "endLine": 226
+          }
+        },
+        {
+          "id": "declaration-4cc91b5c06fd7a4d",
+          "kind": "property",
+          "qualifiedName": "PermissionError.resourceId",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-5f7834dcc951e2e3"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
+            "position": {
+              "start": 5780,
+              "end": 5914
+            },
+            "referencedNames": [
+              "armResourceIdentifier"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 222,
+            "endLine": 226
+          }
+        },
+        {
+          "id": "declaration-86c0febfaaed02f2",
+          "kind": "property",
+          "qualifiedName": "PermissionError.missingPermissions",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-5f7834dcc951e2e3"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
+            "position": {
+              "start": 5893,
+              "end": 5993
+            },
+            "referencedNames": [
+              "Array",
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "base",
+            "startLine": 228,
+            "endLine": 232
+          }
+        },
+        {
+          "id": "declaration-8a7be003eed2e097",
+          "kind": "property",
+          "qualifiedName": "PermissionError.missingPermissions",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-5f7834dcc951e2e3"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
+            "position": {
+              "start": 5919,
+              "end": 6019
+            },
+            "referencedNames": [
+              "Array",
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 228,
+            "endLine": 232
+          }
+        },
+        {
+          "id": "declaration-d9e1c130690b2ee0",
+          "kind": "model",
+          "qualifiedName": "ResourceStateError",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-5aa33c961a49d6c7"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Model",
+            "sourceFile": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
+            "position": {
+              "start": 6563,
+              "end": 7032
+            },
+            "referencedNames": [
+              "ResourceStateError.errorCode",
+              "ResourceStateError.errorMessage",
+              "ResourceStateError.remediationUri",
+              "ResourceStateError.resourceId",
+              "int32",
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "base",
+            "startLine": 270,
+            "endLine": 297
+          }
+        },
+        {
+          "id": "declaration-8ce42704b5b649ae",
+          "kind": "model",
+          "qualifiedName": "ResourceStateError",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-5aa33c961a49d6c7"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Model",
+            "sourceFile": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
+            "position": {
+              "start": 6589,
+              "end": 7084
+            },
+            "referencedNames": [
+              "ResourceStateError.errorCode",
+              "ResourceStateError.errorMessage",
+              "ResourceStateError.remediationUri",
+              "ResourceStateError.resourceId",
+              "armResourceIdentifier",
+              "int32",
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 270,
+            "endLine": 297
+          }
+        },
+        {
+          "id": "declaration-d7366994d879d315",
+          "kind": "property",
+          "qualifiedName": "ResourceStateError.resourceId",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-5aa33c961a49d6c7"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
+            "position": {
+              "start": 6651,
+              "end": 6759
+            },
+            "referencedNames": [
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "base",
+            "startLine": 274,
+            "endLine": 278
+          }
+        },
+        {
+          "id": "declaration-2e1900676b35bd4f",
+          "kind": "property",
+          "qualifiedName": "ResourceStateError.resourceId",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-5aa33c961a49d6c7"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
+            "position": {
+              "start": 6677,
+              "end": 6811
+            },
+            "referencedNames": [
+              "armResourceIdentifier"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 274,
+            "endLine": 278
+          }
+        },
+        {
+          "id": "declaration-356d7b4d5795d51a",
+          "kind": "property",
+          "qualifiedName": "ResourceStateError.errorCode",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-5aa33c961a49d6c7"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
+            "position": {
+              "start": 6764,
+              "end": 6843
+            },
+            "referencedNames": [
+              "int32"
+            ]
+          },
+          "source": {
+            "revision": "base",
+            "startLine": 280,
+            "endLine": 284
+          }
+        },
+        {
+          "id": "declaration-78652b14e0a95fe6",
+          "kind": "property",
+          "qualifiedName": "ResourceStateError.errorCode",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-5aa33c961a49d6c7"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
+            "position": {
+              "start": 6816,
+              "end": 6895
+            },
+            "referencedNames": [
+              "int32"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 280,
+            "endLine": 284
+          }
+        },
+        {
+          "id": "declaration-8fd1a078a66e6ef7",
+          "kind": "model",
+          "qualifiedName": "RoleAssignmentResult",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-fe6a3ee26eca43f6",
+            "hunk-995b8bf1e599f1a7"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Model",
+            "sourceFile": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
+            "position": {
+              "start": 9642,
+              "end": 10665
+            },
+            "referencedNames": [
+              "Failed",
+              "Pending",
+              "RoleAssignmentError",
+              "RoleAssignmentError.code",
+              "RoleAssignmentError.message",
+              "RoleAssignmentResult.error",
+              "RoleAssignmentResult.principalId",
+              "RoleAssignmentResult.roleAssignmentId",
+              "RoleAssignmentResult.roleDefinitionId",
+              "RoleAssignmentResult.roleDefinitionName",
+              "RoleAssignmentResult.scope",
+              "RoleAssignmentResult.status",
+              "RoleAssignmentResult.targetResourceId",
+              "RoleAssignmentStatus",
+              "Skipped",
+              "Succeeded",
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "base",
+            "startLine": 413,
+            "endLine": 464
+          }
+        },
+        {
+          "id": "declaration-093010d621963a62",
+          "kind": "model",
+          "qualifiedName": "RoleAssignmentResult",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-fe6a3ee26eca43f6",
+            "hunk-995b8bf1e599f1a7"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Model",
+            "sourceFile": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
+            "position": {
+              "start": 9694,
+              "end": 10769
+            },
+            "referencedNames": [
+              "Failed",
+              "Pending",
+              "RoleAssignmentError",
+              "RoleAssignmentError.code",
+              "RoleAssignmentError.message",
+              "RoleAssignmentResult.error",
+              "RoleAssignmentResult.principalId",
+              "RoleAssignmentResult.roleAssignmentId",
+              "RoleAssignmentResult.roleDefinitionId",
+              "RoleAssignmentResult.roleDefinitionName",
+              "RoleAssignmentResult.scope",
+              "RoleAssignmentResult.status",
+              "RoleAssignmentResult.targetResourceId",
+              "RoleAssignmentStatus",
+              "Skipped",
+              "Succeeded",
+              "armResourceIdentifier",
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 413,
+            "endLine": 464
+          }
+        },
+        {
+          "id": "declaration-809805ebcbf61f0c",
+          "kind": "property",
+          "qualifiedName": "RoleAssignmentResult.targetResourceId",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-fe6a3ee26eca43f6"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
+            "position": {
+              "start": 9730,
+              "end": 9831
+            },
+            "referencedNames": [
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "base",
+            "startLine": 417,
+            "endLine": 421
+          }
+        },
+        {
+          "id": "declaration-60ebf3b787a982bd",
+          "kind": "property",
+          "qualifiedName": "RoleAssignmentResult.targetResourceId",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-fe6a3ee26eca43f6"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
+            "position": {
+              "start": 9782,
+              "end": 9909
+            },
+            "referencedNames": [
+              "armResourceIdentifier"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 417,
+            "endLine": 421
+          }
+        },
+        {
+          "id": "declaration-6f39280bdde8fec2",
+          "kind": "property",
+          "qualifiedName": "RoleAssignmentResult.principalId",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-fe6a3ee26eca43f6"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
+            "position": {
+              "start": 9836,
+              "end": 9937
+            },
+            "referencedNames": [
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "base",
+            "startLine": 423,
+            "endLine": 427
+          }
+        },
+        {
+          "id": "declaration-ff86b930100df79b",
+          "kind": "property",
+          "qualifiedName": "RoleAssignmentResult.principalId",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-fe6a3ee26eca43f6"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
+            "position": {
+              "start": 9914,
+              "end": 10015
+            },
+            "referencedNames": [
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 423,
+            "endLine": 427
+          }
+        },
+        {
+          "id": "declaration-f621899f16bc0e1c",
+          "kind": "property",
+          "qualifiedName": "RoleAssignmentResult.roleAssignmentId",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-995b8bf1e599f1a7"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
+            "position": {
+              "start": 10397,
+              "end": 10543
+            },
+            "referencedNames": [
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "base",
+            "startLine": 453,
+            "endLine": 457
+          }
+        },
+        {
+          "id": "declaration-456c2aa54f019a46",
+          "kind": "property",
+          "qualifiedName": "RoleAssignmentResult.roleAssignmentId",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-995b8bf1e599f1a7"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
+            "position": {
+              "start": 10475,
+              "end": 10647
+            },
+            "referencedNames": [
+              "armResourceIdentifier"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 453,
+            "endLine": 457
+          }
+        },
+        {
+          "id": "declaration-f97d81908b0321f0",
+          "kind": "property",
+          "qualifiedName": "RoleAssignmentResult.error",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-995b8bf1e599f1a7"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
+            "position": {
+              "start": 10548,
+              "end": 10662
+            },
+            "referencedNames": [
+              "RoleAssignmentError",
+              "RoleAssignmentError.code",
+              "RoleAssignmentError.message",
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "base",
+            "startLine": 459,
+            "endLine": 463
+          }
+        },
+        {
+          "id": "declaration-bf85818faf90d08b",
+          "kind": "property",
+          "qualifiedName": "RoleAssignmentResult.error",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-995b8bf1e599f1a7"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
+            "position": {
+              "start": 10652,
+              "end": 10766
+            },
+            "referencedNames": [
+              "RoleAssignmentError",
+              "RoleAssignmentError.code",
+              "RoleAssignmentError.message",
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 459,
+            "endLine": 463
+          }
+        }
+      ],
+      "documentEvidence": {
+        "schemaVersion": 3,
+        "status": "ready",
+        "blockers": [],
+        "documents": [
+          {
+            "id": "document-03c59cf5a0a7b330",
+            "sourceChangeId": "source-445ac39004e671ef",
+            "qualifiedName": "Microsoft.Chaos.PermissionError.resourceId",
+            "kind": "property",
+            "before": {
+              "doc": "The resource id for the affected resource.",
+              "declaration": "/**\n   * The resource id for the affected resource.\n   */\n  @visibility(Lifecycle.Read)\n  resourceId: string",
+              "source": {
+                "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
+                "revision": "base",
+                "startLine": 222,
+                "endLine": 226
+              }
+            },
+            "after": {
+              "doc": "The resource id for the affected resource.",
+              "declaration": "/**\n   * The resource id for the affected resource.\n   */\n  @visibility(Lifecycle.Read)\n  resourceId: Azure.Core.armResourceIdentifier",
+              "source": {
+                "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
+                "revision": "current",
+                "startLine": 222,
+                "endLine": 226
+              }
+            },
+            "hunkIds": [
+              "hunk-5f7834dcc951e2e3"
+            ]
+          },
+          {
+            "id": "document-250cb6d0701b146c",
+            "sourceChangeId": "source-445ac39004e671ef",
+            "qualifiedName": "Microsoft.Chaos.RoleAssignmentResult.roleAssignmentId",
+            "kind": "property",
+            "before": {
+              "doc": "The created role assignment resource ID (null if failed or what-if mode).",
+              "declaration": "/**\n   * The created role assignment resource ID (null if failed or what-if mode).\n   */\n  @visibility(Lifecycle.Read)\n  roleAssignmentId?: string",
+              "source": {
+                "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
+                "revision": "base",
+                "startLine": 453,
+                "endLine": 457
+              }
+            },
+            "after": {
+              "doc": "The created role assignment resource ID (null if failed or what-if mode).",
+              "declaration": "/**\n   * The created role assignment resource ID (null if failed or what-if mode).\n   */\n  @visibility(Lifecycle.Read)\n  roleAssignmentId?: Azure.Core.armResourceIdentifier",
+              "source": {
+                "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
+                "revision": "current",
+                "startLine": 453,
+                "endLine": 457
+              }
+            },
+            "hunkIds": [
+              "hunk-995b8bf1e599f1a7"
+            ]
+          },
+          {
+            "id": "document-4b67929fcc7c14fe",
+            "sourceChangeId": "source-445ac39004e671ef",
+            "qualifiedName": "Microsoft.Chaos.PermissionError",
+            "kind": "model",
+            "before": {
+              "doc": "Model that represents the permission error.",
+              "declaration": "/**\n * Model that represents the permission error.\n */\nmodel PermissionError {\n  /**\n   * The resource id for the affected resource.\n   */\n  @visibility(Lifecycle.Read)\n  resourceId: string;\n\n  /**\n   * The missing permissions.\n   */\n  @visibility(Lifecycle.Read)\n  missingPermissions: string[];\n\n  /**\n   * The required permissions.\n   */\n  @visibility(Lifecycle.Read)\n  requiredPermissions: string[];\n\n  /**\n   * The recommended roles.\n   */\n  @visibility(Lifecycle.Read)\n  recommendedRoles: string[];\n\n  /**\n   * The identity.\n   */\n  @visibility(Lifecycle.Read)\n  identity?: EntraIdentity;\n}",
+              "source": {
+                "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
+                "revision": "base",
+                "startLine": 218,
+                "endLine": 251
+              }
+            },
+            "after": {
+              "doc": "Model that represents the permission error.",
+              "declaration": "/**\n * Model that represents the permission error.\n */\nmodel PermissionError {\n  /**\n   * The resource id for the affected resource.\n   */\n  @visibility(Lifecycle.Read)\n  resourceId: Azure.Core.armResourceIdentifier;\n\n  /**\n   * The missing permissions.\n   */\n  @visibility(Lifecycle.Read)\n  missingPermissions: string[];\n\n  /**\n   * The required permissions.\n   */\n  @visibility(Lifecycle.Read)\n  requiredPermissions: string[];\n\n  /**\n   * The recommended roles.\n   */\n  @visibility(Lifecycle.Read)\n  recommendedRoles: string[];\n\n  /**\n   * The identity.\n   */\n  @visibility(Lifecycle.Read)\n  identity?: EntraIdentity;\n}",
+              "source": {
+                "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
+                "revision": "current",
+                "startLine": 218,
+                "endLine": 251
+              }
+            },
+            "hunkIds": [
+              "hunk-5f7834dcc951e2e3"
+            ]
+          },
+          {
+            "id": "document-4d760f764d669270",
+            "sourceChangeId": "source-445ac39004e671ef",
+            "qualifiedName": "Microsoft.Chaos.ResourceStateError.resourceId",
+            "kind": "property",
+            "before": {
+              "doc": "The resource id for the affected resource.",
+              "declaration": "/**\n   * The resource id for the affected resource.\n   */\n  @visibility(Lifecycle.Read)\n  resourceId: string",
+              "source": {
+                "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
+                "revision": "base",
+                "startLine": 274,
+                "endLine": 278
+              }
+            },
+            "after": {
+              "doc": "The resource id for the affected resource.",
+              "declaration": "/**\n   * The resource id for the affected resource.\n   */\n  @visibility(Lifecycle.Read)\n  resourceId: Azure.Core.armResourceIdentifier",
+              "source": {
+                "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
+                "revision": "current",
+                "startLine": 274,
+                "endLine": 278
+              }
+            },
+            "hunkIds": [
+              "hunk-5aa33c961a49d6c7"
+            ]
+          },
+          {
+            "id": "document-60238ea4d91f0589",
+            "sourceChangeId": "source-445ac39004e671ef",
+            "qualifiedName": "Microsoft.Chaos.RoleAssignmentResult.targetResourceId",
+            "kind": "property",
+            "before": {
+              "doc": "The target Azure resource ID.",
+              "declaration": "/**\n   * The target Azure resource ID.\n   */\n  @visibility(Lifecycle.Read)\n  targetResourceId: string",
+              "source": {
+                "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
+                "revision": "base",
+                "startLine": 417,
+                "endLine": 421
+              }
+            },
+            "after": {
+              "doc": "The target Azure resource ID.",
+              "declaration": "/**\n   * The target Azure resource ID.\n   */\n  @visibility(Lifecycle.Read)\n  targetResourceId: Azure.Core.armResourceIdentifier",
+              "source": {
+                "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
+                "revision": "current",
+                "startLine": 417,
+                "endLine": 421
+              }
+            },
+            "hunkIds": [
+              "hunk-fe6a3ee26eca43f6"
+            ]
+          },
+          {
+            "id": "document-a98f6a8fc599c2ae",
+            "sourceChangeId": "source-445ac39004e671ef",
+            "qualifiedName": "Microsoft.Chaos.ResourceStateError",
+            "kind": "model",
+            "before": {
+              "doc": "Model that represents the resource state error.",
+              "declaration": "/**\n * Model that represents the resource state error.\n */\nmodel ResourceStateError {\n  /**\n   * The resource id for the affected resource.\n   */\n  @visibility(Lifecycle.Read)\n  resourceId: string;\n\n  /**\n   * The error code.\n   */\n  @visibility(Lifecycle.Read)\n  errorCode: int32;\n\n  /**\n   * The error message.\n   */\n  @visibility(Lifecycle.Read)\n  errorMessage: string;\n\n  /**\n   * The remediation uri.\n   */\n  @visibility(Lifecycle.Read)\n  remediationUri: string;\n}",
+              "source": {
+                "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
+                "revision": "base",
+                "startLine": 270,
+                "endLine": 297
+              }
+            },
+            "after": {
+              "doc": "Model that represents the resource state error.",
+              "declaration": "/**\n * Model that represents the resource state error.\n */\nmodel ResourceStateError {\n  /**\n   * The resource id for the affected resource.\n   */\n  @visibility(Lifecycle.Read)\n  resourceId: Azure.Core.armResourceIdentifier;\n\n  /**\n   * The error code.\n   */\n  @visibility(Lifecycle.Read)\n  errorCode: int32;\n\n  /**\n   * The error message.\n   */\n  @visibility(Lifecycle.Read)\n  errorMessage: string;\n\n  /**\n   * The remediation uri.\n   */\n  @visibility(Lifecycle.Read)\n  remediationUri: string;\n}",
+              "source": {
+                "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
+                "revision": "current",
+                "startLine": 270,
+                "endLine": 297
+              }
+            },
+            "hunkIds": [
+              "hunk-5aa33c961a49d6c7"
+            ]
+          },
+          {
+            "id": "document-d6f8b19c0d442fa8",
+            "sourceChangeId": "source-445ac39004e671ef",
+            "qualifiedName": "Microsoft.Chaos.RoleAssignmentResult",
+            "kind": "model",
+            "before": {
+              "doc": "Result of a single role assignment operation.",
+              "declaration": "/**\n * Result of a single role assignment operation.\n */\nmodel RoleAssignmentResult {\n  /**\n   * The target Azure resource ID.\n   */\n  @visibility(Lifecycle.Read)\n  targetResourceId: string;\n\n  /**\n   * The managed identity principal ID.\n   */\n  @visibility(Lifecycle.Read)\n  principalId: string;\n\n  /**\n   * The Azure RBAC role definition ID.\n   */\n  @visibility(Lifecycle.Read)\n  roleDefinitionId: string;\n\n  /**\n   * Human-readable role name.\n   */\n  @visibility(Lifecycle.Read)\n  roleDefinitionName: string;\n\n  /**\n   * The scope at which the role was/will be assigned.\n   */\n  @visibility(Lifecycle.Read)\n  scope: string;\n\n  /**\n   * The status of the role assignment operation.\n   */\n  @visibility(Lifecycle.Read)\n  status: RoleAssignmentStatus;\n\n  /**\n   * The created role assignment resource ID (null if failed or what-if mode).\n   */\n  @visibility(Lifecycle.Read)\n  roleAssignmentId?: string;\n\n  /**\n   * Error details if the assignment failed.\n   */\n  @visibility(Lifecycle.Read)\n  error?: RoleAssignmentError;\n}",
+              "source": {
+                "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
+                "revision": "base",
+                "startLine": 413,
+                "endLine": 464
+              }
+            },
+            "after": {
+              "doc": "Result of a single role assignment operation.",
+              "declaration": "/**\n * Result of a single role assignment operation.\n */\nmodel RoleAssignmentResult {\n  /**\n   * The target Azure resource ID.\n   */\n  @visibility(Lifecycle.Read)\n  targetResourceId: Azure.Core.armResourceIdentifier;\n\n  /**\n   * The managed identity principal ID.\n   */\n  @visibility(Lifecycle.Read)\n  principalId: string;\n\n  /**\n   * The Azure RBAC role definition ID.\n   */\n  @visibility(Lifecycle.Read)\n  roleDefinitionId: string;\n\n  /**\n   * Human-readable role name.\n   */\n  @visibility(Lifecycle.Read)\n  roleDefinitionName: string;\n\n  /**\n   * The scope at which the role was/will be assigned.\n   */\n  @visibility(Lifecycle.Read)\n  scope: string;\n\n  /**\n   * The status of the role assignment operation.\n   */\n  @visibility(Lifecycle.Read)\n  status: RoleAssignmentStatus;\n\n  /**\n   * The created role assignment resource ID (null if failed or what-if mode).\n   */\n  @visibility(Lifecycle.Read)\n  roleAssignmentId?: Azure.Core.armResourceIdentifier;\n\n  /**\n   * Error details if the assignment failed.\n   */\n  @visibility(Lifecycle.Read)\n  error?: RoleAssignmentError;\n}",
+              "source": {
+                "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.models.tsp",
+                "revision": "current",
+                "startLine": 413,
+                "endLine": 464
+              }
+            },
+            "hunkIds": [
+              "hunk-995b8bf1e599f1a7",
+              "hunk-fe6a3ee26eca43f6"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "source-e69ddc949601a3eb",
+      "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspaceEvaluation.models.tsp",
+      "status": "modified",
+      "origins": [
+        "committed"
+      ],
+      "hunks": [
+        {
+          "id": "hunk-6adc2f483edb150b",
+          "base": {
+            "startLine": 60,
+            "endLine": 66
+          },
+          "current": {
+            "startLine": 60,
+            "endLine": 66
+          },
+          "lines": [
+            "    * The workspace ID this evaluation belongs to.",
+            "    */",
+            "   @visibility(Lifecycle.Read)",
+            "-  workspaceId: string;",
+            "+  workspaceId: Azure.Core.armResourceIdentifier;",
+            " ",
+            "   /**",
+            "    * The number of scenarios to evaluate.",
+            ""
+          ]
+        }
+      ],
+      "declarations": [
+        {
+          "id": "declaration-a7370cc63cd38c57",
+          "kind": "model",
+          "qualifiedName": "WorkspaceEvaluationProperties",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-6adc2f483edb150b"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Model",
+            "sourceFile": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspaceEvaluation.models.tsp",
+            "position": {
+              "start": 688,
+              "end": 2384
+            },
+            "referencedNames": [
+              "Array",
+              "Canceled",
+              "Evaluating",
+              "EvaluationCancelled",
+              "EvaluationFailed",
+              "Failed",
+              "InProgress",
+              "NotApplicable",
+              "NotEvaluated",
+              "OperationError",
+              "OperationError.errorCode",
+              "OperationError.errorMessage",
+              "PartiallySucceeded",
+              "Pending",
+              "Queued",
+              "RecommendationStatus",
+              "Recommended",
+              "ScenarioEvaluationResultItem",
+              "ScenarioEvaluationResultItem.evaluationResult",
+              "ScenarioEvaluationResultItem.scenarioName",
+              "Succeeded",
+              "WorkspaceEvaluationProperties.endTime",
+              "WorkspaceEvaluationProperties.errors",
+              "WorkspaceEvaluationProperties.evaluationResult",
+              "WorkspaceEvaluationProperties.numScenariosEvaluatedCancelled",
+              "WorkspaceEvaluationProperties.numScenariosEvaluatedFailed",
+              "WorkspaceEvaluationProperties.numScenariosEvaluatedSucceeded",
+              "WorkspaceEvaluationProperties.numScenariosToEvaluate",
+              "WorkspaceEvaluationProperties.results",
+              "WorkspaceEvaluationProperties.startTime",
+              "WorkspaceEvaluationProperties.status",
+              "WorkspaceEvaluationProperties.workspaceId",
+              "WorkspaceEvaluationStatus",
+              "int32",
+              "string",
+              "utcDateTime"
+            ]
+          },
+          "source": {
+            "revision": "base",
+            "startLine": 29,
+            "endLine": 101
+          }
+        },
+        {
+          "id": "declaration-75b41b9222358fbd",
+          "kind": "model",
+          "qualifiedName": "WorkspaceEvaluationProperties",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-6adc2f483edb150b"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Model",
+            "sourceFile": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspaceEvaluation.models.tsp",
+            "position": {
+              "start": 688,
+              "end": 2410
+            },
+            "referencedNames": [
+              "Array",
+              "Canceled",
+              "Evaluating",
+              "EvaluationCancelled",
+              "EvaluationFailed",
+              "Failed",
+              "InProgress",
+              "NotApplicable",
+              "NotEvaluated",
+              "OperationError",
+              "OperationError.errorCode",
+              "OperationError.errorMessage",
+              "PartiallySucceeded",
+              "Pending",
+              "Queued",
+              "RecommendationStatus",
+              "Recommended",
+              "ScenarioEvaluationResultItem",
+              "ScenarioEvaluationResultItem.evaluationResult",
+              "ScenarioEvaluationResultItem.scenarioName",
+              "Succeeded",
+              "WorkspaceEvaluationProperties.endTime",
+              "WorkspaceEvaluationProperties.errors",
+              "WorkspaceEvaluationProperties.evaluationResult",
+              "WorkspaceEvaluationProperties.numScenariosEvaluatedCancelled",
+              "WorkspaceEvaluationProperties.numScenariosEvaluatedFailed",
+              "WorkspaceEvaluationProperties.numScenariosEvaluatedSucceeded",
+              "WorkspaceEvaluationProperties.numScenariosToEvaluate",
+              "WorkspaceEvaluationProperties.results",
+              "WorkspaceEvaluationProperties.startTime",
+              "WorkspaceEvaluationProperties.status",
+              "WorkspaceEvaluationProperties.workspaceId",
+              "WorkspaceEvaluationStatus",
+              "armResourceIdentifier",
+              "int32",
+              "string",
+              "utcDateTime"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 29,
+            "endLine": 101
+          }
+        },
+        {
+          "id": "declaration-9b091cf09f8b2ce6",
+          "kind": "property",
+          "qualifiedName": "WorkspaceEvaluationProperties.workspaceId",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-6adc2f483edb150b"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspaceEvaluation.models.tsp",
+            "position": {
+              "start": 1439,
+              "end": 1550
+            },
+            "referencedNames": [
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "base",
+            "startLine": 59,
+            "endLine": 63
+          }
+        },
+        {
+          "id": "declaration-f1e636e2050f7207",
+          "kind": "property",
+          "qualifiedName": "WorkspaceEvaluationProperties.workspaceId",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-6adc2f483edb150b"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspaceEvaluation.models.tsp",
+            "position": {
+              "start": 1439,
+              "end": 1576
+            },
+            "referencedNames": [
+              "armResourceIdentifier"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 59,
+            "endLine": 63
+          }
+        },
+        {
+          "id": "declaration-66a1234b5a48a459",
+          "kind": "property",
+          "qualifiedName": "WorkspaceEvaluationProperties.numScenariosToEvaluate",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-6adc2f483edb150b"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspaceEvaluation.models.tsp",
+            "position": {
+              "start": 1555,
+              "end": 1669
+            },
+            "referencedNames": [
+              "int32"
+            ]
+          },
+          "source": {
+            "revision": "base",
+            "startLine": 65,
+            "endLine": 69
+          }
+        },
+        {
+          "id": "declaration-16ca792cc2133bb6",
+          "kind": "property",
+          "qualifiedName": "WorkspaceEvaluationProperties.numScenariosToEvaluate",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-6adc2f483edb150b"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspaceEvaluation.models.tsp",
+            "position": {
+              "start": 1581,
+              "end": 1695
+            },
+            "referencedNames": [
+              "int32"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 65,
+            "endLine": 69
+          }
+        }
+      ],
+      "documentEvidence": {
+        "schemaVersion": 3,
+        "status": "ready",
+        "blockers": [],
+        "documents": [
+          {
+            "id": "document-39f39ee6ddd0e5f9",
+            "sourceChangeId": "source-e69ddc949601a3eb",
+            "qualifiedName": "Microsoft.Chaos.WorkspaceEvaluationProperties.workspaceId",
+            "kind": "property",
+            "before": {
+              "doc": "The workspace ID this evaluation belongs to.",
+              "declaration": "/**\n   * The workspace ID this evaluation belongs to.\n   */\n  @visibility(Lifecycle.Read)\n  workspaceId: string",
+              "source": {
+                "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspaceEvaluation.models.tsp",
+                "revision": "base",
+                "startLine": 59,
+                "endLine": 63
+              }
+            },
+            "after": {
+              "doc": "The workspace ID this evaluation belongs to.",
+              "declaration": "/**\n   * The workspace ID this evaluation belongs to.\n   */\n  @visibility(Lifecycle.Read)\n  workspaceId: Azure.Core.armResourceIdentifier",
+              "source": {
+                "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspaceEvaluation.models.tsp",
+                "revision": "current",
+                "startLine": 59,
+                "endLine": 63
+              }
+            },
+            "hunkIds": [
+              "hunk-6adc2f483edb150b"
+            ]
+          },
+          {
+            "id": "document-f8e2d65c11d83904",
+            "sourceChangeId": "source-e69ddc949601a3eb",
+            "qualifiedName": "Microsoft.Chaos.WorkspaceEvaluationProperties",
+            "kind": "model",
+            "before": {
+              "doc": "Model that represents the properties of the workspace evaluation.",
+              "declaration": "/**\n * Model that represents the properties of the workspace evaluation.\n */\n#suppress \"@azure-tools/typespec-azure-resource-manager/arm-resource-provisioning-state\" \"Read-only singleton resource representing latest evaluation status\"\nmodel WorkspaceEvaluationProperties {\n  /**\n   * The evaluation status.\n   */\n  @visibility(Lifecycle.Read)\n  status: WorkspaceEvaluationStatus;\n\n  /**\n   * The evaluation UTC start time.\n   */\n  @visibility(Lifecycle.Read)\n  startTime?: utcDateTime;\n\n  /**\n   * The evaluation UTC end time.\n   */\n  @visibility(Lifecycle.Read)\n  endTime?: utcDateTime;\n\n  /**\n   * System or infrastructure errors encountered during evaluation.\n   */\n  @visibility(Lifecycle.Read)\n  @identifiers(#[])\n  errors?: OperationError[];\n\n  /**\n   * The workspace ID this evaluation belongs to.\n   */\n  @visibility(Lifecycle.Read)\n  workspaceId: string;\n\n  /**\n   * The number of scenarios to evaluate.\n   */\n  @visibility(Lifecycle.Read)\n  numScenariosToEvaluate?: int32;\n\n  /**\n   * The number of scenarios that evaluated successfully.\n   */\n  @visibility(Lifecycle.Read)\n  numScenariosEvaluatedSucceeded?: int32;\n\n  /**\n   * The number of scenarios that failed evaluation.\n   */\n  @visibility(Lifecycle.Read)\n  numScenariosEvaluatedFailed?: int32;\n\n  /**\n   * The number of scenarios that were cancelled during evaluation.\n   */\n  @visibility(Lifecycle.Read)\n  numScenariosEvaluatedCancelled?: int32;\n\n  /**\n   * The overall evaluation result.\n   */\n  @visibility(Lifecycle.Read)\n  evaluationResult?: RecommendationStatus;\n\n  /**\n   * Per-scenario evaluation results.\n   */\n  @visibility(Lifecycle.Read)\n  @identifiers(#[\"scenarioName\"])\n  results?: ScenarioEvaluationResultItem[];\n}",
+              "source": {
+                "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspaceEvaluation.models.tsp",
+                "revision": "base",
+                "startLine": 29,
+                "endLine": 101
+              }
+            },
+            "after": {
+              "doc": "Model that represents the properties of the workspace evaluation.",
+              "declaration": "/**\n * Model that represents the properties of the workspace evaluation.\n */\n#suppress \"@azure-tools/typespec-azure-resource-manager/arm-resource-provisioning-state\" \"Read-only singleton resource representing latest evaluation status\"\nmodel WorkspaceEvaluationProperties {\n  /**\n   * The evaluation status.\n   */\n  @visibility(Lifecycle.Read)\n  status: WorkspaceEvaluationStatus;\n\n  /**\n   * The evaluation UTC start time.\n   */\n  @visibility(Lifecycle.Read)\n  startTime?: utcDateTime;\n\n  /**\n   * The evaluation UTC end time.\n   */\n  @visibility(Lifecycle.Read)\n  endTime?: utcDateTime;\n\n  /**\n   * System or infrastructure errors encountered during evaluation.\n   */\n  @visibility(Lifecycle.Read)\n  @identifiers(#[])\n  errors?: OperationError[];\n\n  /**\n   * The workspace ID this evaluation belongs to.\n   */\n  @visibility(Lifecycle.Read)\n  workspaceId: Azure.Core.armResourceIdentifier;\n\n  /**\n   * The number of scenarios to evaluate.\n   */\n  @visibility(Lifecycle.Read)\n  numScenariosToEvaluate?: int32;\n\n  /**\n   * The number of scenarios that evaluated successfully.\n   */\n  @visibility(Lifecycle.Read)\n  numScenariosEvaluatedSucceeded?: int32;\n\n  /**\n   * The number of scenarios that failed evaluation.\n   */\n  @visibility(Lifecycle.Read)\n  numScenariosEvaluatedFailed?: int32;\n\n  /**\n   * The number of scenarios that were cancelled during evaluation.\n   */\n  @visibility(Lifecycle.Read)\n  numScenariosEvaluatedCancelled?: int32;\n\n  /**\n   * The overall evaluation result.\n   */\n  @visibility(Lifecycle.Read)\n  evaluationResult?: RecommendationStatus;\n\n  /**\n   * Per-scenario evaluation results.\n   */\n  @visibility(Lifecycle.Read)\n  @identifiers(#[\"scenarioName\"])\n  results?: ScenarioEvaluationResultItem[];\n}",
+              "source": {
+                "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspaceEvaluation.models.tsp",
+                "revision": "current",
+                "startLine": 29,
+                "endLine": 101
+              }
+            },
+            "hunkIds": [
+              "hunk-6adc2f483edb150b"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "source-b87f3a5e3fa341ca",
+      "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/client.tsp",
+      "status": "modified",
+      "origins": [
+        "committed"
+      ],
+      "hunks": [
+        {
+          "id": "hunk-b7cfd28859536ed6",
+          "base": {
+            "startLine": 9,
+            "endLine": 14
+          },
+          "current": {
+            "startLine": 9,
+            "endLine": 18
+          },
+          "lines": [
+            " @@clientName(Scenario, \"ChaosScenario\", \"csharp\");",
+            " @@clientName(ScenarioRun, \"ChaosScenarioRun\", \"csharp\");",
+            " @@clientName(ScenarioConfiguration, \"ChaosScenarioConfiguration\", \"csharp\");",
+            "+@@clientName(DiscoveredResource, \"ChaosDiscovered\", \"csharp\");",
+            "+@@clientName(PrivateAccess, \"ChaosPrivateAccess\", \"csharp\");",
+            "+@@clientName(PrivateAccessPatch, \"ChaosPrivateAccessPatch\", \"csharp\");",
+            "+@@clientName(PrivateAccessProperties, \"ChaosPrivateAccessProperties\", \"csharp\");",
+            " @@clientName(ExperimentExecution, \"ChaosExperimentExecution\", \"csharp\");",
+            " @@clientName(Experiment, \"ChaosExperiment\", \"csharp\");",
+            " @@clientName(ExperimentExecution, \"ChaosExperimentExecution\", \"csharp\");"
+          ]
+        },
+        {
+          "id": "hunk-6427bb1a68cb07d6",
+          "base": {
+            "startLine": 52,
+            "endLine": 57
+          },
+          "current": {
+            "startLine": 56,
+            "endLine": 80
+          },
+          "lines": [
+            " @@clientName(Action, \"ChaosAction\", \"csharp\");",
+            " @@clientName(ActionVersion, \"ChaosActionVersion\", \"csharp\");",
+            " @@clientName(ActionKind, \"ChaosActionKind\", \"csharp\");",
+            "+@@clientName(",
+            "+  ConfigurationExclusions,",
+            "+  \"ChaosScenarioConfigurationExclusions\",",
+            "+  \"csharp\"",
+            "+);",
+            "+@@clientName(",
+            "+  ConfigurationFilters,",
+            "+  \"ChaosScenarioConfigurationFilters\",",
+            "+  \"csharp\"",
+            "+);",
+            "+@@clientName(OperationError, \"ChaosOperationError\", \"csharp\");",
+            "+@@clientName(ScenarioParameter.required, \"IsRequired\", \"csharp\");",
+            "+@@clientName(ParameterType, \"ChaosScenarioParameterType\", \"csharp\");",
+            "+@@clientName(FixResourcePermissionsRequest.whatIf, \"IsWhatIf\", \"csharp\");",
+            "+@@clientName(PermissionsFix, \"ChaosPermissionsFixData\", \"csharp\");",
+            "+@@clientName(PermissionsFixProperties.whatIfMode, \"IsWhatIfMode\", \"csharp\");",
+            "+@@clientName(Recommendation, \"ChaosScenarioRecommendation\", \"csharp\");",
+            "+@@clientName(Validation, \"ChaosScenarioValidationData\", \"csharp\");",
+            "+@@clientName(WorkspaceEvaluation, \"ChaosWorkspaceEvaluationData\", \"csharp\");",
+            " @@clientName(",
+            "   ActionSupportedTargetType,",
+            "   \"ChaosActionSupportedTargetType\",",
+            ""
+          ]
+        }
+      ],
+      "declarations": [],
+      "documentEvidence": {
+        "schemaVersion": 3,
+        "status": "ready",
+        "blockers": [],
+        "documents": []
+      }
+    },
+    {
+      "id": "source-07d51f7284c81844",
+      "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.models.tsp",
+      "status": "modified",
+      "origins": [
+        "committed"
+      ],
+      "hunks": [
+        {
+          "id": "hunk-72c5a83f61377cf6",
+          "base": {
+            "startLine": 5,
+            "endLine": 16
+          },
+          "current": {
+            "startLine": 5,
+            "endLine": 45
+          },
+          "lines": [
+            " import \"./scenario.models.tsp\";",
+            " ",
+            " using TypeSpec.Rest;",
+            "+using TypeSpec.Http;",
+            " using Azure.ResourceManager;",
+            " using Azure.Core;",
+            " using Azure.Core.Traits;",
+            " ",
+            " namespace Microsoft.Chaos;",
+            " ",
+            "+/**",
+            "+ * Indicates the scenario run is still in progress. Clients polling via the",
+            "+ * Location header should continue polling until a 200 response is returned.",
+            "+ * The body reflects the current run state at the time of the poll.",
+            "+ */",
+            "+model ScenarioRunInProgressResponse {",
+            "+  ...AcceptedResponse;",
+            "+",
+            "+  /**",
+            "+   * The URL where the status of the long-running operation can be polled.",
+            "+   */",
+            "+  @header(\"Location\")",
+            "+  location: url;",
+            "+",
+            "+  /**",
+            "+   * The number of seconds the client should wait before polling again.",
+            "+   */",
+            "+  @minValue(0)",
+            "+  @maxValue(2147483647)",
+            "+  @header(\"Retry-After\")",
+            "+  retryAfter?: int32;",
+            "+",
+            "+  /**",
+            "+   * The current scenario run state at the time of the poll.",
+            "+   */",
+            "+  @bodyRoot body: ScenarioRun;",
+            "+}",
+            "+",
+            " /**",
+            "  * Model that represents the scenario run.",
+            "  */",
+            ""
+          ]
+        }
+      ],
+      "declarations": [
+        {
+          "id": "declaration-3cd1eef2631d85ab",
+          "kind": "model",
+          "qualifiedName": "ScenarioRun",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-72c5a83f61377cf6"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Model",
+            "sourceFile": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.models.tsp",
+            "position": {
+              "start": 303,
+              "end": 673
+            },
+            "referencedNames": [
+              "Application",
+              "Array",
+              "Canceled",
+              "Canceling",
+              "CleaningUp",
+              "Failed",
+              "Generating",
+              "Key",
+              "Logical",
+              "ManagedIdentity",
+              "OperationError",
+              "OperationError.errorCode",
+              "OperationError.errorMessage",
+              "PermissionError",
+              "Physical",
+              "Preparing",
+              "ProxyResource",
+              "ProxyResource.properties",
+              "Queued",
+              "Resolving",
+              "Resource",
+              "Resource.id",
+              "Resource.name",
+              "Resource.systemData",
+              "Resource.type",
+              "ResourceStateError",
+              "Running",
+              "ScenarioErrors",
+              "ScenarioErrors.errorCode",
+              "ScenarioErrors.errorMessage",
+              "ScenarioErrors.permission",
+              "ScenarioErrors.resource",
+              "ScenarioRun.name",
+              "ScenarioRun.properties",
+              "ScenarioRunProperties",
+              "ScenarioRunProperties.endTime",
+              "ScenarioRunProperties.errors",
+              "ScenarioRunProperties.executionErrors",
+              "ScenarioRunProperties.managedIdentityPrincipalId",
+              "ScenarioRunProperties.resources",
+              "ScenarioRunProperties.scenarioConfigurationName",
+              "ScenarioRunProperties.scenarioName",
+              "ScenarioRunProperties.scenarioRunJson",
+              "ScenarioRunProperties.scenarioRunSummary",
+              "ScenarioRunProperties.startTime",
+              "ScenarioRunProperties.status",
+              "ScenarioRunProperties.workspaceName",
+              "ScenarioRunProperties.zoneResolution",
+              "ScenarioRunResource",
+              "ScenarioRunResource.id",
+              "ScenarioRunState",
+              "ScenarioRunSummaryAction",
+              "ScenarioRunSummaryAction.actionUrn",
+              "ScenarioRunSummaryAction.completedAt",
+              "ScenarioRunSummaryAction.resources",
+              "ScenarioRunSummaryAction.startedAt",
+              "ScenarioRunSummaryAction.state",
+              "ScenarioSummaryState",
+              "Starting",
+              "Succeeded",
+              "SystemData",
+              "SystemData.createdAt",
+              "SystemData.createdBy",
+              "SystemData.createdByType",
+              "SystemData.lastModifiedAt",
+              "SystemData.lastModifiedBy",
+              "SystemData.lastModifiedByType",
+              "User",
+              "Validating",
+              "ValidationSucceeded",
+              "ZoneResolutionInfo",
+              "ZoneResolutionInfo.mode",
+              "ZoneResolutionInfo.requestedPhysicalZones",
+              "ZoneResolutionInfo.subscriptionZoneMappings",
+              "ZoneResolutionMapping",
+              "ZoneResolutionMode",
+              "armResourceIdentifier",
+              "armResourceType",
+              "createdByType",
+              "string",
+              "utcDateTime"
+            ]
+          },
+          "source": {
+            "revision": "base",
+            "startLine": 14,
+            "endLine": 26
+          }
+        },
+        {
+          "id": "declaration-a6040788c889759b",
+          "kind": "model",
+          "qualifiedName": "ScenarioRunInProgressResponse",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-72c5a83f61377cf6"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Model",
+            "sourceFile": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.models.tsp",
+            "position": {
+              "start": 324,
+              "end": 1018
+            },
+            "referencedNames": [
+              "Array",
+              "Canceled",
+              "Canceling",
+              "CleaningUp",
+              "Failed",
+              "Generating",
+              "OperationError",
+              "Preparing",
+              "ProxyResource",
+              "ProxyResource.properties",
+              "Queued",
+              "Resolving",
+              "Resource",
+              "Resource.id",
+              "Resource.name",
+              "Resource.systemData",
+              "Resource.type",
+              "Running",
+              "ScenarioErrors",
+              "ScenarioErrors.errorCode",
+              "ScenarioErrors.errorMessage",
+              "ScenarioErrors.permission",
+              "ScenarioErrors.resource",
+              "ScenarioRun",
+              "ScenarioRun.name",
+              "ScenarioRun.properties",
+              "ScenarioRunInProgressResponse.body",
+              "ScenarioRunInProgressResponse.location",
+              "ScenarioRunInProgressResponse.retryAfter",
+              "ScenarioRunInProgressResponse.statusCode",
+              "ScenarioRunProperties",
+              "ScenarioRunProperties.endTime",
+              "ScenarioRunProperties.errors",
+              "ScenarioRunProperties.executionErrors",
+              "ScenarioRunProperties.managedIdentityPrincipalId",
+              "ScenarioRunProperties.resources",
+              "ScenarioRunProperties.scenarioConfigurationName",
+              "ScenarioRunProperties.scenarioName",
+              "ScenarioRunProperties.scenarioRunJson",
+              "ScenarioRunProperties.scenarioRunSummary",
+              "ScenarioRunProperties.startTime",
+              "ScenarioRunProperties.status",
+              "ScenarioRunProperties.workspaceName",
+              "ScenarioRunProperties.zoneResolution",
+              "ScenarioRunResource",
+              "ScenarioRunState",
+              "ScenarioRunSummaryAction",
+              "Starting",
+              "Succeeded",
+              "SystemData",
+              "SystemData.createdAt",
+              "SystemData.createdBy",
+              "SystemData.createdByType",
+              "SystemData.lastModifiedAt",
+              "SystemData.lastModifiedBy",
+              "SystemData.lastModifiedByType",
+              "Validating",
+              "ValidationSucceeded",
+              "ZoneResolutionInfo",
+              "ZoneResolutionInfo.mode",
+              "ZoneResolutionInfo.requestedPhysicalZones",
+              "ZoneResolutionInfo.subscriptionZoneMappings",
+              "armResourceIdentifier",
+              "armResourceType",
+              "createdByType",
+              "int32",
+              "string",
+              "url",
+              "utcDateTime"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 15,
+            "endLine": 41
+          }
+        },
+        {
+          "id": "declaration-51f8321feaf63705",
+          "kind": "property",
+          "qualifiedName": "ScenarioRunInProgressResponse.location",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-72c5a83f61377cf6"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.models.tsp",
+            "position": {
+              "start": 617,
+              "end": 739
+            },
+            "referencedNames": [
+              "url"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 23,
+            "endLine": 27
+          }
+        },
+        {
+          "id": "declaration-6ed9fe17dabb3ec4",
+          "kind": "property",
+          "qualifiedName": "ScenarioRunInProgressResponse.retryAfter",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-72c5a83f61377cf6"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.models.tsp",
+            "position": {
+              "start": 744,
+              "end": 910
+            },
+            "referencedNames": [
+              "int32"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 29,
+            "endLine": 35
+          }
+        },
+        {
+          "id": "declaration-f449301f3ea800f9",
+          "kind": "property",
+          "qualifiedName": "ScenarioRunInProgressResponse.body",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-72c5a83f61377cf6"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.models.tsp",
+            "position": {
+              "start": 915,
+              "end": 1015
+            },
+            "referencedNames": [
+              "Application",
+              "Array",
+              "Canceled",
+              "Canceling",
+              "CleaningUp",
+              "Failed",
+              "Generating",
+              "Key",
+              "ManagedIdentity",
+              "OperationError",
+              "OperationError.errorCode",
+              "OperationError.errorMessage",
+              "Preparing",
+              "ProxyResource",
+              "ProxyResource.properties",
+              "Queued",
+              "Resolving",
+              "Resource",
+              "Resource.id",
+              "Resource.name",
+              "Resource.systemData",
+              "Resource.type",
+              "Running",
+              "ScenarioErrors",
+              "ScenarioErrors.errorCode",
+              "ScenarioErrors.errorMessage",
+              "ScenarioErrors.permission",
+              "ScenarioErrors.resource",
+              "ScenarioRun",
+              "ScenarioRun.name",
+              "ScenarioRun.properties",
+              "ScenarioRunProperties",
+              "ScenarioRunProperties.endTime",
+              "ScenarioRunProperties.errors",
+              "ScenarioRunProperties.executionErrors",
+              "ScenarioRunProperties.managedIdentityPrincipalId",
+              "ScenarioRunProperties.resources",
+              "ScenarioRunProperties.scenarioConfigurationName",
+              "ScenarioRunProperties.scenarioName",
+              "ScenarioRunProperties.scenarioRunJson",
+              "ScenarioRunProperties.scenarioRunSummary",
+              "ScenarioRunProperties.startTime",
+              "ScenarioRunProperties.status",
+              "ScenarioRunProperties.workspaceName",
+              "ScenarioRunProperties.zoneResolution",
+              "ScenarioRunResource",
+              "ScenarioRunResource.id",
+              "ScenarioRunState",
+              "ScenarioRunSummaryAction",
+              "ScenarioRunSummaryAction.actionUrn",
+              "ScenarioRunSummaryAction.completedAt",
+              "ScenarioRunSummaryAction.resources",
+              "ScenarioRunSummaryAction.startedAt",
+              "ScenarioRunSummaryAction.state",
+              "Starting",
+              "Succeeded",
+              "SystemData",
+              "SystemData.createdAt",
+              "SystemData.createdBy",
+              "SystemData.createdByType",
+              "SystemData.lastModifiedAt",
+              "SystemData.lastModifiedBy",
+              "SystemData.lastModifiedByType",
+              "User",
+              "Validating",
+              "ValidationSucceeded",
+              "ZoneResolutionInfo",
+              "ZoneResolutionInfo.mode",
+              "ZoneResolutionInfo.requestedPhysicalZones",
+              "ZoneResolutionInfo.subscriptionZoneMappings",
+              "ZoneResolutionMode",
+              "armResourceIdentifier",
+              "armResourceType",
+              "createdByType",
+              "string",
+              "utcDateTime"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 37,
+            "endLine": 40
+          }
+        },
+        {
+          "id": "declaration-c860d1800e203a3b",
+          "kind": "model",
+          "qualifiedName": "ScenarioRun",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-72c5a83f61377cf6"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Model",
+            "sourceFile": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.models.tsp",
+            "position": {
+              "start": 1020,
+              "end": 1390
+            },
+            "referencedNames": [
+              "Application",
+              "Array",
+              "Canceled",
+              "Canceling",
+              "CleaningUp",
+              "Failed",
+              "Generating",
+              "Key",
+              "Logical",
+              "ManagedIdentity",
+              "OperationError",
+              "OperationError.errorCode",
+              "OperationError.errorMessage",
+              "PermissionError",
+              "Physical",
+              "Preparing",
+              "ProxyResource",
+              "ProxyResource.properties",
+              "Queued",
+              "Resolving",
+              "Resource",
+              "Resource.id",
+              "Resource.name",
+              "Resource.systemData",
+              "Resource.type",
+              "ResourceStateError",
+              "Running",
+              "ScenarioErrors",
+              "ScenarioErrors.errorCode",
+              "ScenarioErrors.errorMessage",
+              "ScenarioErrors.permission",
+              "ScenarioErrors.resource",
+              "ScenarioRun.name",
+              "ScenarioRun.properties",
+              "ScenarioRunProperties",
+              "ScenarioRunProperties.endTime",
+              "ScenarioRunProperties.errors",
+              "ScenarioRunProperties.executionErrors",
+              "ScenarioRunProperties.managedIdentityPrincipalId",
+              "ScenarioRunProperties.resources",
+              "ScenarioRunProperties.scenarioConfigurationName",
+              "ScenarioRunProperties.scenarioName",
+              "ScenarioRunProperties.scenarioRunJson",
+              "ScenarioRunProperties.scenarioRunSummary",
+              "ScenarioRunProperties.startTime",
+              "ScenarioRunProperties.status",
+              "ScenarioRunProperties.workspaceName",
+              "ScenarioRunProperties.zoneResolution",
+              "ScenarioRunResource",
+              "ScenarioRunResource.id",
+              "ScenarioRunState",
+              "ScenarioRunSummaryAction",
+              "ScenarioRunSummaryAction.actionUrn",
+              "ScenarioRunSummaryAction.completedAt",
+              "ScenarioRunSummaryAction.resources",
+              "ScenarioRunSummaryAction.startedAt",
+              "ScenarioRunSummaryAction.state",
+              "ScenarioSummaryState",
+              "Starting",
+              "Succeeded",
+              "SystemData",
+              "SystemData.createdAt",
+              "SystemData.createdBy",
+              "SystemData.createdByType",
+              "SystemData.lastModifiedAt",
+              "SystemData.lastModifiedBy",
+              "SystemData.lastModifiedByType",
+              "User",
+              "Validating",
+              "ValidationSucceeded",
+              "ZoneResolutionInfo",
+              "ZoneResolutionInfo.mode",
+              "ZoneResolutionInfo.requestedPhysicalZones",
+              "ZoneResolutionInfo.subscriptionZoneMappings",
+              "ZoneResolutionMapping",
+              "ZoneResolutionMode",
+              "armResourceIdentifier",
+              "armResourceType",
+              "createdByType",
+              "string",
+              "utcDateTime"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 43,
+            "endLine": 55
+          }
+        }
+      ],
+      "documentEvidence": {
+        "schemaVersion": 3,
+        "status": "ready",
+        "blockers": [],
+        "documents": [
+          {
+            "id": "document-0afb4ad255cbe5d6",
+            "sourceChangeId": "source-07d51f7284c81844",
+            "qualifiedName": "Microsoft.Chaos.ScenarioRunInProgressResponse",
+            "kind": "model",
+            "before": null,
+            "after": {
+              "doc": "Indicates the scenario run is still in progress. Clients polling via the\nLocation header should continue polling until a 200 response is returned.\nThe body reflects the current run state at the time of the poll.",
+              "declaration": "/**\n * Indicates the scenario run is still in progress. Clients polling via the\n * Location header should continue polling until a 200 response is returned.\n * The body reflects the current run state at the time of the poll.\n */\nmodel ScenarioRunInProgressResponse {\n  ...AcceptedResponse;\n\n  /**\n   * The URL where the status of the long-running operation can be polled.\n   */\n  @header(\"Location\")\n  location: url;\n\n  /**\n   * The number of seconds the client should wait before polling again.\n   */\n  @minValue(0)\n  @maxValue(2147483647)\n  @header(\"Retry-After\")\n  retryAfter?: int32;\n\n  /**\n   * The current scenario run state at the time of the poll.\n   */\n  @bodyRoot body: ScenarioRun;\n}",
+              "source": {
+                "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.models.tsp",
+                "revision": "current",
+                "startLine": 15,
+                "endLine": 41
+              }
+            },
+            "hunkIds": [
+              "hunk-72c5a83f61377cf6"
+            ]
+          },
+          {
+            "id": "document-162418e98505f8e5",
+            "sourceChangeId": "source-07d51f7284c81844",
+            "qualifiedName": "Microsoft.Chaos.ScenarioRunInProgressResponse.body",
+            "kind": "property",
+            "before": null,
+            "after": {
+              "doc": "The current scenario run state at the time of the poll.",
+              "declaration": "/**\n   * The current scenario run state at the time of the poll.\n   */\n  @bodyRoot body: ScenarioRun",
+              "source": {
+                "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.models.tsp",
+                "revision": "current",
+                "startLine": 37,
+                "endLine": 40
+              }
+            },
+            "hunkIds": [
+              "hunk-72c5a83f61377cf6"
+            ]
+          },
+          {
+            "id": "document-9706fb759b340d67",
+            "sourceChangeId": "source-07d51f7284c81844",
+            "qualifiedName": "Microsoft.Chaos.ScenarioRunInProgressResponse.location",
+            "kind": "property",
+            "before": null,
+            "after": {
+              "doc": "The URL where the status of the long-running operation can be polled.",
+              "declaration": "/**\n   * The URL where the status of the long-running operation can be polled.\n   */\n  @header(\"Location\")\n  location: url",
+              "source": {
+                "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.models.tsp",
+                "revision": "current",
+                "startLine": 23,
+                "endLine": 27
+              }
+            },
+            "hunkIds": [
+              "hunk-72c5a83f61377cf6"
+            ]
+          },
+          {
+            "id": "document-c3c3de5e90456420",
+            "sourceChangeId": "source-07d51f7284c81844",
+            "qualifiedName": "Microsoft.Chaos.ScenarioRunInProgressResponse.retryAfter",
+            "kind": "property",
+            "before": null,
+            "after": {
+              "doc": "The number of seconds the client should wait before polling again.",
+              "declaration": "/**\n   * The number of seconds the client should wait before polling again.\n   */\n  @minValue(0)\n  @maxValue(2147483647)\n  @header(\"Retry-After\")\n  retryAfter?: int32",
+              "source": {
+                "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.models.tsp",
+                "revision": "current",
+                "startLine": 29,
+                "endLine": 35
+              }
+            },
+            "hunkIds": [
+              "hunk-72c5a83f61377cf6"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "source-5872d934af0ffb74",
+      "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
+      "status": "modified",
+      "origins": [
+        "committed"
+      ],
+      "hunks": [
+        {
+          "id": "hunk-cbbce09d5e224510",
+          "base": {
+            "startLine": 2,
+            "endLine": 14
+          },
+          "current": {
+            "startLine": 2,
+            "endLine": 12
+          },
+          "lines": [
+            " import \"@azure-tools/typespec-azure-resource-manager\";",
+            " import \"@typespec/http\";",
+            " import \"@typespec/rest\";",
+            "-import \"@typespec/openapi\";",
+            " ",
+            " using Azure.ResourceManager;",
+            " using Azure.Core;",
+            " using TypeSpec.Http;",
+            " using TypeSpec.Rest;",
+            "-using TypeSpec.OpenAPI;",
+            " ",
+            " namespace Microsoft.Chaos;",
+            " "
+          ]
+        },
+        {
+          "id": "hunk-4073fd3bb79c9f96",
+          "base": {
+            "startLine": 24,
+            "endLine": 38
+          },
+          "current": {
+            "startLine": 22,
+            "endLine": 31
+          },
+          "lines": [
+            " #suppress \"@azure-tools/typespec-azure-core/documentation-required\" \"template\"",
+            " #suppress \"@azure-tools/typespec-azure-resource-manager/arm-resource-operation\" \"template\"",
+            " #suppress \"@azure-tools/typespec-azure-resource-manager/arm-post-operation-response-codes\" \"Custom LRO operation with specific response codes\"",
+            "-#suppress \"@azure-tools/typespec-azure-core/no-openapi\" \"Required for LRO extensions in OpenAPI output\"",
+            " @autoRoute",
+            " @armResourceAction(Resource)",
+            " @post",
+            "-@extension(\"x-ms-long-running-operation\", true)",
+            "-@extension(",
+            "-  \"x-ms-long-running-operation-options\",",
+            "-  #{ `final-state-via`: \"location\" }",
+            "-)",
+            "+@Azure.Core.useFinalStateVia(\"location\")",
+            " op ArmResourceActionAsyncWithLocation<",
+            "   Resource extends Azure.ResourceManager.Foundations.Resource,",
+            "   Request extends TypeSpec.Reflection.Model | void,"
+          ]
+        },
+        {
+          "id": "hunk-382feea9f72c3005",
+          "base": {
+            "startLine": 67,
+            "endLine": 81
+          },
+          "current": {
+            "startLine": 60,
+            "endLine": 69
+          },
+          "lines": [
+            " #suppress \"@azure-tools/typespec-azure-core/documentation-required\" \"template\"",
+            " #suppress \"@azure-tools/typespec-azure-resource-manager/arm-resource-operation\" \"template\"",
+            " #suppress \"@azure-tools/typespec-azure-resource-manager/arm-post-operation-response-codes\" \"Custom LRO operation with specific response codes\"",
+            "-#suppress \"@azure-tools/typespec-azure-core/no-openapi\" \"Required for LRO extensions in OpenAPI output\"",
+            " @autoRoute",
+            " @armResourceAction(Resource)",
+            " @post",
+            "-@extension(\"x-ms-long-running-operation\", true)",
+            "-@extension(",
+            "-  \"x-ms-long-running-operation-options\",",
+            "-  #{ `final-state-via`: \"location\" }",
+            "-)",
+            "+@Azure.Core.useFinalStateVia(\"location\")",
+            " op ArmResourceActionNoContentAsyncWithLocationResult<",
+            "   Resource extends Azure.ResourceManager.Foundations.Resource,",
+            "   Request extends TypeSpec.Reflection.Model | void,"
+          ]
+        },
+        {
+          "id": "hunk-3e1defef9a255227",
+          "base": {
+            "startLine": 107,
+            "endLine": 121
+          },
+          "current": {
+            "startLine": 95,
+            "endLine": 104
+          },
+          "lines": [
+            " #suppress \"@azure-tools/typespec-azure-core/documentation-required\" \"template\"",
+            " #suppress \"@azure-tools/typespec-azure-resource-manager/arm-resource-operation\" \"template\"",
+            " #suppress \"@azure-tools/typespec-azure-resource-manager/arm-post-operation-response-codes\" \"Custom LRO operation with specific response codes\"",
+            "-#suppress \"@azure-tools/typespec-azure-core/no-openapi\" \"Required for LRO extensions in OpenAPI output\"",
+            " @autoRoute",
+            " @armResourceAction(Resource)",
+            " @post",
+            "-@extension(\"x-ms-long-running-operation\", true)",
+            "-@extension(",
+            "-  \"x-ms-long-running-operation-options\",",
+            "-  #{ `final-state-via`: \"location\" }",
+            "-)",
+            "+@Azure.Core.useFinalStateVia(\"location\")",
+            " op ArmResourceActionNoBodyAsyncWithLocation<",
+            "   Resource extends Azure.ResourceManager.Foundations.Resource,",
+            "   Request extends TypeSpec.Reflection.Model | void,",
+            ""
+          ]
+        }
+      ],
+      "declarations": [
+        {
+          "id": "declaration-d7d34ee7cb83cb00",
+          "kind": "operation",
+          "qualifiedName": "ArmResourceActionNoContentAsyncWithLocationResult",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-382feea9f72c3005"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Operation",
+            "sourceFile": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
+            "position": {
+              "start": 1736,
+              "end": 3477
+            },
+            "referencedNames": [
+              "ArmAcceptedLroResponse",
+              "ArmAcceptedLroResponse.location",
+              "ArmAcceptedLroResponse.retryAfter",
+              "ArmAcceptedLroResponse.statusCode",
+              "Array",
+              "ErrorAdditionalInfo",
+              "ErrorDetail",
+              "ErrorDetail.additionalInfo",
+              "ErrorDetail.code",
+              "ErrorDetail.details",
+              "ErrorDetail.message",
+              "ErrorDetail.target",
+              "ErrorResponse",
+              "ErrorResponse.error",
+              "apiVersion",
+              "body",
+              "int32",
+              "provider",
+              "resourceGroupName",
+              "runId",
+              "scenarioName",
+              "string",
+              "subscriptionId",
+              "uuid",
+              "void",
+              "workspaceName"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 46,
+            "endLine": 81
+          }
+        },
+        {
+          "id": "declaration-871e0c8b5e7c783f",
+          "kind": "operation",
+          "qualifiedName": "ArmResourceActionNoContentAsyncWithLocationResult",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-382feea9f72c3005"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Operation",
+            "sourceFile": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/lro-helpers.tsp",
+            "position": {
+              "start": 1991,
+              "end": 3935
+            },
+            "referencedNames": [
+              "ArmAcceptedLroResponse",
+              "ArmAcceptedLroResponse.location",
+              "ArmAcceptedLroResponse.retryAfter",
+              "ArmAcceptedLroResponse.statusCode",
+              "Array",
+              "ErrorAdditionalInfo",
+              "ErrorDetail",
+              "ErrorDetail.additionalInfo",
+              "ErrorDetail.code",
+              "ErrorDetail.details",
+              "ErrorDetail.message",
+              "ErrorDetail.target",
+              "ErrorResponse",
+              "ErrorResponse.error",
+              "FixResourcePermissionsRequest",
+              "FixResourcePermissionsRequest.whatIf",
+              "apiVersion",
+              "body",
+              "boolean",
+              "int32",
+              "provider",
+              "resourceGroupName",
+              "scenarioConfigurationName",
+              "scenarioName",
+              "string",
+              "subscriptionId",
+              "uuid",
+              "workspaceName"
+            ]
+          },
+          "source": {
+            "revision": "base",
+            "startLine": 53,
+            "endLine": 93
+          }
+        }
+      ],
+      "documentEvidence": {
+        "schemaVersion": 3,
+        "status": "ready",
+        "blockers": [],
+        "documents": [
+          {
+            "id": "document-1fba886886a458de",
+            "sourceChangeId": "source-5872d934af0ffb74",
+            "qualifiedName": "Microsoft.Chaos.ArmResourceActionNoBodyAsyncWithLocation",
+            "kind": "operation",
+            "before": null,
+            "after": null,
+            "hunkIds": [
+              "hunk-3e1defef9a255227"
+            ],
+            "blocker": "Cannot establish that the local description resolves to TypeSpec @doc."
+          },
+          {
+            "id": "document-281e24a663de880c",
+            "sourceChangeId": "source-5872d934af0ffb74",
+            "qualifiedName": "Microsoft.Chaos.ArmResourceActionAsyncWithLocation",
+            "kind": "operation",
+            "before": null,
+            "after": null,
+            "hunkIds": [
+              "hunk-4073fd3bb79c9f96"
+            ],
+            "blocker": "Cannot establish that the local description resolves to TypeSpec @doc."
+          },
+          {
+            "id": "document-da079fdd88c9e037",
+            "sourceChangeId": "source-5872d934af0ffb74",
+            "qualifiedName": "Microsoft.Chaos.ArmResourceActionNoContentAsyncWithLocationResult",
+            "kind": "operation",
+            "before": null,
+            "after": null,
+            "hunkIds": [
+              "hunk-382feea9f72c3005"
+            ],
+            "blocker": "Cannot establish that the local description resolves to TypeSpec @doc."
+          }
+        ]
+      }
+    },
+    {
+      "id": "source-69a2ddc47ac80abd",
+      "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
+      "status": "modified",
+      "origins": [
+        "committed"
+      ],
+      "hunks": [
+        {
+          "id": "hunk-01f45d5aed4d7b62",
+          "base": {
+            "startLine": 2,
+            "endLine": 8
+          },
+          "current": {
+            "startLine": 2,
+            "endLine": 7
+          },
+          "lines": [
+            " import \"@azure-tools/typespec-azure-resource-manager\";",
+            " import \"@typespec/rest\";",
+            " import \"@typespec/http\";",
+            "-import \"@typespec/openapi\";",
+            " import \"./scenarioRun.models.tsp\";",
+            " import \"./lro-helpers.tsp\";",
+            " "
+          ]
+        },
+        {
+          "id": "hunk-579b9c3ab2d0f182",
+          "base": {
+            "startLine": 11,
+            "endLine": 47
+          },
+          "current": {
+            "startLine": 10,
+            "endLine": 37
+          },
+          "lines": [
+            " using TypeSpec.Versioning;",
+            " using TypeSpec.Http;",
+            " using TypeSpec.Rest;",
+            "-using TypeSpec.OpenAPI;",
+            " ",
+            " namespace Microsoft.Chaos;",
+            " ",
+            " @added(Microsoft.Chaos.Versions.v2026_05_01_preview)",
+            "+@removed(Microsoft.Chaos.Versions.v2025_01_01)",
+            " @armResourceOperations",
+            " interface ScenarioRuns {",
+            "   /**",
+            "    * Get a scenario run.",
+            "+   *",
+            "+   * This endpoint is also the polling target for ScenarioConfigurations.execute",
+            "+   * and ScenarioRuns.cancel (final-state-via: location). While the run is in",
+            "+   * progress the service returns 202 with a Location header pointing back to",
+            "+   * this URL; clients must keep polling until they receive 200, which carries",
+            "+   * the final ScenarioRun body.",
+            "    */",
+            "-  #suppress \"@azure-tools/typespec-azure-resource-manager/arm-resource-operation\" \"LRO polling endpoint that returns body in both 200 and 202\"",
+            "-  #suppress \"@azure-tools/typespec-azure-resource-manager/no-response-body\" \"LRO polling endpoint returns body in 202 to reflect current status\"",
+            "-  #suppress \"@azure-tools/typespec-azure-core/polling-operation-no-status-monitor\" \"LRO uses final-state-via:location pattern, not status monitor\"",
+            "-  @summary(\"Get a scenario run.\")",
+            "-  @autoRoute",
+            "-  @armResourceRead(ScenarioRun)",
+            "-  @get",
+            "-  get(...ResourceInstanceParameters<ScenarioRun>):",
+            "-    | ArmResponse<ScenarioRun>",
+            "-    | (AcceptedResponse & {",
+            "-        @doc(\"The Location header contains the URL where the status of the long running operation can be checked.\")",
+            "-        @header(\"Location\")",
+            "-        location: string;",
+            "-",
+            "-        @doc(\"The Retry-After header can indicate how long the client should wait before polling the operation status.\")",
+            "-        @header(\"Retry-After\")",
+            "-        retryAfter?: int32;",
+            "-",
+            "-        @bodyRoot body: ScenarioRun;",
+            "-      })",
+            "-    | ErrorResponse;",
+            "+  #suppress \"@azure-tools/typespec-azure-resource-manager/arm-resource-operation\" \"LRO polling endpoint that returns body in both 200 and 202 responses.\"",
+            "+  #suppress \"@azure-tools/typespec-azure-resource-manager/no-response-body\" \"LRO polling endpoint returns body in 202 to reflect the current run state.\"",
+            "+  get is ArmResourceRead<",
+            "+    ScenarioRun,",
+            "+    Response = ArmResponse<ScenarioRun> | ScenarioRunInProgressResponse",
+            "+  >;",
+            " ",
+            "   /**",
+            "    * Get a list of scenario runs."
+          ]
+        },
+        {
+          "id": "hunk-9bd6d022e944c48c",
+          "base": {
+            "startLine": 54,
+            "endLine": 63
+          },
+          "current": {
+            "startLine": 44,
+            "endLine": 50
+          },
+          "lines": [
+            "   /**",
+            "    * Cancel the currently running scenario execution.",
+            "    */",
+            "-  #suppress \"@azure-tools/typespec-azure-resource-manager/arm-post-operation-response-codes\" \"LRO POST returns 202 with Location header for polling; final result obtained by polling the Location URL\"",
+            "-  #suppress \"@azure-tools/typespec-azure-core/polling-operation-no-status-monitor\" \"LRO uses final-state-via:location pattern\"",
+            "   @added(Microsoft.Chaos.Versions.v2026_05_01_preview)",
+            "-  @pollingOperation(ScenarioRuns.get)",
+            "   cancel is ArmResourceActionNoContentAsyncWithLocationResult<",
+            "     ScenarioRun,",
+            "     void,",
+            ""
+          ]
+        }
+      ],
+      "declarations": [
+        {
+          "id": "declaration-2caa7e8c582fa254",
+          "kind": "interface",
+          "qualifiedName": "ScenarioRuns",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-579b9c3ab2d0f182",
+            "hunk-9bd6d022e944c48c"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Interface",
+            "sourceFile": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
+            "position": {
+              "start": 357,
+              "end": 1701
+            },
+            "referencedNames": []
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 16,
+            "endLine": 53
+          }
+        },
+        {
+          "id": "declaration-65b119489a810bb0",
+          "kind": "interface",
+          "qualifiedName": "ScenarioRuns",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-579b9c3ab2d0f182",
+            "hunk-9bd6d022e944c48c"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Interface",
+            "sourceFile": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
+            "position": {
+              "start": 409,
+              "end": 2340
+            },
+            "referencedNames": []
+          },
+          "source": {
+            "revision": "base",
+            "startLine": 18,
+            "endLine": 66
+          }
+        },
+        {
+          "id": "declaration-6772621d58825c99",
+          "kind": "operation",
+          "qualifiedName": "ScenarioRuns.get",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-579b9c3ab2d0f182"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Operation",
+            "sourceFile": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
+            "position": {
+              "start": 507,
+              "end": 1321
+            },
+            "referencedNames": [
+              "ArmResponse",
+              "ArmResponse.body",
+              "ArmResponse.statusCode",
+              "Array",
+              "ErrorAdditionalInfo",
+              "ErrorDetail",
+              "ErrorDetail.additionalInfo",
+              "ErrorDetail.code",
+              "ErrorDetail.details",
+              "ErrorDetail.message",
+              "ErrorDetail.target",
+              "ErrorResponse",
+              "ErrorResponse.error",
+              "ProxyResource",
+              "ProxyResource.properties",
+              "Resource",
+              "Resource.id",
+              "Resource.name",
+              "Resource.systemData",
+              "Resource.type",
+              "ScenarioRun",
+              "ScenarioRun.name",
+              "ScenarioRun.properties",
+              "ScenarioRunInProgressResponse",
+              "ScenarioRunInProgressResponse.body",
+              "ScenarioRunInProgressResponse.location",
+              "ScenarioRunInProgressResponse.retryAfter",
+              "ScenarioRunInProgressResponse.statusCode",
+              "ScenarioRunProperties",
+              "apiVersion",
+              "int32",
+              "provider",
+              "resourceGroupName",
+              "runId",
+              "scenarioName",
+              "string",
+              "subscriptionId",
+              "url",
+              "uuid",
+              "workspaceName"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 20,
+            "endLine": 34
+          }
+        },
+        {
+          "id": "declaration-95c44a3c3deaa986",
+          "kind": "operation",
+          "qualifiedName": "ScenarioRuns.get",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-579b9c3ab2d0f182"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Operation",
+            "sourceFile": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
+            "position": {
+              "start": 512,
+              "end": 1595
+            },
+            "referencedNames": [
+              "ArmResponse",
+              "ArmResponse.body",
+              "ArmResponse.statusCode",
+              "Array",
+              "ErrorAdditionalInfo",
+              "ErrorDetail",
+              "ErrorDetail.additionalInfo",
+              "ErrorDetail.code",
+              "ErrorDetail.details",
+              "ErrorDetail.message",
+              "ErrorDetail.target",
+              "ErrorResponse",
+              "ErrorResponse.error",
+              "ProxyResource",
+              "ProxyResource.properties",
+              "Resource",
+              "Resource.id",
+              "Resource.name",
+              "Resource.systemData",
+              "Resource.type",
+              "ScenarioRun",
+              "ScenarioRun.name",
+              "ScenarioRun.properties",
+              "ScenarioRunProperties",
+              "apiVersion",
+              "body",
+              "int32",
+              "location",
+              "provider",
+              "resourceGroupName",
+              "retryAfter",
+              "runId",
+              "scenarioName",
+              "statusCode",
+              "string",
+              "subscriptionId",
+              "uuid",
+              "workspaceName"
+            ]
+          },
+          "source": {
+            "revision": "base",
+            "startLine": 21,
+            "endLine": 44
+          }
+        },
+        {
+          "id": "declaration-42d22d744dbadac0",
+          "kind": "property",
+          "qualifiedName": "location",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-579b9c3ab2d0f182"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
+            "position": {
+              "start": 1186,
+              "end": 1346
+            },
+            "referencedNames": [
+              "string"
+            ]
+          },
+          "source": {
+            "revision": "base",
+            "startLine": 34,
+            "endLine": 36
+          }
+        },
+        {
+          "id": "declaration-81da35f0f9a5fa26",
+          "kind": "operation",
+          "qualifiedName": "ScenarioRuns.listAll",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-579b9c3ab2d0f182"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Operation",
+            "sourceFile": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
+            "position": {
+              "start": 1326,
+              "end": 1465
+            },
+            "referencedNames": [
+              "Array",
+              "ErrorAdditionalInfo",
+              "ErrorDetail",
+              "ErrorDetail.additionalInfo",
+              "ErrorDetail.code",
+              "ErrorDetail.details",
+              "ErrorDetail.message",
+              "ErrorDetail.target",
+              "ErrorResponse",
+              "ErrorResponse.error",
+              "Page",
+              "Page.nextLink",
+              "Page.value",
+              "ProxyResource",
+              "ResourceLocation",
+              "ScenarioRun",
+              "ScenarioRun.name",
+              "ScenarioRun.properties",
+              "ScenarioRunListResult",
+              "ScenarioRunListResult.nextLink",
+              "ScenarioRunListResult.value",
+              "apiVersion",
+              "provider",
+              "resourceGroupName",
+              "scenarioName",
+              "string",
+              "subscriptionId",
+              "uuid",
+              "workspaceName"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 36,
+            "endLine": 42
+          }
+        },
+        {
+          "id": "declaration-b83be927db86cf01",
+          "kind": "property",
+          "qualifiedName": "retryAfter",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-579b9c3ab2d0f182"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
+            "position": {
+              "start": 1357,
+              "end": 1527
+            },
+            "referencedNames": [
+              "int32"
+            ]
+          },
+          "source": {
+            "revision": "base",
+            "startLine": 38,
+            "endLine": 40
+          }
+        },
+        {
+          "id": "declaration-6d2e0ea2549ab9de",
+          "kind": "property",
+          "qualifiedName": "body",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-579b9c3ab2d0f182"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "ModelProperty",
+            "sourceFile": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
+            "position": {
+              "start": 1538,
+              "end": 1565
+            },
+            "referencedNames": [
+              "Application",
+              "Array",
+              "Canceled",
+              "Canceling",
+              "CleaningUp",
+              "Failed",
+              "Generating",
+              "Key",
+              "ManagedIdentity",
+              "OperationError",
+              "OperationError.errorCode",
+              "OperationError.errorMessage",
+              "Preparing",
+              "ProxyResource",
+              "ProxyResource.properties",
+              "Queued",
+              "Resolving",
+              "Resource",
+              "Resource.id",
+              "Resource.name",
+              "Resource.systemData",
+              "Resource.type",
+              "Running",
+              "ScenarioErrors",
+              "ScenarioErrors.errorCode",
+              "ScenarioErrors.errorMessage",
+              "ScenarioErrors.permission",
+              "ScenarioErrors.resource",
+              "ScenarioRun",
+              "ScenarioRun.name",
+              "ScenarioRun.properties",
+              "ScenarioRunProperties",
+              "ScenarioRunProperties.endTime",
+              "ScenarioRunProperties.errors",
+              "ScenarioRunProperties.executionErrors",
+              "ScenarioRunProperties.managedIdentityPrincipalId",
+              "ScenarioRunProperties.resources",
+              "ScenarioRunProperties.scenarioConfigurationName",
+              "ScenarioRunProperties.scenarioName",
+              "ScenarioRunProperties.scenarioRunJson",
+              "ScenarioRunProperties.scenarioRunSummary",
+              "ScenarioRunProperties.startTime",
+              "ScenarioRunProperties.status",
+              "ScenarioRunProperties.workspaceName",
+              "ScenarioRunProperties.zoneResolution",
+              "ScenarioRunResource",
+              "ScenarioRunResource.id",
+              "ScenarioRunState",
+              "ScenarioRunSummaryAction",
+              "ScenarioRunSummaryAction.actionUrn",
+              "ScenarioRunSummaryAction.completedAt",
+              "ScenarioRunSummaryAction.resources",
+              "ScenarioRunSummaryAction.startedAt",
+              "ScenarioRunSummaryAction.state",
+              "Starting",
+              "Succeeded",
+              "SystemData",
+              "SystemData.createdAt",
+              "SystemData.createdBy",
+              "SystemData.createdByType",
+              "SystemData.lastModifiedAt",
+              "SystemData.lastModifiedBy",
+              "SystemData.lastModifiedByType",
+              "User",
+              "Validating",
+              "ValidationSucceeded",
+              "ZoneResolutionInfo",
+              "ZoneResolutionInfo.mode",
+              "ZoneResolutionInfo.requestedPhysicalZones",
+              "ZoneResolutionInfo.subscriptionZoneMappings",
+              "ZoneResolutionMode",
+              "armResourceIdentifier",
+              "armResourceType",
+              "createdByType",
+              "string",
+              "utcDateTime"
+            ]
+          },
+          "source": {
+            "revision": "base",
+            "startLine": 42,
+            "endLine": 42
+          }
+        },
+        {
+          "id": "declaration-76f31b8a81dcb8e5",
+          "kind": "operation",
+          "qualifiedName": "ScenarioRuns.cancel",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-9bd6d022e944c48c"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Operation",
+            "sourceFile": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
+            "position": {
+              "start": 1470,
+              "end": 1698
+            },
+            "referencedNames": [
+              "ArmAcceptedLroResponse",
+              "ArmAcceptedLroResponse.location",
+              "ArmAcceptedLroResponse.retryAfter",
+              "ArmAcceptedLroResponse.statusCode",
+              "Array",
+              "ErrorAdditionalInfo",
+              "ErrorDetail",
+              "ErrorDetail.additionalInfo",
+              "ErrorDetail.code",
+              "ErrorDetail.details",
+              "ErrorDetail.message",
+              "ErrorDetail.target",
+              "ErrorResponse",
+              "ErrorResponse.error",
+              "apiVersion",
+              "body",
+              "int32",
+              "provider",
+              "resourceGroupName",
+              "runId",
+              "scenarioName",
+              "string",
+              "subscriptionId",
+              "uuid",
+              "void",
+              "workspaceName"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 44,
+            "endLine": 52
+          }
+        },
+        {
+          "id": "declaration-6f3e2daa7ea1e1aa",
+          "kind": "operation",
+          "qualifiedName": "ScenarioRuns.listAll",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-579b9c3ab2d0f182"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Operation",
+            "sourceFile": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
+            "position": {
+              "start": 1600,
+              "end": 1739
+            },
+            "referencedNames": [
+              "Array",
+              "ErrorAdditionalInfo",
+              "ErrorDetail",
+              "ErrorDetail.additionalInfo",
+              "ErrorDetail.code",
+              "ErrorDetail.details",
+              "ErrorDetail.message",
+              "ErrorDetail.target",
+              "ErrorResponse",
+              "ErrorResponse.error",
+              "Page",
+              "Page.nextLink",
+              "Page.value",
+              "ProxyResource",
+              "ResourceLocation",
+              "ScenarioRun",
+              "ScenarioRun.name",
+              "ScenarioRun.properties",
+              "ScenarioRunListResult",
+              "ScenarioRunListResult.nextLink",
+              "ScenarioRunListResult.value",
+              "apiVersion",
+              "provider",
+              "resourceGroupName",
+              "scenarioName",
+              "string",
+              "subscriptionId",
+              "uuid",
+              "workspaceName"
+            ]
+          },
+          "source": {
+            "revision": "base",
+            "startLine": 46,
+            "endLine": 52
+          }
+        },
+        {
+          "id": "declaration-8c838b3ab5483a90",
+          "kind": "operation",
+          "qualifiedName": "ScenarioRuns.cancel",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-9bd6d022e944c48c"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Operation",
+            "sourceFile": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
+            "position": {
+              "start": 1744,
+              "end": 2337
+            },
+            "referencedNames": [
+              "ArmAcceptedLroResponse",
+              "ArmAcceptedLroResponse.location",
+              "ArmAcceptedLroResponse.retryAfter",
+              "ArmAcceptedLroResponse.statusCode",
+              "Array",
+              "ErrorAdditionalInfo",
+              "ErrorDetail",
+              "ErrorDetail.additionalInfo",
+              "ErrorDetail.code",
+              "ErrorDetail.details",
+              "ErrorDetail.message",
+              "ErrorDetail.target",
+              "ErrorResponse",
+              "ErrorResponse.error",
+              "apiVersion",
+              "body",
+              "int32",
+              "provider",
+              "resourceGroupName",
+              "runId",
+              "scenarioName",
+              "string",
+              "subscriptionId",
+              "uuid",
+              "void",
+              "workspaceName"
+            ]
+          },
+          "source": {
+            "revision": "base",
+            "startLine": 54,
+            "endLine": 65
+          }
+        }
+      ],
+      "documentEvidence": {
+        "schemaVersion": 3,
+        "status": "ready",
+        "blockers": [],
+        "documents": [
+          {
+            "id": "document-831bde059abd35ff",
+            "sourceChangeId": "source-69a2ddc47ac80abd",
+            "qualifiedName": "Microsoft.Chaos.ScenarioRuns.cancel",
+            "kind": "operation",
+            "before": {
+              "doc": "Cancel the currently running scenario execution.",
+              "declaration": "/**\n   * Cancel the currently running scenario execution.\n   */\n  #suppress \"@azure-tools/typespec-azure-resource-manager/arm-post-operation-response-codes\" \"LRO POST returns 202 with Location header for polling; final result obtained by polling the Location URL\"\n  #suppress \"@azure-tools/typespec-azure-core/polling-operation-no-status-monitor\" \"LRO uses final-state-via:location pattern\"\n  @added(Microsoft.Chaos.Versions.v2026_05_01_preview)\n  @pollingOperation(ScenarioRuns.get)\n  cancel is ArmResourceActionNoContentAsyncWithLocationResult<\n    ScenarioRun,\n    void,\n    ScenarioRun\n  >",
+              "source": {
+                "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
+                "revision": "base",
+                "startLine": 54,
+                "endLine": 65
+              }
+            },
+            "after": {
+              "doc": "Cancel the currently running scenario execution.",
+              "declaration": "/**\n   * Cancel the currently running scenario execution.\n   */\n  @added(Microsoft.Chaos.Versions.v2026_05_01_preview)\n  cancel is ArmResourceActionNoContentAsyncWithLocationResult<\n    ScenarioRun,\n    void,\n    ScenarioRun\n  >",
+              "source": {
+                "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
+                "revision": "current",
+                "startLine": 44,
+                "endLine": 52
+              }
+            },
+            "hunkIds": [
+              "hunk-9bd6d022e944c48c"
+            ]
+          },
+          {
+            "id": "document-93a8c82410c5c8c8",
+            "sourceChangeId": "source-69a2ddc47ac80abd",
+            "qualifiedName": "Microsoft.Chaos.ScenarioRuns.get",
+            "kind": "operation",
+            "before": {
+              "doc": "Get a scenario run.",
+              "declaration": "/**\n   * Get a scenario run.\n   */\n  #suppress \"@azure-tools/typespec-azure-resource-manager/arm-resource-operation\" \"LRO polling endpoint that returns body in both 200 and 202\"\n  #suppress \"@azure-tools/typespec-azure-resource-manager/no-response-body\" \"LRO polling endpoint returns body in 202 to reflect current status\"\n  #suppress \"@azure-tools/typespec-azure-core/polling-operation-no-status-monitor\" \"LRO uses final-state-via:location pattern, not status monitor\"\n  @summary(\"Get a scenario run.\")\n  @autoRoute\n  @armResourceRead(ScenarioRun)\n  @get\n  get(...ResourceInstanceParameters<ScenarioRun>):\n    | ArmResponse<ScenarioRun>\n    | (AcceptedResponse & {\n        @doc(\"The Location header contains the URL where the status of the long running operation can be checked.\")\n        @header(\"Location\")\n        location: string;\n\n        @doc(\"The Retry-After header can indicate how long the client should wait before polling the operation status.\")\n        @header(\"Retry-After\")\n        retryAfter?: int32;\n\n        @bodyRoot body: ScenarioRun;\n      })\n    | ErrorResponse",
+              "source": {
+                "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
+                "revision": "base",
+                "startLine": 21,
+                "endLine": 44
+              }
+            },
+            "after": {
+              "doc": "Get a scenario run.\n\nThis endpoint is also the polling target for ScenarioConfigurations.execute\nand ScenarioRuns.cancel (final-state-via: location). While the run is in\nprogress the service returns 202 with a Location header pointing back to\nthis URL; clients must keep polling until they receive 200, which carries\nthe final ScenarioRun body.",
+              "declaration": "/**\n   * Get a scenario run.\n   *\n   * This endpoint is also the polling target for ScenarioConfigurations.execute\n   * and ScenarioRuns.cancel (final-state-via: location). While the run is in\n   * progress the service returns 202 with a Location header pointing back to\n   * this URL; clients must keep polling until they receive 200, which carries\n   * the final ScenarioRun body.\n   */\n  #suppress \"@azure-tools/typespec-azure-resource-manager/arm-resource-operation\" \"LRO polling endpoint that returns body in both 200 and 202 responses.\"\n  #suppress \"@azure-tools/typespec-azure-resource-manager/no-response-body\" \"LRO polling endpoint returns body in 202 to reflect the current run state.\"\n  get is ArmResourceRead<\n    ScenarioRun,\n    Response = ArmResponse<ScenarioRun> | ScenarioRunInProgressResponse\n  >",
+              "source": {
+                "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioRun.tsp",
+                "revision": "current",
+                "startLine": 20,
+                "endLine": 34
+              }
+            },
+            "hunkIds": [
+              "hunk-579b9c3ab2d0f182"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "source-aca736d134f3b4c4",
+      "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
+      "status": "modified",
+      "origins": [
+        "committed"
+      ],
+      "hunks": [
+        {
+          "id": "hunk-44dd52563cb70ae1",
+          "base": {
+            "startLine": 48,
+            "endLine": 55
+          },
+          "current": {
+            "startLine": 48,
+            "endLine": 53
+          },
+          "lines": [
+            "   /**",
+            "    * Execute the scenario execution with the given scenario configuration.",
+            "    */",
+            "-  #suppress \"@azure-tools/typespec-azure-resource-manager/arm-post-operation-response-codes\" \"LRO POST returns 202 with Location header for polling; final result obtained by polling the Location URL\"",
+            "-  @pollingOperation(ScenarioRuns.get)",
+            "   execute is ArmResourceActionNoContentAsyncWithLocationResult<",
+            "     ScenarioConfiguration,",
+            "     void,"
+          ]
+        },
+        {
+          "id": "hunk-2e4a7da67fc3730f",
+          "base": {
+            "startLine": 59,
+            "endLine": 67
+          },
+          "current": {
+            "startLine": 57,
+            "endLine": 63
+          },
+          "lines": [
+            "   /**",
+            "    * Cancel the currently running scenario execution.",
+            "    */",
+            "-  #suppress \"@azure-tools/typespec-azure-resource-manager/arm-post-operation-response-codes\" \"LRO POST returns 202 with Location header for polling; final result obtained by polling the Location URL\"",
+            "   @removed(Microsoft.Chaos.Versions.v2026_05_01_preview)",
+            "-  @pollingOperation(ScenarioRuns.get)",
+            "   cancel is ArmResourceActionNoContentAsyncWithLocationResult<",
+            "     ScenarioConfiguration,",
+            "     void,"
+          ]
+        },
+        {
+          "id": "hunk-349961572456cb8d",
+          "base": {
+            "startLine": 71,
+            "endLine": 77
+          },
+          "current": {
+            "startLine": 67,
+            "endLine": 72
+          },
+          "lines": [
+            "   /**",
+            "    * Validate the given scenario configuration.",
+            "    */",
+            "-  #suppress \"@azure-tools/typespec-azure-resource-manager/arm-post-operation-response-codes\" \"LRO POST returns 202 with Location header for polling; final result obtained by polling the Location URL\"",
+            "   validate is ArmResourceActionNoContentAsyncWithLocationResult<",
+            "     ScenarioConfiguration,",
+            "     void,"
+          ]
+        },
+        {
+          "id": "hunk-8bba970ccf3af6ef",
+          "base": {
+            "startLine": 81,
+            "endLine": 87
+          },
+          "current": {
+            "startLine": 76,
+            "endLine": 81
+          },
+          "lines": [
+            "   /**",
+            "    * Fixes resource permissions for the given scenario configuration.",
+            "    */",
+            "-  #suppress \"@azure-tools/typespec-azure-resource-manager/arm-post-operation-response-codes\" \"LRO POST returns 202 with Location header for polling; final result obtained by polling the Location URL\"",
+            "   fixResourcePermissions is ArmResourceActionNoContentAsyncWithLocationResult<",
+            "     ScenarioConfiguration,",
+            "     FixResourcePermissionsRequest,",
+            ""
+          ]
+        }
+      ],
+      "declarations": [
+        {
+          "id": "declaration-50be709541f82f96",
+          "kind": "interface",
+          "qualifiedName": "ScenarioConfigurations",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-44dd52563cb70ae1",
+            "hunk-2e4a7da67fc3730f",
+            "hunk-349961572456cb8d",
+            "hunk-8bba970ccf3af6ef"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Interface",
+            "sourceFile": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
+            "position": {
+              "start": 537,
+              "end": 2969
+            },
+            "referencedNames": []
+          },
+          "source": {
+            "revision": "base",
+            "startLine": 22,
+            "endLine": 90
+          }
+        },
+        {
+          "id": "declaration-d4a1b51bd36bdcc3",
+          "kind": "interface",
+          "qualifiedName": "ScenarioConfigurations",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-44dd52563cb70ae1",
+            "hunk-2e4a7da67fc3730f",
+            "hunk-349961572456cb8d",
+            "hunk-8bba970ccf3af6ef"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Interface",
+            "sourceFile": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
+            "position": {
+              "start": 537,
+              "end": 2093
+            },
+            "referencedNames": []
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 22,
+            "endLine": 84
+          }
+        },
+        {
+          "id": "declaration-10d22b15e206689e",
+          "kind": "operation",
+          "qualifiedName": "ScenarioConfigurations.execute",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-44dd52563cb70ae1"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Operation",
+            "sourceFile": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
+            "position": {
+              "start": 1165,
+              "end": 1608
+            },
+            "referencedNames": [
+              "ArmAcceptedLroResponse",
+              "ArmAcceptedLroResponse.location",
+              "ArmAcceptedLroResponse.retryAfter",
+              "ArmAcceptedLroResponse.statusCode",
+              "Array",
+              "ErrorAdditionalInfo",
+              "ErrorDetail",
+              "ErrorDetail.additionalInfo",
+              "ErrorDetail.code",
+              "ErrorDetail.details",
+              "ErrorDetail.message",
+              "ErrorDetail.target",
+              "ErrorResponse",
+              "ErrorResponse.error",
+              "apiVersion",
+              "body",
+              "int32",
+              "provider",
+              "resourceGroupName",
+              "scenarioConfigurationName",
+              "scenarioName",
+              "string",
+              "subscriptionId",
+              "uuid",
+              "void",
+              "workspaceName"
+            ]
+          },
+          "source": {
+            "revision": "base",
+            "startLine": 48,
+            "endLine": 57
+          }
+        },
+        {
+          "id": "declaration-99e7eb4caeecae4f",
+          "kind": "operation",
+          "qualifiedName": "ScenarioConfigurations.execute",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-44dd52563cb70ae1"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Operation",
+            "sourceFile": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
+            "position": {
+              "start": 1165,
+              "end": 1370
+            },
+            "referencedNames": [
+              "ArmAcceptedLroResponse",
+              "ArmAcceptedLroResponse.location",
+              "ArmAcceptedLroResponse.retryAfter",
+              "ArmAcceptedLroResponse.statusCode",
+              "Array",
+              "ErrorAdditionalInfo",
+              "ErrorDetail",
+              "ErrorDetail.additionalInfo",
+              "ErrorDetail.code",
+              "ErrorDetail.details",
+              "ErrorDetail.message",
+              "ErrorDetail.target",
+              "ErrorResponse",
+              "ErrorResponse.error",
+              "apiVersion",
+              "body",
+              "int32",
+              "provider",
+              "resourceGroupName",
+              "scenarioConfigurationName",
+              "scenarioName",
+              "string",
+              "subscriptionId",
+              "uuid",
+              "void",
+              "workspaceName"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 48,
+            "endLine": 55
+          }
+        },
+        {
+          "id": "declaration-bb6863688e9f4caf",
+          "kind": "operation",
+          "qualifiedName": "ScenarioConfigurations.cancel",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-2e4a7da67fc3730f"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Operation",
+            "sourceFile": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
+            "position": {
+              "start": 1375,
+              "end": 1659
+            },
+            "referencedNames": [
+              "ArmAcceptedLroResponse",
+              "ArmAcceptedLroResponse.location",
+              "ArmAcceptedLroResponse.retryAfter",
+              "ArmAcceptedLroResponse.statusCode",
+              "Array",
+              "ErrorAdditionalInfo",
+              "ErrorDetail",
+              "ErrorDetail.additionalInfo",
+              "ErrorDetail.code",
+              "ErrorDetail.details",
+              "ErrorDetail.message",
+              "ErrorDetail.target",
+              "ErrorResponse",
+              "ErrorResponse.error",
+              "apiVersion",
+              "body",
+              "int32",
+              "provider",
+              "resourceGroupName",
+              "scenarioConfigurationName",
+              "scenarioName",
+              "string",
+              "subscriptionId",
+              "uuid",
+              "void",
+              "workspaceName"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 57,
+            "endLine": 65
+          }
+        },
+        {
+          "id": "declaration-9b95bc954ac86876",
+          "kind": "operation",
+          "qualifiedName": "ScenarioConfigurations.cancel",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-2e4a7da67fc3730f"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Operation",
+            "sourceFile": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
+            "position": {
+              "start": 1613,
+              "end": 2135
+            },
+            "referencedNames": [
+              "ArmAcceptedLroResponse",
+              "ArmAcceptedLroResponse.location",
+              "ArmAcceptedLroResponse.retryAfter",
+              "ArmAcceptedLroResponse.statusCode",
+              "Array",
+              "ErrorAdditionalInfo",
+              "ErrorDetail",
+              "ErrorDetail.additionalInfo",
+              "ErrorDetail.code",
+              "ErrorDetail.details",
+              "ErrorDetail.message",
+              "ErrorDetail.target",
+              "ErrorResponse",
+              "ErrorResponse.error",
+              "apiVersion",
+              "body",
+              "int32",
+              "provider",
+              "resourceGroupName",
+              "scenarioConfigurationName",
+              "scenarioName",
+              "string",
+              "subscriptionId",
+              "uuid",
+              "void",
+              "workspaceName"
+            ]
+          },
+          "source": {
+            "revision": "base",
+            "startLine": 59,
+            "endLine": 69
+          }
+        },
+        {
+          "id": "declaration-b724ffb86d553126",
+          "kind": "operation",
+          "qualifiedName": "ScenarioConfigurations.validate",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-349961572456cb8d"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Operation",
+            "sourceFile": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
+            "position": {
+              "start": 1664,
+              "end": 1842
+            },
+            "referencedNames": [
+              "ArmAcceptedLroResponse",
+              "ArmAcceptedLroResponse.location",
+              "ArmAcceptedLroResponse.retryAfter",
+              "ArmAcceptedLroResponse.statusCode",
+              "Array",
+              "ErrorAdditionalInfo",
+              "ErrorDetail",
+              "ErrorDetail.additionalInfo",
+              "ErrorDetail.code",
+              "ErrorDetail.details",
+              "ErrorDetail.message",
+              "ErrorDetail.target",
+              "ErrorResponse",
+              "ErrorResponse.error",
+              "apiVersion",
+              "body",
+              "int32",
+              "provider",
+              "resourceGroupName",
+              "scenarioConfigurationName",
+              "scenarioName",
+              "string",
+              "subscriptionId",
+              "uuid",
+              "void",
+              "workspaceName"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 67,
+            "endLine": 74
+          }
+        },
+        {
+          "id": "declaration-823592290fb24168",
+          "kind": "operation",
+          "qualifiedName": "ScenarioConfigurations.validate",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-349961572456cb8d"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Operation",
+            "sourceFile": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
+            "position": {
+              "start": 2140,
+              "end": 2518
+            },
+            "referencedNames": [
+              "ArmAcceptedLroResponse",
+              "ArmAcceptedLroResponse.location",
+              "ArmAcceptedLroResponse.retryAfter",
+              "ArmAcceptedLroResponse.statusCode",
+              "Array",
+              "ErrorAdditionalInfo",
+              "ErrorDetail",
+              "ErrorDetail.additionalInfo",
+              "ErrorDetail.code",
+              "ErrorDetail.details",
+              "ErrorDetail.message",
+              "ErrorDetail.target",
+              "ErrorResponse",
+              "ErrorResponse.error",
+              "apiVersion",
+              "body",
+              "int32",
+              "provider",
+              "resourceGroupName",
+              "scenarioConfigurationName",
+              "scenarioName",
+              "string",
+              "subscriptionId",
+              "uuid",
+              "void",
+              "workspaceName"
+            ]
+          },
+          "source": {
+            "revision": "base",
+            "startLine": 71,
+            "endLine": 79
+          }
+        },
+        {
+          "id": "declaration-342190062fe21bef",
+          "kind": "operation",
+          "qualifiedName": "ScenarioConfigurations.fixResourcePermissions",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-8bba970ccf3af6ef"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Operation",
+            "sourceFile": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
+            "position": {
+              "start": 1847,
+              "end": 2090
+            },
+            "referencedNames": [
+              "ArmAcceptedLroResponse",
+              "ArmAcceptedLroResponse.location",
+              "ArmAcceptedLroResponse.retryAfter",
+              "ArmAcceptedLroResponse.statusCode",
+              "Array",
+              "ErrorAdditionalInfo",
+              "ErrorDetail",
+              "ErrorDetail.additionalInfo",
+              "ErrorDetail.code",
+              "ErrorDetail.details",
+              "ErrorDetail.message",
+              "ErrorDetail.target",
+              "ErrorResponse",
+              "ErrorResponse.error",
+              "FixResourcePermissionsRequest",
+              "FixResourcePermissionsRequest.whatIf",
+              "apiVersion",
+              "body",
+              "boolean",
+              "int32",
+              "provider",
+              "resourceGroupName",
+              "scenarioConfigurationName",
+              "scenarioName",
+              "string",
+              "subscriptionId",
+              "uuid",
+              "workspaceName"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 76,
+            "endLine": 83
+          }
+        },
+        {
+          "id": "declaration-9b980b9dfb429790",
+          "kind": "operation",
+          "qualifiedName": "ScenarioConfigurations.fixResourcePermissions",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-8bba970ccf3af6ef"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Operation",
+            "sourceFile": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
+            "position": {
+              "start": 2523,
+              "end": 2966
+            },
+            "referencedNames": [
+              "ArmAcceptedLroResponse",
+              "ArmAcceptedLroResponse.location",
+              "ArmAcceptedLroResponse.retryAfter",
+              "ArmAcceptedLroResponse.statusCode",
+              "Array",
+              "ErrorAdditionalInfo",
+              "ErrorDetail",
+              "ErrorDetail.additionalInfo",
+              "ErrorDetail.code",
+              "ErrorDetail.details",
+              "ErrorDetail.message",
+              "ErrorDetail.target",
+              "ErrorResponse",
+              "ErrorResponse.error",
+              "FixResourcePermissionsRequest",
+              "FixResourcePermissionsRequest.whatIf",
+              "apiVersion",
+              "body",
+              "boolean",
+              "int32",
+              "provider",
+              "resourceGroupName",
+              "scenarioConfigurationName",
+              "scenarioName",
+              "string",
+              "subscriptionId",
+              "uuid",
+              "workspaceName"
+            ]
+          },
+          "source": {
+            "revision": "base",
+            "startLine": 81,
+            "endLine": 89
+          }
+        }
+      ],
+      "documentEvidence": {
+        "schemaVersion": 3,
+        "status": "ready",
+        "blockers": [],
+        "documents": [
+          {
+            "id": "document-2b4d08f39bfe0935",
+            "sourceChangeId": "source-aca736d134f3b4c4",
+            "qualifiedName": "Microsoft.Chaos.ScenarioConfigurations.validate",
+            "kind": "operation",
+            "before": {
+              "doc": "Validate the given scenario configuration.",
+              "declaration": "/**\n   * Validate the given scenario configuration.\n   */\n  #suppress \"@azure-tools/typespec-azure-resource-manager/arm-post-operation-response-codes\" \"LRO POST returns 202 with Location header for polling; final result obtained by polling the Location URL\"\n  validate is ArmResourceActionNoContentAsyncWithLocationResult<\n    ScenarioConfiguration,\n    void,\n    Validation\n  >",
+              "source": {
+                "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
+                "revision": "base",
+                "startLine": 71,
+                "endLine": 79
+              }
+            },
+            "after": {
+              "doc": "Validate the given scenario configuration.",
+              "declaration": "/**\n   * Validate the given scenario configuration.\n   */\n  validate is ArmResourceActionNoContentAsyncWithLocationResult<\n    ScenarioConfiguration,\n    void,\n    Validation\n  >",
+              "source": {
+                "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
+                "revision": "current",
+                "startLine": 67,
+                "endLine": 74
+              }
+            },
+            "hunkIds": [
+              "hunk-349961572456cb8d"
+            ]
+          },
+          {
+            "id": "document-54421276dbb0a4c4",
+            "sourceChangeId": "source-aca736d134f3b4c4",
+            "qualifiedName": "Microsoft.Chaos.ScenarioConfigurations.execute",
+            "kind": "operation",
+            "before": {
+              "doc": "Execute the scenario execution with the given scenario configuration.",
+              "declaration": "/**\n   * Execute the scenario execution with the given scenario configuration.\n   */\n  #suppress \"@azure-tools/typespec-azure-resource-manager/arm-post-operation-response-codes\" \"LRO POST returns 202 with Location header for polling; final result obtained by polling the Location URL\"\n  @pollingOperation(ScenarioRuns.get)\n  execute is ArmResourceActionNoContentAsyncWithLocationResult<\n    ScenarioConfiguration,\n    void,\n    ScenarioRun\n  >",
+              "source": {
+                "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
+                "revision": "base",
+                "startLine": 48,
+                "endLine": 57
+              }
+            },
+            "after": {
+              "doc": "Execute the scenario execution with the given scenario configuration.",
+              "declaration": "/**\n   * Execute the scenario execution with the given scenario configuration.\n   */\n  execute is ArmResourceActionNoContentAsyncWithLocationResult<\n    ScenarioConfiguration,\n    void,\n    ScenarioRun\n  >",
+              "source": {
+                "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
+                "revision": "current",
+                "startLine": 48,
+                "endLine": 55
+              }
+            },
+            "hunkIds": [
+              "hunk-44dd52563cb70ae1"
+            ]
+          },
+          {
+            "id": "document-5ec317bbd666abdf",
+            "sourceChangeId": "source-aca736d134f3b4c4",
+            "qualifiedName": "Microsoft.Chaos.ScenarioConfigurations.cancel",
+            "kind": "operation",
+            "before": {
+              "doc": "Cancel the currently running scenario execution.",
+              "declaration": "/**\n   * Cancel the currently running scenario execution.\n   */\n  #suppress \"@azure-tools/typespec-azure-resource-manager/arm-post-operation-response-codes\" \"LRO POST returns 202 with Location header for polling; final result obtained by polling the Location URL\"\n  @removed(Microsoft.Chaos.Versions.v2026_05_01_preview)\n  @pollingOperation(ScenarioRuns.get)\n  cancel is ArmResourceActionNoContentAsyncWithLocationResult<\n    ScenarioConfiguration,\n    void,\n    Azure.ResourceManager.Foundations.OperationStatusResult\n  >",
+              "source": {
+                "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
+                "revision": "base",
+                "startLine": 59,
+                "endLine": 69
+              }
+            },
+            "after": {
+              "doc": "Cancel the currently running scenario execution.",
+              "declaration": "/**\n   * Cancel the currently running scenario execution.\n   */\n  @removed(Microsoft.Chaos.Versions.v2026_05_01_preview)\n  cancel is ArmResourceActionNoContentAsyncWithLocationResult<\n    ScenarioConfiguration,\n    void,\n    Azure.ResourceManager.Foundations.OperationStatusResult\n  >",
+              "source": {
+                "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
+                "revision": "current",
+                "startLine": 57,
+                "endLine": 65
+              }
+            },
+            "hunkIds": [
+              "hunk-2e4a7da67fc3730f"
+            ]
+          },
+          {
+            "id": "document-b8545853dd033711",
+            "sourceChangeId": "source-aca736d134f3b4c4",
+            "qualifiedName": "Microsoft.Chaos.ScenarioConfigurations.fixResourcePermissions",
+            "kind": "operation",
+            "before": {
+              "doc": "Fixes resource permissions for the given scenario configuration.",
+              "declaration": "/**\n   * Fixes resource permissions for the given scenario configuration.\n   */\n  #suppress \"@azure-tools/typespec-azure-resource-manager/arm-post-operation-response-codes\" \"LRO POST returns 202 with Location header for polling; final result obtained by polling the Location URL\"\n  fixResourcePermissions is ArmResourceActionNoContentAsyncWithLocationResult<\n    ScenarioConfiguration,\n    FixResourcePermissionsRequest,\n    PermissionsFix\n  >",
+              "source": {
+                "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
+                "revision": "base",
+                "startLine": 81,
+                "endLine": 89
+              }
+            },
+            "after": {
+              "doc": "Fixes resource permissions for the given scenario configuration.",
+              "declaration": "/**\n   * Fixes resource permissions for the given scenario configuration.\n   */\n  fixResourcePermissions is ArmResourceActionNoContentAsyncWithLocationResult<\n    ScenarioConfiguration,\n    FixResourcePermissionsRequest,\n    PermissionsFix\n  >",
+              "source": {
+                "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/scenarioConfiguration.tsp",
+                "revision": "current",
+                "startLine": 76,
+                "endLine": 83
+              }
+            },
+            "hunkIds": [
+              "hunk-8bba970ccf3af6ef"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "source-cb13d5cecbd1acfb",
+      "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspace.tsp",
+      "status": "modified",
+      "origins": [
+        "committed"
+      ],
+      "hunks": [
+        {
+          "id": "hunk-0ca3bf7536e0d80a",
+          "base": {
+            "startLine": 71,
+            "endLine": 77
+          },
+          "current": {
+            "startLine": 71,
+            "endLine": 76
+          },
+          "lines": [
+            "   /**",
+            "    * Refreshes recommendation status for all scenarios in a given workspace.",
+            "    */",
+            "-  #suppress \"@azure-tools/typespec-azure-resource-manager/arm-post-operation-response-codes\" \"Async LRO POST returning 202 + Location, not a synchronous POST\"",
+            "   refreshRecommendations is ArmResourceActionNoContentAsyncWithLocationResult<",
+            "     Workspace,",
+            "     void,",
+            ""
+          ]
+        }
+      ],
+      "declarations": [
+        {
+          "id": "declaration-2a9c165196e7ae37",
+          "kind": "interface",
+          "qualifiedName": "Workspaces",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-0ca3bf7536e0d80a"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Interface",
+            "sourceFile": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspace.tsp",
+            "position": {
+              "start": 401,
+              "end": 2002
+            },
+            "referencedNames": []
+          },
+          "source": {
+            "revision": "base",
+            "startLine": 17,
+            "endLine": 80
+          }
+        },
+        {
+          "id": "declaration-462b286c48e80b14",
+          "kind": "interface",
+          "qualifiedName": "Workspaces",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-0ca3bf7536e0d80a"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Interface",
+            "sourceFile": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspace.tsp",
+            "position": {
+              "start": 401,
+              "end": 1843
+            },
+            "referencedNames": []
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 17,
+            "endLine": 79
+          }
+        },
+        {
+          "id": "declaration-1cc0be619df94550",
+          "kind": "operation",
+          "qualifiedName": "Workspaces.refreshRecommendations",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-0ca3bf7536e0d80a"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Operation",
+            "sourceFile": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspace.tsp",
+            "position": {
+              "start": 1622,
+              "end": 1999
+            },
+            "referencedNames": [
+              "ArmAcceptedLroResponse",
+              "ArmAcceptedLroResponse.location",
+              "ArmAcceptedLroResponse.retryAfter",
+              "ArmAcceptedLroResponse.statusCode",
+              "Array",
+              "ErrorAdditionalInfo",
+              "ErrorDetail",
+              "ErrorDetail.additionalInfo",
+              "ErrorDetail.code",
+              "ErrorDetail.details",
+              "ErrorDetail.message",
+              "ErrorDetail.target",
+              "ErrorResponse",
+              "ErrorResponse.error",
+              "apiVersion",
+              "body",
+              "int32",
+              "provider",
+              "resourceGroupName",
+              "string",
+              "subscriptionId",
+              "uuid",
+              "void",
+              "workspaceName"
+            ]
+          },
+          "source": {
+            "revision": "base",
+            "startLine": 71,
+            "endLine": 79
+          }
+        },
+        {
+          "id": "declaration-4e6785e3fd6c14b6",
+          "kind": "operation",
+          "qualifiedName": "Workspaces.refreshRecommendations",
+          "decorators": [],
+          "versionedMembers": [],
+          "hunkIds": [
+            "hunk-0ca3bf7536e0d80a"
+          ],
+          "compilerEvidence": {
+            "kind": "semantic-type",
+            "compilerTypeKind": "Operation",
+            "sourceFile": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspace.tsp",
+            "position": {
+              "start": 1622,
+              "end": 1840
+            },
+            "referencedNames": [
+              "ArmAcceptedLroResponse",
+              "ArmAcceptedLroResponse.location",
+              "ArmAcceptedLroResponse.retryAfter",
+              "ArmAcceptedLroResponse.statusCode",
+              "Array",
+              "ErrorAdditionalInfo",
+              "ErrorDetail",
+              "ErrorDetail.additionalInfo",
+              "ErrorDetail.code",
+              "ErrorDetail.details",
+              "ErrorDetail.message",
+              "ErrorDetail.target",
+              "ErrorResponse",
+              "ErrorResponse.error",
+              "apiVersion",
+              "body",
+              "int32",
+              "provider",
+              "resourceGroupName",
+              "string",
+              "subscriptionId",
+              "uuid",
+              "void",
+              "workspaceName"
+            ]
+          },
+          "source": {
+            "revision": "current",
+            "startLine": 71,
+            "endLine": 78
+          }
+        }
+      ],
+      "documentEvidence": {
+        "schemaVersion": 3,
+        "status": "ready",
+        "blockers": [],
+        "documents": [
+          {
+            "id": "document-dfc17109b6c23d0e",
+            "sourceChangeId": "source-cb13d5cecbd1acfb",
+            "qualifiedName": "Microsoft.Chaos.Workspaces.refreshRecommendations",
+            "kind": "operation",
+            "before": {
+              "doc": "Refreshes recommendation status for all scenarios in a given workspace.",
+              "declaration": "/**\n   * Refreshes recommendation status for all scenarios in a given workspace.\n   */\n  #suppress \"@azure-tools/typespec-azure-resource-manager/arm-post-operation-response-codes\" \"Async LRO POST returning 202 + Location, not a synchronous POST\"\n  refreshRecommendations is ArmResourceActionNoContentAsyncWithLocationResult<\n    Workspace,\n    void,\n    WorkspaceEvaluation\n  >",
+              "source": {
+                "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspace.tsp",
+                "revision": "base",
+                "startLine": 71,
+                "endLine": 79
+              }
+            },
+            "after": {
+              "doc": "Refreshes recommendation status for all scenarios in a given workspace.",
+              "declaration": "/**\n   * Refreshes recommendation status for all scenarios in a given workspace.\n   */\n  refreshRecommendations is ArmResourceActionNoContentAsyncWithLocationResult<\n    Workspace,\n    void,\n    WorkspaceEvaluation\n  >",
+              "source": {
+                "path": "specification/chaos/resource-manager/Microsoft.Chaos/Chaos/workspace.tsp",
+                "revision": "current",
+                "startLine": 71,
+                "endLine": 78
+              }
+            },
+            "hunkIds": [
+              "hunk-0ca3bf7536e0d80a"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

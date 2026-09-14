@@ -2,18 +2,22 @@ function unique(values = []) {
   return [...new Set(values)].sort();
 }
 
+export const DOCUMENT_QUALITY_CRITERION =
+  "Does the @doc description clearly and accurately explain the associated TypeSpec code?";
+
 /**
  * Builds bounded @doc evidence, not a documentation judgment. source.documentEvidence
  * is produced by addCompilerEvidence using the compiler AST of both revisions.
  * Legacy indexes without that evidence explicitly block rather than implying a pass.
  * Snapshot strings are untrusted source data, never executable agent instructions.
  */
-export function buildDocumentQualityInput({ sourceIndex, semantic }) {
+export function buildDocumentQualityInput({ sourceIndex, semantic, schemaVersion = 3 }) {
+  if (![1, 2, 3].includes(schemaVersion)) throw new Error("Unsupported documentation input schemaVersion.");
   const sources = new Map((sourceIndex?.sourceChanges ?? []).map((source) => [source.id, source]));
   const blockers = [];
   if (!Array.isArray(semantic?.reviewUnits)) {
     return {
-      schemaVersion: 1, status: "blocked",
+      schemaVersion, status: "blocked",
       blockers: [{ reason: "Semantic review units are unavailable; documentation scope cannot be established." }],
       reviewUnits: [],
     };
@@ -40,6 +44,12 @@ export function buildDocumentQualityInput({ sourceIndex, semantic }) {
         continue;
       }
       const evidence = source.documentEvidence;
+      if (schemaVersion >= 2 && evidence?.schemaVersion !== schemaVersion) {
+        reasons.push(schemaVersion === 2
+          ? `Source descriptions must be recollected for ${source.path}; cached evidence does not cover TypeSpec documentation comments.`
+          : `Source descriptions must be recollected for ${source.path}; cached evidence does not match v3 effective local and inherited documentation coverage.`);
+        continue;
+      }
       if (evidence?.status !== "ready") {
         reasons.push(`Compiler @doc context unavailable for ${source.path}: ${
           evidence?.blockers?.map((blocker) => blocker.message).join(" ") || "document evidence was not collected."
@@ -57,6 +67,10 @@ export function buildDocumentQualityInput({ sourceIndex, semantic }) {
       for (const document of evidence.documents) {
         if (!document.hunkIds.some((hunkId) => scopedHunks.includes(hunkId))) continue;
         if (document.after && document.after.doc.trim().length === 0) continue;
+        if (schemaVersion === 3 && document.after?.documentationOrigin === "inherited") {
+          (result.inheritedDocumentIds ??= []).push(document.id);
+          continue;
+        }
         if (document.blocker) {
           reasons.push(`${document.qualifiedName}: ${document.blocker}`);
           continue;
@@ -68,15 +82,18 @@ export function buildDocumentQualityInput({ sourceIndex, semantic }) {
     }
     result.documents = [...new Map(result.documents.map((document) => [document.id, document])).values()]
       .sort((left, right) => left.id.localeCompare(right.id));
+    if (result.inheritedDocumentIds) result.inheritedDocumentIds = unique(result.inheritedDocumentIds);
     if (reasons.length) {
       result.status = "blocked";
       result.reason = unique(reasons).join(" ");
       blockers.push({ reviewUnitId: unit.id, reason: result.reason });
     } else if (!result.documents.length) {
       result.status = "not-applicable";
-      result.reason = "No changed, associated nonempty @doc with a current target; absent, deleted, empty, or whitespace-only @doc is outside documentation coverage scope.";
+      result.reason = result.inheritedDocumentIds?.length
+        ? "Inherited documentation is present; its quality is not reviewed in v1."
+        : "No changed, associated nonempty @doc with a current target; absent, deleted, empty, or whitespace-only @doc is outside documentation coverage scope.";
     }
     return result;
   });
-  return { schemaVersion: 1, status: blockers.length ? "blocked" : "ready", blockers, reviewUnits };
+  return { schemaVersion, status: blockers.length ? "blocked" : "ready", blockers, reviewUnits };
 }

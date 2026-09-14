@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "documentQualityAssessmentVersion": 3,
+  "documentQualityCriterion": "Does the @doc description clearly and accurately explain the associated TypeSpec code?",
+  "context": {
+    "mode": "source-documentation-replay",
+    "comparison": {
+      "baseRef": "e8420e45fdaf12e2c72417d379c454f1fc8ce1e6",
+      "baseCommit": "e8420e45fdaf12e2c72417d379c454f1fc8ce1e6",
+      "headCommit": "b63b8bfc79e274c916a91c5a2ff8b403cb00c3f2",
+      "workingTree": {
+        "staged": false,
+        "unstaged": false,
+        "untracked": false
+      }
+    },
+    "retainedDimensions": [
+      "semantic",
+      "rest",
+      "downstream",
+      "compliance"
+    ]
+  },
+  "artifactReferences": {
+    "sourceIndex": "source/source-index.json",
+    "documentQuality": "dimensions/document-quality-input.json"
+  },
+  "documentQualityReviewUnits": [
+    {
+      "reviewUnitId": "semantic-3d8a84ab0984f292",
+      "status": "not-applicable",
+      "reason": "No changed, associated nonempty @doc with a current target; absent, deleted, empty, or whitespace-only @doc is outside documentation coverage scope.",
+      "documentIds": [],
+      "evidenceSetId": "evidence-document-semantic-3d8a84ab0984f292"
+    },
+    {
+      "reviewUnitId": "semantic-a3ce2a2ef2e5fba3",
+      "status": "not-applicable",
+      "reason": "No changed, associated nonempty @doc with a current target; absent, deleted, empty, or whitespace-only @doc is outside documentation coverage scope.",
+      "documentIds": [],
+      "evidenceSetId": "evidence-document-semantic-a3ce2a2ef2e5fba3"
+    }
+  ],
+  "evidenceSets": {
+    "evidence-document-semantic-3d8a84ab0984f292": {
+      "sourceChangeIds": [
+        "source-c1e49e3c867c88fb"
+      ],
+      "hunkIds": [
+        "hunk-083033f3d0862b87"
+      ],
+      "declarationCount": 0,
+      "evidenceFactIds": [],
+      "evidenceRef": {
+        "artifact": "dimensions/document-quality-input.json",
+        "id": "semantic-3d8a84ab0984f292"
+      }
+    },
+    "evidence-document-semantic-a3ce2a2ef2e5fba3": {
+      "sourceChangeIds": [
+        "source-c1e49e3c867c88fb"
+      ],
+      "hunkIds": [
+        "hunk-9834454183c6cab6"
+      ],
+      "declarationCount": 0,
+      "evidenceFactIds": [],
+      "evidenceRef": {
+        "artifact": "dimensions/document-quality-input.json",
+        "id": "semantic-a3ce2a2ef2e5fba3"
+      }
+    }
+  }
+}

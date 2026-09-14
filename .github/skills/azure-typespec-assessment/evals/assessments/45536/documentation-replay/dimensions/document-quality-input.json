@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 3,
+  "status": "ready",
+  "blockers": [],
+  "reviewUnits": [
+    {
+      "reviewUnitId": "semantic-5c37e529c22fc782",
+      "status": "not-applicable",
+      "sourceChangeIds": [
+        "source-c1e2c387eea01645"
+      ],
+      "hunkIds": [
+        "hunk-eecc1413cf4aeedb"
+      ],
+      "declarationIds": [],
+      "documents": [],
+      "reason": "No changed, associated nonempty @doc with a current target; absent, deleted, empty, or whitespace-only @doc is outside documentation coverage scope."
+    }
+  ]
+}

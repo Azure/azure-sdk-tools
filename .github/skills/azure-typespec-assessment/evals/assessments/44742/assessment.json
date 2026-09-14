@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-11T04:21:02.494Z",
+  "generatedAt": "2026-09-11T10:30:10.071Z",
   "title": "TypeSpec assessment: specification/storage/data-plane/FileStorage",
   "repository": {
     "root": "C:\\workspace\\azure-sdk-tools\\.github\\skills\\azure-typespec-assessment\\evals\\.workspaces\\44742\\head",
@@ -5747,7 +5747,188 @@
                     "endLine": 845
                   }
                 }
-              ]
+              ],
+              "documentEvidence": {
+                "schemaVersion": 3,
+                "status": "ready",
+                "blockers": [],
+                "documents": [
+                  {
+                    "id": "document-4c819471d3e4b790",
+                    "sourceChangeId": "source-59080f734682d35e",
+                    "qualifiedName": "Storage.File.FileItem",
+                    "kind": "model",
+                    "before": {
+                      "doc": "A listed file item.",
+                      "declaration": "/** A listed file item. */\n@Xml.name(\"File\")\nmodel FileItem {\n  /** The file name. */\n  @Xml.name(\"Name\") name: StringEncoded;\n\n  /** The file ID. */\n  @Xml.name(\"FileId\") fileId?: string;\n\n  /** File properties. */\n  @Xml.name(\"Properties\") properties: FileProperty;\n\n  /** The file attributes. */\n  @Xml.name(\"Attributes\") attributes?: string;\n\n  /** The permission key. */\n  @Xml.name(\"PermissionKey\") permissionKey?: string;\n\n  /** NFS only. The link count of the file. */\n  @added(Versions.v2026_12_06)\n  @Xml.name(\"LinkCount\")\n  linkCount?: int64;\n\n  /** NFS only. The type of the file. */\n  @added(Versions.v2026_12_06)\n  @Xml.name(\"FileType\")\n  fileType?: NfsFileType;\n}",
+                      "source": {
+                        "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                        "revision": "base",
+                        "startLine": 677,
+                        "endLine": 704
+                      }
+                    },
+                    "after": {
+                      "doc": "A listed file item.",
+                      "declaration": "/** A listed file item. */\n@Xml.name(\"File\")\nmodel FileItem {\n  /** The file name. */\n  @Xml.name(\"Name\") name: StringEncoded;\n\n  /** The file ID. */\n  @Xml.name(\"FileId\") fileId?: string;\n\n  /** File properties. */\n  @Xml.name(\"Properties\") properties: FileProperty;\n\n  /** The file attributes. */\n  @Xml.name(\"Attributes\") attributes?: string;\n\n  /** The permission key. */\n  @Xml.name(\"PermissionKey\") permissionKey?: string;\n}",
+                      "source": {
+                        "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                        "revision": "current",
+                        "startLine": 595,
+                        "endLine": 612
+                      }
+                    },
+                    "hunkIds": [
+                      "hunk-4dee08e0e6059404"
+                    ]
+                  },
+                  {
+                    "id": "document-4f1fce0e9aca00aa",
+                    "sourceChangeId": "source-59080f734682d35e",
+                    "qualifiedName": "Storage.File.NfsFileType",
+                    "kind": "union",
+                    "before": {
+                      "doc": "The NFS file type.",
+                      "declaration": "/** The NFS file type. */\nunion NfsFileType {\n  string,\n\n  /** Regular */\n  Regular: \"Regular\",\n\n  /** Directory */\n  Directory: \"Directory\",\n\n  /** SymLink */\n  SymLink: \"SymLink\",\n\n  /** BlockDevice */\n  @added(Versions.v2026_12_06)\n  BlockDevice: \"BlockDevice\",\n\n  /** CharacterDevice */\n  @added(Versions.v2026_12_06)\n  CharacterDevice: \"CharacterDevice\",\n\n  /** Socket */\n  @added(Versions.v2026_12_06)\n  Socket: \"Socket\",\n\n  /** Fifo */\n  @added(Versions.v2026_12_06)\n  Fifo: \"Fifo\",\n}",
+                      "source": {
+                        "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                        "revision": "base",
+                        "startLine": 275,
+                        "endLine": 303
+                      }
+                    },
+                    "after": {
+                      "doc": "The NFS file type.",
+                      "declaration": "/** The NFS file type. */\nunion NfsFileType {\n  string,\n\n  /** Regular */\n  Regular: \"Regular\",\n\n  /** Directory */\n  Directory: \"Directory\",\n\n  /** SymLink */\n  SymLink: \"SymLink\",\n}",
+                      "source": {
+                        "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                        "revision": "current",
+                        "startLine": 275,
+                        "endLine": 287
+                      }
+                    },
+                    "hunkIds": [
+                      "hunk-58b9de7d81513824"
+                    ]
+                  },
+                  {
+                    "id": "document-5ee05fa0fcd53f46",
+                    "sourceChangeId": "source-59080f734682d35e",
+                    "qualifiedName": "Storage.File.FilesAndDirectoriesListSegment",
+                    "kind": "model",
+                    "before": {
+                      "doc": "Abstract for entries that can be listed from Directory.",
+                      "declaration": "/** Abstract for entries that can be listed from Directory. */\nmodel FilesAndDirectoriesListSegment {\n  /** The directory items. */\n  @Xml.unwrapped\n  @Xml.name(\"Directory\")\n  directoryItems: DirectoryItem[];\n\n  /** The file items. */\n  @Xml.unwrapped\n  @Xml.name(\"File\")\n  fileItems: FileItem[];\n\n  /** The symbolic link items. */\n  @added(Versions.v2026_12_06)\n  @Xml.unwrapped\n  @Xml.name(\"SymLink\")\n  symLinkItems?: SymLinkItem[];\n\n  /** The block device items. */\n  @added(Versions.v2026_12_06)\n  @Xml.unwrapped\n  @Xml.name(\"BlockDevice\")\n  blockDeviceItems?: BlockDeviceItem[];\n\n  /** The character device items. */\n  @added(Versions.v2026_12_06)\n  @Xml.unwrapped\n  @Xml.name(\"CharDevice\")\n  charDeviceItems?: CharDeviceItem[];\n\n  /** The FIFO items. */\n  @added(Versions.v2026_12_06)\n  @Xml.unwrapped\n  @Xml.name(\"Fifo\")\n  fifoItems?: FifoItem[];\n\n  /** The socket items. */\n  @added(Versions.v2026_12_06)\n  @Xml.unwrapped\n  @Xml.name(\"Socket\")\n  socketItems?: SocketItem[];\n}",
+                      "source": {
+                        "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                        "revision": "base",
+                        "startLine": 549,
+                        "endLine": 590
+                      }
+                    },
+                    "after": {
+                      "doc": "Abstract for entries that can be listed from Directory.",
+                      "declaration": "/** Abstract for entries that can be listed from Directory. */\nmodel FilesAndDirectoriesListSegment {\n  /** The directory items. */\n  @Xml.unwrapped\n  @Xml.name(\"Directory\")\n  directoryItems: DirectoryItem[];\n\n  /** The file items. */\n  @Xml.unwrapped\n  @Xml.name(\"File\")\n  fileItems: FileItem[];\n}",
+                      "source": {
+                        "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                        "revision": "current",
+                        "startLine": 517,
+                        "endLine": 528
+                      }
+                    },
+                    "hunkIds": [
+                      "hunk-5bd0f0131086151d"
+                    ]
+                  },
+                  {
+                    "id": "document-976014d0b8cb1967",
+                    "sourceChangeId": "source-59080f734682d35e",
+                    "qualifiedName": "Storage.File.FileProperty",
+                    "kind": "model",
+                    "before": {
+                      "doc": "File properties.",
+                      "declaration": "/** File properties. */\nmodel FileProperty {\n  /**\n   * Content length of the file. This value may not be up-to-date since an SMB\n   * client may have modified the file locally. The value of Content-Length may not\n   * reflect that fact until the handle is closed or the op-lock is broken. To\n   * retrieve current property values, call Get File Properties.\n   */\n  @Xml.name(\"Content-Length\") contentLength: int64;\n\n  /** The creation time. */\n  @Xml.name(\"CreationTime\")\n  creationTime?: utcDateTime;\n\n  /** The last access time. */\n  @Xml.name(\"LastAccessTime\")\n  lastAccessTime?: utcDateTime;\n\n  /** The last write time. */\n  @Xml.name(\"LastWriteTime\")\n  lastWriteTime?: utcDateTime;\n\n  /** The change time. */\n  @Xml.name(\"ChangeTime\")\n  changeTime?: utcDateTime;\n\n  /** The last modified time. */\n  @encode(\"rfc7231\")\n  @Xml.name(\"Last-Modified\")\n  lastModified?: utcDateTime;\n\n  /** The ETag of the file. */\n  @Xml.name(\"Etag\") eTag?: Azure.Core.eTag;\n\n  /** NFS only. The owner user identifier (UID) of the file. */\n  @added(Versions.v2026_12_06)\n  @Xml.name(\"Uid\")\n  owner?: string;\n\n  /** NFS only. The owner group identifier (GID) of the file. */\n  @added(Versions.v2026_12_06)\n  @Xml.name(\"Gid\")\n  group?: string;\n\n  /** NFS only. The file mode of the file. */\n  @added(Versions.v2026_12_06)\n  @Xml.name(\"Mode\")\n  fileMode?: string;\n}",
+                      "source": {
+                        "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                        "revision": "base",
+                        "startLine": 627,
+                        "endLine": 675
+                      }
+                    },
+                    "after": {
+                      "doc": "File properties.",
+                      "declaration": "/** File properties. */\nmodel FileProperty {\n  /**\n   * Content length of the file. This value may not be up-to-date since an SMB\n   * client may have modified the file locally. The value of Content-Length may not\n   * reflect that fact until the handle is closed or the op-lock is broken. To\n   * retrieve current property values, call Get File Properties.\n   */\n  @Xml.name(\"Content-Length\") contentLength: int64;\n\n  /** The creation time. */\n  @Xml.name(\"CreationTime\")\n  creationTime?: utcDateTime;\n\n  /** The last access time. */\n  @Xml.name(\"LastAccessTime\")\n  lastAccessTime?: utcDateTime;\n\n  /** The last write time. */\n  @Xml.name(\"LastWriteTime\")\n  lastWriteTime?: utcDateTime;\n\n  /** The change time. */\n  @Xml.name(\"ChangeTime\")\n  changeTime?: utcDateTime;\n\n  /** The last modified time. */\n  @encode(\"rfc7231\")\n  @Xml.name(\"Last-Modified\")\n  lastModified?: utcDateTime;\n\n  /** The ETag of the file. */\n  @Xml.name(\"Etag\") eTag?: Azure.Core.eTag;\n}",
+                      "source": {
+                        "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                        "revision": "current",
+                        "startLine": 560,
+                        "endLine": 593
+                      }
+                    },
+                    "hunkIds": [
+                      "hunk-e5ff8d8bf05c0d3d"
+                    ]
+                  },
+                  {
+                    "id": "document-b445ae21b614188a",
+                    "sourceChangeId": "source-59080f734682d35e",
+                    "qualifiedName": "Storage.File.ListFilesIncludeType",
+                    "kind": "enum",
+                    "before": {
+                      "doc": "The type of file information to include in the listing.",
+                      "declaration": "/** The type of file information to include in the listing. */\n#suppress \"@azure-tools/typespec-azure-core/no-enum\" \"Existing API\"\nenum ListFilesIncludeType {\n  /** Timestamps */\n  Timestamps,\n\n  /** Etag */\n  Etag,\n\n  /** Attributes */\n  Attributes,\n\n  /** PermissionKey */\n  PermissionKey,\n\n  /** Permissions */\n  @added(Versions.v2026_12_06)\n  Permissions,\n\n  /** LinkCount */\n  @added(Versions.v2026_12_06)\n  LinkCount,\n\n  /** NfsAttributes */\n  @added(Versions.v2026_12_06)\n  NfsAttributes,\n\n  /** All */\n  @added(Versions.v2026_12_06)\n  All,\n}",
+                      "source": {
+                        "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                        "revision": "base",
+                        "startLine": 394,
+                        "endLine": 424
+                      }
+                    },
+                    "after": {
+                      "doc": "The type of file information to include in the listing.",
+                      "declaration": "/** The type of file information to include in the listing. */\n#suppress \"@azure-tools/typespec-azure-core/no-enum\" \"Existing API\"\nenum ListFilesIncludeType {\n  /** Timestamps */\n  Timestamps,\n\n  /** Etag */\n  Etag,\n\n  /** Attributes */\n  Attributes,\n\n  /** PermissionKey */\n  PermissionKey,\n}",
+                      "source": {
+                        "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                        "revision": "current",
+                        "startLine": 378,
+                        "endLine": 392
+                      }
+                    },
+                    "hunkIds": [
+                      "hunk-a6115c581e6d3790"
+                    ]
+                  },
+                  {
+                    "id": "document-cbab6ef9cf3f8bef",
+                    "sourceChangeId": "source-59080f734682d35e",
+                    "qualifiedName": "Storage.File.DirectoryItem",
+                    "kind": "model",
+                    "before": {
+                      "doc": "A listed directory item.",
+                      "declaration": "/** A listed directory item. */\n@Xml.name(\"Directory\")\nmodel DirectoryItem {\n  /** The directory name. */\n  @Xml.name(\"Name\") name: StringEncoded;\n\n  /** The file ID. */\n  @Xml.name(\"FileId\") fileId?: string;\n\n  /** File properties. */\n  @Xml.name(\"Properties\") properties?: FileProperty;\n\n  /** The file attributes. */\n  @Xml.name(\"Attributes\") attributes?: string;\n\n  /** The permission key. */\n  @Xml.name(\"PermissionKey\") permissionKey?: string;\n\n  /** NFS only. The link count of the directory. */\n  @added(Versions.v2026_12_06)\n  @Xml.name(\"LinkCount\")\n  linkCount?: int64;\n}",
+                      "source": {
+                        "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                        "revision": "base",
+                        "startLine": 592,
+                        "endLine": 614
+                      }
+                    },
+                    "after": {
+                      "doc": "A listed directory item.",
+                      "declaration": "/** A listed directory item. */\n@Xml.name(\"Directory\")\nmodel DirectoryItem {\n  /** The directory name. */\n  @Xml.name(\"Name\") name: StringEncoded;\n\n  /** The file ID. */\n  @Xml.name(\"FileId\") fileId?: string;\n\n  /** File properties. */\n  @Xml.name(\"Properties\") properties?: FileProperty;\n\n  /** The file attributes. */\n  @Xml.name(\"Attributes\") attributes?: string;\n\n  /** The permission key. */\n  @Xml.name(\"PermissionKey\") permissionKey?: string;\n}",
+                      "source": {
+                        "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                        "revision": "current",
+                        "startLine": 530,
+                        "endLine": 547
+                      }
+                    },
+                    "hunkIds": [
+                      "hunk-0f2db41c9cc968ad"
+                    ]
+                  }
+                ]
+              }
             }
           ],
           "relatedFindings": {
@@ -9542,7 +9723,188 @@
                     "endLine": 625
                   }
                 }
-              ]
+              ],
+              "documentEvidence": {
+                "schemaVersion": 3,
+                "status": "ready",
+                "blockers": [],
+                "documents": [
+                  {
+                    "id": "document-4c819471d3e4b790",
+                    "sourceChangeId": "source-59080f734682d35e",
+                    "qualifiedName": "Storage.File.FileItem",
+                    "kind": "model",
+                    "before": {
+                      "doc": "A listed file item.",
+                      "declaration": "/** A listed file item. */\n@Xml.name(\"File\")\nmodel FileItem {\n  /** The file name. */\n  @Xml.name(\"Name\") name: StringEncoded;\n\n  /** The file ID. */\n  @Xml.name(\"FileId\") fileId?: string;\n\n  /** File properties. */\n  @Xml.name(\"Properties\") properties: FileProperty;\n\n  /** The file attributes. */\n  @Xml.name(\"Attributes\") attributes?: string;\n\n  /** The permission key. */\n  @Xml.name(\"PermissionKey\") permissionKey?: string;\n\n  /** NFS only. The link count of the file. */\n  @added(Versions.v2026_12_06)\n  @Xml.name(\"LinkCount\")\n  linkCount?: int64;\n\n  /** NFS only. The type of the file. */\n  @added(Versions.v2026_12_06)\n  @Xml.name(\"FileType\")\n  fileType?: NfsFileType;\n}",
+                      "source": {
+                        "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                        "revision": "base",
+                        "startLine": 677,
+                        "endLine": 704
+                      }
+                    },
+                    "after": {
+                      "doc": "A listed file item.",
+                      "declaration": "/** A listed file item. */\n@Xml.name(\"File\")\nmodel FileItem {\n  /** The file name. */\n  @Xml.name(\"Name\") name: StringEncoded;\n\n  /** The file ID. */\n  @Xml.name(\"FileId\") fileId?: string;\n\n  /** File properties. */\n  @Xml.name(\"Properties\") properties: FileProperty;\n\n  /** The file attributes. */\n  @Xml.name(\"Attributes\") attributes?: string;\n\n  /** The permission key. */\n  @Xml.name(\"PermissionKey\") permissionKey?: string;\n}",
+                      "source": {
+                        "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                        "revision": "current",
+                        "startLine": 595,
+                        "endLine": 612
+                      }
+                    },
+                    "hunkIds": [
+                      "hunk-4dee08e0e6059404"
+                    ]
+                  },
+                  {
+                    "id": "document-4f1fce0e9aca00aa",
+                    "sourceChangeId": "source-59080f734682d35e",
+                    "qualifiedName": "Storage.File.NfsFileType",
+                    "kind": "union",
+                    "before": {
+                      "doc": "The NFS file type.",
+                      "declaration": "/** The NFS file type. */\nunion NfsFileType {\n  string,\n\n  /** Regular */\n  Regular: \"Regular\",\n\n  /** Directory */\n  Directory: \"Directory\",\n\n  /** SymLink */\n  SymLink: \"SymLink\",\n\n  /** BlockDevice */\n  @added(Versions.v2026_12_06)\n  BlockDevice: \"BlockDevice\",\n\n  /** CharacterDevice */\n  @added(Versions.v2026_12_06)\n  CharacterDevice: \"CharacterDevice\",\n\n  /** Socket */\n  @added(Versions.v2026_12_06)\n  Socket: \"Socket\",\n\n  /** Fifo */\n  @added(Versions.v2026_12_06)\n  Fifo: \"Fifo\",\n}",
+                      "source": {
+                        "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                        "revision": "base",
+                        "startLine": 275,
+                        "endLine": 303
+                      }
+                    },
+                    "after": {
+                      "doc": "The NFS file type.",
+                      "declaration": "/** The NFS file type. */\nunion NfsFileType {\n  string,\n\n  /** Regular */\n  Regular: \"Regular\",\n\n  /** Directory */\n  Directory: \"Directory\",\n\n  /** SymLink */\n  SymLink: \"SymLink\",\n}",
+                      "source": {
+                        "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                        "revision": "current",
+                        "startLine": 275,
+                        "endLine": 287
+                      }
+                    },
+                    "hunkIds": [
+                      "hunk-58b9de7d81513824"
+                    ]
+                  },
+                  {
+                    "id": "document-5ee05fa0fcd53f46",
+                    "sourceChangeId": "source-59080f734682d35e",
+                    "qualifiedName": "Storage.File.FilesAndDirectoriesListSegment",
+                    "kind": "model",
+                    "before": {
+                      "doc": "Abstract for entries that can be listed from Directory.",
+                      "declaration": "/** Abstract for entries that can be listed from Directory. */\nmodel FilesAndDirectoriesListSegment {\n  /** The directory items. */\n  @Xml.unwrapped\n  @Xml.name(\"Directory\")\n  directoryItems: DirectoryItem[];\n\n  /** The file items. */\n  @Xml.unwrapped\n  @Xml.name(\"File\")\n  fileItems: FileItem[];\n\n  /** The symbolic link items. */\n  @added(Versions.v2026_12_06)\n  @Xml.unwrapped\n  @Xml.name(\"SymLink\")\n  symLinkItems?: SymLinkItem[];\n\n  /** The block device items. */\n  @added(Versions.v2026_12_06)\n  @Xml.unwrapped\n  @Xml.name(\"BlockDevice\")\n  blockDeviceItems?: BlockDeviceItem[];\n\n  /** The character device items. */\n  @added(Versions.v2026_12_06)\n  @Xml.unwrapped\n  @Xml.name(\"CharDevice\")\n  charDeviceItems?: CharDeviceItem[];\n\n  /** The FIFO items. */\n  @added(Versions.v2026_12_06)\n  @Xml.unwrapped\n  @Xml.name(\"Fifo\")\n  fifoItems?: FifoItem[];\n\n  /** The socket items. */\n  @added(Versions.v2026_12_06)\n  @Xml.unwrapped\n  @Xml.name(\"Socket\")\n  socketItems?: SocketItem[];\n}",
+                      "source": {
+                        "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                        "revision": "base",
+                        "startLine": 549,
+                        "endLine": 590
+                      }
+                    },
+                    "after": {
+                      "doc": "Abstract for entries that can be listed from Directory.",
+                      "declaration": "/** Abstract for entries that can be listed from Directory. */\nmodel FilesAndDirectoriesListSegment {\n  /** The directory items. */\n  @Xml.unwrapped\n  @Xml.name(\"Directory\")\n  directoryItems: DirectoryItem[];\n\n  /** The file items. */\n  @Xml.unwrapped\n  @Xml.name(\"File\")\n  fileItems: FileItem[];\n}",
+                      "source": {
+                        "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                        "revision": "current",
+                        "startLine": 517,
+                        "endLine": 528
+                      }
+                    },
+                    "hunkIds": [
+                      "hunk-5bd0f0131086151d"
+                    ]
+                  },
+                  {
+                    "id": "document-976014d0b8cb1967",
+                    "sourceChangeId": "source-59080f734682d35e",
+                    "qualifiedName": "Storage.File.FileProperty",
+                    "kind": "model",
+                    "before": {
+                      "doc": "File properties.",
+                      "declaration": "/** File properties. */\nmodel FileProperty {\n  /**\n   * Content length of the file. This value may not be up-to-date since an SMB\n   * client may have modified the file locally. The value of Content-Length may not\n   * reflect that fact until the handle is closed or the op-lock is broken. To\n   * retrieve current property values, call Get File Properties.\n   */\n  @Xml.name(\"Content-Length\") contentLength: int64;\n\n  /** The creation time. */\n  @Xml.name(\"CreationTime\")\n  creationTime?: utcDateTime;\n\n  /** The last access time. */\n  @Xml.name(\"LastAccessTime\")\n  lastAccessTime?: utcDateTime;\n\n  /** The last write time. */\n  @Xml.name(\"LastWriteTime\")\n  lastWriteTime?: utcDateTime;\n\n  /** The change time. */\n  @Xml.name(\"ChangeTime\")\n  changeTime?: utcDateTime;\n\n  /** The last modified time. */\n  @encode(\"rfc7231\")\n  @Xml.name(\"Last-Modified\")\n  lastModified?: utcDateTime;\n\n  /** The ETag of the file. */\n  @Xml.name(\"Etag\") eTag?: Azure.Core.eTag;\n\n  /** NFS only. The owner user identifier (UID) of the file. */\n  @added(Versions.v2026_12_06)\n  @Xml.name(\"Uid\")\n  owner?: string;\n\n  /** NFS only. The owner group identifier (GID) of the file. */\n  @added(Versions.v2026_12_06)\n  @Xml.name(\"Gid\")\n  group?: string;\n\n  /** NFS only. The file mode of the file. */\n  @added(Versions.v2026_12_06)\n  @Xml.name(\"Mode\")\n  fileMode?: string;\n}",
+                      "source": {
+                        "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                        "revision": "base",
+                        "startLine": 627,
+                        "endLine": 675
+                      }
+                    },
+                    "after": {
+                      "doc": "File properties.",
+                      "declaration": "/** File properties. */\nmodel FileProperty {\n  /**\n   * Content length of the file. This value may not be up-to-date since an SMB\n   * client may have modified the file locally. The value of Content-Length may not\n   * reflect that fact until the handle is closed or the op-lock is broken. To\n   * retrieve current property values, call Get File Properties.\n   */\n  @Xml.name(\"Content-Length\") contentLength: int64;\n\n  /** The creation time. */\n  @Xml.name(\"CreationTime\")\n  creationTime?: utcDateTime;\n\n  /** The last access time. */\n  @Xml.name(\"LastAccessTime\")\n  lastAccessTime?: utcDateTime;\n\n  /** The last write time. */\n  @Xml.name(\"LastWriteTime\")\n  lastWriteTime?: utcDateTime;\n\n  /** The change time. */\n  @Xml.name(\"ChangeTime\")\n  changeTime?: utcDateTime;\n\n  /** The last modified time. */\n  @encode(\"rfc7231\")\n  @Xml.name(\"Last-Modified\")\n  lastModified?: utcDateTime;\n\n  /** The ETag of the file. */\n  @Xml.name(\"Etag\") eTag?: Azure.Core.eTag;\n}",
+                      "source": {
+                        "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                        "revision": "current",
+                        "startLine": 560,
+                        "endLine": 593
+                      }
+                    },
+                    "hunkIds": [
+                      "hunk-e5ff8d8bf05c0d3d"
+                    ]
+                  },
+                  {
+                    "id": "document-b445ae21b614188a",
+                    "sourceChangeId": "source-59080f734682d35e",
+                    "qualifiedName": "Storage.File.ListFilesIncludeType",
+                    "kind": "enum",
+                    "before": {
+                      "doc": "The type of file information to include in the listing.",
+                      "declaration": "/** The type of file information to include in the listing. */\n#suppress \"@azure-tools/typespec-azure-core/no-enum\" \"Existing API\"\nenum ListFilesIncludeType {\n  /** Timestamps */\n  Timestamps,\n\n  /** Etag */\n  Etag,\n\n  /** Attributes */\n  Attributes,\n\n  /** PermissionKey */\n  PermissionKey,\n\n  /** Permissions */\n  @added(Versions.v2026_12_06)\n  Permissions,\n\n  /** LinkCount */\n  @added(Versions.v2026_12_06)\n  LinkCount,\n\n  /** NfsAttributes */\n  @added(Versions.v2026_12_06)\n  NfsAttributes,\n\n  /** All */\n  @added(Versions.v2026_12_06)\n  All,\n}",
+                      "source": {
+                        "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                        "revision": "base",
+                        "startLine": 394,
+                        "endLine": 424
+                      }
+                    },
+                    "after": {
+                      "doc": "The type of file information to include in the listing.",
+                      "declaration": "/** The type of file information to include in the listing. */\n#suppress \"@azure-tools/typespec-azure-core/no-enum\" \"Existing API\"\nenum ListFilesIncludeType {\n  /** Timestamps */\n  Timestamps,\n\n  /** Etag */\n  Etag,\n\n  /** Attributes */\n  Attributes,\n\n  /** PermissionKey */\n  PermissionKey,\n}",
+                      "source": {
+                        "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                        "revision": "current",
+                        "startLine": 378,
+                        "endLine": 392
+                      }
+                    },
+                    "hunkIds": [
+                      "hunk-a6115c581e6d3790"
+                    ]
+                  },
+                  {
+                    "id": "document-cbab6ef9cf3f8bef",
+                    "sourceChangeId": "source-59080f734682d35e",
+                    "qualifiedName": "Storage.File.DirectoryItem",
+                    "kind": "model",
+                    "before": {
+                      "doc": "A listed directory item.",
+                      "declaration": "/** A listed directory item. */\n@Xml.name(\"Directory\")\nmodel DirectoryItem {\n  /** The directory name. */\n  @Xml.name(\"Name\") name: StringEncoded;\n\n  /** The file ID. */\n  @Xml.name(\"FileId\") fileId?: string;\n\n  /** File properties. */\n  @Xml.name(\"Properties\") properties?: FileProperty;\n\n  /** The file attributes. */\n  @Xml.name(\"Attributes\") attributes?: string;\n\n  /** The permission key. */\n  @Xml.name(\"PermissionKey\") permissionKey?: string;\n\n  /** NFS only. The link count of the directory. */\n  @added(Versions.v2026_12_06)\n  @Xml.name(\"LinkCount\")\n  linkCount?: int64;\n}",
+                      "source": {
+                        "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                        "revision": "base",
+                        "startLine": 592,
+                        "endLine": 614
+                      }
+                    },
+                    "after": {
+                      "doc": "A listed directory item.",
+                      "declaration": "/** A listed directory item. */\n@Xml.name(\"Directory\")\nmodel DirectoryItem {\n  /** The directory name. */\n  @Xml.name(\"Name\") name: StringEncoded;\n\n  /** The file ID. */\n  @Xml.name(\"FileId\") fileId?: string;\n\n  /** File properties. */\n  @Xml.name(\"Properties\") properties?: FileProperty;\n\n  /** The file attributes. */\n  @Xml.name(\"Attributes\") attributes?: string;\n\n  /** The permission key. */\n  @Xml.name(\"PermissionKey\") permissionKey?: string;\n}",
+                      "source": {
+                        "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                        "revision": "current",
+                        "startLine": 530,
+                        "endLine": 547
+                      }
+                    },
+                    "hunkIds": [
+                      "hunk-0f2db41c9cc968ad"
+                    ]
+                  }
+                ]
+              }
             }
           ],
           "relatedFindings": {
@@ -10024,7 +10386,188 @@
                     "endLine": 704
                   }
                 }
-              ]
+              ],
+              "documentEvidence": {
+                "schemaVersion": 3,
+                "status": "ready",
+                "blockers": [],
+                "documents": [
+                  {
+                    "id": "document-4c819471d3e4b790",
+                    "sourceChangeId": "source-59080f734682d35e",
+                    "qualifiedName": "Storage.File.FileItem",
+                    "kind": "model",
+                    "before": {
+                      "doc": "A listed file item.",
+                      "declaration": "/** A listed file item. */\n@Xml.name(\"File\")\nmodel FileItem {\n  /** The file name. */\n  @Xml.name(\"Name\") name: StringEncoded;\n\n  /** The file ID. */\n  @Xml.name(\"FileId\") fileId?: string;\n\n  /** File properties. */\n  @Xml.name(\"Properties\") properties: FileProperty;\n\n  /** The file attributes. */\n  @Xml.name(\"Attributes\") attributes?: string;\n\n  /** The permission key. */\n  @Xml.name(\"PermissionKey\") permissionKey?: string;\n\n  /** NFS only. The link count of the file. */\n  @added(Versions.v2026_12_06)\n  @Xml.name(\"LinkCount\")\n  linkCount?: int64;\n\n  /** NFS only. The type of the file. */\n  @added(Versions.v2026_12_06)\n  @Xml.name(\"FileType\")\n  fileType?: NfsFileType;\n}",
+                      "source": {
+                        "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                        "revision": "base",
+                        "startLine": 677,
+                        "endLine": 704
+                      }
+                    },
+                    "after": {
+                      "doc": "A listed file item.",
+                      "declaration": "/** A listed file item. */\n@Xml.name(\"File\")\nmodel FileItem {\n  /** The file name. */\n  @Xml.name(\"Name\") name: StringEncoded;\n\n  /** The file ID. */\n  @Xml.name(\"FileId\") fileId?: string;\n\n  /** File properties. */\n  @Xml.name(\"Properties\") properties: FileProperty;\n\n  /** The file attributes. */\n  @Xml.name(\"Attributes\") attributes?: string;\n\n  /** The permission key. */\n  @Xml.name(\"PermissionKey\") permissionKey?: string;\n}",
+                      "source": {
+                        "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                        "revision": "current",
+                        "startLine": 595,
+                        "endLine": 612
+                      }
+                    },
+                    "hunkIds": [
+                      "hunk-4dee08e0e6059404"
+                    ]
+                  },
+                  {
+                    "id": "document-4f1fce0e9aca00aa",
+                    "sourceChangeId": "source-59080f734682d35e",
+                    "qualifiedName": "Storage.File.NfsFileType",
+                    "kind": "union",
+                    "before": {
+                      "doc": "The NFS file type.",
+                      "declaration": "/** The NFS file type. */\nunion NfsFileType {\n  string,\n\n  /** Regular */\n  Regular: \"Regular\",\n\n  /** Directory */\n  Directory: \"Directory\",\n\n  /** SymLink */\n  SymLink: \"SymLink\",\n\n  /** BlockDevice */\n  @added(Versions.v2026_12_06)\n  BlockDevice: \"BlockDevice\",\n\n  /** CharacterDevice */\n  @added(Versions.v2026_12_06)\n  CharacterDevice: \"CharacterDevice\",\n\n  /** Socket */\n  @added(Versions.v2026_12_06)\n  Socket: \"Socket\",\n\n  /** Fifo */\n  @added(Versions.v2026_12_06)\n  Fifo: \"Fifo\",\n}",
+                      "source": {
+                        "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                        "revision": "base",
+                        "startLine": 275,
+                        "endLine": 303
+                      }
+                    },
+                    "after": {
+                      "doc": "The NFS file type.",
+                      "declaration": "/** The NFS file type. */\nunion NfsFileType {\n  string,\n\n  /** Regular */\n  Regular: \"Regular\",\n\n  /** Directory */\n  Directory: \"Directory\",\n\n  /** SymLink */\n  SymLink: \"SymLink\",\n}",
+                      "source": {
+                        "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                        "revision": "current",
+                        "startLine": 275,
+                        "endLine": 287
+                      }
+                    },
+                    "hunkIds": [
+                      "hunk-58b9de7d81513824"
+                    ]
+                  },
+                  {
+                    "id": "document-5ee05fa0fcd53f46",
+                    "sourceChangeId": "source-59080f734682d35e",
+                    "qualifiedName": "Storage.File.FilesAndDirectoriesListSegment",
+                    "kind": "model",
+                    "before": {
+                      "doc": "Abstract for entries that can be listed from Directory.",
+                      "declaration": "/** Abstract for entries that can be listed from Directory. */\nmodel FilesAndDirectoriesListSegment {\n  /** The directory items. */\n  @Xml.unwrapped\n  @Xml.name(\"Directory\")\n  directoryItems: DirectoryItem[];\n\n  /** The file items. */\n  @Xml.unwrapped\n  @Xml.name(\"File\")\n  fileItems: FileItem[];\n\n  /** The symbolic link items. */\n  @added(Versions.v2026_12_06)\n  @Xml.unwrapped\n  @Xml.name(\"SymLink\")\n  symLinkItems?: SymLinkItem[];\n\n  /** The block device items. */\n  @added(Versions.v2026_12_06)\n  @Xml.unwrapped\n  @Xml.name(\"BlockDevice\")\n  blockDeviceItems?: BlockDeviceItem[];\n\n  /** The character device items. */\n  @added(Versions.v2026_12_06)\n  @Xml.unwrapped\n  @Xml.name(\"CharDevice\")\n  charDeviceItems?: CharDeviceItem[];\n\n  /** The FIFO items. */\n  @added(Versions.v2026_12_06)\n  @Xml.unwrapped\n  @Xml.name(\"Fifo\")\n  fifoItems?: FifoItem[];\n\n  /** The socket items. */\n  @added(Versions.v2026_12_06)\n  @Xml.unwrapped\n  @Xml.name(\"Socket\")\n  socketItems?: SocketItem[];\n}",
+                      "source": {
+                        "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                        "revision": "base",
+                        "startLine": 549,
+                        "endLine": 590
+                      }
+                    },
+                    "after": {
+                      "doc": "Abstract for entries that can be listed from Directory.",
+                      "declaration": "/** Abstract for entries that can be listed from Directory. */\nmodel FilesAndDirectoriesListSegment {\n  /** The directory items. */\n  @Xml.unwrapped\n  @Xml.name(\"Directory\")\n  directoryItems: DirectoryItem[];\n\n  /** The file items. */\n  @Xml.unwrapped\n  @Xml.name(\"File\")\n  fileItems: FileItem[];\n}",
+                      "source": {
+                        "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                        "revision": "current",
+                        "startLine": 517,
+                        "endLine": 528
+                      }
+                    },
+                    "hunkIds": [
+                      "hunk-5bd0f0131086151d"
+                    ]
+                  },
+                  {
+                    "id": "document-976014d0b8cb1967",
+                    "sourceChangeId": "source-59080f734682d35e",
+                    "qualifiedName": "Storage.File.FileProperty",
+                    "kind": "model",
+                    "before": {
+                      "doc": "File properties.",
+                      "declaration": "/** File properties. */\nmodel FileProperty {\n  /**\n   * Content length of the file. This value may not be up-to-date since an SMB\n   * client may have modified the file locally. The value of Content-Length may not\n   * reflect that fact until the handle is closed or the op-lock is broken. To\n   * retrieve current property values, call Get File Properties.\n   */\n  @Xml.name(\"Content-Length\") contentLength: int64;\n\n  /** The creation time. */\n  @Xml.name(\"CreationTime\")\n  creationTime?: utcDateTime;\n\n  /** The last access time. */\n  @Xml.name(\"LastAccessTime\")\n  lastAccessTime?: utcDateTime;\n\n  /** The last write time. */\n  @Xml.name(\"LastWriteTime\")\n  lastWriteTime?: utcDateTime;\n\n  /** The change time. */\n  @Xml.name(\"ChangeTime\")\n  changeTime?: utcDateTime;\n\n  /** The last modified time. */\n  @encode(\"rfc7231\")\n  @Xml.name(\"Last-Modified\")\n  lastModified?: utcDateTime;\n\n  /** The ETag of the file. */\n  @Xml.name(\"Etag\") eTag?: Azure.Core.eTag;\n\n  /** NFS only. The owner user identifier (UID) of the file. */\n  @added(Versions.v2026_12_06)\n  @Xml.name(\"Uid\")\n  owner?: string;\n\n  /** NFS only. The owner group identifier (GID) of the file. */\n  @added(Versions.v2026_12_06)\n  @Xml.name(\"Gid\")\n  group?: string;\n\n  /** NFS only. The file mode of the file. */\n  @added(Versions.v2026_12_06)\n  @Xml.name(\"Mode\")\n  fileMode?: string;\n}",
+                      "source": {
+                        "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                        "revision": "base",
+                        "startLine": 627,
+                        "endLine": 675
+                      }
+                    },
+                    "after": {
+                      "doc": "File properties.",
+                      "declaration": "/** File properties. */\nmodel FileProperty {\n  /**\n   * Content length of the file. This value may not be up-to-date since an SMB\n   * client may have modified the file locally. The value of Content-Length may not\n   * reflect that fact until the handle is closed or the op-lock is broken. To\n   * retrieve current property values, call Get File Properties.\n   */\n  @Xml.name(\"Content-Length\") contentLength: int64;\n\n  /** The creation time. */\n  @Xml.name(\"CreationTime\")\n  creationTime?: utcDateTime;\n\n  /** The last access time. */\n  @Xml.name(\"LastAccessTime\")\n  lastAccessTime?: utcDateTime;\n\n  /** The last write time. */\n  @Xml.name(\"LastWriteTime\")\n  lastWriteTime?: utcDateTime;\n\n  /** The change time. */\n  @Xml.name(\"ChangeTime\")\n  changeTime?: utcDateTime;\n\n  /** The last modified time. */\n  @encode(\"rfc7231\")\n  @Xml.name(\"Last-Modified\")\n  lastModified?: utcDateTime;\n\n  /** The ETag of the file. */\n  @Xml.name(\"Etag\") eTag?: Azure.Core.eTag;\n}",
+                      "source": {
+                        "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                        "revision": "current",
+                        "startLine": 560,
+                        "endLine": 593
+                      }
+                    },
+                    "hunkIds": [
+                      "hunk-e5ff8d8bf05c0d3d"
+                    ]
+                  },
+                  {
+                    "id": "document-b445ae21b614188a",
+                    "sourceChangeId": "source-59080f734682d35e",
+                    "qualifiedName": "Storage.File.ListFilesIncludeType",
+                    "kind": "enum",
+                    "before": {
+                      "doc": "The type of file information to include in the listing.",
+                      "declaration": "/** The type of file information to include in the listing. */\n#suppress \"@azure-tools/typespec-azure-core/no-enum\" \"Existing API\"\nenum ListFilesIncludeType {\n  /** Timestamps */\n  Timestamps,\n\n  /** Etag */\n  Etag,\n\n  /** Attributes */\n  Attributes,\n\n  /** PermissionKey */\n  PermissionKey,\n\n  /** Permissions */\n  @added(Versions.v2026_12_06)\n  Permissions,\n\n  /** LinkCount */\n  @added(Versions.v2026_12_06)\n  LinkCount,\n\n  /** NfsAttributes */\n  @added(Versions.v2026_12_06)\n  NfsAttributes,\n\n  /** All */\n  @added(Versions.v2026_12_06)\n  All,\n}",
+                      "source": {
+                        "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                        "revision": "base",
+                        "startLine": 394,
+                        "endLine": 424
+                      }
+                    },
+                    "after": {
+                      "doc": "The type of file information to include in the listing.",
+                      "declaration": "/** The type of file information to include in the listing. */\n#suppress \"@azure-tools/typespec-azure-core/no-enum\" \"Existing API\"\nenum ListFilesIncludeType {\n  /** Timestamps */\n  Timestamps,\n\n  /** Etag */\n  Etag,\n\n  /** Attributes */\n  Attributes,\n\n  /** PermissionKey */\n  PermissionKey,\n}",
+                      "source": {
+                        "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                        "revision": "current",
+                        "startLine": 378,
+                        "endLine": 392
+                      }
+                    },
+                    "hunkIds": [
+                      "hunk-a6115c581e6d3790"
+                    ]
+                  },
+                  {
+                    "id": "document-cbab6ef9cf3f8bef",
+                    "sourceChangeId": "source-59080f734682d35e",
+                    "qualifiedName": "Storage.File.DirectoryItem",
+                    "kind": "model",
+                    "before": {
+                      "doc": "A listed directory item.",
+                      "declaration": "/** A listed directory item. */\n@Xml.name(\"Directory\")\nmodel DirectoryItem {\n  /** The directory name. */\n  @Xml.name(\"Name\") name: StringEncoded;\n\n  /** The file ID. */\n  @Xml.name(\"FileId\") fileId?: string;\n\n  /** File properties. */\n  @Xml.name(\"Properties\") properties?: FileProperty;\n\n  /** The file attributes. */\n  @Xml.name(\"Attributes\") attributes?: string;\n\n  /** The permission key. */\n  @Xml.name(\"PermissionKey\") permissionKey?: string;\n\n  /** NFS only. The link count of the directory. */\n  @added(Versions.v2026_12_06)\n  @Xml.name(\"LinkCount\")\n  linkCount?: int64;\n}",
+                      "source": {
+                        "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                        "revision": "base",
+                        "startLine": 592,
+                        "endLine": 614
+                      }
+                    },
+                    "after": {
+                      "doc": "A listed directory item.",
+                      "declaration": "/** A listed directory item. */\n@Xml.name(\"Directory\")\nmodel DirectoryItem {\n  /** The directory name. */\n  @Xml.name(\"Name\") name: StringEncoded;\n\n  /** The file ID. */\n  @Xml.name(\"FileId\") fileId?: string;\n\n  /** File properties. */\n  @Xml.name(\"Properties\") properties?: FileProperty;\n\n  /** The file attributes. */\n  @Xml.name(\"Attributes\") attributes?: string;\n\n  /** The permission key. */\n  @Xml.name(\"PermissionKey\") permissionKey?: string;\n}",
+                      "source": {
+                        "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                        "revision": "current",
+                        "startLine": 530,
+                        "endLine": 547
+                      }
+                    },
+                    "hunkIds": [
+                      "hunk-0f2db41c9cc968ad"
+                    ]
+                  }
+                ]
+              }
             }
           ],
           "relatedFindings": {
@@ -17403,7 +17946,188 @@
                     "endLine": 314
                   }
                 }
-              ]
+              ],
+              "documentEvidence": {
+                "schemaVersion": 3,
+                "status": "ready",
+                "blockers": [],
+                "documents": [
+                  {
+                    "id": "document-4c819471d3e4b790",
+                    "sourceChangeId": "source-59080f734682d35e",
+                    "qualifiedName": "Storage.File.FileItem",
+                    "kind": "model",
+                    "before": {
+                      "doc": "A listed file item.",
+                      "declaration": "/** A listed file item. */\n@Xml.name(\"File\")\nmodel FileItem {\n  /** The file name. */\n  @Xml.name(\"Name\") name: StringEncoded;\n\n  /** The file ID. */\n  @Xml.name(\"FileId\") fileId?: string;\n\n  /** File properties. */\n  @Xml.name(\"Properties\") properties: FileProperty;\n\n  /** The file attributes. */\n  @Xml.name(\"Attributes\") attributes?: string;\n\n  /** The permission key. */\n  @Xml.name(\"PermissionKey\") permissionKey?: string;\n\n  /** NFS only. The link count of the file. */\n  @added(Versions.v2026_12_06)\n  @Xml.name(\"LinkCount\")\n  linkCount?: int64;\n\n  /** NFS only. The type of the file. */\n  @added(Versions.v2026_12_06)\n  @Xml.name(\"FileType\")\n  fileType?: NfsFileType;\n}",
+                      "source": {
+                        "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                        "revision": "base",
+                        "startLine": 677,
+                        "endLine": 704
+                      }
+                    },
+                    "after": {
+                      "doc": "A listed file item.",
+                      "declaration": "/** A listed file item. */\n@Xml.name(\"File\")\nmodel FileItem {\n  /** The file name. */\n  @Xml.name(\"Name\") name: StringEncoded;\n\n  /** The file ID. */\n  @Xml.name(\"FileId\") fileId?: string;\n\n  /** File properties. */\n  @Xml.name(\"Properties\") properties: FileProperty;\n\n  /** The file attributes. */\n  @Xml.name(\"Attributes\") attributes?: string;\n\n  /** The permission key. */\n  @Xml.name(\"PermissionKey\") permissionKey?: string;\n}",
+                      "source": {
+                        "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                        "revision": "current",
+                        "startLine": 595,
+                        "endLine": 612
+                      }
+                    },
+                    "hunkIds": [
+                      "hunk-4dee08e0e6059404"
+                    ]
+                  },
+                  {
+                    "id": "document-4f1fce0e9aca00aa",
+                    "sourceChangeId": "source-59080f734682d35e",
+                    "qualifiedName": "Storage.File.NfsFileType",
+                    "kind": "union",
+                    "before": {
+                      "doc": "The NFS file type.",
+                      "declaration": "/** The NFS file type. */\nunion NfsFileType {\n  string,\n\n  /** Regular */\n  Regular: \"Regular\",\n\n  /** Directory */\n  Directory: \"Directory\",\n\n  /** SymLink */\n  SymLink: \"SymLink\",\n\n  /** BlockDevice */\n  @added(Versions.v2026_12_06)\n  BlockDevice: \"BlockDevice\",\n\n  /** CharacterDevice */\n  @added(Versions.v2026_12_06)\n  CharacterDevice: \"CharacterDevice\",\n\n  /** Socket */\n  @added(Versions.v2026_12_06)\n  Socket: \"Socket\",\n\n  /** Fifo */\n  @added(Versions.v2026_12_06)\n  Fifo: \"Fifo\",\n}",
+                      "source": {
+                        "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                        "revision": "base",
+                        "startLine": 275,
+                        "endLine": 303
+                      }
+                    },
+                    "after": {
+                      "doc": "The NFS file type.",
+                      "declaration": "/** The NFS file type. */\nunion NfsFileType {\n  string,\n\n  /** Regular */\n  Regular: \"Regular\",\n\n  /** Directory */\n  Directory: \"Directory\",\n\n  /** SymLink */\n  SymLink: \"SymLink\",\n}",
+                      "source": {
+                        "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                        "revision": "current",
+                        "startLine": 275,
+                        "endLine": 287
+                      }
+                    },
+                    "hunkIds": [
+                      "hunk-58b9de7d81513824"
+                    ]
+                  },
+                  {
+                    "id": "document-5ee05fa0fcd53f46",
+                    "sourceChangeId": "source-59080f734682d35e",
+                    "qualifiedName": "Storage.File.FilesAndDirectoriesListSegment",
+                    "kind": "model",
+                    "before": {
+                      "doc": "Abstract for entries that can be listed from Directory.",
+                      "declaration": "/** Abstract for entries that can be listed from Directory. */\nmodel FilesAndDirectoriesListSegment {\n  /** The directory items. */\n  @Xml.unwrapped\n  @Xml.name(\"Directory\")\n  directoryItems: DirectoryItem[];\n\n  /** The file items. */\n  @Xml.unwrapped\n  @Xml.name(\"File\")\n  fileItems: FileItem[];\n\n  /** The symbolic link items. */\n  @added(Versions.v2026_12_06)\n  @Xml.unwrapped\n  @Xml.name(\"SymLink\")\n  symLinkItems?: SymLinkItem[];\n\n  /** The block device items. */\n  @added(Versions.v2026_12_06)\n  @Xml.unwrapped\n  @Xml.name(\"BlockDevice\")\n  blockDeviceItems?: BlockDeviceItem[];\n\n  /** The character device items. */\n  @added(Versions.v2026_12_06)\n  @Xml.unwrapped\n  @Xml.name(\"CharDevice\")\n  charDeviceItems?: CharDeviceItem[];\n\n  /** The FIFO items. */\n  @added(Versions.v2026_12_06)\n  @Xml.unwrapped\n  @Xml.name(\"Fifo\")\n  fifoItems?: FifoItem[];\n\n  /** The socket items. */\n  @added(Versions.v2026_12_06)\n  @Xml.unwrapped\n  @Xml.name(\"Socket\")\n  socketItems?: SocketItem[];\n}",
+                      "source": {
+                        "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                        "revision": "base",
+                        "startLine": 549,
+                        "endLine": 590
+                      }
+                    },
+                    "after": {
+                      "doc": "Abstract for entries that can be listed from Directory.",
+                      "declaration": "/** Abstract for entries that can be listed from Directory. */\nmodel FilesAndDirectoriesListSegment {\n  /** The directory items. */\n  @Xml.unwrapped\n  @Xml.name(\"Directory\")\n  directoryItems: DirectoryItem[];\n\n  /** The file items. */\n  @Xml.unwrapped\n  @Xml.name(\"File\")\n  fileItems: FileItem[];\n}",
+                      "source": {
+                        "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                        "revision": "current",
+                        "startLine": 517,
+                        "endLine": 528
+                      }
+                    },
+                    "hunkIds": [
+                      "hunk-5bd0f0131086151d"
+                    ]
+                  },
+                  {
+                    "id": "document-976014d0b8cb1967",
+                    "sourceChangeId": "source-59080f734682d35e",
+                    "qualifiedName": "Storage.File.FileProperty",
+                    "kind": "model",
+                    "before": {
+                      "doc": "File properties.",
+                      "declaration": "/** File properties. */\nmodel FileProperty {\n  /**\n   * Content length of the file. This value may not be up-to-date since an SMB\n   * client may have modified the file locally. The value of Content-Length may not\n   * reflect that fact until the handle is closed or the op-lock is broken. To\n   * retrieve current property values, call Get File Properties.\n   */\n  @Xml.name(\"Content-Length\") contentLength: int64;\n\n  /** The creation time. */\n  @Xml.name(\"CreationTime\")\n  creationTime?: utcDateTime;\n\n  /** The last access time. */\n  @Xml.name(\"LastAccessTime\")\n  lastAccessTime?: utcDateTime;\n\n  /** The last write time. */\n  @Xml.name(\"LastWriteTime\")\n  lastWriteTime?: utcDateTime;\n\n  /** The change time. */\n  @Xml.name(\"ChangeTime\")\n  changeTime?: utcDateTime;\n\n  /** The last modified time. */\n  @encode(\"rfc7231\")\n  @Xml.name(\"Last-Modified\")\n  lastModified?: utcDateTime;\n\n  /** The ETag of the file. */\n  @Xml.name(\"Etag\") eTag?: Azure.Core.eTag;\n\n  /** NFS only. The owner user identifier (UID) of the file. */\n  @added(Versions.v2026_12_06)\n  @Xml.name(\"Uid\")\n  owner?: string;\n\n  /** NFS only. The owner group identifier (GID) of the file. */\n  @added(Versions.v2026_12_06)\n  @Xml.name(\"Gid\")\n  group?: string;\n\n  /** NFS only. The file mode of the file. */\n  @added(Versions.v2026_12_06)\n  @Xml.name(\"Mode\")\n  fileMode?: string;\n}",
+                      "source": {
+                        "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                        "revision": "base",
+                        "startLine": 627,
+                        "endLine": 675
+                      }
+                    },
+                    "after": {
+                      "doc": "File properties.",
+                      "declaration": "/** File properties. */\nmodel FileProperty {\n  /**\n   * Content length of the file. This value may not be up-to-date since an SMB\n   * client may have modified the file locally. The value of Content-Length may not\n   * reflect that fact until the handle is closed or the op-lock is broken. To\n   * retrieve current property values, call Get File Properties.\n   */\n  @Xml.name(\"Content-Length\") contentLength: int64;\n\n  /** The creation time. */\n  @Xml.name(\"CreationTime\")\n  creationTime?: utcDateTime;\n\n  /** The last access time. */\n  @Xml.name(\"LastAccessTime\")\n  lastAccessTime?: utcDateTime;\n\n  /** The last write time. */\n  @Xml.name(\"LastWriteTime\")\n  lastWriteTime?: utcDateTime;\n\n  /** The change time. */\n  @Xml.name(\"ChangeTime\")\n  changeTime?: utcDateTime;\n\n  /** The last modified time. */\n  @encode(\"rfc7231\")\n  @Xml.name(\"Last-Modified\")\n  lastModified?: utcDateTime;\n\n  /** The ETag of the file. */\n  @Xml.name(\"Etag\") eTag?: Azure.Core.eTag;\n}",
+                      "source": {
+                        "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                        "revision": "current",
+                        "startLine": 560,
+                        "endLine": 593
+                      }
+                    },
+                    "hunkIds": [
+                      "hunk-e5ff8d8bf05c0d3d"
+                    ]
+                  },
+                  {
+                    "id": "document-b445ae21b614188a",
+                    "sourceChangeId": "source-59080f734682d35e",
+                    "qualifiedName": "Storage.File.ListFilesIncludeType",
+                    "kind": "enum",
+                    "before": {
+                      "doc": "The type of file information to include in the listing.",
+                      "declaration": "/** The type of file information to include in the listing. */\n#suppress \"@azure-tools/typespec-azure-core/no-enum\" \"Existing API\"\nenum ListFilesIncludeType {\n  /** Timestamps */\n  Timestamps,\n\n  /** Etag */\n  Etag,\n\n  /** Attributes */\n  Attributes,\n\n  /** PermissionKey */\n  PermissionKey,\n\n  /** Permissions */\n  @added(Versions.v2026_12_06)\n  Permissions,\n\n  /** LinkCount */\n  @added(Versions.v2026_12_06)\n  LinkCount,\n\n  /** NfsAttributes */\n  @added(Versions.v2026_12_06)\n  NfsAttributes,\n\n  /** All */\n  @added(Versions.v2026_12_06)\n  All,\n}",
+                      "source": {
+                        "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                        "revision": "base",
+                        "startLine": 394,
+                        "endLine": 424
+                      }
+                    },
+                    "after": {
+                      "doc": "The type of file information to include in the listing.",
+                      "declaration": "/** The type of file information to include in the listing. */\n#suppress \"@azure-tools/typespec-azure-core/no-enum\" \"Existing API\"\nenum ListFilesIncludeType {\n  /** Timestamps */\n  Timestamps,\n\n  /** Etag */\n  Etag,\n\n  /** Attributes */\n  Attributes,\n\n  /** PermissionKey */\n  PermissionKey,\n}",
+                      "source": {
+                        "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                        "revision": "current",
+                        "startLine": 378,
+                        "endLine": 392
+                      }
+                    },
+                    "hunkIds": [
+                      "hunk-a6115c581e6d3790"
+                    ]
+                  },
+                  {
+                    "id": "document-cbab6ef9cf3f8bef",
+                    "sourceChangeId": "source-59080f734682d35e",
+                    "qualifiedName": "Storage.File.DirectoryItem",
+                    "kind": "model",
+                    "before": {
+                      "doc": "A listed directory item.",
+                      "declaration": "/** A listed directory item. */\n@Xml.name(\"Directory\")\nmodel DirectoryItem {\n  /** The directory name. */\n  @Xml.name(\"Name\") name: StringEncoded;\n\n  /** The file ID. */\n  @Xml.name(\"FileId\") fileId?: string;\n\n  /** File properties. */\n  @Xml.name(\"Properties\") properties?: FileProperty;\n\n  /** The file attributes. */\n  @Xml.name(\"Attributes\") attributes?: string;\n\n  /** The permission key. */\n  @Xml.name(\"PermissionKey\") permissionKey?: string;\n\n  /** NFS only. The link count of the directory. */\n  @added(Versions.v2026_12_06)\n  @Xml.name(\"LinkCount\")\n  linkCount?: int64;\n}",
+                      "source": {
+                        "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                        "revision": "base",
+                        "startLine": 592,
+                        "endLine": 614
+                      }
+                    },
+                    "after": {
+                      "doc": "A listed directory item.",
+                      "declaration": "/** A listed directory item. */\n@Xml.name(\"Directory\")\nmodel DirectoryItem {\n  /** The directory name. */\n  @Xml.name(\"Name\") name: StringEncoded;\n\n  /** The file ID. */\n  @Xml.name(\"FileId\") fileId?: string;\n\n  /** File properties. */\n  @Xml.name(\"Properties\") properties?: FileProperty;\n\n  /** The file attributes. */\n  @Xml.name(\"Attributes\") attributes?: string;\n\n  /** The permission key. */\n  @Xml.name(\"PermissionKey\") permissionKey?: string;\n}",
+                      "source": {
+                        "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                        "revision": "current",
+                        "startLine": 530,
+                        "endLine": 547
+                      }
+                    },
+                    "hunkIds": [
+                      "hunk-0f2db41c9cc968ad"
+                    ]
+                  }
+                ]
+              }
             }
           ],
           "relatedFindings": {
@@ -196974,8 +197698,254 @@
       "blockers": []
     },
     "documentQuality": {
-      "status": "not-assessed",
-      "summary": "Document Quality and Agent Friendliness is not assessed."
+      "assessmentVersion": 3,
+      "status": "passed",
+      "summary": "All assessed descriptions clearly and accurately explain their associated TypeSpec code.",
+      "coverage": {
+        "semanticIntentCount": 4,
+        "assessedIntentCount": 4,
+        "documentCount": 6,
+        "assessedDocumentCount": 6,
+        "checkCount": 6,
+        "assessedCheckCount": 6,
+        "inheritedDocumentCount": 0,
+        "unassessedIntentIds": [],
+        "notApplicableIntentIds": []
+      },
+      "intentAssessments": [
+        {
+          "reviewUnitId": "semantic-106722e15dc2d25d",
+          "status": "passed",
+          "documents": [
+            {
+              "id": "document-4c819471d3e4b790",
+              "sourceChangeId": "source-59080f734682d35e",
+              "qualifiedName": "Storage.File.FileItem",
+              "kind": "model",
+              "before": {
+                "doc": "A listed file item.",
+                "declaration": "/** A listed file item. */\n@Xml.name(\"File\")\nmodel FileItem {\n  /** The file name. */\n  @Xml.name(\"Name\") name: StringEncoded;\n\n  /** The file ID. */\n  @Xml.name(\"FileId\") fileId?: string;\n\n  /** File properties. */\n  @Xml.name(\"Properties\") properties: FileProperty;\n\n  /** The file attributes. */\n  @Xml.name(\"Attributes\") attributes?: string;\n\n  /** The permission key. */\n  @Xml.name(\"PermissionKey\") permissionKey?: string;\n\n  /** NFS only. The link count of the file. */\n  @added(Versions.v2026_12_06)\n  @Xml.name(\"LinkCount\")\n  linkCount?: int64;\n\n  /** NFS only. The type of the file. */\n  @added(Versions.v2026_12_06)\n  @Xml.name(\"FileType\")\n  fileType?: NfsFileType;\n}",
+                "source": {
+                  "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                  "revision": "base",
+                  "startLine": 677,
+                  "endLine": 704
+                }
+              },
+              "after": {
+                "doc": "A listed file item.",
+                "declaration": "/** A listed file item. */\n@Xml.name(\"File\")\nmodel FileItem {\n  /** The file name. */\n  @Xml.name(\"Name\") name: StringEncoded;\n\n  /** The file ID. */\n  @Xml.name(\"FileId\") fileId?: string;\n\n  /** File properties. */\n  @Xml.name(\"Properties\") properties: FileProperty;\n\n  /** The file attributes. */\n  @Xml.name(\"Attributes\") attributes?: string;\n\n  /** The permission key. */\n  @Xml.name(\"PermissionKey\") permissionKey?: string;\n}",
+                "source": {
+                  "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                  "revision": "current",
+                  "startLine": 595,
+                  "endLine": 612
+                }
+              }
+            }
+          ],
+          "checks": [
+            {
+              "reviewUnitId": "semantic-106722e15dc2d25d",
+              "documentId": "document-4c819471d3e4b790",
+              "check": "description",
+              "decision": "pass",
+              "rationale": "Listed file item remains accurate after removing link-count and file-type fields."
+            }
+          ]
+        },
+        {
+          "reviewUnitId": "semantic-259f67bc56ae9c3d",
+          "status": "passed",
+          "documents": [
+            {
+              "id": "document-5ee05fa0fcd53f46",
+              "sourceChangeId": "source-59080f734682d35e",
+              "qualifiedName": "Storage.File.FilesAndDirectoriesListSegment",
+              "kind": "model",
+              "before": {
+                "doc": "Abstract for entries that can be listed from Directory.",
+                "declaration": "/** Abstract for entries that can be listed from Directory. */\nmodel FilesAndDirectoriesListSegment {\n  /** The directory items. */\n  @Xml.unwrapped\n  @Xml.name(\"Directory\")\n  directoryItems: DirectoryItem[];\n\n  /** The file items. */\n  @Xml.unwrapped\n  @Xml.name(\"File\")\n  fileItems: FileItem[];\n\n  /** The symbolic link items. */\n  @added(Versions.v2026_12_06)\n  @Xml.unwrapped\n  @Xml.name(\"SymLink\")\n  symLinkItems?: SymLinkItem[];\n\n  /** The block device items. */\n  @added(Versions.v2026_12_06)\n  @Xml.unwrapped\n  @Xml.name(\"BlockDevice\")\n  blockDeviceItems?: BlockDeviceItem[];\n\n  /** The character device items. */\n  @added(Versions.v2026_12_06)\n  @Xml.unwrapped\n  @Xml.name(\"CharDevice\")\n  charDeviceItems?: CharDeviceItem[];\n\n  /** The FIFO items. */\n  @added(Versions.v2026_12_06)\n  @Xml.unwrapped\n  @Xml.name(\"Fifo\")\n  fifoItems?: FifoItem[];\n\n  /** The socket items. */\n  @added(Versions.v2026_12_06)\n  @Xml.unwrapped\n  @Xml.name(\"Socket\")\n  socketItems?: SocketItem[];\n}",
+                "source": {
+                  "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                  "revision": "base",
+                  "startLine": 549,
+                  "endLine": 590
+                }
+              },
+              "after": {
+                "doc": "Abstract for entries that can be listed from Directory.",
+                "declaration": "/** Abstract for entries that can be listed from Directory. */\nmodel FilesAndDirectoriesListSegment {\n  /** The directory items. */\n  @Xml.unwrapped\n  @Xml.name(\"Directory\")\n  directoryItems: DirectoryItem[];\n\n  /** The file items. */\n  @Xml.unwrapped\n  @Xml.name(\"File\")\n  fileItems: FileItem[];\n}",
+                "source": {
+                  "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                  "revision": "current",
+                  "startLine": 517,
+                  "endLine": 528
+                }
+              }
+            },
+            {
+              "id": "document-b445ae21b614188a",
+              "sourceChangeId": "source-59080f734682d35e",
+              "qualifiedName": "Storage.File.ListFilesIncludeType",
+              "kind": "enum",
+              "before": {
+                "doc": "The type of file information to include in the listing.",
+                "declaration": "/** The type of file information to include in the listing. */\n#suppress \"@azure-tools/typespec-azure-core/no-enum\" \"Existing API\"\nenum ListFilesIncludeType {\n  /** Timestamps */\n  Timestamps,\n\n  /** Etag */\n  Etag,\n\n  /** Attributes */\n  Attributes,\n\n  /** PermissionKey */\n  PermissionKey,\n\n  /** Permissions */\n  @added(Versions.v2026_12_06)\n  Permissions,\n\n  /** LinkCount */\n  @added(Versions.v2026_12_06)\n  LinkCount,\n\n  /** NfsAttributes */\n  @added(Versions.v2026_12_06)\n  NfsAttributes,\n\n  /** All */\n  @added(Versions.v2026_12_06)\n  All,\n}",
+                "source": {
+                  "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                  "revision": "base",
+                  "startLine": 394,
+                  "endLine": 424
+                }
+              },
+              "after": {
+                "doc": "The type of file information to include in the listing.",
+                "declaration": "/** The type of file information to include in the listing. */\n#suppress \"@azure-tools/typespec-azure-core/no-enum\" \"Existing API\"\nenum ListFilesIncludeType {\n  /** Timestamps */\n  Timestamps,\n\n  /** Etag */\n  Etag,\n\n  /** Attributes */\n  Attributes,\n\n  /** PermissionKey */\n  PermissionKey,\n}",
+                "source": {
+                  "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                  "revision": "current",
+                  "startLine": 378,
+                  "endLine": 392
+                }
+              }
+            },
+            {
+              "id": "document-cbab6ef9cf3f8bef",
+              "sourceChangeId": "source-59080f734682d35e",
+              "qualifiedName": "Storage.File.DirectoryItem",
+              "kind": "model",
+              "before": {
+                "doc": "A listed directory item.",
+                "declaration": "/** A listed directory item. */\n@Xml.name(\"Directory\")\nmodel DirectoryItem {\n  /** The directory name. */\n  @Xml.name(\"Name\") name: StringEncoded;\n\n  /** The file ID. */\n  @Xml.name(\"FileId\") fileId?: string;\n\n  /** File properties. */\n  @Xml.name(\"Properties\") properties?: FileProperty;\n\n  /** The file attributes. */\n  @Xml.name(\"Attributes\") attributes?: string;\n\n  /** The permission key. */\n  @Xml.name(\"PermissionKey\") permissionKey?: string;\n\n  /** NFS only. The link count of the directory. */\n  @added(Versions.v2026_12_06)\n  @Xml.name(\"LinkCount\")\n  linkCount?: int64;\n}",
+                "source": {
+                  "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                  "revision": "base",
+                  "startLine": 592,
+                  "endLine": 614
+                }
+              },
+              "after": {
+                "doc": "A listed directory item.",
+                "declaration": "/** A listed directory item. */\n@Xml.name(\"Directory\")\nmodel DirectoryItem {\n  /** The directory name. */\n  @Xml.name(\"Name\") name: StringEncoded;\n\n  /** The file ID. */\n  @Xml.name(\"FileId\") fileId?: string;\n\n  /** File properties. */\n  @Xml.name(\"Properties\") properties?: FileProperty;\n\n  /** The file attributes. */\n  @Xml.name(\"Attributes\") attributes?: string;\n\n  /** The permission key. */\n  @Xml.name(\"PermissionKey\") permissionKey?: string;\n}",
+                "source": {
+                  "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                  "revision": "current",
+                  "startLine": 530,
+                  "endLine": 547
+                }
+              }
+            }
+          ],
+          "checks": [
+            {
+              "reviewUnitId": "semantic-259f67bc56ae9c3d",
+              "documentId": "document-5ee05fa0fcd53f46",
+              "check": "description",
+              "decision": "pass",
+              "rationale": "Directory-listing entries accurately summarizes the remaining directory and file arrays; removed special-file arrays do not make it stale."
+            },
+            {
+              "reviewUnitId": "semantic-259f67bc56ae9c3d",
+              "documentId": "document-b445ae21b614188a",
+              "check": "description",
+              "decision": "pass",
+              "rationale": "Information included in a listing accurately describes the remaining timestamps, ETag, attributes and permission-key options."
+            },
+            {
+              "reviewUnitId": "semantic-259f67bc56ae9c3d",
+              "documentId": "document-cbab6ef9cf3f8bef",
+              "check": "description",
+              "decision": "pass",
+              "rationale": "Listed directory item remains accurate after removing linkCount."
+            }
+          ]
+        },
+        {
+          "reviewUnitId": "semantic-bdd43786bf6adae0",
+          "status": "passed",
+          "documents": [
+            {
+              "id": "document-976014d0b8cb1967",
+              "sourceChangeId": "source-59080f734682d35e",
+              "qualifiedName": "Storage.File.FileProperty",
+              "kind": "model",
+              "before": {
+                "doc": "File properties.",
+                "declaration": "/** File properties. */\nmodel FileProperty {\n  /**\n   * Content length of the file. This value may not be up-to-date since an SMB\n   * client may have modified the file locally. The value of Content-Length may not\n   * reflect that fact until the handle is closed or the op-lock is broken. To\n   * retrieve current property values, call Get File Properties.\n   */\n  @Xml.name(\"Content-Length\") contentLength: int64;\n\n  /** The creation time. */\n  @Xml.name(\"CreationTime\")\n  creationTime?: utcDateTime;\n\n  /** The last access time. */\n  @Xml.name(\"LastAccessTime\")\n  lastAccessTime?: utcDateTime;\n\n  /** The last write time. */\n  @Xml.name(\"LastWriteTime\")\n  lastWriteTime?: utcDateTime;\n\n  /** The change time. */\n  @Xml.name(\"ChangeTime\")\n  changeTime?: utcDateTime;\n\n  /** The last modified time. */\n  @encode(\"rfc7231\")\n  @Xml.name(\"Last-Modified\")\n  lastModified?: utcDateTime;\n\n  /** The ETag of the file. */\n  @Xml.name(\"Etag\") eTag?: Azure.Core.eTag;\n\n  /** NFS only. The owner user identifier (UID) of the file. */\n  @added(Versions.v2026_12_06)\n  @Xml.name(\"Uid\")\n  owner?: string;\n\n  /** NFS only. The owner group identifier (GID) of the file. */\n  @added(Versions.v2026_12_06)\n  @Xml.name(\"Gid\")\n  group?: string;\n\n  /** NFS only. The file mode of the file. */\n  @added(Versions.v2026_12_06)\n  @Xml.name(\"Mode\")\n  fileMode?: string;\n}",
+                "source": {
+                  "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                  "revision": "base",
+                  "startLine": 627,
+                  "endLine": 675
+                }
+              },
+              "after": {
+                "doc": "File properties.",
+                "declaration": "/** File properties. */\nmodel FileProperty {\n  /**\n   * Content length of the file. This value may not be up-to-date since an SMB\n   * client may have modified the file locally. The value of Content-Length may not\n   * reflect that fact until the handle is closed or the op-lock is broken. To\n   * retrieve current property values, call Get File Properties.\n   */\n  @Xml.name(\"Content-Length\") contentLength: int64;\n\n  /** The creation time. */\n  @Xml.name(\"CreationTime\")\n  creationTime?: utcDateTime;\n\n  /** The last access time. */\n  @Xml.name(\"LastAccessTime\")\n  lastAccessTime?: utcDateTime;\n\n  /** The last write time. */\n  @Xml.name(\"LastWriteTime\")\n  lastWriteTime?: utcDateTime;\n\n  /** The change time. */\n  @Xml.name(\"ChangeTime\")\n  changeTime?: utcDateTime;\n\n  /** The last modified time. */\n  @encode(\"rfc7231\")\n  @Xml.name(\"Last-Modified\")\n  lastModified?: utcDateTime;\n\n  /** The ETag of the file. */\n  @Xml.name(\"Etag\") eTag?: Azure.Core.eTag;\n}",
+                "source": {
+                  "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                  "revision": "current",
+                  "startLine": 560,
+                  "endLine": 593
+                }
+              }
+            }
+          ],
+          "checks": [
+            {
+              "reviewUnitId": "semantic-bdd43786bf6adae0",
+              "documentId": "document-976014d0b8cb1967",
+              "check": "description",
+              "decision": "pass",
+              "rationale": "File properties accurately summarizes the remaining size, time and ETag fields without promising removed NFS ownership fields."
+            }
+          ]
+        },
+        {
+          "reviewUnitId": "semantic-eed96d1f60797ccb",
+          "status": "passed",
+          "documents": [
+            {
+              "id": "document-4f1fce0e9aca00aa",
+              "sourceChangeId": "source-59080f734682d35e",
+              "qualifiedName": "Storage.File.NfsFileType",
+              "kind": "union",
+              "before": {
+                "doc": "The NFS file type.",
+                "declaration": "/** The NFS file type. */\nunion NfsFileType {\n  string,\n\n  /** Regular */\n  Regular: \"Regular\",\n\n  /** Directory */\n  Directory: \"Directory\",\n\n  /** SymLink */\n  SymLink: \"SymLink\",\n\n  /** BlockDevice */\n  @added(Versions.v2026_12_06)\n  BlockDevice: \"BlockDevice\",\n\n  /** CharacterDevice */\n  @added(Versions.v2026_12_06)\n  CharacterDevice: \"CharacterDevice\",\n\n  /** Socket */\n  @added(Versions.v2026_12_06)\n  Socket: \"Socket\",\n\n  /** Fifo */\n  @added(Versions.v2026_12_06)\n  Fifo: \"Fifo\",\n}",
+                "source": {
+                  "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                  "revision": "base",
+                  "startLine": 275,
+                  "endLine": 303
+                }
+              },
+              "after": {
+                "doc": "The NFS file type.",
+                "declaration": "/** The NFS file type. */\nunion NfsFileType {\n  string,\n\n  /** Regular */\n  Regular: \"Regular\",\n\n  /** Directory */\n  Directory: \"Directory\",\n\n  /** SymLink */\n  SymLink: \"SymLink\",\n}",
+                "source": {
+                  "path": "specification/storage/data-plane/FileStorage/models.tsp",
+                  "revision": "current",
+                  "startLine": 275,
+                  "endLine": 287
+                }
+              }
+            }
+          ],
+          "checks": [
+            {
+              "reviewUnitId": "semantic-eed96d1f60797ccb",
+              "documentId": "document-4f1fce0e9aca00aa",
+              "check": "description",
+              "decision": "pass",
+              "rationale": "NFS file type still accurately describes Regular, Directory and SymLink after removing other variants."
+            }
+          ]
+        }
+      ],
+      "findings": [],
+      "blockers": []
     }
   },
   "changedFiles": [
@@ -197193,7 +198163,15 @@
     "modelInput": "model-input.json",
     "complianceSearchEvidence": "compliance-search-evidence.json",
     "judgment": "assessment-judgment.json",
-    "preparationManifest": "preparation-manifest.json"
+    "preparationManifest": "preparation-manifest.json",
+    "documentQualityReplay": {
+      "preparedAt": "2026-09-11T10:12:51.733Z",
+      "sourceAssessmentHash": "97fdcb0593dd93a37185ec7a371b61f65c136b3289c0a5acf55fe320e1a1d55b",
+      "sourceIndex": "documentation-replay/source/source-index.json",
+      "modelInput": "documentation-replay/model-input.json",
+      "input": "documentation-replay/dimensions/document-quality-input.json",
+      "judgment": "documentation-replay/document-quality-judgment.json"
+    }
   },
   "inputAccounting": {
     "budgetTier": "small",

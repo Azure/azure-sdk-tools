@@ -95,6 +95,7 @@ test("raw revision sources are not serialized and unavailable compilers block @d
   });
   assert.equal(sourceIndex.analysis.status, "blocked");
   assert.equal(sourceIndex.sourceChanges[0].documentEvidence.status, "blocked");
+  assert.equal(sourceIndex.sourceChanges[0].documentEvidence.schemaVersion, 3);
   assert.equal(sourceIndex.sourceChanges[0].documentEvidence.blockers.length, 2);
   assert.deepEqual(sourceIndex.sourceChanges[0].documentEvidence.documents, []);
 });

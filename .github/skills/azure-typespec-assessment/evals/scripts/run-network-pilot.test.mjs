@@ -222,7 +222,8 @@ test("coordinates deterministic analysis and prepares an Agent work item", () =>
     assert.ok(workItem.instructions.some((instruction) =>
       instruction.includes("documentQualityDecisions") &&
       instruction.includes("canonical @doc") &&
-      instruction.includes("Correctness and Meaning")));
+      instruction.includes("check: description") &&
+      instruction.includes("clearly and accurately explain")));
     assert.ok(existsSync(workItem.inputs.sharedNodeModules));
     assert.equal(
       realpathSync.native(join(base, "node_modules")),

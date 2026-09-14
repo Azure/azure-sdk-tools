@@ -176,7 +176,7 @@ test("documentation input retains exact document IDs with dedicated canonical ev
     rest: { status: "ready", candidates: [], facts: {}, blockers: [] },
     downstream: { status: "ready", candidates: [], facts: {}, blockers: [] },
     documentQuality: {
-      schemaVersion: 1,
+      schemaVersion: 3,
       status: "ready",
       reviewUnits: [unit],
       blockers: [],
@@ -184,6 +184,8 @@ test("documentation input retains exact document IDs with dedicated canonical ev
   };
   const input = buildModelInput(options);
   const summary = input.documentQualityReviewUnits[0];
+  assert.equal(input.documentQualityAssessmentVersion, 3);
+  assert.equal(input.documentQualityCriterion, "Does the @doc description clearly and accurately explain the associated TypeSpec code?");
   assert.deepEqual(summary.documentIds, ["document-timeout"]);
   assert.deepEqual(summary.qualifiedNames, ["Options.timeout"]);
   assert.equal(summary.status, "ready");
@@ -198,11 +200,19 @@ test("documentation input retains exact document IDs with dedicated canonical ev
   assert.equal(input.inputAccounting.retained.documentQualityDocuments, 1);
   assert.deepEqual(input.inferenceRequests, []);
 
+  for (const schemaVersion of [1, 2]) {
+    const legacy = buildModelInput({ ...options, documentQuality: { ...options.documentQuality, schemaVersion } });
+    assert.equal(legacy.documentQualityAssessmentVersion, schemaVersion === 2 ? 2 : undefined);
+    assert.equal(legacy.documentQualityCriterion, schemaVersion === 2 ? input.documentQualityCriterion : undefined);
+  }
+  const defaultInput = buildModelInput({ ...options, documentQuality: undefined });
+  assert.equal(defaultInput.documentQualityAssessmentVersion, 3);
+
   const reason = "The associated declaration could not be resolved.";
   const blocked = buildModelInput({
     ...options,
     documentQuality: {
-      schemaVersion: 1,
+      schemaVersion: 3,
       status: "blocked",
       blockers: [{ message: reason }],
       reviewUnits: [{ ...unit, status: "blocked", reason, documents: [] }],

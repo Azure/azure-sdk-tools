@@ -572,10 +572,10 @@ test("renderer shows fetched Azure Guidelines guidance and expands failures", ()
     html,
     /class="finding compliance-finding medium"[^>]* open/,
   );
-  assert.match(html, /Failed/);
+  assert.match(html, /Fail<\/div><div class="summary-label">Azure Guidelines/);
   assert.match(
     html,
-    /<a class="summary-card" href="#azure-compliance"><div class="summary-value"><span class="fail">×<\/span> 1<\/div><div class="summary-label">Azure Guidelines/,
+    /<a class="summary-card" href="#azure-compliance"><div class="summary-value"><span class="fail">×<\/span> Fail<\/div><div class="summary-label">Azure Guidelines/,
   );
   const complianceHtml = html.slice(
     html.indexOf('<section id="azure-compliance">'),
@@ -752,23 +752,24 @@ test("renderer labels active Azure Guidelines and scoped safety", () => {
   assert.match(html, /REST, downstream, and Azure Guidelines/);
   assert.match(
     html,
-    /> Not assessed<\/div><div class="summary-label">Overall code quality/,
+    /> N\/A<\/div><div class="summary-label">Overall code quality/,
   );
-  assert.match(html, /> 0<\/div><div class="summary-label">Semantic intents/);
+  assert.match(html, /> Pass<\/div><div class="summary-label">Semantic intents/);
+  assert.match(html, /0 intents assessed/);
   assert.match(html, /0 operations<br>0 Added, 0 Modified, 0 Removed/);
   assert.match(
     html,
-    /> 0<\/div><div class="summary-label">REST breaking changes/,
+    /> Pass<\/div><div class="summary-label">REST breaking changes<\/div><div class="summary-detail">0 breaking changes/,
   );
   assert.match(
     html,
-    /> 0<\/div><div class="summary-label">Downstream breaking changes/,
+    /> Pass<\/div><div class="summary-label">Downstream breaking changes<\/div><div class="summary-detail">0 generated SDK contract changes/,
   );
   assert.match(html, /Azure Guidelines/);
   assert.match(html, /0\/0 intents assessed/);
   assert.match(
     html,
-    /<a class="summary-card" href="#azure-compliance"><div class="summary-value"><span class="">i<\/span> 0<\/div><div class="summary-label">Azure Guidelines/,
+    /<a class="summary-card" href="#azure-compliance"><div class="summary-value"><span class="">i<\/span> N\/A<\/div><div class="summary-label">Azure Guidelines/,
   );
   assert.match(
     html,
@@ -999,7 +1000,7 @@ test("renderer shows expandable REST operations and aggregated downstream method
   assert.match(downstream, /Affected intents \(1\)/);
   assert.match(
     html,
-    /<a class="summary-card" href="#downstream-breaking"><div class="summary-value"><span class="fail">×<\/span> 1/,
+    /<a class="summary-card" href="#downstream-breaking"><div class="summary-value"><span class="fail">×<\/span> Fail/,
   );
   assert.match(
     html,
@@ -1325,7 +1326,7 @@ test("counts repeated Azure guideline findings as one visible issue", () => {
   assert.equal(findings.length, 4);
   assert.match(
     html,
-    /<span class="fail">×<\/span> 1<\/div><div class="summary-label">Azure Guidelines<\/div><div class="summary-detail">1 guideline issue<br>4\/4 intents assessed/,
+    /<span class="fail">×<\/span> Fail<\/div><div class="summary-label">Azure Guidelines<\/div><div class="summary-detail">1 guideline issue<br>4\/4 intents assessed/,
   );
   assert.match(complianceHtml, /<h2>Azure Guidelines<\/h2>/);
   assert.equal(
@@ -1486,7 +1487,7 @@ test("omits compatible response-wrapper and response-only required properties", 
   );
   assert.match(
     html,
-    /> 0<\/div><div class="summary-label">Downstream breaking changes/,
+    /> Pass<\/div><div class="summary-label">Downstream breaking changes<\/div><div class="summary-detail">0 generated SDK contract changes/,
   );
 });
 
@@ -1835,15 +1836,15 @@ test("renderer derives overall code quality from assessed dimensions", () => {
 
   assert.match(
     renderAssessmentHtml(highAssessment),
-    /<span class="pass">✓<\/span> Passed<\/div><div class="summary-label">Overall code quality/,
+    /<span class="pass">✓<\/span> Pass<\/div><div class="summary-label">Overall code quality/,
   );
   assert.match(
     renderAssessmentHtml(mediumAssessment),
-    /<span class="">i<\/span> Not assessed<\/div><div class="summary-label">Overall code quality/,
+    /<span class="">i<\/span> N\/A<\/div><div class="summary-label">Overall code quality/,
   );
 });
 
-function documentedAssessment(decision = "pass", noDocs = false) {
+function documentedAssessment(decision = "pass", noDocs = false, version = 1) {
   const source = {
     id: "source-widget", path: "models.tsp",
     hunks: [{ id: "hunk-widget", lines: ['-@doc("The count.")', '+@doc("A positive count.")'] }],
@@ -1860,16 +1861,18 @@ function documentedAssessment(decision = "pass", noDocs = false) {
     after: { doc: "A positive count.", declaration: '@doc("A positive count.")\n@minValue(1)\ncount: int32;', source: { path: source.path, revision: "current", startLine: 1, endLine: 3 } },
   };
   source.documentEvidence = { status: "ready", documents: noDocs ? [] : [{ ...document, hunkIds: ["hunk-widget"] }], blockers: [] };
+  if (version >= 2) source.documentEvidence.schemaVersion = version;
   const unit = {
     reviewUnitId: intent.id, status: noDocs ? "not-applicable" : "ready",
     ...(noDocs ? { reason: "No current @doc in the changed declaration scope." } : {}),
     sourceChangeIds: [source.id], hunkIds: ["hunk-widget"], declarationIds: ["declaration-widget"], documents: noDocs ? [] : [document],
   };
   const input = buildDocumentQualityInput({
+    schemaVersion: version,
     sourceIndex: { sourceChanges: [source] },
     semantic: { reviewUnits: [{ id: intent.id, sourceChangeIds: unit.sourceChangeIds, hunkIds: unit.hunkIds, declarationIds: unit.declarationIds }] },
   });
-  const decisions = noDocs ? [] : ["correctness", "meaning"].map((check) => {
+  const decisions = noDocs ? [] : (version >= 2 ? ["description"] : ["correctness", "meaning"]).map((check) => {
     const checkDecision = typeof decision === "string" ? decision : decision[check];
     return {
       reviewUnitId: intent.id, documentId: document.id, check, decision: checkDecision,
@@ -1880,6 +1883,10 @@ function documentedAssessment(decision = "pass", noDocs = false) {
   const documentQuality = assembleDocumentQuality({
     input,
     modelInput: {
+      ...(version >= 2 ? {
+        documentQualityAssessmentVersion: version,
+        documentQualityCriterion: "Does the @doc description clearly and accurately explain the associated TypeSpec code?",
+      } : {}),
       artifactReferences: { documentQuality: DOCUMENT_QUALITY_ARTIFACT },
       documentQualityReviewUnits: [{
         reviewUnitId: intent.id, status: unit.status, documentIds: unit.documents.map((item) => item.id), evidenceSetId: "evidence-document-widget",
@@ -1906,12 +1913,30 @@ function documentedAssessment(decision = "pass", noDocs = false) {
   };
 }
 
+test("every hero category uses a compact status while retaining counts and N/A reasons", () => {
+  for (const [decision, noDocs] of [["pass", false], ["fail", false], ["not-assessed", false], ["pass", true]]) {
+    const html = renderAssessmentHtml(documentedAssessment(decision, noDocs));
+    const header = html.slice(html.indexOf('<div class="summary-grid">'), html.indexOf("</header>"));
+    const values = [...header.matchAll(/<div class="summary-value"><span[^>]*>[^<]*<\/span> ([^<]+)<\/div>/g)].map((match) => match[1]);
+    assert.equal(values.length, 6);
+    assert.ok(values.every((value) => ["Pass", "Fail", "N/A"].includes(value)));
+    assert.match(header, /0 breaking changes/);
+    assert.match(header, /0 generated SDK contract changes/);
+    assert.match(header, /0 guideline issues/);
+    assert.match(header, /1 intent assessed/);
+    const docCard = header.match(/<a class="summary-card" href="#document-quality">[\s\S]*?<\/a>/)[0];
+    if (noDocs) assert.match(docCard, /No applicable documentation/);
+    if (decision === "not-assessed") assert.match(docCard, /Not assessed/);
+    assert.match(html, /\.summary-value\{white-space:nowrap\}/);
+  }
+});
+
 test("document hero reflects final pass, fail, incomplete and no-applicable-doc coverage", () => {
   for (const [decision, noDocs, label, coverage] of [
-    ["pass", false, "Passed", "2/2 checks assessed"],
-    ["fail", false, "Failed", "2/2 checks assessed"],
-    ["not-assessed", false, "Not assessed", "0/2 checks assessed"],
-    ["pass", true, "Passed", "0/0 checks assessed"],
+    ["pass", false, "Pass", "2/2 checks assessed"],
+    ["fail", false, "Fail", "2/2 checks assessed"],
+    ["not-assessed", false, "N/A", "0/2 checks assessed"],
+    ["pass", true, "N/A", "0/0 checks assessed"],
   ]) {
     const assessment = documentedAssessment(decision, noDocs);
     const before = structuredClone(assessment);
@@ -1921,7 +1946,7 @@ test("document hero reflects final pass, fail, incomplete and no-applicable-doc 
     assert.ok(hero.includes(coverage));
     if (noDocs) assert.match(hero, /no applicable @doc/);
     assert.match(html, /REST, downstream, Azure Guidelines, and Document Quality/);
-    assert.ok(html.includes(`${decision === "fail" ? "Failed" : "Not assessed"}</div><div class="summary-label">Overall code quality`));
+    assert.ok(html.includes(`${decision === "fail" ? "Fail" : "N/A"}</div><div class="summary-label">Overall code quality`));
     assert.deepEqual(assessment, before);
     assert.equal(assessment.safety.status, "passed");
     const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map((match) => match[1]);
@@ -1940,17 +1965,39 @@ test("legacy document hero remains not-assessed without invented assessment coun
   assert.doesNotMatch(hero, /checks assessed|0 findings|Passed/);
 });
 
+for (const version of [2, 3]) test(`v${version} renders one description assessment and an honest no-document outcome`, () => {
+  for (const [decision, noDocs, label] of [
+    ["pass", false, "Pass"],
+    ["fail", false, "Fail"],
+    ["not-assessed", false, "N/A"],
+    ["pass", true, "N/A"],
+  ]) {
+    const assessment = documentedAssessment(decision, noDocs, version);
+    const html = renderAssessmentHtml(assessment);
+    const quality = html.slice(html.indexOf('<section id="document-quality">'), html.indexOf('<section id="semantic-intents">'));
+    const hero = html.match(/<a class="summary-card" href="#document-quality">[\s\S]*?<\/a>/)[0];
+    assert.ok(hero.includes(`</span> ${label}</div>`));
+    assert.match(quality, /Does the @doc description clearly and accurately explain the associated TypeSpec code\?/);
+    assert.doesNotMatch(quality, /Correctness|Meaning|Legacy assessment|checks assessed/);
+    assert.ok(quality.includes(`${noDocs || decision === "not-assessed" ? 0 : 1}/${noDocs ? 0 : 1} descriptions assessed`));
+    if (noDocs) assert.doesNotMatch(quality, /report-badge add|>passed</);
+    else assert.match(quality, /Description explains code/);
+    assert.equal(assessment.dimensions.documentQuality.coverage.checkCount, noDocs ? 0 : 1);
+  }
+});
+
 test("active documentation affects aggregate quality but legacy placeholders do not affect safety or quality", () => {
   const recorded = JSON.parse(readFileSync(new URL("../evals/assessments/45348/assessment.json", import.meta.url), "utf8"));
   const passedGuidance = recorded.dimensions.compliance.intentAssessments[0];
   assert.equal(recorded.dimensions.compliance.status, "passed");
-  for (const [decision, legacy, expected] of [
-    ["pass", false, "Passed"],
-    ["fail", false, "Failed"],
-    ["not-assessed", false, "Not assessed"],
-    ["pass", true, "Passed"],
+  for (const version of [1, 2, 3]) for (const [decision, legacy, expected, noDocs = false] of [
+    ["pass", false, "Pass"],
+    ["fail", false, "Fail"],
+    ["not-assessed", false, "N/A"],
+    ["pass", true, "Pass"],
+    ["pass", false, "Pass", true],
   ]) {
-    const assessment = documentedAssessment(decision);
+    const assessment = documentedAssessment(decision, noDocs, version);
     assessment.dimensions.compliance = {
       ...structuredClone(recorded.dimensions.compliance),
       intentAssessments: [{ ...structuredClone(passedGuidance), semanticIntentId: "semantic-widget" }],
@@ -1980,21 +2027,28 @@ test("failed documentation with partial checks reports incomplete intent coverag
   assert.equal(dimension.coverage.assessedCheckCount, 1);
   const html = renderAssessmentHtml(assessment);
   assert.match(html, /1\/2 checks assessed/);
-  assert.match(html, /0\/1 intents assessed/);
+  assert.match(html, /0\/1 intent scopes resolved/);
   assert.match(html, /Documentation not assessed for:/);
-  assert.match(html, /Failed<\/div><div class="summary-label">Overall code quality/);
+  assert.match(html, /Fail<\/div><div class="summary-label">Overall code quality/);
   assert.equal(assessment.safety.status, "passed");
 });
 
-test("passed documentation checks retain compact rationales without missing-expected warnings or duplicated source", () => {
+test("passed documentation is browsable through collapsed intent, file and description groups", () => {
   const assessment = documentedAssessment("pass");
   assert.ok(assessment.dimensions.documentQuality.intentAssessments[0].checks.every((check) => check.expected === undefined));
   const html = renderAssessmentHtml(assessment);
   const quality = html.slice(html.indexOf('<section id="document-quality">'), html.indexOf('<section id="semantic-intents">'));
-  assert.equal((quality.match(/class="report-card document-quality-check-summary"/g) ?? []).length, 1);
-  assert.match(quality, /2 passed · 0 not assessed/);
+  assert.match(quality, /<div class="document-quality-scope"><details/);
+  assert.doesNotMatch(quality, /Coverage by change intent|2 checks passed · 0 failed/);
+  assert.match(quality, /<details class="report-card document-quality-intent"><summary>/);
+  assert.match(quality, /<details class="report-subdetails document-quality-file"><summary/);
+  assert.match(quality, /<details class="document-quality-document"><summary>/);
+  assert.match(quality, /<blockquote>A positive count\.<\/blockquote>/);
+  assert.doesNotMatch(quality, /<details[^>]*\bopen/);
+  assert.match(quality, /class="report-badge add">2 checks passed/);
+  assert.match(quality, /Widget.count/);
   assert.match(quality, /2\/2 checks assessed/);
-  assert.equal((quality.match(/Recorded documentation judgment\./g) ?? []).length, 2);
+  assert.doesNotMatch(quality, /Recorded documentation judgment|Check results:|document-quality-check-summary/);
   assert.doesNotMatch(quality, /Expected meaning or contract was not recorded|<h3>Expected|<h3>Actual|class="report-document-snapshots"|class="report-card document-quality-check"/);
 });
 
@@ -2002,22 +2056,22 @@ test("one failed and one passed doc check render only one full source comparison
   const html = renderAssessmentHtml(documentedAssessment({ correctness: "pass", meaning: "fail" }));
   const quality = html.slice(html.indexOf('<section id="document-quality">'), html.indexOf('<section id="semantic-intents">'));
   assert.equal((quality.match(/class="report-card document-quality-check"/g) ?? []).length, 1);
-  assert.equal((quality.match(/class="report-card document-quality-check-summary"/g) ?? []).length, 1);
+  assert.doesNotMatch(quality, /document-quality-check-summary/);
   assert.equal((quality.match(/class="report-document-snapshots"/g) ?? []).length, 1);
   assert.equal((quality.match(/<pre><code>/g) ?? []).length, 2);
   assert.equal((quality.match(/<h3>Expected<\/h3>/g) ?? []).length, 1);
   assert.equal((quality.match(/<h3>Actual<\/h3>/g) ?? []).length, 1);
   assert.match(quality, /meaning issue in count documentation/);
-  assert.match(quality, /1 passed · 0 not assessed/);
+  assert.match(quality, /1 check passed \/ 1 failed/);
   assert.doesNotMatch(quality, /Expected meaning or contract was not recorded/);
 });
 
 test("unassessed documentation checks keep compact reasons and coverage without fabricated expected judgments", () => {
   const html = renderAssessmentHtml(documentedAssessment("not-assessed"));
   const quality = html.slice(html.indexOf('<section id="document-quality">'), html.indexOf('<section id="semantic-intents">'));
-  assert.match(quality, /0 passed · 2 not assessed/);
+  assert.match(quality, /0 checks passed \/ 2 not assessed/);
   assert.match(quality, /0\/2 checks assessed/);
-  assert.match(quality, /0\/1 intents assessed/);
+  assert.match(quality, /0\/1 intent scopes resolved/);
   assert.equal((quality.match(/Not assessed reason:<\/strong> Contract evidence incomplete\./g) ?? []).length, 2);
   assert.doesNotMatch(quality, /Expected meaning or contract was not recorded|<h3>Expected|<h3>Actual|class="report-document-snapshots"/);
 });

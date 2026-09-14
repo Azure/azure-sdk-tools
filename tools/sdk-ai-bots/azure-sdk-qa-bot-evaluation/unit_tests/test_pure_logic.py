@@ -38,7 +38,6 @@ from _evals_runner import (  # noqa: E402
     _combine_batch_results,
     _inline_run_request_bytes,
     append_tool_evidence_to_context,
-    extract_tool_trace_from_response,
     output_items_to_rows,
     extract_title_and_link_from_references,
     extract_title_and_link_from_context,
@@ -520,7 +519,6 @@ def test_retrieve_stored_response_history_and_tool_evidence():
 
     assert serialize_response_output(response) == response["output"]
     assert history["response-1"]["response_output"] == response["output"]
-    assert history["response-1"]["tool_trace"] == extract_tool_trace_from_response(response)
     assert history["response-1"]["tool_trace"] == [
         {
             "sequence": 1,

@@ -515,11 +515,6 @@ def _extract_tool_trace(output_items: list[dict[str, Any]]) -> list[dict[str, An
     return traces
 
 
-def extract_tool_trace_from_response(response: Any) -> list[dict[str, Any]]:
-    """Normalize stored response tool calls and join explicit outputs by ``call_id``."""
-    return _extract_tool_trace(serialize_response_output(response))
-
-
 def append_tool_evidence_to_context(context: str, tool_trace: list[dict[str, Any]]) -> str:
     """Add complete tool evidence to the text supplied to the groundedness evaluator."""
     if not tool_trace:
@@ -892,7 +887,6 @@ __all__ = [
     "extract_title_and_link_from_references",
     "extract_title_and_link_from_context",
     "serialize_response_output",
-    "extract_tool_trace_from_response",
     "append_tool_evidence_to_context",
     "COMPLETION_ITEM_SCHEMA",
 ]

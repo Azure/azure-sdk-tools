@@ -36,9 +36,8 @@ stimuli:
   # Natural 2-turn flow (rewritten from a single "here is all the context
   # you need" prompt — a pre-multi-turn workaround, see microsoft/vally#481):
   # turn 0 states intent only; turn 1 supplies the structured details, as a
-  # real user follow-up would. Graders stay session-wide because the skill's
-  # own documented workflow may legitimately check for an existing plan
-  # (azsdk_get_release_plan) before all details arrive.
+  # real user follow-up would. Creation performs its own duplicate checks;
+  # do not require an additional get call before creating or reusing a plan.
   - name: create-public-preview-release-plan
     # Spec-repo worktree fixture: defined once here and aliased by the stimuli
     # below. CI clones it via eng/common/scripts/eval/init-eval-git-fixtures.js before this suite.
@@ -74,7 +73,6 @@ stimuli:
       - type: tool-calls
         config:
           required:
-            - azsdk_get_release_plan
             - azsdk_create_release_plan
 
   # --- End-to-end demo: create, then (in a separate turn) generate -----
@@ -114,7 +112,6 @@ stimuli:
         turn: 0
         config:
           required:
-            - azsdk_get_release_plan
             - azsdk_create_release_plan
           disallowed:
             - azsdk_run_generate_sdk

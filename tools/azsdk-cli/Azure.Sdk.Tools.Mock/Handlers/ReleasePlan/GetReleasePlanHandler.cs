@@ -27,6 +27,12 @@ public class GetReleasePlanHandler : IMockToolHandler
         var specPullRequestUrl = arguments?.GetValueOrDefault("specPullRequestUrl")?.ToString() ?? "";
         var typeSpecProjectPath = arguments?.GetValueOrDefault("typeSpecProjectPath")?.ToString() ?? "";
         var apiReleaseType = arguments?.GetValueOrDefault("apiReleaseType")?.ToString() ?? "";
+        if (releasePlanId == "50002" || workItemId == "35002"
+            || string.Equals(typeSpecProjectPath, ExistingReleasePlanFixture.ProjectPath, StringComparison.OrdinalIgnoreCase))
+        {
+            return ExistingReleasePlanFixture.CreateResponse();
+        }
+
         var isKnownSpecPullRequest = string.Equals(
             specPullRequestUrl,
             "https://github.com/Azure/azure-rest-api-specs/pull/38387",

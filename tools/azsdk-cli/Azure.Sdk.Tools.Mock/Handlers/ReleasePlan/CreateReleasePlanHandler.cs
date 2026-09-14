@@ -19,6 +19,11 @@ public class CreateReleasePlanHandler : IMockToolHandler
     {
         var typespecPath = arguments?.GetValueOrDefault("typeSpecProjectPath")?.ToString() ?? "";
 
+        if (string.Equals(typespecPath, ExistingReleasePlanFixture.ProjectPath, StringComparison.OrdinalIgnoreCase))
+        {
+            return ExistingReleasePlanFixture.CreateResponse();
+        }
+
         return typespecPath.ToLowerInvariant() switch
         {
             "specification/contosowidgetmanager/contoso.widgetmanager" => ContosoReleasePlanResponse(typespecPath, arguments),

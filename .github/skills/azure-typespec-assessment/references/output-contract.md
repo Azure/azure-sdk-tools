@@ -131,7 +131,8 @@ Downstream SDK method and SDK type cards must not repeat `Changed TypeSpec`
 source links. Keep that evidence in `assessment.json`, Semantic intents, and
 the appendix; retain only related Semantic intent links in the cards.
 Method cards use direct, mixed, or indirect cause labels. Red impact links
-are reserved for confirmed REST/downstream impacts; guideline links are separate.
+are reserved for confirmed REST/downstream impacts and failed documentation
+findings; guideline links are separate.
 Downstream data and cards must not contain affected REST operations, HTTP
 routes, REST-derived counts, or REST/downstream suppression records. Direct
 method findings are assembled into `methodGroups`; type findings are assembled
@@ -147,7 +148,7 @@ Dimension statuses are derived, not authored:
 - REST/downstream: `passed`, `failed`, or `not-assessed`;
 - Azure Guidelines: `passed`, `failed`, or `not-assessed`, derived from
   Semantic intent coverage and applicable fetched guidance;
-- Document Quality and Agent Friendliness: `passed`, `failed`, `not-assessed`,
+- Doc Correctness (`documentQuality`): `passed`, `failed`, `not-assessed`,
   or `not-applicable`, with `assessmentVersion: 3` for v3 input and separate semantic-unit,
   document, and check coverage (one check per eligible description);
 - safety scope: `rest-and-downstream-only`, never Azure Guidelines or document quality.
@@ -163,8 +164,8 @@ Historical v1 results keep their separate correctness/meaning checks and absent
 assessment version; v2 results retain `assessmentVersion: 2` and their original
 coverage. V2/v3 inputs require matching source evidence versions. Do not relabel
 legacy inputs or silently add inherited coverage; recollect evidence for v3.
-HTML labels inherited-only coverage **Inherited documentation not reviewed**,
-not passed, failed, blocked, or missing. Baseline inherited text, when relevant
+Recorded inherited-only coverage is unreviewed, not passed, failed, blocked,
+or missing; it is not rendered as a separate HTML group. Baseline inherited text, when relevant
 to a local-description finding, remains separate from exact declaration source.
 A completed Azure Guidelines search with no governing guidance is represented by an
 intent-level `no-applicable-guidance` decision. It counts as assessed and does
@@ -174,19 +175,26 @@ the Azure Guidelines assessment.
 
 ## HTML
 
-`assessment.html` must show comparison identity, overall code quality as
-`passed|failed|not-assessed`, REST/downstream code-safety findings, semantic
+`assessment.html` must show comparison identity, overall finding count with a
+finding-based status icon, REST/downstream code-safety findings, semantic
 intents, active Azure Guidelines status
 and coverage, retained document evidence, fetched guidance and changed
 TypeSpec, collapsed finding cards, retrieval blockers, explicit
-Document Quality and Agent Friendliness status and coverage, and complete provenance.
-After overall code quality, summary cards and main sections must order the five
-dimensions as REST breaking changes, downstream breaking changes, Azure
-Guidelines, Document Quality and Agent Friendliness, and Semantic intents. The
-Azure Guidelines card uses its distinct visual guideline-issue count as the
-primary numeric value; status remains represented by its icon and color.
-The Azure Guidelines summary card counts distinct visual guideline issues;
-the section metadata retains the underlying finding count.
+Doc Correctness status and coverage, and complete provenance.
+Overall code quality is a non-clickable summary card. The five dimension cards
+follow in this order: Semantic intents, Azure Guidelines, REST breaking changes,
+downstream breaking changes, and Doc Correctness. Main sections with findings
+precede those without findings; within each group, use the dimension-card order.
+Semantic intents are information only, always in the no-findings group. Show an
+information icon beside its title, with intent, operation, and action counts below;
+do not display Pass, Fail, or N/A status tags for Semantic intents. Preserve the
+recorded review state in JSON. The appendix remains last.
+Each card's heading contains only its icon and title on the same line, not a
+number or Pass/Fail/N/A text. Quality cards show the recorded finding count below
+the heading. Overall sums REST, downstream, Azure Guidelines, and Doc Correctness
+findings, excluding intents. Preserve status icons, accessible labels, and colors.
+Count underlying findings, not grouped operations, SDK methods, or guideline issue
+cards. Exclude legacy downstream entries that only repeat approved REST findings.
 HTML may present multiple findings in one guideline-issue
 card only when their canonical guidance document-section sets and normalized
 expected behavior are identical. Grouping is presentation-only: JSON findings
@@ -249,8 +257,11 @@ paths with baseline/target roles only when verified raw evidence is explicitly
 supplied. Keep unmapped confirmed types visible. Do not add enum-specific or
 shared-cause banners; enum transitions remain in per-method evidence.
 
-Semantic summaries expose static `Impacts (N)` links, counting only REST and
-downstream targets. Guideline links are separate. Relationship labels and
+Semantic summaries expose static `Impacts (N)` links, counting REST, downstream,
+and failed documentation targets. Failed documentation links use the existing
+red impact style and retain stable finding destinations. Passing, incomplete,
+and appendix navigation links are not failure impacts. Guideline links are
+separate. Relationship labels and
 backgrounds do not toggle the card; anchors reveal their target's enclosing
 details. On expansion, complete Changed TypeSpec source appears first and is
 expanded. Affected operations follow in a collapsed group: at most ten operation
@@ -265,35 +276,62 @@ anchors. Do not duplicate these sections with a comparison table or a second
 source-evidence block. Preserve pass/fail/not-assessed and no-applicable-guidance
 states without severity labels.
 
-Documentation failures use the same collapsed cards with readable affected-intent
-links, a "Description explains code" label, and Expected/Actual sections. Actual
-retains exact target descriptions and associated source declarations, including
-baseline context when available. If only one snapshot exists, show it full-width
-without an empty comparison column. Include retained related type definitions
-from the same intent and revision when compiler-recorded references resolve
-unambiguously to their source declarations. Do not infer type links from prose
-or identifier text, or duplicate declarations already inside the displayed code.
-Show canonical evidence, not invented fixes
-or generated descriptions. Do not render individual passed cards or rationales.
-Show a compact group per intent directly below the section's existing summary,
-without an extra group heading or repeated aggregate counts. Passed
-groups are collapsed; groups with failures or incomplete checks are expanded.
-Each summary shows the intent title, description/file counts, and result counts
-(explicit check counts for legacy judgments). Within a group, collapse files and
-bound declaration lists to a keyboard-scrollable region. Use short declaration
-names and unambiguous file suffixes; expose full identities on hover and full
-source paths with the selected description's expandable TypeSpec source.
-Passing descriptions can be inspected without a judgment card or rationale;
-failed declarations link to their existing Expected/Actual cards in the intent.
-Keep non-applicable and inherited-only groups neutral, separate from failures.
-Retain all judgments and stable finding anchors in JSON/HTML.
-Label description/check counts separately from blocked, incomplete, and
-non-applicable intent counts; zero pending decisions does not mean all scopes
-were assessed.
-Keep unassessed reasons visible as compact notes. Preserve pass/fail/not-assessed and explicit
-no-applicable-documentation outcomes with coverage, never a green pass for zero
-descriptions. Historical two-check results are labeled legacy. Documentation links are
-separate from REST/downstream `Impacts (N)` and do not affect scoped safety.
-Active documentation results participate in overall code quality. Legacy
-documentation placeholders without coverage remain excluded from that
-aggregate.
+Use **Doc Correctness** for this dimension's heading, summary/navigation labels,
+and failed impact prefix (`Doc Correctness: ...`).
+The subtitle asks whether the description accurately explains its associated
+TypeSpec code and retains exclusions for examples, external documentation, and
+agent execution. This is description quality, not runtime agent evaluation.
+Keep `documentQuality`, schema/evidence fields, the historical rubric, and
+main-section and finding anchors unchanged.
+Retain original recorded source, description, and judgment evidence verbatim.
+
+Keep the summary card and main-section coverage to the finding count and assessed
+description count, for example **0 findings** and **9 descriptions assessed**.
+Do not include unassessed counts or partial-review wording in the overview.
+Display Doc Correctness as **Pass** when no findings are recorded and **Fail**
+otherwise; Overall code quality similarly passes only when no main dimension has
+findings. These display statuses do not imply complete coverage or alter recorded
+assessment statuses. Label unavailable legacy assessment counts explicitly instead
+of inventing zero. Full coverage, original statuses, inherited-description counts,
+exclusions, and documentation blockers remain in `assessment.json`, not the HTML.
+
+The main documentation section contains only failed finding cards grouped by
+intent and compact coverage. Do not render Doc Correctness details in the appendix
+or links to the removed documentation appendix.
+Failed intent groups open initially; individual findings remain collapsed.
+Their summaries prominently show short object identities with qualified-name
+hover text, the recorded issue and check label, and no severity. Do not repeat
+the owning intent's link inside its finding cards; retain links to other affected
+intents and stable finding anchors.
+
+On expansion, show **Current description** first: the exact compiler-resolved
+target string, with only a nonempty exact `docQuote` match highlighted.
+Preserve whitespace and escape every string, including highlighted text.
+Follow with recorded `rationale` under **Why this needs attention** and recorded
+`expected` under **Suggested change**. The latter is actionable guidance, not
+a literal proposed description. Do not fabricate replacement prose, code
+summaries, or new judgment fields. Missing current text is explicitly unavailable,
+never substituted with a baseline string or legacy `actual` prose.
+
+Collapse supporting TypeSpec and source evidence. Retain baseline/current
+snapshots, exact declarations, full source paths, and inherited-origin labels;
+a single snapshot uses full width. Include related type definitions only through
+unambiguous compiler-recorded references from the same intent and revision,
+with exact source ownership. Do not infer references from prose or duplicate
+declarations already contained in the selected declaration.
+
+Omit passed, incomplete, and neutral documentation groups, detailed coverage,
+recorded summaries, and non-finding description browsers from the entire HTML
+report. Complete judgments and retained evidence remain in `assessment.json`.
+Zero pending decisions does not imply complete scope; no eligible descriptions
+retains its neutral recorded audit state even though the finding-based overview
+passes. Label historical two-check results legacy. Human-facing labels say **description**,
+not `@doc`; the normative criterion, historical artifacts, and literal evidence
+remain unchanged.
+
+`renderReportSections` returns main `html` and an empty `appendixHtml` for
+compatibility. The general report appendix remains unchanged. Hash navigation opens
+all enclosing details for appendix, finding, and intent links. Failed documentation
+links contribute to semantic `Impacts (N)` but never to scoped REST/downstream safety.
+Recorded documentation findings participate in overall code quality; coverage
+limitations remain recorded in the assessment data.

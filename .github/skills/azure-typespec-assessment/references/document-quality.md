@@ -1,4 +1,4 @@
-# Document Quality and Agent Friendliness
+# Doc Correctness
 
 ## Scope and evidence
 
@@ -32,8 +32,8 @@ or empty documentation is outside this version's missing-documentation scope.
 `not-applicable` units require no Agent decisions and count as resolved scope,
 not as assessed documents. `blocked` units retain their reasons; unresolved
 documentation or unavailable declaration evidence must never become a pass.
-Inherited-only units are outside quality-review scope, not blocked; display
-them as **Inherited documentation not reviewed**, not missing documentation.
+Inherited-only units are outside quality-review scope, not blocked; retain
+them as unreviewed coverage in JSON, not missing documentation.
 
 ## Criterion
 
@@ -78,8 +78,10 @@ The final dimension records `assessmentVersion: 3` for v3 input and an independe
 document/check counts. Confirmed failures yield
 `failed`; otherwise incomplete coverage yields `not-assessed`; otherwise no
 eligible descriptions yields `not-applicable`; otherwise `passed`. Partial
-coverage remains visible even alongside failures. Never call zero assessed
-descriptions a successful documentation assessment.
+coverage remains recorded even alongside failures. Never call zero assessed
+descriptions a successful documentation assessment. The HTML shows only finding
+and assessed-description counts plus failure cards, with no documentation appendix.
+Its finding-based Pass means no recorded findings, not complete assessment coverage.
 
 Historical v1 inputs/results retain their separate `correctness` and `meaning`
 checks; v2 retains its local-description-only coverage and version. Never
